@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en"> 
 	<head>
-		<title>Epics CA Monitor</title>
+		<title>Controls Dashboard Editor</title>
 		<style type="text/css">			
 			body {
 				background-color: rgba(87,87,87,0.8);//241, 241, 212, 0.6);//rgba(255,255,255,0.9);
@@ -18,6 +18,10 @@
 			
 			h2 {
 				margin: 0px;
+			}
+
+			::color {
+				cursor: 
 			}
 			
 			
@@ -42,11 +46,19 @@
 				overflow: hidden;
 			}
 			
-			.tile{
+			.tile {
 				position: absolute;
 				background-color: #b2b2b2;
 				border: thin solid rgba(0,0,0,0.1);
 				border-radius: 8px;
+			}
+
+			.tile:hover {
+				cursor: pointer;
+				border-style: dotted;
+  				border-width: 2px;
+  				border-color: gold;
+
 			}
 			
 			.rotate270 {
@@ -59,7 +71,7 @@
 			
 			#widgetFilter {
 				position: absolute;
-				top: -4px;
+				top: 0px;
 				left: 50%;
 				width: 45%;
 				height: (100% - 6px);
@@ -69,7 +81,7 @@
 				border-bottom: solid 2px #c9c9c9;
 				transition: border 0.3s;
 		    	font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:13px;   
-				background-color: transparent;
+				background-color: rgba(105, 105, 105, 0.4);
 				!position:absolute;
 				appearance: none;
 				-webkit-appearance: none;
@@ -82,6 +94,10 @@
 				outline: none;
 				border: none;
 				border-bottom: solid 2px #969696;
+			}
+	
+			#widgetFilter:hover {
+				cursor: pointer;
 			}
 			
 			option {
@@ -111,7 +127,8 @@
 				-webkit-appearance: none;
 				-moz-appearance: none;
 				box-shadow: none;
-				border-radius: 0px;
+				border-radius: 5px;
+				-webkit-border-radius: 5px;
 				background-color: transparent;
 				color: #d3d3d3;
 			}
@@ -121,14 +138,28 @@
 				color: black;
 			}
 			
-
+						
+			.titleDiv {
+                                
+                                background-color: white;
+                        }
+                        .editorPanelTitle {
+				color: #d3d3d3;
+                                font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:22px;
+                                appearance: none;
+                                -webkit-appearance: none;
+                                -moz-appearance: none;
+                        }
 
 			
 			#widgetSearch {
 				padding: 0px;
 				border: none;
-				border-bottom: solid 2px #c9c9c9;
+				border-radius: 2px;
+				-webkit-border-radius: 5px;
+				border-bottom: solid 5px #c8c8c8;
 				transition: border 0.3s;
+				background-color: rgba(105, 105, 105, 0.4);
 			}
 			#widgetSearch:focus,
 			#widgetSearch.focus {
@@ -188,19 +219,30 @@
 				overflow: auto;
 			}
 			
+			#colorPickersDiv {
+			  float: left;
+			}
 
-			
 			.toggle {
 			  position:relative;
 			  display:inline-block;
 			  width:40px;
 			  height:60px;
+			  float:left;
 			  background-color:#bbb;
 			  -webkit-border-radius:4px;
 			  -moz-border-radius:4px;
 			  border-radius:4px;
 			  text-align:center;
 			}
+
+			.toggle_settings {
+			 
+			}
+
+			.toggle-margin {
+			  margin-right: 15px;
+			}	
 
 			.toggle input {
 			  width:100%;
@@ -342,6 +384,7 @@
 			var userSettingsDiv;
 			var defaultGridColor_;
 			var defaultBackgroundColor_;
+			var codeEditor_ = 12345678910;
 
 					
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -353,9 +396,9 @@
 
 //				DesktopContent.XMLHttpRequest("Request?RequestType=getList","",handlerFunction);
 				tilesDiv = document.getElementById("tilesDiv");
-				tilesDiv.style.top = (window.innerHeight * 0.15) + "px";
+				tilesDiv.style.top = (window.innerHeight * 0.25) + "px";
 				tilesDiv.style.left = "0px";
-				tilesDiv.style.height = (window.innerHeight * 0.85) + "px";
+				tilesDiv.style.height = (window.innerHeight * 0.75) + "px";
 				tilesDiv.style.width = (window.innerWidth * 0.6)+ "px";
 				
 				counter = Object.keys(widgetLibrary.typeToSrc).length;
@@ -388,20 +431,34 @@
 						--columns;
 					}
 				}
+				var titleDiv = document.getElementById("titleDiv");
+                                titleDiv.style.width = window.innerWidth + "px";
+                                titleDiv.style.height = (window.innerHeight * 0.1) + "px";
+                                titleDiv.style.top  = "0px";
+                                titleDiv.style.left = "0px";
 
 		
-//				var buttonsDiv = document.getElementById("buttonsDiv");
+				var buttonsDiv = document.getElementById("buttonsDiv");
 //				buttonsDiv.style.width = window.innerWidth + "px";
 //				buttonsDiv.style.height = (window.innerHeight * 0.1) + "px";
-//				buttonsDiv.top  = "0px";
-//				buttonsDiv.left = "0px";
+				buttonsDiv.style.top  = (parseFloat(titleDiv.style.height) * 1.5) + "px"; //(window.innerHeight * 0.2) + "px"; //"0px";
+				buttonsDiv.left = "0px";
 //				
 				var searchFields = document.getElementById("searchFields");
 				searchFields.style.width  = (window.innerWidth * 0.6)+ "px";
 				searchFields.style.height =  (window.innerHeight * 0.15) + "px";
-				searchFields.style.top  = "0px";
+				searchFields.style.top  = (window.innerHeight * 0.1) + "px"; //"0px";
 				searchFields.style.left = "0px";
 				
+                                var widgetSearch = document.getElementById("widgetSearch");
+				widgetSearch.title = "Search the widget library by name of widget! \nCheck out the widgetLibrary.js in the Code Editor to set widgets' name and other properties."
+				widgetSearch.placeholder = "Search";
+                                var widgetFilter = document.getElementById("widgetFilter");
+				widgetFilter.title = "Filter the widget library by type of widget! \nCheck out the widgetLibrary.js in the Code Editor to set widgets' type and other properties."
+				widgetFilter.placeholder = "Filter";
+//                                widgetSearch.style.top  = (window.innerHeight * 0.1) + "px"; //"0px";
+//                                widgetFilter.style.top  = (window.innerHeight * 0.1) + "px"; //"0px";
+
 //				var searchButtonDiv = document.getElementById("searchButtonDiv");
 //				searchButtonDiv.style.width  =  dimensions + "px";
 //				searchButtonDiv.style.height =  dimensions + "px";
@@ -438,14 +495,17 @@
 				var backgroundColorPicker = document.getElementById("backgroundColorPicker");
 				defaultBackgroundColor_ = parent.mainBlock_.el.style["background-color"];
 				backgroundColorPicker.value = rgbToHex(defaultBackgroundColor_);
-				backgroundColorPicker.innerHTML = "Background Color";
+				backgroundColorPicker.innerHTML = "Background";
 				
 				var gridColorPicker = document.getElementById("gridColorPicker");
 				defaultGridColor_ = parent.gridColor_;
 				gridColorPicker.value = rgbToHex(defaultGridColor_);
 				backgroundColorPicker.innerHTML = "<p>Grid Color</p>";
+				gridColorPicker.title = "Set the color of the grid lines."
+				backgroundColorPicker.title = "Set the background color."
+				document.getElementById("gridCheckbox").title = "Toggle the grid lines on/off."				
+				document.getElementById("resetGrid").title = "Reset the grid to default values."  
 
-				
 				var filter = document.getElementById("widgetFilter");
 				var option = document.createElement("option");
 				option.value = "All";
@@ -497,6 +557,7 @@
 				var positionX = window.innerWidth * 0.025;
 				var positionY = window.innerHeight * 0.00;
 				var tileNumber = -1;
+				indexReferenceArray.push(codeEditor_);
 				
 				for(var cell = 0; cell < rows; cell++)
 				{
@@ -516,15 +577,51 @@
 							tile.setAttribute("widgetID", tileNumber);
 							
 							var tileIMG = document.createElement("img");
-							
+							var name = "";
+							var type = "";
+		
+							console.log(indexReferenceArray[indexReferenceArray.length-1] + " " + tileNumber);
+	
+							if(typeof parent.widgetLibrary.typeToName[indexReferenceArray[tileNumber]] !== 'undefined')
+								name = parent.widgetLibrary.typeToName[indexReferenceArray[tileNumber]];
+							else
+								name = parent.widgetLibrary.typeToSrc[indexReferenceArray[tileNumber]];
+
+							if(typeof parent.widgetLibrary.typeToName[indexReferenceArray[tileNumber]] !== 'undefined')
+								type = parent.widgetLibrary.typeToPurpose[indexReferenceArray[tileNumber]];
+							else
+								type = "Undefined";
+								
+							tile.title = "Name: " + name + "\nType: " + type;
+
 							if(typeof parent.widgetLibrary.typeToImgSrc[indexReferenceArray[tileNumber]] !== 'undefined')
 								tileIMG.src = "widgets/" + parent.widgetLibrary.typeToImgSrc[indexReferenceArray[tileNumber]];
 							else
 								tileIMG.src = "widgets/default-icon.png";
-	
+									
 							tileIMG.style.width = tile.style.width;
 							tileIMG.style.height = "100%";
-							tileIMG.onclick = setupForDrawSelectionRectangle(indexReferenceArray[tileNumber]); 
+								
+							
+							if(indexReferenceArray[tileNumber] == codeEditor_) //last tile -> [+] brings user to widget editor in Code Editor
+							{	
+								tile.title = "Not finding what your looking for? \nLaunch the Code Editor to make changes to the Widget Library, including making your own widget!";
+								tileIMG.src = "widgets/code-editor.png";
+                                tile.onclick = function()
+                                				{
+                                					DesktopContent.openNewWindow(
+						                       		"Code Editor", 
+						                       		undefined /*subname undefined for LID lookup*/,  
+						                       		"?startFilePrimary=/otsdaq_utilities/WebGUI/js/widgetLibrary.js",
+						                       		undefined /*unique undefined for LID lookup*/);
+                                				}
+							}
+							else
+								tileIMG.onclick = setupForDrawSelectionRectangle(indexReferenceArray[tileNumber]); 
+
+							//tileIMG.style.width = tile.style.width;
+							//tileIMG.style.height = "100%";
+							//tileIMG.onclick = setupForDrawSelectionRectangle(indexReferenceArray[tileNumber]); 
 							
 							tile.appendChild(tileIMG);
 							tilesDiv.appendChild(tile);				
@@ -547,8 +644,13 @@
 				var foundResult = [];
 				
 				for(var i = 0; i < counter; i++)
-					parent.widgetLibrary.typeToSrc[i].indexOf(keyword) != -1 ? foundResult.push(i) : console.log();
-
+				{
+					console.log(i + " : " + parent.widgetLibrary.typeToName + " : " + keyword);
+					if(parent.widgetLibrary.typeToName[i] != undefined)
+						parent.widgetLibrary.typeToName[i].indexOf(keyword) != -1 ? foundResult.push(i) : console.log();
+					else if(parent.widgetLibrary.typeToSrc[i] != undefined)
+						parent.widgetLibrary.typeToSrc[i].indexOf(keyword) != -1 ? foundResult.push(i) : console.log();
+				}
 				console.log(foundResult);
 				drawicons(foundResult);
 			}
@@ -674,9 +776,13 @@
 	
 	<body onload='Javascript:initEdit();'>	
 			
-		<div class='mainBlock' id='buttonsDiv'>
+		
+                <div id="titleDiv" class="mainBlock">
+                                <h2 class="editorPanelTitle">Editor Panel</h2>
+                </div>
+                <div class='mainBlock' id='buttonsDiv'>
 			<div id="searchFields" class="absolute">
-					<input id="widgetSearch" type="text" placeholder="Search" class="focus" onchange="searchWidgets(this)"></input>
+					<input id="widgetSearch" type="text" class="focus" onchange="searchWidgets(this)"></input>
 					<select id="widgetFilter" class="absolute" onchange="filterWidgets(this)"></select>
 			</div>
 		</div>
@@ -684,19 +790,37 @@
 		<div class='mainBlock' id='divider'></div>
 		<div class='mainBlock' id='userSettingsDiv'>
 			<div id="switchesContainer">
-	      		<span class="toggle">
-			      		<input type="checkbox" id="gridCheckbox" onclick="toggleGrid(this)" checked>
+	      			<span class="toggle toggle-margin">
+			      		<input type="checkbox" id="checkbox" onclick="" checked>
 			      			<label data-off="Off" data-on="On"></label>
 			      		</input>
 		      		</span>
-		      </div>
+				<span class="toggle toggle-margin">
+                                	<input type="checkbox" id="checkbox" onclick="" checked>
+                                        	<label data-off="Off" data-on="On"></label>
+                                        </input>
+                                </span>
+				<span class="toggle toggle-margin">
+                                         <input type="checkbox" id="checkbox" onclick="" checked>
+                                                 <label data-off="Off" data-on="On"></label>
+                                         </input>
+                                 </span>
+		      		</div>
 				<div id="settingsContainer">
-		      		<input type="color"    id="gridColorPicker"       onchange="setGridColor(this)">Grid Color</input>
-		      		<br><input type="color"    id="backgroundColorPicker" onchange="setBackgroundColor(this)">Background Color</input>
-		      		<br><input type="button" onclick="resetToDefault()" value="Default Values"></input>
-	      		</div>
+				<span class="toggle">
+                                         <input type="checkbox" id="gridCheckbox" onclick="toggleGrid(this)" checked>
+                                         	<label data-off="Off" data-on="On"></label>
+                                         </input>
+			 	</span>
+				<span class="colorPickersDiv"
+				<br><input type="color"  id="gridColorPicker"       onchange="setGridColor(this)">Grid Color</input>
+                                <br><input type="color"  id="backgroundColorPicker" onchange="setBackgroundColor(this)">Background</input>
+                                <br><input type="button" id="resetGrid"             onclick="resetToDefault()" value="Default Values"></input>
+	      			</span>
+			</div>
 		</div>
 		
 	</body>
 	
 </html>
+

@@ -1,5 +1,7 @@
 #include "otsdaq-utilities/ControlsDashboard/ControlsDashboardSupervisor.h"
 #include <dirent.h>    //for DIR
+#include <dirent.h>    //for DIR
+#include <sys/stat.h>  //for stat() quickly checking if file exists
 #include <sys/stat.h>  //for stat() quickly checking if file exists
 #include <thread>      //for std::thread
 
@@ -26,7 +28,12 @@ ControlsDashboardSupervisor::ControlsDashboardSupervisor(xdaq::ApplicationStub* 
 	mkdir(((std::string)(CONTROLS_SUPERVISOR_DATA_PATH)).c_str(), 0755);
 	mkdir(((std::string)(PAGES_DIRECTORY)).c_str(), 0755);
 
+
+	interface_ = NULL;
+
 	init();
+
+	//interface_ = NULL;
 
 	__SUP_COUT__ << "Constructed." << __E__;
 }  // end constructor
@@ -54,18 +61,19 @@ void ControlsDashboardSupervisor::init(void)
 
 	__SUP_COUT__ << std::endl;
 	ConfigurationTree node       = CorePropertySupervisorBase::getSupervisorTableNode();
-	std::string       pluginType = node.getNode("ControlsInterfacePluginType").getValue();
-	__SUP_COUTV__(pluginType);
-
+	std::string       pluginType = CorePropertySupervisorBase::getSupervisorProperty("ControlsInterfacePluginType");
+	
+	std::string supervisorConfigurationPath = "/" + CorePropertySupervisorBase::getContextUID() +
+ 	"/LinkToApplicationTable/" + CorePropertySupervisorBase::getSupervisorUID();
+//	
 	interface_ =
 	    makeSlowControls(pluginType,
-	                     node.getUIDAsString(),
+	                     CorePropertySupervisorBase::getSupervisorUID(),
 	                     CorePropertySupervisorBase::getContextTreeNode(),
-	                     CorePropertySupervisorBase::getSupervisorConfigurationPath());
+	                     supervisorConfigurationPath);
 	__COUT__ << std::endl;
-
-	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
-
+//
+//
 	// interface_->initialize();
 	std::thread(
 	    [](ControlsDashboardSupervisor* cs) {
@@ -79,7 +87,8 @@ void ControlsDashboardSupervisor::init(void)
 	    },
 	    this)
 	    .detach();  // thread completes after creating, subscribing, and getting
-	                // parameters for all pvs
+//	                // parameters for all pvs
+	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
 }  // end init()
 
@@ -114,7 +123,7 @@ void ControlsDashboardSupervisor::request(const std::string&               reque
 	//	std::string requestType = CgiDataUtilities::getData(cgi,"RequestType");
 	//	__SUP_COUT__ << request << std::endl;
 	//	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " " <<
-	// requestType << " : end"<< std::endl;
+	//requestType << " : end"<< std::endl;
 
 	//	if(requestType == "")
 	//	{
@@ -130,8 +139,8 @@ void ControlsDashboardSupervisor::request(const std::string&               reque
 	//	//**** start LOGIN GATEWAY CODE ***//
 	//	{
 	//		bool automaticCommand = requestType == "poll"; //automatic commands should not
-	// refresh cookie code.. only user initiated commands should! 		bool checkLock   =
-	// true; 		bool getUser     = false; 		bool requireLock = false;
+	//refresh cookie code.. only user initiated commands should! 		bool checkLock   =
+	//true; 		bool getUser     = false; 		bool requireLock = false;
 	//
 	//		if(!theRemoteWebUsers_.xmlRequestToGateway(
 	//				cgi,
@@ -139,18 +148,19 @@ void ControlsDashboardSupervisor::request(const std::string&               reque
 	//				&xmldoc,
 	//				allSupervisorInfo_,
 	//				&userPermissions,  		//acquire user's access level (optionally null
-	// pointer) 				!automaticCommand,			//true/false refresh cookie
-	// code 				1, //set access level requirement to pass gateway
-	//				checkLock,					//true/false enable check that system is
-	//unlocked  or  this user has the lock 				requireLock,
-	// //true/false  requires this user has the lock to  proceed
-	// 0,//&userWithLock,
-	////acquire username with lock (optionally null  pointer)
-	//				//(getUser?&user:0),				//acquire username of this user
-	//(optionally  null  pointer) 				&username,
+	//pointer) 				!automaticCommand,			//true/false refresh cookie code
+	//				1, //set access level requirement to pass gateway
+	//				checkLock,					//true/false enable check that system is unlocked or
+	//this user has the lock
+	//				requireLock,				//true/false requires this user has the lock to
+	//proceed
+	//				0,//&userWithLock,			//acquire username with lock (optionally null
+	//pointer)
+	//				//(getUser?&user:0),				//acquire username of this user (optionally null
+	//pointer) 				&username,
 	//				0,						//acquire user's Display Name
-	//				&activeSessionIndex		//acquire user's session index associated with
-	// the  cookieCode
+	//				&activeSessionIndex		//acquire user's session index associated with the
+	//cookieCode
 	//		))
 	//		{	//failure
 	//			__SUP_COUT__ << "Failed Login Gateway: " <<
@@ -239,12 +249,17 @@ void ControlsDashboardSupervisor::handleRequest(const std::string  Command,
 
 		loadPage(cgiIn, xmlOut, page);
 	}
-	else if(Command == "savePage")
+	else if(Command == "createControlsPage")
 	{
-		std::string pageName = CgiDataUtilities::getData(cgiIn, "PageName");
-		std::string page     = CgiDataUtilities::getOrPostData(cgiIn, "Page");
-		SavePage(cgiIn, xmlOut, pageName, page);
+		SaveControlsPage(cgiIn, xmlOut);		
 	}
+//	else if(Command == "savePage")
+//	{
+//		std::string pageName = CgiDataUtilities::getData(cgiIn, "PageName");
+//		std::string page     = CgiDataUtilities::getOrPostData(cgiIn, "Page");
+//		SavePage(cgiIn, xmlOut, pageName, page);
+//	}
+
 	__SUP_COUT__ << "" << std::endl;
 
 	// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
@@ -306,7 +321,7 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 			//__SUP_COUT__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
 			//__SUP_COUT__ << pv  << ":" << pvInfo->mostRecentBufferIndex -1 << std::endl;
 			//__SUP_COUT__ << pv << " : " <<
-			// pvInfo->dataCache[(pvInfo->mostRecentBufferIndex -1)].second << std::endl;
+			//pvInfo->dataCache[(pvInfo->mostRecentBufferIndex -1)].second << std::endl;
 		}
 
 		JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
@@ -460,7 +475,7 @@ void ControlsDashboardSupervisor::GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument&
 {
 	/*DIR * dir;
 	struct dirent * ent;
-	std::string pathToPages = PAGES_DIRECTORY;
+	std::string pathToPages = CONTROLS_SUPERVISOR_DATA_PATH;
 
 	std::vector<std::string> pages;
 
@@ -477,9 +492,9 @@ void ControlsDashboardSupervisor::GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument&
 	}
 	else
 	{
-	    __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << "Could not open
-	directory: " << pathToPages << std::endl; return;
-	}*/
+	    __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << "Could not open directory: " << pathToPages << std::endl; return;
+	}
+	*/
 	std::vector<std::string> pages;
 
 	listFiles("", true, &pages);
@@ -529,8 +544,8 @@ void ControlsDashboardSupervisor::loadPage(cgicc::Cgicc&    cgiIn,
 		             << "Error! File not found: " << page << std::endl;
 	}
 
-	std::string file = PAGES_DIRECTORY;
-	file += "/" + page;
+	std::string file = CONTROLS_SUPERVISOR_DATA_PATH;
+	file += CgiDataUtilities::decodeURIComponent(page);
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 	             << "Trying to load page: " << page << std::endl;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
@@ -540,24 +555,75 @@ void ControlsDashboardSupervisor::loadPage(cgicc::Cgicc&    cgiIn,
 
 	std::ifstream infile(file);
 	std::cout << "Reading file" << std::endl;
-	std::string JSONpage = "";
+
+	std::string time = "";
+	std::string notes = "";
+	std::string controlsPage = "";
+
 	for(std::string line; getline(infile, line);)
 	{
 		std::cout << line << std::endl;
-		JSONpage += line;
+		if(!line.substr(0,5).compare("Time:")) 
+		{
+			time = line.substr(6);
+		}
+		else if(!line.substr(0,6).compare("Notes:"))
+		{
+			notes = line.substr(7);
+		}
+		else if(!line.substr(0,5).compare("Page:"))
+		{
+			controlsPage = line.substr(6);
+		}
 	}
 	std::cout << "Finished reading file" << std::endl;
-
-	xmlOut.addTextElementToData("JSON", JSONpage);  // add to response
+	__SUP_COUTV__(time);
+	__SUP_COUTV__(notes);
+	__SUP_COUTV__(controlsPage);
+	
+	xmlOut.addTextElementToData("Time", time);  // add to response
+	xmlOut.addTextElementToData("Notes", notes);  // add to response
+	xmlOut.addTextElementToData("Page", controlsPage);  // add to response
 }
 //========================================================================================================================
-void ControlsDashboardSupervisor::SavePage(cgicc::Cgicc&    cgiIn,
-                                           HttpXmlDocument& xmlOut,
-                                           std::string      pageName,
-                                           std::string      page)
+void ControlsDashboardSupervisor::SaveControlsPage(cgicc::Cgicc&    cgiIn,
+                                           HttpXmlDocument& xmlOut)
 {
-	std::string file = PAGES_DIRECTORY;
-	file += pageName;
+	
+	__SUP_COUT__ << "ControlsDashboard wants to create a Controls Page!" << __E__;
+
+	std::string controlsPageName = CgiDataUtilities::postData(cgiIn, "Name");
+	std::string pageString = CgiDataUtilities::postData(cgiIn, "Page");
+	std::string Time = CgiDataUtilities::postData(cgiIn, "Time");
+	std::string Notes = 
+	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::postData(cgiIn, "Notes"));
+	std::string isControlsPagePublic = CgiDataUtilities::postData(cgiIn, "isPublic");
+
+	__SUP_COUTV__(controlsPageName);
+	__SUP_COUTV__(pageString);
+	__SUP_COUTV__(Notes);
+	__SUP_COUTV__(Time);
+	__SUP_COUTV__(isControlsPagePublic);
+	
+	if(controlsPageName == "")
+		return;
+	
+	__SUP_COUTV__(CONTROLS_SUPERVISOR_DATA_PATH);
+
+	std::string fullPath;
+	if(isControlsPagePublic == "true")
+		fullPath = (std::string) CONTROLS_SUPERVISOR_DATA_PATH + "publicPages/";
+	else
+		fullPath = (std::string) CONTROLS_SUPERVISOR_DATA_PATH + "privatePages/";
+
+	__SUP_COUTV__(fullPath);
+
+
+
+
+	std::string file = fullPath + controlsPageName;
+
+	__SUP_COUTV__("Saving Controls Page to: " + file);
 
 	std::string extension = file.substr(file.length() - 4, 4);
 	if(extension != ".dat")
@@ -566,7 +632,7 @@ void ControlsDashboardSupervisor::SavePage(cgicc::Cgicc&    cgiIn,
 		file += std::string(".dat");
 	}
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-	             << "Trying to save page: " << page << std::endl;
+	             << "Trying to save page: " << controlsPageName << std::endl;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 	             << "Trying to save page as: " << file << std::endl;
 	// read file
@@ -574,8 +640,9 @@ void ControlsDashboardSupervisor::SavePage(cgicc::Cgicc&    cgiIn,
 
 	std::ofstream outputFile;
 	outputFile.open(file);
-
-	outputFile << page;
+	outputFile << "Time: " << Time << "\n";
+	outputFile << "Notes: " << Notes << "\n";
+	outputFile << "Page: " << pageString;
 	outputFile.close();
 
 	std::cout << "Finished writing file" << std::endl;
@@ -614,7 +681,7 @@ void ControlsDashboardSupervisor::listFiles(std::string               baseDir,
                                             bool                      recursive,
                                             std::vector<std::string>* pages)
 {
-	std::string base = PAGES_DIRECTORY;
+	std::string base = CONTROLS_SUPERVISOR_DATA_PATH;
 	base += baseDir;
 
 	DIR*           dp;

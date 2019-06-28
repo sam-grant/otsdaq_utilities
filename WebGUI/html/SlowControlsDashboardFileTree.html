@@ -273,7 +273,7 @@
 					li.id = fullPathToPage;
 					li.className = "file";
 					var a = document.createElement("a");
-					a.innerHTML = path.substring(0, path.search(".page"));
+					a.innerHTML = path.substring(0, path.search(".dat"));
 					a.href = "";
 					a.onclick = function(){parent.loadPage(fullPathToPage)};//"addPV()";// + pv + ')';
 					li.appendChild(a);
@@ -408,9 +408,10 @@
 					closeButton.onclick = function(){close();};
 					saveButton.onclick = function(){save();};
 					saveAsButton.onclick = function(){saveAs();};
-	
+					
+					document.getElementById("saveli").innerHTML = "";
 					document.getElementById("saveli").appendChild(saveButton);
-					document.getElementById("saveli").appendChild(saveAsButton);
+					//document.getElementById("saveli").appendChild(saveAsButton);
 					document.getElementById("saveli").appendChild(closeButton);
 
 					
@@ -430,9 +431,10 @@
 						li.id = page;
 						li.className = "file";
 						var a = document.createElement("a");
-						a.innerHTML = page.substring(0, page.search(".page"));
+						a.innerHTML = page;
 						a.href = "";
 						a.onclick = function(){parent.loadPage(page)};//"addPV()";// + pv + ')';
+						console.log("Here is my file: " + a);
 						li.appendChild(a);
 
 						document.getElementById("pagesFolderol").appendChild(li);

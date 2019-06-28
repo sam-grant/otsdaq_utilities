@@ -91,6 +91,36 @@
 			  	cursor: default !important;
 			}
 			
+			
+			.popup{
+	        	width:400px;
+	        	height:320px;
+	        	background-color: #002540;
+	        	z-index:9;
+	        	position: fixed;
+				top: 40%;
+				left: 50%;
+				margin-top: -100px;
+				margin-left: -200px;
+				opacity:0.9;
+				border-radius:5px;
+				padding:6px;
+				color:#c4e9f5;
+				border: 2px solid #c4e9f5;
+        	}
+        	
+        	#popupSaveControlsPage{
+        		display:none;
+       	 	}
+
+			.cursor-default {
+				cursor: default !important;
+			}
+
+			.cursor-grabbing {
+				cursor: grabbing !important;
+			}
+			
 
 			.cover {
 			    transition: background-color .25s;
@@ -253,6 +283,7 @@
 				vertical-align: middle;
 
 			}
+
 			
 			#navigationBarDiv {
 				top: 0%;
@@ -280,7 +311,7 @@
 				float:left; 
 				border-right:1px solid #5d5d5d; 
 				border-left:1px solid #929292; 
-				width:18%;
+				width:22.5%;
 				height:5%; 
 				border-bottom:1px solid #575757; 
 				border-top:1px solid #797979;
@@ -353,7 +384,52 @@
 		     	-moz-animation: showMenu 1s;
 		     	animation: showMenu 1s;
 			}
+
+			.navigationMenu--Edit {
+
+                              background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #     434343), color-stop(1, #555555));   
+                              background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
+                              background-color:#383838;
+  
+                              -moz-box-shadow: inset 0 0 5px 5px #535353;
+                              -webkit-box-shadow: inset 0 0 5px 5px #535353;
+                              box-shadow: inset 0 0 5px 5px #535353;
+			}
+
+
+
+			.HUD-coordinates-container {
+			  position: absolute;
+  			  bottom: 15px;
+                          right: 16px;
 			
+			  background-color: #757575;
+			  border-left: 15px solid #757575;
+			  border-right: 15px solid #757575;
+			  padding: 2.5px;
+			  margin: 5px;
+			  opacity: 0.3;
+			  z-index: 40;
+			  font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:13px;   
+			  color:white !important;
+              text-decoration:none;
+              text-align:center;
+              display:block;
+              line-height:34px;
+              outline:none;
+			
+                          transition-timing-function: ease-out;
+                          transition: bottom .5s;
+                          -webkit-transition-timing-function: ease-out;
+                          -webkit-transition: bottom .5s;
+			}
+		
+			.HUD-coordinates-container:hover {
+			
+			 opacity: 0.7 !important;
+
+			}
+	
 			.editWidgetAttributesPopup-container {
 				position: absolute;
 				display: none;
@@ -523,7 +599,7 @@
 			var pvList_ = [];
 			var elPointer_ = {};
 			var pagesList_ = [];
-			var fileBlock_ = {name:"", isHidden:false, el:""};// = ["fileBlock", false ];
+			var fileBlock_ = {name:"", isHidden:false, el:"", savePopup:""};// = ["fileBlock", false ];
 			var mainBlock_ = {name:"", isHidden:false, el:""};// = ["mainBlock", false ];
 			var editBlock_ = {name:"", isHidden:true, el:""};// = [false ];
 			var page_ = page_ || {}; //define the namespace
@@ -534,6 +610,8 @@
 			var hiddenWidth_;
 			var unhiddenWidth_;
 			var mailbox_;
+			var ADMIN_PERMISSION_THRESHOLD = 255;
+			var userPermission = 10;
 			//BEGIN 
 			var xPos_;
 			var yPos_;
@@ -548,7 +626,8 @@
 			var gridColor_;
 			var addPVMenuDiv_;
 			var addPVMenu_;
-			
+			var hud_;
+			var hudContainer_;			
 			page_.createPage = function(){
 				
 				this.name = "MyPage";
@@ -564,9 +643,9 @@
 			var y_Pos_forDrag_;
 			var id_forDrag_;
 			var target_forDrag;
-			//END Drag		
+			//END Drag	
+			var setupForDrawing_;	
 			hotkey_ = [];
-			var hud_;
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 
@@ -575,14 +654,15 @@
 				
 				Debug.log("init() was called");
 
-				var parameterPageName = DesktopContent.getParameter(0,"page_name");
-				
+				var parameterPageName = DesktopContent.getParameter(0,"page_name");				
+
 				Debug.log("Parameter filename: " + parameterPageName);
 				
 				fileBlock_.el = document.getElementById('fileBlock');//red
+				fileBlock_.savePopup = document.getElementById('popupSaveControlsPage');
 				mainBlock_.el = document.getElementById('mainBlock');//yellow
 				editBlock_.el = document.getElementById('editBlock');//green
-
+				hudContainer_ = document.getElementById('HUD-coordinates-container');
 				page_.createPage;
 				widgetLibrary.init;
 
@@ -613,6 +693,7 @@
 				hud_ = document.getElementById("coordinatesHUD");
 				mailbox_ = document.getElementById("mailbox");
 				var myTimer = setInterval(checkMailbox, 1000);
+				setupForDrawing_ = false;
 //				addPVMenuDiv_ = document.getElementById("addPVMenuDiv");
 //				addPVMenu_ = document.getElementById("addPVMenu");
 
@@ -628,6 +709,11 @@
                                          0 /*callHandlerOnErr*/, 
                                          true /*doNoShowLoadingOverlay*/);
 				pagesList_ = "Loading";
+				DesktopContent.XMLHttpRequest(
+				                    "Request?RequestType=getPermission",
+				                    "",
+				                    getPermissionHandler);
+
 				//get frame and set some text to loading
 
 //				DesktopContent.XMLHttpRequest(
@@ -672,11 +758,16 @@
 				nav_.classList.add("navigationMenu--active");
 
 				//END JS Style 
-				
+			
+				Debug.log(parameterPageName);
+					
 			
 				window.onresize = redrawWindow;
 				redrawWindow(); //redraw window for first time
-				
+
+
+				 if(parameterPageName == undefined)
+                                          toggleEditMode();
 			}
 
             function checkMailbox(){
@@ -694,9 +785,6 @@
             	if(mail == "Save") {
             		savePage();
 
-            	}
-            	else if(mail == "SaveAs") {
-     				savePageAs("Default");
             	}
             	else
             	{
@@ -727,6 +815,14 @@
 					console.log("No pages found in server!");
 				}
 			}
+			
+			function getPermissionHandler(req)
+	        {
+		        Debug.log("getPermissionHandler() was called. ");//Req: " + req.responseText);
+				
+		         userPermission = DesktopContent.getXMLValue(req, "Permission");
+		         console.log("User Permission: " + userPermission);
+	        }
 
 			function pvListReqHandler(req){
 				
@@ -761,8 +857,22 @@
 				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
 				//console.log(req.responseText);
 				toggleFileMenu();
-				page_ = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				var time =  decodeURIComponent(DesktopContent.getXMLValue(req, "Time"));
+				var notes =  decodeURIComponent(DesktopContent.getXMLValue(req, "Notes"));
+				var page =  decodeURIComponent(DesktopContent.getXMLValue(req, "Page"));
+				page_ = JSON.parse(page);
+				
+				Debug.log(time);
+				Debug.log(notes);
+				Debug.log(page);
 				console.log(page_);
+				
+				if(!editBlock_.isHidden)
+					toggleEditMode();
+				
+				
+				//page_ = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				//console.log(page_);
 				/*
 				page_.createPage;
 				page_.widgets = {};
@@ -807,6 +917,8 @@
 				pageOffSetY_ = 0;
 				redrawWindow();
 				turnOnWidgets();
+
+				
 			}
 		
 			function pollServerHandlerFunction(req) {
@@ -894,6 +1006,14 @@
 				Debug.log(response);
 
 			}
+			
+			function createControlsPageHandler(req)//, controlsPageName)
+			{
+				Debug.log("createControlsPageHandler() was called for " + controlsPageName);// Req: " + req.responseText);
+						
+				Debug.log("Your page was succesfully saved!",Debug.INFO_PRIORITY);
+						
+			}
 	
 			function handlerFunction(req) {
 				//Debug.log("handlerFunction() was called. Req: " + req.responseText);
@@ -963,26 +1083,95 @@
 			}
 			
 			function savePage() {
-				savePageAs("MyFirstPage.dat"); 
+				if(false)
+                   Debug.log("No reason to save a blank page!");
+    	        else
+    	        {
+    	        		
+    				console.log("Showing save popup");
+			       	fileBlock_.savePopup.style.display = "block";
+			       	fileBlock_.savePopup.style["z-index"] = "9000";
+			       	if (userPermission == ADMIN_PERMISSION_THRESHOLD)
+				       	document.getElementById("makeControlsPagePublic").style.display = "block";
+				       
+    	        }
+
+
+
+
+			}
+			
+			function hidePopupSaveControlsPage() {
+				fileBlock_.savePopup.style.display = "none";
+			    fileBlock_.savePopup.style["z-index"] = "0";
+			    document.getElementById("controlsPageName").value="";
+        		document.getElementById("controlsPageNotes").value="";
+				Debug.log("Controls Page successfully saved!");
+				
 			}
 
-			function savePageAs(pageName) {
-			
-				Debug.log("Page name: " + pageName);
-				this.page_.name = pageName;
-				var msg = JSON.stringify(this.page_);
+			function savePageAs() {
+				
+		    	var controlsPageName = document.getElementById("controlsPageName").value;
+		    	console.log("Here is our name: " + controlsPageName);
+		    	//var Regex = /^[\w\s]+$/;
+		    	var Regex = /^[a-zA-Z0-9\_]+$/g;
+		    	if (!Regex.test(controlsPageName)) 
+					Debug.log("Illegal characters in name. Please remove these characters and try again.");
+		    	else
+		    	{
+		    		var controlsPageNotes = document.getElementById("controlsPageNotes").value;
+		    		Debug.log(controlsPageNotes);
+					if(controlsPageNotes.indexOf("@") >= 0 || controlsPageNotes.indexOf("#") >= 0 || controlsPageNotes.indexOf("..") >= 0)
+					{
+						Debug.log("Illegal characters in notes. Please remove these characters and try again.");
+						return;
+					}
+		    		var controlsPageLibEl = document.getElementById('listOfPrivateControlsPages');
+		    		//stringOfAllControlsPages[CONTROLSPAGEINDEX] = tempString;
+		    		var isControlsPagePublic = document.getElementById("isControlsPagePublic").checked;
+		    		var pageString = JSON.stringify(page_);
 
-				Debug.log(msg);
-					
-					
-				DesktopContent.XMLHttpRequest(
-                                	"Request?RequestType=savePage&PageName=" + this.page_.name,
-					"Page=" + msg, 
- 					savePageReqHandler,
- 					0 /*reqParam*/, 
-                                        0 /*progressHandler*/, 
-                                        0 /*callHandlerOnErr*/, 
-                                        true /*doNoShowLoadingOverlay*/);
+
+		        	if(pagesList_.indexOf(controlsPageName) !== -1) //duplicate name
+		        	{
+		        		Debug.log("ControlsPage name already exists!");
+		    			
+		    			document.getElementById('popupControlsPageAlreadyExistsOverwrite').onclick = function(){ //call edit
+		    				DesktopContent.XMLHttpRequest("Request?RequestType=editControlsPage",
+		    						//post data 
+		    						"isPublic=" + isControlsPagePublic +
+									"&oldControlsPageName=" + controlsPageName +
+									"&newControlsPageName=" + controlsPageName +
+									"&Page=" + pageString +
+									"&Time=" + Date().toString() +
+									"&Notes=" + encodeURIComponent(controlsPageNotes),
+									saveChangedControlsPageHandler /*handler*/,
+									controlsPageName /*parameter*/);
+		    				
+		    				
+		    				};
+		        	}
+		        	else
+		        	{
+						DesktopContent.XMLHttpRequest("Request?RequestType=createControlsPage", 								"&isPublic="+isControlsPagePublic +
+								//post data
+								"isPublic=" + isControlsPagePublic +
+								"&Name=" + controlsPageName +
+								"&Page=" + pageString +
+								"&Time=" + Date().toString() +
+								"&Notes=" + encodeURIComponent(controlsPageNotes),
+								createControlsPageHandler /*handler*/);
+								//,
+								//controlsPageName /*parameter*/);	
+						
+						hidePopupSaveControlsPage(); 
+		        	}
+		        	
+	    	}
+				
+				
+
 			}
 
 			
@@ -1067,9 +1256,14 @@
 			
 			function setupForDrawSelectionRectangle(id)
 			{
-				document.body.style.cursor = "crosshair";
-				mainBlock_.el.removeEventListener("mousedown", startDrag, true);
-				mainBlock_.el.addEventListener("mousedown", drawSelectionRectangle(id), false);
+				
+				if(!setupForDrawing_)
+				{
+					mainBlock_.el.style.cursor = "crosshair";
+					mainBlock_.el.removeEventListener("mousedown", startDrag, true);
+					mainBlock_.el.addEventListener("mousedown", drawSelectionRectangle(id), false);
+					setupForDrawing_ = true;
+				}
 			}
 			
 			//var drawSelectionRectangle = 
@@ -1103,10 +1297,11 @@
 				return function(event) {			
 					mainBlock_.el.removeEventListener("mousemove", arguments.callee, false);
 					mainBlock_.el.removeEventListener("mouseup"  , arguments.callee, false);
-					document.body.style.cursor = "pointer";
+					mainBlock_.el.style.cursor = "grab";
 					document.getElementById("selectionRectangle").style.display = "none";
 					drawWidget(id, true, xPos_ - pageOffSetX_, yPos_ - pageOffSetY_, (event.clientX - xPos_), (event.clientY - yPos_));
 					turnOnWidgets();
+					setupForDrawing_ = false;
 					mainBlock_.el.addEventListener("mousedown", startDrag, true);
 				};
 			};
@@ -1188,7 +1383,7 @@
 				
 				containerDiv.appendChild(coverDiv);
 				
-				widgetFrame.src = widgetLibrary.typeToSrc[page_.widgets[widget].type];
+				widgetFrame.src = "widgets/" + widgetLibrary.typeToSrc[page_.widgets[widget].type];
 				widgetFrame.style.border = "0";
 				widgetFrame.style.position = "absolute";
 				widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
@@ -1220,10 +1415,13 @@
 			}
 			
 			function mouseoverEditBlock(e){
+				console.log(editBlock_.el.style.height);
+				hudContainer_.style.bottom = editBlock_.el.style.height;
 				editBlock_.el.style.marginBottom = editBlock_.el.style.height;
 			}
 			
 			function mouseoutEditBlock(e){
+				hudContainer_.style.bottom = hiddenWidth_ + "px";// "0px";
 				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
 				editBlock_.el.style.marginBottom = 1.5 * hiddenWidth_ + "px";
 				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
@@ -1237,6 +1435,7 @@
 				console.log()
 				editBlock_.el.style.bottom = "-" + parseInt(editBlock_.el.style.height) + "px"; 
 				var covers = document.getElementsByClassName("widgetCover");
+                                var editButton = document.getElementById("menuli2");
 
 				
 				if(editBlock_.isHidden)
@@ -1252,6 +1451,7 @@
 						false /*doNoShowLoadingOverlay*/);
 						
 					//window.clearInterval(timerVariable_);
+					editButton.classList.add("navigationMenu--Edit");
 					mainBlock_.el.classList.add("editMode");
 //					cover.style.backgroundColor = "rgba(0,0,0,0.4)";
 					editBlock_.el.style.zIndex = "50";
@@ -1260,6 +1460,7 @@
 					editBlock_.el.addEventListener("mouseleave", mouseoutEditBlock, true);
 				//	mainBlock_.el.style.display = "none";
 					editBlock_.isHidden = false;
+					hudContainer_.style.bottom = hiddenWidth_ + "px";
 					for(widget in page_.widgets)
 					{
 						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].addEventListener("dblclick", toggleContextMenuCaller(widget), true);
@@ -1279,9 +1480,11 @@
 				{
 					timerVariable_ = setInterval(pollServer, refreshRate_);
 					mainBlock_.el.classList.remove("editMode");
+					editButton.classList.remove("navigationMenu--Edit");
 					editBlock_.el.style.marginBottom = "0px";
 					editBlock_.el.style.zIndex = "30";
 					editBlock_.isHidden = true;
+					hudContainer_.style.bottom = "15px";
 					for(widget in page_.widgets)
 					{
 						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].removeEventListener("dblclick", toggleContextMenu, true);
@@ -1371,7 +1574,7 @@
 			function toggleHotkeyMenu()
 			{
 
-				var rectangle = document.getElementById("menuli2").getBoundingClientRect();
+				var rectangle = document.getElementById("menuli3").getBoundingClientRect();
 				if((elPointer_["hotkeyMenuDiv"].style.display).indexOf("block") != -1)
 				{
 					elPointer_["hotkeyMenuDiv"].style.display = "none";
@@ -1957,6 +2160,11 @@
 			{
 				if(!dragLockout_)
 				{
+
+					//Set Mouse Pointer to Grabbing Hand
+					mainBlock_.el.style.cursor = "grabbing";
+
+	
 					dragTargetElement_ = e.target;
 					
 					x_Pos_forDrag_ = e.clientX;
@@ -2030,6 +2238,9 @@
 					dragTargetElement_.parentNode.style.zIndex = "5";
 				}
 			
+
+				//Remove cursor grabbing
+				mainBlock_.el.style.cursor = "grab";
 				redrawWindow();
 				turnOnWidgets();
 
@@ -2079,7 +2290,8 @@
 			function drawGrid()
 			{
 				mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");
-				hud_.innerHTML = pageOffSetX_ + " x " + pageOffSetY_;
+				hud_.innerHTML = "X: " + pageOffSetX_ + " Y:  " + pageOffSetY_;
+				hud_.title = "Reset the view to default (X:0 Y:0)";
 			}
 			
 
@@ -2164,11 +2376,12 @@
 		<div id="navigationBarDiv">	
 	    	<nav>
 		        <ul id="navigationMenu">
-		            <li><a href="#" title="" id="coordinatesHUD" onclick="resetToOrigin()"> 0 x 0</a></li>
-		            <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">Open File</a></li>
-		            <li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>
-		            <li><a href="#" title="" id="menuli3" onclick="toggleEditMode()">EditMode</a></li>
-		            <li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>
+		           <!-- <li><a href="#" title="" id="coordinatesHUD" onclick="resetToOrigin()"> 0 x 0</a></li>-->
+		            <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File</a></li>
+		            <!--<li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>-->
+		            <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">EditMode</a></li>
+		            <li><a href="#" title="" id="menuli3" onclick="toggleHotkeyMenu()">Quick Views</a></li>
+			    <li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>
 		        </ul>
 	        </nav>
 	    </div>
@@ -2290,6 +2503,24 @@
 			  </ul>
 			</nav>
 		</div>
+		<div id="popupSaveControlsPage" class="popup">
+			<center><h2>Save your Controls Page</h2></center>
+			<div>
+				<p><b>Page Name</b></p>
+				<center><textarea id="controlsPageName" cols="43" rows="1"></textarea></center>
+				<p><b>Controls Page Notes</b></p>
+				<center><textarea id="controlsPageNotes" cols="43" rows="6"></textarea></center>
+				<div id="makeControlsPagePublic">
+				    <input type="checkbox" id="isControlsPagePublic"> Make accessible to public</input>
+				</div>
+				<div class="buttongroup">
+					<center>
+						<button onclick="hidePopupSaveControlsPage()">Cancel</button>
+						<button onclick="savePageAs()">Save as Controls Page</button>
+					</center>
+				</div>
+			</div>
+		</div>
 		<div class="editWidgetAttributesPopup-container" id="editWidgetAttributesPopup-container">
 			<div class="editWidgetAttributesPopup-header" id="editWidgetAttributesPopup-header" ></div>
 			<div class="editWidgetAttributesPopup-menu"   id="editWidgetAttributesPopup-menu">
@@ -2318,6 +2549,10 @@
 			<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>
 			<div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
 		</div>
+		<div class="HUD-coordinates-container" id="HUD-coordinates-container">
+		    <a href="#" title="" id="coordinatesHUD" onclick="resetToOrigin()">X: 0  Y: 0 </a>
+		</div>
+
 		<datalist id="pvDatalist"></datalist>
 		<p hidden id="mailbox"></p>
 		
