@@ -166,6 +166,7 @@ int main(int argc, char** argv)
 	{
 		if((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
 		{
+			std::cout << "\n\n" << __FILE__ << "\t" << "listener: socket...\n\n" << std::endl;
 			perror("listener: socket");
 			continue;
 		}
@@ -173,6 +174,7 @@ int main(int argc, char** argv)
 		if(bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
 		{
 			close(sockfd);
+			std::cout << "\n\n" << __FILE__ << "\t" << "listener: bind.\n\n" << std::endl;
 			perror("listener: bind");
 			continue;
 		}
@@ -182,6 +184,7 @@ int main(int argc, char** argv)
 
 	if(p == NULL)
 	{
+		std::cout << "\n\n" << __FILE__ << "\t" << "listener: failed to bind socket...\n\n" << std::endl;
 		fprintf(stderr, "listener: failed to bind socket\n");
 		return 2;
 	}
@@ -239,6 +242,7 @@ int main(int argc, char** argv)
 			                        (struct sockaddr*)&their_addr,
 			                        &addr_len)) == -1)
 			{
+				std::cout << "\n\n" << __FILE__ << "\t" << "error: recvfrom...\n\n" << std::endl;
 				perror("recvfrom");
 				exit(1);
 			}
@@ -314,6 +318,7 @@ int main(int argc, char** argv)
 			if((numbytes = sendto(
 			        sendSockfd, buff, numbytes, 0, p->ai_addr, p->ai_addrlen)) == -1)
 			{
+				std::cout << "\n\n" << __FILE__ << "\t" << "error: sendto...\n\n" << std::endl;
 				perror("hw: sendto");
 				exit(1);
 			}
@@ -325,6 +330,8 @@ int main(int argc, char** argv)
 
 	close(sockfd);
 	close(sendSockfd);
+
+	std::cout << "\n\n" << __FILE__ << "\t" << "Exited.\n\n" << std::endl;
 
 	return 0;
 }
