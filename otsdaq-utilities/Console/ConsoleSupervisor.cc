@@ -153,9 +153,14 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 	long long    newSourceId;
 	unsigned int newSequenceId;
 
+	// force a starting message
+	__MCOUT__("DEBUG messages look like this." << __E__);
+
 	while(1)
 	{
 		// if receive succeeds display message
+
+		//__COUTV__(i);
 
 		if(rsock.receive(
 		       buffer, 1 /*timeoutSeconds*/, 0 /*timeoutUSeconds*/, false /*verbose*/) !=
@@ -163,14 +168,13 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 		{
 			if(i != 200)
 			{
-				__COUT__ << "Console has first message." << std::endl;
+				__COUT__ << "Console has first message." << __E__;
 				i = 200;  // mark so things are good for all time. (this indicates things
 				          // are configured to be sent here)
 
-				__MOUT__ << "DEBUG messages look like this." << std::endl;
-				__MOUT_INFO__ << "INFO messages look like this." << std::endl;
-				__MOUT_WARN__ << "WARNING messages look like this." << std::endl;
-				__MOUT_ERR__ << "ERROR messages look like this." << std::endl;
+				__MOUT_INFO__ << "INFO messages look like this." << __E__;
+				__MOUT_WARN__ << "WARNING messages look like this." << __E__;
+				__MOUT_ERR__ << "ERROR messages look like this." << __E__;
 
 				//				//to debug special packets
 				//				__SS__ << "???";

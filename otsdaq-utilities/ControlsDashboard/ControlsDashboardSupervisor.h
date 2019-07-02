@@ -46,7 +46,7 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 	void GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void loadPage(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string page);
-	void SaveControlsPage(cgicc::Cgicc&    cgiIn, HttpXmlDocument& xmlOut);
+	void SaveControlsPage(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void Subscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void Unsubscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 

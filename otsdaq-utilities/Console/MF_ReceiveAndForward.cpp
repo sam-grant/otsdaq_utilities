@@ -42,6 +42,34 @@ using namespace std;
 
 #define MAXBUFLEN 5000
 
+#define __MF_SUBJECT__ "mfReceiveAndForward"
+#define Q(X) #X
+#define QUOTE(X) Q(X)
+
+// take filename only after srcs/ (this gives by repo name)
+#define __SHORTFILE__ \
+	(strstr(&__FILE__[0], "/srcs/") ? strstr(&__FILE__[0], "/srcs/") + 6 : __FILE__)
+
+// take only file name
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define __E__ std::endl
+
+#define __COUT_HDR_F__ __SHORTFILE__ << "\t"
+#define __COUT_HDR_L__ "[" << std::dec << __LINE__ << "]\t"
+#define __COUT_HDR_P__ __PRETTY_FUNCTION__ << "\t"
+#define __COUT_HDR_FL__ __SHORTFILE__ << " " << __COUT_HDR_L__
+#define __COUT_HDR_FP__ __SHORTFILE__ << " : " << __COUT_HDR_P__
+#define __COUT_HDR__ __COUT_HDR_FL__
+
+#define __COUT_TYPE__(X) std::cout << QUOTE(X) << ":" << __MF_SUBJECT__ << ":"
+
+#define __COUT_ERR__ __COUT_TYPE__(LogError) << __COUT_HDR__
+#define __COUT_WARN__ __COUT_TYPE__(LogWarning) << __COUT_HDR__
+#define __COUT_INFO__ __COUT_TYPE__(LogInfo) << __COUT_HDR__
+#define __COUT__ __COUT_TYPE__(LogDebug) << __COUT_HDR__
+#define __COUTV__(X) __COUT__ << QUOTE(X) << " = " << X << __E__
+
 // get sockaddr, IPv4 or IPv6:
 void* get_in_addr(struct sockaddr* sa)
 {
@@ -99,16 +127,14 @@ int makeSocket(const char* ip, int port, struct addrinfo*& p)
 
 int main(int argc, char** argv)
 {
-	std::cout << "\n\n" << __FILE__ << "\tStarting...\n\n" << std::endl;
+	__COUT__ << "Starting...\n\n" << __E__;
 
 	std::string myPort_("3000");        // set default
 	std::string myFwdPort_("3001");     // set default
 	std::string myFwdIP_("127.0.0.1");  // set default
 	if(argc >= 2)
 	{
-		std::cout << "\n\n"
-		          << __FILE__ << "\t port parameter file:" << argv[1] << "\n\n"
-		          << std::endl;
+		__COUT__ << "port parameter file:" << argv[1] << "\n\n" << __E__;
 		FILE* fp = fopen(argv[1], "r");
 		if(fp)
 		{
@@ -126,15 +152,12 @@ int main(int argc, char** argv)
 			fclose(fp);
 		}
 		else  // else use defaults
-			std::cout << "\n\n"
-			          << __FILE__ << "\t port parameter file failed to open: " << argv[1]
-			          << "\n\n"
-			          << std::endl;
+			__COUT__ << "port parameter file failed to open: " << argv[1] << "\n\n"
+			         << __E__;
 	}
-	std::cout << "\n\n"
-	          << __FILE__ << "\t Forwarding from: " << myPort_ << " to: " << myFwdIP_
-	          << ":" << myFwdPort_ << "\n\n"
-	          << std::endl;
+	__COUT__ << "Forwarding from: " << myPort_ << " to: " << myFwdIP_ << ":" << myFwdPort_
+	         << "\n\n"
+	         << __E__;
 
 	int myFwdPort;
 	sscanf(myFwdPort_.c_str(), "%d", &myFwdPort);
@@ -166,7 +189,7 @@ int main(int argc, char** argv)
 	{
 		if((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
 		{
-			std::cout << "\n\n" << __FILE__ << "\t" << "listener: socket...\n\n" << std::endl;
+			__COUT__ << "listener: socket...\n\n" << __E__;
 			perror("listener: socket");
 			continue;
 		}
@@ -174,7 +197,7 @@ int main(int argc, char** argv)
 		if(bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
 		{
 			close(sockfd);
-			std::cout << "\n\n" << __FILE__ << "\t" << "listener: bind.\n\n" << std::endl;
+			__COUT__ << "listener: bind.\n\n" << __E__;
 			perror("listener: bind");
 			continue;
 		}
@@ -184,7 +207,7 @@ int main(int argc, char** argv)
 
 	if(p == NULL)
 	{
-		std::cout << "\n\n" << __FILE__ << "\t" << "listener: failed to bind socket...\n\n" << std::endl;
+		__COUT__ << "listener: failed to bind socket...\n\n" << __E__;
 		fprintf(stderr, "listener: failed to bind socket\n");
 		return 2;
 	}
@@ -242,7 +265,7 @@ int main(int argc, char** argv)
 			                        (struct sockaddr*)&their_addr,
 			                        &addr_len)) == -1)
 			{
-				std::cout << "\n\n" << __FILE__ << "\t" << "error: recvfrom...\n\n" << std::endl;
+				__COUT__ << "error: recvfrom...\n\n" << __E__;
 				perror("recvfrom");
 				exit(1);
 			}
@@ -266,19 +289,22 @@ int main(int argc, char** argv)
 			// by jumping to the correct '|' marker
 			buff[numbytes] = '\0';  // make sure it is null terminated
 
-			// DEBUG -- for indentifying strange MessageFacility bug with clipped messages
+			// DEBUG -- for identifying strange MessageFacility bug with clipped messages
 			// std::cout << "+" << ((int)strlen(buff)==numbytes?1:0) << " " << buff <<
-			// std::endl; 			if((int)strlen(buff)!=numbytes)
+			// __E__; 			if((int)strlen(buff)!=numbytes)
 			//			{
 			//				for(int iii=strlen(buff)-3;iii<numbytes;++iii)
 			//					std::cout << (int)buff[iii] << "-" << (char)buff[iii] << "
-			//"; 				std::cout << numbytes << " " << strlen(buff) << std::endl;
-			//				std::cout << std::endl;
+			//"; 				std::cout << numbytes << " " << strlen(buff) << __E__;
+			//				std::cout << __E__;
 			//			}
 
 			// count markers to find message
 
-			// std::cout << "|||" << buff << std::endl; // show all
+			// std::cout << "|||" << buff << __E__; // show all
+			// e.g. UDPMFMESSAGE7370|01-Jul-2019 11:12:44
+			// CDT|3|correlator2.fnal.gov|131.225.52.45|Info|_TCPConnect|xdaq.exe|7370|Booted|DAQ|TCPConnect.cc|241|Resolving
+			// ip correlator2.fnal.gov
 
 			for(mf_p = 0, mf_i = 0; mf_i < numbytes && mf_p < MF_POS_OF_TYPE; ++mf_i)
 				if(buff[mf_i] == '|')
@@ -308,17 +334,17 @@ int main(int argc, char** argv)
 					++mf_p;  // count markers
 
 			// print second part
-			if(mf_i < numbytes)                             // if valid find, show message
-				std::cout << &buff[mf_i - 1] << std::endl;  // show msg after '|'
+			if(mf_i < numbytes)                         // if valid find, show message
+				std::cout << &buff[mf_i - 1] << __E__;  // show msg after '|'
 			else if(firstPartPresent)
-				std::cout << std::endl;
+				std::cout << __E__;
 
 			// forward packet onto sendSockfd
 
 			if((numbytes = sendto(
 			        sendSockfd, buff, numbytes, 0, p->ai_addr, p->ai_addrlen)) == -1)
 			{
-				std::cout << "\n\n" << __FILE__ << "\t" << "error: sendto...\n\n" << std::endl;
+				__COUT__ << "error: sendto...\n\n" << __E__;
 				perror("hw: sendto");
 				exit(1);
 			}
@@ -331,7 +357,7 @@ int main(int argc, char** argv)
 	close(sockfd);
 	close(sendSockfd);
 
-	std::cout << "\n\n" << __FILE__ << "\t" << "Exited.\n\n" << std::endl;
+	__COUT__ << "Exited.\n\n" << __E__;
 
 	return 0;
 }

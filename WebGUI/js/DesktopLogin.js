@@ -55,6 +55,7 @@ else {
 		var _system_blackout = false;
 		var _user = "";
 		var _displayName = "No-Login";
+		var _otsOwner = "";
 		var _permissions = 0;
 		var _cookieCode = 0;
 		var _cookieTime = 0;
@@ -103,7 +104,7 @@ else {
 				
 				//update display name
 				ldiv = document.getElementById("DesktopDashboard-user-displayName");
-				var tmpStr = "Welcome to ots, " + _displayName;
+				var tmpStr = "Welcome to " + _otsOwner + "ots, " + _displayName;
 				
 				if(ldiv.innerHTML != "" && //if not first time
 						ldiv.innerHTML != tmpStr) //and name is different
@@ -155,7 +156,7 @@ else {
 				//create table just to center content easily, especially on window resize
 			var str;
 			str = "<table width='100%' height='100%'><td valign='middle' align='center'>";
-			str += "<b><u>Welcome to ots!</u></b><br /><br />";
+			str += "<b><u>Welcome to " + _otsOwner + "ots!</u></b><br /><br />";
 			str += "<table><td align='right'><div id='Desktop-loginContent'></div></td></table></td></table>";
 			ldiv.innerHTML = str;
 			
@@ -392,6 +393,13 @@ else {
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
 			_displayName = Desktop.getXMLValue(req,"DisplayName");
 			
+			_otsOwner = Desktop.getXMLValue(req,"ots_owner");
+			if(!_otsOwner || _otsOwner.length < 2)
+				_otsOwner = "";
+			else if(_otsOwner[_otsOwner.length-1] != ' ') //enforce space at end
+				_otsOwner += ' ';
+			Debug.log("_otsOwner = " + _otsOwner);
+			
 			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	//make user = display name if no login
 				_user = Desktop.getXMLValue(req,"pref_username");
 			_permissions = Desktop.getXMLValue(req,"desktop_user_permissions");
@@ -468,6 +476,7 @@ else {
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
 			_displayName = Desktop.getXMLValue(req,"DisplayName");
 			_permissions = Desktop.getXMLValue(req,"desktop_user_permissions");
+			
 			
 			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) 
 			{ 	
