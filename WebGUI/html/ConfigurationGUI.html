@@ -14378,9 +14378,29 @@
 						{					
 							Debug.log(err,Debug.HIGH_PRIORITY);
 
-							//kill popup dialog
-							var el = document.getElementById("popUpDialog"); 
-							if(el) el.parentNode.removeChild(el);	
+//							//kill popup dialog
+//							var el = document.getElementById("popUpDialog"); 
+//							if(el) el.parentNode.removeChild(el);
+							
+							Debug.log("There were problems identified while saving the " +
+									"attempted new group '" +
+									attemptedNewGroupName +
+									".'\nThe new group was not created.\n\n" +									
+									"You can attempt to save the group anyway (if you think it is a good idea) by clicking " +
+									"the button in the pop-up dialog " +
+									"'<u>Save Group with Warnings Ignored</u>.' " +
+									"\n\nOtherwise, you can hit '<u>Cancel</u>.' and fix any issues. " +
+									"Below you will find the description of the problem:",																		
+									Debug.WARN_PRIORITY);
+
+							//change dialog save button
+							var el = document.getElementById("popUpDialog-submitButton");
+							el.onmouseup = function() {
+								document.getElementById("popUpDialog-submitButton").disabled = true;
+								saveTableGroupAsNewKey(attemptedNewGroupName,sourceType,1); //1 = ignore warnings								
+							};
+							el.value = "Save Group with Warnings Ignored";
+							el.disabled = false;
 							return;
 						}			
 

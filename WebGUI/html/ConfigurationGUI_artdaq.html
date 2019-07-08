@@ -128,6 +128,7 @@
 		//	- Save functionality should be same as saving tree	
 		//		* If admin, could give options to target a certain system alias.. Etc.
 		//		* Else assume saving to currently active groups
+		//	- Save/Load positioning maps to filename based on active Context group.
 		//
 		//	- On load, get active groups artdaq modules.. allow editing, deleting, adding.. 
 		//	and connecting sources and destinations
@@ -138,7 +139,7 @@
 		var _NODE_SIZE = 100;
 		var _MARGIN = 100;
 		
-		var _nodes = {};
+		var _nodes = [];
 		
 		var _NODE_TYPE_READER 		= 0;
 		var _NODE_TYPE_BUILDER 		= 1;
@@ -186,7 +187,20 @@
 			//					"\n\t- 'Right Pane' is for modifying the common fields associated with the selected records."
 			//			);
 
-			drawNode(_NODE_TYPE_READER, 100,100);
+			var x = 100;
+			var y = 100;
+			_nodes.push({"type":_NODE_TYPE_READER,	"x":x, 	"y":y});
+			x += 200;
+			_nodes.push({"type":_NODE_TYPE_BUILDER,	"x":x, 	"y":y});
+			x += 200;
+			_nodes.push({"type":_NODE_TYPE_LOGGER,	"x":x, 	"y":y});
+			x = 100;
+			y += 200
+			_nodes.push({"type":_NODE_TYPE_MONITOR,	"x":x, 	"y":y});
+			x += 200;
+			_nodes.push({"type":_NODE_TYPE_DISPATCHER,	"x":x, 	"y":y});
+				
+			paint();
 			
 						
 		} //end init()
@@ -194,9 +208,13 @@
 
 		//=====================================================================================
 		//drawNode ~~
-		//	draw a node of specified type at x,y position 
-		function drawNode(type,x,y)
+		//	draw a node of specified by node index 
+		function drawNode(i)
 		{
+			var type = _nodes[i].type;
+			var x = _nodes[i].x;
+			var y = _nodes[i].y;
+			
 			if(!_container)
 			{
 				//create container if it does not exist
@@ -284,7 +302,7 @@
 			//Debug.log("paint w,h=" + w + "," +h);
 
 			var MIN_H = 280;
-			var MIN_W = 580;
+			var MIN_W = 280;
 			if(w < MIN_W)
 				w = MIN_W;
 			if(h < MIN_H)
@@ -292,33 +310,10 @@
 			
 			Debug.log("paint w,h=" + w + "," +h);
 
-			var TOP_H = 56;
-			var LEFT_W = 400;
-			var BORDER_SZ = 0;			
-			var MARGIN = 0;
 			
-			if(!_leftPane && !_rightPane && !_topPane)
-			{
-				//first time create elements
-				createTopPaneContent();
-				createLeftPaneContent(LEFT_W-2*BORDER_SZ);
-				createRightPaneContent();
-				
-				updateRecordsAndFields();
-			}
-
+			for(var i=0;i<_nodes.length;++i)							
+				drawNode(i);
 			
-			var y = MARGIN;
-			var x = MARGIN;
-			w -= 2*MARGIN;
-			h -= 2*MARGIN;
-			
-			_topPane.style.left = x + "px";
-			_topPane.style.top = y + "px";
-			_topPane.style.width = (w - 2*BORDER_SZ) + "px";
-			_topPane.style.height = (TOP_H - 2*BORDER_SZ) + "px";
-		
-						
 		}	//end paint()
 
 		//=====================================================================================

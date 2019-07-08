@@ -2704,6 +2704,9 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 
 		__SUP_COUT__ << "Active tables are setup. Warning string: '" << accumulatedErrors
 		             << "'" << __E__;
+
+		__SUP_COUT__ << "Active table versions: " <<
+				StringMacros::mapToString(cfgMgr->getActiveVersions()) << __E__;
 	}
 	else
 		__SUP_COUT__ << "Active tables are setup. No issues found." << __E__;
@@ -4762,7 +4765,14 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	{
 		try
 		{
-			cfgViewPtr = cfgMgr->getVersionedTableByName(tableName, version)->getViewP();
+			//locally accumulate 'manageable' errors getting the version to avoid reverting to mockup
+			std::string localAccumulatedErrors = "";
+			cfgViewPtr = cfgMgr->getVersionedTableByName(tableName, version,
+					false /*looseColumnMatching*/,
+					&localAccumulatedErrors)->getViewP();
+
+			if(localAccumulatedErrors != "")
+				xmlOut.addTextElementToData("Error", localAccumulatedErrors);
 		}
 		catch(std::runtime_error& e)  // default to mock-up for fail-safe in GUI editor
 		{
@@ -4948,6 +4958,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		__SUP_COUT__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("TableWarnings", ss.str());
 	}
+
 }  // end handleGetTableXML()
 catch(std::runtime_error& e)
 {
@@ -6583,7 +6594,7 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument&       
 		    aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT)
 		        .getValueAsString());
 	}
-}
+} // end handleVersionAliasesXML()
 
 //========================================================================================================================
 //	handleGetTableGroupTypeXML
