@@ -412,7 +412,8 @@ Desktop.createDesktop = function(security) {
 	    //	check if a window iFrame has taken focus and tampered with z mailbox. If so 'officially' set to fore window
 		if(_windowZmailbox.innerHTML > _defaultWindowMaxZindex) 
 		{
-			Desktop.desktop.setForeWindow(Desktop.desktop.getForeWindow()); //use function just to standardize, do not change current foreground			
+			Desktop.desktop.setForeWindow(); //should pass undefined window.. to just relabel Z depth
+			//Desktop.desktop.getForeWindow()			
 			//Debug.log("Desktop Foreground Window Refreshed by Timeout",Debug.LOW_PRIORITY);
 		}
 	    

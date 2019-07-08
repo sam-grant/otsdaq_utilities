@@ -126,8 +126,11 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 								Debug.lastLogger.length);
 					}
 					
+					var source = window.location.href;
+					source = source.substr(source.lastIndexOf('/'));
+					source = source.substr(0,source.indexOf('?'));
 					console.log("%c" + type + "-Priority" +  
-							 ":\t " + Debug.lastLog + ":\n" +
+							 ":\t " + Debug.lastLog + " from " + source + ":\n" +
 							 Debug.lastLogger + "::\t" + str,							 
 							 num == 0?"color:#F30;"	//chrome/firefox allow css styling
 									 :(num == 1?"color:#F70" //warn

@@ -433,9 +433,13 @@
 				_inAnimation = false;
                 _selectedTransition = -1;
 
-				window.onresize = redrawPhysics;
-				document.body.onmousemove = handleMouseMove;
-				document.body.onmouseup = handleMouseUp;
+                window.addEventListener("resize",redrawPhysics);
+                //DesktopContent.mouseMoveSubscriber(handleMouseMove); //cause problems because of this.cursor handling 
+                document.body.addEventListener("mousemove",handleMouseMove);
+                document.body.addEventListener("mouseup",handleMouseUp);
+//				window.onresize = redrawPhysics;
+//				document.body.onmousemove = handleMouseMove;
+//				document.body.onmouseup = handleMouseUp;
 
 				//get state machine from server
 				DesktopContent.XMLHttpRequest(

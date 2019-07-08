@@ -123,7 +123,8 @@
 		//	
 		//	- Requires user to have LOCK
 		//
-		//	- Zoomable (key [a,z -,= _,+] or mousewheel) with thumb-nail grid
+		//	- Grid always stretches to full window size
+		//	and defines scale (allow adding row/col of dots at either side)
 		//		
 		//	- Save functionality should be same as saving tree	
 		//		* If admin, could give options to target a certain system alias.. Etc.
@@ -139,6 +140,7 @@
 		var _NODE_SIZE = 100;
 		var _MARGIN = 100;
 		
+		var _grid = { "rows": 4, "cols": 3 };
 		var _nodes = [];
 		
 		var _NODE_TYPE_READER 		= 0;
@@ -201,7 +203,7 @@
 			_nodes.push({"type":_NODE_TYPE_DISPATCHER,	"x":x, 	"y":y});
 				
 			paint();
-			
+			window.addEventListener("resize",paint);
 						
 		} //end init()
 		
@@ -294,12 +296,15 @@
 		
 		//=====================================================================================
 		//paint ~~
-		//	positiong left and right panes based on window size
+		//	paint grid and nodes based on 
+		//	_grid and _nodes global variable and window size
 		function paint() 
 		{	
 			var w = DesktopContent.getWindowWidth();
 			var h = DesktopContent.getWindowHeight();
-			//Debug.log("paint w,h=" + w + "," +h);
+			Debug.log("paint w,h=" + w + "," +h);
+			console.log("_grid",_grid);
+			console.log("_nodes",_nodes);
 
 			var MIN_H = 280;
 			var MIN_W = 280;
@@ -310,6 +315,7 @@
 			
 			Debug.log("paint w,h=" + w + "," +h);
 
+			drawGrid();
 			
 			for(var i=0;i<_nodes.length;++i)							
 				drawNode(i);
@@ -1399,6 +1405,10 @@
 
 	<div class='preloadImage' id='preloadImage-treeEditTrashIconHover'></div>
 	<div class='preloadImage' id='preloadImage-treeEditIconHover'></div>
+
+	<div id='preCanvas'></div>
+	<canvas id='theCanvas'></canvas>
+	<div id='postCanvas'></div>
 		
 </body>
 	

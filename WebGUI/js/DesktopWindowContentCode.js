@@ -237,6 +237,8 @@ DesktopContent.init = function() {
 	window.onmousemove = DesktopContent.mouseMove; //setup mouse move handler
 	window.focus();	//before this fix, full screen in new tab would not give window focus
 
+	Debug.log("Window URL " + window.location.href);
+	
 	DesktopContent._serverUrnLid = DesktopContent.getDesktopWindowParameter(0,"urn");//((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
 		Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
@@ -369,6 +371,8 @@ DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, 
 
 	if(!DesktopContent._myDesktopFrame) return; //only happen if not part of desktop
 
+	//Debug.log("Focus DesktopContent._isFocused " + DesktopContent._isFocused);
+	
 	//commented below because, at times, desktop window movement led to wrong focus assumptions 
 	//if(DesktopContent._isFocused ) {Debug.log("already"); return; }//only focus when unfocused
 	DesktopContent._isFocused = true;					
@@ -376,13 +380,17 @@ DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, 
 	DesktopContent._zMailbox.innerHTML = parseInt(DesktopContent._zMailbox.innerHTML) + 1;
 	return true;
 }
-DesktopContent.handleBlur = function(e) {			
+DesktopContent.handleBlur = function(e) {	
+	//Debug.log("Blur DesktopContent._isFocused " + DesktopContent._isFocused);
 	DesktopContent._isFocused = false;
 }
-DesktopContent.handleScroll = function(e) {			
+DesktopContent.handleScroll = function(e) {		
+	//Debug.log("Scroll DesktopContent._isFocused" + DesktopContent._isFocused);
 	window.focus();	
 }
 DesktopContent.mouseMove = function(mouseEvent) {	
+	//Debug.log("Move DesktopContent._isFocused" + DesktopContent._isFocused);
+	
 	//call each subscriber
 	for(var i=0; i<DesktopContent._mouseMoveSubscribers.length; ++i)
 		DesktopContent._mouseMoveSubscribers[i](mouseEvent); 
