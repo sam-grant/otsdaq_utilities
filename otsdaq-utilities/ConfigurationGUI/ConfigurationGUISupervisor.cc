@@ -1673,7 +1673,7 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		//		allTableInfo.at(activePair.first).tablePtr_->getView().getVersion() <<
 		//__E__;
 	}
-}
+} //end setupActiveTablesXML()
 catch(std::runtime_error& e)
 {
 	__SUP_SS__ << ("Error setting up active tables!\n\n" + std::string(e.what()))
@@ -1686,7 +1686,8 @@ catch(...)
 	__SUP_SS__ << ("Error setting up active tables!\n\n") << __E__;
 	__SUP_COUT_ERR__ << "\n" << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
-}
+	throw; //throw to get info from special errors at a parent level
+} //end setupActiveTablesXML() throw
 
 //========================================================================================================================
 // handleFillCreateTreeNodeRecordsXML

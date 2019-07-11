@@ -539,8 +539,8 @@ echo -e "\t\t\t\t http://scisoft.fnal.gov/scisoft/bundles/otsdaq/"
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
 echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t To switch qualifiers, do the following: mrb newDev -v v2_02_00 -q s67:e15:prof"
-echo -e "UpdateOTS.sh [${LINENO}]  \t ...and replace 'v2_02_00' with your target version. and 's67:e15:prof' with your qualifiers"
+echo -e "UpdateOTS.sh [${LINENO}]  \t To switch qualifiers, do the following: mrb newDev -v v2_04_01 -q s82:e19:prof"
+echo -e "UpdateOTS.sh [${LINENO}]  \t ...and replace 'v2_04_01' with your target version. and 's82:e19:prof' with your qualifiers"
 echo -e "UpdateOTS.sh [${LINENO}]  \t ...a new localProducts directory will be created, which you should use when you setup ots."
 echo
 echo

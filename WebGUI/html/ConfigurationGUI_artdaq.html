@@ -134,35 +134,43 @@
 		//	- On load, get active groups artdaq modules.. allow editing, deleting, adding.. 
 		//	and connecting sources and destinations
 		
-				
-		var _SCALE = 1; //controls the zoom and look of everything
 	
-		var _NODE_SIZE = 100;
-		var _MARGIN = 100;
+		//paint globals -------------
+		var _SCALE; //controls the zoom and look of everything	
+		var _NODE_SIZE;
+		var _MARGIN				= 100;
+		var _CANVAS_COLOR 		= "white";
+		var _GRID_COLOR 		= "rgb(218, 194, 194)";
+		var _SHADOW_COLOR 		= "gray";
+		var _canvas, _context;
+		var _w, _h;		
 		
-		var _grid = { "rows": 4, "cols": 3 };
+		//object globals -------------
+		var _grid = { //size of grid, rows and cols can be added or removed
+				"rows": 4, 	"cols": 3, 
+				"x0": 	0, 	"y0": 	0, 
+				"xstep":0, 	"ystep":0}; 
 		var _nodes = [];
+		var _arrows = []; //array of arrow objects (start and end x,y,p - where p is one of 4 positions starting from top going clock-wise)
+		var _nextNodeId = 0;
 		
+		//constant globals -------------
 		var _NODE_TYPE_READER 		= 0;
 		var _NODE_TYPE_BUILDER 		= 1;
 		var _NODE_TYPE_LOGGER 		= 2;
 		var _NODE_TYPE_MONITOR 		= 3;
 		var _NODE_TYPE_DISPATCHER 	= 4;
 		
-		var _nextNodeId = 0;
-		
-		var _container;
-		var _containerX = 0;
-		var _containerY = 0;
-		var _containerW = 0;
-		var _containerH = 0;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 	
 		//functions:			
 			//init()
+			//paint()
+			//drawGrid() 
 			//drawNode() 
+			//contextAddContextShadow() 
 				
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -202,11 +210,86 @@
 			x += 200;
 			_nodes.push({"type":_NODE_TYPE_DISPATCHER,	"x":x, 	"y":y});
 				
+			_arrows.push({	"x0":0,"y0":2,"p0":1,
+							"x1":3,"y1":3,"p0":0,})
+									
+
+			_canvas = document.getElementById("theCanvas");
+			_canvas.style.backgroundColor = _CANVAS_COLOR;
+			_context = _canvas.getContext('2d');
+			
 			paint();
 			window.addEventListener("resize",paint);
 						
 		} //end init()
 		
+
+		
+
+		//=====================================================================================
+		//drawNode ~~
+		//	draw a node of specified type at x,y position 
+		function handleNodeMouseOver(e)
+		{
+			var id = this.id.split('-')[1] | 0;
+			Debug.log("MouseOver Node id = " + id);
+			
+		} //end handleNodeMouseOver()
+		
+		//=====================================================================================
+		//paint ~~
+		//	paint grid and nodes based on 
+		//	_grid and _nodes global variable and window size
+		function paint() 
+		{	
+			_w = DesktopContent.getWindowWidth();
+			_h = DesktopContent.getWindowHeight();
+			
+			console.log("_grid",_grid);
+			console.log("_nodes",_nodes);
+			console.log("_arrows",_arrows);
+
+			var MIN_H = 280;
+			var MIN_W = 280;
+			if(_w < MIN_W)
+				_w = MIN_W;
+			if(_h < MIN_H)
+				_h = MIN_H;
+			
+			Debug.log("paint w,h=" + _w + "," + _h);
+			
+			drawGrid();
+			
+			//for(var i=0;i<_nodes.length;++i)							
+			//	drawNode(i);
+			
+		} //end paint()
+
+		//=====================================================================================
+		//drawGrid ~~
+		function drawGrid() 
+		{	
+			//determine grid spacing
+			_grid.x0 = _MARGIN;
+			_grid.y0 = _MARGIN;
+			_grid.xstep = (_w - 2*_MARGIN)/_grid.cols;
+			_grid.ystep = (_h - 2*_MARGIN)/_grid.rows;
+
+			console.log("drawGrid _grid",_grid);
+			
+			_context.save();
+			//_context.strokeStyle   = _GRID_COLOR;
+			_context.fillStyle   = _GRID_COLOR;
+			//_context.lineWidth     = 2;
+			_context.shadowOffsetX = 4;
+			_context.shadowOffsetY = 4;
+			_context.shadowBlur    = 7;
+			
+			for(var r=0;r<_grid.rows;++r)
+			
+			fillRect(10,10,1,1);
+			_context.restore();
+		} //end drawGrid()
 
 		//=====================================================================================
 		//drawNode ~~
@@ -283,45 +366,6 @@
 			_container.style.height	= _containerH + "px";
 		} //end drawNode
 		
-
-		//=====================================================================================
-		//drawNode ~~
-		//	draw a node of specified type at x,y position 
-		function handleNodeMouseOver(e)
-		{
-			var id = this.id.split('-')[1] | 0;
-			Debug.log("MouseOver Node id = " + id);
-			
-		} //end handleNodeMouseOver()
-		
-		//=====================================================================================
-		//paint ~~
-		//	paint grid and nodes based on 
-		//	_grid and _nodes global variable and window size
-		function paint() 
-		{	
-			var w = DesktopContent.getWindowWidth();
-			var h = DesktopContent.getWindowHeight();
-			Debug.log("paint w,h=" + w + "," +h);
-			console.log("_grid",_grid);
-			console.log("_nodes",_nodes);
-
-			var MIN_H = 280;
-			var MIN_W = 280;
-			if(w < MIN_W)
-				w = MIN_W;
-			if(h < MIN_H)
-				h = MIN_H;
-			
-			Debug.log("paint w,h=" + w + "," +h);
-
-			drawGrid();
-			
-			for(var i=0;i<_nodes.length;++i)							
-				drawNode(i);
-			
-		}	//end paint()
-
 		//=====================================================================================
 		//updateRecordsAndFields ~~
 		//	update records selector display
