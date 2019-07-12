@@ -1154,8 +1154,8 @@ CodeEditor.create = function() {
 			
 			//remove crazy characters 
 			// (looks like they come from emacs tabbing -- they seem to be backwards (i.e. 2C and 0A are real characters))
-			textObj.text = textObj.text.replace(/%C2%A0%C2%A0/g,"%20%20").replace(/%C2%A0/g, //convert two to tab, otherwise space
-					"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
+			textObj.text = textObj.text.replace(/%20%20/g,"%20%20").replace(/%20/g, //convert two to tab, otherwise space
+					"%20").replace(/%20/g,"%20").replace(/%20/g,"%20");
 			
 			
 			
@@ -1706,6 +1706,8 @@ CodeEditor.create = function() {
 			altExtensions.push("c");
 			altPaths.push(relatedPath);
 			altExtensions.push("C");
+			altPaths.push(relatedPath);
+			altExtensions.push("icc");
 			
 			//try special plugin addons
 			if(relatedPath.indexOf("Interface") >= 0)
@@ -1752,7 +1754,8 @@ CodeEditor.create = function() {
 			return;
 		}
 		else if(relatedExtension[0] == 'c' || 
-				relatedExtension[0] == 'C')
+				relatedExtension[0] == 'C' || 
+				relatedExtension == "icc")
 		{
 			relatedExtension = "h";
 
@@ -2657,17 +2660,19 @@ CodeEditor.create = function() {
 		if(_fileExtension[forPrimary][0] == 'c' || 
 				_fileExtension[forPrimary][0] == 'C' ||
 				_fileExtension[forPrimary][0] == 'h' ||
-				_fileExtension[forPrimary][0] == 'j')
+				_fileExtension[forPrimary][0] == 'j' ||
+				_fileExtension[forPrimary] == "icc")
 			commentString = "//"; //comment string
 			
 			var fileDecorType = "txt";
-		if(	_fileExtension[forPrimary] == 'html' ||
-				_fileExtension[forPrimary] == 'js')
+		if(	_fileExtension[forPrimary] == "html" ||
+				_fileExtension[forPrimary] == "js")
 			fileDecorType = "js"; //js style
 		else if(_fileExtension[forPrimary][0] == 'c' || 
 				_fileExtension[forPrimary][0] == 'C' ||
 				_fileExtension[forPrimary][0] == 'h' ||
-				_fileExtension[forPrimary][0] == 'j')
+				_fileExtension[forPrimary][0] == 'j' ||
+				_fileExtension[forPrimary] == "icc")
 			fileDecorType = "c++"; //c++ style
 		else if(_fileExtension[forPrimary] == 'sh' || 
 				_fileExtension[forPrimary] == 'py')
@@ -3914,7 +3919,8 @@ CodeEditor.create = function() {
 		var fail, found;
 		
 		var isCcSource = _fileExtension[forPrimary][0] == 'c' || 
-			_fileExtension[forPrimary][0] == 'C';
+			_fileExtension[forPrimary][0] == 'C' ||
+			_fileExtension[forPrimary] == "icc";
 		var isJsSource = _fileExtension[forPrimary] == "js" || 
 			_fileExtension[forPrimary] == "html";
 		

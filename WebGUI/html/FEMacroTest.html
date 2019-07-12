@@ -473,7 +473,7 @@
 				for(var i=0;i<outputArgNames.length;++i)
 				{
 					var name = outputArgNames[i].getAttribute("value");
-					var value = outputArgValues[i].getAttribute("value");
+					var value = decodeURIComponent(outputArgValues[i].getAttribute("value"));
 					if(name == "Filename" || name == "filename")
 						str += name + " = " +
 							//if filename, add link to CodeEditor
