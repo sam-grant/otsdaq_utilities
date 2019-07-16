@@ -1,24 +1,10 @@
 #include "otsdaq-utilities/MacroMaker/MacroMakerSupervisor.h"
 
-//#include "otsdaq-core/MessageFacility/MessageFacility.h"
-//#include "otsdaq-core/Macros/CoutMacros.h"
-//#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-//#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
-//#include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
-//#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-//#include "otsdaq-core/Macros/CoutMacros.h"
-
 #include "otsdaq-core/FECore/FEVInterface.h"
-
 #include "otsdaq-core/CodeEditor/CodeEditor.h"
 
-//#include <xdaq/NamespaceURI.h>
-//#include <string>
-//#include <vector>
-//#include <iostream>
 #include <fstream>
-//#include <sstream>
 #include <dirent.h>    //for DIR
 #include <stdio.h>     //for file rename
 #include <sys/stat.h>  //for mkdir
