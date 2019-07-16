@@ -14,7 +14,10 @@
 var widgetLibrary = widgetLibrary || {};
 widgetLibrary.typeToSrc = {			   "0" :"widget_text.html",
 						   "1" :"widget_basicDisplay.html",
-						   "2" :"widget_text_with_title.html"/*,
+						   "2" :"widget_text_with_title.html",
+						   "3" :"guage_widget.html",
+						   "4" :"simple_bar_chart.html",
+						   "5" :"thermometer.html"/*,
 						   "3" :"widgets",
 						   "4" :"widgets",						   
 						   "5" :"widgets/thermometer.html",						   
@@ -29,14 +32,20 @@ widgetLibrary.typeToSrc = {			   "0" :"widget_text.html",
 widgetLibrary.typeToImgSrc =  {
 							   "0" :"label-icon.png",
 							   "1" :"digital-clock-icon.png",
-		   					   "2" :"label-icon.png" /*,
+		   					   "2" :"label-icon.png",
+		   					   "3" :"guage-icon.png",
+		   					   "4" :"basic-chart-icon.png",
+		   					   "5" :"thermometer-icon.png" /*,
 							   "3" :"Alarm-clock-icon.png",
 							   "4" :"digital-clock-icon.png",						   
 							   "5" :"thermometer-icon.png"		*/		   
 							  }
 widgetLibrary.typeToName = {
                                                                 "0" : "Plain Text",
-                                                                "2" : "Basic Display with name and value displays"/*,
+                                                                "2" : "Basic Display with name and value displays",
+                                                                "3" : "Basic Guage Style Display",
+                                                                "4" : "Basic Line Chart",
+                                                                "5" : "Basic Thermometer"/*,
                                                                 "2" : "Hakeem's Widet",
                                                                 "3" : "Clock",
                                                                 "4" : "Clock",
@@ -44,7 +53,10 @@ widgetLibrary.typeToName = {
                                                                 }
 widgetLibrary.typeToPurpose = {
 								"0" : "Plain Text",
-								"2" : "Plain Text"/*,
+								"2" : "Plain Text",
+								"3" : "Guage",
+								"4" : "Chart",
+								"5" : "Thermometer"/*,
 								"2" : "Hakeem's Widet",
 								"3" : "Clock",
 								"4" : "Clock",
