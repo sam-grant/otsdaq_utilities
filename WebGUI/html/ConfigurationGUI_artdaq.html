@@ -59,11 +59,11 @@
 									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
 			border-radius: 			3px;	
 			
-			position:				relative;
+			position:				absolute;
 			cursor:					pointer;
 		}
 		
-		.node:hover .node-box{
+		.node-box:hover {
 
 			background-color: 		rgb(230, 201, 201);
 
@@ -74,7 +74,31 @@
 									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
 		}		
 		
-		#recordAddDiv {
+		.node-point {
+			background-color : 		red;
+			border:					3px solid black;
+			border-radius: 			9px;	
+			width:					9px;
+			height:					9px;
+
+			box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
+									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+									rgba(200, 200, 200,0.6) 0 .1em 3px,
+									rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
+									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+			
+			position:				absolute;
+			cursor:					pointer;
+		}
+		.node-point0 { left: 50%; top: -10px }  
+			
+		.node-point:hover {
+			background-color: 		rgb(230, 201, 201);
+		}
+		
+		
+		
+		#createNodeDiv {
 			background-color: 		rgb(195, 230, 193);	
 			cursor:					pointer;
 			width: 					32px;
@@ -86,19 +110,18 @@
 									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
 									rgba(200, 200, 200,0.6) 0 .1em 3px,
 									rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
-									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+									rgba(0,0,0,0.2) 0 .3em 5px;	/* drop shadow */
 			
-			left:					10px;
-			top:					10px;
+			left:					-1000px;			
 			position: 				absolute;
 		    z-index:				2000; 	/* to place on top of everything */
 		}
 		
-		#recordAddDiv:hover {
+		#createNodeDiv:hover {
 			background-color: 		rgb(215, 255, 213);			
 		}
 
-		#recordAdd {
+		#createNode {
 			margin: 				1px 16px -10px 8px;
 			float:					left;
 			
@@ -177,9 +200,8 @@
 		//	and connecting sources and destinations
 		
 	
-		//paint globals -------------
-		var _SCALE; //controls the zoom and look of everything	
-		var _NODE_SIZE;
+		//paint globals -------------		
+		var _NODE_SIZE; //everything else should be sized off of this, and grid steps
 		var _CANVAS_MARGIN		= 0;
 		var _GRID_MARGIN		= 100;
 		var _CANVAS_COLOR 		= "rgba(255,255,255,0)";
@@ -187,6 +209,7 @@
 		var _SHADOW_COLOR 		= "gray";
 		var _canvas, _context, _actionCanvas, _actionContext;
 		var _preCanvas, _postCanvas;
+		var _addNodeEl;
 		var _w, _h;		
 		
 		//object globals -------------
@@ -220,6 +243,7 @@
 			//handleNodeMouseOver(e)
 			//handleMouseMove(e)
 			//handleMouseUp(e)
+			//handlePointMouseUp(i,p)
 				
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -262,6 +286,7 @@
 
 			_preCanvas = document.getElementById("preCanvas");
 			_postCanvas = document.getElementById("postCanvas");
+			_addNodeEl = document.getElementById("createNodeDiv");
 			
 			_canvas = document.getElementById("theCanvas");
 			_canvas.style.backgroundColor = _CANVAS_COLOR;
@@ -269,6 +294,7 @@
 			_actionCanvas = document.getElementById("theActionCanvas");
 			_actionCanvas.style.backgroundColor = _CANVAS_COLOR;
 			_actionContext = _actionCanvas.getContext('2d');
+			
 			
 			paint();
 			window.addEventListener("resize",paint);
@@ -323,12 +349,12 @@
 
 			drawGrid();
 
-			//determine node size and then draw
-			_SCALE = 1;
+			//determine node size and then draw			
 			_NODE_SIZE = _grid.xstep*0.5;
 			if(_NODE_SIZE > _grid.ystep*0.5)
 				_NODE_SIZE = _grid.ystep*0.5;
 			
+			_grid.rowColMap = [];
 			for(var i=0;i<_nodes.length;++i)							
 				drawNode(i);
 			
@@ -350,6 +376,20 @@
 						
 			_grid.x0 = _GRID_MARGIN + _grid.xstep/2;
 			_grid.y0 = _GRID_MARGIN + _grid.ystep/2;
+			
+			//shrink margin if window is small
+			if(_grid.x0 > _grid.xstep * 2)
+			{
+				_grid.x0 = _grid.xstep;
+				_grid.xstep = (_w - 2*_grid.x0)/_grid.cols;	
+				_grid.x0 = _grid.x0 + _grid.xstep/2;
+			}
+			if(_grid.y0 > _grid.ystep * 2)
+			{
+				_grid.y0 = _grid.ystep;		
+				_grid.ystep = (_h - 2*_grid.ystep)/_grid.rows;
+				_grid.y0 = _grid.y0 + _grid.ystep/2;
+			}
 
 			console.log("drawGrid _grid",_grid);
 			
@@ -379,9 +419,14 @@
 			var x = _nodes[i].x;
 			var y = _nodes[i].y;
 			
+			//add to _grid.rowColMap
+			if(_grid.rowColMap[x] == undefined) 
+				_grid.rowColMap[x] = [];
+			_grid.rowColMap[x][y] = i; //fill x,y position
+			
 			var nodeid = "node-" + i;
 						
-			var sz = (_NODE_SIZE*_SCALE)|0; 
+			var sz = _NODE_SIZE | 0; 
 			x = (_grid.x0 + x * _grid.xstep - sz/2) | 0;
 			y = (_grid.y0 + y * _grid.ystep - sz/2) | 0;
 			
@@ -402,11 +447,25 @@
 			{
 				el = document.createElement("div"); 
 				el.setAttribute("class", "node " + typeClass);
-				el.setAttribute("id", "node-" + nodeid);
+				el.setAttribute("id", nodeid);
 								
-				//draw connect source, pencil, and trashcan
+				//draw box, connect points, pencil, and trashcan
 				var str = "";
-				str += "<div id='" + nodeid + "-box' class='node-box'></div>";
+								
+				//box
+				str += "<div id='" + nodeid + 
+						"-box' class='node-box'></div>";
+				
+				//connect points
+				for(var p=0;p<4;++p)
+					str += "<div id='" + nodeid + 
+						"-point" + p + 
+						"' class='node-point" + p +
+						" node-point node-point-open' " +
+						" onmouseup='handlePointMouseUp(" + 
+						i + "," + p + ",event);'></div>";
+				
+				
 				el.innerHTML = str;
 				_postCanvas.appendChild(el);	
 				el.onmouseover = handleNodeMouseOver;	
@@ -417,7 +476,18 @@
 			boxEl.style.width  = sz + "px";
 			boxEl.style.height = sz + "px";
 			el.style.left 	= x + "px";
-			el.style.top 	= y + "px";			
+			el.style.top 	= y + "px";		
+			
+			var pointSz = 12;
+			var points = el.getElementsByClassName("node-point");
+			points[0].style.left 	= ((sz/2 - pointSz/2)|0) + "px";
+			points[0].style.top 	= (( -pointSz/2)|0) + "px";
+			points[1].style.left 	= ((sz - pointSz/2)|0) + "px";
+			points[1].style.top 	= ((sz/2 - pointSz/2)|0) + "px";	
+			points[2].style.left 	= ((sz/2 - pointSz/2)|0) + "px";
+			points[2].style.top 	= ((sz - pointSz/2)|0) + "px";	
+			points[3].style.left 	= (( -pointSz/2)|0) + "px";
+			points[3].style.top 	= ((sz/2 - pointSz/2)|0) + "px";	
 			
 		} //end drawNode()
 		
@@ -447,8 +517,33 @@
     		//_context.fillRect((x)|0,(y)|0,3,3 );
     		
     		//steps:
-    		//	if over empty grid, show + 
+    		//	if over empty grid position, show + 
     		//	if mousedown, draw arrow or dragging object
+    		
+    		//if over empty grid position, show +
+    		
+			var xg = ((x - _grid.x0 + _grid.xstep/2)/_grid.xstep)|0;
+			var yg = ((y - _grid.y0 + _grid.ystep/2)/_grid.ystep)|0;			
+			//console.log("mousemove x,y",x,y,
+			//		"mousemove xg,yg",xg,yg);
+			if(xg >= 0 && yg >= 0 && 
+					xg < _grid.cols && 
+					yg < _grid.rows &&
+					(_grid.rowColMap[xg] == undefined ||
+					_grid.rowColMap[xg][yg] == undefined))
+			{				
+				//Debug.log("Place + at " + xg + "," + yg);
+
+				var sz = 32;
+				_addNodeEl.style.left =
+						((_grid.x0 + xg * _grid.xstep - sz/2) | 0) + "px";
+				_addNodeEl.style.top =
+						((_grid.y0 + yg * _grid.ystep - sz/2) | 0) + "px";
+			}
+			else //remove +
+			{
+				_addNodeEl.style.left = "-1000px"; //off screen
+			}
     		
 		} //end handleMouseMove()
 
@@ -465,6 +560,18 @@
     		_context.fillRect((x)|0,(y)|0,3,3 );
     		
 		} //end handleMouseUp()
+
+		//=====================================================================================
+		//handlePointMouseUp ~~
+		function handlePointMouseUp(i,p,e) 
+		{	   
+			e.stopPropagation();
+			
+    		Debug.log("mouseup-point i,p" +
+    				i + " " + p);
+    		
+    		
+		} //end handlePointMouseUp()
 		
 		</script>
 </head>
@@ -482,8 +589,8 @@
 	<canvas id='theActionCanvas'></canvas>
 	<div id='postCanvas'></div>
 	
-	<div id='recordAddDiv'>
-		<a id='recordAdd' onclick='createNode(); return false;'
+	<div id='createNodeDiv'>
+		<a id='createNode' onclick='createNode(); return false;'
 				title='Create a new node'>+</a>
 	</div>
 </body>
