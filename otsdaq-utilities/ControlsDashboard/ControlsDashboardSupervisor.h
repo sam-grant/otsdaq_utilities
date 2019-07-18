@@ -41,7 +41,7 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 	                                                            // settings)
 
 	void Poll(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID);
-	void GetPVSettings(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvList);
+	void GetPVSettings(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void GenerateUID(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvlist);
 	void GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);

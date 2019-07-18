@@ -744,10 +744,14 @@
         var _cmdTargetParentSelArr = [];
 		
 	
-		var _HEADER_ERROR_BGCLR = 		"rgb(226, 205, 197)";
-		var _HEADER_PAUSED_BGCLR = 		"rgb(197, 205, 226)";
-		var _HEADER_RUNNING_BGCLR = 	"rgb(177, 206, 178)";
-		var _HEADER_INACTIVE_BGCLR = 	"transparent";
+		var _HEADER_ERROR_BGCLR 		= "rgb(226, 205, 197)";
+		var _HEADER_PAUSED_BGCLR 		= "rgb(197, 205, 226)";
+		var _HEADER_RUNNING_BGCLR 		= "rgb(177, 206, 178)";
+		var _HEADER_INACTIVE_BGCLR 		= "transparent";
+		
+		var _FE_TABLE 					= "FEInterfaceTable";
+		var _FE_SUPERVISOR_TABLE		= "FESupervisorTable";
+		var _MACRO_DIM_LOOP_TABLE		= "IterationCommandMacroDimensionalLoopTable";
         
 
 		//=====================================================================================
@@ -2434,7 +2438,7 @@
 													  :"")]);
 							addCommand(_COMMAND_TYPES.MODIFY_ACTIVE_GROUP,
 									[								
-									 "FEInterfaceConfiguration",//"Tables":params[0],
+									 _FE_TABLE,//"Tables":params[0],
 									 "ExampleInterface0",//"UIDs":params[1],
 									 0,//"DoTrackGroupChanges":params[2], 
 									 "LinkToFETypeTable/FirmwareVersion",//"RelativePathToField":params[3],
@@ -2977,7 +2981,7 @@
 								_COMMAND_PARAM_FIELDS.LinkToMacroDimensions)
 						{
 							if(initValue == "") //set default table name
-								initValue = "IterationCommandMacroDimensionalLoopConfiguration";
+								initValue = _MACRO_DIM_LOOP_TABLE;
 							str += htmlOpen("input",
 									{
 											"id":("popUp-param-" + i),
@@ -3528,7 +3532,7 @@
 				}
 				Debug.log("localFeCheckboxHandler " + el.checked);
 
-				var path = el.checked?"FESupervisorConfiguration":"/";
+				var path = el.checked?_FE_SUPERVISOR_TABLE:"/";
 				ConfigurationAPI.getTree(path,
 						1, //down through command parameters
 						_modifiedTables,
@@ -3656,7 +3660,7 @@
 			var allUidMode = document.getElementById("popUp-targetWizAllUIDs").checked;
 			
 			var path = feMode?
-					"FESupervisorConfiguration":"";
+					_FE_SUPERVISOR_TABLE:"";
 			
 
 			
@@ -3680,7 +3684,7 @@
 						//different, so load children and act
 						
 						parentTable = feMode?
-								"FEInterfaceConfiguration":
+								_FE_TABLE:
 								MultiSelectBox.getSelectionElementByIndex(
 									sel,i).innerText;
 
@@ -3708,7 +3712,7 @@
 			
 			
 			_cmdTargetWizParentTable = feMode?
-					"FEInterfaceConfiguration":sel.innerText;
+					_FE_TABLE:sel.innerText;
 						
 			path += "/" + sel.innerText;
 			path += feMode?
