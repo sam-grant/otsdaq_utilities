@@ -63,7 +63,7 @@ void ChatSupervisor::request(const std::string&               requestType,
 {
 	//__COUT__ << "requestType: " << requestType << std::endl;
 
-	// Commands
+	// Commands:
 	// RefreshChat
 	// RefreshUsers
 	// SendChat
@@ -107,10 +107,8 @@ void ChatSupervisor::request(const std::string&               requestType,
 	}
 	else
 		__COUT__ << "requestType request not recognized." << std::endl;
-	//
-	//	//return xml doc holding server response
-	//	xmlOut.outputXmlDocument((std::ostringstream*)out);
-}
+
+} //end request()
 
 //========================================================================================================================
 // ChatSupervisor::escapeChat()

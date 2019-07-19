@@ -215,8 +215,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		std::string columnChoicesCSV =
 		    CgiDataUtilities::postData(cgiIn, "columnChoicesCSV");  // from POST
 
-		// columnCSV = CgiDataUtilities::decodeURIComponent(columnCSV);
-		// tableDescription = CgiDataUtilities::decodeURIComponent(tableDescription);
+		// columnCSV = StringMacros::decodeURIComponent(columnCSV);
+		// tableDescription = StringMacros::decodeURIComponent(tableDescription);
 
 		__SUP_COUT__ << "tableName: " << tableName << __E__;
 		__SUP_COUT__ << "columnCSV: " << columnCSV << __E__;
@@ -994,8 +994,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                          targetTable,
 		                          TableVersion(targetTableVersion),
 		                          editNodeType,
-		                          CgiDataUtilities::decodeURIComponent(targetUID),
-		                          CgiDataUtilities::decodeURIComponent(targetColumn),
+		                          StringMacros::decodeURIComponent(targetUID),
+		                          StringMacros::decodeURIComponent(targetColumn),
 		                          newValue,
 		                          userInfo.username_);
 	}
@@ -1005,7 +1005,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		std::string linkToTableVersion =
 		    CgiDataUtilities::getData(cgiIn, "linkToTableVersion");
 		std::string linkIdType = CgiDataUtilities::getData(cgiIn, "linkIdType");
-		std::string linkIndex  = CgiDataUtilities::decodeURIComponent(
+		std::string linkIndex  = StringMacros::decodeURIComponent(
             CgiDataUtilities::getData(cgiIn, "linkIndex"));
 		std::string linkInitId = CgiDataUtilities::getData(cgiIn, "linkInitId");
 

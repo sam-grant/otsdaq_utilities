@@ -549,7 +549,7 @@ void ControlsDashboardSupervisor::loadPage(cgicc::Cgicc&    cgiIn,
 	}
 
 	std::string file = CONTROLS_SUPERVISOR_DATA_PATH;
-	file += CgiDataUtilities::decodeURIComponent(page);
+	file += StringMacros::decodeURIComponent(page);
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 	             << "Trying to load page: " << page << std::endl;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
@@ -599,7 +599,7 @@ void ControlsDashboardSupervisor::SaveControlsPage(cgicc::Cgicc&    cgiIn,
 	std::string pageString       = CgiDataUtilities::postData(cgiIn, "Page");
 	std::string Time             = CgiDataUtilities::postData(cgiIn, "Time");
 	std::string Notes =
-	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::postData(cgiIn, "Notes"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgiIn, "Notes"));
 	std::string isControlsPagePublic = CgiDataUtilities::postData(cgiIn, "isPublic");
 
 	__SUP_COUTV__(controlsPageName);

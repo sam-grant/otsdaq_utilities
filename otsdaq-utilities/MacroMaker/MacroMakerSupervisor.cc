@@ -811,7 +811,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument&   xmldoc,
 	std::string interfaceIndexArray  = CgiDataUtilities::getData(cgi, "interfaceIndex");
 	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
 	std::string time =
-	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "time"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::getData(cgi, "time"));
 	std::string addressFormatStr = CgiDataUtilities::getData(cgi, "addressFormatStr");
 	std::string dataFormatStr    = CgiDataUtilities::getData(cgi, "dataFormatStr");
 
@@ -915,7 +915,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument&   xmldoc,
 	std::string interfaceIndexArray  = CgiDataUtilities::getData(cgi, "interfaceIndex");
 	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
 	std::string time =
-	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "time"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::getData(cgi, "time"));
 	std::string addressFormatStr = CgiDataUtilities::getData(cgi, "addressFormatStr");
 	std::string dataFormatStr    = CgiDataUtilities::getData(cgi, "dataFormatStr");
 
@@ -1022,7 +1022,7 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument&   xmldoc,
 	std::string Sequence = CgiDataUtilities::postData(cgi, "Sequence");
 	std::string Time     = CgiDataUtilities::postData(cgi, "Time");
 	std::string Notes =
-	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::postData(cgi, "Notes"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "Notes"));
 	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
 	std::string isMacroLSBF   = CgiDataUtilities::getData(cgi, "isLSBF");
 
@@ -1405,7 +1405,7 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument&   xmldoc,
 	std::string Sequence     = CgiDataUtilities::postData(cgi, "Sequence");
 	std::string Time         = CgiDataUtilities::postData(cgi, "Time");
 	std::string Notes =
-	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::postData(cgi, "Notes"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "Notes"));
 
 	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
 	std::string isMacroLSBF   = CgiDataUtilities::getData(cgi, "isLSBF");
@@ -1475,7 +1475,7 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument&   xmldoc,
 	std::string macroName     = CgiDataUtilities::getData(cgi, "MacroName");
 	std::string pluginName    = CgiDataUtilities::getData(cgi, "PluginName");
 	std::string macroSequence = CgiDataUtilities::postData(cgi, "MacroSequence");
-	std::string macroNotes    = CgiDataUtilities::decodeURIComponent(
+	std::string macroNotes    = StringMacros::decodeURIComponent(
         CgiDataUtilities::postData(cgi, "MacroNotes"));
 
 	__SUP_COUTV__(pluginName);
@@ -1751,7 +1751,7 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
 {
 	std::string macroName     = CgiDataUtilities::getData(cgi, "MacroName");
 	std::string macroSequence = CgiDataUtilities::postData(cgi, "MacroSequence");
-	std::string macroNotes    = CgiDataUtilities::decodeURIComponent(
+	std::string macroNotes    = StringMacros::decodeURIComponent(
         CgiDataUtilities::postData(cgi, "MacroNotes"));
 
 	__SUP_COUTV__(macroName);

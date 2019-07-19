@@ -26,20 +26,21 @@ echo -e "UpdateOTS.sh [${LINENO}]  "
 #replace StartOTS.sh in any setup file!
 sed -i s/StartOTS\.sh/ots/g ${MRB_SOURCE}/../setup_*
 
-if [ "x$1" == "x" ] || [[ "$1" != "--fetch" && "$1" != "--fetchall" && "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullcore" && "$1" != "--pushcore" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
+if [ "x$1" == "x" ] || [[ "$1" != "--fetch" && "$1" != "--fetchcore" && "$1" != "--fetchall" && "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullcore" && "$1" != "--pushcore" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
     echo -e "UpdateOTS.sh [${LINENO}]  \t Usage: Parameter 1 is the operation and, for pushes, Parameter 2 is the comment for git commit"
 	echo -e "UpdateOTS.sh [${LINENO}]  "
     echo -e "UpdateOTS.sh [${LINENO}]  \t Note: git status will be logged here: $CHECKIN_LOG_PATH"
 	echo -e "UpdateOTS.sh [${LINENO}]  "
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Parameter 1 operations:"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetch               \t #will fetch otsdaq repositories in srcs/"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetchall            \t #will fetch otsdaq repositories in srcs/"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pull                \t #will pull otsdaq user repositories in srcs/"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --push \"comment\"    \t #will push otsdaq user repositories in srcs/"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pullcore            \t #will pull otsdaq core repositories in srcs/"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pushcore \"comment\"\t #will push otsdaq core repositories in srcs/"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pullall             \t #will pull all    repositories in srcs/ (i.e. not just otsdaq)."
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pushall \"comment\" \t #will push all    repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetch               \t #will fetch otsdaq repositories in srcs/"	
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pull                \t #will pull  otsdaq user repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --push \"comment\"    \t #will push  otsdaq user repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetchcore           \t #will fetch otsdaq core repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pullcore            \t #will pull  otsdaq core repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pushcore \"comment\"\t #will push  otsdaq core repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetchall            \t #will fetch all    repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pullall             \t #will pull  all    repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pushall \"comment\" \t #will push  all    repositories in srcs/ (i.e. not just otsdaq)."
 	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --tables              \t #will not pull or push; it will just update tables."
 		
 	echo -e "UpdateOTS.sh [${LINENO}]  "
@@ -218,6 +219,11 @@ if [ "$1"  == "--fetchall" ]; then
 	ALL_REPOS=1
 	FETCH_ONLY=1
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Fetching all repositories (i.e. not only otsdaq)!"
+fi
+if [ "$1"  == "--fetchcore" ]; then
+	ONLY_CORE=1
+	FETCH_ONLY=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Fetching otsdaq core repositories!"
 fi
 if [ "$1"  == "--fetch" ]; then		
 	FETCH_ONLY=1
