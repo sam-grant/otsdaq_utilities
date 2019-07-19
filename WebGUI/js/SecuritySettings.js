@@ -333,9 +333,10 @@ function editSecurityHandler(req)
 	
 	if(selectedSecurityChoice_ == "DigestAccessAuthentication")
 		Debug.log("Digest Access Authentication was enabled successfully!" + 
-				"\n\nIf this is the first time you are enabling users and passwords, " +
+				"\n\n NOTE: If this is the first time you are enabling users and passwords, " +
 				"then you must get the New Account Code for the admin account from " +
-				"the printouts in the linux console when you start ots in normal mode." +
+				"the printouts in normal mode. In verbose mode ('ots -v'), the admin New Account Code will be in the linux console; " +
+				"otherwise ('ots'), the admin New Account Code can be retrieved in the Gateway log file. " +
 				"\n\nAfter the admin account has been setup, new accounts can be made and " +
 				"the admin account will have access to the New Account Codes in the settings " +
 				"web GUI.", 
