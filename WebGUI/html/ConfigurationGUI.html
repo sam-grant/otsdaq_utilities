@@ -524,13 +524,12 @@
 	
 		var firstInit_ = true;
 		
-		
 		//init called once body has loaded
 		function init() {			
 						
 			Debug.log("CfgGUI init ");
-			DesktopContent.tooltip("Configuration GUI Introduction",
-					"Welcome to the Configuration GUI. Here you can manipulate every configuration "+
+
+		         var windowTooltip = 	"Welcome to the Configuration GUI. Here you can manipulate every configuration "+
 					"parameter in your entire <i>otsdaq</i> system. \n\n" +
 					"The organization of the Configuration GUI is as follows:\n" +
 					"There are links at the top of the page to switch between the main views" +
@@ -548,8 +547,13 @@
 					"\n\n" +
 					"You will see one more type view in the Configuration GUI and that is the 'Tree-view'." +
 					"Briefly, the 'Tree-view' is a way of viewing tables that are linked together - " +
-					"each group can be viewed in 'Tree-view' format."
-			);
+					"each group can be viewed in 'Tree-view' format.";
+		
+
+			DesktopContent.tooltip("Configuration GUI Introduction",
+				windowTooltip
+		        );
+		        DesktopContent.setWindowTooltip(windowTooltip);
 			
 			
 			window.onkeydown = bodyKeyHandler;
@@ -762,7 +766,7 @@
 					{
 						//end blackout
 						DesktopContent._blockSystemCheckMailbox.innerHTML = "";
-						Debug.log("And we are back!",Debug.INFO_PRIORITY);
+						Debug.log("And we are back!<br>If you are switching modes, you will need to manually change the URL in your browser.",Debug.INFO_PRIORITY);
 						setupSystemViewMode();
 						DesktopContent.XMLHttpRequest("Request?" +
 								"RequestType=clearTableCachedVersions" +
