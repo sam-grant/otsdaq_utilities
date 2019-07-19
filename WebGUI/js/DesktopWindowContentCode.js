@@ -128,6 +128,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth, cancelFunc)
 //	DesktopContent.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	DesktopContent.tooltip(uid,tip)
+//      DesktopContent.setWindowTooltip(tip)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
 //	DesktopContent.getWindowScrollLeft()
@@ -137,7 +138,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getMouseX()
 //	DesktopContent.getMouseY()
 //	DesktopContent.getDefaultWindowColor()
-//  DesktopContent.getDefaultDashboardColor()
+//      DesktopContent.getDefaultDashboardColor()
 //	DesktopContent.getDefaultDesktopColor()
 //	DesktopContent.getUsername()
 //	DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
@@ -1190,6 +1191,17 @@ DesktopContent.tooltip = function(id,tip) {
 	},0,0,0,true,true); //show loading, and target supervisor
 	
 }
+
+//=====================================================================================
+DesktopContent.setWindowTooltip = function(tip)
+{
+    var windowTooltipElement = document.createElement("div");
+    windowTooltipElement.setAttribute("id", "otsDesktopWindowTooltipElement");
+    windowTooltipElement.setAttribute("style", "display:none");
+    
+    windowTooltipElement.innerText = encodeURIComponent(tip);
+    document.body.appendChild(windowTooltipElement);
+} //end setWindowTooltip()
 
 //=====================================================================================
 //setSecurityOne
