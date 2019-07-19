@@ -2,149 +2,19 @@
 <html lang="en">
 	<head>
 		<title>Supervisor</title>
-		<style type="text/css">			
-			body {
-				background-color: rgb(200,200,200);
-				font-family: 'Comfortaa', serif;
-			}
-			
-			#clearDiv {
-				clear: both;
-			}
-			
-			a {
-				color: blue;
-				cursor:pointer;
-				text-decoration: underline;
-			}
-			
-			input:not([type=submit]) {
-				border: 1px solid gray;
-				box-shadow: 
-				  inset 0 0 8px  rgba(0,0,0,0.1),
-				        0 0 16px rgba(0,0,0,0.1); 
-				padding: 5px;
-				background: rgba(255,255,255,0.75);
-				margin: 0 0 10px 0;
-				border-radius: 3px;	
-			}
-			
-			#colorInputs {
-				width: 400px;
-			}		
-						
-			#colorInputs input {
-				width: 30px;
-				text-align: center;
-			}				
-			
-			.Settings-el {
-				float: left;
-				margin: 5px;
-			}
-			
-			.Settings-colorName {
-				width:150px;
-				text-align: right;
-				white-space: nowrap;
-			}
-			
-			.Settings-colorBox {
-				width:25px;
-				height:25px;
-				margin: -1px 0 5px 10px;
-				border: 2px solid black;
-			}
-			 
-			#windLayoutDiv {
-				margin-left: 20px;
-				width: 400px;
-			}
-			
-			.winLayoutLink {
-				text-decoration: none;
-				font-weight: 800;
-				color: black;
-			}
-			.winLayoutLink:hover {
-				text-decoration: underline;
-			}
-				
-			li {
-				list-style-type:square;
-				width: 400px;
-			}
-			
-			.winLayoutText {
-				white-space: nowrap;			
-			}
-			
-			td {
-				text-align: center;
-			}
-			
-			.accountsHeaderFld {
-				font-weight: 800;
-			}
-						
-			#accountsPageNav a {
-				color: #880000;
-				text-decoration: none;
-			}
-			#accountsPageNav a:hover {
-				text-decoration: underline;
-			}
-			.accountsHeaderFld a {
-				color: #880000;
-				text-decoration: none;
-			}
-			.accountsHeaderFld a:hover {
-				text-decoration: underline;
-			}
-			
-			#loaderGif {
-				margin: 50px 0 0 100px;
-			}
-			
-			.actPermInput {
-				width: 60px;
-				margin: 5px;
-			}
-			
-			.actDispNameInput {
-				width: 120px;	
-				margin: 25px 0 0 0;		
-			}
-			
-			table {
-				border: 2px solid #aaaaaa;
-			    border-radius: 5px;
-			    background-color: #dddddd;
-			}
-			
-			#accountsPermNote {
-				font-size: 12px;	
-				margin-left: 10px;
-				color: #444444;			
-			}
-			
-			#jumpToAccounts {
-				width: 100%;
-			}
-			
-		</style>
 		
 		<!--link href="https://fonts.googleapis.com/css?family=Comfortaa" rel="stylesheet"-->
 		<link href='/WebPath/css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
+		<link type='text/css' rel='stylesheet' href='/WebPath/css/UserSettings.css'>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 		 
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-		
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>	
 		
 		<script>		
 				
-			var _selectedLayout = -2; //hold index of selected layout, if any
+			var _selectedLayout = -2; //hold index of selected , if any
 			var _mailbox,_settingsLayoutMailbox; //pass messages to Desktop
 			var _layoutArray,_sysLayoutArray,_accountsArray;
 			var _NUM_USER_LAYOUTS = 5; //changing this number alone should work... but also have to change Desktop (this.defaultLayoutSelect) and DesktopDashboard (_layoutMenuItems) handling!
@@ -152,6 +22,10 @@
 			var _NUM_OF_LAYOUT_FIELDS = 8;
 			var _accountFields = ["username","useremail","display_name","permissions","nac"];
 			var _theDeleteIndex = -1;
+			
+			var userGroups = "";
+			var Groups = "";
+			
 			
 			//for accounts display
 			var _AccountsPageIndex = 0;
@@ -237,21 +111,23 @@
 				
 				settingsRequest();
 				
+				const tooltipContent = 						
+				"<p id='tools'>"+"Welcome to the User Settings window. Here you can personalize " +
+					"your user experience.\n\n" +
+					"Here is what you can personalize:" +
+					"\n\t- Color Scheme: " +
+					"<div style='margin-left:40px'>" +
+					"You can change your color scheme by choosing colors for " +
+					"the desktop dashboard, the desktop background, and desktop windows." +
+					"</div>" +
+					"\n\t- Window Layouts: each user can customize their window layout presets. " +
+					"A layout preset is a set of windows (including their size and position on your " +
+					"desktop) that you can recall any time you would like by clicking 'Layouts' " +
+					"in the top left of the desktop environment and choosing a preset. This is useful" +
+					"of you find yourself always using the same few windows - you can open them all with one click! "+"</p>";
 				DesktopContent.tooltip("User Settings Introduction",
-						"Welcome to the User Settings window. Here you can personalize " +
-						"your user experience.\n\n" +
-						"Here is what you can personalize:" +
-						"\n\t- Color Scheme: " +
-						"<div style='margin-left:40px'>" +
-						"You can change your color scheme by choosing colors for " +
-						"the desktop dashboard, the desktop background, and desktop windows." +
-						"</div>" +
-						"\n\t- Window Layouts: each user can customize their window layout presets. " +
-						"A layout preset is a set of windows (including their size and position on your " +
-						"desktop) that you can recall any time you would like by clicking 'Layouts' " +
-						"in the top left of the desktop environment and choosing a preset. This is useful" +
-						"of you find yourself always using the same few windows - you can open them all with one click! "
-						);
+				
+						tooltipContent);
 			}	
 			
 			//request current settings immediately once page loads
@@ -345,7 +221,7 @@
 						el.innerHTML = "Currently: no layout set";
 					else
 						el.innerHTML = "Currently: <a href='#' onmouseup='showLayoutText(" +
-							(i+1) + ",true,event,1); return false;'>show</a>";		
+							(i+1) + ",true,event,1); return false;'>show</a>"; 		
 				}
 				
 			} //end extractLayoutToForm()			
@@ -464,9 +340,9 @@
 					el = document.getElementById("newAccountFeedbackDiv");
 					if(el) {
 						if(_accountsArray[0].length != _oldAccountSize)
-							el.innerHTML = "<font color='green'>New account added successfully!</font>";
+							el.innerHTML = "<center  style='padding:5px'><font color='green'>New account added successfully!</font></center>";
 						else
-							el.innerHTML = "<font color='red'>New account was not created. Did you have at least 4 characters?</font>";
+							el.innerHTML = "<center style='padding:5px'><font color='red'>New account was not created. Did you have at least 4 characters?</font></center>";
 					}
 				}
 
@@ -609,7 +485,7 @@
 				var htmlStr = "";
 				
 				if(_usernameWithLock && _usernameWithLock != "") //insert user with lock if applicable
-					htmlStr += "<div style='color:red'>Note: <i>" + _usernameWithLock + "</i> currently has the ots Lock.</div>";
+					htmlStr += "<div style='color:yellow'>Note: <i>" + _usernameWithLock + "</i> currently has the ots Lock.</div>";
 				
 				if(_accountsArray[0] && _accountsArray[0].length) //If have permissions, add Jump to Link
 				{
@@ -624,7 +500,7 @@
 				
 				htmlStr = "";
 				
-				htmlStr += "<br><hr width='75%'><a href='#' style='color:#880000'>Jump to Preferences Section</a><h1>Accounts</h1>";
+				htmlStr += "<br><hr width='75%'><center><a href='#' style='color:#880000'>Jump to Preferences Section</a></center><h1>Accounts</h1>";
 				
 				htmlStr += "<div id='accountsSearchDiv'>Search: " + 
 					"<input onkeyup='handleSearchKeyUp();' type='text' id='accountsSearchBox' value='" + _AccountsLastSearch + "'></div>";
@@ -635,7 +511,7 @@
 				if(_AccountsPageIndex < 0) _AccountsPageIndex = 0; //don't allow page to be negative, or bad array access happens
 				Debug.log("Settings showing page " + (_AccountsPageIndex+1) + " of " + numOfPages);
 				
-				htmlStr += _AccountsOrderArray.length + " accounts found (" + _AccountsPageSize + " per page).<br>";
+				htmlStr += "<center>"+ _AccountsOrderArray.length + " accounts found (" + _AccountsPageSize + " per page).</center><br>";
 				htmlStr += "<div id='accountsPageNav'>Navigate: ";
 				htmlStr += "<a onmouseup='setAccountsPage("+ (_AccountsPageIndex-1) + ")'; event.stopPropagation(); return false;'>&nbsp;Prev </a>";				
 				
@@ -650,7 +526,7 @@
 				htmlStr += "<a onmouseup='Javascript:setAccountsPage("+ (_AccountsPageIndex+1) + ")';event.stopPropagation(); return false;'> Next&nbsp;</a>";
 				htmlStr += "</div>";
 				
-				htmlStr += "<div id='accountsPermNote'>Permissions Note: 0 := Inactive, 10 := Standard User, 100 := Expert, 255 := Super User</div>"; 
+				htmlStr += "<center><div id='accountsPermNote'>Permissions Note: 0 := Inactive, 10 := Standard User, 100 := Expert, 255 := Super User<br>Tip: Add new group and view existing groups in the permissions box. <br>(e.g. allUsers: 10, newGroup: 150)</div></center>"; 
 				
 				//////////////////////////////////////////////////////
 				//accounts table
@@ -710,10 +586,10 @@
 				htmlStr += "</table>";
 				htmlStr += "</div>";
 				
-				htmlStr += "<input id='theRealDelete' style='display:none' type='submit' onmouseup='reallyDelete(event);' value='Really Delete!'><br>";
+				htmlStr += "<center style='padding-top: 5px;'><input id='theRealDelete' style='display:none; background-color: #EAABAB' type='submit' onmouseup='reallyDelete(event);' value='Really Delete!'></center><br>";
 				//////////////////////////////////////////////////////
 				//add new account option				
-				htmlStr += "<h3>Create New Account:</h3>";		
+						   htmlStr += "<h3 style='margin-bottom: -15px; margin-top: 10px'>Create New Account:</h3>";		
 				htmlStr += "<table><tr>";
 				for(j=0;j<_accountFields.length-1;++j) //omit nac field
 					htmlStr += "<td class='accountsHeaderFld'>" + _accountFields[j] + "</td>";
@@ -721,11 +597,16 @@
                 htmlStr += "<td><input type='text' id='accountsUsernameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
                 htmlStr += "<td><input type='text' id='accountsEmailNew' value='' onkeydown='return handleEmailInputKeyDown(event)'></td> ";
 				htmlStr += "<td><input type='text' id='accountsDisplayNameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
-				htmlStr += "<td>1</td> ";
+				htmlStr += "<td><input type='text' id='accountsDisplayNameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
+				htmlStr += "<td></td><br><br>";
 				htmlStr += "</tr></table>";
-				htmlStr += "<input type='submit' onmouseup='createNewAccount(event);' value='Create New Account'>";
+						       htmlStr += "<center><div style='padding-top: 10px'><input id='newacct' type='submit' onmouseup='createNewAccount(event);' value='Create New Account'></div></center>";
 				
 				el.innerHTML = htmlStr;
+				
+	
+				
+				///////
 				
 				if(_AccountsTriedSearch) {
 					el = document.getElementById('accountsSearchBox');
@@ -746,7 +627,8 @@
                     (e.keyCode >= 65 && e.keyCode <= 90) || //accept letters and shifted letters
                     e.keyCode == 46 || e.keyCode == 8 || //delete, backspace
                     e.keyCode == 35 || e.keyCode == 36 ||  //home and end
-                    (e.keyCode >= 37 && e.keyCode <= 40))  //arrows are accepted 
+                    (e.keyCode >= 37 && e.keyCode <= 40 || //arrows are accepted 
+                    e.keyCode == 188 || e.keyCode == 186 || e.keyCode == 32)) // Space, Colon, and Comma
 					return true;
 				
 				return false; //to stop tab and enter (and unaccepted chars) from propagating to window
@@ -1089,24 +971,39 @@
 							function() {
 						Debug.log("All of your Tooltips have been reset!",
 								Debug.INFO_PRIORITY);
+					}, 0, 0, 0, false); //show loading
+				});
+			}
+			
+			function silenceUserTooltips() {
+				DesktopContent.popUpVerification("Are you sure you want to silence all your " +
+						"Tooltips?<br>",
+						function() {
+					Debug.log("accepted");
+					DesktopContent.XMLHttpRequest("Request?RequestType=silenceUserTooltips","",
+							function() {
+						Debug.log("All of your Tooltips have been silenced!",
+								Debug.INFO_PRIORITY);
 					}, 0, 0, 0, true); //show loading
 				});
 			}
 			
-		</script>
+
+
+			</script>
 		
 	</head>
 	
 	
 	<body onload='Javascript:init();'>	
-			
+		
 		<div id='jumpToAccounts'></div>
-		<h1>General Preferences</h1>
-		
-		<input id='prefBtn' type='submit' value='Save Preferences' 
+		<div id = "header" style = "width:100%"><h1>General Preferences</h1>
+		 <!--<p align="right" onclick="groupsTips()" class="tip" style='font-size:30px;'>&#10067;</p></div>-->
+
+		<center><input id='prefBtn' type='submit' value='Save Preferences' 
 				onmouseup='saveGenPreferences(); event.stopPropagation(); return false;' />
-		<br>
-		
+		<br>	
 		<h3>Color Scheme:</h3>
 		<table><td>
 		<div id='colorInputs'></div>		
@@ -1133,26 +1030,28 @@
 					<a onmouseup='Javascript:setLayout(5,event)' class='winLayoutLink' id='winSysLayoutLink2'><li>Set Current Window Layout as System Preset-2</li></a>		
 					<div class='winLayoutText' id='winSysLayoutText2'></div>
 			</div> -->
-		</div>
+		</div></center>
 		
 		
 		<div id='clearDiv'></div>
 		
 		<br>
-		<input id='prefBtn' type='submit' value='Save Preferences' onmouseup='saveGenPreferences(event); return false;' />
+		<center><input id='prefBtn' type='submit' value='Save Preferences' onmouseup='saveGenPreferences(event); return false;' /></center>
 
 		<div id='clearDiv'></div>
 		<h3>Misc. Personal Customizations:</h3>
-		<ul>
-			<li>
-				<a onmouseup='Javascript:resetUserTooltips()'>Reset My Tooltips</a>
-			</li>
-		</ul>
+	
+				<center><button class = 'reset' onmouseup='Javascript:resetUserTooltips()'>Reset My Tooltips</button> <!--onmouseup='Javascript:resetUserTooltips()'-->
+			
+				<button class = 'silence' onclick='Javascript:silenceUserTooltips()'>Silence My Tooltips</button></center>
+		
 		
 		<a name="ACCOUNTS_LABEL"></a>
 		<div id='accountsDiv'></div>
 		<div id='newAccountFeedbackDiv'></div>
-		<br><br><br><br>
+				<br><br><br><br>
+			
+
 	</body>
 	
 </html>
