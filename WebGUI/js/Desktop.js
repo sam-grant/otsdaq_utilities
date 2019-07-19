@@ -774,7 +774,30 @@ Desktop.createDesktop = function(security) {
 	    this.setForeWindow(win);
 	    this.refreshWindow();
             console.log("Finished refreshWindow() " + id);
-  	  }
+		}
+	
+	this.windowHelpById = function (id) {
+		var win = this.getWindowById(id);
+		if (win == -1) return -1;
+
+		this.setForeWindow(win);
+		var tempwin = Desktop.desktop.getForeWindow();
+
+		console.log(tempwin);
+		console.log(tempwin.windiv);	    
+
+	        var tooltipEl = tempwin.windiv.childNodes[2].childNodes[0].contentWindow.document.getElementById("otsDesktopWindowTooltipElement");
+	    
+		if(!tooltipEl)
+	        {
+		    DesktopContent.tooltip("ALWAYS", "There is no tooltip for the " + tempwin.getWindowName() +
+					   "window. Try visiting <a href='https://otsdaq.fnal.gov' target='_blank'>otsdaq.fnal.gov</a> for further assistance.");
+		}
+		else
+	        {
+		    DesktopContent.tooltip("ALWAYS", decodeURIComponent(tooltipEl.innerText));
+		}
+	}
 
 	this.refreshWindow = function(e) {
 	    if(!_getForeWindow()) return;
@@ -1640,6 +1663,12 @@ Desktop.handleWindowRefresh = function(mouseEvent){
         Debug.log("Refresh " + this.id.split('-')[1]);
         Desktop.desktop.refreshWindowById(this.id.split('-')[1]);
         return false;
+
+}
+Desktop.handleWindowHelp = function (mouseEvent) {
+	Debug.log("Help " + this.id.split('-')[1]);
+	Desktop.desktop.windowHelpById(this.id.split('-')[1]);
+	return false;
 
 }
 
