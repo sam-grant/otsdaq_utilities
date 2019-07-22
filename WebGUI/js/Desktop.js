@@ -786,16 +786,39 @@ Desktop.createDesktop = function(security) {
 		console.log(tempwin);
 		console.log(tempwin.windiv);	    
 
-	        var tooltipEl = tempwin.windiv.childNodes[2].childNodes[0].contentWindow.document.getElementById("otsDesktopWindowTooltipElement");
-	    
+		var tooltipEl;
+		
+		try //try no-frameset approach (if window is not in frame)
+		{
+			tooltipEl = tempwin.windiv.childNodes[2].childNodes[0].contentWindow.document.getElementById("otsDesktopWindowTooltipElement");
+		}
+		catch(e)
+		{
+			Debug.log("Ignoring error: " + e);
+			tooltipEl = 0;
+		}
 		if(!tooltipEl)
-	        {
-		    DesktopContent.tooltip("ALWAYS", "There is no tooltip for the " + tempwin.getWindowName() +
-					   "window. Try visiting <a href='https://otsdaq.fnal.gov' target='_blank'>otsdaq.fnal.gov</a> for further assistance.");
+		{
+			try //try frameset approach (if window is in frame)
+			{
+				tooltipEl = tempwin.windiv.childNodes[2].childNodes[0].contentWindow.document.getElementsByTagName("frameset")[0].childNodes[0].contentWindow.document.getElementById("otsDesktopWindowTooltipElement");
+			}
+			catch(e)
+			{
+				Debug.log("Ignoring error: " + e);
+				tooltipEl = 0;
+			}
+		}
+					
+
+		if(!tooltipEl)
+		{
+			DesktopContent.tooltip("ALWAYS", "There is no tooltip for the " + tempwin.getWindowName() +
+					" window. Try visiting <a href='https://otsdaq.fnal.gov' target='_blank'>otsdaq.fnal.gov</a> for further assistance.");
 		}
 		else
-	        {
-		    DesktopContent.tooltip("ALWAYS", decodeURIComponent(tooltipEl.innerText));
+		{
+			DesktopContent.tooltip("ALWAYS", decodeURIComponent(tooltipEl.innerText));
 		}
 	}
 
