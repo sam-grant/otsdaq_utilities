@@ -215,8 +215,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		std::string columnChoicesCSV =
 		    CgiDataUtilities::postData(cgiIn, "columnChoicesCSV");  // from POST
 
-		// columnCSV = CgiDataUtilities::decodeURIComponent(columnCSV);
-		// tableDescription = CgiDataUtilities::decodeURIComponent(tableDescription);
+		// columnCSV = StringMacros::decodeURIComponent(columnCSV);
+		// tableDescription = StringMacros::decodeURIComponent(tableDescription);
 
 		__SUP_COUT__ << "tableName: " << tableName << __E__;
 		__SUP_COUT__ << "columnCSV: " << columnCSV << __E__;
@@ -994,8 +994,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                          targetTable,
 		                          TableVersion(targetTableVersion),
 		                          editNodeType,
-		                          CgiDataUtilities::decodeURIComponent(targetUID),
-		                          CgiDataUtilities::decodeURIComponent(targetColumn),
+		                          StringMacros::decodeURIComponent(targetUID),
+		                          StringMacros::decodeURIComponent(targetColumn),
 		                          newValue,
 		                          userInfo.username_);
 	}
@@ -1005,7 +1005,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		std::string linkToTableVersion =
 		    CgiDataUtilities::getData(cgiIn, "linkToTableVersion");
 		std::string linkIdType = CgiDataUtilities::getData(cgiIn, "linkIdType");
-		std::string linkIndex  = CgiDataUtilities::decodeURIComponent(
+		std::string linkIndex  = StringMacros::decodeURIComponent(
             CgiDataUtilities::getData(cgiIn, "linkIndex"));
 		std::string linkInitId = CgiDataUtilities::getData(cgiIn, "linkInitId");
 
@@ -1673,7 +1673,7 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		//		allTableInfo.at(activePair.first).tablePtr_->getView().getVersion() <<
 		//__E__;
 	}
-}
+} //end setupActiveTablesXML()
 catch(std::runtime_error& e)
 {
 	__SUP_SS__ << ("Error setting up active tables!\n\n" + std::string(e.what()))
@@ -1686,7 +1686,8 @@ catch(...)
 	__SUP_SS__ << ("Error setting up active tables!\n\n") << __E__;
 	__SUP_COUT_ERR__ << "\n" << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
-}
+	throw; //throw to get info from special errors at a parent level
+} //end setupActiveTablesXML() throw
 
 //========================================================================================================================
 // handleFillCreateTreeNodeRecordsXML

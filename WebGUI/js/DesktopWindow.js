@@ -78,7 +78,7 @@ else {
 			//	private function to refresh header name based on window size
 			// 	clip text if too long
 		var _refreshHeader = function() {
-			var hdrW = _w-2*_defaultHeaderLeftMargin-4*(_defaultButtonSize+_defaultButtonLeftMargin);
+			var hdrW = _w-2*_defaultHeaderLeftMargin-5*(_defaultButtonSize+_defaultButtonLeftMargin);
 			_winhdr.style.width = hdrW +"px"; 
 			_winhdr.innerHTML = _name + (_subname==""?"":" - ") + _subname;
 			while(_winhdr.scrollWidth > hdrW && _winhdr.innerHTML.length > 4)
@@ -308,6 +308,8 @@ else {
 	   	this.windiv.appendChild(_winhdr); //add header to window	   	
 	   	
 			//create buttons
+
+
 		var tmpContainer = document.createElement("div");
 		tmpContainer.setAttribute("style", "float:right;white-space:nowrap;");
 		var tmpBtn = document.createElement("div");
@@ -324,6 +326,23 @@ else {
 		tmpEl.innerHTML = "↻";
 		tmpBtn.appendChild(tmpEl);
 		tmpContainer.appendChild(tmpBtn); //add button to window 
+
+		//create new window element next to the refresh button with the question mark
+		var tmpBtn = document.createElement("div");
+		tmpBtn.setAttribute("class", "DesktopWindowButton");
+		tmpBtn.setAttribute("id", "DesktopWindowButtonHelp-" + _id);
+		tmpBtn.style.width = (_defaultButtonSize) +"px";
+		tmpBtn.style.height = (_defaultButtonSize) +"px";
+		tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px";
+		tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";
+		tmpBtn.onmouseup = Desktop.handleWindowHelp;
+		tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
+		var tmpEl = document.createElement("div");
+		tmpEl.setAttribute("class", "DesktopWindowButtonGraphicHelp");
+		tmpEl.innerHTML = "?";
+		tmpBtn.appendChild(tmpEl);
+		tmpContainer.appendChild(tmpBtn); //add button to window 
+
 
 		var tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopWindowButton");

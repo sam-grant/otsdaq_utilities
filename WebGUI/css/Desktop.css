@@ -283,6 +283,17 @@
 		color: 					#0f2269;
 	}
 
+	#Desktop .DesktopWindowButtonGraphicHelp {
+		width: 					12px;
+		height: 				12px;
+		margin: 				3px 0 0 5px;
+		color: 					#0f2269;
+		/*font-family: arial; this is displaying differently in chrome and firefox .. so trying different font */
+		font-family: 			'Comfortaa', serif;
+		font-size: 				18px;
+		line-height: 			16px;
+	}
+
 	#Desktop .DesktopWindowButtonGraphicRefresh {
 		width: 					12px;
 		height: 				12px;

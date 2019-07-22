@@ -993,11 +993,21 @@
 
 			}
 			
-			function settingsReqHandler(req) {
-				var settings = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
-				var id = DesktopContent.getXMLValue(req,"id");
+			function settingsReqHandler(req, passParams) {
+				var settings = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));				
+				var id = passParams[0];
+				var parameters = passParams[1];
+				
+				console.log("id: " + id + " parameter: " + parameters);
+
+				//var id = DesktopContent.getXMLValue(req,"id");
+				console.log(req);
+				console.log(settings);
+				console.log(id);
+
 				
 				page_.widgets[id].el.contentWindow.setupPVs(settings);
+				page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
 
 			}
 		
@@ -1197,8 +1207,15 @@
 				
 				console.log("******************************^^^^^^^^^^^^^^^^^^^^^" + pvList);
 				
-				DesktopContent.XMLHttpRequest("Request?RequestType=GetPVSettings&PVList=" + pvList + "&id=" + id, "", settingsReqHandler);//, undefined, undefined, "sequence");	
-				page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
+                var passParams = [id, parameters];
+				//DesktopContent.XMLHttpRequest("Request?RequestType=GetPVSettings&PVList=" + pvList + "&id=" + id, "", settingsReqHandler);//, undefined, undefined, "sequence");	
+				DesktopContent.XMLHttpRequest("Request?RequestType=getPVSettings",
+									//post data 
+		    						"PVList=" + pvList + 
+									"&id=" + id,
+									settingsReqHandler /*handler*/,
+									 passParams /*parameter*/);
+				//page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
 
 
 			}
@@ -1894,9 +1911,12 @@
 			
 			function showeditWidgetAttributesPopupBody(body)
 			{
+				editWidgetAttributesSave();
+			
 				elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display = "none";
 				elPointer_["editWidgetAttributesPopup-body-attributes"].style.display = "none";
 				elPointer_["editWidgetAttributesPopup-body-macromaker"].style.display = "none";
+				
 				
 				if (body == "EditAttributes")
 				{

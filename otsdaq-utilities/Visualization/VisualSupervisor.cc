@@ -494,7 +494,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 					//__SUP_COUT__ << "histo length " << tbuff.Length() << __E__;
 
-					std::string destination = BinaryStringMacros::binaryToHexString(
+					std::string destination = BinaryStringMacros::binaryStringToHexString(
 					    tBuffer.Buffer(), tBuffer.Length());
 
 					xmlOut.addTextElementToData("rootType", histoClone->ClassName());

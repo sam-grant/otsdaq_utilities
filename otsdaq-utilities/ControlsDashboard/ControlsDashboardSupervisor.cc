@@ -221,10 +221,10 @@ void ControlsDashboardSupervisor::handleRequest(const std::string  Command,
 		std::string pvList = CgiDataUtilities::getOrPostData(cgiIn, "PVList");
 		GenerateUID(cgiIn, xmlOut, pvList);
 	}
-	else if(Command == "GetPVSettings")
+	else if(Command == "getPVSettings")
 	{
-		std::string pvList = CgiDataUtilities::getOrPostData(cgiIn, "PVList");
-		GetPVSettings(cgiIn, xmlOut, pvList);
+		__SUP_COUT__ << "PV settings requested from server! " << std::endl;
+		GetPVSettings(cgiIn, xmlOut);
 		xmlOut.addTextElementToData("id", CgiDataUtilities::getData(cgiIn, "id"));
 	}
 	else if(Command == "getList")
@@ -353,11 +353,16 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc&    cgiIn,
-                                                HttpXmlDocument& xmlOut,
-                                                std::string      pvList)
+                                                HttpXmlDocument& xmlOut)
 {
+	
+	std::string pvList = CgiDataUtilities::postData(cgiIn, "PVList");
+
+
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
 	             << "Getting settings for " << pvList << std::endl;
+	             
+
 
 	std::string JSONMessage = "{ ";
 
@@ -377,15 +382,15 @@ void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc&    cgiIn,
 			std::array<std::string, 9> pvSettings = interface_->getSettings(pv);
 
 			JSONMessage += "\"" + pv + "\": {";
-			JSONMessage += "\"Units              \": \"" + pvSettings[0] + "\",";
-			JSONMessage += "\"Upper_Display_Limit\": \"" + pvSettings[1] + "\",";
-			JSONMessage += "\"Lower_Display_Limit\": \"" + pvSettings[2] + "\",";
-			JSONMessage += "\"Upper_Alarm_Limit  \": \"" + pvSettings[3] + "\",";
-			JSONMessage += "\"Upper_Warning_Limit\": \"" + pvSettings[4] + "\",";
-			JSONMessage += "\"Lower_Warning_Limit\": \"" + pvSettings[5] + "\",";
-			JSONMessage += "\"Lower_Alarm_Limit  \": \"" + pvSettings[6] + "\",";
-			JSONMessage += "\"Upper_Control_Limit\": \"" + pvSettings[7] + "\",";
-			JSONMessage += "\"Lower_Control_Limit\": \"" + pvSettings[8] + "\"},";
+			JSONMessage += "\"Units\": \"" 					+ pvSettings[0] + "\",";
+			JSONMessage += "\"Upper_Display_Limit\": \"" 	+ pvSettings[1] + "\",";
+			JSONMessage += "\"Lower_Display_Limit\": \"" 	+ pvSettings[2] + "\",";
+			JSONMessage += "\"Upper_Alarm_Limit\": \"" 		+ pvSettings[3] + "\",";
+			JSONMessage += "\"Upper_Warning_Limit\": \"" 	+ pvSettings[4] + "\",";
+			JSONMessage += "\"Lower_Warning_Limit\": \"" 	+ pvSettings[5] + "\",";
+			JSONMessage += "\"Lower_Alarm_Limit\": \"" 		+ pvSettings[6] + "\",";
+			JSONMessage += "\"Upper_Control_Limit\": \"" 	+ pvSettings[7] + "\",";
+			JSONMessage += "\"Lower_Control_Limit\": \"" 	+ pvSettings[8] + "\"},";
 
 			pos = nextPos + 1;
 		}
@@ -398,6 +403,8 @@ void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc&    cgiIn,
 	}
 	else
 	{
+		__SUP_COUT__ << "Did not find any settings because PV list is length zero!" << std::endl;
+
 		xmlOut.addTextElementToData(
 		    "JSON", "{ \"message\": \"GetPVSettings\"}");  // add to response
 	}
@@ -542,7 +549,7 @@ void ControlsDashboardSupervisor::loadPage(cgicc::Cgicc&    cgiIn,
 	}
 
 	std::string file = CONTROLS_SUPERVISOR_DATA_PATH;
-	file += CgiDataUtilities::decodeURIComponent(page);
+	file += StringMacros::decodeURIComponent(page);
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 	             << "Trying to load page: " << page << std::endl;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
@@ -592,7 +599,7 @@ void ControlsDashboardSupervisor::SaveControlsPage(cgicc::Cgicc&    cgiIn,
 	std::string pageString       = CgiDataUtilities::postData(cgiIn, "Page");
 	std::string Time             = CgiDataUtilities::postData(cgiIn, "Time");
 	std::string Notes =
-	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::postData(cgiIn, "Notes"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgiIn, "Notes"));
 	std::string isControlsPagePublic = CgiDataUtilities::postData(cgiIn, "isPublic");
 
 	__SUP_COUTV__(controlsPageName);

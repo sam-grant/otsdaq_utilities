@@ -38,15 +38,28 @@
 		}
 		
 		#display {
-			padding: 			0;
+			padding: 		10px;
+			margin: auto;
 		}
 		
 		#macroModulesTable, .macroModuleTable {
 			border:				0;
+			
+		}
+		body .macroModule{
+			margin: auto;
 		}
 		.macroModule {
-			border:				1px solid grey;
-			padding:			10px;
+			border:				2px solid #000058;
+			padding:			30px;
+			background: rgb(255, 255, 255);
+			/* background: -webkit-linear-gradient(top, #838AB1, #B2FFFC);
+			background: -moz-linear-gradient(top, #838AB1, #B2FFFC);
+			background: linear-gradient(to bottom, #838AB1, #B2FFFC); */
+			margin: auto;
+		}
+		div:hover,div:active{
+			font-size: 120%;
 		}
 		
 		td {
@@ -56,6 +69,9 @@
 		
 		.macroOutputName, .macroInputName  {
 			font-weight:		bold;
+		}
+		h1{
+			font-size: 40px;
 		}
 		
 		
@@ -473,7 +489,7 @@
 				for(var i=0;i<outputArgNames.length;++i)
 				{
 					var name = outputArgNames[i].getAttribute("value");
-					var value = outputArgValues[i].getAttribute("value");
+					var value = decodeURIComponent(outputArgValues[i].getAttribute("value"));
 					if(name == "Filename" || name == "filename")
 						str += name + " = " +
 							//if filename, add link to CodeEditor
@@ -1193,13 +1209,13 @@
 
 <body onload='Javascript:init();'>	
 		
-	<h1>Front-End Macros</h1>
+	<center><h1>Front-End Macros</h1>
 		<div style='width:550px'></div>		
 
 	<!--<a onclick='init();'>Refresh</a>
 		<br>-->
 	<div id='display'></div>
-	
+	</center>
 </body>
 	
 </html>

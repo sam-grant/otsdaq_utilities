@@ -773,7 +773,7 @@ else {
    		
 		
         Debug.log("Desktop Icons created",Debug.LOW_PRIORITY);
-    }
+    } // end of createIcons()
 
 }
 
