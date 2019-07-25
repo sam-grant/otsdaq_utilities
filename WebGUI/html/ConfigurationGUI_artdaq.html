@@ -55,8 +55,7 @@
 		}
 		
 		.node-box {
-			background-color : 		rgb(241, 231, 231);
-			overflow: 				auto;
+			background-color : 		rgb(241, 231, 231);			
 
 			box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
 									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
@@ -102,7 +101,19 @@
 			background-color: 		rgb(230, 201, 201);
 		}
 		
+		.node-boxText {
+			width: 					100%;
+			text-align: 			center;
+			color: 					black;
+			margin-top: 			43px;
+		}
 		
+		.node-headerText {			
+			text-align: 			center;
+			color: 					black;			
+			font-size: 				10px;
+			position: 				absolute;			
+		}
 		
 		#createNodeDiv {
 			background-color: 		rgb(195, 230, 193);	
@@ -137,34 +148,115 @@
 			color: 					rgb(15, 152, 76);
 		}
 		
-		
-		.treeNode-Value-editIcon {			
+		.node-icon {
+			position:			absolute;
+			display:			block;	
+			z-index:			1001; /* same as node anchor points */
+		}
+				
+		.node-editIcon {			
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
 			width: 				24px;
 			height: 			20px;
 			float: 				left;
 			border: 			0;
-			margin: 			-2px 0 -7px 10px;
-			display:			none;
+			margin: 			-9px 0 -7px -4px;
 		}
-		.treeNode-Value-editIcon:hover {
+		.node-editIcon:hover {
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
 			cursor: 			pointer;
 		}
 		
-		.treeNode-deleteIcon {			
+		.node-deleteIcon {			
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
 			width: 				16px;
 			height: 			20px;
 			border: 			0;
-			margin: 			-9px 0 -10px 10px;
+			margin: 			-8px 0 -10px 6px;
 		}
-		.treeNode-deleteIcon:hover {
+		.node-deleteIcon:hover {
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 			cursor: 			pointer;
 		}
-    	
+		
+		.node-viewFclIcon {
+		    border: 			2px solid rgb(202, 204, 210);
+		    width: 				16px;
+		    height: 			20px;
+		    border-radius: 		2px;
+		    margin: 			-10px 0 0 2px;
+		}
+		.node-viewFclIcon:hover {
+			border: 			2px solid rgb(101, 173, 199);
+		}
+		.node-viewFclIcon:hover * {
+			border-color: 		rgb(101, 173, 199);
+		}
+		.node-viewFclIcon-line {
+			border-top: 		2px solid rgb(202, 204, 210);
+			border-bottom: 		2px solid rgb(202, 204, 210);
+			height: 			2px;			    
+			width:				12px;
+			float:				left;
+			margin:				3px 0 -1px 2px;
+		}    
 
+		.grid-plusMinusArrows {
+			position:			absolute;
+			z-index:			1001;
+		}
+		.grid-plusMinusArrows-arrow {
+			cursor:				pointer;
+		}
+		.grid-plusMinusArrows-arrow:hover * {
+			background-color:	rgb(101, 173, 199);
+		}
+
+		.grid-plusMinusArrows-upDown {
+			width:				100px;
+			height:				30px;
+		}
+		.grid-plusMinusArrows-leftRight {
+			width:				30px;
+			height:				100px;
+		}
+		.grid-plusMinusArrows-down {
+			float:				left;
+		}
+		.grid-plusMinusArrows-up {
+			float:				right;
+		}
+		.grid-plusMinusArrows-down-top {
+			display: 			block; 
+			margin-left: 		5px; 
+			height:				16px;
+			width: 				14px; 
+			background-color: 	rgb(202, 204, 210);
+		} 
+		.grid-plusMinusArrows-down-bottom {
+			display: 			block; 
+			width: 				0; 
+			height: 			0;
+			border-left: 		12px solid transparent; 
+			border-right: 		12px solid transparent; 
+			border-top: 		14px solid rgb(202, 204, 210);
+		}
+		.grid-plusMinusArrows-up-top {
+			display: 			block; 
+			width: 				0; 
+			height: 			0;
+			border-left: 		6px solid transparent; 
+			border-right: 		6px solid transparent; 
+			border-top: 		8px solid rgb(202, 204, 210);
+		}
+		.grid-plusMinusArrows-up-bottom {
+			display: 			block; 
+			margin-left: 		3px; 
+			height:				7px;
+			width: 				6px; 
+			background-color: 	rgb(202, 204, 210);
+		}
+		
 		.preloadImage {			
 			width: 				24px;
 			height: 			20px;
@@ -294,8 +386,8 @@
 			var x = 0;
 			var y = 0;
 			_nodes.push({"type":_NODE_TYPE_READER,	"x":x++, 	"y":y});			
-			_nodes.push({"type":_NODE_TYPE_BUILDER,	"x":x++, 	"y":y, "node-count": 5});			
-			_nodes.push({"type":_NODE_TYPE_LOGGER,	"x":x++, 	"y":y, "node-count": 2});
+			_nodes.push({"type":_NODE_TYPE_BUILDER,	"x":x++, 	"y":y, "nodeCount": 5});			
+			_nodes.push({"type":_NODE_TYPE_LOGGER,	"x":x++, 	"y":y, "nodeCount": 2});
 			x = 0;
 			y++;
 			_nodes.push({"type":_NODE_TYPE_MONITOR,	"x":x, 	"y":y});			
@@ -426,6 +518,124 @@
 
 			console.log("drawGrid _grid",_grid);
 			
+			//draw grid +/- arrows
+			//if node exists, get element
+			var el = document.getElementById("grid-plusMinusArrowsContainer");
+			if(!el) //else create it
+			{
+				el = document.createElement("div"); 
+				el.setAttribute("id", "grid-plusMinusArrowsContainer");
+				
+				var str = "";
+				
+				//make 4 sets of +/- arrows
+				var a = 0;
+				//top set
+				str += "<div class='grid-plusMinusArrows grid-plusMinusArrows-upDown'>";
+				{ //make top up/down arrows
+					str += "<div class='grid-plusMinusArrows-down grid-plusMinusArrows-arrow' " +
+							"id='grid-plusMinusArrows" + a +
+							"-plus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							a + ")' title='Add a row to the canvas grid.' >" +
+								//make up arrow
+								"<div class='grid-plusMinusArrows-down-top'></div>" +
+								"<div class='grid-plusMinusArrows-down-bottom'></div>" +										
+							"</div>";
+					str += "<div class='grid-plusMinusArrows-up grid-plusMinusArrows-arrow' " +
+							"id='grid-plusMinusArrows" + a +
+							"-minus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							a + ")' title='Remove a row from the canvas grid.' >" +
+								//make down arrow
+								"<div class='grid-plusMinusArrows-up-top'></div>" +
+								"<div class='grid-plusMinusArrows-up-bottom'></div>" +										
+							"</div>";
+				}				
+				str += "</div>\n\n\n"; //close top +/- set collection
+				
+				++a;
+				//right set
+				str += "<div class='grid-plusMinusArrows grid-plusMinusArrows-leftRight'>";
+				{ //make top up/down arrows
+					str += "<div class='grid-plusMinusArrows-addCol grid-plusMinusArrows-arrow' " +
+							"id='grid-plusMinusArrows" + a +
+							"-plus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							a + ")' title='Add a column to the canvas grid.' >" +
+							//make up arrow
+							"<div class='grid-plusMinusArrows-right-top'></div>" +
+							"<div class='grid-plusMinusArrows-right-bottom'></div>" +										
+							"</div>";
+					str += "<div class='grid-plusMinusArrows-removeCol grid-plusMinusArrows-arrow' " +
+							"id='grid-plusMinusArrows" + a +
+							"-minus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							a + ")' title='Remove a column from the canvas grid.' >" +
+							//make down arrow
+							"<div class='grid-plusMinusArrows-left-top'></div>" +
+							"<div class='grid-plusMinusArrows-left-bottom'></div>" +										
+							"</div>";
+				}				
+				str += "</div>\n\n\n"; //close top +/- set collection
+				
+				//bottom set
+				str += "<div class='grid-plusMinusArrows grid-plusMinusArrows-upDown'>";
+				{ //make top up/down arrows
+					str += "<div class='grid-plusMinusArrows-addRow grid-plusMinusArrows-arrow' " +
+							"id='grid-plusMinusArrows" + a +
+							"-plus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							a + ")' title='Add a row to the canvas grid.' >" +
+								//make up arrow
+								"<div class='grid-plusMinusArrows-up-top'></div>" +
+								"<div class='grid-plusMinusArrows-up-bottom'></div>" +										
+							"</div>";
+					str += "<div class='grid-plusMinusArrows-removeRow grid-plusMinusArrows-arrow' " +
+							"id='grid-plusMinusArrows" + a +
+							"-minus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							a + ")' title='Remove a row from the canvas grid.' >" +
+								//make down arrow
+								"<div class='grid-plusMinusArrows-down-top'></div>" +
+								"<div class='grid-plusMinusArrows-down-bottom'></div>" +										
+							"</div>";
+				}				
+				str += "</div>\n\n\n"; //close top +/- set collection
+				
+				++a;
+				//left set
+				str += "<div class='grid-plusMinusArrows grid-plusMinusArrows-leftRight'>";
+				{ //make top up/down arrows
+					str += "<div class='grid-plusMinusArrows-addCol grid-plusMinusArrows-arrow' " +
+							"id='grid-plusMinusArrows" + a +
+							"-plus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							a + ")' title='Add a column to the canvas grid.' >" +
+							//make up arrow
+							"<div class='grid-plusMinusArrows-right-top'></div>" +
+							"<div class='grid-plusMinusArrows-right-bottom'></div>" +										
+							"</div>";
+					str += "<div class='grid-plusMinusArrows-removeCol grid-plusMinusArrows-arrow' " +
+							"id='grid-plusMinusArrows" + a +
+							"-minus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							a + ")' title='Remove a column from the canvas grid.' >" +
+							//make down arrow
+							"<div class='grid-plusMinusArrows-left-top'></div>" +
+							"<div class='grid-plusMinusArrows-left-bottom'></div>" +										
+							"</div>";
+				}				
+				str += "</div>"; //close top +/- set collection
+				el.innerHTML = str;
+				_postCanvas.appendChild(el);	
+			}
+
+			var arrows = el.getElementsByClassName("grid-plusMinusArrows");
+			sz = 100;
+			vsz = 30;
+			arrows[0].style.left 	= ((_w/2 - sz/2)|0) + "px";
+			arrows[0].style.top 	= (((_GRID_MARGIN-vsz)/2)|0) + "px";
+			arrows[1].style.left 	= ((_w/2 - sz/2)|0) + "px";
+			arrows[1].style.top 	= ((_h - (_GRID_MARGIN-vsz)/2)|0) + "px";
+			arrows[2].style.left 	= (((_GRID_MARGIN-vsz)/2)|0) + "px";
+			arrows[2].style.top 	= ((_h/2 - vsz/2)|0) + "px";
+			arrows[3].style.left 	= ((_w - (_GRID_MARGIN-vsz)/2)|0) + "px";
+			arrows[3].style.top 	= ((_h/2 - vsz/2)|0) + "px";
+
+			//draw grid dots			
 			_gridContext.save();
 			_gridContext.fillStyle   	= _GRID_COLOR;
 			_gridContext.shadowOffsetX 	= 2;
@@ -477,8 +687,7 @@
 			Debug.log("nodeid = " + nodeid + "; typeClass = " + typeClass);
 
 			//if node exists, get element
-			var el = document.getElementById(nodeid);	
-			var boxEl;
+			var el = document.getElementById(nodeid);
 			if(!el) //else create it
 			{
 				el = document.createElement("div"); 
@@ -487,16 +696,27 @@
 								
 				//draw box, connect points, pencil, and trashcan
 				var str = "";
-								
+										
 				//box
-				var count = _nodes[i].node-count?_nodes[i].node-count:1;
-				console.log(i,count);
-				for(var p=0;p<count;++p)
+				var count = _nodes[i].nodeCount?_nodes[i].nodeCount:1;
+				if(count > 4) count = 4; //cap at 4
+				console.log(i,count);				
+				for(var p=count-1;p>=0;--p)
+				{
 					str += "<div id='" + nodeid + 
 						"-box' class='node-box' " +
-						"style='top:" + (-p*10) + "px;" +
-						"left:" + (-p*10) + "px;' " +
-						"></div>";
+						"style='top:" + (-p*5) + "px;" +
+						"left:" + (-p*5) + "px;' " +
+						">";
+					if(p == 0)
+					{
+						str += "<div id='" + nodeid + 
+							"-boxText' class='node-boxText'>" +
+							"BR" +
+							"</div>";
+					}
+					str += "</div>";
+				}
 				
 				//connect points
 				for(var p=0;p<4;++p)
@@ -510,16 +730,39 @@
 						i + "," + p + ",event);'" +
 						"></div>";
 				
+				//header text
+				str += "<div id='" + nodeid + 
+					"-headerText' class='node-headerText'>" +
+					"BoardReader:" +
+					"</div>";
+				
+				//add edit pencil icon
+				str += "<div id='" + nodeid + 
+						"-editIcon' class='node-icon node-editIcon'>" +
+						"</div>";
+				//add view fcl icon
+				str += "<div id='" + nodeid + 
+						"-viewFclIcon' class='node-icon node-viewFclIcon'>" +
+						"<div class='node-viewFclIcon-line'></div>" +
+						"<div class='node-viewFclIcon-line'></div>" +
+						"</div>";
+				//add delete trash can icon
+				str += "<div id='" + nodeid + 
+						"-deleteIcon' class='node-icon node-deleteIcon'>" +
+						"</div>";
 				
 				el.innerHTML = str;
 				_postCanvas.appendChild(el);	
 				el.onmouseover = handleNodeMouseOver;	
 			}			
 			
-			boxEl = document.getElementById(nodeid + "-box");
-		
-			boxEl.style.width  = sz + "px";
-			boxEl.style.height = sz + "px";
+			var boxes = el.getElementsByClassName("node-box");
+			for(var p=0;p<boxes.length;++p)
+			{
+				boxes[p].style.width  = sz + "px";
+				boxes[p].style.height = sz + "px";
+			}			
+			
 			el.style.left 	= x + "px";
 			el.style.top 	= y + "px";		
 			
@@ -532,6 +775,21 @@
 				points[p].style.left 	= (pxy[0] - x - pointSz/2) + "px";
 				points[p].style.top 	= (pxy[1] - y - pointSz/2) + "px";
 			}
+			
+			el = document.getElementById(nodeid + "-headerText");
+			el.style.left = (- (_grid.xstep-sz)/2) + "px";
+			el.style.top = (-30) + "px";
+			el.style.width = (_grid.xstep) + "px";
+						
+			el = document.getElementById(nodeid + "-editIcon");
+			el.style.left = (-10) + "px";
+			el.style.top = (sz+32) + "px";
+			el = document.getElementById(nodeid + "-viewFclIcon");
+			el.style.left = (((sz/2)|0)-10) + "px";
+			el.style.top = (sz+32) + "px";
+			el = document.getElementById(nodeid + "-deleteIcon");
+			el.style.left = (sz-10) + "px";
+			el.style.top = (sz+32) + "px";
 			
 		} //end drawNode()
 
@@ -800,10 +1058,19 @@
 			
 			var nodeid = "node-" + i;
 			var el = document.getElementById(nodeid);	
+			
+			//handle points
 			var points = el.getElementsByClassName("node-point");		
 			for(var p=0;p<4;++p)
 				points[p].style.display = undoHover?"none":"block";
-
+			
+//			el = document.getElementById(nodeid + "-editIcon");
+//			el.style.display = undoHover?"none":"block";
+//			el = document.getElementById(nodeid + "-viewFclIcon");
+//			el.style.display = undoHover?"none":"block";
+//			el = document.getElementById(nodeid + "-deleteIcon");
+//			el.style.display = undoHover?"none":"block";
+			
 		} //end doNodeHover()
 
 		//=====================================================================================

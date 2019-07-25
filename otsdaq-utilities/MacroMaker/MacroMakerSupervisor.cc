@@ -2302,7 +2302,8 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 				        "\t Target front-end: '%s::%s'\n",
 				        FEtoPluginTypeMap_[feUID].c_str(),
 				        feUID.c_str());
-				fprintf(fp, "\t\t Inputs: %s\n", inputArgs.c_str());
+				fprintf(fp, "\t\t Inputs: %s\n",
+						StringMacros::decodeURIComponent(inputArgs).c_str());
 			}
 
 			// have FE supervisor descriptor, so send
@@ -2353,7 +2354,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 						fprintf(fp,
 						        "\t\t Output '%s' = %s\n",
 						        argName.c_str(),
-						        argValue.c_str());
+						        StringMacros::decodeURIComponent(argValue).c_str());
 					}
 					else
 					{
