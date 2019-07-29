@@ -589,6 +589,13 @@ Desktop.createDesktop = function(security) {
 	this.addWindow = function(name,subname,url,unique,extraStep) {		
 		Debug.log(name + " - " + subname + " - " + url + " - " + unique,Debug.LOW_PRIORITY);
 		
+		if(unique == 2) //open as stand-alone new tab page
+		{
+			Debug.log("Opening stand-alone new tab",Debug.LOW_PRIORITY);
+			window.open(url,'_blank');	
+			return;			
+		}
+		
 		if(unique) {
 			Debug.log("Adding window uniquely",Debug.LOW_PRIORITY);
 			for(var i=0;i<_windows.length;++i)

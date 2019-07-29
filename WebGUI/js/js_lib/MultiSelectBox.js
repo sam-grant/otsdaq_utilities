@@ -101,6 +101,15 @@ MultiSelectBox.toggleClass = function(ele,cls)
 
 MultiSelectBox.getSelectedIndex = function(el)
 {
+	try //try to treat as selection box element first
+	{
+		var selects = MultiSelectBox.mySelects_[el.getElementsByClassName("mySelect")[0].id];
+		for(var i=0;i<selects.length;++i)
+			if(selects[i]) return i;
+		return -1; //no index selected				
+	}
+	catch(e){} // ignore error and treat as selected element now
+	
     var splits = el.id.split('_');
     return splits[splits.length-1] | 0;    
 }

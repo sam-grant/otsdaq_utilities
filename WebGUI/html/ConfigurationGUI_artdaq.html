@@ -34,9 +34,86 @@
 		
 		/* make buttons and links have a hand cursor */
 		input[type="button"], button, a {
-			cursor: pointer;
+			cursor: 				pointer;
 		}
 		
+		.controlsPane {
+			position:				absolute;			
+			top:					-2px;
+			z-index:				1002;
+		}
+		
+		.controlsButton {
+			-webkit-user-select: 	none;
+			-moz-user-select: 		none;
+			user-select:			none;
+			
+			overflow: 				hidden;				
+			cursor: 				pointer;
+			width: 					34px;
+			height: 				36px;
+			
+			background-color: 		rgb(202, 204, 210);
+			
+			
+			box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
+					inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+					rgb(150,150,150) 0 .1em 3px,
+					rgb(175,175,175) 0 .2em 1px, /* color border */
+					rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+		}
+
+		.controlsButton:hover,
+		.controlsButton:focus {
+			background-color: 		rgb(225, 227, 233);
+		}
+
+		.controlsButton:active {
+			background-color: 		rgb(202, 204, 210);
+			-webkit-transform: 		translateY(.1em);
+			-moz-transform: 		translateY(.1em);
+			transform: 				translateY(.1em);
+		}
+		
+		#directoryNavToggleTop {
+			float: 					left;
+			width: 					10px;
+			height: 				4px;
+			margin: 				6px 3px 0px 6px;
+			border-right: 			3px solid transparent;
+			border-bottom: 			4px solid white;
+		}
+		#directoryNavToggleBottom {
+			background-color: 		white;
+			float: 					left;
+			width: 					24px;
+			height: 				15px;
+			margin: 				0px 3px 0px 5px;
+		}
+
+		#saveFileMain {
+			border:					1px solid white;
+			border-radius:			2px;
+			float: 					left;
+			width: 					21px;
+			height: 				21px;
+			margin: 				8px 3px 0px 6px;
+		}
+		#saveFileMainTop {
+			border:					1px solid white;
+			float: 					left;
+			width: 					13px;
+			height: 				10px;
+			margin: 				-23px 0px 0px 10px;
+		}
+		#saveFileMainBottom {
+			border:					1px solid white;
+			float: 					left;
+			width: 					7px;
+			height: 				5px;
+			margin: 				-7px 0px 0px 13px;
+		}
+				
 		#theGridCanvas, #theCanvas, #theActionCanvas, #preCanvas, #postCanvas {
 			position: 				absolute;
 			left: 					0;
@@ -150,7 +227,7 @@
 		
 		.node-icon {
 			position:			absolute;
-			display:			block;	
+			display:			none;	
 			z-index:			1001; /* same as node anchor points */
 		}
 				
@@ -204,12 +281,36 @@
 		.grid-plusMinusArrows {
 			position:			absolute;
 			z-index:			1001;
+			display:			none;
 		}
 		.grid-plusMinusArrows-arrow {
 			cursor:				pointer;
 		}
-		.grid-plusMinusArrows-arrow:hover * {
+		.grid-plusMinusArrows-arrow:hover 
+		.grid-plusMinusArrows-down-body, 
+		.grid-plusMinusArrows-arrow:hover 
+		.grid-plusMinusArrows-up-body, 
+		.grid-plusMinusArrows-arrow:hover 
+		.grid-plusMinusArrows-left-body, 
+		.grid-plusMinusArrows-arrow:hover 
+		.grid-plusMinusArrows-right-body {
 			background-color:	rgb(101, 173, 199);
+		}
+		.grid-plusMinusArrows-arrow:hover 
+		.grid-plusMinusArrows-down-point {
+			border-top-color:	rgb(101, 173, 199);
+		}
+		.grid-plusMinusArrows-arrow:hover 
+		.grid-plusMinusArrows-up-point {
+			border-bottom-color:rgb(101, 173, 199);
+		}
+		.grid-plusMinusArrows-arrow:hover 
+		.grid-plusMinusArrows-left-point {
+			border-right-color:	rgb(101, 173, 199);
+		}
+		.grid-plusMinusArrows-arrow:hover 
+		.grid-plusMinusArrows-right-point {
+			border-left-color:	rgb(101, 173, 199);
 		}
 
 		.grid-plusMinusArrows-upDown {
@@ -225,15 +326,24 @@
 		}
 		.grid-plusMinusArrows-up {
 			float:				right;
+			margin-top:			-6px;
 		}
-		.grid-plusMinusArrows-down-top {
+		.grid-plusMinusArrows-left {
+			float:				left;
+		}
+		.grid-plusMinusArrows-right {
+			float:				left;
+			margin:				50px -6px 0 6px;
+		}
+		.grid-plusMinusArrows-down-body,
+		.grid-plusMinusArrows-up-body {
 			display: 			block; 
 			margin-left: 		5px; 
 			height:				16px;
 			width: 				14px; 
 			background-color: 	rgb(202, 204, 210);
 		} 
-		.grid-plusMinusArrows-down-bottom {
+		.grid-plusMinusArrows-down-point {
 			display: 			block; 
 			width: 				0; 
 			height: 			0;
@@ -241,20 +351,40 @@
 			border-right: 		12px solid transparent; 
 			border-top: 		14px solid rgb(202, 204, 210);
 		}
-		.grid-plusMinusArrows-up-top {
+		.grid-plusMinusArrows-up-point {
 			display: 			block; 
 			width: 				0; 
 			height: 			0;
-			border-left: 		6px solid transparent; 
-			border-right: 		6px solid transparent; 
-			border-top: 		8px solid rgb(202, 204, 210);
+			border-left: 		12px solid transparent; 
+			border-right: 		12px solid transparent; 
+			border-bottom: 		14px solid rgb(202, 204, 210);
 		}
-		.grid-plusMinusArrows-up-bottom {
-			display: 			block; 
-			margin-left: 		3px; 
-			height:				7px;
-			width: 				6px; 
+		.grid-plusMinusArrows-left-body,
+		.grid-plusMinusArrows-right-body {
+			display: 			block;
+			float:				left;
+			margin-top: 		5px; 
+			height:				14px;
+			width: 				16px;
 			background-color: 	rgb(202, 204, 210);
+		} 
+		.grid-plusMinusArrows-left-point {
+			display: 			block; 
+			float:				left;
+			width: 				0; 
+			height: 			0;
+			border-top: 		12px solid transparent; 
+			border-bottom: 		12px solid transparent; 
+			border-right: 		14px solid rgb(202, 204, 210);
+		}
+		.grid-plusMinusArrows-right-point {
+			display: 			block; 
+			float:				left;
+			width: 				0; 
+			height: 			0;
+			border-top: 		12px solid transparent; 
+			border-bottom: 		12px solid transparent; 
+			border-left: 		14px solid rgb(202, 204, 210);
 		}
 		
 		.preloadImage {			
@@ -535,19 +665,19 @@
 				{ //make top up/down arrows
 					str += "<div class='grid-plusMinusArrows-down grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-plus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
-							a + ")' title='Add a row to the canvas grid.' >" +
+							"-plus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							a + ")' title='Remove a row from the canvas grid.' >" +
 								//make up arrow
-								"<div class='grid-plusMinusArrows-down-top'></div>" +
-								"<div class='grid-plusMinusArrows-down-bottom'></div>" +										
+								"<div class='grid-plusMinusArrows-down-body'></div>" +
+								"<div class='grid-plusMinusArrows-down-point'></div>" +										
 							"</div>";
 					str += "<div class='grid-plusMinusArrows-up grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-minus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
-							a + ")' title='Remove a row from the canvas grid.' >" +
+							"-minus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							a + ")' title='Add a row to the canvas grid.' >" +
 								//make down arrow
-								"<div class='grid-plusMinusArrows-up-top'></div>" +
-								"<div class='grid-plusMinusArrows-up-bottom'></div>" +										
+								"<div class='grid-plusMinusArrows-up-point'></div>" +
+								"<div class='grid-plusMinusArrows-up-body'></div>" +										
 							"</div>";
 				}				
 				str += "</div>\n\n\n"; //close top +/- set collection
@@ -555,22 +685,22 @@
 				++a;
 				//right set
 				str += "<div class='grid-plusMinusArrows grid-plusMinusArrows-leftRight'>";
-				{ //make top up/down arrows
-					str += "<div class='grid-plusMinusArrows-addCol grid-plusMinusArrows-arrow' " +
+				{ //make right left/right arrows
+					str += "<div class='grid-plusMinusArrows-left grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-plus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
-							a + ")' title='Add a column to the canvas grid.' >" +
-							//make up arrow
-							"<div class='grid-plusMinusArrows-right-top'></div>" +
-							"<div class='grid-plusMinusArrows-right-bottom'></div>" +										
-							"</div>";
-					str += "<div class='grid-plusMinusArrows-removeCol grid-plusMinusArrows-arrow' " +
-							"id='grid-plusMinusArrows" + a +
-							"-minus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							"-plus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
 							a + ")' title='Remove a column from the canvas grid.' >" +
-							//make down arrow
-							"<div class='grid-plusMinusArrows-left-top'></div>" +
-							"<div class='grid-plusMinusArrows-left-bottom'></div>" +										
+							//make left arrow
+							"<div class='grid-plusMinusArrows-left-point'></div>" +
+							"<div class='grid-plusMinusArrows-left-body'></div>" +										
+							"</div>";
+					str += "<div class='grid-plusMinusArrows-right grid-plusMinusArrows-arrow' " +
+							"id='grid-plusMinusArrows" + a +
+							"-minus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							a + ")' title='Add a column to the canvas grid.' >" +
+							//make right arrow
+							"<div class='grid-plusMinusArrows-right-body'></div>" +
+							"<div class='grid-plusMinusArrows-right-point'></div>" +										
 							"</div>";
 				}				
 				str += "</div>\n\n\n"; //close top +/- set collection
@@ -578,21 +708,21 @@
 				//bottom set
 				str += "<div class='grid-plusMinusArrows grid-plusMinusArrows-upDown'>";
 				{ //make top up/down arrows
-					str += "<div class='grid-plusMinusArrows-addRow grid-plusMinusArrows-arrow' " +
+					str += "<div class='grid-plusMinusArrows-up grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-plus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
-							a + ")' title='Add a row to the canvas grid.' >" +
+							"-plus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							a + ")' title='Remove a row to the canvas grid.' >" +
 								//make up arrow
-								"<div class='grid-plusMinusArrows-up-top'></div>" +
-								"<div class='grid-plusMinusArrows-up-bottom'></div>" +										
+								"<div class='grid-plusMinusArrows-up-point'></div>" +
+								"<div class='grid-plusMinusArrows-up-body'></div>" +										
 							"</div>";
-					str += "<div class='grid-plusMinusArrows-removeRow grid-plusMinusArrows-arrow' " +
+					str += "<div class='grid-plusMinusArrows-down grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-minus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
-							a + ")' title='Remove a row from the canvas grid.' >" +
+							"-minus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							a + ")' title='Add a row to the canvas grid.' >" +
 								//make down arrow
-								"<div class='grid-plusMinusArrows-down-top'></div>" +
-								"<div class='grid-plusMinusArrows-down-bottom'></div>" +										
+								"<div class='grid-plusMinusArrows-down-body'></div>" +
+								"<div class='grid-plusMinusArrows-down-point'></div>" +										
 							"</div>";
 				}				
 				str += "</div>\n\n\n"; //close top +/- set collection
@@ -600,22 +730,22 @@
 				++a;
 				//left set
 				str += "<div class='grid-plusMinusArrows grid-plusMinusArrows-leftRight'>";
-				{ //make top up/down arrows
-					str += "<div class='grid-plusMinusArrows-addCol grid-plusMinusArrows-arrow' " +
+				{ //make left left/right arrows
+					str += "<div class='grid-plusMinusArrows-left grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
 							"-plus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
 							a + ")' title='Add a column to the canvas grid.' >" +
-							//make up arrow
-							"<div class='grid-plusMinusArrows-right-top'></div>" +
-							"<div class='grid-plusMinusArrows-right-bottom'></div>" +										
+							//make left arrow
+							"<div class='grid-plusMinusArrows-left-point'></div>" +
+							"<div class='grid-plusMinusArrows-left-body'></div>" +										
 							"</div>";
-					str += "<div class='grid-plusMinusArrows-removeCol grid-plusMinusArrows-arrow' " +
+					str += "<div class='grid-plusMinusArrows-right grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
 							"-minus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
 							a + ")' title='Remove a column from the canvas grid.' >" +
-							//make down arrow
-							"<div class='grid-plusMinusArrows-left-top'></div>" +
-							"<div class='grid-plusMinusArrows-left-bottom'></div>" +										
+							//make right arrow
+							"<div class='grid-plusMinusArrows-right-body'></div>" +
+							"<div class='grid-plusMinusArrows-right-point'></div>" +										
 							"</div>";
 				}				
 				str += "</div>"; //close top +/- set collection
@@ -628,11 +758,11 @@
 			vsz = 30;
 			arrows[0].style.left 	= ((_w/2 - sz/2)|0) + "px";
 			arrows[0].style.top 	= (((_GRID_MARGIN-vsz)/2)|0) + "px";
-			arrows[1].style.left 	= ((_w/2 - sz/2)|0) + "px";
-			arrows[1].style.top 	= ((_h - (_GRID_MARGIN-vsz)/2)|0) + "px";
-			arrows[2].style.left 	= (((_GRID_MARGIN-vsz)/2)|0) + "px";
-			arrows[2].style.top 	= ((_h/2 - vsz/2)|0) + "px";
-			arrows[3].style.left 	= ((_w - (_GRID_MARGIN-vsz)/2)|0) + "px";
+			arrows[1].style.left 	= ((_w - (_GRID_MARGIN-sz)/2 - sz)|0) + "px";
+			arrows[1].style.top 	= ((_h/2 - vsz/2)|0) + "px";
+			arrows[2].style.left 	= ((_w/2 - sz/2)|0) + "px";
+			arrows[2].style.top 	= ((_h - (_GRID_MARGIN-vsz)/2 - vsz)|0) + "px";
+			arrows[3].style.left 	= (((_GRID_MARGIN-vsz)/2)|0) + "px";
 			arrows[3].style.top 	= ((_h/2 - vsz/2)|0) + "px";
 
 			//draw grid dots			
@@ -738,18 +868,22 @@
 				
 				//add edit pencil icon
 				str += "<div id='" + nodeid + 
-						"-editIcon' class='node-icon node-editIcon'>" +
-						"</div>";
+						"-editIcon' class='node-icon node-editIcon' " +
+						"title='Edit the configuration of this node.' " +
+						"></div>";
 				//add view fcl icon
 				str += "<div id='" + nodeid + 
-						"-viewFclIcon' class='node-icon node-viewFclIcon'>" +
+						"-viewFclIcon' class='node-icon node-viewFclIcon' " +
+						"title='View the generated FHiCL of this node.' " +
+						">" +
 						"<div class='node-viewFclIcon-line'></div>" +
 						"<div class='node-viewFclIcon-line'></div>" +
 						"</div>";
 				//add delete trash can icon
 				str += "<div id='" + nodeid + 
-						"-deleteIcon' class='node-icon node-deleteIcon'>" +
-						"</div>";
+						"-deleteIcon' class='node-icon node-deleteIcon' " +
+						"title='Delete this node.' " +
+						"></div>";
 				
 				el.innerHTML = str;
 				_postCanvas.appendChild(el);	
@@ -813,8 +947,8 @@
 		//drawArrow ~~
 		function drawArrow(x0,y0,x,y,isActionCanvas) 
 		{	
-			console.log("drawArrow x0,y0,x,y,isActionCanvas ",
-					x0,y0,x,y,isActionCanvas);
+			//console.log("drawArrow x0,y0,x,y,isActionCanvas ",
+			//		x0,y0,x,y,isActionCanvas);
 			
 			if(isActionCanvas) //assume one at a time in action
 				_actionContext.clearRect(0, 0, _canvas.width, _canvas.height);
@@ -832,17 +966,6 @@
             
             x -= HEAD_SZ*Math.cos(angle);
             y -= HEAD_SZ*Math.sin(angle);
-//            
-//            if(x0 < x)
-//            	
-//            else 
-//            	x += HEAD_SZ*Math.cos(angle);
-//            if(y0 < y)
-//            	x -= HEAD_SZ*Math.cos(angle);
-//            else 
-//            	x += HEAD_SZ*Math.cos(angle);
-            
-
 
             //starting path of the arrow from the start square to the end square and drawing the stroke
             context.beginPath();
@@ -909,20 +1032,28 @@
     						_mouseMoveStart[0],
 							_mouseMoveStart[1],
 							x,y, true /*isActionCanvas*/);
-    					
+    				//continue on
     				break;    			
     			default:
     				Debug.log("Illegal _mouseMoveMode = " + _mouseMoveMode, 
     						Debug.HIGH_PRIORITY);
+    				return; //do not continue on
     			}
     			
-    			return;
+    			//for some modes, continue on to show mouse over nodes while dragging
+    			
     		} //end handle mousemove mode
 
     		
-			var xg = ((x - _grid.x0 + _grid.xstep/2)/_grid.xstep)|0;
-			var yg = ((y - _grid.y0 + _grid.ystep/2)/_grid.ystep)|0;			
+			var xg = ((x - _grid.x0 + _grid.xstep/2)/_grid.xstep);
+			var yg = ((y - _grid.y0 + _grid.ystep/2)/_grid.ystep);			
 			
+			if(xg < 0) xg = -1; //clip to -1 for +/- icons
+			else xg |= 0;
+			if(yg < 0) yg = -1; //clip to -1 for +/- icons			
+			else yg |= 0;
+			
+
 			//console.log("mousemove x,y",x,y,
 			//		"mousemove xg,yg",xg,yg);
 			
@@ -948,7 +1079,10 @@
 				{		
 					//----------------------------
 					//if over empty grid position, show +
-					    		
+					
+					//do not show + if for mouse move modes
+					if(_mouseMoveMode != _MMM_NONE) return;
+					
 					Debug.log("Place + at " + xg + "," + yg);
 	
 					var sz = 32;
@@ -962,6 +1096,18 @@
 			{
 				//if not handled, remove +			
 				_addNodeEl.style.left = "-1000px"; //off screen
+				
+				//add +/- row column icons
+				if(yg < 0) 
+					doNodeHover(-10); //show top icons
+				else if(xg >= _grid.cols)
+					doNodeHover(-11); //show right icons
+				else if(yg >= _grid.rows)
+					doNodeHover(-12); //show top icons
+				else if(xg < 0)
+					doNodeHover(-13); //show left icons
+				
+				return;
 			}
 			
 			//undo cursor changes if any
@@ -1056,6 +1202,18 @@
 			Debug.log((undoHover?"Hide ":"") + 
 					"Mouse over node " + i);
 			
+			if(i < -1)
+			{
+				//do not show for mouse move modes
+				if(!undoHover && _mouseMoveMode != _MMM_NONE) return; 
+				
+				Debug.log("This is +/- icon " + (3-(i+13)));
+				document.getElementsByClassName(
+						"grid-plusMinusArrows")[(3-(i+13))].style.display = 
+								undoHover?"none":"block";
+				return;
+			}
+			
 			var nodeid = "node-" + i;
 			var el = document.getElementById(nodeid);	
 			
@@ -1064,12 +1222,15 @@
 			for(var p=0;p<4;++p)
 				points[p].style.display = undoHover?"none":"block";
 			
-//			el = document.getElementById(nodeid + "-editIcon");
-//			el.style.display = undoHover?"none":"block";
-//			el = document.getElementById(nodeid + "-viewFclIcon");
-//			el.style.display = undoHover?"none":"block";
-//			el = document.getElementById(nodeid + "-deleteIcon");
-//			el.style.display = undoHover?"none":"block";
+			//do not show icons for mouse move modes
+			if(!undoHover && _mouseMoveMode != _MMM_NONE) return;
+			
+			el = document.getElementById(nodeid + "-editIcon");
+			el.style.display = undoHover?"none":"block";
+			el = document.getElementById(nodeid + "-viewFclIcon");
+			el.style.display = undoHover?"none":"block";
+			el = document.getElementById(nodeid + "-deleteIcon");
+			el.style.display = undoHover?"none":"block";
 			
 		} //end doNodeHover()
 
@@ -1153,6 +1314,29 @@
 		<a id='createNode' onclick='createNode(); return false;'
 				title='Create a new node'>+</a>
 	</div>
+		
+	<!-- Controls pane, Copied from Code Editor -->
+	<div class="controlsPane">
+		<div 	id="directoryNavToggle" 
+				class="controlsButton"						
+				style="float:left"
+				onclick="event.stopPropagation(); openActiveGroupsDialog();" 
+				title="Choose the active configuration (Ctrl + D)">
+			<div 	id="directoryNavToggleTop"></div>
+			<div 	id="directoryNavToggleBottom"></div>
+		</div>
+		<div 	id="saveFile"
+				class="controlsButton" 
+				style="float:left;" 
+				onclick="event.stopPropagation(); save();"
+				title="Click to Save changes to the active configuration (Ctrl + S)">
+			<div 	id="saveFileMain"></div>
+			<div 	id="saveFileMainTop"></div>
+			<div 	id="saveFileMainBottom"></div>
+		</div>
+	</div>
+	<!-- End controls pane, Copied from Code Editor -->
+		
 </body>
 	
 </html>
