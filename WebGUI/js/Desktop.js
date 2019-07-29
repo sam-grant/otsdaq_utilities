@@ -26,7 +26,13 @@ Desktop.init = function(security) {
 	Desktop.desktop = Desktop.createDesktop(security);
 	if(Desktop.desktop)
 		Debug.log("Desktop.desktop Initalized Successfully",Debug.LOW_PRIORITY);
-}
+	
+	// Enable navigation prompt 
+	//	(to prevent accidental/back/forward/nav leaving the page)
+	window.onbeforeunload = function() {
+	    return true;
+	};	
+} //end init()
 
 Desktop.SECURITY_TYPE_NONE = "NoSecurity";
 Desktop.SECURITY_TYPE_DIGEST_ACCESS = "DigestAccessAuthentication";
