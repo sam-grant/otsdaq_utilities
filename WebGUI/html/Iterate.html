@@ -4372,9 +4372,16 @@
 							val = DesktopContent.getXMLValue(depth_iterations[i]) | 0;
 							if(val > 99) //truncate text length
 								val = "...";
-							document.getElementById("plan-command-bounceBall-text-" + 
+							try
+							{
+								document.getElementById("plan-command-bounceBall-text-" + 
 									command_index + "-depth-" + 
 									(i+1)).innerHTML = val;
+							}
+							catch(e)
+							{
+								console.log("ignoring",e);
+							}
 						}
 						val = command_iteration | 0;
 						if(val > 99) //truncate text length

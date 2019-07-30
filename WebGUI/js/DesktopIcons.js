@@ -472,7 +472,7 @@ else {
 					currChild = currChild.nextSibling; //get next child
 				}
 			}
-      	}
+      	} //end this.addIcon()
       	
       	//this.openFolder ~~
       	//	this version is called from desktop icons

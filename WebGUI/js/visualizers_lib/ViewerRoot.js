@@ -619,9 +619,17 @@ ViewerRoot.getDirectoryContents = function(path) {
 	Debug.log("ViewerRoot getDirectoryContents " + path);
 	
 	if(path.indexOf(".root/") >=0)
-		DesktopContent.XMLHttpRequest("Request?RequestType=getRoot", "RootPath="+path, ViewerRoot.getDirContentsHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=getRoot", "RootPath="+path, ViewerRoot.getDirContentsHandler,
+                                         0 /*reqParam*/, 
+                                         0 /*progressHandler*/, 
+                                         0 /*callHandlerOnErr*/, 
+                                         true /*doNoShowLoadingOverlay*/);
 	else
-		DesktopContent.XMLHttpRequest("Request?RequestType=getDirectoryContents", "Path="+path, ViewerRoot.getDirContentsHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=getDirectoryContents", "Path="+path, ViewerRoot.getDirContentsHandler,
+                                         0 /*reqParam*/, 
+                                         0 /*progressHandler*/, 
+                                         0 /*callHandlerOnErr*/, 
+                                         true /*doNoShowLoadingOverlay*/);
 }
 
 // ViewerRoot.getDirContentsHandler ~~
@@ -648,14 +656,22 @@ ViewerRoot.rootReq = function(rootPath) {
 	Debug.log("ViewerRoot.rootReq " + rootPath );
 	DesktopContent.XMLHttpRequest("Request?RequestType=getRoot", "RootPath="+rootPath, 
 			//ViewerRoot.tmpRootDataHandler);
-			ViewerRoot.getRootDataHandler);
+			ViewerRoot.getRootDataHandler,
+                                         0 /*reqParam*/, 
+                                         0 /*progressHandler*/, 
+                                         0 /*callHandlerOnErr*/, 
+                                         true /*doNoShowLoadingOverlay*/);
 }
 
 //ViewerRoot.rootConfigReq ~~
 ViewerRoot.rootConfigReq = function(rootConfigPath) {	
 	//Debug.log("ViewerRoot.rootReq");
 	DesktopContent.XMLHttpRequest("Request?RequestType=getRootConfig", "RootConfigPath="+rootConfigPath, 
-			ViewerRoot.getRootConfigHandler);
+			ViewerRoot.getRootConfigHandler,
+                                         0 /*reqParam*/, 
+                                         0 /*progressHandler*/, 
+                                         0 /*callHandlerOnErr*/, 
+                                         true /*doNoShowLoadingOverlay*/);
 }
 
 //ViewerRoot.getRootConfigHandler ~~
