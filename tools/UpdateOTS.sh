@@ -24,7 +24,10 @@ echo -e "UpdateOTS.sh [${LINENO}]  "
 echo -e "UpdateOTS.sh [${LINENO}]  "
 
 #replace StartOTS.sh in any setup file!
-sed -i s/StartOTS\.sh/ots/g ${MRB_SOURCE}/../setup_*
+for ff in ${MRB_SOURCE}/../setup_*;do
+	cp $ff{,.tmp}
+	sed s/StartOTS\.sh/ots/g $ff.tmp >$ff && rm $ff.tmp
+done
 
 if [ "x$1" == "x" ] || [[ "$1" != "--fetch" && "$1" != "--fetchcore" && "$1" != "--fetchall" && "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullcore" && "$1" != "--pushcore" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
     echo -e "UpdateOTS.sh [${LINENO}]  \t Usage: Parameter 1 is the operation and, for pushes, Parameter 2 is the comment for git commit"
