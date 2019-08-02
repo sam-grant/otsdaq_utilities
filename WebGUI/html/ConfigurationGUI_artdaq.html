@@ -15,7 +15,8 @@
 	<style type="text/css">			
 		
 		/* CSS Reset */
-		html{color:white;background:#FFF}
+		/*html{color:white;background:#FFF}
+
 		body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td{margin:0;padding:0}table{border-collapse:collapse;border-spacing:0}fieldset,img{border:0}address,caption,cite,code,dfn,em,strong,th,var{font-style:normal;font-weight:normal}ol,ul{list-style:none}caption,th{text-align:left}h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:normal}q:before,q:after{content:''}abbr,acronym{border:0;font-variant:normal}sup{vertical-align:text-top}sub{vertical-align:text-bottom}input,textarea,select{font-family:inherit;font-size:inherit;font-weight:inherit;*font-size:100%}
 		legend{color:#000}	
 		* {
@@ -30,7 +31,7 @@
 			outline: 				none;  /* to stop firefox selection*/	
 			font-family: 			'Comfortaa', serif; /*'Donegal One', serif;*/		
 			font-size: 				20px;
-		}
+		}*/
 		
 		/* make buttons and links have a hand cursor */
 		input[type="button"], button, a {
@@ -467,12 +468,44 @@
 		var _mouseMoveMode = _MMM_NONE;
 		var _mouseMoveStart = [0,0,0,0]; //x,y,i,p start (i,p are optional)
 		var _mouseHoverNode = -1;
+
+		//configuration globals -------------
+		var _modifiedTables;
+		var _systemGroups = {};
+		var _firstInit = true;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
-	
-		//functions:			
-			//init()
+
+		//=====================================================================================
+		//htmlOpen ~~		
+		//	tab name and attribute/value map object
+		function htmlOpen(tag,attObj,innerHTML,doCloseTag)
+		{
+			var str = "";
+			var attKeys = Object.keys(attObj); 
+			str += "<" + tag + " ";
+			for(var i=0;i<attKeys.length;++i)
+				str += " " + attKeys[i] + "='" +
+				attObj[attKeys[i]] + "' ";
+			str += ">";
+			if(innerHTML) str += innerHTML;
+			if(doCloseTag)
+				str += "</" + tag + ">";
+			return str;
+		} // end htmlOpen()
+
+		//=====================================================================================
+		//htmlClearDiv ~~		
+		function htmlClearDiv()
+		{
+			return "<div id='clearDiv'></div>";
+		} //end htmlClearDiv()
+		
+		//functions:
+			//htmlOpen()
+			//htmlClearDiv()
+			//init()			
 		
 			//paint()
 			//drawGrid() 
@@ -542,13 +575,38 @@
 			_gridContext = _gridCanvas.getContext('2d');
 			
 			
-			paint();
-			window.addEventListener("resize",paint);
+			//==============================
+			function localFinishInit() 
+			{
+				window.addEventListener("resize",paint);
+	
+				//DesktopContent.mouseMoveSubscriber(handleMouseMove); //causes problems because of this.style.cursor handling 
+				document.body.addEventListener("mousemove",handleMouseMove);
+				document.body.addEventListener("mouseup",handleMouseUp);
+			} //end localFinishInit()
+			
+			
+			//init configuration members
+			_modifiedTables = undefined; //reset
+			_systemGroups = {}; //reset
+			
+			//	get groups and aliases
+			ConfigurationAPI.getAliasesAndGroups(
+					function(retObj)
+					{
+				_systemGroups = retObj;
+				console.log("_systemGroups",_systemGroups);
+				console.log("ConfigurationAPI._activeGroups",ConfigurationAPI._activeGroups);
 
-            //DesktopContent.mouseMoveSubscriber(handleMouseMove); //causes problems because of this.style.cursor handling 
-            document.body.addEventListener("mousemove",handleMouseMove);
-			document.body.addEventListener("mouseup",handleMouseUp);
+				if(_firstInit)
+				{
+					//localFinishInit();
+					_firstInit = false; //only finish init once
+				}	
+					
+					}); //end getAliasesAndGroups
 						
+			
 		} //end init()		
 
 		//=====================================================================================
@@ -1292,6 +1350,279 @@
     		}
     		
 		} //end handlePointMouseUp()
+
+		//=====================================================================================
+		//openActiveGroupsDialog ~~
+		function openActiveGroupsDialog()
+		{	
+			Debug.log("openActiveGroupsDialog()");
+						
+			var ctrlStr = "";
+			ctrlStr += htmlOpen("input",
+					{
+							"class": "closeButton",
+							"type": "button",
+							"style": "margin:20px;",
+							"value": "Close",
+							"title": "Close this dialog."
+					},
+					0 /*html*/, true /*closeTag*/);	
+
+			var str = "";
+			
+			var groupTypes = ["Context","Configuration"];
+			var stepString;
+			
+			for(var g=0;g<groupTypes.length;++g)
+			{
+				stepString = "chooseActiveGroups" + "-" +
+						groupTypes[g] + "-";
+				
+				str += "Choose a '" + groupTypes[g] +
+						"' group to activate (either a System Alias or specific group):";
+	
+				str += htmlClearDiv();
+				
+				str += "<center>"; 
+				str += "<table style='margin-bottom: 10px;'>";
+				if(_systemGroups.aliases[groupTypes[g]].length)
+				{
+					str += "<tr><td><b>System Aliases:</b></td><td>";
+					{ //start aliases
+						str += htmlOpen("select",
+								{
+										"id" :		stepString + "aliases",
+								});
+
+						for(var i=0;i<_systemGroups.aliases[groupTypes[g]].length;++i)
+						{
+							str += htmlOpen("option",
+									{		
+									},
+									_systemGroups.aliases[groupTypes[g]]
+														  [i].alias /*innerHTML*/, true /*closeTag*/);
+						}
+						str += "</select>"; //end aliases dropdown
+						str += htmlOpen("input",
+								{
+										"id": stepString + "activateAlias",
+										"type": "button",
+										"value": "Activate Alias",
+										"title": "Activate chosen System Alias.",
+								},
+								0 /*html*/, true /*closeTag*/);	
+					} //end aliases
+					str += "</td></tr>";
+				}
+				else
+					str += "<tr><td colspan='2'>No system aliases of type Context found.</td></tr>";
+
+				var groupNames = Object.keys(_systemGroups.groups[groupTypes[g]]);
+				if(groupNames.length)
+				{
+					str += "<tr><td><b>Group Names:</b></td><td>";
+					{ //start groups
+						str += htmlOpen("select",
+								{
+										"id" :		stepString + "groupNames",
+								});
+
+						for(var i=0;i<groupNames.length;++i)
+						{
+							str += htmlOpen("option",
+									{		
+									},
+									groupNames[i] /*innerHTML*/, true /*closeTag*/);
+						}
+						str += "</select>"; //end group name dropdown
+
+					} //end groups
+					str += "</td></tr>";
+				}
+				else
+					str += "<tr><td colspan='2'>No groups of type Context found.</td></tr>";
+
+				if(groupNames.length)
+				{
+					str += "<tr><td><b>Group Keys:</b></td><td>";
+					{ //start keys
+						str += htmlOpen("select",
+								{
+										"id" :		stepString + "groupKeys",
+								});
+
+						for(var i=0;i<_systemGroups.groups[groupTypes[g]]
+														   [groupNames[0]].keys.length;++i)
+						{
+							str += htmlOpen("option",
+									{		
+									},
+									_systemGroups.groups[groupTypes[g]]
+														 [groupNames[0]].keys[i] /*innerHTML*/, true /*closeTag*/);
+						}
+						str += "</select>"; //end group keys dropdown
+						str += htmlOpen("input",
+								{
+										"id": stepString + "activateGroup",
+										"type": "button",
+										"value": "Activate Group",
+										"title": "Activate chosen Group and Key pair.",
+								},
+								0 /*html*/, true /*closeTag*/);	
+					} //end keys
+					str += "</td></tr>";
+				}
+				str += "</table>";
+				str += "</center>";
+			} //end group type loop
+			
+			//remove all existing dialogs
+			ConfigurationAPI.removeAllPopUps();
+			
+			//make popup element
+			el = document.createElement("div");			
+			el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
+
+			ConfigurationAPI.setPopUpPosition(el,
+					undefined /*w*/,
+					undefined /*h*/, 
+					undefined /*padding*/, 
+					undefined /*border*/,
+					50 /*margin*/);
+
+			el.innerHTML = ctrlStr + htmlClearDiv() + 
+					str + htmlClearDiv() + ctrlStr;
+			document.body.appendChild(el);
+			
+			localAddHandlers();
+			
+			return;
+
+			//==========
+			function localAddHandlers()
+			{ //start localAddHandlers			
+
+				var closeButtons = document.getElementsByClassName("closeButton");
+				for(var b=0;b<closeButtons.length;++b)
+					closeButtons[b].onclick = 
+						localCloseButtonHandler;
+
+				/////////////////////////////////
+				function localCloseButtonHandler()
+				{
+					Debug.log("localCloseButtonHandler()");
+					
+					//remove all existing dialogs
+					ConfigurationAPI.removeAllPopUps();
+					
+				} //end localCloseButtonHandler()
+
+				var stepString;
+				for(var g=0;g<groupTypes.length;++g)
+				{
+					stepString = "chooseActiveGroups-" + 
+							groupTypes[g] + "-";
+					/////////////////////////////////
+					document.getElementById(stepString + "activateAlias").onclick = 
+							function()
+							{
+						//since multiple, use id to identify
+						var idSplit = this.id.split('-');
+						var localGroupType = idSplit[1];
+						var localStepString = idSplit[0] + "-" +
+								idSplit[1] + "-";
+						
+						//activate alias then go back to record name
+						var alias = document.getElementById(localStepString +
+								"aliases").value;
+						Debug.log("activateAlias " + alias);
+
+						//find associated aliasObj
+						var aliasObj;
+						for(var i=0;i<
+						_systemGroups.aliases[localGroupType].length;++i)
+							if(_systemGroups.aliases[localGroupType][i].alias == 
+									alias)
+							{
+								aliasObj = _systemGroups.aliases[localGroupType][i];
+								break;						
+							}
+
+						Debug.log("activateAlias group " + aliasObj.name + 
+								"-" + aliasObj.key);
+
+						ConfigurationAPI.activateGroup(aliasObj.name, aliasObj.key, 
+								true /*ignoreWarnings*/, 
+								/*doneHandler*/
+								function()
+								{
+							Debug.log("The System Alias '" + alias + 
+									"' (" + aliasObj.name + " (" + 
+									aliasObj.key + ")) was successfully activated!", Debug.INFO_PRIORITY);
+
+							init();
+								}); //end activate group handler
+							}; //end activate alias handler
+
+					/////////////////////////////////
+					document.getElementById(stepString + "groupNames").onchange = 
+							function()
+							{
+						//since multiple, use id to identify
+						var idSplit = this.id.split('-');
+						var localGroupType = idSplit[1];
+						var localStepString = idSplit[0] + "-" +
+								idSplit[1] + "-";
+						
+						//fill keys drop down
+						Debug.log("Filling dropdown with keys for " + this.value);
+						var str = "";
+						for(var i=0;i<_systemGroups.groups[localGroupType]
+														   [this.value].keys.length;++i)
+						{
+							str += htmlOpen("option",
+									{		
+									},
+									_systemGroups.groups[localGroupType]
+														 [this.value].keys[i] /*innerHTML*/, true /*closeTag*/);
+						}
+						document.getElementById(localStepString + "groupKeys").innerHTML = 
+								str;
+							}; //end group names dropdown handler
+
+					/////////////////////////////////
+					document.getElementById(stepString + "activateGroup").onclick = 
+							function()
+							{
+						//since multiple, use id to identify
+						var idSplit = this.id.split('-');
+						var localGroupType = idSplit[1];
+						var localStepString = idSplit[0] + "-" +
+								idSplit[1] + "-";
+						
+						//activate alias then go back to record name
+						var name = document.getElementById(localStepString + "groupNames").value;
+						var key = document.getElementById(localStepString + "groupKeys").value;
+
+						Debug.log("activateGroup " + name + 
+								"-" + key);
+
+						ConfigurationAPI.activateGroup(name, key, 
+								true /*ignoreWarnings*/, 
+								/*doneHandler*/
+								function()
+								{
+							Debug.log("The Group '" + name + " (" + 
+									key + ") was successfully activated!", Debug.INFO_PRIORITY);
+
+							init();
+								}); //end activate group handler
+							}; //end activate alias handler
+
+				}
+			} //end localAddHandlers
+			
+		} //end openActiveGroupsDialog()
 		
 		</script>
 </head>
