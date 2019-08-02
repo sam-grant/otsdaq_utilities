@@ -181,6 +181,12 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//	deleteTreeNodeRecords
 	//		---- end associated with JavaScript Config API
 	//
+	//		---- associated with JavaScript artdaq Config API
+	//	getArtdaqNodes
+    //  loadArtdaqNodeLayout
+	//  saveArtdaqNodeLayout
+	//		---- end associated with JavaScript artdaq Config API
+	//
 	//	activateTableGroup
 	//	getActiveTableGroups
 	//  copyViewToCurrentColumns
@@ -959,6 +965,42 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                                   startPath,
 		                                   modifiedTables,
 		                                   recordList);
+	}
+	else if(requestType == "getArtdaqNodes")
+	{
+		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+
+		__SUP_COUTV__(modifiedTables);
+
+		handleGetArtdaqNodeRecordsXML(xmlOut,
+				cfgMgr,
+				modifiedTables);
+	}
+	else if(requestType == "loadArtdaqNodeLayout")
+	{
+		std::string contextGroupName      = CgiDataUtilities::getData(cgiIn, "contextGroupName");
+		std::string contextGroupKey       = CgiDataUtilities::getData(cgiIn, "contextGroupKey");
+
+		__SUP_COUTV__(contextGroupName);
+		__SUP_COUTV__(contextGroupKey);
+
+		handleLoadArtdaqNodeLayoutXML(xmlOut,
+				cfgMgr,
+				contextGroupName,
+                TableGroupKey(contextGroupKey));
+	}
+	else if(requestType == "saveArtdaqNodeLayout")
+	{
+		std::string contextGroupName      = CgiDataUtilities::getData(cgiIn, "contextGroupName");
+		std::string contextGroupKey       = CgiDataUtilities::getData(cgiIn, "contextGroupKey");
+
+		__SUP_COUTV__(contextGroupName);
+		__SUP_COUTV__(contextGroupKey);
+
+		handleSaveArtdaqNodeLayoutXML(xmlOut,
+				cfgMgr,
+				contextGroupName,
+                TableGroupKey(contextGroupKey));
 	}
 	else if(requestType == "getAffectedActiveGroups")
 	{
@@ -1994,7 +2036,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
-}
+} //end handleFillDeleteTreeNodeRecordsXML()
 
 //========================================================================================================================
 // handleFillSetTreeNodeFieldValuesXML
@@ -6857,7 +6899,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 
 		}  // end other key loop
 	}      // end primary group loop
-}
+} //end handleTableGroupsXML()
 
 //========================================================================================================================
 //	handleTablesXML
@@ -6943,7 +6985,90 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 		    "Error",
 		    std::string("Column errors were allowed for this request, ") +
 		        "but please note the following errors:\n" + accumulatedErrors);
-}
+} //end handleTablesXML()
+
+
+//========================================================================================================================
+// handleGetArtdaqNodeRecordsXML
+//	get artdaq nodes for active groups
+//
+// parameters
+//	modifiedTables := CSV of table/version pairs
+//
+void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      modifiedTables)
+{
+	//	setup active tables based on active groups and modified tables
+	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
+
+	const XDAQContextTable* contextTable =
+	    cfgMgr->__GET_CONFIG__(XDAQContextTable);
+
+	//for each artdaq context, output all artdaq apps
+		//call individual tables (Reader, Builder, Aggregator)
+		//for further details (e.g. Aggregator->isDispatcher()...)
+
+	std::vector<const XDAQContextTable::XDAQContext*> artdaqContexts[] =
+		{
+			contextTable->getBoardReaderContexts(),
+			contextTable->getEventBuilderContexts(),
+			contextTable->getAggregatorContexts()
+		});
+
+	for(unsigned int i=0;i<3 /*context type count*/;++i)
+		for(auto& artdaqContext:artdaqContexts[i])
+		{
+			__SUP_COUTV__(artdaqContext->contextUID_);
+			__SUP_COUTV__(artdaqContext->applications_.size());
+
+			for(auto& artdaqApp:artdaqContext->applications_)
+			{
+				__SUP_COUTV__(artdaqApp->applicationUID_);
+				xmlOut.addTextElementToData(
+						i == 0? "reader" :
+						(i == 1? "builder" :
+								"aggregator"),
+						artdaqApp->applicationUID_
+					);
+			} //end artdaq app loop
+		} //end artdaq context loop
+
+
+} //end handleGetArtdaqNodeRecordsXML()
+
+//========================================================================================================================
+// handleLoadArtdaqNodeLayoutXML
+//	load artdaq configuration GUI layout for group/key
+//
+// parameters
+//	contextGroupName (full name with key)
+//
+void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      contextGroupName,
+    const TableGroupKey&    contextGroupKey)
+{
+
+} //end handleLoadArtdaqNodeLayoutXML()
+
+//========================================================================================================================
+// handleSaveArtdaqNodeLayoutXML
+//	save artdaq configuration GUI layout for group/key
+//
+// parameters
+//	configGroupName (full name with key)
+//
+void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      contextGroupName,
+    const TableGroupKey&    contextGroupKey)
+{
+
+} //end handleSaveArtdaqNodeLayoutXML()
 
 //========================================================================================================================
 //	testXDAQContext
@@ -7011,4 +7136,4 @@ void ConfigurationGUISupervisor::testXDAQContext()
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////
-}
+} //end testXDAQContext()
