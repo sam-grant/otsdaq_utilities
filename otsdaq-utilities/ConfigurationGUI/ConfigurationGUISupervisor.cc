@@ -26,6 +26,8 @@ using namespace ots;
 #define TABLE_INFO_PATH std::string(__ENV__("TABLE_INFO_PATH")) + "/"
 #define TABLE_INFO_EXT std::string("Info.xml")
 
+#define ARTDAQ_CONFIG_LAYOUTS_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/ConfigurationGUI_artdaqLayouts/"
+
 /*! the XDAQ_INSTANTIATOR_IMPL(ns1::ns2::...) macro needs to be put into the
  * implementation file (.cc) of the XDAQ application */
 xdaq::Application* ConfigurationGUISupervisor::instantiate(xdaq::ApplicationStub* stub)
@@ -44,9 +46,12 @@ ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* st
 
 	INIT_MF("ConfigurationGUI");
 
+	// make macro directories in case they don't exist
+	mkdir(((std::string)ARTDAQ_CONFIG_LAYOUTS_PATH).c_str(), 0755);
+
 	init();
 	__SUP_COUT__ << "Constructor complete." << __E__;
-}
+} //end constructor()
 
 //========================================================================================================================
 ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void) { destroy(); }
@@ -7000,6 +7005,8 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
     ConfigurationManagerRW* cfgMgr,
     const std::string&      modifiedTables)
 {
+	__COUT__ << "Getting artdaq nodes..." << __E__;
+
 	//	setup active tables based on active groups and modified tables
 	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
 
@@ -7015,9 +7022,17 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 			contextTable->getBoardReaderContexts(),
 			contextTable->getEventBuilderContexts(),
 			contextTable->getAggregatorContexts()
-		});
+		};
 
+	std::string typeString;
 	for(unsigned int i=0;i<3 /*context type count*/;++i)
+	{
+		typeString = i == 0? "reader" :
+				(i == 1? "builder" :
+						"aggregator");
+
+		__COUT__ << typeString << " size = " << artdaqContexts[i].size() << __E__;
+
 		for(auto& artdaqContext:artdaqContexts[i])
 		{
 			__SUP_COUTV__(artdaqContext->contextUID_);
@@ -7025,16 +7040,25 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 
 			for(auto& artdaqApp:artdaqContext->applications_)
 			{
-				__SUP_COUTV__(artdaqApp->applicationUID_);
+				__SUP_COUTV__(artdaqApp.applicationUID_);
+
 				xmlOut.addTextElementToData(
-						i == 0? "reader" :
-						(i == 1? "builder" :
-								"aggregator"),
-						artdaqApp->applicationUID_
+						typeString,
+						artdaqApp.applicationUID_
+					);
+				xmlOut.addTextElementToData(
+						typeString + "-contextAddress",
+						artdaqContext->address_
+					);
+				xmlOut.addTextElementToData(
+						typeString + "-contextPort",
+						std::to_string(artdaqContext->port_)
 					);
 			} //end artdaq app loop
 		} //end artdaq context loop
+	} //end artdaq type loop
 
+	__COUT__ << "Done getting artdaq nodes." << __E__;
 
 } //end handleGetArtdaqNodeRecordsXML()
 
@@ -7051,6 +7075,74 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
     const std::string&      contextGroupName,
     const TableGroupKey&    contextGroupKey)
 {
+	std::stringstream layoutPath;
+	layoutPath << ARTDAQ_CONFIG_LAYOUTS_PATH << contextGroupName << "_"
+			<< contextGroupKey << ".dat";
+	__SUP_COUTV__(layoutPath.str());
+	FILE *fp = fopen(layoutPath.str().c_str(),"r");
+	if(!fp)
+	{
+		__SUP_COUT__ << "Layout file not found for '" <<
+				contextGroupName << "(" << contextGroupKey << ")'" << __E__;
+		return;
+	}
+
+
+	//file format is line by line
+	// line 0 -- grid: <rows> <cols>
+	// line 1-N -- node: <type> <name> <x-grid> <y-grid>
+
+	const size_t maxLineSz = 1000;
+	char line[maxLineSz];
+	if(!fgets(line,maxLineSz,fp)) {fclose(fp); return;}
+	else
+	{
+		//extract grid
+
+		unsigned int rows, cols;
+
+		sscanf(line,"%u %u",&rows,&cols);
+
+		__COUT__ << "Grid rows,cols = " << rows << "," << cols << __E__;
+
+		xmlOut.addTextElementToData(
+				"grid-rows",
+				std::to_string(rows)
+		);
+		xmlOut.addTextElementToData(
+				"grid-cols",
+				std::to_string(cols)
+		);
+	}
+
+	char name[maxLineSz];
+	char type[maxLineSz];
+	unsigned int x,y;
+	while(fgets(line,maxLineSz,fp))
+	{
+		//extract node
+		sscanf(line,"%s %s %u %u",type,name,&x,&y);
+
+		xmlOut.addTextElementToData(
+				"node-type",
+				type
+		);
+		xmlOut.addTextElementToData(
+				"node-name",
+				name
+		);
+		xmlOut.addTextElementToData(
+				"node-x",
+				std::to_string(x)
+		);
+		xmlOut.addTextElementToData(
+				"node-y",
+				std::to_string(y)
+		);
+	} //end node extraction loop
+
+
+	fclose(fp);
 
 } //end handleLoadArtdaqNodeLayoutXML()
 

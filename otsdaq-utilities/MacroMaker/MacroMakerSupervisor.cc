@@ -296,6 +296,8 @@ void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 	// filename, 0 for no image  5 - linkurl = url of the window to open  6 - folderPath =
 	// folder and subfolder location
 
+
+
 	*out << "Macro Maker "
 	        ",MM,0,1,icon-MacroMaker.png,/WebPath/html/"
 	        "MacroMaker.html?urn=290,/"
@@ -303,6 +305,30 @@ void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 	        ",CFG,0,1,icon-Configure.png,/WebPath/html/"
 	        "FEMacroTest.html?urn=290,/"
 	     << "";
+
+	//if there is a file of more icons, add to end of output
+	std::string iconFile = std::string(__ENV__("USER_DATA")) + "/MacroMakerModeIcons.dat";
+	__COUT__ << "Macro Maker mode user icons file: " << iconFile << __E__;
+	FILE *fp = fopen(iconFile.c_str(),"r");
+	if(fp)
+	{
+		__COUT__ << "Macro Maker mode user icons loading from " << iconFile << __E__;
+		fseek(fp, 0, SEEK_END);
+		const unsigned long fileSize = ftell(fp);
+		std::string fileString(fileSize,0);
+		rewind(fp);
+		if(fread(&fileString[0],1,fileSize,fp) != fileSize)
+		{
+			__COUT_ERR__ << "Unable to read proper size string from icons file!" << __E__;
+			return;
+		}
+
+		fclose(fp);
+		__COUTV__(fileString);
+		*out << fileString;
+	}
+	else
+		__COUT__ << "Macro Maker mode user icons file not found: " << iconFile << __E__;
 	return;
 }  // end requestIcons()
 

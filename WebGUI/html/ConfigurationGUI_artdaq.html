@@ -14,24 +14,9 @@
 
 	<style type="text/css">			
 		
-		/* CSS Reset */
-		/*html{color:white;background:#FFF}
-
-		body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td{margin:0;padding:0}table{border-collapse:collapse;border-spacing:0}fieldset,img{border:0}address,caption,cite,code,dfn,em,strong,th,var{font-style:normal;font-weight:normal}ol,ul{list-style:none}caption,th{text-align:left}h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:normal}q:before,q:after{content:''}abbr,acronym{border:0;font-variant:normal}sup{vertical-align:text-top}sub{vertical-align:text-bottom}input,textarea,select{font-family:inherit;font-size:inherit;font-weight:inherit;*font-size:100%}
-		legend{color:#000}	
-		* {
-			margin: 				0;
-			spacing: 				0;
-			padding: 				0;
-			border: 				0;
-			color: 					white;
-			-webkit-user-select: 	none; /* prevent highlight selection (does not stop ghost images, must use el.ondragstart = function() {return false;}; */
-			-moz-user-select: 		none;
-			user-select:			none;
-			outline: 				none;  /* to stop firefox selection*/	
-			font-family: 			'Comfortaa', serif; /*'Donegal One', serif;*/		
-			font-size: 				20px;
-		}*/
+		body {
+			background-color: 		white; 
+		}
 		
 		/* make buttons and links have a hand cursor */
 		input[type="button"], button, a {
@@ -410,6 +395,7 @@
 	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ArtdaqConfigurationAPI.js"></script>
 	
 	<script>		
 		
@@ -437,6 +423,9 @@
 		var _GRID_COLOR 		= "rgb(218, 194, 194)";
 		var _ARROW_COLOR 		= "rgb(70, 67, 67)";
 		var _SHADOW_COLOR 		= "gray";
+		var _GRID_ROW_MIN		= 2;
+		var _GRID_COL_MIN		= 3;
+		
 		var _gridCanvas, _gridContext, _canvas, _context, _actionCanvas, _actionContext;
 		var _preCanvas, _postCanvas;
 		var _addNodeEl;
@@ -444,13 +433,15 @@
 		
 		//object globals -------------
 		var _grid = { //size of grid, rows and cols can be added or removed
-				"rows": 4, 	"cols": 3, 
+				"rows": _GRID_ROW_MIN, 	"cols": _GRID_COL_MIN, 
 				"x0": 	0, 	"y0": 	0, 
 				"xstep":0, 	"ystep":0}; 
 		var _nodes = []; 	// array of node objects (can be multi-node vector at location)
-							//	node: 	{type,x-grid,y-grid,node-count}
+							//	node: 	{type,name,x-grid,y-grid,node-count}
 		var _arrows = {}; 	//multi-dim map of arrow objects 
 							//	arrow:	[i0][i1] = {p0,p1} (start and end i,p - where i := node index, p := 1 of 4 positions starting from top going clock-wise)
+		
+		var _nodesByType = {};		
 		
 		
 		
@@ -458,8 +449,8 @@
 		var _NODE_TYPE_READER 		= 0;
 		var _NODE_TYPE_BUILDER 		= 1;
 		var _NODE_TYPE_LOGGER 		= 2;
-		var _NODE_TYPE_MONITOR 		= 3;
-		var _NODE_TYPE_DISPATCHER 	= 4;
+		var _NODE_TYPE_DISPATCHER 	= 3;
+		var _NODE_TYPE_MONITOR 		= 4;
 		
 		var _MMM_NONE				= 0;
 		var _MMM_ARROW_DRAG			= 1;
@@ -505,7 +496,9 @@
 		//functions:
 			//htmlOpen()
 			//htmlClearDiv()
-			//init()			
+			//init()	
+		
+			//openActiveGroupsDialog()
 		
 			//paint()
 			//drawGrid() 
@@ -514,7 +507,10 @@
 		
 			//getNodePoint(i,p)
 			//doNodeHover(i)
-			
+			//getTypeIndex(typeName)
+			//getEmptyGridSpot(type)
+			//plusMinusGrid(isPlus,directionIndex)
+		
 			//handleNodeMouseOver(e)
 			//handleMouseMove(e)
 			//handleMouseUp(e)
@@ -546,68 +542,243 @@
 			//					"\n\t- 'Right Pane' is for modifying the common fields associated with the selected records."
 			//			);
 
-			var x = 0;
-			var y = 0;
-			_nodes.push({"type":_NODE_TYPE_READER,	"x":x++, 	"y":y});			
-			_nodes.push({"type":_NODE_TYPE_BUILDER,	"x":x++, 	"y":y, "nodeCount": 5});			
-			_nodes.push({"type":_NODE_TYPE_LOGGER,	"x":x++, 	"y":y, "nodeCount": 2});
-			x = 0;
-			y++;
-			_nodes.push({"type":_NODE_TYPE_MONITOR,	"x":x, 	"y":y});			
-			_nodes.push({"type":_NODE_TYPE_DISPATCHER,	"x":x++, 	"y":y});
-				
-			_arrows[1] = {};
-			_arrows[1][0] = {"p0":1,"p1":0};
-									
-
-			_preCanvas = document.getElementById("preCanvas");
-			_postCanvas = document.getElementById("postCanvas");
-			_addNodeEl = document.getElementById("createNodeDiv");
-			
-			_canvas = document.getElementById("theCanvas");
-			_canvas.style.backgroundColor = _CANVAS_COLOR;
-			_context = _canvas.getContext('2d');
-			_actionCanvas = document.getElementById("theActionCanvas");
-			_actionCanvas.style.backgroundColor = _CANVAS_COLOR;
-			_actionContext = _actionCanvas.getContext('2d');
-			_gridCanvas = document.getElementById("theGridCanvas");
-			_gridCanvas.style.backgroundColor = _CANVAS_COLOR;
-			_gridContext = _gridCanvas.getContext('2d');
-			
-			
-			//==============================
-			function localFinishInit() 
+			if(0) //example nodes and arrows
 			{
+				var x = 0;
+				var y = 0;
+				_nodes.push({"type":_NODE_TYPE_READER,	"x":x++, 	"y":y});			
+				_nodes.push({"type":_NODE_TYPE_BUILDER,	"x":x++, 	"y":y, "nodeCount": 5});			
+				_nodes.push({"type":_NODE_TYPE_LOGGER,	"x":x++, 	"y":y, "nodeCount": 2});
+				x = 0;
+				y++;
+				_nodes.push({"type":_NODE_TYPE_MONITOR,	"x":x, 	"y":y});			
+				_nodes.push({"type":_NODE_TYPE_DISPATCHER,	"x":x++, 	"y":y});
+
+				_arrows[1] = {};
+				_arrows[1][0] = {"p0":1,"p1":0};
+
+			}
+						
+			
+			//init configuration members
+			_modifiedTables = undefined; //reset
+			
+			ArtdaqConfigurationAPI.getArtdaqNodes(
+					function(artdaqNodesObj)
+					{
+				console.log("artdaqNodesObj",artdaqNodesObj);
+				
+				//get active configuration group
+				DesktopContent.XMLHttpRequest("Request?RequestType=loadArtdaqNodeLayout",
+						"", //end post data, 
+						function(req) 
+						{
+					//Steps:
+					//	if layout, 
+					//		for each matching node in layout, place, delete from artdaqNodesObj 
+					//  for each remaining node, then use default behavior to place nodes
+					
+					// build _nodes and _nodesByType
+					
+					// Then, get artdaqSourcesAndDestinations
+					
+					var rows = DesktopContent.getXMLValue(req,"grid-rows");
+					var cols = DesktopContent.getXMLValue(req,"grid-cols");
+					
+					if(!rows || rows == "" || !cols || cols == "")
+					{
+						//setup default grid
+						rows = Math.ceil(Math.sqrt(artdaqNodesObj.nodeCount));
+						cols = rows + 1;
+					}
+					_grid.rows = rows | 0;
+					_grid.cols = cols | 0;
+					if(_grid.rows < _GRID_ROW_MIN)
+						_grid.rows = _GRID_ROW_MIN;
+					if(_grid.cols < _GRID_COL_MIN)
+						_grid.cols = _GRID_COL_MIN;
+					
+					console.log("_grid",_grid);
+					
+					var layoutNodesType = req.responseXML.getElementsByTagName("node-type");
+					var layoutNodesName = req.responseXML.getElementsByTagName("node-name");
+					var layoutNodesX 	= req.responseXML.getElementsByTagName("node-x");
+					var layoutNodesY	= req.responseXML.getElementsByTagName("node-y");
+					
+					//for every type, node match.. add to _nodes.. and delete from artdaqNodesObj
+					for(var i=0;i<layoutNodesType.length;++i)
+					{
+						var type = layoutNodesType[i].getAttribute('value');
+						var name = layoutNodesName[i].getAttribute('value');
+						if(artdaqNodesObj[type] && 
+								artdaqNodesObj[type][name])
+						{
+							Debug.log("Found " + name);
+							delete artdaqNodesObj[type][name];
+							
+							//add to nodes
+							_nodes.push({
+								"type": getTypeIndex(type),
+								"name": name,								
+								"x":	layoutNodesX[i].getAttribute('value')|0,
+								"y":	layoutNodesY[i].getAttribute('value')|0});
+							
+						}
+						else //not found, so do not represent anymore
+							Debug.log("Not Found " + name);
+					}
+					
+					console.log("nodes in layout",_nodes);
+					
+					//now add remaining nodes to layout automatically
+					
+					for(var t in artdaqNodesObj)
+					{
+						console.log("Type",t);
+
+						for(var n in artdaqNodesObj[t])
+						{	
+							console.log("Type",t,"Name",n);
+
+							var typeIndex = getTypeIndex(t);
+							var xy = getEmptyGridSpot(typeIndex);
+							//add to nodes
+							_nodes.push({
+								"type": 		typeIndex,
+								"name": 		n,	
+								"address":		artdaqNodesObj[t][n].address,
+								"port":			artdaqNodesObj[t][n].port,
+								"x":			xy[0],
+								"y":			xy[1]});
+						}
+					}
+					
+					console.log("all nodes",_nodes);
+					
+					localFinishInit();
+						}, //end loadArtdaqNodeLayout handler
+						0,0,true  //reqParam, progressHandler, callHandlerOnErr
+				); //end loadArtdaqNodeLayout call
+				
+					}, //end getArtdaqApps handler
+					_modifiedTables); //end getArtdaqApps call
+			
+			return;
+			
+
+			//=================
+			function localFinishInit()
+			{				
+				//only continue if the first time in init()
+				if(!_firstInit) 
+				{
+					paint();
+					return;
+				}		
+				//else first time!
+				
+				_firstInit = false; //only finish init once
+	
+				_preCanvas = document.getElementById("preCanvas");
+				_postCanvas = document.getElementById("postCanvas");
+				_addNodeEl = document.getElementById("createNodeDiv");
+	
+				_canvas = document.getElementById("theCanvas");
+				_canvas.style.backgroundColor = _CANVAS_COLOR;
+				_context = _canvas.getContext('2d');
+				_actionCanvas = document.getElementById("theActionCanvas");
+				_actionCanvas.style.backgroundColor = _CANVAS_COLOR;
+				_actionContext = _actionCanvas.getContext('2d');
+				_gridCanvas = document.getElementById("theGridCanvas");
+				_gridCanvas.style.backgroundColor = _CANVAS_COLOR;
+				_gridContext = _gridCanvas.getContext('2d');
+	
+				paint();
 				window.addEventListener("resize",paint);
 	
 				//DesktopContent.mouseMoveSubscriber(handleMouseMove); //causes problems because of this.style.cursor handling 
 				document.body.addEventListener("mousemove",handleMouseMove);
 				document.body.addEventListener("mouseup",handleMouseUp);
-			} //end localFinishInit()
+			} //end localFinishInit()									
 			
+		} //end init()	
+		
+		//=====================================================================================
+		//getTypeIndex ~~
+		function getTypeIndex(typeName)
+		{
+			Debug.log("getTypeIndex " + typeName);
+			t = typeName == "reader"?0:
+					(typeName == "builder"?1:
+					(typeName == "logger"?2:
+					(typeName == "dispatcher"?3:
+					(typeName == "monitor"?4:-1))));
 			
-			//init configuration members
-			_modifiedTables = undefined; //reset
-			_systemGroups = {}; //reset
-			
-			//	get groups and aliases
-			ConfigurationAPI.getAliasesAndGroups(
-					function(retObj)
-					{
-				_systemGroups = retObj;
-				console.log("_systemGroups",_systemGroups);
-				console.log("ConfigurationAPI._activeGroups",ConfigurationAPI._activeGroups);
+			if(t < 0)
+			{	
+				Debug.log("Illegal type name " + typeName + 
+						". Tell admins how you got here!", Debug.HIGH_PRIORITY);
+				return; 
+			}
+			return t;
+		} //end getTypeIndex()		
 
-				if(_firstInit)
-				{
-					//localFinishInit();
-					_firstInit = false; //only finish init once
-				}	
-					
-					}); //end getAliasesAndGroups
-						
+		//=====================================================================================
+		//getEmptyGridSpot ~~
+		//	return empty x,y grid spot
+		//	handle types differently.. 
+		//	i.e. readers to left, builders in middle, aggregators to right
+		function getEmptyGridSpot(type)
+		{
+			var x = type == _NODE_TYPE_READER?0:
+					(type == _NODE_TYPE_BUILDER?((_grid.cols/2)|0):
+					_grid.cols-1); //else aggregators on right
+			var d = type == _NODE_TYPE_READER?1:-1; //direction of search in x
+			var y = 0; //start at top-ish
 			
-		} //end init()		
+			//search _nodes for conflict
+			var tries = 0;
+			do
+			{
+				var conflict = false;
+				
+				//if too many conflicts, add row to top
+				if(tries > _grid.cols*_grid.rows/2)
+				{
+					plusMinusGrid(true /*isPlus*/,0 /*directionIndex*/); //add row to top
+
+					var x = type == _NODE_TYPE_READER?0:
+							(type == _NODE_TYPE_BUILDER?((_grid.cols/2)|0):
+							_grid.cols-1); //else aggregators on right
+					y = 0;
+				}
+
+				for(var i=0;i<_nodes.length;++i)
+				{
+					if(_nodes[i].x == x && _nodes[i].y == y)
+					{
+						conflict = true;
+						//try new value
+						++y;
+						if(y >= _grid.cols)
+						{
+							//handle y wraparound
+							y = 0;
+							x = (x + d) % _grid.cols;
+						}
+						
+						break;
+					}
+				}
+				++tries;
+			} while(conflict);
+			
+			Debug.log("Position found at x,y " + 
+					x + "," + y);
+			
+			return [x,y];
+			
+		} //end getEmptyGridSpot()
 
 		//=====================================================================================
 		//handleNodeMouseOver ~~
@@ -677,6 +848,17 @@
 		//drawGrid ~~
 		function drawGrid() 
 		{	
+			if(_grid.cols < _GRID_COL_MIN) 
+			{
+				Debug.log("Not enough columns, defaulting.");
+				_grid.cols = _GRID_COL_MIN;
+			}
+			if(_grid.rows < _GRID_ROW_MIN) 
+			{
+				Debug.log("Not enough rows, defaulting.");
+				_grid.rows = _GRID_ROW_MIN;
+			}
+			
 			//determine grid spacing
 			_grid.xstep = (_w - 2*_GRID_MARGIN)/_grid.cols;			
 			_grid.ystep = (_h - 2*_GRID_MARGIN)/_grid.rows;
@@ -845,6 +1027,126 @@
 		} //end drawGrid()
 
 		//=====================================================================================
+		//plusMinusGrid ~~
+		//	add or subtract row/col, and adjust nodes
+		// directionIndex := 0-3 := top, right, bottom, left
+		function plusMinusGrid(isPlus,directionIndex)
+		{
+			if(!isPlus) //then deleting row/col
+			{
+				if(directionIndex == 0 || 
+						directionIndex == 2)
+				{
+					//dealing with a row
+					
+					var y = directionIndex == 0?
+							0:_grid.rows-1;
+
+					if(_grid.rows <= 2)
+					{
+						Debug.log("Can not delete row " + y +
+								" - two rows is the minimum!",
+								Debug.HIGH_PRIORITY);
+						return;
+					}
+					
+					//check for conflict
+					for(var i=0;i<_nodes.length;++i)
+						if(_nodes[i].y == y)
+						{
+							Debug.log("Can not delete row " + y +
+									" while still occupied!",
+									Debug.HIGH_PRIORITY);
+							return;
+						}
+					
+					//remove row 
+					--_grid.rows;
+					
+					//move all nodes if row-0 was removed
+					if(directionIndex == 0)
+						for(var i=0;i<_nodes.length;++i)
+							--_nodes[i].y;					
+				}
+				else if(directionIndex == 1 || 
+						directionIndex == 3)
+				{
+					//dealing with a column
+					
+					var x = directionIndex == 3?
+							0:_grid.cols-1;
+
+					if(_grid.cols <= 2)
+					{
+						Debug.log("Can not delete column " + x +
+								" - two columns is the minimum!",
+								Debug.HIGH_PRIORITY);
+						return;
+					}
+
+					//check for conflict
+					for(var i=0;i<_nodes.length;++i)
+						if(_nodes[i].x == x)
+						{
+							Debug.log("Can not delete column " + x +
+									" while still occupied!",
+									Debug.HIGH_PRIORITY);
+							return;
+						}
+
+					//remove column 
+					--_grid.cols;
+
+					//move all nodes if col-0 was removed
+					if(directionIndex == 3)
+						for(var i=0;i<_nodes.length;++i)
+							--_nodes[i].x;
+				}
+				else
+				{	
+					Debug.log("Unrecognized direction index - should be impossible!",
+							Debug.HIGH_PRIORITY);
+				}
+				
+				//re-paint adjustments
+				paint(); 
+				
+				return;
+			} //end minus handling
+			
+			//if here, the add handling
+			
+			if(directionIndex == 0 || 
+					directionIndex == 2)
+			{
+				//dealing with a row
+				++_grid.rows;
+				
+				//move all nodes if row-0 was added
+				if(directionIndex == 0)
+					for(var i=0;i<_nodes.length;++i)
+						++_nodes[i].y;
+			}
+			else if(directionIndex == 1 || 
+					directionIndex == 3)
+			{
+				//dealing with a column
+				++_grid.cols;
+
+				//move all nodes if col-0 was removed
+				if(directionIndex == 3)
+					for(var i=0;i<_nodes.length;++i)
+						++_nodes[i].x;
+			}
+			else
+			{	
+				Debug.log("Unrecognized direction index - should be impossible!",
+						Debug.HIGH_PRIORITY);
+			}
+			
+		} //end plusMinusGrid()
+
+		//=====================================================================================
 		//drawNode ~~
 		//	draw a node of specified by node index 
 		function drawNode(i)
@@ -867,10 +1169,22 @@
 			Debug.log("x,y,sz = " + x + "," + y + "," + sz);
 			
 			var typeClass = 
-					type == _NODE_TYPE_READER? "nodeReader":
-					type == _NODE_TYPE_READER? "nodeBuilder":
-					type == _NODE_TYPE_READER? "nodeLogger":
-					type == _NODE_TYPE_READER? "nodeMonitor": "nodeDispatcher";
+					type == _NODE_TYPE_READER? 		"nodeReader":
+					type == _NODE_TYPE_BUILDER? 	"nodeBuilder":
+					type == _NODE_TYPE_LOGGER? 		"nodeLogger":
+					type == _NODE_TYPE_DISPATCHER? 	"nodeDispatcher":"nodeMonitor";
+
+			var typeName = 
+					type == _NODE_TYPE_READER? 		"Reader":
+					type == _NODE_TYPE_BUILDER? 	"Builder":
+					type == _NODE_TYPE_LOGGER? 		"Logger":
+					type == _NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
+			var typeAcronym = 
+					type == _NODE_TYPE_READER? 		"BR":
+					type == _NODE_TYPE_BUILDER? 	"EB":
+					type == _NODE_TYPE_LOGGER? 		"DL":
+					type == _NODE_TYPE_DISPATCHER? 	"Di":"Mo";
+						
 			
 			Debug.log("nodeid = " + nodeid + "; typeClass = " + typeClass);
 
@@ -900,7 +1214,7 @@
 					{
 						str += "<div id='" + nodeid + 
 							"-boxText' class='node-boxText'>" +
-							"BR" +
+							typeAcronym +
 							"</div>";
 					}
 					str += "</div>";
@@ -921,7 +1235,10 @@
 				//header text
 				str += "<div id='" + nodeid + 
 					"-headerText' class='node-headerText'>" +
-					"BoardReader:" +
+					typeName + ": " + _nodes[i].name +
+					"<br>" + 
+					_nodes[i].address + ":" +
+					_nodes[i].port					
 					"</div>";
 				
 				//add edit pencil icon
@@ -972,6 +1289,10 @@
 			el.style.left = (- (_grid.xstep-sz)/2) + "px";
 			el.style.top = (-30) + "px";
 			el.style.width = (_grid.xstep) + "px";
+
+			el = document.getElementById(nodeid + "-boxText");
+			el.style.fontSize = ((sz/5)|0) + "px";
+			el.style.marginTop = ((sz/2 - sz/10)|0) + "px";			
 						
 			el = document.getElementById(nodeid + "-editIcon");
 			el.style.left = (-10) + "px";
@@ -1059,6 +1380,9 @@
 		//handleMouseMove ~~
 		function handleMouseMove(e) 
 		{	
+			if(document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID))
+				return; //disable while popup
+				
     		var x = e.clientX;//- this.offsetLeft - _CANVAS_MARGIN - 2;
     		var y = e.clientY;//- this.offsetTop - _CANVAS_MARGIN - 2;
 			
@@ -1353,275 +1677,306 @@
 
 		//=====================================================================================
 		//openActiveGroupsDialog ~~
+		//	show update group options to activate
 		function openActiveGroupsDialog()
-		{	
+		{
+			//undo hover node, if any
+			if(_mouseHoverNode != -1)
+				doNodeHover(_mouseHoverNode,true /*undoHover*/);
+			
 			Debug.log("openActiveGroupsDialog()");
-						
-			var ctrlStr = "";
-			ctrlStr += htmlOpen("input",
+
+			_systemGroups = {}; //reset			
+
+			//	get groups and aliases
+			ConfigurationAPI.getAliasesAndGroups(
+					function(retObj)
 					{
-							"class": "closeButton",
-							"type": "button",
-							"style": "margin:20px;",
-							"value": "Close",
-							"title": "Close this dialog."
-					},
-					0 /*html*/, true /*closeTag*/);	
+				_systemGroups = retObj;
+				console.log("_systemGroups",_systemGroups);
+				console.log("ConfigurationAPI._activeGroups",ConfigurationAPI._activeGroups);
 
-			var str = "";
-			
-			var groupTypes = ["Context","Configuration"];
-			var stepString;
-			
-			for(var g=0;g<groupTypes.length;++g)
-			{
-				stepString = "chooseActiveGroups" + "-" +
-						groupTypes[g] + "-";
-				
-				str += "Choose a '" + groupTypes[g] +
-						"' group to activate (either a System Alias or specific group):";
-	
-				str += htmlClearDiv();
-				
-				str += "<center>"; 
-				str += "<table style='margin-bottom: 10px;'>";
-				if(_systemGroups.aliases[groupTypes[g]].length)
-				{
-					str += "<tr><td><b>System Aliases:</b></td><td>";
-					{ //start aliases
-						str += htmlOpen("select",
-								{
-										"id" :		stepString + "aliases",
-								});
-
-						for(var i=0;i<_systemGroups.aliases[groupTypes[g]].length;++i)
-						{
-							str += htmlOpen("option",
-									{		
-									},
-									_systemGroups.aliases[groupTypes[g]]
-														  [i].alias /*innerHTML*/, true /*closeTag*/);
-						}
-						str += "</select>"; //end aliases dropdown
-						str += htmlOpen("input",
-								{
-										"id": stepString + "activateAlias",
-										"type": "button",
-										"value": "Activate Alias",
-										"title": "Activate chosen System Alias.",
-								},
-								0 /*html*/, true /*closeTag*/);	
-					} //end aliases
-					str += "</td></tr>";
-				}
-				else
-					str += "<tr><td colspan='2'>No system aliases of type Context found.</td></tr>";
-
-				var groupNames = Object.keys(_systemGroups.groups[groupTypes[g]]);
-				if(groupNames.length)
-				{
-					str += "<tr><td><b>Group Names:</b></td><td>";
-					{ //start groups
-						str += htmlOpen("select",
-								{
-										"id" :		stepString + "groupNames",
-								});
-
-						for(var i=0;i<groupNames.length;++i)
-						{
-							str += htmlOpen("option",
-									{		
-									},
-									groupNames[i] /*innerHTML*/, true /*closeTag*/);
-						}
-						str += "</select>"; //end group name dropdown
-
-					} //end groups
-					str += "</td></tr>";
-				}
-				else
-					str += "<tr><td colspan='2'>No groups of type Context found.</td></tr>";
-
-				if(groupNames.length)
-				{
-					str += "<tr><td><b>Group Keys:</b></td><td>";
-					{ //start keys
-						str += htmlOpen("select",
-								{
-										"id" :		stepString + "groupKeys",
-								});
-
-						for(var i=0;i<_systemGroups.groups[groupTypes[g]]
-														   [groupNames[0]].keys.length;++i)
-						{
-							str += htmlOpen("option",
-									{		
-									},
-									_systemGroups.groups[groupTypes[g]]
-														 [groupNames[0]].keys[i] /*innerHTML*/, true /*closeTag*/);
-						}
-						str += "</select>"; //end group keys dropdown
-						str += htmlOpen("input",
-								{
-										"id": stepString + "activateGroup",
-										"type": "button",
-										"value": "Activate Group",
-										"title": "Activate chosen Group and Key pair.",
-								},
-								0 /*html*/, true /*closeTag*/);	
-					} //end keys
-					str += "</td></tr>";
-				}
-				str += "</table>";
-				str += "</center>";
-			} //end group type loop
-			
-			//remove all existing dialogs
-			ConfigurationAPI.removeAllPopUps();
-			
-			//make popup element
-			el = document.createElement("div");			
-			el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
-
-			ConfigurationAPI.setPopUpPosition(el,
-					undefined /*w*/,
-					undefined /*h*/, 
-					undefined /*padding*/, 
-					undefined /*border*/,
-					50 /*margin*/);
-
-			el.innerHTML = ctrlStr + htmlClearDiv() + 
-					str + htmlClearDiv() + ctrlStr;
-			document.body.appendChild(el);
-			
-			localAddHandlers();
-			
+				localOpenActiveGroupsDialog();
+					}); //end getAliasesAndGroups
 			return;
 
-			//==========
-			function localAddHandlers()
-			{ //start localAddHandlers			
+			function localOpenActiveGroupsDialog()
+			{	
+				Debug.log("localOpenActiveGroupsDialog()");
 
-				var closeButtons = document.getElementsByClassName("closeButton");
-				for(var b=0;b<closeButtons.length;++b)
-					closeButtons[b].onclick = 
-						localCloseButtonHandler;
+				var ctrlStr = "";
+				ctrlStr += htmlOpen("input",
+						{
+								"class": "closeButton",
+								"type": "button",
+								"style": "margin:20px;",
+								"value": "Close",
+								"title": "Close this dialog."
+						},
+						0 /*html*/, true /*closeTag*/);	
 
-				/////////////////////////////////
-				function localCloseButtonHandler()
-				{
-					Debug.log("localCloseButtonHandler()");
-					
-					//remove all existing dialogs
-					ConfigurationAPI.removeAllPopUps();
-					
-				} //end localCloseButtonHandler()
+				var str = "";
 
+				var groupTypes = ["Context","Configuration"];
 				var stepString;
+
 				for(var g=0;g<groupTypes.length;++g)
 				{
-					stepString = "chooseActiveGroups-" + 
+					stepString = "chooseActiveGroups" + "-" +
 							groupTypes[g] + "-";
-					/////////////////////////////////
-					document.getElementById(stepString + "activateAlias").onclick = 
-							function()
-							{
-						//since multiple, use id to identify
-						var idSplit = this.id.split('-');
-						var localGroupType = idSplit[1];
-						var localStepString = idSplit[0] + "-" +
-								idSplit[1] + "-";
-						
-						//activate alias then go back to record name
-						var alias = document.getElementById(localStepString +
-								"aliases").value;
-						Debug.log("activateAlias " + alias);
 
-						//find associated aliasObj
-						var aliasObj;
-						for(var i=0;i<
-						_systemGroups.aliases[localGroupType].length;++i)
-							if(_systemGroups.aliases[localGroupType][i].alias == 
-									alias)
+					str += "Choose a '" + groupTypes[g] +
+							"' group to activate (either a System Alias or specific group):";
+
+					str += htmlClearDiv();
+
+					str += "<center><br>";
+					str += "Current active '" + groupTypes[g] +
+							"' group: <b>" + 
+							_systemGroups.activeGroups[groupTypes[g]].groupName + 
+							"(" + 
+							_systemGroups.activeGroups[groupTypes[g]].groupKey +
+							")</b>";
+					str += htmlClearDiv();
+					str += "<br><table style='margin-bottom: 10px;'>";
+					if(_systemGroups.aliases[groupTypes[g]].length)
+					{
+						str += "<tr><td><b>System Aliases:</b></td><td>";
+						{ //start aliases
+							str += htmlOpen("select",
+									{
+											"id" :		stepString + "aliases",
+									});
+
+							for(var i=0;i<_systemGroups.aliases[groupTypes[g]].length;++i)
 							{
-								aliasObj = _systemGroups.aliases[localGroupType][i];
-								break;						
+								str += htmlOpen("option",
+										{		
+										},
+										_systemGroups.aliases[groupTypes[g]]
+															  [i].alias /*innerHTML*/, true /*closeTag*/);
 							}
-
-						Debug.log("activateAlias group " + aliasObj.name + 
-								"-" + aliasObj.key);
-
-						ConfigurationAPI.activateGroup(aliasObj.name, aliasObj.key, 
-								true /*ignoreWarnings*/, 
-								/*doneHandler*/
-								function()
-								{
-							Debug.log("The System Alias '" + alias + 
-									"' (" + aliasObj.name + " (" + 
-									aliasObj.key + ")) was successfully activated!", Debug.INFO_PRIORITY);
-
-							init();
-								}); //end activate group handler
-							}; //end activate alias handler
-
-					/////////////////////////////////
-					document.getElementById(stepString + "groupNames").onchange = 
-							function()
-							{
-						//since multiple, use id to identify
-						var idSplit = this.id.split('-');
-						var localGroupType = idSplit[1];
-						var localStepString = idSplit[0] + "-" +
-								idSplit[1] + "-";
-						
-						//fill keys drop down
-						Debug.log("Filling dropdown with keys for " + this.value);
-						var str = "";
-						for(var i=0;i<_systemGroups.groups[localGroupType]
-														   [this.value].keys.length;++i)
-						{
-							str += htmlOpen("option",
-									{		
+							str += "</select>"; //end aliases dropdown
+							str += htmlOpen("input",
+									{
+											"id": stepString + "activateAlias",
+											"type": "button",
+											"value": "Activate Alias",
+											"title": "Activate chosen System Alias.",
 									},
-									_systemGroups.groups[localGroupType]
-														 [this.value].keys[i] /*innerHTML*/, true /*closeTag*/);
-						}
-						document.getElementById(localStepString + "groupKeys").innerHTML = 
-								str;
-							}; //end group names dropdown handler
+									0 /*html*/, true /*closeTag*/);	
+						} //end aliases
+						str += "</td></tr>";
+					}
+					else
+						str += "<tr><td colspan='2'>No system aliases of type Context found.</td></tr>";
+
+					var groupNames = Object.keys(_systemGroups.groups[groupTypes[g]]);
+					if(groupNames.length)
+					{
+						str += "<tr><td><b>Group Names:</b></td><td>";
+						{ //start groups
+							str += htmlOpen("select",
+									{
+											"id" :		stepString + "groupNames",
+									});
+
+							for(var i=0;i<groupNames.length;++i)
+							{
+								str += htmlOpen("option",
+										{		
+										},
+										groupNames[i] /*innerHTML*/, true /*closeTag*/);
+							}
+							str += "</select>"; //end group name dropdown
+
+						} //end groups
+						str += "</td></tr>";
+					}
+					else
+						str += "<tr><td colspan='2'>No groups of type Context found.</td></tr>";
+
+					if(groupNames.length)
+					{
+						str += "<tr><td><b>Group Keys:</b></td><td>";
+						{ //start keys
+							str += htmlOpen("select",
+									{
+											"id" :		stepString + "groupKeys",
+									});
+
+							for(var i=0;i<_systemGroups.groups[groupTypes[g]]
+															   [groupNames[0]].keys.length;++i)
+							{
+								str += htmlOpen("option",
+										{		
+										},
+										_systemGroups.groups[groupTypes[g]]
+															 [groupNames[0]].keys[i] /*innerHTML*/, true /*closeTag*/);
+							}
+							str += "</select>"; //end group keys dropdown
+							str += htmlOpen("input",
+									{
+											"id": stepString + "activateGroup",
+											"type": "button",
+											"value": "Activate Group",
+											"title": "Activate chosen Group and Key pair.",
+									},
+									0 /*html*/, true /*closeTag*/);	
+						} //end keys
+						str += "</td></tr>";
+					}
+					str += "</table>";
+					str += "</center>";
+				} //end group type loop
+
+				//remove all existing dialogs
+				ConfigurationAPI.removeAllPopUps();
+
+				//make popup element
+				el = document.createElement("div");			
+				el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
+
+				ConfigurationAPI.setPopUpPosition(el,
+						undefined /*w*/,
+						undefined /*h*/, 
+						undefined /*padding*/, 
+						undefined /*border*/,
+						50 /*margin*/);
+
+				el.innerHTML = ctrlStr + htmlClearDiv() + 
+						str + htmlClearDiv() + ctrlStr;
+				document.body.appendChild(el);
+
+				localAddHandlers();
+
+				return;
+
+				//==========
+				function localAddHandlers()
+				{ //start localAddHandlers			
+
+					var closeButtons = document.getElementsByClassName("closeButton");
+					for(var b=0;b<closeButtons.length;++b)
+						closeButtons[b].onclick = 
+								localCloseButtonHandler;
 
 					/////////////////////////////////
-					document.getElementById(stepString + "activateGroup").onclick = 
-							function()
-							{
-						//since multiple, use id to identify
-						var idSplit = this.id.split('-');
-						var localGroupType = idSplit[1];
-						var localStepString = idSplit[0] + "-" +
-								idSplit[1] + "-";
-						
-						//activate alias then go back to record name
-						var name = document.getElementById(localStepString + "groupNames").value;
-						var key = document.getElementById(localStepString + "groupKeys").value;
+					function localCloseButtonHandler()
+					{
+						Debug.log("localCloseButtonHandler()");
 
-						Debug.log("activateGroup " + name + 
-								"-" + key);
+						//remove all existing dialogs
+						ConfigurationAPI.removeAllPopUps();
 
-						ConfigurationAPI.activateGroup(name, key, 
-								true /*ignoreWarnings*/, 
-								/*doneHandler*/
+					} //end localCloseButtonHandler()
+
+					var stepString;
+					for(var g=0;g<groupTypes.length;++g)
+					{
+						stepString = "chooseActiveGroups-" + 
+								groupTypes[g] + "-";
+						/////////////////////////////////
+						document.getElementById(stepString + "activateAlias").onclick = 
 								function()
 								{
-							Debug.log("The Group '" + name + " (" + 
-									key + ") was successfully activated!", Debug.INFO_PRIORITY);
+							//since multiple, use id to identify
+							var idSplit = this.id.split('-');
+							var localGroupType = idSplit[1];
+							var localStepString = idSplit[0] + "-" +
+									idSplit[1] + "-";
 
-							init();
-								}); //end activate group handler
-							}; //end activate alias handler
+							//activate alias then go back to record name
+							var alias = document.getElementById(localStepString +
+									"aliases").value;
+							Debug.log("activateAlias " + alias);
 
-				}
-			} //end localAddHandlers
-			
+							//find associated aliasObj
+							var aliasObj;
+							for(var i=0;i<
+							_systemGroups.aliases[localGroupType].length;++i)
+								if(_systemGroups.aliases[localGroupType][i].alias == 
+										alias)
+								{
+									aliasObj = _systemGroups.aliases[localGroupType][i];
+									break;						
+								}
+
+							Debug.log("activateAlias group " + aliasObj.name + 
+									"-" + aliasObj.key);
+
+							ConfigurationAPI.activateGroup(aliasObj.name, aliasObj.key, 
+									true /*ignoreWarnings*/, 
+									/*doneHandler*/
+									function()
+									{
+								Debug.log("The System Alias '" + alias + 
+										"' (" + aliasObj.name + " (" + 
+										aliasObj.key + ")) was successfully activated!", Debug.INFO_PRIORITY);
+
+								init();
+									}); //end activate group handler
+								}; //end activate alias handler
+
+						/////////////////////////////////
+						document.getElementById(stepString + "groupNames").onchange = 
+								function()
+								{
+							//since multiple, use id to identify
+							var idSplit = this.id.split('-');
+							var localGroupType = idSplit[1];
+							var localStepString = idSplit[0] + "-" +
+									idSplit[1] + "-";
+
+							//fill keys drop down
+							Debug.log("Filling dropdown with keys for " + this.value);
+							var str = "";
+							for(var i=0;i<_systemGroups.groups[localGroupType]
+															   [this.value].keys.length;++i)
+							{
+								str += htmlOpen("option",
+										{		
+										},
+										_systemGroups.groups[localGroupType]
+															 [this.value].keys[i] /*innerHTML*/, true /*closeTag*/);
+							}
+							document.getElementById(localStepString + "groupKeys").innerHTML = 
+									str;
+								}; //end group names dropdown handler
+
+						/////////////////////////////////
+						document.getElementById(stepString + "activateGroup").onclick = 
+								function()
+								{
+							//since multiple, use id to identify
+							var idSplit = this.id.split('-');
+							var localGroupType = idSplit[1];
+							var localStepString = idSplit[0] + "-" +
+									idSplit[1] + "-";
+
+							//activate alias then go back to record name
+							var name = document.getElementById(localStepString + "groupNames").value;
+							var key = document.getElementById(localStepString + "groupKeys").value;
+
+							Debug.log("activateGroup " + name + 
+									"-" + key);
+
+							ConfigurationAPI.activateGroup(name, key, 
+									true /*ignoreWarnings*/, 
+									/*doneHandler*/
+									function()
+									{
+								Debug.log("The Group '" + name + " (" + 
+										key + ") was successfully activated!", Debug.INFO_PRIORITY);
+
+								init();
+									}); //end activate group handler
+								}; //end activate alias handler
+
+					}
+				} //end localAddHandlers
+
+			} //end localOpenActiveGroupsDialog()
 		} //end openActiveGroupsDialog()
 		
 		</script>
