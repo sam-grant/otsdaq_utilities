@@ -52,27 +52,28 @@
 				//		            notSecure = (window.location.search.split("?")[1].split("&")[1].split("=")[1]);
 
 
-								
+				var windowTooltip = "Welcome to the otsdaq MacroMaker-mode Desktop. MacroMaker-mode is designed to be " +
+					"a quick and dirty playground for your front-end interfaces. Here, you can develop communcation " +
+					"sequences without having to worry about managing a configuration or controlling a state machine. \n\n" +
+					"The MacroMaker-mode desktop environment behaves similar to a personal computer desktop, but there are just a few " +
+					"special apps available in MacroMaker-mode:\n" +
+
+					"\n\t- <b>Macro Maker:</b> " +
+					"<INDENT>" +
+					"You can execute Reads and Writes, and create sequences of Reads and Writes." +
+					"</INDENT>" +
+
+					"\n\t- <b>FE Macro Test:</b> " +
+					"<INDENT>" +
+					"You can execute macros (sequneces of reads and writes) that have already been created!" +
+					"</INDENT>" +
+
+					"\n\nRemember, if you would like to take a look at the available online documentation, " +
+					"click the question mark at the top-right of the Desktop.";				
 				DesktopContent.tooltip("MacroMaker-mode Introduction",
-			                        "Welcome to the otsdaq MacroMaker-mode Desktop. MacroMaker-mode is designed to be " +						 
-						"a quick and dirty playground for your front-end interfaces. Here, you can develop communcation " +
-						"sequences without having to worry about managing a configuration or controlling a state machine. \n\n" + 
-						"The MacroMaker-mode desktop environment behaves similar to a personal computer desktop, but there are just a few " +
-						"special apps available in MacroMaker-mode:\n" +
-						
-						"\n\t- <b>Macro Maker:</b> " +
-						"<INDENT>" +
-						"You can execute Reads and Writes, and create sequences of Reads and Writes." +				
-						"</INDENT>" +		
-						
-						"\n\t- <b>FE Macro Test:</b> " +
-						"<INDENT>" +
-						"You can execute macros (sequneces of reads and writes) that have already been created!" +
-						"</INDENT>" +						
-						
-						"\n\nRemember, if you would like to take a look at the available online documentation, " +
-						"click the question mark at the top-right of the Desktop."
-				);				
+			      windowTooltip                  
+				);
+				DesktopContent.setWindowTooltip(windowTooltip);				
 				
 			}			            
 
