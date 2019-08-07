@@ -140,14 +140,14 @@ SmartLaunch.create = function() {
 	//=====================================================================================
 	//init ~~
 	function init() 
-	{						
+	{				
+		var windowTooltip = "Welcome to the Smart Launch user interface. " +
+			"Select which pieces of the configuration you want to enable, and then press the launch button!" +
+			"\n\n" +
+			"Once the pieces you want are enabled, press the run button!";	
 		Debug.log("Smart Launch init ");
-		DesktopContent.tooltip("Smart Launch",
-				"Welcome to the Smart Launch user interface. "+
-				"Select which pieces of the configuration you want to enable, and then press the launch button!" +
-				"\n\n" +
-				"Once the pieces you want are enabled, press the run button!"
-		);
+		DesktopContent.tooltip("Smart Launch", windowTooltip);
+		DesktopContent.setWindowTooltip(windowTooltip);
 
 		//get all existing contexts
 		ConfigurationAPI.getSubsetRecords(
