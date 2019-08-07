@@ -758,34 +758,35 @@
 		//init ~~
 		//	init called once body has loaded
 		function init() 
-		{									
+		{		
+			var windowTooltip = "Welcome to the Iterate GUI. Here you can create 'Iteration Plans' that can facilitate " +
+				"calibrations or complex run plans. \n\n" +
+
+				"For an example calibration case, you might create an Iteration Plan to step through " +
+				"a register value from 0 to 50, counting by 10.\n\n" +
+
+				"For an example run plan case, you might create an Iteration Plan to take 5 runs for " +
+				"10 minutes each.\n\n" +
+
+				"The organization of the Iterate GUI is in the form of two panes, a top and bottom.\n\n" +
+
+				"Briefly, here is a description of the two panes: " +
+				"<INDENT> " +
+				"- <b>Top Pane</b>\n" +
+				"<INDENT> The 'Top Pane' is for controlling the selected Iteration Plan. " +
+				"You can Play, Pause, or Stop the Iteration Plan. Or if you make modifications " +
+				"you can Save or Discard them." +
+				"</INDENT>" +
+				"</INDENT>" +
+				"<INDENT> " +
+				"- <b>Bottom Pane</b>\n" +
+				"<INDENT> The 'Bottom Pane' is for viewing and modifying the selected Iteration Plan. " +
+				"</INDENT>" +
+				"</INDENT>"	;						
 			Debug.log("Iterate init ");
 			DesktopContent.tooltip("Iterate Introduction",
-					"Welcome to the Iterate GUI. Here you can create 'Iteration Plans' that can facilitate "+
-					"calibrations or complex run plans. \n\n" +
-					
-					"For an example calibration case, you might create an Iteration Plan to step through " +
-					"a register value from 0 to 50, counting by 10.\n\n" +
-					
-					"For an example run plan case, you might create an Iteration Plan to take 5 runs for " +
-					"10 minutes each.\n\n" +
-					
-					"The organization of the Iterate GUI is in the form of two panes, a top and bottom.\n\n" +
-					
-					"Briefly, here is a description of the two panes: " +
-					"<INDENT> " +
-					"- <b>Top Pane</b>\n" +
-					"<INDENT> The 'Top Pane' is for controlling the selected Iteration Plan. " +
-					"You can Play, Pause, or Stop the Iteration Plan. Or if you make modifications " +
-					"you can Save or Discard them." +
-					"</INDENT>" +
-					"</INDENT>" + 
-					"<INDENT> " +
-					"- <b>Bottom Pane</b>\n" +
-					"<INDENT> The 'Bottom Pane' is for viewing and modifying the selected Iteration Plan. " +
-					"</INDENT>" +
-					"</INDENT>"
-			);
+			windowTooltip);
+			DesktopContent.setWindowTooltip(windowTooltip);
 			
 			//extract get parameters
 			if(!extractGETParameters())
