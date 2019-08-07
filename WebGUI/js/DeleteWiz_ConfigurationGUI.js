@@ -161,16 +161,16 @@ DeleteWiz.createWiz = function(doneHandler) {
 	Debug.log("DeleteWiz.wiz constructed");
 	DeleteWiz.wiz = this; 
 	
+	var windowTooltip= "Welcome to the Delete Wizard GUI. Here you can delete hierarchical records for " +
+		"your <i>otsdaq</i> system. \n\n" +
+		"The Delete Wizard is presented as a step-by-step process that will walk you through deleting a record and its children.\n\n" +
 
+		"Briefly, here is a description of the steps: " +
+		"\n\t- 'What is the name of your record?'" +
+		"\n\t- 'How deep into the hierachy do you want to delete?'";
 	DesktopContent.tooltip("Delete Wizard Introduction",
-			"Welcome to the Delete Wizard GUI. Here you can delete hierarchical records for "+
-			"your <i>otsdaq</i> system. \n\n" +
-			"The Delete Wizard is presented as a step-by-step process that will walk you through deleting a record and its children.\n\n" +
-
-			"Briefly, here is a description of the steps: " +
-			"\n\t- 'What is the name of your record?'" +
-			"\n\t- 'How deep into the hierachy do you want to delete?'"
-	);
+		windowTooltip);
+	DesktopContent.setWindowTooltip(windowTooltip);
 	xdaqContextTooltip();
 	xdaqApplicationTooltip();
 
