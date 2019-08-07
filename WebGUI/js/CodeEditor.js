@@ -2806,7 +2806,8 @@ CodeEditor.create = function() {
 								str[0] == 'h' ||
 								str == "txt" || 
 								str == "py" ||
-								str == "sh"
+								str == "sh" ||
+								str[0] == "j"
 						))
 				{
 					Debug.log("is quote " + str);
