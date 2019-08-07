@@ -208,18 +208,19 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 	Debug.log("RecordWiz.wiz constructed");
 	RecordWiz.wiz = this; 
 	
-	
+	var windowTooltip = "Welcome to the Record Wizard GUI. Here you can create new records for " +
+		"your <i>otsdaq</i> system. \n\n" +
+		"The Record Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new record.\n\n" +
+
+		"Briefly, here is a description of the steps: " +
+		"\n\t- 'What type of record do you want to add?'" +
+		"\n\t- 'Do you want to add it to an existing context or create a new one?'";
 	if(!recordsAliasFastForward || recordsAliasFastForward == "")
 	{
 		DesktopContent.tooltip("Record Wizard Introduction",
-				"Welcome to the Record Wizard GUI. Here you can create new records for "+
-				"your <i>otsdaq</i> system. \n\n" +
-				"The Record Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new record.\n\n" +
-	
-				"Briefly, here is a description of the steps: " +
-				"\n\t- 'What type of record do you want to add?'" +
-				"\n\t- 'Do you want to add it to an existing context or create a new one?'"
+			windowTooltip	
 		);
+		DesktopContent.setWindowTooltip(windowTooltip);
 	
 		showPrompt(_STEP_WHICH_RECORD_TYPE);
 	}
