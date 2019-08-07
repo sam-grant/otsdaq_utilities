@@ -100,77 +100,107 @@ if (!Element.prototype.scrollIntoViewIfNeeded) {
 
 //=====================================================================================
 //showTooltip ~~
+var windowTooltip = "Welcome to the Code Editor user interface. " +
+	"Edit your code, save it, and compile!\n\n" +
+	"Hover your mouse over the icons and buttons to see what they do. " +
+	"If you hover your mouse over the filename additional icons will appear for changing the filename, downloading, uploading, undo, and redo. The buttons in the top corners are described below followed by hot-keys:\n\n" +
+	"<INDENT>" +
+	"<b>Open a file:</b>\n<INDENT>Use the folder icon in the top-left to navigate to a code file to edit.</INDENT>\n" +
+	"<b>Toggle view:</b>\n<INDENT>Use the split-pane icon in the top-right to toggle another code editor in the same window.</INDENT>\n" +
+	"<b>Save:</b>\n<INDENT>Use the save icon in the top-left to save your changes.</INDENT>\n" +
+	"<b>Compile:</b>\n<INDENT>Use the Incremmental Build or Clean Build icons in the top-right.</INDENT>\n" +
+
+	"<b>Global Hot Keys:</b>\n<INDENT>" +
+
+	"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + B </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Incremental Build</td></tr>" +
+	"<tr><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + N </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Clean Build</td></tr>" +
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + 2 </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Split-View Mode (single, dual-vertical, dual-horizontal)</td></tr>" +
+	"</table></INDENT>\n" +
+
+
+	"<b>Editor Pane Hot Keys:</b>\n<INDENT>" +
+
+	"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +
+
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + S </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Save File</td></tr>" +
+
+	"<tr><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + D </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Directory Navigation</td></tr>" +
+
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + F </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Find & Replace</td></tr>" +
+
+	"<tr><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Undo Text Editing</td></tr>" +
+
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+	"Shift + Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Redo Text Editing</td></tr>" +
+
+	"<tr><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + L or G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
+
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + 1 or ; </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
+
+	"<tr><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + 0 or &apos; </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Reload Current File from Server</td></tr>" +
+
+	"</table></INDENT>\n" +
+
+
+	"<b>Selected-Text Hot Keys:</b>\n<INDENT>" +
+
+	"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> TAB</td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading TAB character to all highlighted lines.</td></tr>" +
+	"<tr><td style='white-space: nowrap; padding:5px;'> Shift + TAB </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove leading TAB character from all highlighted lines.</td></tr>" +
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + T or Y </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add TAB character at starting cursor position of all highlighted line (i.e. Block Tab effect).</td></tr>" +
+	"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + T or Y</td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove TAB character from starting cursor position of all highlighted line (i.e. reverse Block Tab effect).</td></tr>" +
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading comment character(s) to all highlighted lines.</td></tr>" +
+	"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove leading comment character(s) to all highlighted lines.</td></tr>" +
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + I </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Auto-indent all highlighted lines.</td></tr>" +
+	"</table></INDENT>\n" +
+	"If you are an admin and want to set Code Editor in viewer mode for other users i,e. 'Code Viewer,' go to 'Desktop Icon Table' in Configure to set the parameter 'readOnlyMode.'" +
+	"</INDENT>"
+	;
+
+var windowViewModeTooltip = "Welcome to the Code Viewer user interface. " +
+	"You will only be able to view codes without modifying. Your text inputs won't be saved. " +
+	"Contact your administrator if you think you should have modification access."+
+	"<INDENT>\n" +
+	"<b>Open a file:</b>\n<INDENT>Use the folder icon in the top-left to navigate to a code file to edit.</INDENT>\n" +
+	"<b>Toggle view:</b>\n<INDENT>Use the split-pane icon in the top-right to toggle another code editor in the same window.</INDENT>\n" +
+
+	"<b>Viewer Hot Keys:</b>\n<INDENT>" +
+
+	"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +
+
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + 2 </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Split-View Mode (single, dual-vertical, dual-horizontal)</td></tr>" +
+	
+	"<tr><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + L or G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
+
+	"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+	"Ctrl + F </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Find</td></tr>" +
+	"</table></INDENT>\n" +
+
+	"</INDENT>";
+
+appMode = "Code Editor";
+
 CodeEditor.showTooltip = function(alwaysShow)
 {
 	DesktopContent.tooltip(
-			(alwaysShow?"ALWAYS":"Code Editor"),
-			"Welcome to the Code Editor user interface. "+
-			"Edit your code, save it, and compile!\n\n" +
-			"Hover your mouse over the icons and buttons to see what they do. " + 
-			"If you hover your mouse over the filename additional icons will appear for changing the filename, downloading, uploading, undo, and redo. The buttons in the top corners are described below followed by hot-keys:\n\n" +
-			"<INDENT>" +
-			"<b>Open a file:</b>\n<INDENT>Use the folder icon in the top-left to navigate to a code file to edit.</INDENT>\n" +
-			"<b>Toggle view:</b>\n<INDENT>Use the split-pane icon in the top-right to toggle another code editor in the same window.</INDENT>\n" +
-			"<b>Save:</b>\n<INDENT>Use the save icon in the top-left to save your changes.</INDENT>\n" +
-			"<b>Compile:</b>\n<INDENT>Use the Incremmental Build or Clean Build icons in the top-right.</INDENT>\n" +
-			
-			"<b>Global Hot Keys:</b>\n<INDENT>" +
-			
-			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
-			"Ctrl + B </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Incremental Build</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> " +
-			"Ctrl + N </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Clean Build</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
-			"Ctrl + 2 </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Split-View Mode (single, dual-vertical, dual-horizontal)</td></tr>" +			
-			"</table></INDENT>\n" +
-			
-			
-			"<b>Editor Pane Hot Keys:</b>\n<INDENT>" +
-			
-			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +			
-			
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
-			"Ctrl + S </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Save File</td></tr>" +
-			
-			"<tr><td style='white-space: nowrap; padding:5px;'> " +
-			"Ctrl + D </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Directory Navigation</td></tr>" +
-			
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
-			"Ctrl + F </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Find & Replace</td></tr>" +
-			
-			"<tr><td style='white-space: nowrap; padding:5px;'> " +
-			"Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Undo Text Editing</td></tr>" +
-			
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
-			"Shift + Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Redo Text Editing</td></tr>" +
-			
-			"<tr><td style='white-space: nowrap; padding:5px;'> " +
-			"Ctrl + L or G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
-			
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
-			"Ctrl + 1 or ; </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
-			
-			"<tr><td style='white-space: nowrap; padding:5px;'> " +
-            "Ctrl + 0 or &apos; </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Reload Current File from Server</td></tr>" +
-			
-			"</table></INDENT>\n" +
-			
-			
-			"<b>Selected-Text Hot Keys:</b>\n<INDENT>" +
-			
-			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +			
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> TAB</td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading TAB character to all highlighted lines.</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + TAB </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove leading TAB character from all highlighted lines.</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + T or Y </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add TAB character at starting cursor position of all highlighted line (i.e. Block Tab effect).</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + T or Y</td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove TAB character from starting cursor position of all highlighted line (i.e. reverse Block Tab effect).</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading comment character(s) to all highlighted lines.</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove leading comment character(s) to all highlighted lines.</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + I </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Auto-indent all highlighted lines.</td></tr>" +
-			"</table></INDENT>\n" +
-			"</INDENT>"
-			);
+		(alwaysShow ? "ALWAYS" : appMode), windowTooltip); 
+	
+	DesktopContent.setWindowTooltip(windowTooltip);
 } //end showTooltip()
+
 
 
 ////////////////////////////////////////////////////////////////////
@@ -182,7 +212,6 @@ CodeEditor.create = function() {
 	
 	
 	
-	CodeEditor.showTooltip();
 	
 	//outline:			
 	//
@@ -290,6 +319,9 @@ CodeEditor.create = function() {
 	var _UPDATE_DECOR_TIMEOUT = 2000; //ms
 	
 	var _TAB_SIZE = 4; //to match eclipse!
+
+	var _READ_ONLY = false; 
+	var _requestPreamble = ""; // to choose readonly request or fullaccess
 	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
@@ -346,12 +378,34 @@ CodeEditor.create = function() {
 		{
 			_viewMode = parameterViewMode|0;
 		}
+
+
+		var readOnlyMode = DesktopContent.getParameter(0, "readOnlyMode");
+		if (readOnlyMode !== undefined) //set read mode if parameter
+		{
+			console.log("Print Print");
+			_READ_ONLY = true; //readOnlyMode | 0;
+			
+			
+		}
 		console.log("parameterStartFile",parameterStartFile);
 		console.log("parameterGotoLine",parameterGotoLine);
 		console.log("parameterViewMode",parameterViewMode);
-		console.log("parameterOpenDirectory",parameterOpenDirectory);
-		
+		console.log("parameterOpenDirectory", parameterOpenDirectory);
+		console.log("_READ_ONLY", _READ_ONLY);
+
+		if(_READ_ONLY == true)
+		{
+			_requestPreamble = "readOnly";
+			appMode = "Code Viewer";
+			windowTooltip = windowViewModeTooltip;
+			
+
 		//_viewMode = 2; for debugging
+		}
+
+
+		CodeEditor.showTooltip();
 		
 		//proceed
 		
@@ -366,7 +420,8 @@ CodeEditor.create = function() {
 		
 		
 
-		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+		DesktopContent.XMLHttpRequest("Request?RequestType=" + _requestPreamble +
+				"codeEditor" + 
 				"&option=getAllowedExtensions" 
 				, "" /* data */,
 				function(req)
@@ -378,7 +433,8 @@ CodeEditor.create = function() {
 			_ALLOWED_FILE_EXTENSIONS = _ALLOWED_FILE_EXTENSIONS.split(',');
 			console.log("_ALLOWED_FILE_EXTENSIONS",_ALLOWED_FILE_EXTENSIONS);
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+			DesktopContent.XMLHttpRequest("Request?RequestType=" +
+				 	 "codeEditor" + 
 					"&option=getDirectoryContent" +
 					"&path=/"
 					, "" /* data */,
@@ -430,7 +486,7 @@ CodeEditor.create = function() {
 							parameterGotoLine[1 /*secondary goto line*/] /*gotoLine*/);
 				else //show base directory nav				
 				{
-
+					
 					CodeEditor.editor.openDirectory(
 							0 /*forPrimary*/,
 							parameterOpenDirectory[1] /*path*/,
@@ -453,6 +509,8 @@ CodeEditor.create = function() {
 	function createElements()
 	{
 		Debug.log("createElements");
+
+		
 		
 		
 		//		<!-- body content populated by javascript -->
@@ -513,7 +571,7 @@ CodeEditor.create = function() {
 						{
 							"id":"directoryNavToggle",
 							"class":"controlsButton",
-							"style":"float:left",
+							"style":"float:left;",
 							"onclick":"CodeEditor.editor.toggleDirectoryNav(" + forPrimary + ");",
 							"title": "Open a file... (Ctrl + D)",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
@@ -532,14 +590,27 @@ CodeEditor.create = function() {
 					str += "</div>"; //close directoryNavToggle
 					
 					//save
-					str += htmlOpen("div",
-						{
-							"id":"saveFile",
-							"class":"controlsButton",
-							"style":"float:left;",
-							"onclick":"CodeEditor.editor.saveFile(" + forPrimary + ");",
-							"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
-						},"" /*innerHTML*/, 0 /*doCloseTag*/);
+					if (_requestPreamble == "readOnly"){
+
+						str += htmlOpen("div",
+							{
+								"id":"saveFile",
+								"class":"controlsButton",
+								"style": "float:left; display:none;",
+								"onclick":"CodeEditor.editor.saveFile(" + forPrimary + ");",
+								"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
+							},"" /*innerHTML*/, 0 /*doCloseTag*/);
+					}
+					else{
+						str += htmlOpen("div",
+							{
+								"id": "saveFile",
+								"class": "controlsButton",
+								"style": "float:left;",
+								"onclick": "CodeEditor.editor.saveFile(" + forPrimary + ");",
+								"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
+							}, "" /*innerHTML*/, 0 /*doCloseTag*/);
+					}
 					{
 						str += htmlOpen("div",
 							{
@@ -563,13 +634,13 @@ CodeEditor.create = function() {
 				str += "</div>"; //close controlsPane
 				return str;
 			} //end localCreatePaneControls
-			
-			
+
 			
 			//================
 			//controlsPane div
 			el = document.createElement("div");
-			el.setAttribute("class","controlsPane");	
+			el.setAttribute("class", "controlsPane");
+
 			{
 				//add view toggle, incremental compile, and clean compile buttons
 				
@@ -577,13 +648,15 @@ CodeEditor.create = function() {
 				
 				//view toggle
 				str += htmlOpen("div",
-					{
-						"id":"viewToggle",
-						"class":"controlsButton",
-						"style":"float:right",
-						"onclick":"CodeEditor.editor.toggleView();",
-						"title":"Toggle Verical/Horizontal Split-view (Ctrl + W)",
-					},"" /*innerHTML*/, 0 /*doCloseTag*/);
+					
+						{
+							"id":"viewToggle",
+							"class":"controlsButton",
+							"style":"float:right",
+							"onclick":"CodeEditor.editor.toggleView();",
+							"title":"Toggle Verical/Horizontal Split-view (Ctrl + W)",
+						},"" /*innerHTML*/, 0 /*doCloseTag*/);
+					
 				{
 					
 					str += htmlOpen("div",
@@ -605,14 +678,26 @@ CodeEditor.create = function() {
 				str += "</div>"; //close viewToggle
 				
 				//incremental compile
+			if (_requestPreamble == "readOnly") {
 				str += htmlOpen("div",
 					{
 						"id":"incrementalBuild",
 						"class":"controlsButton",
-						"style":"float:right",
+						"style":"float:right; display: none;",
 						"onclick":"CodeEditor.editor.build(0 /*cleanBuild*/);",
 						"title":"Incremental Build... (Ctrl + B)",
 					},"" /*innerHTML*/, 0 /*doCloseTag*/);
+				}
+			else {
+				str += htmlOpen("div",
+					{
+						"id": "incrementalBuild",
+						"class": "controlsButton",
+						"style": "float:right",
+						"onclick": "CodeEditor.editor.build(0 /*cleanBuild*/);",
+						"title": "Incremental Build... (Ctrl + B)",
+					}, "" /*innerHTML*/, 0 /*doCloseTag*/);
+			}
 				{
 					
 					str += htmlOpen("div",
@@ -623,14 +708,26 @@ CodeEditor.create = function() {
 				str += "</div>"; //close incrementalBuild
 				
 				//clean compile
+			if (_requestPreamble == "readOnly") {
 				str += htmlOpen("div",
 					{
 						"id":"cleanBuild",
 						"class":"controlsButton",
-						"style":"float:right",
+						"style":"float:right; display: none;",
 						"onclick":"CodeEditor.editor.build(1 /*cleanBuild*/);",
 						"title":"Clean Build... (Ctrl + N)",
 					},"" /*innerHTML*/, 0 /*doCloseTag*/);
+				}
+			else {
+				str += htmlOpen("div",
+					{
+						"id": "cleanBuild",
+						"class": "controlsButton",
+						"style": "float:right",
+						"onclick": "CodeEditor.editor.build(1 /*cleanBuild*/);",
+						"title": "Clean Build... (Ctrl + N)",
+					}, "" /*innerHTML*/, 0 /*doCloseTag*/);
+			}
 				{
 					
 					str += htmlOpen("div",
@@ -640,30 +737,14 @@ CodeEditor.create = function() {
 				}
 				str += "</div>"; //close cleanBuild
 				
-				//help
-				str += htmlOpen("div",
-					{
-						"id":"displayHelp",
-						"class":"controlsButton",
-						"style":"float:right",
-						"onclick":"CodeEditor.showTooltip(1 /*alwaysShow*/);",
-						"title":"Click for help, short-cuts, etc.",
-					},"" /*innerHTML*/, 0 /*doCloseTag*/);
-				{
-					
-					str += htmlOpen("div",
-						{
-							"style":"margin:12px 0 0 13px;",
-						},"?" /*innerHTML*/, 1 /*doCloseTag*/);
-				}
-				str += "</div>"; //close help
 				
 				el.innerHTML = str;	
 			}
 			cel.appendChild(el);
 			
-		} //end content div					
-		
+		} //end content div	
+
+
 		document.body.appendChild(cel);
 		_eel = [document.getElementById("editableBox" + 0),
 			document.getElementById("editableBox" + 1)];
@@ -1348,8 +1429,7 @@ CodeEditor.create = function() {
 				"/" + "\"" + 
 				")'>" + 
 				"srcs</a>";
-			
-			
+
 			
 			for(i=0;i<pathSplit.length;++i)
 			{
@@ -4794,14 +4874,15 @@ CodeEditor.create = function() {
 		//end preempt key handling	
 		
 		
-		
 		if(e.ctrlKey) //handle shortcuts
 		{			
 			if(keyCode == 83) 		// S for file save
 			{
-				CodeEditor.editor.saveFile(forPrimary,true /*quiet*/);
-				e.preventDefault();
-				return;
+				if (_requestPreamble !== "readOnly") {
+					CodeEditor.editor.saveFile(forPrimary,true /*quiet*/);
+					e.preventDefault();
+					return;
+				}
 			}
 			else if(keyCode == 68) 	// D for directory toggle
 			{
@@ -4811,9 +4892,11 @@ CodeEditor.create = function() {
 			}
 			else if(keyCode == 66) 	// B for incremental build
 			{
-				CodeEditor.editor.build();
-				e.preventDefault();
-				return;
+				if (_requestPreamble !== "readOnly") {
+					CodeEditor.editor.build();
+					e.preventDefault();
+					return;
+				}
 			}
 			else if(keyCode == 70) 	// F for Find and Replace
 			{
@@ -4829,9 +4912,11 @@ CodeEditor.create = function() {
 			}
 			else if(keyCode == 78) 	// N for clean build
 			{
-				CodeEditor.editor.build(true /*clean*/);
-				e.preventDefault();
-				return;
+				if (_requestPreamble !== "readOnly") {
+					CodeEditor.editor.build(true /*clean*/);
+					e.preventDefault();
+					return;
+				}
 			}
 			else if(keyCode == 222 || 	// ' or 
 					keyCode == 48)  // 0 for refresh file
@@ -4884,8 +4969,8 @@ CodeEditor.create = function() {
 				e.preventDefault();
 				return;
 			}
-			
-		} //end shortcut cases		
+	
+	}//end shortcut cases		
 		if(shortcutsOnly)		
 			return; //if only doing short-cuts, dont handle text
 		
@@ -6370,12 +6455,25 @@ CodeEditor.create = function() {
 		str += "<center>";
 		
 		//add rename button		
+		if (_requestPreamble == "readOnly") {
 		str += htmlOpen("div", //this is place holder, that keeps height spacing
 			{
 				"class":"fileButtonContainer",
+					"style":"width: 48px;",
 				"id":"fileButtonContainer" + forPrimary,
 				
-			},0 /*innerHTML*/, false /*doCloseTag*/);		
+			},0 /*innerHTML*/, false /*doCloseTag*/);	
+		}	
+		else{
+			str += htmlOpen("div", //this is place holder, that keeps height spacing
+				{
+					
+					"style": "width: 148px;",
+					"class": "fileButtonContainer",
+					"id": "fileButtonContainer" + forPrimary,
+
+				}, 0 /*innerHTML*/, false /*doCloseTag*/);	
+		}
 		str += htmlOpen("div", //this is el that gets hide/show toggle
 			{
 				"class":"fileButtonContainerShowHide",
@@ -6385,16 +6483,18 @@ CodeEditor.create = function() {
 				"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + 
 				",1 /*doNotStartTimer*/);",
 				
-			},0 /*innerHTML*/, false /*doCloseTag*/);		
-		str += htmlOpen("div", 
-			{
-				"class":"fileButton",
-				"id":"fileRenameButton" + forPrimary,
-				"title": "Change the filename\n" + path + "." + extension,
-				"onclick":
-				"event.stopPropagation(); " + 
-				"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
-			},0 /*innerHTML*/, true /*doCloseTag*/);
+			},0 /*innerHTML*/, false /*doCloseTag*/);	
+		if (_requestPreamble !== "readOnly") {		
+			str += htmlOpen("div", 
+				{
+					"class":"fileButton",
+					"id":"fileRenameButton" + forPrimary,
+					"title": "Change the filename\n" + path + "." + extension,
+					"onclick":
+					"event.stopPropagation(); " + 
+					"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+			}
 		str += htmlOpen("div", 
 			{
 				"class":"fileButton",
@@ -6405,40 +6505,45 @@ CodeEditor.create = function() {
 				"CodeEditor.editor.download(" + forPrimary + ");",
 			},
 			//make download arrow
-			"<div class='fileDownloadButtonBgChild' style='display: block; margin-left: 0px; margin-top: 1px; height:7px; width: 6px; background-color: rgb(202, 204, 210);'></div>" +
+			"<div class='fileDownloadButtonBgChild' style='display: ; margin-left: 0px; margin-top: 1px; height:7px; width: 6px; background-color: rgb(202, 204, 210);'></div>" +
 			"<div class='fileDownloadButtonBorderChild' style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid rgb(202, 204, 210);'></div>" +
 			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 2px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
 			/*innerHTML*/, true /*doCloseTag*/);
-		str += htmlOpen("div", 
-			{
-				"class":"fileButton",
-				"id":"fileUploadButton" + forPrimary,
-				"title": "Upload file content to\n" + path + "." + extension,
-				"onclick":
-				"event.stopPropagation(); " + 
-				"CodeEditor.editor.upload(" + forPrimary + ");",
-			},
+		if (_requestPreamble !== "readOnly") {	
+			str += htmlOpen("div", 
+				{
+					"class":"fileButton",
+					"id":"fileUploadButton" + forPrimary,
+					"title": "Upload file content to\n" + path + "." + extension,
+					"onclick":
+					"event.stopPropagation(); " + 
+					"CodeEditor.editor.upload(" + forPrimary + ");",
+				},
+				
 			//make upload arrow
 			"<div class='fileDownloadButtonBorderChild' style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 8px solid rgb(202, 204, 210);'></div>" +
 			"<div class='fileDownloadButtonBgChild' style='display: block; margin-left: 0px; height:7px; width: 6px; background-color: rgb(202, 204, 210);'></div>" +
 			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 3px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
 			/*innerHTML*/, true /*doCloseTag*/);
-		str += htmlOpen("div",
-			{
-				"class":"fileButton fileUndoButton",
-				"id":"fileUndoButton" + forPrimary,
-				"title": "Undo to rewind to last recorded checkpoint for\n" + path + "." + extension,
-				"style": "color: rgb(202, 204, 210);" +
-					"padding: 0 5px 0;" +
-					"font-size: 17px;" +
-					"font-weight: bold;",
-				"onclick":
-				"event.stopPropagation(); " + 
-				"CodeEditor.editor.undo(" + forPrimary + ");",
-			},
-			//make undo arrow
-			"&#8617;"
-			/*innerHTML*/, true /*doCloseTag*/);
+		}
+		if (_requestPreamble !== "readOnly") {	
+			str += htmlOpen("div",
+				{
+					"class":"fileButton fileUndoButton",
+					"id":"fileUndoButton" + forPrimary,
+					"title": "Undo to rewind to last recorded checkpoint for\n" + path + "." + extension,
+					"style": "color: rgb(202, 204, 210);" +
+						"padding: 0 5px 0;" +
+						"font-size: 17px;" +
+						"font-weight: bold;",
+					"onclick":
+					"event.stopPropagation(); " + 
+					"CodeEditor.editor.undo(" + forPrimary + ");",
+				},
+				//make undo arrow
+				"&#8617;"
+				/*innerHTML*/, true /*doCloseTag*/);
+			
 		str += htmlOpen("div",
 			{
 				"class":"fileButton fileUndoButton",
@@ -6455,6 +6560,7 @@ CodeEditor.create = function() {
 			//make redo arrow
 			"&#8618;"
 			/*innerHTML*/, true /*doCloseTag*/);
+		}
 		
 		str += htmlOpen("div",
 			{
@@ -7008,8 +7114,9 @@ CodeEditor.create = function() {
 				});	 //end show loading
 
 	} //end uploadTextFromFile()
-	
+
 } //end create() CodeEditor instance
+
 
 
 
