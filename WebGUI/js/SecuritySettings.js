@@ -26,28 +26,29 @@ var selectedtargetBlue;
 //=====================================================================================
 function init()
 {
+	var = "This is an introduction into the Wiz-Mode Security!" +
+		"\n\n" +
+		"There are currently two options for otsdaq Security:" +
+		"\n\t- <b>No Security:</b>\n<INDENT>" +
+		"Just as it sounds, there will be no login required, and all requests " +
+		"will be treated as though they come from fully priveleged administrators. " +
+		"The only security is afforded by keeping your URL unknown (like on a private network)." +
+		"\n\n" +
+		"This mode is usually convenient during development when no hardware is at stake." +
+		"</INDENT>" +
+		"\n\t- <b>Digest Access Authentication:</b>\n<INDENT>" +
+		"This is a straightforward username and password approach to security. " +
+		"Included in this selection, when using a HTTPS gateway, is CILOGON certificate access if users associate and email " +
+		"address with their accounts." +
+		"Users can be assigned different levels of access individually." +
+		"\n\n" +
+		"This mode, behind the ots HTTPS nodejs gateway, is the recommended <i>otsdaq</i> security approach." +
+		"</INDENT>";
 	console.log("init()");
 	DesktopContent.tooltip("Security in the Wiz-Mode",
-			       "This is an introduction into the Wiz-Mode Security!" + 
-				   "\n\n" + 
-				   "There are currently two options for otsdaq Security:" +
-				   "\n\t- <b>No Security:</b>\n<INDENT>" +
-				   "Just as it sounds, there will be no login required, and all requests " +
-				   "will be treated as though they come from fully priveleged administrators. " +
-				   "The only security is afforded by keeping your URL unknown (like on a private network)." + 
-				   "\n\n" + 
-				   "This mode is usually convenient during development when no hardware is at stake." +
-				   "</INDENT>" +
-				   "\n\t- <b>Digest Access Authentication:</b>\n<INDENT>" +
-				   "This is a straightforward username and password approach to security. " +
-				   "Included in this selection, when using a HTTPS gateway, is CILOGON certificate access if users associate and email " +
-				   "address with their accounts." +
-				   "Users can be assigned different levels of access individually." +
-				   "\n\n" + 
-				   "This mode, behind the ots HTTPS nodejs gateway, is the recommended <i>otsdaq</i> security approach." +
-				   "</INDENT>"
+		windowTooltip  
 	);
-
+	DesktopContent.setWindowTooltip(windowTooltip);
 
 	for(var index = 0; index < IDs_.length; index++)
 			selection_[index] = IDs_[index];
