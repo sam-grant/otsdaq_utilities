@@ -13043,14 +13043,6 @@
 			Debug.log("CfgGUI uploadTableFromCSV doReplace = " + doReplace);
 			Debug.log("CfgGUI uploadTableFromCSV doAppend = " + doAppend);
 			
-			//			"Replace all current records with uploaded records", 			//0
-			//			"Append all uploaded records to current table", 				//1
-			//			"Append only uploaded records without conflicting UIDs",		//2
-			//			"Append all uploaded records and replace conflicting UIDs",		//3
-			//			"Prepend all uploaded records to current table",				//4
-			//			"Prepend only uploaded records without conflicting UIDs",		//5
-			//			"Prepend all uploaded records and replace conflicting UIDs"		//6
-						
 			//clean up [[ ]] from bitmap
 			// may only be necessary for backwards compatibility?
 			{
@@ -13067,24 +13059,49 @@
 					
 					if(c) // if looking for a closing bracket.. block \n and ,
 					{
-						if(_tableUploadStr[i] == '\n')
+						
+					if(_tableUploadStr[i] == '\n'){
 							tmpStr += "NNNEWLINNE";
+							}
 						else if(_tableUploadStr[i] == ',')
-							tmpStr += "CCCOMMACCC";
-						else
-							tmpStr += _tableUploadStr[i];
+							tmpStr += "NNNEWLINNE";
 					}
 					else
 						tmpStr += _tableUploadStr[i];
+						if(1==0){}
+						else if (_tableUploadStr[i] == '\n') {
+							var rowDel = "\n";
+						}
+						else if (_tableUploadStr[i] == '+') {
+							var rowDel = "+";
+						}
+						else if (_tableUploadStr[i] == '&') {
+							var rowDel = "&";
+						}
+						else if (_tableUploadStr[i] == ';') {
+							var rowDel = ";";
+						}
+						else if (_tableUploadStr[i] == ',') {
+							var colDel = ',';
+						}
+						else if (_tableUploadStr[i] == '.') {
+							var colDel = '.';
+						}
+						else if (_tableUploadStr[i] == '/') {
+							var colDel = '/';
+						}
+						else if (_tableUploadStr[i] == '|') {
+							var colDel = '|';
+						}
 				}
 				console.log(tmpStr);
 				_tableUploadStr = tmpStr;
 			}
 			
-			var srcRows = _tableUploadStr.split('\n');
+			var srcRows = _tableUploadStr.split(rowDel);
 			var src = []; //src = [r][c]
 			for(var i=0;i<srcRows.length;++i)
-				src.push(srcRows[i].split(','));
+				src.push(srcRows[i].split(colDel));
 			
 			//Note: similar to addRow
 			var el = document.getElementById("SubSystemTable");
@@ -13112,7 +13129,7 @@
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							cols[c+1][rowOffset + r] = src[r][srcc++].replace(/CCCOMMACCC/g, colDel).replace(/NNNEWLINNE/g, rowDel); //swap commas and newlines back in
 							//seems like no need to decode URI component on import side
 							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
@@ -13130,7 +13147,7 @@
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							cols[c+1][rowOffset + r] = src[r][srcc++].replace(/CCCOMMACCC/g, colDel).replace(/NNNEWLINNE/g, rowDel); //swap commas and newlines back in
 							//seems like no need to decode URI component on import side
 							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
@@ -13149,9 +13166,10 @@
 						for(var c=0;c<src[r].length-3 && c<colTypes.length-3-1;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							cols[rowOffset + r][c+1] = src[r][srcc++].replace(/CCCOMMACCC/g, colDel).replace(/NNNEWLINNE/g, rowDel); //swap commas and newlines back in
 							//seems like no need to decode URI component on import side
 							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+											console.log("Value of ", rowDel);
 						}
 
 						//fill any missing columns up to special columns
@@ -13165,7 +13183,7 @@
 						for(c;srcc<src[r].length;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							cols[rowOffset + r][c+1] = src[r][srcc++].replace(/CCCOMMACCC/g, colDel).replace(/NNNEWLINNE/g, rowDel); //swap commas and newlines back in
 							//seems like no need to decode URI component on import side
 							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
@@ -13504,69 +13522,150 @@
 		//	Note: href must be  encodeURI(dataStr) if data not already encoded
 		function downloadTableAsCSV()
 		{
-			editCellOK(); //editCellCancel();
-			Debug.log("CfgGUI downloadTableAsCSV ");
-			
-			//create CSV data string from html table
-			var dataStr = "data:text/csv;charset=utf-8,";
-			el = document.getElementById("SubSystemTable");
-			var rows = el.getElementsByTagName("tr");				
+			// Popup selection window
+			_tableUploadStr = ""; //clear previous upload
 
-			var cells;
+			var str = "";
 
-			if(_tableViewIsTransposed)
-			{
-				var numOfCols = rows.length - _CONFIG_DATA_COL_OFFSET;
-				var numOfRows = rows[0].getElementsByTagName("td").length + 1 - 
+			var el = document.getElementById("popUpDialog");
+			if (!el) {
+				el = document.createElement("div");
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 380;
+			var h = 275;
+			ConfigurationAPI.setPopUpPosition(el, w /*w*/, h /*h*/);
+
+			var str = "<a id='" +
+				"popUpDialog" + //clear upload string on cancel!
+				"-header' onclick='_tableUploadStr = \"\"; var el = document.getElementById(" +
+				"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+
+			str += "Delimiters may vary based on keyboard types.<br><br>";
+
+			str += "<center>";
+
+
+			str += "Select your field delimiter: <br><br>";
+			str += "<select id='fieldSelect' style='width:360px'>";
+				
+				str += "<option value= ',' selected>Comma ' , '</option>";
+				str += "<option value= '/'>Backslach ' / '</option>";
+				str += "<option value= '|'>pipe ' | '</option>";
+				str += "<option value= '.'>Dot' . '</option>";
+
+			str += "</select><br><br>";
+
+			str += "Select your record delimiter: <br><br>";
+			str += "<select id='recordSelect' style='width:360px'>";
+
+				str += "<option value= '\n' selected>New line</option>" ;
+				str += "<option value= '&'>Ampersand ' & '</option>" ;
+				str += "<option value= '+'>Addition ' + '</option>" ;
+				str += "<option value= ';'>Semicolon ' ; '</option>";
+			str += "</select>";
+
+			// done with special handling
+			// continue with pop-up prompt
+			str += "</center></div><br><br>"; //close main popup div
+			var onmouseupJS = "";
+			onmouseupJS += "document.getElementById(\"delimiterSubmit\").disabled = true;";
+			onmouseupJS += "uploadTableFromCSV();";
+
+			str += "<button id='downloadCSV' class='downloadCSV' title='Download file with your chosen delimiter'>Download file</button>";
+
+			el.innerHTML = str;
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+				called =0;
+			document.getElementById("downloadCSV").onclick = function (){ 
+				Debug.log("CfgGUI downloadTableAsCSV ");
+				editCellOK(); //editCellCancel();
+				var dataStr = "data:text/csv;charset=utf-8,";
+				el = document.getElementById("SubSystemTable");
+				var rows = el.getElementsByTagName("tr");
+
+				var cells;
+
+				if (_tableViewIsTransposed) {
+					var numOfCols = rows.length - _CONFIG_DATA_COL_OFFSET;
+					var numOfRows = rows[0].getElementsByTagName("td").length + 1 -
 						_CONFIG_DATA_ROW_OFFSET; //assume one TH cell
 
-				//have to locate each cell individually
-				for(var r=0;r<numOfRows;++r)
-				{
-					if(r) 
-						dataStr += encodeURI("\n"); //encoded \n
-					
-					for(var c=0;c<numOfCols;++c) //skip row index column
-					{
-						cells = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td");
-						//assume one th column so minus 1
-						if(c)
-							dataStr += ",";
-						dataStr += encodeURIComponent(
-								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].textContent.trim()); //replaces all special characters				
-					}
-				}
-			}
-			else
-			{
-				for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
-				{
-					if(r - _CONFIG_DATA_ROW_OFFSET) 
-						dataStr += encodeURI("\n"); //encoded \n
-					
-					cells = rows[r].getElementsByTagName("td");
+					//have to locate each cell individually
+					for (var r = 0; r < numOfRows; ++r) {
+						if (r)
+							var rowDel = document.getElementById("recordSelect").value;
+							dataStr += encodeURI(rowDel); //encoded \n
 
-					for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
-					{
-						if(c - _CONFIG_DATA_COL_OFFSET)
-							dataStr += ",";
-						dataStr += encodeURIComponent(cells[c].textContent.trim()); //replaces all special characters
+						for (var c = 0; c < numOfCols; ++c) //skip row index column
+						{
+							cells = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td");
+							//assume one th column so minus 1
+							if (c)
+								colDel = document.getElementById("fieldSelect").value;
+								dataStr += colDel;
+							dataStr += encodeURIComponent(
+								cells[_CONFIG_DATA_ROW_OFFSET - 1 + r].textContent.trim()); //replaces all special characters				
+						}
 					}
 				}
-			}
-			Debug.log("CfgGUI downloadTableAsCSV dataStr=" + dataStr);
-			
-			var link = document.createElement("a");
-			link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
-			link.setAttribute("style", "display:none");
-			link.setAttribute("download", _currentConfigName + "-v" + 
+				else {
+					for (var r = _CONFIG_DATA_ROW_OFFSET; r < rows.length; ++r) //skip header rows
+					{
+						if (r - _CONFIG_DATA_ROW_OFFSET)
+							var rowDel = document.getElementById("recordSelect").value;
+							dataStr += encodeURI(rowDel); //encoded \n
+
+						cells = rows[r].getElementsByTagName("td");
+
+						for (var c = _CONFIG_DATA_COL_OFFSET; c < cells.length; ++c) //skip row index column
+						{
+							if (c - _CONFIG_DATA_COL_OFFSET)
+								var colDel = document.getElementById("fieldSelect").value;
+								dataStr += colDel;
+							dataStr += encodeURIComponent(cells[c].textContent.trim()); //replaces all special characters
+						}
+					}
+				}
+				Debug.log("CfgGUI downloadTableAsCSV dataStr=" + dataStr);
+
+				var link = document.createElement("a");
+				link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
+				link.setAttribute("style", "display:none");
+				link.setAttribute("download", _currentConfigName + "-v" +
 					_version + "_download.csv");
-			document.body.appendChild(link); // Required for FF
+				document.body.appendChild(link); // Required for FF
 
-			link.click(); // This will download the data file with filename *_download.csv
-			
-			link.parentNode.removeChild(link);
+				link.click(); // This will download the data file with filename *_download.csv
+
+				link.parentNode.removeChild(link);
+				called = 1;
+				if (called == 1){
+					document.getElementById("popUpDialog").style.display = "none";
+
+				}
+			 }; 
+			 
+			// function dwl() {
+			// 	called = true;
+			// }
+
+			// if (!called) {
+			// 	el.style.display = "none";
+			// }
+			// document.getElementById("downloadCSV").onclick = function () { el.style.display = "none";};
+			// document.getElementById("downloadCSV").onclick = function () { el.style.display = "none"; }
+
 		}
+			
+			
+		
 		
 		
 		//saveTableAsNewVersion ~~

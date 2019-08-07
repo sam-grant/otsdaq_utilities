@@ -235,6 +235,21 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                                    bool                    ignoreDuplicates = false,
 	                                    bool lookForEquivalent                   = false);
 
+	void handleGetArtdaqNodeRecordsXML(HttpXmlDocument&        xmlOut,
+	                          ConfigurationManagerRW* cfgMgr,
+                              const std::string&      modifiedTables);
+	void handleLoadArtdaqNodeLayoutXML(HttpXmlDocument&        xmlOut,
+	                          ConfigurationManagerRW* cfgMgr,
+	                          const std::string&      contextGroupName,
+	                          const TableGroupKey&    contextGroupKey);
+	void handleSaveArtdaqNodeLayoutXML(HttpXmlDocument&        xmlOut,
+	                          ConfigurationManagerRW* cfgMgr,
+	                          const std::string&      contextGroupName,
+	                          const TableGroupKey&    contextGroupKey);
+
+
+
+
 	void testXDAQContext(void);
 
 	enum

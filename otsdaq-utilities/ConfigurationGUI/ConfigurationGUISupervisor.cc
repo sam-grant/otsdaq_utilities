@@ -26,6 +26,8 @@ using namespace ots;
 #define TABLE_INFO_PATH std::string(__ENV__("TABLE_INFO_PATH")) + "/"
 #define TABLE_INFO_EXT std::string("Info.xml")
 
+#define ARTDAQ_CONFIG_LAYOUTS_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/ConfigurationGUI_artdaqLayouts/"
+
 /*! the XDAQ_INSTANTIATOR_IMPL(ns1::ns2::...) macro needs to be put into the
  * implementation file (.cc) of the XDAQ application */
 xdaq::Application* ConfigurationGUISupervisor::instantiate(xdaq::ApplicationStub* stub)
@@ -44,9 +46,12 @@ ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* st
 
 	INIT_MF("ConfigurationGUI");
 
+	// make macro directories in case they don't exist
+	mkdir(((std::string)ARTDAQ_CONFIG_LAYOUTS_PATH).c_str(), 0755);
+
 	init();
 	__SUP_COUT__ << "Constructor complete." << __E__;
-}
+} //end constructor()
 
 //========================================================================================================================
 ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void) { destroy(); }
@@ -180,6 +185,12 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//	addTreeNodeRecords
 	//	deleteTreeNodeRecords
 	//		---- end associated with JavaScript Config API
+	//
+	//		---- associated with JavaScript artdaq Config API
+	//	getArtdaqNodes
+    //  loadArtdaqNodeLayout
+	//  saveArtdaqNodeLayout
+	//		---- end associated with JavaScript artdaq Config API
 	//
 	//	activateTableGroup
 	//	getActiveTableGroups
@@ -959,6 +970,42 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                                   startPath,
 		                                   modifiedTables,
 		                                   recordList);
+	}
+	else if(requestType == "getArtdaqNodes")
+	{
+		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+
+		__SUP_COUTV__(modifiedTables);
+
+		handleGetArtdaqNodeRecordsXML(xmlOut,
+				cfgMgr,
+				modifiedTables);
+	}
+	else if(requestType == "loadArtdaqNodeLayout")
+	{
+		std::string contextGroupName      = CgiDataUtilities::getData(cgiIn, "contextGroupName");
+		std::string contextGroupKey       = CgiDataUtilities::getData(cgiIn, "contextGroupKey");
+
+		__SUP_COUTV__(contextGroupName);
+		__SUP_COUTV__(contextGroupKey);
+
+		handleLoadArtdaqNodeLayoutXML(xmlOut,
+				cfgMgr,
+				contextGroupName,
+                TableGroupKey(contextGroupKey));
+	}
+	else if(requestType == "saveArtdaqNodeLayout")
+	{
+		std::string contextGroupName      = CgiDataUtilities::getData(cgiIn, "contextGroupName");
+		std::string contextGroupKey       = CgiDataUtilities::getData(cgiIn, "contextGroupKey");
+
+		__SUP_COUTV__(contextGroupName);
+		__SUP_COUTV__(contextGroupKey);
+
+		handleSaveArtdaqNodeLayoutXML(xmlOut,
+				cfgMgr,
+				contextGroupName,
+                TableGroupKey(contextGroupKey));
 	}
 	else if(requestType == "getAffectedActiveGroups")
 	{
@@ -1994,7 +2041,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
-}
+} //end handleFillDeleteTreeNodeRecordsXML()
 
 //========================================================================================================================
 // handleFillSetTreeNodeFieldValuesXML
@@ -6857,7 +6904,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 
 		}  // end other key loop
 	}      // end primary group loop
-}
+} //end handleTableGroupsXML()
 
 //========================================================================================================================
 //	handleTablesXML
@@ -6943,7 +6990,177 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 		    "Error",
 		    std::string("Column errors were allowed for this request, ") +
 		        "but please note the following errors:\n" + accumulatedErrors);
-}
+} //end handleTablesXML()
+
+
+//========================================================================================================================
+// handleGetArtdaqNodeRecordsXML
+//	get artdaq nodes for active groups
+//
+// parameters
+//	modifiedTables := CSV of table/version pairs
+//
+void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      modifiedTables)
+{
+	__COUT__ << "Getting artdaq nodes..." << __E__;
+
+	//	setup active tables based on active groups and modified tables
+	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
+
+	const XDAQContextTable* contextTable =
+	    cfgMgr->__GET_CONFIG__(XDAQContextTable);
+
+	//for each artdaq context, output all artdaq apps
+		//call individual tables (Reader, Builder, Aggregator)
+		//for further details (e.g. Aggregator->isDispatcher()...)
+
+	std::vector<const XDAQContextTable::XDAQContext*> artdaqContexts[] =
+		{
+			contextTable->getBoardReaderContexts(),
+			contextTable->getEventBuilderContexts(),
+			contextTable->getAggregatorContexts()
+		};
+
+	std::string typeString;
+	for(unsigned int i=0;i<3 /*context type count*/;++i)
+	{
+		typeString = i == 0? "reader" :
+				(i == 1? "builder" :
+						"aggregator");
+
+		__COUT__ << typeString << " size = " << artdaqContexts[i].size() << __E__;
+
+		for(auto& artdaqContext:artdaqContexts[i])
+		{
+			__SUP_COUTV__(artdaqContext->contextUID_);
+			__SUP_COUTV__(artdaqContext->applications_.size());
+
+			for(auto& artdaqApp:artdaqContext->applications_)
+			{
+				__SUP_COUTV__(artdaqApp.applicationUID_);
+
+				xmlOut.addTextElementToData(
+						typeString,
+						artdaqApp.applicationUID_
+					);
+				xmlOut.addTextElementToData(
+						typeString + "-contextAddress",
+						artdaqContext->address_
+					);
+				xmlOut.addTextElementToData(
+						typeString + "-contextPort",
+						std::to_string(artdaqContext->port_)
+					);
+			} //end artdaq app loop
+		} //end artdaq context loop
+	} //end artdaq type loop
+
+	__COUT__ << "Done getting artdaq nodes." << __E__;
+
+} //end handleGetArtdaqNodeRecordsXML()
+
+//========================================================================================================================
+// handleLoadArtdaqNodeLayoutXML
+//	load artdaq configuration GUI layout for group/key
+//
+// parameters
+//	contextGroupName (full name with key)
+//
+void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      contextGroupName,
+    const TableGroupKey&    contextGroupKey)
+{
+	std::stringstream layoutPath;
+	layoutPath << ARTDAQ_CONFIG_LAYOUTS_PATH << contextGroupName << "_"
+			<< contextGroupKey << ".dat";
+	__SUP_COUTV__(layoutPath.str());
+	FILE *fp = fopen(layoutPath.str().c_str(),"r");
+	if(!fp)
+	{
+		__SUP_COUT__ << "Layout file not found for '" <<
+				contextGroupName << "(" << contextGroupKey << ")'" << __E__;
+		return;
+	}
+
+
+	//file format is line by line
+	// line 0 -- grid: <rows> <cols>
+	// line 1-N -- node: <type> <name> <x-grid> <y-grid>
+
+	const size_t maxLineSz = 1000;
+	char line[maxLineSz];
+	if(!fgets(line,maxLineSz,fp)) {fclose(fp); return;}
+	else
+	{
+		//extract grid
+
+		unsigned int rows, cols;
+
+		sscanf(line,"%u %u",&rows,&cols);
+
+		__COUT__ << "Grid rows,cols = " << rows << "," << cols << __E__;
+
+		xmlOut.addTextElementToData(
+				"grid-rows",
+				std::to_string(rows)
+		);
+		xmlOut.addTextElementToData(
+				"grid-cols",
+				std::to_string(cols)
+		);
+	}
+
+	char name[maxLineSz];
+	char type[maxLineSz];
+	unsigned int x,y;
+	while(fgets(line,maxLineSz,fp))
+	{
+		//extract node
+		sscanf(line,"%s %s %u %u",type,name,&x,&y);
+
+		xmlOut.addTextElementToData(
+				"node-type",
+				type
+		);
+		xmlOut.addTextElementToData(
+				"node-name",
+				name
+		);
+		xmlOut.addTextElementToData(
+				"node-x",
+				std::to_string(x)
+		);
+		xmlOut.addTextElementToData(
+				"node-y",
+				std::to_string(y)
+		);
+	} //end node extraction loop
+
+
+	fclose(fp);
+
+} //end handleLoadArtdaqNodeLayoutXML()
+
+//========================================================================================================================
+// handleSaveArtdaqNodeLayoutXML
+//	save artdaq configuration GUI layout for group/key
+//
+// parameters
+//	configGroupName (full name with key)
+//
+void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      contextGroupName,
+    const TableGroupKey&    contextGroupKey)
+{
+
+} //end handleSaveArtdaqNodeLayoutXML()
 
 //========================================================================================================================
 //	testXDAQContext
@@ -7011,4 +7228,4 @@ void ConfigurationGUISupervisor::testXDAQContext()
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////
-}
+} //end testXDAQContext()

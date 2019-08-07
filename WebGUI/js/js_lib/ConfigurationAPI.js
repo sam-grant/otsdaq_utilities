@@ -68,6 +68,7 @@ if (typeof DesktopContent == 'undefined' &&
 
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
+//	ConfigurationAPI.removeAllPopUps()
 //	ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	ConfigurationAPI.addClass(elem,class)
 //	ConfigurationAPI.removeClass(elem,class)
@@ -4140,6 +4141,18 @@ ConfigurationAPI.setCaretPosition = function(elem, caretPos, endPos)
 	elem.setSelectionRange(caretPos, endPos);
 }
 
+//=====================================================================================
+//ConfigurationAPI.removeAllPopUps()
+ConfigurationAPI.removeAllPopUps = function()
+{
+	//remove all existing dialogs
+	var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+	while(el) 
+	{
+		el.parentNode.removeChild(el); //close popup
+		el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+	}
+} //end ConfigurationAPI.removeAllPopUps()
 
 //=====================================================================================
 //setPopUpPosition ~~
@@ -4201,10 +4214,11 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		//else w,h are inputs and margin is ignored
 
 		x = (DesktopContent.getWindowScrollLeft() + ((ww-w)/2));
-		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2)) - (offsetUp|0) - 100; //bias up (looks nicer)
+		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2)) - (offsetUp|0);		
+		if(y > 110) y -= 100; //bias up (looks nicer)
 		
-		if(y<DesktopContent.getWindowScrollTop()+margin+padding) 
-			y = DesktopContent.getWindowScrollTop()+margin+padding; //don't let it bottom out though
+		if(y<DesktopContent.getWindowScrollTop()+margin)//+padding) 
+			y = DesktopContent.getWindowScrollTop()+margin;//+padding; //don't let it bottom out though
 
 		//if dialog is smaller than window, allow scrolling to see the whole thing 
 		if(w > ww-margin-padding)			
@@ -4212,14 +4226,14 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		if(ah > wh-margin-padding)
 			y = -DesktopContent.getWindowScrollTop();
 			
-		el.style.left = x + "px";
-		el.style.top = y + "px"; 
+		el.style.left = (x|0) + "px";
+		el.style.top = (y|0) + "px"; 
 	}; 
 	ConfigurationAPI.setPopUpPosition.popupResize();
 	
 	//window width and height are not manipulated on resize, only setup once
-	el.style.width = w + "px";
-	el.style.height = h + "px";
+	el.style.width = (w|0) + "px";
+	el.style.height = (h|0) + "px";
 	
 	if(!doNotResize)
 	{

@@ -2810,12 +2810,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 						_systemGroups = {}; //reset
 						
 						//remove all existing dialogs
-						var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
-						while(el) 
-						{
-							el.parentNode.removeChild(el); //close popup
-							el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
-						}
+						ConfigurationAPI.removeAllPopUps();
 						
 						if(_doneHandler) _doneHandler(_aRecordWasModified);
 						return; //prevent default prev showPrompt

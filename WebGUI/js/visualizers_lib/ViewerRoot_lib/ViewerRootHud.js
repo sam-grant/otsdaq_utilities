@@ -74,7 +74,13 @@ ViewerRoot.createHud = function() {
 			ViewerRoot.hardRefresh = chk.checked; 	//hard refresh
 			console.log("checkboxUpdate: hardRefresh: " + chk.checked);
 			DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&hardRefresh="+
-					(chk.checked?1:0));	
+					(chk.checked?1:0),
+                                                "",
+                                                "" /*reqHandler*/,
+                                                0 /*reqParam*/,
+                                                0 /*progressHandler*/,
+                                                0 /*callHandlerOnErr*/,
+                                                true /*doNoShowLoadingOverlay*/);	
 		}	
 		else
 		{
@@ -86,7 +92,13 @@ ViewerRoot.createHud = function() {
 				ViewerRoot.autoRefreshDefault = chk.checked; 	//auto refresh
 				
 				DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&autoRefresh="+
-						(chk.checked?1:0));	
+						(chk.checked?1:0),
+						"",
+						""/*reqHandler*/,
+                                         	0 /*reqParam*/, 
+                                         	0 /*progressHandler*/, 
+                                         	0 /*callHandlerOnErr*/, 
+                                         	true /*doNoShowLoadingOverlay*/);	
 			}
 			else if(i==1) 
 			{
@@ -94,7 +106,13 @@ ViewerRoot.createHud = function() {
 				ViewerRoot.handleWindowResize();
 	
 				DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&autoHide="+
-						(chk.checked?1:0));	
+						(chk.checked?1:0),
+                                                "",
+                                                ""/*reqHandler*/,
+                                                0 /*reqParam*/,
+                                                0 /*progressHandler*/,
+                                                0 /*callHandlerOnErr*/,
+                                                true /*doNoShowLoadingOverlay*/);	
 			}
 			else if(i==2) 
 			{
@@ -117,7 +135,13 @@ ViewerRoot.createHud = function() {
 		document.getElementById("hudAutoRefreshPeriod").value = v;
 		ViewerRoot.autoRefreshPeriod = v;
 		DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&autoRefreshPeriod="+
-				ViewerRoot.autoRefreshPeriod);
+				ViewerRoot.autoRefreshPeriod,
+                                                "",
+                                                ""/*reqHandler*/,
+                                                0 /*reqParam*/,
+                                                0 /*progressHandler*/,
+                                                0 /*callHandlerOnErr*/,
+                                                true /*doNoShowLoadingOverlay*/);
 		if(ViewerRoot.autoRefreshTimer) window.clearInterval(ViewerRoot.autoRefreshTimer);
 		ViewerRoot.autoRefreshTimer = window.setInterval(ViewerRoot.autoRefreshTick,
 			ViewerRoot.autoRefreshPeriod);
@@ -525,7 +549,12 @@ ViewerRoot.createHud = function() {
 		var dir = document.getElementById('hudAdminControlField').value;
 		Debug.log("ViewerRoot Hud makeConfigDir  " + dir);
 
-		DesktopContent.XMLHttpRequest("Request?RequestType=rootAdminControls&cmd=mkdir", "path="+adminControlsPath+"&name="+dir, ViewerRoot.hud.adminControlsReqHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=rootAdminControls&cmd=mkdir", "path="+adminControlsPath+"&name="+dir, ViewerRoot.hud.adminControlsReqHandler,
+                                                ""/*reqHandler*/,
+                                                0 /*reqParam*/,
+                                                0 /*progressHandler*/,
+                                                0 /*callHandlerOnErr*/,
+                                                true /*doNoShowLoadingOverlay*/);
 			
 	} //end makeConfigDir()
 
