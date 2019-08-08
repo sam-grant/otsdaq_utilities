@@ -1,0 +1,110 @@
+html, body {
+    height: 100%;
+}
+
+body {
+    background-color: rgb(226, 216, 216);
+    font-family: 'Inconsolata', monospace;
+    overflow: scroll;
+}
+
+
+h1, h2, h3 {
+ color: rgb(65, 86, 146);
+}
+
+#mainContent {
+    height: 100%
+}
+
+#filterDiv {
+    float: left;
+    width: 20%;
+    height: 100%;
+    border: 2px solid black;
+    overflow: auto;
+}
+
+#filterDiv h3 {
+    margin: 5px 10px;
+}
+
+#filterForm {
+    margin: 5px 10px;
+}
+
+.filterList {
+    padding: 0 10px;
+    display: none;
+    overflow: hidden;
+    background-color: #f1f1f1;
+}
+
+#statusDiv {
+    float: right;
+    width: 75%;
+    border: 2px solid black;
+    overflow: auto;
+}
+
+
+ul {
+    list-style-type: none;
+}
+
+.collapsible {
+    background-color: #777;
+    color: white;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+ }
+
+.collapsible:hover {
+    background-color: #555;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.collapsible:hover .helptext {
+    visibility: visible;
+}
+
+/* Tooltip text */
+.helptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+   
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+}
+  
+#buttons {
+    text-align: center;
+}
+
+#filterButton {
+    color: #020c07 !important;
+	text-transform: uppercase;
+	background: #ffffff;
+	padding: 5px;
+	border: 1px solid #010804 !important;
+	border-radius: 6px;
+    display: inline-block;
+    margin-top: 10px;
+    width: 100px;
+}
+
+ul li:hover {
+    background-color: yellow;
+    cursor: pointer;
+}
