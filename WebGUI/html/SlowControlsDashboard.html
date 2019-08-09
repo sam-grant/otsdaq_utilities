@@ -59,11 +59,56 @@
 				//background-color: rgb(200,0,0);
 			}
 			
-			.widgetCover{
+			.widgetCover {
 				z-index: 9;
 //			  	background-color: rgba(239, 28, 190, 0.6);
 
 			}
+			
+			.resizeWidgetCover {
+				outline: dashed thin;
+
+			}
+
+				
+			
+			//Sides			
+
+			.resizeWidgetCoverTop {
+				cursor: ns-resize !important;
+			}
+			
+			.resizeWidgetCoverBottom {
+				cursor: ns-resize !important;
+			}
+			
+			.resizeWidgetCoverRight {
+				cursor: ew-resize !important;
+			}
+
+			.resizeWidgetCoverLeft {
+				cursor: ew-resize !important;
+			}
+			
+
+			//Corners
+			.resizeWidgetCoverTopLeft {
+				cursor: nwse-resize !important;
+			}
+			
+			.resizeWidgetCoverTopRight {
+				cursor: nesw-resize !important;
+			}
+			
+			
+			.resizeWidgetCoverBottomLeft {
+				cursor: nesw-resize !important;
+			}
+			
+			.resizeWidgetCoverBottomRight {
+				cursor: nwse-resize !important;
+			}
+			
 			
 			.mainBlock {
 			    transition: background-color .25s;
@@ -1292,20 +1337,107 @@
 					var selectionRectangle = document.getElementById("selectionRectangle");
 					selectionRectangle.style.top = event.clientY + "px";
 					selectionRectangle.style.left = event.clientX + "px";
-					selectionRectangle.style.width = "1px";
-					selectionRectangle.style.height = "1px";
+					
+//					console.log("Reached: " + id);
+//					console.log(widgetLibrary);
+//					console.log(widgetLibrary.dimensions[id]);
+//					console.log(widgetLibrary.dimensions[id]["X"]);
+//					console.log(widgetLibrary.dimensions[id]["Y"]);
+//					console.log(widgetLibrary.dimensions[id]["Scale"]);
+//					console.log(widgetLibrary.dimensions[id]);
+
+					if(widgetLibrary.dimensions[id])
+					{
+					
+						if(widgetLibrary.dimensions[id]["X"])
+						{
+							console.log("Has a specified width");
+							selectionRectangle.style.width = (widgetLibrary.dimensions[id]["X"] + "px");
+	
+						}
+						else
+						{
+							selectionRectangle.style.width = "1px";
+						}
+						
+						if(widgetLibrary.dimensions[id]["Y"])
+						{
+							console.log("Has a specified height");
+							selectionRectangle.style.height = (widgetLibrary.dimensions[id]["Y"] + "px");
+	
+						}
+						else
+						{
+							selectionRectangle.style.height = "1px";
+						}
+	
+	
+						if(widgetLibrary.dimensions[id]["Scale"] != "False")
+						{
+							console.log("Widget is scalable");
+							mainBlock_.el.addEventListener("mousemove", redrawSelectionRectangle(id), false);
+						}
+						
+					}
+					else //Default - no aspect ratio, no min size, 
+					{
+						mainBlock_.el.addEventListener("mousemove", redrawSelectionRectangle(id), false);
+						selectionRectangle.style.height = "1px";
+						selectionRectangle.style.width = "1px";
+					}
+					
 					selectionRectangle.style.display = "block";
-					mainBlock_.el.addEventListener("mousemove", redrawSelectionRectangle(), false);
 					mainBlock_.el.addEventListener("mouseup"  , stopdrawSelectionRectangle(id), false);
 				};
 				
 			};
 			
-			function redrawSelectionRectangle() {
+			function redrawSelectionRectangle(id) {
 				return function(event){
 					var ghost = document.getElementById("selectionRectangle");
-					ghost.style.width = (event.clientX - xPos_) + "px";
-					ghost.style.height = (event.clientY - yPos_) + "px";
+					
+					if(widgetLibrary.dimensions[id] && widgetLibrary.dimensions[id]["Y"] && widgetLibrary.dimensions[id]["X"])
+					{
+						var aspect_ratio = parseFloat(widgetLibrary.dimensions[id]["X"]) / parseFloat(widgetLibrary.dimensions[id]["Y"]);
+						//console.log(aspect_ratio);
+						
+						var y_displacement = (event.clientY - yPos_);
+						var x_displacement = (event.clientX - xPos_);
+						
+						if((y_displacement > widgetLibrary.dimensions[id]["Y"]) || (x_displacement > widgetLibrary.dimensions[id]["X"]))
+						{
+						
+							var adjusted_y_displacement = y_displacement * aspect_ratio;
+							var adjusted_x_displacement = x_displacement;
+							
+//							console.log("y_displacement: " + y_displacement);
+//							console.log("adjusted_y_displacement: " + adjusted_y_displacement);
+//							console.log("adjusted_x_displacement: " + adjusted_x_displacement);
+							
+							if(adjusted_y_displacement >= adjusted_x_displacement)
+							{
+								//console.log(parseFloat(y_displacement * aspect_ratio));								
+							
+								ghost.style.width = parseFloat(y_displacement * aspect_ratio) + "px";
+								ghost.style.height = (y_displacement) + "px";						
+							}
+							else
+							{
+								
+								//console.log(parseFloat(x_displacement / aspect_ratio));								
+							
+								ghost.style.width = (x_displacement) + "px";
+								ghost.style.height = parseFloat(x_displacement / aspect_ratio) + "px";							
+							}
+						}
+					}
+					else
+					{
+						ghost.style.width = (event.clientX - xPos_) + "px";
+						ghost.style.height = (event.clientY - yPos_) + "px";						
+					}
+
+
 				};
 			};
 			
@@ -1315,8 +1447,19 @@
 					mainBlock_.el.removeEventListener("mousemove", arguments.callee, false);
 					mainBlock_.el.removeEventListener("mouseup"  , arguments.callee, false);
 					mainBlock_.el.style.cursor = "grab";
-					document.getElementById("selectionRectangle").style.display = "none";
-					drawWidget(id, true, xPos_ - pageOffSetX_, yPos_ - pageOffSetY_, (event.clientX - xPos_), (event.clientY - yPos_));
+					
+					var ghost = document.getElementById("selectionRectangle");
+
+					ghost.style.display = "none";
+					console.log((event.clientX - xPos_));
+					console.log(ghost.style.width)
+					
+					if(widgetLibrary.dimensions[id] && widgetLibrary.dimensions[id]["Scale"] && widgetLibrary.dimensions[id]["Scale"] == "False")
+						drawWidget(id, true, xPos_ - pageOffSetX_, yPos_ - pageOffSetY_, parseFloat(widgetLibrary.dimensions[id]["X"]), parseFloat(widgetLibrary.dimensions[id]["Y"]));
+ 					else //Scalable is true which means that the ghost will have a width/height
+						drawWidget(id, true, xPos_ - pageOffSetX_, yPos_ - pageOffSetY_, parseFloat(ghost.style.width), parseFloat(ghost.style.height));
+
+					
 					turnOnWidgets();
 					setupForDrawing_ = false;
 					mainBlock_.el.addEventListener("mousedown", startDrag, true);
@@ -1327,7 +1470,7 @@
 			{
 				
 				var widgetFrame = document.createElement("iframe");
-			
+					
 				if(newWidget)
 				{
 					if(typeof page_.widgets == 'undefined')
@@ -1356,15 +1499,24 @@
 					widgetObject.attributes = {};
 					widgetObject.Display_Name = widgetFrame.id;
 					widgetObject.loaded = "false";
-					widget = widgetFrame.id
+					widget = widgetFrame.id;
 					page_.widgets[widget] = widgetObject;
 					
+	
 				}
 				else
 				{
 					widgetFrame.id = widget;//page[widget].Display_Name;
-				}	
-					//console.log("type: ", page[widget].type , " : ", widgetLibrary.typeToSrc[page[widget].type]);
+					
+					page_.widgets[widget].size_x = width;
+					page_.widgets[widget].size_y = height;
+					page_.widgets[widget].x = x;
+					page_.widgets[widget].y = y;
+					
+					var oldContainer = document.getElementById(widgetFrame.id + "-container");
+					oldContainer.parentNode.removeChild(oldContainer);
+					
+				}
 				
 				var containerDiv = document.createElement("div");
 				containerDiv.style.width = page_.widgets[widget].size_x + "px";
@@ -1385,36 +1537,178 @@
 				coverDiv.style.top = "0px";
 				coverDiv.id = widgetFrame.id + "-cover";
 				coverDiv.style.zIndex = "50";
+				
+				
+				var outline_offset = 15;
+				var resizeDiv = document.createElement("div");
+				resizeDiv.className = "resizeWidgetCover";
+				resizeDiv.style.width = parseFloat(page_.widgets[widget].size_x + (2 * outline_offset)) + "px";
+				resizeDiv.style.height = parseFloat(page_.widgets[widget].size_y + (2 * outline_offset)) + "px";
+				resizeDiv.style.position = "absolute";
+				resizeDiv.style.left = -(outline_offset) + "px";
+				resizeDiv.style.top = -(outline_offset) + "px";
+				resizeDiv.id = widgetFrame.id + "-resize-cover";
+				resizeDiv.style.zIndex = "49";
+				
+				
+				//To handle the different resize arrows
+				//Edges
+				var resizeDivTop = document.createElement("div");
+				resizeDivTop.className = "resizeWidgetCoverTop";
+				resizeDivTop.style.width = parseFloat(page_.widgets[widget].size_x) + "px";
+				resizeDivTop.style.height = outline_offset + "px";
+				resizeDivTop.style.position = "absolute";
+				resizeDivTop.style.left = outline_offset + "px";
+				resizeDivTop.style.top = "0px";
+				resizeDivTop.id = widgetFrame.id + "-resize-cover-north";
+				resizeDivTop.style.zIndex = "49";
+				resizeDivTop.style.cursor = "ns-resize";
+				
+				var resizeDivLeft = document.createElement("div");
+				resizeDivLeft.className = "resizeWidgetCoverLeft";
+				resizeDivLeft.style.width = outline_offset + "px";
+				resizeDivLeft.style.height = parseFloat(page_.widgets[widget].size_y) + "px";
+				resizeDivLeft.style.position = "absolute";
+				resizeDivLeft.style.left ="0px";
+				resizeDivLeft.style.top = outline_offset + "px";
+				resizeDivLeft.id = widgetFrame.id + "-resize-cover-west";
+				resizeDivLeft.style.zIndex = "49";
+				resizeDivLeft.style.cursor = "ew-resize";
+								
+				var resizeDivRight = document.createElement("div");
+				resizeDivRight.className = "resizeWidgetCoverRight";
+				resizeDivRight.style.width = outline_offset + "px";
+				resizeDivRight.style.height = parseFloat(page_.widgets[widget].size_y) + "px";
+				resizeDivRight.style.position = "absolute";
+				resizeDivRight.style.right = "0px";
+				resizeDivRight.style.top = outline_offset + "px";
+				resizeDivRight.id = widgetFrame.id + "-resize-cover-east";
+				resizeDivRight.style.zIndex = "49";
+				resizeDivRight.style.cursor = "ew-resize";
+
+				var resizeDivBottom = document.createElement("div");
+				resizeDivBottom.className = "resizeWidgetCoverBottom";
+				resizeDivBottom.style.width = parseFloat(page_.widgets[widget].size_x) + "px";
+				resizeDivBottom.style.height = outline_offset + "px";
+				resizeDivBottom.style.position = "absolute";
+				resizeDivBottom.style.left = outline_offset + "px";
+				resizeDivBottom.style.bottom = "0px";
+				resizeDivBottom.id = widgetFrame.id + "-resize-cover-south";
+				resizeDivBottom.style.zIndex = "49";
+				resizeDivBottom.style.cursor = "ns-resize";
+								
+				//Corners
+				var resizeDivTopLeft = document.createElement("div");
+				resizeDivTopLeft.className = "resizeWidgetCoverTopLeft";
+				resizeDivTopLeft.style.width = outline_offset + "px";
+				resizeDivTopLeft.style.height = outline_offset + "px";
+				resizeDivTopLeft.style.position = "absolute";
+				resizeDivTopLeft.style.left = "0px";
+				resizeDivTopLeft.style.top = "0px";
+				resizeDivTopLeft.id = widgetFrame.id + "-resize-cover-northwest";
+				resizeDivTopLeft.style.zIndex = "49";
+				resizeDivTopLeft.style.cursor = "nwse-resize";
+								
+				var resizeDivTopRight = document.createElement("div");
+				resizeDivTopRight.className = "resizeWidgetCoverTopRight";
+				resizeDivTopRight.style.width = outline_offset + "px";
+				resizeDivTopRight.style.height = outline_offset + "px";
+				resizeDivTopRight.style.position = "absolute";
+				resizeDivTopRight.style.right = "0px";
+				resizeDivTopRight.style.top = "0px";
+				resizeDivTopRight.id = widgetFrame.id + "-resize-cover-northeast";
+				resizeDivTopRight.style.zIndex = "49";
+				resizeDivTopRight.style.cursor = "nesw-resize";
+								
+				var resizeDivBottomRight = document.createElement("div");
+				resizeDivBottomRight.className = "resizeWidgetCoverBottomRight";
+				resizeDivBottomRight.style.width = outline_offset + "px";
+				resizeDivBottomRight.style.height = outline_offset + "px";
+				resizeDivBottomRight.style.position = "absolute";
+				resizeDivBottomRight.style.right = "0px";
+				resizeDivBottomRight.style.bottom = "0px";
+				resizeDivBottomRight.id = widgetFrame.id + "-resize-cover-southeast";
+				resizeDivBottomRight.style.zIndex = "49";
+				resizeDivBottomRight.style.cursor = "nwse-resize";
+								
+				var resizeDivBottomLeft = document.createElement("div");
+				resizeDivBottomLeft.className = "resizeWidgetCoverBottomLeft";
+				resizeDivBottomLeft.style.width = outline_offset + "px";
+				resizeDivBottomLeft.style.height = outline_offset + "px";
+				resizeDivBottomLeft.style.position = "absolute";
+				resizeDivBottomLeft.style.left = "0px";
+				resizeDivBottomLeft.style.bottom = "0px";
+				resizeDivBottomLeft.id = widgetFrame.id + "-resize-cover-southwest";
+				resizeDivBottomLeft.style.zIndex = "49";
+				resizeDivBottomLeft.style.cursor = "nesw-resize";
+				
 
 				if(!editBlock_.isHidden) 
 				{
-					coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id), true);	
+					coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id), true);
+	
 				}
 			//		toggleContextMenu(e, widgetFrame.id);
 			//		});
 				
 				coverDiv.addEventListener("mousedown", startDrag, true);
+				if(!resizeLockout_)
+				{
+					console.log("Not resizing");
+				
+//					resizeDivTop.addEventListener("mousedown", resizeWidgetBeginCaller(widget, "north"), false);
+//					resizeDivLeft.addEventListener("mousedown", resizeWidgetBeginCaller(widget, "west"), false);
+//					resizeDivRight.addEventListener("mousedown", resizeWidgetBeginCaller(widget, "east"), false);
+//					resizeDivBottom.addEventListener("mousedown", resizeWidgetBeginCaller(widget, "south"), false);
+//					resizeDivTopLeft.addEventListener("mousedown", resizeWidgetBeginCaller(widget, "northwest"), false);
+//					resizeDivTopRight.addEventListener("mousedown", resizeWidgetBeginCaller(widget, "northeast"), false);
+//					resizeDivBottomRight.addEventListener("mousedown", resizeWidgetBeginCaller(widget, "southeast"), false);
+//					resizeDivBottomLeft.addEventListener("mousedown", resizeWidgetBeginCaller(widget, "southwest"), false);
+
+					resizeDivTop.addEventListener("mousedown", startDrag, false);
+					resizeDivLeft.addEventListener("mousedown", startDrag, false);
+					resizeDivRight.addEventListener("mousedown", startDrag, false);
+					resizeDivBottom.addEventListener("mousedown", startDrag, false);
+					resizeDivTopLeft.addEventListener("mousedown", startDrag, false);
+					resizeDivTopRight.addEventListener("mousedown", startDrag, false);
+					resizeDivBottomRight.addEventListener("mousedown", startDrag, false);
+					resizeDivBottomLeft.addEventListener("mousedown", startDrag, false);	
+					
+					resizeDiv.appendChild(resizeDivTop);
+					resizeDiv.appendChild(resizeDivLeft);
+					resizeDiv.appendChild(resizeDivRight);
+					resizeDiv.appendChild(resizeDivBottom);
+					resizeDiv.appendChild(resizeDivTopRight);
+					resizeDiv.appendChild(resizeDivTopLeft);
+					resizeDiv.appendChild(resizeDivBottomRight);
+					resizeDiv.appendChild(resizeDivBottomLeft);
+					
+					widgetFrame.src = "widgets/" + widgetLibrary.typeToSrc[page_.widgets[widget].type];
+					widgetFrame.style.border = "0";
+					widgetFrame.style.position = "absolute";
+					widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
+					widgetFrame.width = page_.widgets[widget].size_x + "px";
+					widgetFrame.height = page_.widgets[widget].size_y + "px";
+					//BEGIN Mechanics for selecting what to display
+					widgetFrame.style.left = "0px"//.style.left = page_.widgets[widget].x + "px";
+					widgetFrame.style.top = "0px";//.top = page_.widgets[widget].y + "px";
+
+				}
 
 
-				
-				
+
+				containerDiv.appendChild(resizeDiv);
 				containerDiv.appendChild(coverDiv);
+
 				
-				widgetFrame.src = "widgets/" + widgetLibrary.typeToSrc[page_.widgets[widget].type];
-				widgetFrame.style.border = "0";
-				widgetFrame.style.position = "absolute";
-				widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
-				widgetFrame.width = page_.widgets[widget].size_x + "px";
-				widgetFrame.height = page_.widgets[widget].size_y + "px";
-				//BEGIN Mechanics for selecting what to display
-				widgetFrame.style.left = "0px"//.style.left = page_.widgets[widget].x + "px";
-				widgetFrame.style.top = "0px";//.top = page_.widgets[widget].y + "px";
+				
+
 				
 				
 				
 				//END Mechanics for selecting what to display
 				page_.widgets[widget].el = widgetFrame;
-				console.log(page_.widgets[widget].el);
+				//console.log(page_.widgets[widget].el);
 				//select x and y
 				containerDiv.appendChild(widgetFrame);
 				mainBlock_.el.appendChild(containerDiv);
@@ -1424,12 +1718,242 @@
 //					toggleContextMenu(e);
 //					});
 				//document.getElementById(widgetFrame.id).contentWindow.newWidget(page[widget].PVList);
+				
+				//console.log(page_.widgets[widget].el.parentNode.getElementsByClassName("resizeWidgetCover")[0]);
+//				page_.widgets[widget].el.parentNode.getElementsByClassName("resizeWidgetCover")[0].addEventListener("mousedown", resizeWidgetCaller(widget), true);
 
+				if(!resizeLockout_)
+					document.getElementById(widget).contentWindow.newWidget;
+				
 				toggleWidgetSelection(page_.widgets[widget].el);
 
-				document.getElementById(widget).contentWindow.newWidget;
+				
 				
 			}
+			
+			var resizeLockout_ = false;
+			var resizeId_ = "";
+			var resizeFrom_ = "";
+
+
+//			function resizeWidgetBeginCaller(id, position) {
+//				//alert("toggleContextMenuCaller reached!");
+//		
+//				return function (event) {
+//				resizeWidgetBegin(event, id, position);
+//				};
+//			}
+			
+			
+//			function resizeWidgetBegin(event, id, resize_from)
+//			{
+//				
+//				if(!resizeLockout_)
+//				{
+//					console.log("Resizing " + id + " from the " + resize_from);
+//					xPos_ = event.clientX;
+//					yPos_ = event.clientY;
+//					resizeBeginWidth_ = parseFloat(page_.widgets[id].size_x);
+//					resizeBeginHeight_ = parseFloat(page_.widgets[id].size_y);
+//					console.log("Begin: (X)" + xPos_ + " (Y)" + yPos_);
+//	
+//	
+//					var resizeDiv = document.getElementById(id + "-resize-cover");
+//					var resizeChildren = resizeDiv.children;
+//					
+//					console.log(resizeDiv);
+//					console.log(resizeChildren);
+//					
+//					while(resizeDiv.firstChild)
+//					{
+//						console.log(resizeDiv.firstChild);
+//						//childDiv.removeEventListener("mousedown", resizeWidgetBeginCaller(id, resize_from), true); 
+//						resizeDiv.removeChild(resizeDiv.firstChild);
+//					}	
+//	
+//					//Add event listeners for resize
+//					window.addEventListener('mousemove', resizeWidgetCaller(id, resize_from), false);
+//					resizeDiv.addEventListener('mouseup',   endResizeWidget(resize_from, id), false);
+//					resizeDiv.style.zIndex = "100";
+//
+//		
+//	
+//					//Blackout the selected widget with a cover
+//					page_.widgets[id].el.style.display = "none";
+//					
+//					resizeLockout_ = true;
+//					resizeId_ = id;
+//					resizeFrom_ = resize_from;
+//				}
+//				
+//				return;
+//			}
+			
+			function resizeWidgetCaller(id, resize_from)
+			{
+			
+				return function(event){
+
+					if(resizeLockout_)
+					{
+						//console.log("Now: (X)" + event.clientX + " (Y)" + event.clientY);
+						//console.log(page_.widgets[id].el.parentNode.getElementsByClassName("resizeWidgetCover")[0]);
+						var deltaX = 0;
+						var deltaY = 0;
+						
+						//Depending on where we are pulling the resize, which way means "make the widget bigger" is different
+						if(resize_from == "north")
+						{
+							deltaX = 0;
+							deltaY = -(event.clientY - yPos_);
+						}
+						else if(resize_from == "east")
+						{
+							deltaX = (event.clientX - xPos_);
+							deltaY = 0;
+						}
+						else if(resize_from == "south")
+						{
+							deltaX = 0;
+							deltaY = (event.clientY - yPos_);						
+						}
+						else if(resize_from == "west")
+						{
+							deltaX = -(event.clientX - xPos_);
+							deltaY = event.clientY - yPos_;						
+						}
+						else if(resize_from == "northeast")
+						{
+							deltaX = (event.clientX - xPos_);
+							deltaY = -(event.clientY - yPos_);
+						}
+						else if(resize_from == "northwest")
+						{
+							deltaX = -(event.clientX - xPos_);
+							deltaY = -(event.clientY - yPos_);
+						}
+						else if(resize_from == "southeast")
+						{
+							deltaX = (event.clientX - xPos_);
+							deltaY = (event.clientY - yPos_);						
+						}
+						else if(resize_from == "southwest")
+						{
+							deltaX = -(event.clientX - xPos_);
+							deltaY = (event.clientY - yPos_);						
+						}
+						
+						var newWidth = resizeBeginWidth_ + deltaX;
+						var newHeight = resizeBeginHeight_ + deltaY;
+						
+						resizeWidget(id, resize_from, newWidth, newHeight);
+					}
+				}
+				
+				return;
+			}
+			
+			
+			function resizeWidget(id, resize_from = "center", new_suggested_width, new_suggested_height)
+			{
+				
+					var newWidth = new_suggested_width;
+					var newHeight = new_suggested_height;
+					
+					var deltaHeight = (new_suggested_height  - (parseFloat(page_.widgets[id].size_y)));
+					var deltaWidth = (new_suggested_width  - (parseFloat(page_.widgets[id].size_x)));
+					
+					var anchorX = parseFloat(page_.widgets[id].x);
+					var anchorY = parseFloat(page_.widgets[id].y);
+					
+
+			
+					//The widgets are anchored by their top left point
+					//so we need to figure out the delta in order to make it appear 
+					//that it is resizing based on the side the user is pulling from
+					
+					var anchorDeltaX = 0;
+					var anchorDeltaY = 0;
+			
+					if(resize_from == "center")
+					{
+						anchorDeltaX = -(deltaWidth / 2);
+						anchorDeltaY = -(deltaHeight / 2);
+					}
+					else if(resize_from == "north")
+					{
+						anchorDeltaX = -(deltaWidth / 2);
+						anchorDeltaY = -(deltaHeight);						
+					}
+					else if(resize_from == "east")
+					{
+						anchorDeltaX = 0;
+						anchorDeltaY = -(deltaHeight / 2);						
+					}
+					else if(resize_from == "south")
+					{
+						anchorDeltaX = -(deltaWidth / 2);
+						anchorDeltaY = 0;						
+					}
+					else if(resize_from == "west")
+					{
+						anchorDeltaX = -(deltaWidth);
+						anchorDeltaY = -(deltaHeight / 2);						
+					}
+					else if(resize_from == "northeast")
+					{
+						anchorDeltaX = 0;
+						anchorDeltaY = -(deltaHeight);						
+					}
+					else if(resize_from == "northwest")
+					{
+						anchorDeltaX = -(deltaWidth);
+						anchorDeltaY = -(deltaHeight);						
+					}
+					else if(resize_from == "southeast")
+					{
+						anchorDeltaX = 0;
+						anchorDeltaY = 0;						
+					}
+					else if(resize_from == "southwest")
+					{
+						anchorDeltaX = -(deltaWidth);
+						anchorDeltaY = 0;						
+					}
+					
+					var newAnchorX = anchorX + anchorDeltaX;
+					var newAnchorY = anchorY + anchorDeltaY;
+					
+//					console.log(page_.widgets);
+//					console.log(page_.widgets[id]);
+//					console.log("anchorDeltaX" + anchorDeltaX);
+//					console.log("anchorDeltaY" + anchorDeltaY);
+//					console.log("newAnchorX" + newAnchorX);
+//					console.log("newAnchorY" + newAnchorY);
+//					console.log("deltaWidth" + deltaWidth);
+//					console.log("deltaHeight" + deltaHeight);
+					
+					
+					drawWidget(id, false, newAnchorX, newAnchorY, newWidth, newHeight);
+
+//					console.log(page_.widgets[id]);
+					
+				return;
+			}
+			
+			function endResizeWidget(resize_from, id)
+			{
+				
+				if(resizeLockout_)
+				{
+					console.log("Resizing Ended");	
+					resizeLockout_ = false;
+					window.removeEventListener("mousemove", resizeWidgetCaller(id, resize_from), false);					
+					window.removeEventListener("mouseup",   endResizeWidget(resize_from, id), false);	
+					page_.widgets[id].el.style.display = "block";
+				}
+			}			
+			
 			
 			function mouseoverEditBlock(e){
 				console.log(editBlock_.el.style.height);
@@ -1452,7 +1976,8 @@
 				console.log()
 				editBlock_.el.style.bottom = "-" + parseInt(editBlock_.el.style.height) + "px"; 
 				var covers = document.getElementsByClassName("widgetCover");
-                                var editButton = document.getElementById("menuli2");
+				var resize_covers = document.getElementsByClassName("resizewidgetCover");
+                var editButton = document.getElementById("menuli2");
 
 				
 				if(editBlock_.isHidden)
@@ -1481,6 +2006,8 @@
 					for(widget in page_.widgets)
 					{
 						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].addEventListener("dblclick", toggleContextMenuCaller(widget), true);
+						page_.widgets[widget].el.parentNode.getElementsByClassName("resizeWidgetCover")[0].addEventListener("mousedown", resizeWidgetCaller(widget), true);
+
 						document.getElementById(widget).contentWindow.init();
 					}
 					if(covers.length > 0)
@@ -1491,6 +2018,14 @@
 							console.log(covers);
 							covers[widgetCover].style["z-index"] = "9";
 						}
+						
+						for(resize_cover in resize_covers)
+						{
+							console.log(resize_cover);
+							console.log(resize_covers);
+							resize_cover[resize_cover].style["z-index"] = "8";
+						}
+						
 					}
 				}
 				else
@@ -2155,18 +2690,24 @@
 				if(typeof targetElement_ != 'undefined'  && typeof targetElement_.parentNode != 'undefined')
 				{
 					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "block";
-					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outline = "none";
-					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "0px";			
+					//targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.outline = "none";
+					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "none";
+//					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "0px";			
 				}
 				
 				targetElement_ = target;
 				if(typeof targetElement_ != 'undefined' && typeof targetElement_.parentNode != 'undefined')
 				{
 					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "none";
-					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outline = " thin dashed";
-					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "15px";
+					//targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.outline = " thin dashed";
+					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "block";
+//					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "15px";
+					//targetElement_.parentNode.getElementsByTagName("iframe")[0].addEventListener("mousedown", startResize, true);
+
 				}	
 			}
+			
+
 			
 			var pageOffSetX_ = 0;
 			var pageOffSetY_ = 0;
@@ -2178,47 +2719,86 @@
 
 			function startDrag(e)
 			{
-				if(!dragLockout_)
+
+				console.log("dragging");
+				
+				console.log("i am not reizing");
+				//Set Mouse Pointer to Grabbing Hand
+				mainBlock_.el.style.cursor = "grabbing";
+
+
+				dragTargetElement_ = e.target;
+				
+				x_Pos_forDrag_ = e.clientX;
+				y_Pos_forDrag_ = e.clientY;
+				
+				if((dragTargetElement_.id).indexOf("mainBlock") != -1 )
 				{
+					toggleWidgetSelection();
 
-					//Set Mouse Pointer to Grabbing Hand
-					mainBlock_.el.style.cursor = "grabbing";
-
-	
-					dragTargetElement_ = e.target;
-					
-					x_Pos_forDrag_ = e.clientX;
-					y_Pos_forDrag_ = e.clientY;
-					
-					if((dragTargetElement_.id).indexOf("mainBlock") != -1 )
-					{
-						toggleWidgetSelection();
-
-						for(widget in page_.widgets)
-						{
-							page_.widgets[widget].el.style.display = "none";
-						}	
-					}
-					else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && editBlock_.isHidden == false)
-					{
-						console.log("editBlock is hidden ", editBlock_.isHidden);
-						toggleWidgetSelection(e.target);
-						dragTargetElement_.parentNode.style.zIndex ="105";
-						dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "none";
-						dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.outline = " thin dashed";
-						dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "15px";
-									
-					}
-					//kill all activators for eventlisteners
-					mainBlock_.el.removeEventListener("mousedown", startDrag, true);
 					for(widget in page_.widgets)
 					{
-						page_.widgets[widget].el.removeEventListener("mousedown", startDrag, true);
+						page_.widgets[widget].el.style.display = "none";
 					}	
-					dragLockout_ = true;
-					window.addEventListener("mousemove", redrawPage, true);					
-					window.addEventListener("mouseup",   endDrag, true);
 				}
+				else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && editBlock_.isHidden == false)
+				{
+					console.log("editBlock is hidden ", editBlock_.isHidden);
+					toggleWidgetSelection(e.target);
+					dragTargetElement_.parentNode.style.zIndex ="105";
+					dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "none";
+					dragTargetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.outline = " thin dashed";
+					//dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "15px";
+								
+				}
+				else if(dragTargetElement_.className.indexOf("resizeWidgetCover") != -1)
+				{
+					resizeLockout_ = true;
+					resizeId_ = dragTargetElement_.id.substring(0, dragTargetElement_.id.indexOf("-resize-cover"));
+					resizeFrom_ = dragTargetElement_.id.substring(dragTargetElement_.id.indexOf("resize-cover") + 13);
+					
+					
+					xPos_ = event.clientX;
+					yPos_ = event.clientY;
+					resizeBeginWidth_ = parseFloat(page_.widgets[resizeId_].size_x);
+					resizeBeginHeight_ = parseFloat(page_.widgets[resizeId_].size_y);
+	
+	
+//					var resizeDiv = document.getElementById(dragTargetElement_.id).parentNode;
+//					var resizeChildren = resizeDiv.children;
+					
+					
+//					while(resizeDiv.firstChild)
+//					{
+//						console.log(resizeDiv.firstChild);
+//						//childDiv.removeEventListener("mousedown", resizeWidgetBeginCaller(id, resize_from), true); 
+//						resizeDiv.removeChild(resizeDiv.firstChild);
+//					}	
+	
+					//Add event listeners for resize
+//					window.addEventListener('mousemove', resizeWidgetCaller(id, resize_from), false);
+//					resizeDiv.addEventListener('mouseup',   endResizeWidget(resize_from, id), false);
+//					resizeDiv.style.zIndex = "100";
+
+		
+	
+					//Blackout the selected widget with a cover
+					page_.widgets[resizeId_].el.style.display = "none";
+					
+
+					
+					console.log(resizeId_);
+				}
+				//kill all activators for eventlisteners
+				mainBlock_.el.removeEventListener("mousedown", startDrag, true);
+				for(widget in page_.widgets)
+				{
+					page_.widgets[widget].el.removeEventListener("mousedown", startDrag, true);
+				}	
+				dragLockout_ = true;
+				window.addEventListener("mousemove", redrawPage, true);					
+				window.addEventListener("mouseup",   endDrag, true);
+			
 			}
 			
 			function translateWidget(widgetCover, deltaX, deltaY)
@@ -2233,6 +2813,63 @@
 			
 			function redrawPage(e)
 			{
+
+				if(resizeLockout_)
+				{
+					//console.log("Now: (X)" + event.clientX + " (Y)" + event.clientY);
+					//console.log(page_.widgets[id].el.parentNode.getElementsByClassName("resizeWidgetCover")[0]);
+					var deltaX = 0;
+					var deltaY = 0;
+					
+					//Depending on where we are pulling the resize, which way means "make the widget bigger" is different
+					if(resizeFrom_ == "north")
+					{
+						deltaX = 0;
+						deltaY = -(event.clientY - yPos_);
+					}
+					else if(resizeFrom_ == "east")
+					{
+						deltaX = (event.clientX - xPos_);
+						deltaY = 0;
+					}
+					else if(resizeFrom_ == "south")
+					{
+						deltaX = 0;
+						deltaY = (event.clientY - yPos_);						
+					}
+					else if(resizeFrom_ == "west")
+					{
+						deltaX = -(event.clientX - xPos_);
+						deltaY = event.clientY - yPos_;						
+					}
+					else if(resizeFrom_ == "northeast")
+					{
+						deltaX = (event.clientX - xPos_);
+						deltaY = -(event.clientY - yPos_);
+					}
+					else if(resizeFrom_ == "northwest")
+					{
+						deltaX = -(event.clientX - xPos_);
+						deltaY = -(event.clientY - yPos_);
+					}
+					else if(resizeFrom_ == "southeast")
+					{
+						deltaX = (event.clientX - xPos_);
+						deltaY = (event.clientY - yPos_);						
+					}
+					else if(resizeFrom_ == "southwest")
+					{
+						deltaX = -(event.clientX - xPos_);
+						deltaY = (event.clientY - yPos_);						
+					}
+					
+					var newWidth = resizeBeginWidth_ + deltaX;
+					var newHeight = resizeBeginHeight_ + deltaY;
+					
+					resizeWidget(resizeId_, resizeFrom_, newWidth, newHeight);					
+				}
+
+				console.log("redrawPage");
 				if(dragTargetElement_.id.indexOf("mainBlock") != -1 || editBlock_.isHidden)
 				{			
 					pageOffSetX_ += (e.clientX - x_Pos_forDrag_);
@@ -2249,29 +2886,51 @@
 			}		
 			function endDrag(e)
 			{
-				if(dragTargetElement_.className.indexOf("widgetCover") != -1)
-				{
-					var frame = dragTargetElement_.parentNode.getElementsByTagName("iframe")[0];
-					page_.widgets[frame.id].x = parseInt(page_.widgets[frame.id].x) + e.clientX - x_Pos_forDrag_;
-					page_.widgets[frame.id].y = parseInt(page_.widgets[frame.id].y) + e.clientY - y_Pos_forDrag_;
-					frame.style.display = "block";
-					dragTargetElement_.parentNode.style.zIndex = "5";
-				}
-			
 
-				//Remove cursor grabbing
-				mainBlock_.el.style.cursor = "grab";
+				if(resizeLockout_)
+				{
+					console.log("Resizing Ended");	
+					resizeLockout_ = false;
+					drawWidget(resizeId_, false, page_.widgets[resizeId_].x, page_.widgets[resizeId_].y, page_.widgets[resizeId_].size_x, page_.widgets[resizeId_].size_y);	
+					//page_.widgets[resizeId_].el.style.display = "block";
+					
+					resizeFrom_ = "";
+					resizeId_ = "";
+					
+
+				}
+				
+				if(dragLockout_)
+				{
+					console.log("endDrag");
+					if(dragTargetElement_.className.indexOf("widgetCover") != -1)
+					{
+						var frame = dragTargetElement_.parentNode.getElementsByTagName("iframe")[0];
+						page_.widgets[frame.id].x = parseInt(page_.widgets[frame.id].x) + e.clientX - x_Pos_forDrag_;
+						page_.widgets[frame.id].y = parseInt(page_.widgets[frame.id].y) + e.clientY - y_Pos_forDrag_;
+						frame.style.display = "block";
+						dragTargetElement_.parentNode.style.zIndex = "5";
+					}
+					
+					//Remove cursor grabbing
+					mainBlock_.el.style.cursor = "grab";
+
+	
+		
+					mainBlock_.el.addEventListener("mousedown", startDrag, true);
+					x_Pos_forDrag_ = 0;
+					y_Pos_forDrag_ = 0;
+					
+					dragLockout_ = false;
+					dragTargetElement_ = 'undefined';					
+				}
+				
+				window.removeEventListener("mousemove", redrawPage, true);
+				window.removeEventListener("mouseup",   endDrag, true);		
+
 				redrawWindow();
 				turnOnWidgets();
 
-				window.removeEventListener("mousemove", redrawPage, true);
-				window.removeEventListener("mouseup",   endDrag, true);				
-				mainBlock_.el.addEventListener("mousedown", startDrag, true);
-				x_Pos_forDrag_ = 0;
-				y_Pos_forDrag_ = 0;
-				
-				dragLockout_ = false;
-				dragTargetElement_ = 'undefined';
 			}
 			
 			function turnOnWidgets()
@@ -2289,11 +2948,13 @@
 					 rightSide  = parseInt(page_.widgets[widget].x) + parseInt(page_.widgets[widget].size_x);// + startPosX;
 					 topSide    = parseInt(page_.widgets[widget].y);// + startPosY;
 					 bottomSide = parseInt(page_.widgets[widget].y) + parseInt(page_.widgets[widget].size_y);// + startPosY; 
-					 console.log(leftSide + "," + rightSide + "," + topSide + "," + bottomSide);
-					 console.log(startPosX+ "," +endPosX  + "," + startPosY + "," + endPosY);
+					 //console.log(leftSide + "," + rightSide + "," + topSide + "," + bottomSide);
+					 //console.log(startPosX+ "," +endPosX  + "," + startPosY + "," + endPosY);
 					 if(((leftSide > startPosX  && leftSide < endPosX)  || (rightSide > startPosX  && rightSide < endPosX )) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY)))//) || ((rightSide > startPosX  || rightSide <endPosX ) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY))))
 					 if(true)
 					 {
+					 	
+					 		console.log(widget);
 //						 	console.log("true for " + page_.widgets[widget].Display_Name + leftSide);
 							page_.widgets[widget].el.style.display = "block";
 //							page_.widgets[widget].el.onmousedown = "startDrag()";

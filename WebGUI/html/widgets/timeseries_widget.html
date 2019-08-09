@@ -1,0 +1,337 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  	<head>
+    	<meta http-equiv="content-type" content="text/html;charset=utf-8">
+    	<title>d3.js gauges</title>
+		
+		<style>
+		
+			
+body {
+	    font: 16px 'Open Sans';
+	    color: #2C3E50;
+	}
+	a {
+	    text-decoration: none;
+	    color: #3498DB;
+	}
+	.container {
+	    margin: 1%;
+	}
+	.text {
+	    width: 100%;
+	}
+	.text p {
+	    width: 75%;
+	    margin: auto;
+	    padding: 10px 0px;
+	    text-align: center;
+	}
+	code {
+	    width: 95%;
+	    margin: auto;
+	    text-align: center;
+	}
+	@media screen and (min-width: 800px) {
+	    code {
+	        width: 70%;
+	    }
+	}
+	.header {
+	    width: 100%;
+	    text-align: center;
+	    margin: 1% 0;
+	}
+	.header img {
+	    padding-top: 10px;
+	}
+	.header div {
+	    font-weight: 700;
+	    font-size: 1.6em;
+	    padding-top: 10px;
+	}
+	.dac-logo {
+	    display: none;
+	}
+	@media screen and (min-width: 800px) {
+	    .dac-logo {
+	        display: block;
+	        position: absolute;
+	        left: 5px;
+	        top: 5px;
+	    }
+	    .dac-logo img {
+	        width: 120px;
+	    }
+	}
+	.contact {
+	    width: 50%;
+	    margin: auto;
+	    text-align: center;
+	}
+	.footer {
+	    font-size: 0.9em;
+	    text-align: center;
+	    padding: 5px;
+	}
+	/** Styles for TIMESERIES */
+	
+
+	.timeseries {
+	    width: 100%;
+	    padding: 2% 0;
+	}
+	.circ {
+	    fill: #D35400;
+	    opacity: 0.6;
+	    stroke: rgba(211, 84, 0, 0.7);
+	    stroke-width: 5px;
+	}
+	.domain {
+	    display: none;
+	}
+	.axis path, .axis line {
+	    fill: none;
+	    stroke: #000;
+	    shape-rendering: crispEdges;
+	}
+	.axis text {
+	    font-size: 12px;
+	}
+	.tick line {
+	    stroke: #d5d5d5;
+	    opacity: 0.7;
+	}
+	.brush .extent {
+	    stroke: #fff;
+	    fill-opacity: .125;
+	    shape-rendering: crispEdges;
+	}
+	.clear-brush {
+	    display: none;
+	}
+	.brush-control {
+	    padding: .5%;
+	    width: 100%;
+	    text-align: center;
+	}
+	.brush-info {
+	    display: inline-block;
+	    font-size: 14px;
+	}
+
+			
+		</style>
+		
+		<script type="text/javascript" src="libraries/d3.js"></script>
+		<script type="text/javascript" src="libraries/timeseries.js"></script>
+
+		<script>
+			//functions:			
+				//init()					
+				
+			var gauges = [];
+			
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+			
+			//init called once body has loaded
+			function init()
+			{
+				console.log("init()");
+				console.log(window.frameElement.id)
+				console.log("Dimensions: " + window.innerWidth + " : " + window.innerHeight);
+				window.parent.setupWidget(window.frameElement.id, getParameters());
+
+			}
+			
+			function setupPVs(settings)
+			{
+				console.log("setupPVs() : " , settings);
+			}
+			
+			function newWidget(widget, parameters) 
+			{			
+				var table = document.createElement('table');
+				table.id = "display-table";
+				table.style.height = "100%";
+				table.style.width = "100%";
+
+				var counter = 0;
+				for(var pv in widget.PVList)
+				{
+					counter++;
+				}
+				
+				var rows = Math.round(Math.sqrt(counter));
+				var columns = Math.ceil(counter / rows);
+				
+				for(var col = 1; col <= columns; col++)
+				{
+					var tr = document.createElement('tr');
+					tr.id = "tr" + col;
+					//tr.style.width = tr.parentElement.innerWidth / columns;
+					for(var cell = 1; cell <= rows; cell++)
+					{
+						var td = document.createElement('td');
+						td.id = "td" + col + "-" + cell;
+						//td.style.height = td.parentElement.innerHeight / rows;
+						//console.log(td.id);
+						tr.appendChild(td);
+					}
+					table.appendChild(tr);
+				}
+				document.getElementById("display").innerHTML = "";
+				document.getElementById("display").appendChild(table);
+
+
+				//console.log("newWidget() called *************************************");
+				if(counter > 1){counter = 2;}
+				var pv_number = 0;
+				console.log("counter" + counter);
+				for(var pv in widget.PVList)
+				{
+					
+//					var a = document.createElement('a');
+//					a.id = pv;
+//					a.title = pv;
+//					a.innerHTML = "N/A";
+//					a.style.width = "100%";
+//					a.style.height = "100%";
+					
+//					document.getElementById("display").appendChild(a);	
+//					a = document.getElementById(pv);
+//					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
+
+					var first = Math.floor(counter/columns);
+					if(first < 1) {first = 1;}	
+					
+					//Create div for timeseries
+					var div = document.createElement("div");
+					div.classList.add('timeseries');
+					div.classList.add(pv + "-timeseries");
+
+					//Create span for div container
+					var div = document.createElement('span');
+					span.id = pv + "-Container";
+					span.title = pv;
+
+					//Create Center
+					var center = document.createElement("center");
+					span.appendChild(div);
+					center.appendChild(span);
+					console.log(document.body);
+			
+					console.log("td" + first + "-" + (counter%rows +1));
+					document.getElementById("td" + first + "-" + (counter%rows +1)).appendChild(center);
+					
+					var max_width_ = (window.innerWidth / columns);
+					var max_height = (window.innerHeight / rows);
+
+										
+					
+					counter++;
+					pv_number++;
+//					console.log(counter);
+//					console.log(columns);
+//					console.log(rows);
+
+				}
+			}
+			
+			function getParameters()
+			{
+				parameters = [];
+				
+				for(var i = 0; i < 15; i++)
+				{
+//					parameters["label_" + i] = "";
+//					parameters["min_" + i]   = "";
+//					parameters["max_" + i]   = "";			
+				}
+				console.log(parameters);	
+				return parameters;
+			}
+
+			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+
+				/*if(document.getElementById(pvName) == null)
+				{
+					var div = document.createElement('div');
+					var a = document.createElement('a');
+					a.id = pvName;
+					div.appendChild(a);
+					document.getElementById("display").appendChild(div);
+				}*/
+				console.log("newValue() reached", pvName, pvValue);
+				
+				
+				var data = [{'value': pvTime}];
+				timeseries(pv + "-timeseries", data, brushEnabled = true);
+				
+				
+				
+//				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
+//				document.getElementById(pvName).title = pvName + ":" + pvTime;
+//				document.getElementById(pvName).parentElement.style.border = pvName + ":" + pvTime;
+//				document.getElementById(pvName).parentElement.style["background-color"] = "transparent";
+//				if(pvSeverity == "NO_ALARM")
+//				{
+//					document.getElementById(pvName).parentElement.style.color = "green"
+//				}
+//				else if(pvSeverity == "MINOR")
+//				{
+//					document.getElementById(pvName).parentElement.style.color = "yellow"
+//				}else if(pvSeverity == "MAJOR")
+//				{
+//					document.getElementById(pvName).parentElement.style.color = "red"
+//				}else if(pvSeverity == "INVALID")
+//				{
+//					document.getElementById(pvName).parentElement.style.color = "DimGray";
+//				}
+//				else if(pvSeverity == "DC")
+//				{
+//					document.getElementById(pvName).parentElement.style.color = "Light Grey";
+//				}
+//				
+//				if(pvStatus == "NO_ALARM")
+//				{
+//					document.getElementById(pvName).parentElement.style.border = "thin dotted green";
+//				}
+//				else if(pvStatus == "HIHI")
+//				{
+//					document.getElementById(pvName).parentElement.style.border = "thick solid red"
+//				}else if(pvStatus == "LOLO")
+//				{
+//					document.getElementById(pvName).parentElement.style.border = "thick solid MediumSlateBlue";
+//				}else if(pvStatus == "HIGH")
+//				{
+//					document.getElementById(pvName).parentElement.style.border = "thin dotted red";
+//				}else if(pvStatus == "LOW")
+//				{
+//					document.getElementById(pvName).parentElement.style.border = "thing dotted blue";
+//				}else if(pvStatus == "DC")
+//				{
+//					document.getElementById(pvName).parentElement.style["background-color"] = "Gainsboro";
+//				}else if(pvStatus == "UDF")
+//				{
+//					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
+//				}
+				
+			}
+			
+			//End Template						
+			
+		</script>
+		
+		
+	</head>
+	
+	<body onload="Javascript:init()">
+		<div id="display" width="100%" height="100%">
+
+	</body>
+	
+</html>
+

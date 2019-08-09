@@ -62,6 +62,26 @@ widgetLibrary.typeToPurpose = {
 								"4" : "Clock",
 								"5" : "Temperature"*/
 								}
+
+widgetLibrary.dimensions = {
+								"0": {
+									"X": "100",
+									"Y": "300",
+									"Scale": "False"
+								},
+								"4": {
+									"X": "300",
+									"Y": "200",
+									"Scale": "True"
+								},
+								"7": {
+									"X": "300",
+									"Y": "300",
+									"Scale": "True"
+								}
+}
+								
+								
 widgetLibrary.init = function()
 {
 	
