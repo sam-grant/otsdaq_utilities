@@ -230,6 +230,7 @@ if [ "$1"  == "--fetchcore" ]; then
 fi
 if [ "$1"  == "--fetch" ]; then		
 	FETCH_ONLY=1
+	SKIP_CORE=1
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Fetching otsdaq repositories!"
 fi
 
