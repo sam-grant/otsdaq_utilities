@@ -65,7 +65,9 @@ function htmlClearDiv()
 
 //=====================================================================================
 //define scrollIntoViewIfNeeded for Firefox
-if (!Element.prototype.scrollIntoViewIfNeeded) {
+// NOTE: Chrome broke this functionality in Version 76.0.3809.100 (Official Build) (64-bit)
+//	so just always redefine this behavior.
+if (1 || !Element.prototype.scrollIntoViewIfNeeded) {
 	Element.prototype.scrollIntoViewIfNeeded = function (centerIfNeeded) {
 		centerIfNeeded = arguments.length === 0 ? true : !!centerIfNeeded;
 
