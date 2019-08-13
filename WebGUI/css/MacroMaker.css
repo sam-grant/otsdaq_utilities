@@ -605,6 +605,12 @@ button, input[type=submit] {
     height:95%;
 }
 
+.multiselectbox .mySelect .optionhighlighted
+{
+        background:				rgb(207, 226, 244);
+}
+
+
 @media screen and (max-height: 300px){
     #macroLib {
         display:none !important;
@@ -639,3 +645,5 @@ button, input[type=submit] {
         overflow:auto;
     }
 }
+
+

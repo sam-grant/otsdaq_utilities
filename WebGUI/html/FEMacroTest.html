@@ -58,10 +58,7 @@
 			background: linear-gradient(to bottom, #838AB1, #B2FFFC); */
 			margin: auto;
 		}
-		div:hover,div:active{
-			font-size: 120%;
-		}
-		
+				
 		td {
 			white-space: 		nowrap;
 			vertical-align:		top;
@@ -583,6 +580,7 @@
 			var el = document.getElementById("display");
 			el.innerHTML = str;
 			
+			var count = 0;
 			for(var row in macroModules_)
 				for(var col in macroModules_[row])
 				{					
@@ -604,7 +602,9 @@
 					//	then inputs and outpus
 
 					str = "";
-
+					
+					str += (++count) + ". <br>";
+					
 					str += htmlOpen("table", //start macro module table
 							{
 									"class": "macroModuleTable",
@@ -1209,7 +1209,9 @@
 
 <body onload='Javascript:init();'>	
 		
-	<center><h1>Front-End Macros</h1>
+	<center>
+	
+	
 		<div style='width:550px'></div>		
 
 	<!--<a onclick='init();'>Refresh</a>
