@@ -11372,7 +11372,7 @@
 							var fileKey = fileKeyArr.pop();
 							//this code is copied from js::ConfigurationGUI::uploadTableFromCSV()
 
-							var rowDel, colDel; //row/record and column/field delimeters
+							var colDel, rowDel = '\n; //row/record and column/field delimeters (default record to \n)
 							
 							var tmpStr = "";
 
@@ -11408,13 +11408,13 @@
 									if(colDel != uploadedFiles[fileKey][i])
 									{	//prevent matching row and col delimeter with above if
 										if (uploadedFiles[fileKey][i] == '\n')						
-											rowDel = "\n";
+											rowDel = '\n';
 										else if (uploadedFiles[fileKey][i] == ';')
-											rowDel = ";";
+											rowDel = ';';
 										else if (uploadedFiles[fileKey][i] == ',')
-											rowDel = ",";
+											rowDel = ',';
 										else if (uploadedFiles[fileKey][i] == '&')
-											rowDel = "&";
+											rowDel = '&';
 										
 										if (uploadedFiles[fileKey][i] == ',')
 											colDel = ',';
@@ -11424,6 +11424,10 @@
 											colDel = '%';
 										else if (uploadedFiles[fileKey][i] == '/')
 											colDel = '/';
+										
+										if(rowDel == colDel) //disallow and return to record default \n
+											rowDel = '\n';
+											
 									}
 								}
 								console.log(tmpStr);
@@ -12486,7 +12490,7 @@
 			Debug.log("CfgGUI uploadTableFromCSV doReplace = " + doReplace);
 			Debug.log("CfgGUI uploadTableFromCSV doAppend = " + doAppend);
 
-			var rowDel, colDel; //row/record and column/field delimeters
+			var colDel, rowDel = '\n'; //row/record and column/field delimeters
 			
 			//if this code changes, apply to popUpGroupUploadDownloadForm() => localDoUpload() => localUploadMembers()
 			//clean up [[ ]] from bitmap
@@ -12523,13 +12527,13 @@
 					if(colDel != _tableUploadStr[i])
 					{	//prevent matching row and col delimeter with above if
 						if (_tableUploadStr[i] == '\n')						
-							rowDel = "\n";
+							rowDel = '\n';
 						else if (_tableUploadStr[i] == ';')
-							rowDel = ";";
+							rowDel = ';';
 						else if (_tableUploadStr[i] == ',')
-							rowDel = ",";
+							rowDel = ',';
 						else if (_tableUploadStr[i] == '&')
-							rowDel = "&";
+							rowDel = '&';
 						
 						if (_tableUploadStr[i] == ',')
 							colDel = ',';
@@ -12539,6 +12543,9 @@
 							colDel = '%';
 						else if (_tableUploadStr[i] == '/')
 							colDel = '/';
+
+						if(rowDel == colDel) //disallow and return to record default \n
+							rowDel = '\n';
 					}
 					
 				}
