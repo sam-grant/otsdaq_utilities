@@ -11415,7 +11415,8 @@
 											rowDel = ",";
 										else if (uploadedFiles[fileKey][i] == '&')
 											rowDel = "&";
-										else if (uploadedFiles[fileKey][i] == ',')
+										
+										if (uploadedFiles[fileKey][i] == ',')
 											colDel = ',';
 										else if (uploadedFiles[fileKey][i] == ';')
 											colDel = ';';
@@ -12529,7 +12530,8 @@
 							rowDel = ",";
 						else if (_tableUploadStr[i] == '&')
 							rowDel = "&";
-						else if (_tableUploadStr[i] == ',')
+						
+						if (_tableUploadStr[i] == ',')
 							colDel = ',';
 						else if (_tableUploadStr[i] == ';')
 							colDel = ';';
