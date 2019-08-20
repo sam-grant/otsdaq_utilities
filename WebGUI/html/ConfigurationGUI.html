@@ -11372,6 +11372,8 @@
 							var fileKey = fileKeyArr.pop();
 							//this code is copied from js::ConfigurationGUI::uploadTableFromCSV()
 
+							var rowDel, colDel; //row/record and column/field delimeters
+							
 							var tmpStr = "";
 
 							//clean up [[ ]] from bitmap
@@ -11397,15 +11399,42 @@
 									}
 									else
 										tmpStr += uploadedFiles[fileKey][i];
+									
+									//auto find row/record delimeter
+									//	take last found, which must always be correct
+									//	because last fields are forced fields (author/time) and 
+									//	do not have special characters.
+
+									if(colDel != uploadedFiles[fileKey][i])
+									{	//prevent matching row and col delimeter with above if
+										if (uploadedFiles[fileKey][i] == '\n')						
+											rowDel = "\n";
+										else if (uploadedFiles[fileKey][i] == ';')
+											rowDel = ";";
+										else if (uploadedFiles[fileKey][i] == ',')
+											rowDel = ",";
+										else if (uploadedFiles[fileKey][i] == '&')
+											rowDel = "&";
+										else if (uploadedFiles[fileKey][i] == ',')
+											colDel = ',';
+										else if (uploadedFiles[fileKey][i] == ';')
+											colDel = ';';
+										else if (uploadedFiles[fileKey][i] == '%')
+											colDel = '%';
+										else if (uploadedFiles[fileKey][i] == '/')
+											colDel = '/';
+									}
 								}
 								console.log(tmpStr);
 							}
 
+							console.log("record rowDel",rowDel);
+							console.log("field colDel",colDel);
 						
-							var srcRows = tmpStr.length?tmpStr.split('\n'):[]; //if no data, make no rows
+							var srcRows = tmpStr.length?tmpStr.split(rowDel):[]; //if no data, make no rows
 							var src = []; //src = [r][c]
 							for (var i = 0; i < srcRows.length; ++i)
-								src.push(srcRows[i].split(','));
+								src.push(srcRows[i].split(colDel));
 							console.log("src", src);
 
 							var dataStr = ""; // semi-colon(;) separated rows.. comma(,) separated entries within row
@@ -12490,22 +12519,26 @@
 					//	because last fields are forced fields (author/time) and 
 					//	do not have special characters.
 
-					if (_tableUploadStr[i] == '\n')
-						rowDel = "\n";
-					else if (_tableUploadStr[i] == '+')
-						rowDel = "+";
-					else if (_tableUploadStr[i] == '&')
-						rowDel = "&";
-					else if (_tableUploadStr[i] == ',')
-						colDel = ',';
-					else if (_tableUploadStr[i] == '%')
-						colDel = '%';
-					else if (_tableUploadStr[i] == '/')
-						colDel = '/';
-					else if (_tableUploadStr[i] == '$')
-						colDel = '$';
-					else if (_tableUploadStr[i] == ';')
-						colDel = ";";
+					if(colDel != _tableUploadStr[i])
+					{	//prevent matching row and col delimeter with above if
+						if (_tableUploadStr[i] == '\n')						
+							rowDel = "\n";
+						else if (_tableUploadStr[i] == ';')
+							rowDel = ";";
+						else if (_tableUploadStr[i] == ',')
+							rowDel = ",";
+						else if (_tableUploadStr[i] == '&')
+							rowDel = "&";
+						else if (_tableUploadStr[i] == ',')
+							colDel = ',';
+						else if (_tableUploadStr[i] == ';')
+							colDel = ';';
+						else if (_tableUploadStr[i] == '%')
+							colDel = '%';
+						else if (_tableUploadStr[i] == '/')
+							colDel = '/';
+					}
+					
 				}
 				console.log(tmpStr);
 				_tableUploadStr = tmpStr;
@@ -12940,10 +12973,9 @@
 			str += "<select id='fieldSelect' style='width:360px'>";
 
 			str += "<option value= ',' selected>Comma ' , '</option>";
-			str += "<option value= '/'>Forward slash ' / '</option>";
-			str += "<option value= '|'>Percent ' % '</option>";
-			str += "<option value= '.'>Dollard Sign ' $ '</option>";
 			str += "<option value= ';'>Semicolon ' ; '</option>";
+			str += "<option value= '%'>Percent ' % '</option>";
+			str += "<option value= '/'>Forward slash ' / '</option>";
 
 			str += "</select><br><br>";
 
@@ -12951,8 +12983,9 @@
 			str += "<select id='recordSelect' style='width:360px'>";
 
 			str += "<option value= '\n' selected>New line</option>";
+			str += "<option value= ';'>Semicolon ' ; '</option>";
+			str += "<option value= ';'>Semicolon ' , '</option>";
 			str += "<option value= '&'>Ampersand ' & '</option>";
-			str += "<option value= '+'>Addition ' + '</option>";
 			str += "</select>";
 
 			// done with special handling
