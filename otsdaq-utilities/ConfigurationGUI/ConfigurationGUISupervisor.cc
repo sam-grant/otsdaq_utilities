@@ -5254,7 +5254,7 @@ void ConfigurationGUISupervisor::handleCreateTableXML(HttpXmlDocument&        xm
 		{
 			__SUP_COUT__ << "Data was the same, but columns have changed!" << __E__;
 			__SUP_COUTV__(sourceTableAsIs);
-			lookForEquivalent = false;  // clear
+			__SUP_COUTV__(lookForEquivalent);
 		}
 
 		cfgView->setURIEncodedComment(comment);
