@@ -240,12 +240,13 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
                               const std::string&      modifiedTables);
 	void handleLoadArtdaqNodeLayoutXML(HttpXmlDocument&        xmlOut,
 	                          ConfigurationManagerRW* cfgMgr,
-	                          const std::string&      contextGroupName,
-	                          const TableGroupKey&    contextGroupKey);
+	                          const std::string&      contextGroupName = "",
+	                          const TableGroupKey&    contextGroupKey = TableGroupKey());
 	void handleSaveArtdaqNodeLayoutXML(HttpXmlDocument&        xmlOut,
 	                          ConfigurationManagerRW* cfgMgr,
-	                          const std::string&      contextGroupName,
-	                          const TableGroupKey&    contextGroupKey);
+	                          const std::string&      layoutString,
+	                          const std::string&      contextGroupName = "",
+	                          const TableGroupKey&    contextGroupKey = TableGroupKey());
 
 
 

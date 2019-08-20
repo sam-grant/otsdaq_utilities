@@ -904,9 +904,15 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 		{
 			
 			var uniqueValues = fields[i].getElementsByTagName("uniqueValue");
+			var groupIdChildLinkIndex = DesktopContent.getXMLNode(
+					fields[i],"childLinkIndex");			
 			
 			var obj = {};
 			obj.fieldName = DesktopContent.getXMLValue(fields[i]);
+						
+			if(groupIdChildLinkIndex)
+				obj.childLinkIndex = DesktopContent.getXMLValue(groupIdChildLinkIndex);
+			
 			obj.fieldUniqueValueArray = [];
 			for(var j=0;j<uniqueValues.length;++j)					
 				obj.fieldUniqueValueArray.push(DesktopContent.getXMLValue(uniqueValues[j]));
@@ -4569,6 +4575,7 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 				"editableFieldNode-ChildLink-SubConfigLink" +
 				"' " +
 				"onclick='" + 
+				"event.stopPropagation(); " +
 				"DesktopContent.openNewWindow(" +
 				"\"" + value +  
 				" Subset-Configuration\",\"\",\"" + 
@@ -4586,6 +4593,7 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 				"editableFieldNode-ChildLink-SubConfigLink" +
 				"' " +
 				"onclick='" + 
+				"event.stopPropagation(); " +
 				"DesktopContent.openNewBrowserTab(" +
 				"\"" + value +  
 				" Subset-Configuration\",\"\",\"" + 

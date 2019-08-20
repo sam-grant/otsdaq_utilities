@@ -996,14 +996,17 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "saveArtdaqNodeLayout")
 	{
+		std::string layout      	  	  = CgiDataUtilities::postData(cgiIn, "layout");
 		std::string contextGroupName      = CgiDataUtilities::getData(cgiIn, "contextGroupName");
 		std::string contextGroupKey       = CgiDataUtilities::getData(cgiIn, "contextGroupKey");
 
+		__SUP_COUTV__(layout);
 		__SUP_COUTV__(contextGroupName);
 		__SUP_COUTV__(contextGroupKey);
 
 		handleSaveArtdaqNodeLayoutXML(xmlOut,
 				cfgMgr,
+				layout,
 				contextGroupName,
                 TableGroupKey(contextGroupKey));
 	}
@@ -2620,23 +2623,33 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 		__SUP_COUTV__(StringMacros::vectorToString(fieldsToGet));
 
 		// loop through each field and get unique values among records
-		for(auto& field : fieldsToGet)
 		{
-			__SUP_COUTV__(field);
-
-			DOMElement* parentEl = xmlOut.addTextElementToData("field", field);
-
-			// use set to force sorted unique values
-			std::set<std::string /*unique-values*/> uniqueValues;
-
-			uniqueValues =
-			    cfgMgr->getNode(startPath).getUniqueValuesForField(records, field);
-
-			for(auto& uniqueValue : uniqueValues)
+			ConfigurationTree startNode = cfgMgr->getNode(startPath);
+			std::string fieldGroupIDChildLinkIndex;
+			for(auto& field : fieldsToGet)
 			{
-				__SUP_COUT__ << "uniqueValue " << uniqueValue << __E__;
+				__SUP_COUTV__(field);
 
-				xmlOut.addTextElementToParent("uniqueValue", uniqueValue, parentEl);
+				DOMElement* parentEl = xmlOut.addTextElementToData("field", field);
+
+				//if groupID field, give child link index
+				//	this can be used to pre-select particular group(s)
+
+				// use set to force sorted unique values
+				std::set<std::string /*unique-values*/> uniqueValues =
+						startNode.getUniqueValuesForField(records, field,
+								&fieldGroupIDChildLinkIndex);
+
+				if(fieldGroupIDChildLinkIndex != "")
+					xmlOut.addTextElementToParent("childLinkIndex",
+							fieldGroupIDChildLinkIndex, parentEl);
+
+				for(auto& uniqueValue : uniqueValues)
+				{
+					__SUP_COUT__ << "uniqueValue " << uniqueValue << __E__;
+
+					xmlOut.addTextElementToParent("uniqueValue", uniqueValue, parentEl);
+				}
 			}
 		}
 	}
@@ -2914,7 +2927,6 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 			    parentEl);
 
 			xmlOut.addTextElementToParent("LinkTableName", t.getTableName(), parentEl);
-
 			xmlOut.addTextElementToParent("LinkIndex", t.getChildLinkIndex(), parentEl);
 
 			// add fixed choices (in case link has them)
@@ -7072,18 +7084,30 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
-    const std::string&      contextGroupName,
-    const TableGroupKey&    contextGroupKey)
+    const std::string&      contextGroupName 	/* = "" */,
+    const TableGroupKey&    contextGroupKey 	/* = INVALID */)
 {
+	bool usingActiveGroups = (contextGroupName == "" || contextGroupKey.isInvalid());
+
+	const std::string& finalContextGroupName = usingActiveGroups?
+			cfgMgr->getActiveGroupName(
+							ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT):
+							contextGroupName;
+	const TableGroupKey& finalContextGroupKey = usingActiveGroups?
+			cfgMgr->getActiveGroupKey(
+							ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT):
+							contextGroupKey;
+
 	std::stringstream layoutPath;
-	layoutPath << ARTDAQ_CONFIG_LAYOUTS_PATH << contextGroupName << "_"
-			<< contextGroupKey << ".dat";
+	layoutPath << ARTDAQ_CONFIG_LAYOUTS_PATH << finalContextGroupName << "_"
+			<< finalContextGroupKey << ".dat";
 	__SUP_COUTV__(layoutPath.str());
+
 	FILE *fp = fopen(layoutPath.str().c_str(),"r");
 	if(!fp)
 	{
 		__SUP_COUT__ << "Layout file not found for '" <<
-				contextGroupName << "(" << contextGroupKey << ")'" << __E__;
+				finalContextGroupName << "(" << finalContextGroupKey << ")'" << __E__;
 		return;
 	}
 
@@ -7156,9 +7180,60 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
+	const std::string&		layoutString,
     const std::string&      contextGroupName,
     const TableGroupKey&    contextGroupKey)
 {
+	bool usingActiveGroups = (contextGroupName == "" || contextGroupKey.isInvalid());
+
+	const std::string& finalContextGroupName = usingActiveGroups?
+			cfgMgr->getActiveGroupName(
+					ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT):
+					contextGroupName;
+	const TableGroupKey& finalContextGroupKey = usingActiveGroups?
+			cfgMgr->getActiveGroupKey(
+					ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT):
+					contextGroupKey;
+
+	__SUP_COUTV__(layoutString);
+
+	std::stringstream layoutPath;
+	layoutPath << ARTDAQ_CONFIG_LAYOUTS_PATH << finalContextGroupName << "_"
+			<< finalContextGroupKey << ".dat";
+	__SUP_COUTV__(layoutPath.str());
+
+
+	std::vector<std::string> fields =
+			StringMacros::getVectorFromString(layoutString);
+	__SUP_COUTV__(StringMacros::vectorToString(fields));
+
+	if(fields.size() < 2 || (fields.size()-2)%4 != 0)
+	{
+		__SUP_SS__ << "Invalid layout string fields size of " <<
+				fields.size() << __E__;
+		__SUP_SS_THROW__;
+	}
+
+	FILE *fp = fopen(layoutPath.str().c_str(),"w");
+	if(!fp)
+	{
+		__SUP_SS__ << "Could not open layout file for writing for '" <<
+				finalContextGroupName << "(" << finalContextGroupKey << ")'" << __E__;
+		__SUP_SS_THROW__;
+	}
+
+	//match load code at ::handleLoadArtdaqNodeLayoutXML()
+
+	//write grid
+	fprintf(fp,"%s %s\n",fields[0].c_str(),fields[1].c_str());
+
+	//write nodes
+	for(unsigned int i=2;i<fields.size();i+=4)
+		fprintf(fp,"%s %s %s %s\n",
+				fields[i+0].c_str(),fields[i+1].c_str(),
+				fields[i+2].c_str(),fields[i+3].c_str());
+
+	fclose(fp);
 
 } //end handleSaveArtdaqNodeLayoutXML()
 

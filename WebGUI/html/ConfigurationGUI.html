@@ -8,7 +8,7 @@
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 
-		//functions:			
+		//functions:	=============================		
 		//init()
 		//niceName(str)									//removes "Table" from name
 
@@ -40,11 +40,11 @@
 		//launchRecordCreationWizard(typeOfLaunch)
 		//launchRecordDeletionWizard(typeOfLaunch)
 
-		//tree-view focused
+		//tree-view focused =========
 		//setupTableGroupTreeView(tableGroupName,tableGroupKey,backLinkStr)
 		//treeViewHandler(req,parentId,errStr)
 		//recursiveDrawTree(parent,depth,path,parentIdString)
-		//getTreeViewTableStrings(tableLinkName)
+		//getTreeViewTableStrings(tableLinkName,isLink,linkId,childLinkIndex,isGroupLink)
 		//refreshTreeView();
 		//applyTreeFilter(filter,reapplyFilter,infoWasToggled)
 		//toggleTreeChildren(depth,uid,setVal)
@@ -65,7 +65,7 @@
 
 		//refreshLinkTreeNode(targetEl,idString,LinkColumnNameLabel,linkType,linkTable,linkId,tableComment,tableTitle,menuItems,menuItemHandlers)
 		//refreshTreeTableVersions()
-		//end tree-view focused
+		//end tree-view focused =========
 
 		//selectThisCell(r,c,el,event)
 		//		localGetPairColumnInfo()
@@ -152,17 +152,17 @@
 		//handleFlattenSystemAliasesResponse(req)
 
 
-		//ConfigurationAPI functions
+		//ConfigurationAPI functions =========
 		//ConfigurationAPI.getDateString(date)
 		//ConfigurationAPI.setCaretPosition(el,start,stop)
 		//ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
 		//ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 		//ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin)
-		//end ConfigurationAPI functions
+		//end ConfigurationAPI functions =========
 
-		//ConfigurationAPI constants
+		//ConfigurationAPI constants =========
 		//ConfigurationAPI._DEFAULT_COMMENT
-		//end ConfigurationAPI constants
+		//end ConfigurationAPI constants =========
 
 		//htmlOpen(tag,attObj,innerHTML,closeTag)
 		//htmlClearDiv()
@@ -827,7 +827,7 @@
 
 			el.innerHTML = "Loading...";
 			var v = "";
-			if (version !== undefined && version != "") v = version;
+			if (version !== undefined && version != "") v = "&version" + version;
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable" +
 				"&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +
 				"&tableName=" + tableName +
@@ -3329,8 +3329,8 @@
 					--childrenLength; //subtract the link ID node from children length
 
 					//this is a link node!	
+					
 					var offset = 1;
-
 
 					if (value.getAttribute("value") == "Disconnected") {
 						//this is a disconnected link node!						
@@ -3363,7 +3363,7 @@
 					--childrenLength; //subtract the tableLinkName name node from children length
 					childLinkIndex = nodes[i].children[offset++].getAttribute("value"); //LinkIndex node					
 					--childrenLength; //subtract the childLinkIndex node from children length
-
+					
 					//get fixed choices
 					choices = nodes[i].children[offset++].children; //xml elements		
 					--childrenLength; //subtract the fixed choice node from children length		
@@ -3386,6 +3386,12 @@
 				tableLinkName = tableLinkName.replace(/</g, "&lt");
 				tableLinkName = tableLinkName.replace(/>/g, "&gt");
 
+				var linkId = "";
+				if(isLink)
+				{
+					var p = value.lastIndexOf('=')+2; //get past "= "
+					linkId = value.substr(p,value.length-p-1); //remove last )
+				}
 
 				var treeNavContextMenuItems = [];
 				var treeNavContextMenuItemHandlers = [];
@@ -3393,7 +3399,8 @@
 				var tableTitle = "";
 
 				{
-					var retVal = getTreeViewTableStrings(tableLinkName, isLink);
+					var retVal = getTreeViewTableStrings(tableLinkName, isLink,
+							linkId, childLinkIndex, isGroupLink);
 
 					treeNavContextMenuItems = retVal.treeNavContextMenuItems;
 					treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
@@ -3647,7 +3654,9 @@
 		} //end recursiveDrawTree()
 
 		//getTreeViewTableStrings ~
-		function getTreeViewTableStrings(tableLinkName, isLink) {
+		function getTreeViewTableStrings(tableLinkName,isLink,linkId,
+				childLinkIndex,isGroupLink) 
+		{
 			var backLinkStr;
 			var onmouseupJS = "";
 			var newwindowJS = "";
@@ -3731,6 +3740,8 @@
 							recordAlias += ' ';
 						recordAlias += treeMemberNames_[j][c];
 					}
+					if(recordAlias.length && recordAlias[recordAlias.length-1] != 's')
+						recordAlias += 's'; //make plural
 
 					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
 						DesktopContent._localUrnLid +
@@ -3738,6 +3749,23 @@
 						"&groupingFieldList=AUTO" +
 						"&recordAlias=" + recordAlias +
 						"&editableFieldList=" + "!*CommentDescription";
+					
+					if(isLink) //include special parameters to focus on link targets
+					{
+						if(isGroupLink)
+						{
+							//for group link, pre-select GroupID value							
+							newWindowStr += "&selectedGroupIDs=" +
+									encodeURIComponent(
+											childLinkIndex + "=" +
+											linkId);
+						}
+						else
+						{
+							//for unique link, presect UID record							
+							newWindowStr += "&selectedRecords=" + linkId;							
+						}
+					} //end special link parameter handling
 
 
 					//DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeHandler) {
@@ -3799,10 +3827,11 @@
 				"treeNavContextMenuItems": treeNavContextMenuItems,
 				"treeNavContextMenuItemHandlers": treeNavContextMenuItemHandlers
 			};
-		}
+		} //end getTreeViewTableStrings()
 
 		//editTreeAddNewRow ~~
-		function editTreeAddNewRow(tableName) {
+		function editTreeAddNewRow(tableName) 
+		{
 			Debug.log("editTreeAddNewRow " + tableName);
 
 			//find table node element
@@ -3835,10 +3864,11 @@
 			treeEditingNodeInitValue_ = "1"; //just something so editTreeNodeOK proceeds
 
 			editTreeNodeOK();//act on globals			
-		}
+		} //end editTreeAddNewRow()
 
 		//handleTreeNodeClick ~~
-		function handleTreeNodeClick(depth, uid, editClick, type) {
+		function handleTreeNodeClick(depth, uid, editClick, type) 
+		{
 			var idString = depth + "-" + uid;
 			treeEditingNodeDepth_ = depth;
 			treeEditingNodeIdString_ = idString;
@@ -4034,7 +4064,7 @@
 			}
 
 
-		}
+		} //end handleTreeNodeClick()
 
 		//applyTreeFilter ~
 		function applyTreeFilter(filter, reapplyFilter, infoWasToggled) {
@@ -9451,7 +9481,8 @@
 
 		//refreshTreeTableVersions ~~
 		//	refresh versions based on treeMemberVersions_ fix all the table and table-link versions
-		function refreshTreeTableVersions() {
+		function refreshTreeTableVersions() 
+		{
 			Debug.log("Refreshing tree table versions...");
 
 			//for each table and link
@@ -9522,7 +9553,7 @@
 					idString = els[i].id.substr(("treeNode-Value-").length);
 					table = document.getElementById("treeNode-linkTableName-" + idString).textContent;
 
-					localEditTableVersion(els[i], getTreeViewTableStrings(table));
+					localEditTableVersion(els[i], getTreeViewTableStrings(table, true /*isLink*/));
 				}
 				catch (e) {
 					//ignore errors
@@ -9544,7 +9575,7 @@
 					continue;
 				}
 			}
-		}
+		} //end refreshTreeTableVersions()
 
 		//refreshLinkTreeNode ~~
 		//	updates link context menu
@@ -11370,7 +11401,8 @@
 								console.log(tmpStr);
 							}
 
-							var srcRows = tmpStr.split('\n');
+						
+							var srcRows = tmpStr.length?tmpStr.split('\n'):[]; //if no data, make no rows
 							var src = []; //src = [r][c]
 							for (var i = 0; i < srcRows.length; ++i)
 								src.push(srcRows[i].split(','));
@@ -12407,7 +12439,8 @@
 		}
 
 		//uploadTableFromCSV ~~
-		function uploadTableFromCSV() {
+		function uploadTableFromCSV() 
+		{
 			//enable button so can retry if failure
 			document.getElementById('popUpDialog-submitButton').disabled = false;
 
@@ -12423,6 +12456,9 @@
 			Debug.log("CfgGUI uploadTableFromCSV doReplace = " + doReplace);
 			Debug.log("CfgGUI uploadTableFromCSV doAppend = " + doAppend);
 
+			var rowDel, colDel; //row/record and column/field delimeters
+			
+			//if this code changes, apply to popUpGroupUploadDownloadForm() => localDoUpload() => localUploadMembers()
 			//clean up [[ ]] from bitmap
 			// may only be necessary for backwards compatibility?
 			{
@@ -12439,49 +12475,50 @@
 					if (c) // if looking for a closing bracket.. block \n and ,
 					{
 
-						if (_tableUploadStr[i] == '\n') {
+						if (_tableUploadStr[i] == '\n')
 							tmpStr += "NNNEWLINNE";
-						}
 						else if (_tableUploadStr[i] == ',')
 							tmpStr += "NNNEWLINNE";
+						else
+							tmpStr += _tableUploadStr[i];							
 					}
 					else
 						tmpStr += _tableUploadStr[i];
-					if (1 == 0) { }
-						else if (_tableUploadStr[i] == '\n') {
-							var rowDel = "\n";
-						}
-						else if (_tableUploadStr[i] == '+') {
-							var rowDel = "+";
-						}
-						else if (_tableUploadStr[i] == '&') {
-							var rowDel = "&";
-						}
-						
-						else if (_tableUploadStr[i] == ',') {
-							var colDel = ',';
-						}
-						else if (_tableUploadStr[i] == '%') {
-							var colDel = '%';
-						}
-						else if (_tableUploadStr[i] == '/') {
-							var colDel = '/';
-						}
-						else if (_tableUploadStr[i] == '$') {
-							var colDel = '$';
-						}
-						else if (_tableUploadStr[i] == ';') {
-							var colDel = ";";
-						}
+					
+					//auto find row/record delimeter
+					//	take last found, which must always be correct
+					//	because last fields are forced fields (author/time) and 
+					//	do not have special characters.
+
+					if (_tableUploadStr[i] == '\n')
+						rowDel = "\n";
+					else if (_tableUploadStr[i] == '+')
+						rowDel = "+";
+					else if (_tableUploadStr[i] == '&')
+						rowDel = "&";
+					else if (_tableUploadStr[i] == ',')
+						colDel = ',';
+					else if (_tableUploadStr[i] == '%')
+						colDel = '%';
+					else if (_tableUploadStr[i] == '/')
+						colDel = '/';
+					else if (_tableUploadStr[i] == '$')
+						colDel = '$';
+					else if (_tableUploadStr[i] == ';')
+						colDel = ";";
 				}
 				console.log(tmpStr);
 				_tableUploadStr = tmpStr;
 			}
 
-			var srcRows = _tableUploadStr.split(rowDel);
+			console.log("record rowDel",rowDel);
+			console.log("field colDel",colDel);
+			
+			var srcRows = _tableUploadStr.length?_tableUploadStr.split(rowDel):[]; //if no data, make no rows
 			var src = []; //src = [r][c]
 			for (var i = 0; i < srcRows.length; ++i)
-				src.push(srcRows[i].split(colDel));
+				src.push(srcRows[i].split(colDel));			
+			console.log("src",src);
 
 			//Note: similar to addRow
 			var el = document.getElementById("SubSystemTable");
@@ -12759,7 +12796,9 @@
 			if (el) el.parentNode.removeChild(el);
 
 			versionHasChanged();
-		}
+			
+			Debug.log("The upload was successful!", Debug.INFO_PRIORITY);
+		} //end uploadTableFromCSV()
 
 		//popUpUploadCSVTableForm ~~
 		function popUpUploadCSVTableForm(groupName, groupKey) {

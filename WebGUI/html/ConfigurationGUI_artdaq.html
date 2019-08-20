@@ -168,14 +168,26 @@
 			width: 					100%;
 			text-align: 			center;
 			color: 					black;
+
+			-webkit-user-select: 	none;
+			-moz-user-select: 		none;
+			user-select:			none;
+			
 			margin-top: 			43px;
 		}
 		
-		.node-headerText {			
+		.node-headerText {		
+			-webkit-user-select: 	none;
+			-moz-user-select: 		none;
+			user-select:			none;
+			
 			text-align: 			center;
 			color: 					black;			
 			font-size: 				10px;
-			position: 				absolute;			
+			position: 				absolute;
+			
+			white-space:			nowrap;
+			overflow:				hidden;
 		}
 		
 		#createNodeDiv {
@@ -184,7 +196,7 @@
 			width: 					32px;
 			height: 				32px;
 			border-radius: 			32px;
-			border: 				2px solid rgb(6, 82, 9);
+			border: 				0px solid rgb(6, 82, 9);
 			
 			box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
 									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
@@ -211,6 +223,14 @@
 			color: 					rgb(15, 152, 76);
 		}
 		
+		#selectionBoxDiv {
+			border:					1px dashed gray;
+			
+			left:					-1000px;			
+			position: 				absolute;
+			z-index:				2000;
+		}
+
 		.node-icon {
 			position:			absolute;
 			display:			none;	
@@ -442,7 +462,7 @@
 							//	arrow:	[i0][i1] = {p0,p1} (start and end i,p - where i := node index, p := 1 of 4 positions starting from top going clock-wise)
 		
 		var _nodesByType = {};		
-		
+		var _selectedNodes = {}; //selected nodes get highlighted in paint()
 		
 		
 		//constant globals -------------
@@ -454,6 +474,8 @@
 		
 		var _MMM_NONE				= 0;
 		var _MMM_ARROW_DRAG			= 1;
+		var _MMM_NODE_DRAG			= 2;
+		var _MMM_SELECT_BOX			= 3;
 		
 		//mousemove globals -------------
 		var _mouseMoveMode = _MMM_NONE;
@@ -499,21 +521,24 @@
 			//init()	
 		
 			//openActiveGroupsDialog()
-		
+			//nodeLayoutHasChanged()
+					
 			//paint()
 			//drawGrid() 
-			//drawNode() 
+			//drawNode(i,xoff,yoff) 
 			//drawArrow() 
 		
 			//getNodePoint(i,p)
 			//doNodeHover(i)
 			//getTypeIndex(typeName)
+			//getTypeName(typeIndex)
 			//getEmptyGridSpot(type)
 			//plusMinusGrid(isPlus,directionIndex)
 		
 			//handleNodeMouseOver(e)
 			//handleMouseMove(e)
 			//handleMouseUp(e)
+			//handleMouseDown(e)
 			//handlePointMouseUp(i,p)
 			//handlePointMouseDown(i,p)
 				
@@ -614,14 +639,18 @@
 								artdaqNodesObj[type][name])
 						{
 							Debug.log("Found " + name);
-							delete artdaqNodesObj[type][name];
 							
 							//add to nodes
 							_nodes.push({
-								"type": getTypeIndex(type),
-								"name": name,								
-								"x":	layoutNodesX[i].getAttribute('value')|0,
-								"y":	layoutNodesY[i].getAttribute('value')|0});
+								"type": 	getTypeIndex(type),
+								"name": 	name,
+								"address":	artdaqNodesObj[type][name].address,
+								"port":		artdaqNodesObj[type][name].port,
+								"x":		layoutNodesX[i].getAttribute('value')|0,
+								"y":		layoutNodesY[i].getAttribute('value')|0});
+							
+							//remove from nodes object to keep remainder accurate 
+							delete artdaqNodesObj[type][name];
 							
 						}
 						else //not found, so do not represent anymore
@@ -699,6 +728,9 @@
 				//DesktopContent.mouseMoveSubscriber(handleMouseMove); //causes problems because of this.style.cursor handling 
 				document.body.addEventListener("mousemove",handleMouseMove);
 				document.body.addEventListener("mouseup",handleMouseUp);
+				document.body.addEventListener("mousedown",handleMouseDown);
+				document.body.addEventListener("keydown",handleMouseMove);
+				document.body.addEventListener("keyup",handleMouseMove);
 			} //end localFinishInit()									
 			
 		} //end init()	
@@ -708,11 +740,11 @@
 		function getTypeIndex(typeName)
 		{
 			Debug.log("getTypeIndex " + typeName);
-			t = typeName == "reader"?0:
-					(typeName == "builder"?1:
-					(typeName == "logger"?2:
-					(typeName == "dispatcher"?3:
-					(typeName == "monitor"?4:-1))));
+			t = typeName == ArtdaqConfigurationAPI.NODE_TYPES[_NODE_TYPE_READER]		?_NODE_TYPE_READER:
+					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[_NODE_TYPE_BUILDER]	?_NODE_TYPE_BUILDER:
+					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[_NODE_TYPE_LOGGER]	?_NODE_TYPE_LOGGER:
+					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[_NODE_TYPE_DISPATCHER]?_NODE_TYPE_DISPATCHER:
+					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[_NODE_TYPE_MONITOR]	?_NODE_TYPE_MONITOR:-1))));
 			
 			if(t < 0)
 			{	
@@ -721,7 +753,22 @@
 				return; 
 			}
 			return t;
-		} //end getTypeIndex()		
+		} //end getTypeIndex()
+		
+		//=====================================================================================
+		//getTypeName ~~
+		function getTypeName(typeIndex)
+		{
+			Debug.log("getTypeName " + typeIndex);
+			
+			if(ArtdaqConfigurationAPI.NODE_TYPES[typeIndex] === undefined)
+			{	
+				Debug.log("Illegal type index " + typeIndex + 
+						". Tell admins how you got here!", Debug.HIGH_PRIORITY);
+				return; 
+			}
+			return ArtdaqConfigurationAPI.NODE_TYPES[typeIndex];
+		} //end getTypeName()	
 
 		//=====================================================================================
 		//getEmptyGridSpot ~~
@@ -836,7 +883,7 @@
 			if(_NODE_SIZE > _grid.ystep*0.5)
 				_NODE_SIZE = _grid.ystep*0.5;
 			
-			_grid.rowColMap = [];
+			_grid.rowColMap = {};
 			for(var i=0;i<_nodes.length;++i)							
 				drawNode(i);
 			
@@ -945,9 +992,10 @@
 				}				
 				str += "</div>\n\n\n"; //close top +/- set collection
 				
+				++a;
 				//bottom set
 				str += "<div class='grid-plusMinusArrows grid-plusMinusArrows-upDown'>";
-				{ //make top up/down arrows
+				{ //make bottom up/down arrows
 					str += "<div class='grid-plusMinusArrows-up grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
 							"-plus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
@@ -1032,6 +1080,10 @@
 		// directionIndex := 0-3 := top, right, bottom, left
 		function plusMinusGrid(isPlus,directionIndex)
 		{
+			Debug.log("plusMinusGrid isPlus=" + 
+					isPlus + " directionIndex=" +
+					directionIndex);
+			
 			if(!isPlus) //then deleting row/col
 			{
 				if(directionIndex == 0 || 
@@ -1042,10 +1094,11 @@
 					var y = directionIndex == 0?
 							0:_grid.rows-1;
 
-					if(_grid.rows <= 2)
+					if(_grid.rows <= _GRID_ROW_MIN)
 					{
 						Debug.log("Can not delete row " + y +
-								" - two rows is the minimum!",
+								"; " + _GRID_ROW_MIN +
+								" rows is the minimum!",
 								Debug.HIGH_PRIORITY);
 						return;
 					}
@@ -1076,10 +1129,11 @@
 					var x = directionIndex == 3?
 							0:_grid.cols-1;
 
-					if(_grid.cols <= 2)
+					if(_grid.cols <= _GRID_COL_MIN)
 					{
 						Debug.log("Can not delete column " + x +
-								" - two columns is the minimum!",
+								"; " + _GRID_COL_MIN + 
+								" columns is the minimum!",
 								Debug.HIGH_PRIORITY);
 						return;
 					}
@@ -1114,7 +1168,7 @@
 				return;
 			} //end minus handling
 			
-			//if here, the add handling
+			//if here, then add handling
 			
 			if(directionIndex == 0 || 
 					directionIndex == 2)
@@ -1144,12 +1198,82 @@
 						Debug.HIGH_PRIORITY);
 			}
 			
+			//re-paint adjustments
+			paint(); 
+			
 		} //end plusMinusGrid()
+
+		//=====================================================================================
+		//handleSelectionBox ~~
+		//	draw selection box,	and handle identifying
+		//	nodes within selection area.
+		function handleSelectionBox(e)
+		{
+			var box = [
+			   _mouseMoveStart[0] < e.clientX?
+					   _mouseMoveStart[0]:e.clientX,
+			   _mouseMoveStart[1] < e.clientY?
+					   _mouseMoveStart[1]:e.clientY,
+			   _mouseMoveStart[0] < e.clientX?
+					   e.clientX:_mouseMoveStart[0],
+			   _mouseMoveStart[1] < e.clientY?
+					   e.clientY:_mouseMoveStart[1]
+			 ]; //box top-left ==> bot-right
+			
+			console.log("box",box);
+			
+			var el = document.getElementById("selectionBoxDiv");
+			el.style.left 	= box[0] + "px";
+			el.style.top 	= box[1] + "px";
+			el.style.width 	= (box[2]-box[0]) + "px";
+			el.style.height = (box[3]-box[1]) + "px";
+			
+			//determine temporary selected nodes
+			_mouseMoveStart[2] = {}; //store selected nodes here
+			var nodeBox = [
+			   ((box[0] - _grid.x0 + _grid.xstep/2)/_grid.xstep),
+			   ((box[1] - _grid.y0 + _grid.ystep/2)/_grid.ystep),
+			   ((box[2] - _grid.x0 + _grid.xstep/2)/_grid.xstep),
+			   ((box[3] - _grid.y0 + _grid.ystep/2)/_grid.ystep)			   
+				];
+			for(var i=0;i<4;++i) //clip to -1 and integer
+				if(nodeBox[i] < 0) nodeBox[i] = -1;
+				else nodeBox[i] |= 0;
+			
+			if(box[0] > 
+					_grid.x0 + nodeBox[0]  * _grid.xstep + _NODE_SIZE/2)
+				++nodeBox[0]; //lose selection
+			if(box[1] > 
+					_grid.y0 + nodeBox[1]  * _grid.ystep + _NODE_SIZE/2)
+				++nodeBox[1]; //lose selection
+			if(box[2] <
+					_grid.x0 + nodeBox[2]  * _grid.xstep - _NODE_SIZE/2)
+				--nodeBox[2]; //lose selection
+			if(box[3] < 
+					_grid.y0 + nodeBox[3]  * _grid.ystep - _NODE_SIZE/2)
+				--nodeBox[3]; //lose selection
+			
+			console.log("node box selection",nodeBox);
+			
+			for(var xg=nodeBox[0];xg<=nodeBox[2];++xg)
+				for(var yg=nodeBox[1];yg<=nodeBox[3];++yg)
+					if(_grid.rowColMap[xg] !== undefined &&
+							_grid.rowColMap[xg][yg] !== undefined)
+					{
+						Debug.log("Found selected node " +
+								_grid.rowColMap[xg][yg]);
+						_mouseMoveStart[2][_grid.rowColMap[xg][yg]] = 1;
+					}
+
+			console.log("nodes in box selection",_mouseMoveStart[2]);
+
+			paint();
+		} //end handleSelectionBox()
 
 		//=====================================================================================
 		//drawNode ~~
 		//	draw a node of specified by node index 
-		function drawNode(i)
+		function drawNode(i,xoff,yoff)
 		{
 			var type = _nodes[i].type;
 			var x = _nodes[i].x;
@@ -1157,7 +1281,7 @@
 			
 			//add to _grid.rowColMap
 			if(_grid.rowColMap[x] == undefined) 
-				_grid.rowColMap[x] = [];
+				_grid.rowColMap[x] = {};
 			_grid.rowColMap[x][y] = i; //fill x,y position
 			
 			var nodeid = "node-" + i;
@@ -1165,6 +1289,9 @@
 			var sz = _NODE_SIZE | 0; 
 			x = (_grid.x0 + x * _grid.xstep - sz/2) | 0;
 			y = (_grid.y0 + y * _grid.ystep - sz/2) | 0;
+			
+			if(xoff) x += xoff;
+			if(yoff) y += yoff;
 			
 			Debug.log("x,y,sz = " + x + "," + y + "," + sz);
 			
@@ -1236,9 +1363,9 @@
 				str += "<div id='" + nodeid + 
 					"-headerText' class='node-headerText'>" +
 					typeName + ": " + _nodes[i].name +
-					"<br>" + 
+					htmlClearDiv() + 
 					_nodes[i].address + ":" +
-					_nodes[i].port					
+					_nodes[i].port +				
 					"</div>";
 				
 				//add edit pencil icon
@@ -1270,7 +1397,16 @@
 			{
 				boxes[p].style.width  = sz + "px";
 				boxes[p].style.height = sz + "px";
-			}			
+			}		
+			
+			if(_selectedNodes[i] !== undefined || 
+					(_mouseMoveMode == _MMM_SELECT_BOX &&
+							_mouseMoveStart[2][i] !== undefined))
+			{ //selected node
+				boxes[0].style.border = "3px solid green";
+			}
+			else
+				boxes[0].style.border = "0";
 			
 			el.style.left 	= x + "px";
 			el.style.top 	= y + "px";		
@@ -1285,14 +1421,20 @@
 				points[p].style.top 	= (pxy[1] - y - pointSz/2) + "px";
 			}
 			
+			var fontSz = sz/10;
+			if(fontSz < 6) fontSz = 6;
 			el = document.getElementById(nodeid + "-headerText");
 			el.style.left = (- (_grid.xstep-sz)/2) + "px";
-			el.style.top = (-30) + "px";
+			el.style.fontSize = ((fontSz)|0) + "px";
+			el.style.top = ((-fontSz*3-10)|0) + "px";
+			el.style.height = ((fontSz*3)|0) + "px";
 			el.style.width = (_grid.xstep) + "px";
-
+			
+			fontSz = sz/5;
+			if(fontSz < 6) fontSz = 6;
 			el = document.getElementById(nodeid + "-boxText");
-			el.style.fontSize = ((sz/5)|0) + "px";
-			el.style.marginTop = ((sz/2 - sz/10)|0) + "px";			
+			el.style.fontSize = ((fontSz)|0) + "px";
+			el.style.marginTop = ((sz/2 - fontSz/2)|0) + "px";			
 						
 			el = document.getElementById(nodeid + "-editIcon");
 			el.style.left = (-10) + "px";
@@ -1386,6 +1528,11 @@
     		var x = e.clientX;//- this.offsetLeft - _CANVAS_MARGIN - 2;
     		var y = e.clientY;//- this.offsetTop - _CANVAS_MARGIN - 2;
 			
+    		if(x == undefined) //handle as a key press
+    		{
+    			x = DesktopContent.getMouseX();				
+    			y = DesktopContent.getMouseY();
+    		}
     		//console.log("mousemove x,y",x,y);
     		
     		//debug visually
@@ -1415,7 +1562,18 @@
 							_mouseMoveStart[1],
 							x,y, true /*isActionCanvas*/);
     				//continue on
-    				break;    			
+    				break;    
+    			case _MMM_NODE_DRAG:
+    				console.log("node drag x,y",x,y);
+    				drawNode(
+    						_mouseMoveStart[2],
+    						x - _mouseMoveStart[0],
+							y - _mouseMoveStart[1]);							
+    				return;
+    			case _MMM_SELECT_BOX:
+    				console.log("select box",x,y);
+    				handleSelectionBox(e);							
+    				return;
     			default:
     				Debug.log("Illegal _mouseMoveMode = " + _mouseMoveMode, 
     						Debug.HIGH_PRIORITY);
@@ -1451,10 +1609,31 @@
 									
 					Debug.log("Node over " + xg + "," + yg);
 					
-					//if not handled, remove +			
+					//if over a filled spot, remove +			
 					_addNodeEl.style.left = "-1000px"; //off screen
-														
+					
 					doNodeHover(_grid.rowColMap[xg][yg]);
+					
+					//if directly over node-box, show grabbable hand
+					var pxy = [ _grid.x0 + xg * _grid.xstep,
+								_grid.y0 + yg * _grid.ystep];
+					var overNodeBox = false;
+					if(x > pxy[0] - _NODE_SIZE/2 && 
+							x < pxy[0] + _NODE_SIZE/2 &&
+							y > pxy[1] - _NODE_SIZE/2 &&
+							y < pxy[1] + _NODE_SIZE/2) 
+						overNodeBox = true;
+					
+					if(overNodeBox)
+					{
+						if(e.shiftKey) //indicate toggle selection
+							this.style.cursor = "pointer";
+						else
+							this.style.cursor = "grab";
+					}
+					else
+						this.style.cursor = "default";
+
 					return;
 				}
 				else // else there is no node
@@ -1505,13 +1684,15 @@
 		//handleMouseUp ~~
 		function handleMouseUp(e) 
 		{	
+			e.stopPropagation();
+			
     		var x = e.clientX;
     		var y = e.clientY;
 			
     		console.log("mouseup x,y",x,y);
     		    		
     		//debug visually
-    		_context.fillRect((x)|0,(y)|0,3,3 );
+    		//_context.fillRect((x)|0,(y)|0,3,3 );
     		
     		if(_mouseMoveMode != _MMM_NONE)
     		{
@@ -1520,16 +1701,134 @@
     			case _MMM_ARROW_DRAG:
     				console.log("done arrow drag NO VALID END x,y",x,y);
     				_mouseMoveMode = _MMM_NONE;
-    				break;    			
+    				break;    
+    			case _MMM_NODE_DRAG:
+    				
+    				//end mousemove
+    				_mouseMoveMode = _MMM_NONE;
+    				
+    				//see if node drag ended in open spot
+    				var xg = ((x - _grid.x0 + _grid.xstep/2)/_grid.xstep);
+    				var yg = ((y - _grid.y0 + _grid.ystep/2)/_grid.ystep);			
+
+    				if(xg < 0) xg = -1; //clip to -1 for +/- icons
+    				else xg |= 0;
+    				if(yg < 0) yg = -1; //clip to -1 for +/- icons			
+    				else yg |= 0;
+    				
+    				if(xg >= 0 && yg >= 0 && 
+    						xg < _grid.cols && 
+							yg < _grid.rows &&
+							(
+								_grid.rowColMap[xg] === undefined ||
+								_grid.rowColMap[xg][yg] === undefined
+							))
+    				{
+    					Debug.log("Node drag to new open spot " + 
+    							xg + "," + yg);
+    					_nodes[_mouseMoveStart[2]].x = xg;
+    					_nodes[_mouseMoveStart[2]].y = yg;
+    					
+    					nodeLayoutHasChanged();
+    				}
+    				else
+    					console.log("done node drag NO VALID END x,y",x,y);
+    				
+    				//re-paint to clear move
+    				paint();
+    				break;   
+
+    			case _MMM_SELECT_BOX:
+    				console.log("done select box",x,y);
+    				_mouseMoveMode = _MMM_NONE;
+    				var el = document.getElementById("selectionBoxDiv");
+    				el.style.left 	= (-1000) + "px";
+    				el.style.width 	= (0) + "px";
+    				
+    				if(!e.shiftKey)
+    					_selectedNodes = {}; //clear selected nodes
+    				
+    				//transfer selected nodes from temporary
+    				for(var n in _mouseMoveStart[2])
+    					_selectedNodes[n] = 1;
+    				_mouseMoveStart[2] = {}; //clear temporary selected nodes
+    				paint();
+    				break; 				
     			default:
-    				Debug.log("Illegal mousemove _mouseMoveMode = " +
+    				Debug.log("Illegal mouseup _mouseMoveMode = " +
     						_mouseMoveMode, 
     						Debug.HIGH_PRIORITY);
     			}
-    		}
+    		} //end mousemove mode handling
     		
 		} //end handleMouseUp()
 
+		//=====================================================================================
+		//handleMouseDown ~~
+		function handleMouseDown(e) 
+		{	
+			e.stopPropagation();
+
+    		var x = e.clientX;
+    		var y = e.clientY;
+    		
+    		console.log("mousedown x,y",x,y);
+    		
+    		
+			if(_mouseMoveMode == _MMM_NONE && 
+					_mouseHoverNode >= 0) 
+			{ //start node dragging
+				var pxy = [ _grid.x0 + _nodes[_mouseHoverNode].x * _grid.xstep,
+							_grid.y0 + _nodes[_mouseHoverNode].y * _grid.ystep];
+				if(
+						x > pxy[0] - _NODE_SIZE/2 && 
+						x < pxy[0] + _NODE_SIZE/2 &&
+						y > pxy[1] - _NODE_SIZE/2 &&
+						y < pxy[1] + _NODE_SIZE/2) 
+				{
+					//shift key chooses toggling nodes
+					if(e.shiftKey)
+					{
+						Debug.log("Toggling node select " + _mouseHoverNode);
+						
+						if(_selectedNodes[_mouseHoverNode] === undefined)
+							_selectedNodes[_mouseHoverNode] = 1;
+						else
+							delete _selectedNodes[_mouseHoverNode];
+						paint();
+						return;
+					}
+					
+					Debug.log("Starting node drag " + _mouseHoverNode);
+					this.style.cursor = "grabbing";
+					_mouseMoveMode = _MMM_NODE_DRAG;
+
+					//start movement
+					_mouseMoveStart = [ //x,y,i,p start (i,p are optional)
+								x,y,_mouseHoverNode]; 
+					
+					//unhover node
+					doNodeHover(_mouseHoverNode,true /*undoHover*/);
+					
+					return;
+				}
+			}
+			
+			
+			if(_mouseMoveMode == _MMM_NONE)
+			{ //start node selection box
+				
+				Debug.log("Starting select box ");
+				
+				//start selection box anchor
+				_mouseMoveStart = [ //x,y,temp-selection-node-map
+									x,y,{}]; 
+				_mouseMoveMode = _MMM_SELECT_BOX;
+				handleSelectionBox(e);
+			}
+			
+		} //end handleMouseDown()
+			
 		//=====================================================================================
 		//getNodePoint ~~
 		//	returns x,y center of node point
@@ -1979,6 +2278,41 @@
 			} //end localOpenActiveGroupsDialog()
 		} //end openActiveGroupsDialog()
 		
+		//====================================================================================
+		//nodeLayoutHasChanged ~~
+		//	handle when node layout has changed
+		//	for now, auto-save layout for active group
+		function nodeLayoutHasChanged()
+		{
+			Debug.log("nodeLayoutHasChanged()");
+
+			var postData = "layout=";
+			
+			//post data format:
+			// grid rows, cols
+			// 4-field nodes (type,name,x,y)
+			
+			postData += _grid.rows;
+			postData += "," + _grid.cols;
+			
+			for(var i=0;i<_nodes.length;++i)
+			{
+				postData += "," + getTypeName(_nodes[i].type);
+				postData += "," + _nodes[i].name;
+				postData += "," + _nodes[i].x;
+				postData += "," + _nodes[i].y;				
+			}
+			
+			Debug.log("postData = " + postData);
+			
+			//get active configuration group
+			DesktopContent.XMLHttpRequest(
+					"Request?RequestType=saveArtdaqNodeLayout",
+					postData
+					);
+			
+		} //end nodeLayoutHasChanged()
+		
 		</script>
 </head>
 	
@@ -2000,6 +2334,8 @@
 		<a id='createNode' onclick='createNode(); return false;'
 				title='Create a new node'>+</a>
 	</div>
+		
+	<div id='selectionBoxDiv'></div>
 		
 	<!-- Controls pane, Copied from Code Editor -->
 	<div class="controlsPane">
