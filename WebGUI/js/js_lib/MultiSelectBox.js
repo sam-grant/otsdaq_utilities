@@ -292,7 +292,7 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	if(title)
 	{
 		str += "<div id='" + name + "header' " +
-				"style='margin-top:20px;width:100%'><b>"
+				"style='margin-top:20px;width:100%;white-space:nowrap'><b>"
 		str += title;
 		str += "</b></div>";
 	}

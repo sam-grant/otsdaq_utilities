@@ -827,7 +827,7 @@
 
 			el.innerHTML = "Loading...";
 			var v = "";
-			if (version !== undefined && version != "") v = "&version" + version;
+			if (version !== undefined && version != "") v = "&version=" + version;
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable" +
 				"&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +
 				"&tableName=" + tableName +
@@ -3666,8 +3666,8 @@
 				"Go-to Table View",
 				"Open Table View in new Desktop Window",
 				"Open Table View in new Browser Tab",
-				"Open Sub-Configuration Editor in new Desktop Window",
-				"Open Sub-Configuration Editor in new Browser Tab",
+				"Open Subset Editor in new Desktop Window",
+				"Open Subset Editor in new Browser Tab",
 				"Add new Record to Table"];
 			var treeNavContextMenuItems = []
 			var treeNavContextMenuItemHandlers = [];
@@ -3726,7 +3726,7 @@
 					treeNavContextMenuItemHandlers.push(newtabJS);
 				}
 
-				//open Sub-Configuration in new window link
+				//open Subset-Configuration in new window link
 				{
 					//make record alias with spaces instead of all one word
 					// and remove table
@@ -3771,7 +3771,7 @@
 					//DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeHandler) {
 					newwindowJS = "DesktopContent.openNewWindow(" +
 						"\"" + treeMemberNames_[j] +
-						" Subset-Configuration\",\"\",\"" +
+						" Subset\",\"\",\"" +
 						//windowPath
 						newWindowStr +
 						"\",false /*unique*/);";
@@ -3780,12 +3780,12 @@
 					treeNavContextMenuItemHandlers.push(newwindowJS);
 				}
 
-				//open Sub-Configuration in new browser tab link
+				//open Subset-Configuration in new browser tab link
 				{
 					//DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique)
 					newtabJS = "DesktopContent.openNewBrowserTab(" +
 						"\"" + treeMemberNames_[j] +
-						" Subset-Configuration\",\"\",\"" +
+						" Subset\",\"\",\"" +
 						newWindowStr + "\",false /*unique*/);";
 
 					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
@@ -11023,7 +11023,8 @@
 		} //end deleteRow()
 
 		//popUpVersionAliasSpecificGroupForm
-		function popUpGroupUploadDownloadForm(groupName, groupKey, isUpload) {
+		function popUpGroupUploadDownloadForm(groupName, groupKey, isUpload) 
+		{
 			Debug.log("CfgGUI popUpGroupUploadDownloadForm " + isUpload);
 
 			var type = isUpload ? "upload" : "download";
@@ -11039,7 +11040,7 @@
 			el.style.display = "none";
 
 			//set position and size
-			var w = isUpload ? 560 : 360;
+			var w = isUpload ? 560 : 460;
 			var h = 460;
 			ConfigurationAPI.setPopUpPosition(el, w /*w*/, h /*h*/);
 
@@ -11087,6 +11088,14 @@
 					}
 					else //is download
 					{
+						str += "Default field delimiters (in Excel and Numbers) vary based " +
+								"on keyboard settings, so please select your field delimiter: <br><br>";
+						str += "<select id='fieldSelect'>";
+
+						str += "<option value= ',' selected>Comma ,</option>";
+						str += "<option value= ';'>Semicolon ;</option>";
+						str += "</select><br><br>";
+
 						str += htmlOpen("a",
 							{
 								"onclick": "var el = document.getElementsByClassName(\"uploadDownloadCheckbox\");" +
@@ -11217,6 +11226,11 @@
 
 										console.log("localDownloadMembers have data for ", targetTable);
 
+										//Note: copied download code from downloadTableAsCSV()
+										
+										var rowDel = '\n';
+										var colDel = document.getElementById("fieldSelect").value;
+										
 										var dataStr = "data:text/csv;charset=utf-8,";
 										try {
 											var rows = req.responseXML.getElementsByTagName(
@@ -11225,14 +11239,16 @@
 											var rowEntries;
 											for (var r = 0; r < rows.length; ++r) {
 												if (r)
-													dataStr += encodeURI("\n"); //encoded \n
+													dataStr += encodeURI(rowDel); //encoded \n
 
 												rowEntries = rows[r].getElementsByTagName("Entry");
 
 												for (var c = 0; c < rowEntries.length; ++c) {
 													if (c)
-														dataStr += ",";
-													dataStr += encodeURIComponent(rowEntries[c].getAttribute("value"));
+														dataStr += encodeURI(colDel);
+													dataStr += encodeURIComponent(rowEntries[c].getAttribute("value").
+															replace(new RegExp(rowDel,'g'),"${OTS_RECORD_DELIMETER}").
+															replace(new RegExp(colDel,'g'),"${OTS_FIELD_DELIMETER}"));
 												}
 											}
 											Debug.log("localDownloadMembers dataStr=" + dataStr);
@@ -11370,85 +11386,52 @@
 							if (fileKeyArr.length == 0) return;
 
 							var fileKey = fileKeyArr.pop();
-							//this code is copied from js::ConfigurationGUI::uploadTableFromCSV()
+							
+							Debug.log("Uploading member table " + fileKey);
+							
+							//Note: this upload code is copied from js::ConfigurationGUI::uploadTableFromCSV()
 
 							var colDel, rowDel = '\n'; //row/record and column/field delimeters (default record to \n)
 							
-							var tmpStr = "";
+							//auto find record delimeter (finding auto-row delimiter is more complicated if there are options.. to avoid confusion with data)
+							//	take last found, which must always be correct
+							//	because last fields are forced fields (author/time) and 
+							//	do not have special characters.
 
-							//clean up [[ ]] from bitmap
-							// may only be necessary for backwards compatibility?
+							for (var i = uploadedFiles[fileKey].length-1;i >= 0; --i) 
 							{
-								var x = 0;
-								var y = 0;
-								var c = 0;
-								for (var i = 0; i < uploadedFiles[fileKey].length; ++i) {
-									if (uploadedFiles[fileKey][i] == '[')
-										++c; //increase number of closing brackets necessary 
-									else if (uploadedFiles[fileKey][i] == ']')
-										--c; //decrease number of closing brackets necessary 
-
-									if (c) // if looking for a closing bracket.. block \n and ,
-									{
-										if (uploadedFiles[fileKey][i] == '\n')
-											tmpStr += "NNNEWLINNE";
-										else if (uploadedFiles[fileKey][i] == ',')
-											tmpStr += "CCCOMMACCC";
-										else
-											tmpStr += uploadedFiles[fileKey][i];
-									}
-									else
-										tmpStr += uploadedFiles[fileKey][i];
-									
-									//auto find row/record delimeter
-									//	take last found, which must always be correct
-									//	because last fields are forced fields (author/time) and 
-									//	do not have special characters.
-
-									if(colDel != uploadedFiles[fileKey][i])
-									{	//prevent matching row and col delimeter with above if
-										if (uploadedFiles[fileKey][i] == '\n')						
-											rowDel = '\n';
-										else if (uploadedFiles[fileKey][i] == ';')
-											rowDel = ';';
-										else if (uploadedFiles[fileKey][i] == ',')
-											rowDel = ',';
-										else if (uploadedFiles[fileKey][i] == '&')
-											rowDel = '&';
-										
-										if (uploadedFiles[fileKey][i] == ',')
-											colDel = ',';
-										else if (uploadedFiles[fileKey][i] == ';')
-											colDel = ';';
-										else if (uploadedFiles[fileKey][i] == '%')
-											colDel = '%';
-										else if (uploadedFiles[fileKey][i] == '/')
-											colDel = '/';
-										
-										if(rowDel == colDel) //disallow and return to record default \n
-											rowDel = '\n';
-											
-									}
+								if (uploadedFiles[fileKey][i] == ',')
+								{
+									colDel = ',';
+									break;
 								}
-								console.log(tmpStr);
+								else if (uploadedFiles[fileKey][i] == ';')
+								{
+									colDel = ';';
+									break;
+								}
 							}
 
+							console.log("uploadedFiles[fileKey]",
+									uploadedFiles[fileKey].length,
+									uploadedFiles[fileKey]);
 							console.log("record rowDel",rowDel);
 							console.log("field colDel",colDel);
 						
-							var srcRows = tmpStr.length?tmpStr.split(rowDel):[]; //if no data, make no rows
+							var srcRows = uploadedFiles[fileKey].length? //if no data, make no rows
+									uploadedFiles[fileKey].split(rowDel):[]; 
 							var src = []; //src = [r][c]
 							for (var i = 0; i < srcRows.length; ++i)
 								src.push(srcRows[i].split(colDel));
 							console.log("src", src);
 
 							var dataStr = ""; // semi-colon(;) separated rows.. comma(,) separated entries within row
-
-
 							for (var r = 0; r < src.length; ++r) {
 								for (var c = 0; c < src[r].length; ++c) //skip row index column
 								{
-									dataStr += src[r][c] + ",";
+									dataStr += encodeURIComponent(src[r][c].
+											replace(/\$\{OTS_FIELD_DELIMETER\}/g,colDel).
+											replace(/\$\{OTS_RECORD_DELIMETER\}/g,rowDel)) + ",";
 								}
 								dataStr += ";";
 							}
@@ -11462,8 +11445,8 @@
 								"&temporary=" + (0) +
 								"&tableComment=" +
 								encodeURIComponent("Uploaded table version");
-							Debug.log(dataStr);
-							Debug.log(reqStr);
+							console.log("dataStr",dataStr);
+							console.log("reqStr",reqStr);
 
 							DesktopContent.XMLHttpRequest(reqStr, "data=" + dataStr,
 								function (req) {
@@ -11507,27 +11490,8 @@
 					} //end localDoUpload()
 
 					return;
-					//				var onmouseupJS = "";
-					//				onmouseupJS += 
-					//						"DesktopContent.XMLHttpRequest(\"Request?RequestType=setAliasOfGroupMembers" +
-					//						"&versionAlias=\" + " + 
-					//						"document.getElementById(\"popUpDialog-alias\").value + \"" +
-					//						"&groupName=" + groupName +
-					//						"&groupKey=" + groupKey + "\", \"\"," +
-					//						"ConfigurationAPI.newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]," +
-					//						"0,true" +  //progressHandler, callHandlerOnErr
-					//						");";			
-					//				onmouseupJS += "var el = document.getElementById(" +
-					//						"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
-
-					//str	= el.innerHTML;
-					//				str += "<input type='button' " //onmouseup='" + onmouseupJS + "' " +
-					//						"value='" + capType + " Member Tables' title='" +
-					//						"Download the selected member tables." +
-					//						"'/>";
-					//				el.innerHTML = str;
-				}
-			);
+				} //end getSpecificTableGroup request handler
+			); //end getSpecificTableGroup request
 
 
 		} //end popUpGroupUploadDownloadForm()
@@ -12490,73 +12454,37 @@
 			Debug.log("CfgGUI uploadTableFromCSV doReplace = " + doReplace);
 			Debug.log("CfgGUI uploadTableFromCSV doAppend = " + doAppend);
 
+			//Note: if this upload code changes, apply to popUpGroupUploadDownloadForm() => localDoUpload() => localUploadMembers()
+			
 			var colDel, rowDel = '\n'; //row/record and column/field delimeters
 			
-			//if this code changes, apply to popUpGroupUploadDownloadForm() => localDoUpload() => localUploadMembers()
-			//clean up [[ ]] from bitmap
-			// may only be necessary for backwards compatibility?
+			//auto find record delimeter (finding auto-row delimiter is more complicated if there are options.. to avoid confusion with data)
+			//	take last found, which must always be correct
+			//	because last fields are forced fields (author/time) and 
+			//	do not have special characters.
+
+			for (var i = _tableUploadStr.length-1;i >= 0; --i) 
 			{
-				var x = 0;
-				var y = 0;
-				var c = 0;
-				var tmpStr = "";
-				for (var i = 0; i < _tableUploadStr.length; ++i) {
-					if (_tableUploadStr[i] == '[')
-						++c; //increase number of closing brackets necessary 
-					else if (_tableUploadStr[i] == ']')
-						--c; //decrease number of closing brackets necessary 
-
-					if (c) // if looking for a closing bracket.. block \n and ,
-					{
-
-						if (_tableUploadStr[i] == '\n')
-							tmpStr += "NNNEWLINNE";
-						else if (_tableUploadStr[i] == ',')
-							tmpStr += "NNNEWLINNE";
-						else
-							tmpStr += _tableUploadStr[i];							
-					}
-					else
-						tmpStr += _tableUploadStr[i];
-					
-					//auto find row/record delimeter
-					//	take last found, which must always be correct
-					//	because last fields are forced fields (author/time) and 
-					//	do not have special characters.
-
-					if(colDel != _tableUploadStr[i])
-					{	//prevent matching row and col delimeter with above if
-						if (_tableUploadStr[i] == '\n')						
-							rowDel = '\n';
-						else if (_tableUploadStr[i] == ';')
-							rowDel = ';';
-						else if (_tableUploadStr[i] == ',')
-							rowDel = ',';
-						else if (_tableUploadStr[i] == '&')
-							rowDel = '&';
-						
-						if (_tableUploadStr[i] == ',')
-							colDel = ',';
-						else if (_tableUploadStr[i] == ';')
-							colDel = ';';
-						else if (_tableUploadStr[i] == '%')
-							colDel = '%';
-						else if (_tableUploadStr[i] == '/')
-							colDel = '/';
-
-						if(rowDel == colDel) //disallow and return to record default \n
-							rowDel = '\n';
-					}
-					
+				if (_tableUploadStr[i] == ',')
+				{
+					colDel = ',';
+					break;
 				}
-				console.log(tmpStr);
-				_tableUploadStr = tmpStr;
+				else if (_tableUploadStr[i] == ';')
+				{
+					colDel = ';';
+					break;
+				}
 			}
 
+			console.log("_tableUploadStr",
+					_tableUploadStr.length,
+					_tableUploadStr);
 			console.log("record rowDel",rowDel);
 			console.log("field colDel",colDel);
 			
-			var srcRows = _tableUploadStr.length?_tableUploadStr.split(rowDel):[]; //if no data, make no rows
+			var srcRows = _tableUploadStr.length? //if no data, make no rows
+					_tableUploadStr.split(rowDel):[]; 
 			var src = []; //src = [r][c]
 			for (var i = 0; i < srcRows.length; ++i)
 				src.push(srcRows[i].split(colDel));			
@@ -12574,52 +12502,69 @@
 			//if transposed cols = [c][r], else cols = [r][c]
 
 			//localInsertSourceData ~~
-			function localInsertSourceData() {
-				if (_tableViewIsTransposed) {
+			function localInsertSourceData() 
+			{
+				if (_tableViewIsTransposed) 
+				{
 
-					for (var r = 0; r < src.length; ++r) {
+					for (var r = 0; r < src.length; ++r) 
+					{
 						var srcc = 0;
 
 						//do not let go past special 3 columns of current column types (-1 for the c+1)
-						for (var c = 0; c < src[r].length - 3 && c < colTypes.length - 3 - 1; ++c) {
+						for (var c = 0; c < src[r].length - 3 && c < colTypes.length - 3 - 1; ++c) 
+						{
 							if (rowOffset + r == 0) cols[c] = [];
-							if (!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c + 1][rowOffset + r] = src[r][srcc++].replace(/CCCOMMACCC/g, colDel).replace(/NNNEWLINNE/g, rowDel); //swap commas and newlines back in
+							if (!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number	
+							
 							//seems like no need to decode URI component on import side
-							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[c + 1][rowOffset + r] = src[r][srcc++].
+								replace(/\$\{OTS_FIELD_DELIMETER\}/g,colDel).
+								replace(/\$\{OTS_RECORD_DELIMETER\}/g,rowDel); //e.g. swap commas and newlines back in
+														
 						}
 
 						//fill any missing columns up to special columns
-						for (c; c < colTypes.length - 3 - 1; ++c) {
+						for (c; c < colTypes.length - 3 - 1; ++c) 
+						{
 							if (rowOffset + r == 0) cols[c] = [];
 							if (!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
 							cols[c + 1][rowOffset + r] = ""; //blank
 						}
 
 						//finish last special 3
-						for (c; srcc < src[r].length; ++c) {
+						for (c; srcc < src[r].length; ++c) 
+						{
 							if (rowOffset + r == 0) cols[c] = [];
 							if (!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c + 1][rowOffset + r] = src[r][srcc++].replace(/CCCOMMACCC/g, colDel).replace(/NNNEWLINNE/g, rowDel); //swap commas and newlines back in
+							
 							//seems like no need to decode URI component on import side
-							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[c + 1][rowOffset + r] = src[r][srcc++].
+									replace(/\$\{OTS_FIELD_DELIMETER\}/g,colDel).
+									replace(/\$\{OTS_RECORD_DELIMETER\}/g,rowDel);  //e.g. swap commas and newlines back in
+							
 						}
 
 					}
 				}
-				else {
-					for (var r = 0; r < src.length; ++r) {
+				else 
+				{
+					for (var r = 0; r < src.length; ++r) 
+					{
 						var srcc = 0;
 
 						cols[rowOffset + r] = [];
 
 						//do not let go past special 3 columns of current column types (-1 for the c+1)
-						for (var c = 0; c < src[r].length - 3 && c < colTypes.length - 3 - 1; ++c) {
+						for (var c = 0; c < src[r].length - 3 && c < colTypes.length - 3 - 1; ++c) 
+						{
 							if (!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c + 1] = src[r][srcc++].replace(/CCCOMMACCC/g, colDel).replace(/NNNEWLINNE/g, rowDel); //swap commas and newlines back in
+
 							//seems like no need to decode URI component on import side
-							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
-							console.log("Value of ", rowDel);
+							cols[rowOffset + r][c + 1] = src[r][srcc++].
+									replace(/\$\{OTS_FIELD_DELIMETER\}/g,colDel).
+									replace(/\$\{OTS_RECORD_DELIMETER\}/g,rowDel);  //e.g. swap commas and newlines back in
+						
 						}
 
 						//fill any missing columns up to special columns
@@ -12631,9 +12576,12 @@
 						//finish last special 3
 						for (c; srcc < src[r].length; ++c) {
 							if (!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c + 1] = src[r][srcc++].replace(/CCCOMMACCC/g, colDel).replace(/NNNEWLINNE/g, rowDel); //swap commas and newlines back in
+							
 							//seems like no need to decode URI component on import side
-							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[rowOffset + r][c + 1] = src[r][srcc++].
+									replace(/\$\{OTS_FIELD_DELIMETER\}/g,colDel).
+									replace(/\$\{OTS_RECORD_DELIMETER\}/g,rowDel);  //e.g. swap commas and newlines back in
+							
 						}
 					}
 				}
@@ -12948,7 +12896,8 @@
 		// Note: if files become too big, could have server create csv file
 		//	then link to <a href='/WebPath/download.csv' download></a>
 		//	Note: href must be  encodeURI(dataStr) if data not already encoded
-		function downloadTableAsCSV() {
+		function downloadTableAsCSV() 
+		{
 			// Popup selection window
 			_tableUploadStr = ""; //clear previous upload
 
@@ -12973,28 +12922,29 @@
 
 			str += "<div id='popUpDialog-div'>";
 
-			str += "Delimiters may vary based on keyboard types.<br><br>";
-
 			str += "<center>";
+			
+			str += "Default field delimiters (in Excel and Numbers) vary based " +
+					"on keyboard settings, so please select your field delimiter: <br><br>";
+			str += "<select id='fieldSelect'>";
 
+			str += "<option value= ',' selected>Comma ,</option>";
+			str += "<option value= ';'>Semicolon ;</option>";
+			//			str += "<option value= '%'>Percent ' % '</option>";
+			//			str += "<option value= '/'>Forward slash ' / '</option>";
 
-			str += "Select your field delimiter: <br><br>";
-			str += "<select id='fieldSelect' style='width:360px'>";
-
-			str += "<option value= ',' selected>Comma ' , '</option>";
-			str += "<option value= ';'>Semicolon ' ; '</option>";
-			str += "<option value= '%'>Percent ' % '</option>";
-			str += "<option value= '/'>Forward slash ' / '</option>";
-
-			str += "</select><br><br>";
-
-			str += "Select your record delimiter: <br><br>";
-			str += "<select id='recordSelect' style='width:360px'>";
-
-			str += "<option value= '\n' selected>New line</option>";
-			str += "<option value= ';'>Semicolon ' ; '</option>";
-			str += "<option value= ';'>Semicolon ' , '</option>";
-			str += "<option value= '&'>Ampersand ' & '</option>";
+			//RAR removed record delimiter selection, always assume new line 
+			//	otherwise creates havoc with auto determining on upload
+			
+			//			str += "</select><br><br>";
+			//
+			//			str += "Select your record delimiter: <br><br>";
+			//			str += "<select id='recordSelect' style='width:360px'>";
+			//
+			//			str += "<option value= '\n' selected>New line</option>";
+			//			str += "<option value= ';'>Semicolon ' ; '</option>";
+			//			str += "<option value= ';'>Semicolon ' , '</option>";
+			//			str += "<option value= '&'>Ampersand ' & '</option>";
 			str += "</select>";
 
 			// done with special handling
@@ -13016,7 +12966,10 @@
 				var dataStr = "data:text/csv;charset=utf-8,";
 				el = document.getElementById("SubSystemTable");
 				var rows = el.getElementsByTagName("tr");
-				var rowDel = document.getElementById("recordSelect").value;
+				
+				//Note: changes to download code to propagate to localDownloadMembers()
+				
+				var rowDel = '\n'; //document.getElementById("recordSelect").value;
 				var colDel = document.getElementById("fieldSelect").value;
 
 				var cells;
@@ -13036,9 +12989,12 @@
 							cells = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td");
 							//assume one th column so minus 1
 							if (c)
-								dataStr += colDel;
+								dataStr += encodeURI(colDel);
 							dataStr += encodeURIComponent(
-								cells[_CONFIG_DATA_ROW_OFFSET - 1 + r].textContent.trim()); //replaces all special characters				
+									cells[_CONFIG_DATA_ROW_OFFSET - 1 + r].textContent.trim().
+									replace(new RegExp(rowDel,'g'),"${OTS_RECORD_DELIMETER}").
+									replace(new RegExp(colDel,'g'),"${OTS_FIELD_DELIMETER}")
+							); //replaces all special characters				
 						}
 					}
 				}
@@ -13053,13 +13009,19 @@
 						for (var c = _CONFIG_DATA_COL_OFFSET; c < cells.length; ++c) //skip row index column
 						{
 							if (c - _CONFIG_DATA_COL_OFFSET)	
-								dataStr += colDel;
-							dataStr += encodeURIComponent(cells[c].textContent.trim()); //replaces all special characters
+								dataStr += encodeURI(colDel);
+														
+							dataStr += encodeURIComponent(cells[c].textContent.trim().
+									replace(new RegExp(rowDel,'g'),"${OTS_RECORD_DELIMETER}").
+									replace(new RegExp(colDel,'g'),"${OTS_FIELD_DELIMETER}")
+							); //replaces all special characters				
 						}
 					}
 				}
 				Debug.log("CfgGUI downloadTableAsCSV dataStr=" + dataStr);
-
+				console.log("dataStr",decodeURIComponent(dataStr));
+				return;
+				
 				var link = document.createElement("a");
 				link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
 				link.setAttribute("style", "display:none");
