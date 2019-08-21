@@ -91,6 +91,9 @@ function updateUserData
 
 		#replace TheSupervisorConfiguration with GatewaySupervisorConfiguration for updating
 		sed -i s/TheSupervisorConfiguration/GatewaySupervisorConfiguration/g $USER_DATA/ServiceData/CoreTableInfoNames.dat
+
+		#remove empty whitespace lines
+		 sed -i '/^$/d' $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		
 		cat $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		echo
