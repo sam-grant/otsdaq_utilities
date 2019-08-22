@@ -15064,6 +15064,8 @@
 				tel.style.width = ((sel.offsetWidth > 150 ? sel.offsetWidth : 150) - 2) + "px";
 				sel.style.display = "none";
 				tel.style.display = "block";
+				if(tel.value == "")
+					tel.value = sel.value; //take value from select
 				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);
 			}
 
