@@ -644,6 +644,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		             << " chunkSize: " << chunkSize << " dataOffset: " << dataOffset
 		             << __E__;
 
+
 		TableVersion                            version;
 		const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo();
 		std::string                             versionAlias;
@@ -1081,22 +1082,38 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		__SUP_COUT__ << "Activating config: " << groupName << "(" << groupKey << ")"
 		             << __E__;
-		__SUP_COUT__ << "ignoreWarnings: " << ignoreWarnings << __E__;
+		__SUP_COUTV__(ignoreWarnings);
 
 		// add flag for GUI handling
 		xmlOut.addTextElementToData("AttemptedGroupActivation", "1");
 		xmlOut.addTextElementToData("AttemptedGroupActivationName", groupName);
 		xmlOut.addTextElementToData("AttemptedGroupActivationKey", groupKey);
 
-		std::string accumulatedTreeErrors;
 		try
 		{
+			std::string accumulatedErrors;
+
+			// if ignore warnings,
+			//	then only print errors, do not add to xml
+
 			cfgMgr->activateTableGroup(
 			    groupName,
 			    TableGroupKey(groupKey),
-			    ignoreWarnings
-			        ? 0
-			        : &accumulatedTreeErrors);  // if ignore warning then pass null
+				&accumulatedErrors);
+
+			if(accumulatedErrors != "")
+			{
+				if(!ignoreWarnings)
+				{
+					__SS__ << "Throwing exception on accumulated errors: " <<
+							accumulatedErrors << __E__;
+					__SS_ONLY_THROW__;
+				}
+				//else just print
+				__COUT_WARN__ << "Ignoring warnings so ignoring this error:" <<
+						accumulatedErrors << __E__;
+				__COUT_WARN__ << "Done ignoring the above error(s)." << __E__;
+			}
 		}
 		catch(std::runtime_error& e)
 		{
@@ -1141,16 +1158,9 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		}
 		catch(...)
 		{
-			__SUP_COUT__ << "Error detected!" << __E__;
+			__SUP_COUT__ << "Unknown error detected!" << __E__;
 			throw;  // unexpected exception!
 		}
-
-		if(accumulatedTreeErrors != "")
-			xmlOut.addTextElementToData("Error",
-			                            "Warnings were found when activating group '" +
-			                                groupName + "(" + groupKey + ")" +
-			                                "'! Please see details below:\n\n" +
-			                                accumulatedTreeErrors);
 	}
 	else if(requestType == "getActiveTableGroups")
 		;  // do nothing, since they are always returned
@@ -4733,11 +4743,16 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 
 	std::string accumulatedErrors = "";
 
+	__COUTV__(allowIllegalColumns);
+
+	if(allowIllegalColumns)
+		xmlOut.addTextElementToData("allowIllegalColumns", "1");
+
 	const std::map<std::string, TableInfo>&
-	    allTableInfo =  // if allowIllegalColumns, then also refresh
-	    cfgMgr->getAllTableInfo(allowIllegalColumns,
-	                            allowIllegalColumns ? &accumulatedErrors : 0,
-	                            tableName);  // filter errors by tableName
+		allTableInfo =  // if allowIllegalColumns, then also refresh
+		cfgMgr->getAllTableInfo(allowIllegalColumns,
+								allowIllegalColumns ? &accumulatedErrors : 0,
+								tableName);  // filter errors by tableName
 
 	TableBase* table = cfgMgr->getTableByName(tableName);
 
@@ -4828,7 +4843,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 			//locally accumulate 'manageable' errors getting the version to avoid reverting to mockup
 			std::string localAccumulatedErrors = "";
 			cfgViewPtr = cfgMgr->getVersionedTableByName(tableName, version,
-					false /*looseColumnMatching*/,
+					allowIllegalColumns /*looseColumnMatching*/,
 					&localAccumulatedErrors)->getViewP();
 
 			if(localAccumulatedErrors != "")
