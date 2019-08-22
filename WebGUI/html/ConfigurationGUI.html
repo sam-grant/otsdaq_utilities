@@ -23,11 +23,12 @@
 
 		//setupTableViewMode(anchorTarget)							//gets tables
 		//tableViewRequestHandler(req,anchorTarget)
+		//tableSearchSelectionHandler(el)
 
 		//setupSpecificTableGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific table group
 		//specificGroupRequestHandler(req,param)			
 
-		//setupSpecificTable(tableName,version,backLinkStr)			//setup editor for specific table
+		//setupSpecificTable(tableName,version,backLinkStr,allowIllegalColumns)			//setup editor for specific table
 		//setupSpecificTableInRight(tableName,version)
 		//specificTableRequestHandler(req,backLinkStr)			
 		//toggleTableDetails(setVal)
@@ -128,12 +129,12 @@
 
 		//setupFindAndReplace()
 		//configFind()
-		//configReplace() 
+		//tableReplace() 
 		//configIncrementByReplace()
 		//versionHasChanged()
 
 		//setupCopyAndMoveRows()
-		//configCopyView()
+		//configCopyView(sourceVersion)
 		//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
 		//jump(anchor)
 		//evaluateJS(str)			
@@ -470,7 +471,7 @@
 			"'>Flatten to System Aliases</a>."
 			;
 
-		var _currentConfigName, _associatedGroupName, _associatedGroupKey;
+		var _currentTableName, _associatedGroupName, _associatedGroupKey;
 		var _editingCell = false;
 		var _editingCellEl, _editingCellElOldValue, _editingCellElOldTitle, _editingCellType;
 		var _editingCellPos = [-1, -1];
@@ -688,9 +689,11 @@
 					];
 					//console.log(_lastConfigGroups);
 
-
+				
 					DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases&" +
-						"reloadActiveGroups=" + (firstInit_ ? "0" : "1"), //reload persistent active groups (persistent active config group will be modified when state machine configures) 
+						"reloadActiveGroups=" + (firstInit_ ? "0" : "1"), 
+						//reload persistent active groups (persistent active config group will be modified when state machine configures)
+						//firstInit_ should be used to stop the reload -- for example, after a group activation with warnings ignored
 						"",
 						groupAliasesRequestHandler, anchorTarget,
 						0/*progressHandler*/, true /*callHandlerOnErr*/);
@@ -704,7 +707,8 @@
 		} //end setupSystemViewMode()
 
 		//setupGroupViewMode ~
-		function setupGroupViewMode(anchorTarget) {
+		function setupGroupViewMode(anchorTarget) 
+		{
 
 			editCellCancel();
 
@@ -716,7 +720,8 @@
 		} //end setupGroupViewMode()
 
 		//setupTableViewMode ~
-		function setupTableViewMode(anchorTarget) {
+		function setupTableViewMode(anchorTarget) 
+		{
 
 			editCellCancel();
 
@@ -727,14 +732,16 @@
 		} //end setupTableViewMode()
 
 		//handleFlattenSystemAliasesResponse ~
-		function handleFlattenSystemAliasesResponse(req) {
+		function handleFlattenSystemAliasesResponse(req)
+		{
 			Debug.log("Attempting to Flatten System Aliases... ",
 				Debug.INFO_PRIORITY);
 			handleOtsRelaunchResponse(req, undefined, true /*isOther*/);
 		} //end handleFlattenSystemAliasesResponse()
 
 		//handleFlattenSystemAliasesResponse ~
-		function handleOtsRelaunchResponse(req, isWiz, isOther) {
+		function handleOtsRelaunchResponse(req, isWiz, isOther)
+		{
 			if (req) //if supervisor is killed, then req will be 0, which is a good sign of progress
 			{ 	//else check error response
 				var err = DesktopContent.getXMLValue(req, "Error");
@@ -813,7 +820,8 @@
 
 		//setupSpecificTable ~
 		//	undefined version gives latest
-		function setupSpecificTable(tableName, version, backLinkStr) {
+		function setupSpecificTable(tableName, version, backLinkStr, allowIllegalColumns) 
+		{
 
 			var el;
 			if (_displayTargetEl && backLinkStr == "special display target") {
@@ -830,21 +838,32 @@
 			if (version !== undefined && version != "") v = "&version=" + version;
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable" +
 				"&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +
+				(allowIllegalColumns?"&allowIllegalColumns=1":"") +
 				"&tableName=" + tableName +
 				v,
-				"", specificTableRequestHandler, backLinkStr,
+				"",
+				function(req)
+				{
+					//call with attemptedVersion parameter
+					specificTableRequestHandler(req, backLinkStr,
+							(version !== undefined && version != "")?version:undefined);
+				}, 
+				0, //parameter 
 				0, true  //progressHandler, callHandlerOnErr
 			);
-		}
+		} //end setupSpecificTable()
+		
 		//setupSpecificTableInRight ~
 		//	undefined version gives latest
-		function setupSpecificTableInRight(tableName, version) {
+		function setupSpecificTableInRight(tableName, version) 
+		{
 			_displayTargetEl = document.getElementById("display-right");
 			setupSpecificTable(tableName, version, "special display target");
-		}
+		} //end setupSpecificTableInRight()
 
 		//groupAliasesRequestHandler ~
-		function groupAliasesRequestHandler(req, anchorTarget) {
+		function groupAliasesRequestHandler(req, anchorTarget) 
+		{
 
 			var err = DesktopContent.getXMLValue(req, "Error");
 			if (err) {
@@ -941,12 +960,14 @@
 			//str += "<br>";
 
 			//show active backbone and config
-			function localShowActiveBackboneAndConfig() {
+			function localShowActiveBackboneAndConfig() 
+			{
 				var activeConfigHeaders = ["Context", "Backbone", "Iterate Group", "Configuration"];
 
 				str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
 
-				for (var i = 1; i >= 1 && i < activeConfigHeaders.length; ++i) {
+				for (var i = activeConfigHeaders.length-1; i >= 1 && i < activeConfigHeaders.length; --i) 
+				{
 					str += "<tr><td style='text-align:left'>";
 
 					if (i == activeConfigHeaders.length - 1) //for last configured 
@@ -956,10 +977,12 @@
 
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
 
-					if (!_activeConfigGroups[i * 2] || _activeConfigGroups[i * 2] == "") {
+					if (!_activeConfigGroups[i * 2] || _activeConfigGroups[i * 2] == "")
+					{
 						str += "None";
 					}
-					else {
+					else 
+					{
 						str += "<a href='#' onclick='setupSpecificTableGroup(\"" + _activeConfigGroups[i * 2] +
 							"\",\"" + _activeConfigGroups[i * 2 + 1] + "\"); return false;'>";
 						str += _activeConfigGroups[i * 2] + " (" + _activeConfigGroups[i * 2 + 1] + ")</a>";
@@ -972,54 +995,71 @@
 						_activeConfigGroups[i * 2 + 1] + "\"); return false;'>Tree-view</a>";
 
 					str += "</td></tr>";
+
+					if (i == activeConfigHeaders.length - 1) //for last configured 
+						insertLocalLastConfigGroups();
 				}
 
-				//last config groups for "Configured" and "Started:
-				for (var i = 0; i < _lastConfigGroups.length; i += 3) {
-					str += "<tr><td style='text-align:left'>";
+				/////////////////////
+				function insertLocalLastConfigGroups()
+				{
+					//last config groups for "Configured" and "Started:
+					var extraPadding;
+					for (var i = 0; i < _lastConfigGroups.length; i += 3) 
+					{
+						if(i) //add padding to last
+							extraPadding = "padding-bottom:10px;";
+						else
+							extraPadding = "";
+						
+						str += "<tr><td style='text-align:left;" + extraPadding + "'>";
 
 
-					if (!_lastConfigGroups[i] || _lastConfigGroups[i] == "") {
-						//no last group
+						if (!_lastConfigGroups[i] || _lastConfigGroups[i] == "") 
+						{
+							//no last group
 
-						if (i == 0) //for "Configured"
-							str += "Last Configured by FSM: ";
-						else	//for "Started"
-							str += "Last Started by FSM: ";
+							if (i == 0) //for "Configured"
+								str += "Last Configured by FSM: ";
+							else	//for "Started"
+								str += "Last Started by FSM: ";
+						}
+						else 
+						{
+							//there is a last group, so show time
+
+							if (i == 0) //for "Configured"
+								str += "Last Configured ";
+							else	//for "Started"
+								str += "Last Started ";
+
+							str += "<label style='font-size:10px;white-space:nowrap;'>[" +
+									_lastConfigGroups[i + 2] + "]</label>: ";
+						}
+
+						str += "</td><td style='text-align:left; padding-left:20px;" + extraPadding + "'>";
+
+						if (!_lastConfigGroups[i] || _lastConfigGroups[i] == "") 
+						{
+							str += "None";
+						}
+						else 
+						{
+							str += "<a href='#' onclick='setupSpecificTableGroup(\"" +
+									_lastConfigGroups[i] +
+									"\",\"" + _lastConfigGroups[i + 1] + "\"); return false;'>";
+							str += _lastConfigGroups[i] + " (" + _lastConfigGroups[i + 1] + ")</a>";
+						}
+
+						str += "</td><td style='text-align:left; padding-left:20px;" + extraPadding + "'>";
+						str += "<a href='#' onclick='setupTableGroupTreeView(\"" +
+								_lastConfigGroups[i] +
+								"\",\"" +
+								_lastConfigGroups[i + 1] + "\"); return false;'>Tree-view</a>";
+
+						str += "</td></tr>";
 					}
-					else {
-						//there is a last group, so show time
-
-						if (i == 0) //for "Configured"
-							str += "Last Configured ";
-						else	//for "Started"
-							str += "Last Started ";
-
-						str += "<label style='font-size:10px;white-space:nowrap;'>[" +
-							_lastConfigGroups[i + 2] + "]</label>: ";
-					}
-
-					str += "</td><td style='text-align:left; padding-left:20px;'>";
-
-					if (!_lastConfigGroups[i] || _lastConfigGroups[i] == "") {
-						str += "None";
-					}
-					else {
-						str += "<a href='#' onclick='setupSpecificTableGroup(\"" +
-							_lastConfigGroups[i] +
-							"\",\"" + _lastConfigGroups[i + 1] + "\"); return false;'>";
-						str += _lastConfigGroups[i] + " (" + _lastConfigGroups[i + 1] + ")</a>";
-					}
-
-					str += "</td><td style='text-align:left; padding-left:20px;'>";
-					str += "<a href='#' onclick='setupTableGroupTreeView(\"" +
-						_lastConfigGroups[i] +
-						"\",\"" +
-						_lastConfigGroups[i + 1] + "\"); return false;'>Tree-view</a>";
-
-					str += "</td></tr>";
-				}
-
+				}  //end insertLocalLastConfigGroups()
 
 
 				str += "</table>"; //close active groups table
@@ -1176,10 +1216,11 @@
 
 			var el = document.getElementById("display");
 			el.innerHTML = str;
-		}
+		} //end groupAliasesRequestHandler()
 
 		//tableGroupsRequestHandler ~
-		function tableGroupsRequestHandler(req, anchorTarget) {
+		function tableGroupsRequestHandler(req, anchorTarget) 
+		{
 			var err = DesktopContent.getXMLValue(req, "Error");
 			if (err) {
 				Debug.log(err, Debug.HIGH_PRIORITY);
@@ -1294,22 +1335,26 @@
 
 				var filterOutGroup;
 
-				for (var i = 0; i < groupNames.length; ++i) {
+				for (var i = 0; i < groupNames.length; ++i) 
+				{
 					groupName = groupNames[i].getAttribute("value");
 					key = keys[i].getAttribute("value");
 
 					filterOutGroup = false;
 					//filter based on selected filter index
 					if (_groupViewFilterIndex >= 0)
-						for (var j = 0; j < typeName.length; ++j) {
+						for (var j = 0; j < typeName.length; ++j) 
+						{
 							if (_groupViewFilterIndex == typeFilterIndex[j] &&
-								types[i].getAttribute("value") != typeName[j]) {
+								types[i].getAttribute("value") != typeName[j]) 
+							{
 								filterOutGroup = true;
 								break;
 							}
 						}
 
-					if (filterOutGroup) {
+					if (filterOutGroup) 
+					{
 						Debug.log("Filtering out " + groupName + "_v" + key);
 						continue;
 					}
@@ -1319,9 +1364,11 @@
 					++filteredGroupCount;
 					skipRepeat = false;
 					for (var j = 0; j < msValues.length; ++j)
-						if (msValues[j] == groupName) {
+						if (msValues[j] == groupName)
+						{
 							//only represent single latest group/key
-							if ((key | 0) > (msKeys[j] | 0)) {
+							if ((key | 0) > (msKeys[j] | 0))
+							{
 								msKeys[j] = key; //found new latest key
 								indexToLatest[j] = i; //update latest index
 							}
@@ -1392,7 +1439,8 @@
 		//groupSearchSelectionHandler ~~
 		//	make group search selection handler
 		//	el points to the div of selected element
-		function groupSearchSelectionHandler(el) {
+		function groupSearchSelectionHandler(el) 
+		{
 			var i = MultiSelectBox.getSelectedIndex(el);
 			var selArr = MultiSelectBox.getSelectionArray(el);
 			if (selArr[i]) {
@@ -1425,12 +1473,51 @@
 				el = document.getElementById('msSelectedGroupDiv');
 				el.innerHTML = "";
 			}
-		}
+		} //end groupSearchSelectionHandler()
 
+		//tableSearchSelectionHandler ~~
+		//	make table search selection handler
+		//	el points to the div of selected element
+		function tableSearchSelectionHandler(el) 
+		{
+			var i = MultiSelectBox.getSelectedIndex(el);
+			var selArr = MultiSelectBox.getSelectionArray(el);
+			if (selArr[i]) {
+				Debug.log("Chosen element index:" + i +
+					" value:" + el.innerHTML +
+					" key:" + el.getAttribute("key-value") +
+					" type:" + el.getAttribute("type-value"));
+				var keyArr = el.getAttribute("key-value").split('-');
+
+				_msChosenGroupName = keyArr[keyArr.length - 1];
+				_msChosenGroupKey = keyArr[keyArr.length - 2];
+
+				//copy selected div and show as selected
+				var srcEl = document.getElementById("groupViewGroupDiv-" +
+					_msChosenGroupName + "-" + _msChosenGroupKey);
+				var str = "";
+
+				str += "<b class='bold-header'>";
+				str += "Selected Group: " + _msChosenGroupName;
+				str += "</b><br>";
+				str += srcEl.innerHTML;
+				str += "<br>";
+
+				el = document.getElementById('msSelectedGroupDiv');
+				el.innerHTML = str;
+			}
+			else {
+				_msChosenGroupName = "";
+				_msChosenGroupKey = "";
+				el = document.getElementById('msSelectedGroupDiv');
+				el.innerHTML = "";
+			}
+		} //end tableSearchSelectionHandler()
 
 		//getGroupInfoDisplayString ~~
 		function makeGroupInfoDisplayString(groupName, allKeys, latestKey, latestMembersHdr,
-			backLinkToList) {
+			backLinkToList) 
+		{
 			var str = "";
 
 			str += "<b class='bold-header'>";
@@ -1506,10 +1593,11 @@
 			str += "<hr>";
 
 			return str;
-		}
+		} //end makeGroupInfoDisplayString()
 
 		//gotoSelectedMSGroup ~~
-		function gotoSelectedMSGroup() {
+		function gotoSelectedMSGroup() 
+		{
 			if (_msChosenGroupName == "" || _msChosenGroupKey == "") {
 				Debug.log("Must first select a Group name from the select box.",
 					Debug.HIGH_PRIORITY);
@@ -1517,11 +1605,12 @@
 			}
 			setupSpecificTableGroup(_msChosenGroupName, _msChosenGroupKey,
 				"setupGroupViewMode()");
-		}
+		} //end gotoSelectedMSGroup()
 
 
 		//tableViewRequestHandler ~~
-		function tableViewRequestHandler(req, anchorTarget) {
+		function tableViewRequestHandler(req, anchorTarget) 
+		{
 			var tableNames = req.responseXML.getElementsByTagName("TableName");
 			var tableVersionHdr = req.responseXML.getElementsByTagName("TableVersions");
 
@@ -1535,6 +1624,14 @@
 			var backLinkStr;
 
 			str += "<h3 style='margin-top:-10px'><u>Table View</u></h3>";
+			
+//			str += "<div id='tableSearchDiv' ";
+//			str += "style='margin-top:-20px; height:200px; width:450px;'";
+//			str += ">";
+//			str += "</div>";
+
+			str += "<div id='clearDiv'></div>";
+			
 
 			Debug.log("CfgGUI requestHandler tableNames.length " + tableNames.length);
 			for (var i = 0; i < tableNames.length; ++i) {
@@ -1567,17 +1664,53 @@
 			//Debug.log("CfgGUI requestHandler str " + str);
 			el.innerHTML = str;
 
+//			//////////// make search box - similar to tableGroupsRequestHandler()
+//			{
+//				var noMultiSelect = true; // true or false (false for multiselect functionality) 
+//
+//				var msValues = []; 	//group names for multi-select
+//				var msKeys = []; 	//group keys for multi-select
+//				
+//				
+//				for (var i = 0; i < tableNames.length; ++i) 
+//				{				
+//					msValues.push(tableNames[i].getAttribute("value"));
+//					msKeys.push(i);
+//				}				
+//
+//				//write to a particular div
+//				el = document.getElementById('tableSearchDiv');
+//				MultiSelectBox.createSelectBox(el,
+//						"tableSearch",
+//						"Search and Select a Table:",
+//						msValues, msKeys, msKeys, tableSearchSelectionHandler, noMultiSelect);
+//
+//				MultiSelectBox.initMySelectBoxes();
+//
+//				//if anything is selected from before.. handle as selected
+//				var selArr = MultiSelectBox.getSelectionArray(el);
+//				for (var s in selArr) 
+//				{
+//					if (selArr[s])
+//						tableSearchSelectionHandler(
+//								MultiSelectBox.getSelectionElementByIndex(el, s));
+//				}
+//
+//			}
+			
+
 			//if there is a target to jump to, do it
 			if (anchorTarget) {
 				Debug.log("anchorTarget = " + anchorTarget);
 				jump(anchorTarget);
 			}
-		}
+		} //end tableViewRequestHandler()
 
 
 		//specificGroupRequestHandler ~~
 		//	backLinkStr is defined to call functions one after the other
-		function specificGroupRequestHandler(req, param) {
+		function specificGroupRequestHandler(req, param)
+		{
 
 			//remove all previous buttons
 			var el;
@@ -2012,10 +2145,11 @@
 				Debug.log("anchorTarget = " + anchorTarget);
 				jump(anchorTarget);
 			}
-		} //end specificGroupRequestHandler
+		} //end specificGroupRequestHandler()
 
 		//specificTableRequestHandler
-		function specificTableRequestHandler(req, backLinkStr) {
+		function specificTableRequestHandler(req, backLinkStr, attemptedVersion) 
+		{
 
 			_tableViewBackLinkStr = backLinkStr;
 
@@ -2050,6 +2184,9 @@
 
 			var tableName = DesktopContent.getXMLValue(req, "TableName");
 			var version = DesktopContent.getXMLValue(req, "TableVersion");
+			var allowIllegalColumns = DesktopContent.getXMLValue(req, "allowIllegalColumns");
+			if(allowIllegalColumns == "1")
+				showSaveButtons = true; //allow user to save loose column loaded version
 
 			var existingNames = req.responseXML.getElementsByTagName("ExistingTableNames");
 			_tableLinkDropdownChoices = [];
@@ -2106,9 +2243,13 @@
 
 			//reset globals
 
-			if (_currentConfigName != tableName) //clear  cached comment
+			if (_currentTableName != tableName) //clear  cached comment
+			{
 				_cachedTableComment = "";
-			_currentConfigName = tableName;
+				_associatedGroupName = "";
+				_associatedGroupKey = -1;
+			}
+			_currentTableName = tableName;
 			_version = version;
 			_editingCell = false;
 			_editingCellEl = 0;
@@ -2118,10 +2259,9 @@
 			var str = "";
 			str += "<div style='display:none'>Specific Table View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
 
-			_associatedGroupName = "";
-			_associatedGroupKey = -1;
 
-			if (backLinkStr && backLinkStr != "") {
+			if (backLinkStr && backLinkStr != "")
+			{
 				//Note: be careful with the source of backLinkStr.. don't use both quote styles!
 				if (backLinkStr.indexOf("'") >= 0)
 					backLinkStr = backLinkStr.replace(/'/g, "\\\"");
@@ -2135,8 +2275,8 @@
 				var backLinkStrSplit = backLinkStr.split('"');
 
 				//take a clue from backlink about associated group 
-				if (backLinkStr.indexOf("setupTableViewMode") < 0 && //attempt to identify a group source
-					backLinkStr.indexOf("setupSpecificTable") < 0 &&
+				if (backLinkStr.indexOf("setupTableViewMode(") < 0 && //attempt to identify a group source
+					backLinkStr.indexOf("setupSpecificTable(") < 0 &&
 					backLinkStrSplit.length > 3) {
 					_associatedGroupName = backLinkStrSplit[1].split('\\')[0];
 					_associatedGroupKey = backLinkStrSplit[3].split('\\')[0];
@@ -2457,13 +2597,14 @@
 					dispStr.substr(i) + "<br>" + str;
 			}
 			else if (showSaveButtons)
-				versionHasChanged();
+				versionHasChanged(attemptedVersion);
 
 			toggleTableDetails(_showTableDetails);
-		}
+		 } //end specificTableRequestHandler()
 
 		//toggleTableDetails ~~
-		function toggleTableDetails(setVal) {
+		function toggleTableDetails(setVal) 
+		{
 			if (setVal !== undefined)
 				_showTableDetails = setVal;
 			else
@@ -2472,7 +2613,7 @@
 			Debug.log("toggleTableDetails " + _showTableDetails);
 			var el = document.getElementById("tableDetails");
 			el.style.display = _showTableDetails ? "block" : "none";
-		}
+		} //end toggleTableDetails()
 
 		//toggleGroupDetails ~~
 		function toggleGroupDetails(setVal) {
@@ -4435,7 +4576,8 @@
 		}
 
 		//setupTableGroupTreeView ~
-		function setupTableGroupTreeView(tableGroupName, tableGroupKey, backLinkStr) {
+		function setupTableGroupTreeView(tableGroupName, tableGroupKey, backLinkStr) 
+		{
 			if (backLinkStr && backLinkStr != "")
 				treeViewBackLinkStr_ = backLinkStr;
 			else
@@ -4447,12 +4589,16 @@
 				"&depth=1",
 				"startPath=/", treeViewHandler,
 				0, 0, true); //reqIndex, progressHandler, callHandlerOnErr					
-		}
+		} //end setupTableGroupTreeView()
 
 		//activateSystemConfig ~
-		function activateSystemConfig(groupName, groupKey, ignoreWarnings, doneHandler) {
+		function activateSystemConfig(groupName, groupKey, ignoreWarnings, doneHandler) 
+		{
 			document.getElementById("activateConfigWithWarnings").innerHTML = "";
 
+			if(ignoreWarnings)  //firstInit_ should be used to stop the reload of active groups (e.g. in System View) -- for example, after a group activation with warnings ignored
+				firstInit_ = true;
+			
 			DesktopContent.XMLHttpRequest("Request?RequestType=activateTableGroup&groupName=" +
 				groupName + "&groupKey=" + groupKey +
 				(ignoreWarnings ? ("&ignoreWarnings=" + ignoreWarnings) : ""),
@@ -4463,7 +4609,7 @@
 					if (doneHandler !== undefined) doneHandler(req);
 				},
 				0, 0, true); //reqIndex, progressHandler, callHandlerOnErr					
-		}
+		} //end activateSystemConfig()
 
 
 		//versionTrackingHandler ~
@@ -5378,21 +5524,24 @@
 		}
 
 		//configCopyView ~~
-		function configCopyView() {
-			var src = document.getElementById("copyAndMoveRowsSrc").value;
+		function configCopyView(sourceVersion) 
+		{
+			//allow input override of source version
+			var src = sourceVersion?sourceVersion:document.getElementById("copyAndMoveRowsSrc").value;
 			Debug.log("configCopyView src=" + src);
-			Debug.log("configCopyView _currentConfigName=" + _currentConfigName);
+			Debug.log("configCopyView _currentTableName=" + _currentTableName);
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=copyViewToCurrentColumns" +
-				"&tableName=" + _currentConfigName +
+				"&tableName=" + _currentTableName +
 				"&sourceVersion=" + src,
 				"", specificTableRequestHandler,
 				0, 0, true  //reqParam, progressHandler, callHandlerOnErr
 			);
-		}
+		} // end configCopyView()
 
 		//configCopyRow
-		function configCopyRow(deleteSrc) {
+		function configCopyRow(deleteSrc) 
+		{
 			var src = document.getElementById("copyAndMoveRowsSrc").value | 0;
 			var dest = document.getElementById("copyAndMoveRowsDest").value | 0;
 			var srcCount = document.getElementById("copyAndMoveRowsSrcCount").value | 0;
@@ -5585,10 +5734,11 @@
 			}
 
 			////////////done 			
-		}
+		} //end configCopyRow()
 
 		//setupFindAndReplace
-		function setupFindAndReplace() {
+		function setupFindAndReplace()
+		{
 			var el = document.getElementById('copyAndMoveRows');
 			el.innerHTML = ""; //clear the other type of controls
 			el = document.getElementById('findAndReplace');
@@ -5614,7 +5764,7 @@
 				"Find every occurance of &apos;For text...&quot; in the Column(s) specified by &apos;Search in column.&apos;" +
 				"'/>";
 			str += " ";
-			str += "<input type='button' onmouseup='configReplace()' value='Replace' title='" +
+			str += "<input type='button' onmouseup='tableReplace()' value='Replace' title='" +
 				"Replace every occurance of &apos;For text...&quot; in the Column(s) specified by &apos;Search in column&apos; with the string specified in &apos;Replace with...&apos;" +
 				"'/>";
 			str += "&nbsp;&nbsp; or..."
@@ -5759,8 +5909,9 @@
 			versionHasChanged();
 		}
 
-		//configReplace ~~
-		function configReplace() {
+		//tableReplace ~~
+		function tableReplace() 
+		{
 			editCellOK(); //editCellCancel();
 			var target = document.getElementById("findAndReplaceTarget").value;
 			var needle = document.getElementById("findAndReplaceNeedle").value;
@@ -5778,7 +5929,7 @@
 			convertEl.appendChild(document.createTextNode(replaceStr));
 			replaceStr = convertEl.innerHTML; //converted text
 
-			Debug.log("configReplace '" + needle + "' with '" + replaceStr + "' @ " + target);
+			Debug.log("tableReplace '" + needle + "' with '" + replaceStr + "' @ " + target);
 
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");
@@ -5810,9 +5961,10 @@
 			}
 
 			versionHasChanged();
-		}
+		} //end tableReplace()
 
-		function versionHasChanged() {
+		function versionHasChanged(attemptedVersion) 
+		{
 			if (!_versionIsChanged) {
 				_versionIsChanged = true;
 
@@ -5836,7 +5988,18 @@
 					"value='Save Changes as Temporary Version' title='" +
 					"Save the current table view as new temporary version." +
 					"'/>";
+				str += "&nbsp;&nbsp;&nbsp;";
+				str += "<a onclick='setupSpecificTable(\"" + 
+						_currentTableName + "\",\"" +
+						(attemptedVersion?attemptedVersion:_version) + 
+						"\",\"\" /*backlink*/, 1 /*allowIllegalColumns*/); return false' " +
+						"title='Reload " + _currentTableName + "-v" +
+						(attemptedVersion?attemptedVersion:_version) + 
+						" with loose column matching.' " +
+						">" +
+						"Reload v" + attemptedVersion + " with loose column matching</a>";
 				str += "<br><br>";
+
 				newDiv.innerHTML = str;
 
 				//insert a new div before and after table
@@ -5847,7 +6010,7 @@
 				newDiv.innerHTML = "<br>" + str;
 				el.appendChild(newDiv);
 			}
-		}
+		} //end versionHasChanged()
 
 		//treeViewGroupMemberEditMultiSelectHandler ~~
 		//	called when a uid is selected or deselected
@@ -7363,7 +7526,7 @@
 					var controlString;
 
 					if (colType.indexOf("ChildLink-") == 0 && _editingCellElOldValue != "NO_LINK") {
-						var backLinkStr = "setupSpecificTable(\\\"" + _currentConfigName + "\\\",\\\"" +
+						var backLinkStr = "setupSpecificTable(\\\"" + _currentTableName + "\\\",\\\"" +
 							_version + "\\\");";
 
 						var w = _OK_CANCEL_DIALOG_STR.indexOf("width:95px;");
@@ -7793,7 +7956,8 @@
 		} //end popUpGroupViewAliasForm
 
 		//popUpGroupViewAliasFormSubmit ~~
-		function popUpGroupViewAliasFormSubmit(groupName, groupKey) {
+		function popUpGroupViewAliasFormSubmit(groupName, groupKey)
+		{
 			//get group alias
 			var groupAlias;
 			{
@@ -7843,10 +8007,11 @@
 
 
 				}, true); //request return parameters
-		}
+		} //end popUpGroupViewAliasFormSubmit()
 
 		//popUpSaveTreeForm ~~
-		function popUpSaveTreeForm() {
+		function popUpSaveTreeForm() 
+		{
 			Debug.log("CfgGUI popUpSaveTreeForm");
 
 			var str = "";
@@ -8171,11 +8336,12 @@
 
 			document.getElementById("display").appendChild(el); //add element to display div
 			el.style.display = "block";
-		}
+		} //end popUpSaveTreeForm()
 
 		//saveModifiedTree ~~
 		//	ignoreWarnings = true will ignore warnings when saving groups
-		function saveModifiedTree(ignoreWarnings) {
+		function saveModifiedTree(ignoreWarnings)
+		{
 			Debug.log("saveModifiedTree " + (ignoreWarnings ? 1 : 0));
 
 			//for each modified table
@@ -8780,7 +8946,8 @@
 		} //end saveModifiedTree()
 
 		//treeHasChanged ~~
-		function treeHasChanged(reset) {
+		function treeHasChanged(reset) 
+		{
 			if (reset) {
 				treeHasChanged_ = false;
 
@@ -8827,11 +8994,12 @@
 			newDiv.setAttribute("id", "treeSaveButton");
 			newDiv.innerHTML = "<br>" + str;
 			el.appendChild(newDiv);
-		}
+		} //end treeHasChanged()
 
 
 		//editTreeNodeOK
-		function editTreeNodeOK() {
+		function editTreeNodeOK() 
+		{
 			try {
 				if (!_editingCellEl) return;
 				Debug.log("editTreeNodeOK type " + treeEditingNodeType_);
@@ -11687,7 +11855,7 @@
 			str += "Are you sure you want to clear all " +
 				(clearTemporary ? "temporary" : "cached") +
 				" versions of <b>" +
-				_currentConfigName + "</b>?<br>";
+				_currentTableName + "</b>?<br>";
 			str += "</div>";
 
 			//Note: be careful with the source of backLinkStr.. don't use both quote styles!
@@ -11697,7 +11865,7 @@
 				backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 
 			var refreshLinkStr = "setupSpecificTable(\"" +
-				_currentConfigName + "\",\"" +
+				_currentTableName + "\",\"" +
 				_version + "\",\"" + backLinkStr + "\");";
 
 			var clearLinkStr;
@@ -11705,7 +11873,7 @@
 			if (clearTemporary)
 				clearLinkStr = "DesktopContent.XMLHttpRequest(" +
 					"\"Request?RequestType=clearTableTemporaryVersions" +
-					"&tableName=" + _currentConfigName + "\",\"\"," +
+					"&tableName=" + _currentTableName + "\",\"\"," +
 					" function(req) { " +
 					refreshLinkStr +
 					"}" + //end handler function					
@@ -11713,7 +11881,7 @@
 			else
 				clearLinkStr = "DesktopContent.XMLHttpRequest(" +
 					"\"Request?RequestType=clearTableCachedVersions" +
-					"&tableName=" + _currentConfigName + "\",\"\"," +
+					"&tableName=" + _currentTableName + "\",\"\"," +
 					" function(req) { " +
 					refreshLinkStr +
 					"}" + //end handler function					
@@ -11725,7 +11893,7 @@
 				(clearTemporary ? "Temporary" : "Cached") +
 				" Versions!' title='" +
 				"Permanently delete all the temporary versions associated with " +
-				_currentConfigName + "." +
+				_currentTableName + "." +
 				"'/>";
 			el.innerHTML = str;
 
@@ -11771,7 +11939,7 @@
 					"<br>";
 
 				str += "Please enter a comment describing this new version of <b>" +
-					_currentConfigName + "</b>:<br>";
+					_currentTableName + "</b>:<br>";
 				str += "<textarea id='popUpDialog-comment' rows='4' cols='50' style='width:417px;height:68px;'>";
 				var comment = _cachedTableComment == "" ? ConfigurationAPI._DEFAULT_COMMENT : _cachedTableComment;
 				str += comment;
@@ -11785,7 +11953,7 @@
 				//					"var el = document.getElementById(" +
 				//					"\"popUpDialog-comment\"); el.value = _cachedTableComment; return false;' " +
 				//					"title='Load the cached comment associated with last persistent version " +
-				//					"of " + _currentConfigName + " that was viewed. " + 
+				//					"of " + _currentTableName + " that was viewed. " + 
 				//					"You will still have a chance to append to the comment.' " +
 				//					">Get cached table comment</a><br><br>"; 
 
@@ -11797,7 +11965,7 @@
 
 
 				//put -1 to gaurantee recognizing as a change
-				var modifiedTables = _currentConfigName + ",-1"; //csv table, temporay version,...
+				var modifiedTables = _currentTableName + ",-1"; //csv table, temporay version,...
 				Debug.log("modifiedTables= " + modifiedTables);
 				//get affected groups
 				//	and save member map to hidden div for Save action
@@ -11806,7 +11974,8 @@
 					"&groupName=" + _associatedGroupName +
 					"&groupKey=" + _associatedGroupKey,
 					"&modifiedTables=" + modifiedTables,
-					function (req) {
+					function (req) 
+					{
 						var err = DesktopContent.getXMLValue(req, "Error");
 						if (err) {
 							Debug.log(err, Debug.HIGH_PRIORITY);
@@ -12401,7 +12570,7 @@
 			str += "<div id='popUpDialog-div'>";
 			str += "Please enter the Alias you would like to assign to version &apos;" +
 				_version + "&apos; of <b>" +
-				_currentConfigName + "</b>:<br><br>";
+				_currentTableName + "</b>:<br><br>";
 			str += "<input type='text' id='popUpDialog-alias' value='" +
 				defaultAlias + "'></input>";
 			str += "</div><br><br>";
@@ -12410,10 +12579,10 @@
 			onmouseupJS += "setVersionAliasInActiveBackbone(" +
 				"document.getElementById(\"popUpDialog-alias\").value" +
 				",\"" +
-				_currentConfigName + "\",\"" +
+				_currentTableName + "\",\"" +
 				_version + "\",0,/*done handler*/ function()" +
 				"{setupSpecificTable(\"" +
-				_currentConfigName + "\",\"" +
+				_currentTableName + "\",\"" +
 				_version + "\");}" +
 				"); ";
 			onmouseupJS += "var el = document.getElementById(" +
@@ -12421,7 +12590,7 @@
 
 			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
 				"value='Assign Alias' title='" +
-				"Assign an Alias to " + _currentConfigName +
+				"Assign an Alias to " + _currentTableName +
 				" version " + _version +
 				" by automatically modifying the active Backbone group." +
 				"'/>";
@@ -13025,7 +13194,7 @@
 				var link = document.createElement("a");
 				link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
 				link.setAttribute("style", "display:none");
-				link.setAttribute("download", _currentConfigName + "-v" +
+				link.setAttribute("download", _currentTableName + "-v" +
 					_version + "_download.csv");
 				document.body.appendChild(link); // Required for FF
 
@@ -13108,7 +13277,7 @@
 			if (temporary) {
 				var reqStr = "Request?RequestType=saveSpecificTable" +
 					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length - _CONFIG_DATA_ROW_OFFSET) +
-					"&tableName=" + _currentConfigName + "&version=" + _version +
+					"&tableName=" + _currentTableName + "&version=" + _version +
 					"&temporary=" + (temporary ? 1 : 0) +
 					"&tableComment=" + comment;
 				Debug.log(dataStr);
@@ -13465,7 +13634,7 @@
 
 			var reqStr = "Request?RequestType=saveSpecificTable" +
 				"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length - _CONFIG_DATA_ROW_OFFSET) +
-				"&tableName=" + _currentConfigName +
+				"&tableName=" + _currentTableName +
 				"&version=" + _version +
 				"&lookForEquivalent=" + "1" +
 				"&temporary=" + (temporary ? 1 : 0) +
@@ -13504,11 +13673,11 @@
 					if (foundEquivalentVersion)
 						Debug.log("Found equivalent version '" + scratchNotice +
 							"' for table '" +
-							_currentConfigName + ".' ", Debug.INFO_PRIORITY);
+							_currentTableName + ".' ", Debug.INFO_PRIORITY);
 					else
 						Debug.log("New persistent version '" + scratchNotice +
 							"' for table '" +
-							_currentConfigName + "' was successfully created.", Debug.INFO_PRIORITY);
+							_currentTableName + "' was successfully created.", Debug.INFO_PRIORITY);
 
 					//handle group handling based on popup options
 					localHandleAffectedGroups(savedVersion);
