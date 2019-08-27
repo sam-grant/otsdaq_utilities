@@ -48,6 +48,7 @@ find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( otsdaq v1_00_00 )
 find_ups_product( artdaq v0_04_02 )
 find_ups_product( artdaq_core v1_00_00 )
+find_ups_product( artdaq_utilities v1_00_00 )
 find_ups_product( art v1_06_00 )
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )
@@ -76,7 +77,7 @@ message("-DMESSAGEFACILITY_HEX_VERSION=0x${MESSAGEFACILITY_MAJOR_VERSION}${MESSA
 add_definitions(-DMESSAGEFACILITY_HEX_VERSION=0x${MESSAGEFACILITY_MAJOR_VERSION}${MESSAGEFACILITY_MINOR_VERSION}${MESSAGEFACILITY_PATCH_VERSION})
 
 # macros for art_dictionary and simple_plugin
-include(ArtDictionary)
+
 include(ArtMake)
 include(BuildPlugins)
 include(CetTest)
