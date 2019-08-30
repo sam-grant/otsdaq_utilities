@@ -61,13 +61,9 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			// fields[MSG].set(
 			//   "Msg", 10, -1);
 			// the message facility contents have changed!
-#if MESSAGEFACILITY_HEX_VERSION >= 0x20201
 			fields[FILE].set("File", 10, -1);
 			fields[LINE].set("Line", 11, -1);
 			fields[MSG].set("Msg", 12, -1);
-#else
-			fields[MSG].set("Msg", 10, -1);
-#endif
 		}
 
 		void set(const std::string& msg, const time_t count)
