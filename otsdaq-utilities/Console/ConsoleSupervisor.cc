@@ -30,9 +30,9 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 	    "/MessageFacilityConfigurations/" \
 	    "QuietForwarder.cfg"
 
-#define CONSOLE_SPECIAL_ERROR std::string("||0|||Error|Console|-1||ConsoleSupervisor|")
+#define CONSOLE_SPECIAL_ERROR std::string("|30-Aug-2019 15:30:17 CDT|0|||Error|Console|-1||ConsoleSupervisor|")
 #define CONSOLE_SPECIAL_WARNING \
-	std::string("||0|||Warning|Console|-1||ConsoleSupervisor|")
+	std::string("|30-Aug-2019 15:30:17 CDT|0|||Warning|Console|-1||ConsoleSupervisor|")
 
 #undef __MF_SUBJECT__
 #define __MF_SUBJECT__ "Console"
@@ -229,7 +229,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			// save the new last sequence ID
 			sourceLastSequenceID[newSourceId] = newSequenceId;
 
-			while(cs->messages_.size() > cs->maxMessageCount_)
+			while(cs->messages_.size() > 0 && cs->messages_.size() > cs->maxMessageCount_)
 			{
 				cs->messages_.erase(cs->messages_.begin());
 			}

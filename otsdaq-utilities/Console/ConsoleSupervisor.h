@@ -37,8 +37,7 @@ class ConsoleSupervisor : public CoreSupervisorBase
 
   private:
 	static void messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs);
-	void        insertMessageRefresh(HttpXmlDocument*   xmldoc,
-	                                 const size_t      lastUpdateCount);
+	void insertMessageRefresh(HttpXmlDocument* xmldoc, const size_t lastUpdateCount);
 
 	// UDP Message Format:
 	// UDPMFMESSAGE|TIMESTAMP|SEQNUM|HOSTNAME|HOSTADDR|SEVERITY|CATEGORY|APPLICATION|PID|ITERATION|MODULE|(FILE|LINE)|MESSAGE
@@ -65,7 +64,7 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			tokenizer                                             tokens(msg, sep);
 			tokenizer::iterator                                   it = tokens.begin();
 
-			// There may be syslog garbage in the first token before the timestamp...
+			   			// There may be syslog garbage in the first token before the timestamp...
 			boost::smatch res;
 			while(it != tokens.end() && !boost::regex_search(*it, res, timestamp_regex_))
 			{
@@ -82,7 +81,6 @@ class ConsoleSupervisor : public CoreSupervisorBase
 				t           = mktime(&tm);
 				tv.tv_sec   = t;
 				tv.tv_usec  = 0;
-
 				auto prevIt = it;
 				try
 				{
@@ -160,7 +158,7 @@ class ConsoleSupervisor : public CoreSupervisorBase
 				message = oss.str();
 			}
 
-			// init fields to position -1 (for unknown)
+			// init fields to position -1 (for unknown)s
 			// NOTE: must be in order of appearance in buffer
 			fields[FieldType::TIMESTAMP].set("Timestamp", 1, std::to_string(tv.tv_sec));
 			fields[FieldType::SEQID].set("SequenceID", 2, std::to_string(seqNum));
@@ -172,6 +170,13 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			fields[FieldType::FILE].set("File", 10, file);
 			fields[FieldType::LINE].set("Line", 11, line);
 			fields[FieldType::MSG].set("Msg", 12, message);
+
+			#if 0
+			for (auto& field : fields) {
+				std::cout << "Field " << field.second.fieldName << ": " << field.second.fieldValue
+				          << std::endl;
+			}
+			#endif
 		}
 
 		std::string getTime() const { return fields[FieldType::TIMESTAMP].fieldValue; }
@@ -185,13 +190,23 @@ class ConsoleSupervisor : public CoreSupervisorBase
 		std::string getSourceID() const { return fields[FieldType::SOURCEID].fieldValue; }
 		uint32_t    getSourceIDAsNumber() const
 		{
-			return std::stoul(fields[FieldType::SOURCEID].fieldValue);
+			auto val = fields[FieldType::SOURCEID].fieldValue;
+			if(val != "")
+			{
+				return std::stoul(val);
+			}
+			return 0;
 		}
 		std::string getSource() const { return fields[FieldType::SOURCE].fieldValue; }
 		std::string getSequenceID() const { return fields[FieldType::SEQID].fieldValue; }
 		size_t      getSequenceIDAsNumber() const
 		{
-			return std::stoull(fields[FieldType::SEQID].fieldValue);
+			auto val = fields[FieldType::SEQID].fieldValue;
+			if(val != "")
+			{
+				return std::stoul(val);
+			}
+			return 0;
 		}
 
 		const size_t getCount() const { return countStamp; }
@@ -199,9 +214,10 @@ class ConsoleSupervisor : public CoreSupervisorBase
 		// define field structure
 		struct FieldStruct
 		{
-			void set(const std::string& fn, const int mc, const std::string& fieldValue)
+			void set(const std::string& fn, const int mc, const std::string& fv)
 			{
 				fieldName   = fn;
+				fieldValue  = fv;
 				markerCount = mc;
 			}
 
