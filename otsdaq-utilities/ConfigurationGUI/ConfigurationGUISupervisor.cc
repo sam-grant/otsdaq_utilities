@@ -6,9 +6,7 @@
 #include "otsdaq-core/TablePlugins/IterateTable.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
-#if MESSAGEFACILITY_HEX_VERSION > 0x20100
 #include <boost/stacktrace.hpp>
-#endif
 
 #include "otsdaq-core/TablePlugins/XDAQContextTable.h"  //for context relaunch
 
