@@ -62,6 +62,8 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			//   "Msg", 10, -1);
 			// the message facility contents have changed!
 #if MESSAGEFACILITY_HEX_VERSION >= 0x20201
+			fields[FILE].set("File", 10, -1);
+			fields[LINE].set("Line", 11, -1);
 			fields[MSG].set("Msg", 12, -1);
 #else
 			fields[MSG].set("Msg", 10, -1);
@@ -106,17 +108,21 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			}
 
 			// debug
-			//			std::cout << ":::::" << msg << "\n";
-			//			for(auto &f: fields)
-			//			{
-			//				std::cout << f.fieldName << ": ";
-			//				std::cout << (char *)&buffer[f.posInString] << std::endl;
-			//			}
+						std::cout << ":::::" << msg << "\n";
+						for(auto &f: fields)
+						{
+							std::cout << f.fieldName << ": ";
+							std::cout << (char *)&buffer[f.posInString] << std::endl;
+						}
 		}
 
 		const char* getMsg() { return (char*)&buffer[fields[MSG].posInString]; }
 		const char* getLabel() { return (char*)&buffer[fields[LABEL].posInString]; }
 		const char* getLevel() { return (char*)&buffer[fields[LEVEL].posInString]; }
+
+		const char* getFile() { return (char*)&buffer[fields[FILE].posInString]; }
+		const char* getLine() { return (char*)&buffer[fields[LINE].posInString]; }
+		
 		const char* getSourceID() { return (char*)&buffer[fields[SOURCEID].posInString]; }
 		const long long getSourceIDAsNumber()
 		{
@@ -167,11 +173,14 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			LABEL,
 			SOURCEID,
 			SOURCE,
+			FILE,
+			LINE,
 			MSG,
 		};
 
 		const int                  BUFFER_SZ = 5000;
-		std::array<FieldStruct, 6> fields;
+		static const int           NUM_OF_FIELDS = 8;
+		std::array<FieldStruct, NUM_OF_FIELDS> fields;
 
 	  private:
 		std::string buffer;
