@@ -26,7 +26,8 @@ using namespace ots;
 #define TABLE_INFO_PATH std::string(__ENV__("TABLE_INFO_PATH")) + "/"
 #define TABLE_INFO_EXT std::string("Info.xml")
 
-#define ARTDAQ_CONFIG_LAYOUTS_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/ConfigurationGUI_artdaqLayouts/"
+#define ARTDAQ_CONFIG_LAYOUTS_PATH \
+	std::string(__ENV__("SERVICE_DATA_PATH")) + "/ConfigurationGUI_artdaqLayouts/"
 
 /*! the XDAQ_INSTANTIATOR_IMPL(ns1::ns2::...) macro needs to be put into the
  * implementation file (.cc) of the XDAQ application */
@@ -51,7 +52,7 @@ ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* st
 
 	init();
 	__SUP_COUT__ << "Constructor complete." << __E__;
-} //end constructor()
+}  // end constructor()
 
 //========================================================================================================================
 ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void) { destroy(); }
@@ -188,7 +189,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//
 	//		---- associated with JavaScript artdaq Config API
 	//	getArtdaqNodes
-    //  loadArtdaqNodeLayout
+	//  loadArtdaqNodeLayout
 	//  saveArtdaqNodeLayout
 	//		---- end associated with JavaScript artdaq Config API
 	//
@@ -644,7 +645,6 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		             << " chunkSize: " << chunkSize << " dataOffset: " << dataOffset
 		             << __E__;
 
-
 		TableVersion                            version;
 		const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo();
 		std::string                             versionAlias;
@@ -978,38 +978,33 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		__SUP_COUTV__(modifiedTables);
 
-		handleGetArtdaqNodeRecordsXML(xmlOut,
-				cfgMgr,
-				modifiedTables);
+		handleGetArtdaqNodeRecordsXML(xmlOut, cfgMgr, modifiedTables);
 	}
 	else if(requestType == "loadArtdaqNodeLayout")
 	{
-		std::string contextGroupName      = CgiDataUtilities::getData(cgiIn, "contextGroupName");
-		std::string contextGroupKey       = CgiDataUtilities::getData(cgiIn, "contextGroupKey");
+		std::string contextGroupName =
+		    CgiDataUtilities::getData(cgiIn, "contextGroupName");
+		std::string contextGroupKey = CgiDataUtilities::getData(cgiIn, "contextGroupKey");
 
 		__SUP_COUTV__(contextGroupName);
 		__SUP_COUTV__(contextGroupKey);
 
-		handleLoadArtdaqNodeLayoutXML(xmlOut,
-				cfgMgr,
-				contextGroupName,
-                TableGroupKey(contextGroupKey));
+		handleLoadArtdaqNodeLayoutXML(
+		    xmlOut, cfgMgr, contextGroupName, TableGroupKey(contextGroupKey));
 	}
 	else if(requestType == "saveArtdaqNodeLayout")
 	{
-		std::string layout      	  	  = CgiDataUtilities::postData(cgiIn, "layout");
-		std::string contextGroupName      = CgiDataUtilities::getData(cgiIn, "contextGroupName");
-		std::string contextGroupKey       = CgiDataUtilities::getData(cgiIn, "contextGroupKey");
+		std::string layout = CgiDataUtilities::postData(cgiIn, "layout");
+		std::string contextGroupName =
+		    CgiDataUtilities::getData(cgiIn, "contextGroupName");
+		std::string contextGroupKey = CgiDataUtilities::getData(cgiIn, "contextGroupKey");
 
 		__SUP_COUTV__(layout);
 		__SUP_COUTV__(contextGroupName);
 		__SUP_COUTV__(contextGroupKey);
 
-		handleSaveArtdaqNodeLayoutXML(xmlOut,
-				cfgMgr,
-				layout,
-				contextGroupName,
-                TableGroupKey(contextGroupKey));
+		handleSaveArtdaqNodeLayoutXML(
+		    xmlOut, cfgMgr, layout, contextGroupName, TableGroupKey(contextGroupKey));
 	}
 	else if(requestType == "getAffectedActiveGroups")
 	{
@@ -1097,21 +1092,19 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			//	then only print errors, do not add to xml
 
 			cfgMgr->activateTableGroup(
-			    groupName,
-			    TableGroupKey(groupKey),
-				&accumulatedErrors);
+			    groupName, TableGroupKey(groupKey), &accumulatedErrors);
 
 			if(accumulatedErrors != "")
 			{
 				if(!ignoreWarnings)
 				{
-					__SS__ << "Throwing exception on accumulated errors: " <<
-							accumulatedErrors << __E__;
+					__SS__ << "Throwing exception on accumulated errors: "
+					       << accumulatedErrors << __E__;
 					__SS_ONLY_THROW__;
 				}
-				//else just print
-				__COUT_WARN__ << "Ignoring warnings so ignoring this error:" <<
-						accumulatedErrors << __E__;
+				// else just print
+				__COUT_WARN__ << "Ignoring warnings so ignoring this error:"
+				              << accumulatedErrors << __E__;
 				__COUT_WARN__ << "Done ignoring the above error(s)." << __E__;
 			}
 		}
@@ -1733,7 +1726,7 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		//		allTableInfo.at(activePair.first).tablePtr_->getView().getVersion() <<
 		//__E__;
 	}
-} //end setupActiveTablesXML()
+}  // end setupActiveTablesXML()
 catch(std::runtime_error& e)
 {
 	__SUP_SS__ << ("Error setting up active tables!\n\n" + std::string(e.what()))
@@ -1746,8 +1739,8 @@ catch(...)
 	__SUP_SS__ << ("Error setting up active tables!\n\n") << __E__;
 	__SUP_COUT_ERR__ << "\n" << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
-	throw; //throw to get info from special errors at a parent level
-} //end setupActiveTablesXML() throw
+	throw;  // throw to get info from special errors at a parent level
+}  // end setupActiveTablesXML() throw
 
 //========================================================================================================================
 // handleFillCreateTreeNodeRecordsXML
@@ -2054,7 +2047,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
-} //end handleFillDeleteTreeNodeRecordsXML()
+}  // end handleFillDeleteTreeNodeRecordsXML()
 
 //========================================================================================================================
 // handleFillSetTreeNodeFieldValuesXML
@@ -2635,24 +2628,24 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 		// loop through each field and get unique values among records
 		{
 			ConfigurationTree startNode = cfgMgr->getNode(startPath);
-			std::string fieldGroupIDChildLinkIndex;
+			std::string       fieldGroupIDChildLinkIndex;
 			for(auto& field : fieldsToGet)
 			{
 				__SUP_COUTV__(field);
 
 				DOMElement* parentEl = xmlOut.addTextElementToData("field", field);
 
-				//if groupID field, give child link index
+				// if groupID field, give child link index
 				//	this can be used to pre-select particular group(s)
 
 				// use set to force sorted unique values
 				std::set<std::string /*unique-values*/> uniqueValues =
-						startNode.getUniqueValuesForField(records, field,
-								&fieldGroupIDChildLinkIndex);
+				    startNode.getUniqueValuesForField(
+				        records, field, &fieldGroupIDChildLinkIndex);
 
 				if(fieldGroupIDChildLinkIndex != "")
-					xmlOut.addTextElementToParent("childLinkIndex",
-							fieldGroupIDChildLinkIndex, parentEl);
+					xmlOut.addTextElementToParent(
+					    "childLinkIndex", fieldGroupIDChildLinkIndex, parentEl);
 
 				for(auto& uniqueValue : uniqueValues)
 				{
@@ -2743,19 +2736,18 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 	std::string accumulatedErrors = "";
 	try
 	{
-		setupActiveTablesXML(
-		    xmlOut,
-		    cfgMgr,
-		    groupName,
-		    groupKey,
-		    modifiedTables,
-		    (startPath == "/"),  // refreshAll, if at root node, reload all
-		                         // tables so that partially loaded tables are
-		                         // not allowed
-		    (startPath == "/"),  // get group info
-		    &memberMap,          // get group member map
-		    true,                // output active tables (default)
-		    &accumulatedErrors   // accumulate errors
+		setupActiveTablesXML(xmlOut,
+		                     cfgMgr,
+		                     groupName,
+		                     groupKey,
+		                     modifiedTables,
+		                     (startPath == "/"),  // refreshAll, if at root node, reload
+		                                          // all tables so that partially loaded
+		                                          // tables are not allowed
+		                     (startPath == "/"),  // get group info
+		                     &memberMap,          // get group member map
+		                     true,                // output active tables (default)
+		                     &accumulatedErrors   // accumulate errors
 		);
 	}
 	catch(const std::runtime_error& e)
@@ -2776,8 +2768,8 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 		__SUP_COUT__ << "Active tables are setup. Warning string: '" << accumulatedErrors
 		             << "'" << __E__;
 
-		__SUP_COUT__ << "Active table versions: " <<
-				StringMacros::mapToString(cfgMgr->getActiveVersions()) << __E__;
+		__SUP_COUT__ << "Active table versions: "
+		             << StringMacros::mapToString(cfgMgr->getActiveVersions()) << __E__;
 	}
 	else
 		__SUP_COUT__ << "Active tables are setup. No issues found." << __E__;
@@ -4749,10 +4741,10 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		xmlOut.addTextElementToData("allowIllegalColumns", "1");
 
 	const std::map<std::string, TableInfo>&
-		allTableInfo =  // if allowIllegalColumns, then also refresh
-		cfgMgr->getAllTableInfo(allowIllegalColumns,
-								allowIllegalColumns ? &accumulatedErrors : 0,
-								tableName);  // filter errors by tableName
+	    allTableInfo =  // if allowIllegalColumns, then also refresh
+	    cfgMgr->getAllTableInfo(allowIllegalColumns,
+	                            allowIllegalColumns ? &accumulatedErrors : 0,
+	                            tableName);  // filter errors by tableName
 
 	TableBase* table = cfgMgr->getTableByName(tableName);
 
@@ -4840,11 +4832,16 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	{
 		try
 		{
-			//locally accumulate 'manageable' errors getting the version to avoid reverting to mockup
+			// locally accumulate 'manageable' errors getting the version to avoid
+			// reverting to mockup
 			std::string localAccumulatedErrors = "";
-			cfgViewPtr = cfgMgr->getVersionedTableByName(tableName, version,
-					allowIllegalColumns /*looseColumnMatching*/,
-					&localAccumulatedErrors)->getViewP();
+			cfgViewPtr =
+			    cfgMgr
+			        ->getVersionedTableByName(tableName,
+			                                  version,
+			                                  allowIllegalColumns /*looseColumnMatching*/,
+			                                  &localAccumulatedErrors)
+			        ->getViewP();
 
 			if(localAccumulatedErrors != "")
 				xmlOut.addTextElementToData("Error", localAccumulatedErrors);
@@ -6669,7 +6666,7 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument&       
 		    aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT)
 		        .getValueAsString());
 	}
-} // end handleVersionAliasesXML()
+}  // end handleVersionAliasesXML()
 
 //========================================================================================================================
 //	handleGetTableGroupTypeXML
@@ -6931,7 +6928,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 
 		}  // end other key loop
 	}      // end primary group loop
-} //end handleTableGroupsXML()
+}  // end handleTableGroupsXML()
 
 //========================================================================================================================
 //	handleTablesXML
@@ -7017,8 +7014,7 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 		    "Error",
 		    std::string("Column errors were allowed for this request, ") +
 		        "but please note the following errors:\n" + accumulatedErrors);
-} //end handleTablesXML()
-
+}  // end handleTablesXML()
 
 //========================================================================================================================
 // handleGetArtdaqNodeRecordsXML
@@ -7037,57 +7033,60 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 	//	setup active tables based on active groups and modified tables
 	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
 
-	const XDAQContextTable* contextTable =
-	    cfgMgr->__GET_CONFIG__(XDAQContextTable);
+	const XDAQContextTable* contextTable = cfgMgr->__GET_CONFIG__(XDAQContextTable);
 
-	//for each artdaq context, output all artdaq apps
-		//call individual tables (Reader, Builder, Aggregator)
-		//for further details (e.g. Aggregator->isDispatcher()...)
+	// for each artdaq context, output all artdaq apps
+	// call individual tables (Reader, Builder, DataLogger, Dispatcher)
+	// for further details (e.g. Dispatcher->isDispatcher()...)
 
-	std::vector<const XDAQContextTable::XDAQContext*> artdaqContexts[] =
-		{
-			contextTable->getBoardReaderContexts(),
-			contextTable->getEventBuilderContexts(),
-			contextTable->getAggregatorContexts()
-		};
+	std::vector<const XDAQContextTable::XDAQContext*> artdaqContexts[] = {
+	    contextTable->getBoardReaderContexts(),
+	    contextTable->getEventBuilderContexts(),
+	    contextTable->getDataLoggerContexts(),
+	    contextTable->getDispatcherContexts()};
 
 	std::string typeString;
-	for(unsigned int i=0;i<3 /*context type count*/;++i)
+	for(unsigned int i = 0; i < 4 /*context type count*/; ++i)
 	{
-		typeString = i == 0? "reader" :
-				(i == 1? "builder" :
-						"aggregator");
+		switch(i)
+		{
+		case 0:
+			typeString = "reader";
+			break;
+		case 1:
+			typeString = "builder";
+			break;
+		case 2:
+			typeString = "datalogger";
+			break;
+		case 3:
+			typeString = "dispatcher";
+			break;
+		}
 
 		__COUT__ << typeString << " size = " << artdaqContexts[i].size() << __E__;
 
-		for(auto& artdaqContext:artdaqContexts[i])
+		for(auto& artdaqContext : artdaqContexts[i])
 		{
 			__SUP_COUTV__(artdaqContext->contextUID_);
 			__SUP_COUTV__(artdaqContext->applications_.size());
 
-			for(auto& artdaqApp:artdaqContext->applications_)
+			for(auto& artdaqApp : artdaqContext->applications_)
 			{
 				__SUP_COUTV__(artdaqApp.applicationUID_);
 
-				xmlOut.addTextElementToData(
-						typeString,
-						artdaqApp.applicationUID_
-					);
-				xmlOut.addTextElementToData(
-						typeString + "-contextAddress",
-						artdaqContext->address_
-					);
-				xmlOut.addTextElementToData(
-						typeString + "-contextPort",
-						std::to_string(artdaqContext->port_)
-					);
-			} //end artdaq app loop
-		} //end artdaq context loop
-	} //end artdaq type loop
+				xmlOut.addTextElementToData(typeString, artdaqApp.applicationUID_);
+				xmlOut.addTextElementToData(typeString + "-contextAddress",
+				                            artdaqContext->address_);
+				xmlOut.addTextElementToData(typeString + "-contextPort",
+				                            std::to_string(artdaqContext->port_));
+			}  // end artdaq app loop
+		}      // end artdaq context loop
+	}          // end artdaq type loop
 
 	__COUT__ << "Done getting artdaq nodes." << __E__;
 
-} //end handleGetArtdaqNodeRecordsXML()
+}  // end handleGetArtdaqNodeRecordsXML()
 
 //========================================================================================================================
 // handleLoadArtdaqNodeLayoutXML
@@ -7099,91 +7098,75 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
-    const std::string&      contextGroupName 	/* = "" */,
-    const TableGroupKey&    contextGroupKey 	/* = INVALID */)
+    const std::string&      contextGroupName /* = "" */,
+    const TableGroupKey&    contextGroupKey /* = INVALID */)
 {
 	bool usingActiveGroups = (contextGroupName == "" || contextGroupKey.isInvalid());
 
-	const std::string& finalContextGroupName = usingActiveGroups?
-			cfgMgr->getActiveGroupName(
-							ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT):
-							contextGroupName;
-	const TableGroupKey& finalContextGroupKey = usingActiveGroups?
-			cfgMgr->getActiveGroupKey(
-							ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT):
-							contextGroupKey;
+	const std::string& finalContextGroupName =
+	    usingActiveGroups
+	        ? cfgMgr->getActiveGroupName(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        : contextGroupName;
+	const TableGroupKey& finalContextGroupKey =
+	    usingActiveGroups
+	        ? cfgMgr->getActiveGroupKey(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        : contextGroupKey;
 
 	std::stringstream layoutPath;
 	layoutPath << ARTDAQ_CONFIG_LAYOUTS_PATH << finalContextGroupName << "_"
-			<< finalContextGroupKey << ".dat";
+	           << finalContextGroupKey << ".dat";
 	__SUP_COUTV__(layoutPath.str());
 
-	FILE *fp = fopen(layoutPath.str().c_str(),"r");
+	FILE* fp = fopen(layoutPath.str().c_str(), "r");
 	if(!fp)
 	{
-		__SUP_COUT__ << "Layout file not found for '" <<
-				finalContextGroupName << "(" << finalContextGroupKey << ")'" << __E__;
+		__SUP_COUT__ << "Layout file not found for '" << finalContextGroupName << "("
+		             << finalContextGroupKey << ")'" << __E__;
 		return;
 	}
 
-
-	//file format is line by line
+	// file format is line by line
 	// line 0 -- grid: <rows> <cols>
 	// line 1-N -- node: <type> <name> <x-grid> <y-grid>
 
 	const size_t maxLineSz = 1000;
-	char line[maxLineSz];
-	if(!fgets(line,maxLineSz,fp)) {fclose(fp); return;}
+	char         line[maxLineSz];
+	if(!fgets(line, maxLineSz, fp))
+	{
+		fclose(fp);
+		return;
+	}
 	else
 	{
-		//extract grid
+		// extract grid
 
 		unsigned int rows, cols;
 
-		sscanf(line,"%u %u",&rows,&cols);
+		sscanf(line, "%u %u", &rows, &cols);
 
 		__COUT__ << "Grid rows,cols = " << rows << "," << cols << __E__;
 
-		xmlOut.addTextElementToData(
-				"grid-rows",
-				std::to_string(rows)
-		);
-		xmlOut.addTextElementToData(
-				"grid-cols",
-				std::to_string(cols)
-		);
+		xmlOut.addTextElementToData("grid-rows", std::to_string(rows));
+		xmlOut.addTextElementToData("grid-cols", std::to_string(cols));
 	}
 
-	char name[maxLineSz];
-	char type[maxLineSz];
-	unsigned int x,y;
-	while(fgets(line,maxLineSz,fp))
+	char         name[maxLineSz];
+	char         type[maxLineSz];
+	unsigned int x, y;
+	while(fgets(line, maxLineSz, fp))
 	{
-		//extract node
-		sscanf(line,"%s %s %u %u",type,name,&x,&y);
+		// extract node
+		sscanf(line, "%s %s %u %u", type, name, &x, &y);
 
-		xmlOut.addTextElementToData(
-				"node-type",
-				type
-		);
-		xmlOut.addTextElementToData(
-				"node-name",
-				name
-		);
-		xmlOut.addTextElementToData(
-				"node-x",
-				std::to_string(x)
-		);
-		xmlOut.addTextElementToData(
-				"node-y",
-				std::to_string(y)
-		);
-	} //end node extraction loop
-
+		xmlOut.addTextElementToData("node-type", type);
+		xmlOut.addTextElementToData("node-name", name);
+		xmlOut.addTextElementToData("node-x", std::to_string(x));
+		xmlOut.addTextElementToData("node-y", std::to_string(y));
+	}  // end node extraction loop
 
 	fclose(fp);
 
-} //end handleLoadArtdaqNodeLayoutXML()
+}  // end handleLoadArtdaqNodeLayoutXML()
 
 //========================================================================================================================
 // handleSaveArtdaqNodeLayoutXML
@@ -7195,62 +7178,63 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
-	const std::string&		layoutString,
+    const std::string&      layoutString,
     const std::string&      contextGroupName,
     const TableGroupKey&    contextGroupKey)
 {
 	bool usingActiveGroups = (contextGroupName == "" || contextGroupKey.isInvalid());
 
-	const std::string& finalContextGroupName = usingActiveGroups?
-			cfgMgr->getActiveGroupName(
-					ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT):
-					contextGroupName;
-	const TableGroupKey& finalContextGroupKey = usingActiveGroups?
-			cfgMgr->getActiveGroupKey(
-					ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT):
-					contextGroupKey;
+	const std::string& finalContextGroupName =
+	    usingActiveGroups
+	        ? cfgMgr->getActiveGroupName(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        : contextGroupName;
+	const TableGroupKey& finalContextGroupKey =
+	    usingActiveGroups
+	        ? cfgMgr->getActiveGroupKey(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        : contextGroupKey;
 
 	__SUP_COUTV__(layoutString);
 
 	std::stringstream layoutPath;
 	layoutPath << ARTDAQ_CONFIG_LAYOUTS_PATH << finalContextGroupName << "_"
-			<< finalContextGroupKey << ".dat";
+	           << finalContextGroupKey << ".dat";
 	__SUP_COUTV__(layoutPath.str());
 
-
-	std::vector<std::string> fields =
-			StringMacros::getVectorFromString(layoutString);
+	std::vector<std::string> fields = StringMacros::getVectorFromString(layoutString);
 	__SUP_COUTV__(StringMacros::vectorToString(fields));
 
-	if(fields.size() < 2 || (fields.size()-2)%4 != 0)
+	if(fields.size() < 2 || (fields.size() - 2) % 4 != 0)
 	{
-		__SUP_SS__ << "Invalid layout string fields size of " <<
-				fields.size() << __E__;
+		__SUP_SS__ << "Invalid layout string fields size of " << fields.size() << __E__;
 		__SUP_SS_THROW__;
 	}
 
-	FILE *fp = fopen(layoutPath.str().c_str(),"w");
+	FILE* fp = fopen(layoutPath.str().c_str(), "w");
 	if(!fp)
 	{
-		__SUP_SS__ << "Could not open layout file for writing for '" <<
-				finalContextGroupName << "(" << finalContextGroupKey << ")'" << __E__;
+		__SUP_SS__ << "Could not open layout file for writing for '"
+		           << finalContextGroupName << "(" << finalContextGroupKey << ")'"
+		           << __E__;
 		__SUP_SS_THROW__;
 	}
 
-	//match load code at ::handleLoadArtdaqNodeLayoutXML()
+	// match load code at ::handleLoadArtdaqNodeLayoutXML()
 
-	//write grid
-	fprintf(fp,"%s %s\n",fields[0].c_str(),fields[1].c_str());
+	// write grid
+	fprintf(fp, "%s %s\n", fields[0].c_str(), fields[1].c_str());
 
-	//write nodes
-	for(unsigned int i=2;i<fields.size();i+=4)
-		fprintf(fp,"%s %s %s %s\n",
-				fields[i+0].c_str(),fields[i+1].c_str(),
-				fields[i+2].c_str(),fields[i+3].c_str());
+	// write nodes
+	for(unsigned int i = 2; i < fields.size(); i += 4)
+		fprintf(fp,
+		        "%s %s %s %s\n",
+		        fields[i + 0].c_str(),
+		        fields[i + 1].c_str(),
+		        fields[i + 2].c_str(),
+		        fields[i + 3].c_str());
 
 	fclose(fp);
 
-} //end handleSaveArtdaqNodeLayoutXML()
+}  // end handleSaveArtdaqNodeLayoutXML()
 
 //========================================================================================================================
 //	testXDAQContext
@@ -7303,7 +7287,8 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	//	for(auto& mapIt : allTableInfo)
 	//	{
 	//		__SUP_COUT__ << "Config Name: " << mapIt.first << __E__;
-	//		__SUP_COUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() <<
+	//		__SUP_COUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size()
+	//<<
 	//__E__;
 	//
 	//		//get version key for the current system table key
@@ -7318,4 +7303,4 @@ void ConfigurationGUISupervisor::testXDAQContext()
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////
-} //end testXDAQContext()
+}  // end testXDAQContext()
