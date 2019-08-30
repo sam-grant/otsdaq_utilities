@@ -774,12 +774,12 @@
 		//getEmptyGridSpot ~~
 		//	return empty x,y grid spot
 		//	handle types differently.. 
-		//	i.e. readers to left, builders in middle, aggregators to right
+		//	i.e. readers to left, builders in middle, dataLoggers and dispatchers to right
 		function getEmptyGridSpot(type)
 		{
 			var x = type == _NODE_TYPE_READER?0:
 					(type == _NODE_TYPE_BUILDER?((_grid.cols/2)|0):
-					_grid.cols-1); //else aggregators on right
+					_grid.cols-1); //else dataLoggers and dispatchers on right
 			var d = type == _NODE_TYPE_READER?1:-1; //direction of search in x
 			var y = 0; //start at top-ish
 			
@@ -796,7 +796,7 @@
 
 					var x = type == _NODE_TYPE_READER?0:
 							(type == _NODE_TYPE_BUILDER?((_grid.cols/2)|0):
-							_grid.cols-1); //else aggregators on right
+							_grid.cols-1); //else dataLoggers and dispatchers on right
 					y = 0;
 				}
 
