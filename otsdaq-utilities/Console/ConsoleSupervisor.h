@@ -108,12 +108,12 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			}
 
 			// debug
-						std::cout << ":::::" << msg << "\n";
-						for(auto &f: fields)
-						{
-							std::cout << f.fieldName << ": ";
-							std::cout << (char *)&buffer[f.posInString] << std::endl;
-						}
+			//			std::cout << ":::::" << msg << "\n";
+			//			for(auto &f: fields)
+			//			{
+			//				std::cout << f.fieldName << ": ";
+			//				std::cout << (char *)&buffer[f.posInString] << std::endl;
+			//			}
 		}
 
 		const char* getMsg() { return (char*)&buffer[fields[MSG].posInString]; }
