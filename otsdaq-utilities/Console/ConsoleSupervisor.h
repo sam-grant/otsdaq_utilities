@@ -160,6 +160,7 @@ class ConsoleSupervisor : public CoreSupervisorBase
 				message = oss.str();
 			}
 
+<<<<<<< HEAD
 			// init fields to position -1 (for unknown)
 			// NOTE: must be in order of appearance in buffer
 			fields[FieldType::TIMESTAMP].set("Timestamp", 1, std::to_string(tv.tv_sec));
@@ -172,6 +173,15 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			fields[FieldType::FILE].set("File", 10, file);
 			fields[FieldType::LINE].set("Line", 11, line);
 			fields[FieldType::MSG].set("Msg", 12, message);
+=======
+			// debug
+			//			std::cout << ":::::" << msg << "\n";
+			//			for(auto &f: fields)
+			//			{
+			//				std::cout << f.fieldName << ": ";
+			//				std::cout << (char *)&buffer[f.posInString] << std::endl;
+			//			}
+>>>>>>> 2a7fb12f45cc8cee0193842c5ca5c23f2485fb97
 		}
 
 		std::string getTime() const { return fields[FieldType::TIMESTAMP].fieldValue; }
