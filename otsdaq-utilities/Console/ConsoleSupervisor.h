@@ -179,7 +179,7 @@ class ConsoleSupervisor : public CoreSupervisorBase
 		};
 
 		const int                  BUFFER_SZ = 5000;
-		const int                  NUM_OF_FIELDS = 8;
+		static const int           NUM_OF_FIELDS = 8;
 		std::array<FieldStruct, NUM_OF_FIELDS> fields;
 
 	  private:
