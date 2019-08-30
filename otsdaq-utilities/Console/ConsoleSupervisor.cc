@@ -30,7 +30,8 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 	    "/MessageFacilityConfigurations/" \
 	    "QuietForwarder.cfg"
 
-#define CONSOLE_SPECIAL_ERROR std::string("|30-Aug-2019 15:30:17 CDT|0|||Error|Console|-1||ConsoleSupervisor|")
+#define CONSOLE_SPECIAL_ERROR \
+	std::string("|30-Aug-2019 15:30:17 CDT|0|||Error|Console|-1||ConsoleSupervisor|")
 #define CONSOLE_SPECIAL_WARNING \
 	std::string("|30-Aug-2019 15:30:17 CDT|0|||Warning|Console|-1||ConsoleSupervisor|")
 
@@ -483,6 +484,9 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 {
 	//__SUP_COUT__ << std::endl;
 
+	if(messages_.size() == 0)
+		return;
+
 	// validate lastUpdateCount
 	if(lastUpdateCount > messages_.back().getCount() && lastUpdateCount != (size_t)-1)
 	{
@@ -504,23 +508,26 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 	std::string requestOutOfSyncMsg;
 
 	size_t refreshReadPointer = 0;
-	while(messages_[refreshReadPointer].getCount() <= lastUpdateCount)
+	if(lastUpdateCount != (size_t)-1)
 	{
-		++refreshReadPointer;
+		while(messages_[refreshReadPointer].getCount() <= lastUpdateCount)
+		{
+			++refreshReadPointer;
+		}
 	}
 
 	// output oldest to new
 	for(; refreshReadPointer < messages_.size(); ++refreshReadPointer)
 	{
-		if(messages_[refreshReadPointer].getCount() < lastUpdateCount)
+		auto msg = messages_[refreshReadPointer];
+		if(msg.getCount() < lastUpdateCount)
 		{
 			if(!requestOutOfSync)  // record out of sync message once only
 			{
 				requestOutOfSync = true;
 				__SS__ << "Request is out of sync! Message count should be more recent "
 				          "than update clock! "
-				       << messages_[refreshReadPointer].getCount() << " < "
-				       << lastUpdateCount << std::endl;
+				       << msg.getCount() << " < " << lastUpdateCount << std::endl;
 				requestOutOfSyncMsg = ss.str();
 			}
 			// assume these messages are new (due to a system restart)
@@ -528,22 +535,18 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 		}
 
 		// for all fields, give value
-		for(auto& field : messages_[refreshReadPointer].fields)
+		for(auto& field : msg.fields)
 		{
-			xmlOut->addTextElementToParent(
-			    "message_" + field.second.fieldName,
-			    field.second.fieldValue,
-			    refreshParent_);
+			xmlOut->addTextElementToParent("message_" + field.second.fieldName,
+			                               field.second.fieldValue,
+			                               refreshParent_);
 		}
 
 		// give timestamp also
-		xmlOut->addTextElementToParent(
-		    "message_Time", messages_[refreshReadPointer].getTime(), refreshParent_);
+		xmlOut->addTextElementToParent("message_Time", msg.getTime(), refreshParent_);
 		// give clock also
 		xmlOut->addTextElementToParent(
-		    "message_Count",
-		    std::to_string(messages_[refreshReadPointer].getCount()),
-		    refreshParent_);
+		    "message_Count", std::to_string(msg.getCount()), refreshParent_);
 	}
 
 	if(requestOutOfSync)  // if request was out of sync, show message
