@@ -39,7 +39,7 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 //========================================================================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
-    : CoreSupervisorBase(stub), messageCount_(0)
+    : CoreSupervisorBase(stub), messageCount_(0), maxMessageCount_(100000)
 {
 	__SUP_COUT__ << "Constructor started." << __E__;
 
