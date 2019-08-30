@@ -39,7 +39,7 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 //========================================================================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
-    : CoreSupervisorBase(stub), writePointer_(0), messageCount_(0)
+    : CoreSupervisorBase(stub), messageCount_(0)
 {
 	__SUP_COUT__ << "Constructor started." << __E__;
 
@@ -132,11 +132,12 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 		       << std::endl;
 		__COUT__ << ss.str();
 
-		cs->messages_[cs->writePointer_].set(CONSOLE_SPECIAL_ERROR + ss.str(),
-		                                     cs->messageCount_++);
+		cs->messages_.emplace_back(CONSOLE_SPECIAL_ERROR + ss.str(), cs->messageCount_++);
 
-		if(++cs->writePointer_ == cs->messages_.size())  // handle wrap-around
-			cs->writePointer_ = 0;
+		if(cs->messages_.size() > cs->maxMessageCount_)
+		{
+			cs->messages_.erase(cs->messages_.begin());
+		}
 
 		return;
 	}
@@ -197,11 +198,11 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			// this guarantees the reading thread can safely access the messages
 			std::lock_guard<std::mutex> lock(cs->messageMutex_);
 
-			cs->messages_[cs->writePointer_].set(buffer, cs->messageCount_++);
+			cs->messages_.emplace_back(buffer, cs->messageCount_++);
 
 			// check if sequence ID is out of order
-			newSourceId   = cs->messages_[cs->writePointer_].getSourceIDAsNumber();
-			newSequenceId = cs->messages_[cs->writePointer_].getSequenceIDAsNumber();
+			newSourceId   = cs->messages_.back().getSourceIDAsNumber();
+			newSequenceId = cs->messages_.back().getSequenceIDAsNumber();
 
 			//__COUT__ << "newSourceId: " << newSourceId << std::endl;
 			//__COUT__ << "newSequenceId: " << newSequenceId << std::endl;
@@ -215,25 +216,23 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			        sourceLastSequenceID[newSourceId] + 1))  // normal sequence case
 			{
 				// missed some messages!
-				__SS__ << "Missed packets from "
-				       << cs->messages_[cs->writePointer_].getSource()
+				__SS__ << "Missed packets from " << cs->messages_.back().getSource()
 				       << "! Sequence IDs " << sourceLastSequenceID[newSourceId] << " to "
 				       << newSequenceId << "." << std::endl;
 				std::cout << ss.str();
 
-				if(++cs->writePointer_ == cs->messages_.size())  // handle wrap-around
-					cs->writePointer_ = 0;
-
 				// generate special message to indicate missed packets
-				cs->messages_[cs->writePointer_].set(CONSOLE_SPECIAL_WARNING + ss.str(),
-				                                     cs->messageCount_++);
+				cs->messages_.emplace_back(CONSOLE_SPECIAL_WARNING + ss.str(),
+				                           cs->messageCount_++);
 			}
 
 			// save the new last sequence ID
 			sourceLastSequenceID[newSourceId] = newSequenceId;
 
-			if(++cs->writePointer_ == cs->messages_.size())  // handle wrap-around
-				cs->writePointer_ = 0;
+			while(cs->messages_.size() > cs->maxMessageCount_)
+			{
+				cs->messages_.erase(cs->messages_.begin());
+			}
 		}
 		else
 		{
@@ -336,27 +335,21 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	{
 		// lindex of -1 means first time and user just gets update lcount and lindex
 		std::string lastUpdateCountStr = CgiDataUtilities::postData(cgiIn, "lcount");
-		std::string lastUpdateIndexStr = CgiDataUtilities::postData(cgiIn, "lindex");
 
-		if(lastUpdateCountStr == "" || lastUpdateIndexStr == "")
+		if(lastUpdateCountStr == "")
 		{
 			__SUP_COUT_ERR__ << "Invalid Parameters! lastUpdateCount="
-			                 << lastUpdateCountStr
-			                 << ", lastUpdateIndex=" << lastUpdateIndexStr << std::endl;
+			                 << lastUpdateCountStr << std::endl;
 			xmlOut.addTextElementToData("Error",
 			                            "Error - Invalid parameters for GetConsoleMsgs.");
 			return;
 		}
 
-		clock_t lastUpdateCount;
-		sscanf(lastUpdateCountStr.c_str(), "%ld", &lastUpdateCount);
+		size_t lastUpdateCount = std::stoull(lastUpdateCountStr);
 
-		unsigned int lastUpdateIndex;
-		sscanf(lastUpdateIndexStr.c_str(), "%u", &lastUpdateIndex);
-		//		__SUP_COUT__ << "lastUpdateCount=" << lastUpdateCount <<
-		//				", lastUpdateIndex=" << lastUpdateIndex << std::endl;
+		//		__SUP_COUT__ << "lastUpdateCount=" << lastUpdateCount << std::endl;
 
-		insertMessageRefresh(&xmlOut, lastUpdateCount, lastUpdateIndex);
+		insertMessageRefresh(&xmlOut, lastUpdateCount);
 	}
 	else if(requestType == "SaveUserPreferences")
 	{
@@ -485,17 +478,16 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 //
 //	NOTE: Uses std::mutex to avoid conflict with writing thread. (this is the reading
 // thread)
-void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument*   xmlOut,
-                                             const time_t       lastUpdateCount,
-                                             const unsigned int lastUpdateIndex)
+void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
+                                             const size_t     lastUpdateCount)
 {
 	//__SUP_COUT__ << std::endl;
 
-	// validate lastUpdateIndex
-	if(lastUpdateIndex > messages_.size() && lastUpdateIndex != (unsigned int)-1)
+	// validate lastUpdateCount
+	if(lastUpdateCount > messages_.back().getCount() && lastUpdateCount != (size_t)-1)
 	{
-		__SS__ << "Invalid lastUpdateIndex: " << lastUpdateIndex
-		       << " messagesArray size = " << messages_.size() << std::endl;
+		__SS__ << "Invalid lastUpdateCount: " << lastUpdateCount
+		       << " messagesArray size = " << messages_.back().getCount() << std::endl;
 		__SS_THROW__;
 	}
 
@@ -503,62 +495,31 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument*   xmlOut,
 	// this guarantees the reading thread can safely access the messages
 	std::lock_guard<std::mutex> lock(messageMutex_);
 
-	// newest available read pointer is defined as always one behind writePointer_
-	refreshReadPointer_ = (writePointer_ + messages_.size() - 1) % messages_.size();
-
-	sprintf(refreshTempStr_, "%lu", messages_[refreshReadPointer_].getCount());
-	xmlOut->addTextElementToData("last_update_count", refreshTempStr_);
-	sprintf(refreshTempStr_, "%u", refreshReadPointer_);
-	xmlOut->addTextElementToData("last_update_index", refreshTempStr_);
-
-	if(!messages_[refreshReadPointer_].getTime())  // if no data, then no data
-		return;
-
-	// else, send all messages since last_update_count, from
-	// last_update_index(refreshReadPointer_) on
-	if(lastUpdateIndex != (unsigned int)-1 &&  // if not first time, and index-count are
-	                                           // valid then start at next message
-	   messages_[lastUpdateIndex].getCount() == lastUpdateCount)
-		refreshReadPointer_ = (lastUpdateIndex + 1) % messages_.size();
-	else if(messages_[writePointer_]
-	            .getTime())  // check that writePointer_ message has
-	                         // been initialized, therefore has wrapped
-	                         // around at least once already
-	{
-		// This means we have had many messages and that some were missed since last
-		// update 	(give as many messages as we can!)
-		xmlOut->addTextElementToData("message_overflow", "1");
-		__SUP_COUT__ << "Overflow was detected!" << std::endl;
-		refreshReadPointer_ = (writePointer_ + 1) % messages_.size();
-	}
-	else  // user does not have valid index, and writePointer_ has not wrapped around, so
-	      // give all new messages
-		refreshReadPointer_ = 0;
-
-	//	__SUP_COUT__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
-	//	__SUP_COUT__ << "lastUpdateCount: " << lastUpdateCount << std::endl;
-	//	__SUP_COUT__ << "writePointer_: " << writePointer_ << std::endl;
-
-	// return anything from refreshReadPointer_ to writePointer_
-	// all should have a clock greater than lastUpdateClock
+	xmlOut->addTextElementToData("last_update_count",
+	                             std::to_string(messages_.back().getCount()));
 
 	refreshParent_ = xmlOut->addTextElementToData("messages", "");
 
 	bool        requestOutOfSync = false;
 	std::string requestOutOfSyncMsg;
-	// output oldest to new (from refreshReadPointer_ to writePointer_-1, inclusive)
-	for(/*refreshReadPointer_=<first index to read>*/;
-	    refreshReadPointer_ != writePointer_;
-	    refreshReadPointer_ = (refreshReadPointer_ + 1) % messages_.size())
+
+	size_t refreshReadPointer = 0;
+	while(messages_[refreshReadPointer].getCount() <= lastUpdateCount)
 	{
-		if(messages_[refreshReadPointer_].getCount() < lastUpdateCount)
+		++refreshReadPointer;
+	}
+
+	// output oldest to new
+	for(; refreshReadPointer < messages_.size(); ++refreshReadPointer)
+	{
+		if(messages_[refreshReadPointer].getCount() < lastUpdateCount)
 		{
 			if(!requestOutOfSync)  // record out of sync message once only
 			{
 				requestOutOfSync = true;
 				__SS__ << "Request is out of sync! Message count should be more recent "
 				          "than update clock! "
-				       << messages_[refreshReadPointer_].getCount() << " < "
+				       << messages_[refreshReadPointer].getCount() << " < "
 				       << lastUpdateCount << std::endl;
 				requestOutOfSyncMsg = ss.str();
 			}
@@ -567,21 +528,22 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument*   xmlOut,
 		}
 
 		// for all fields, give value
-		for(refreshIndex_ = 0;
-		    refreshIndex_ < messages_[refreshReadPointer_].fields.size();
-		    ++refreshIndex_)
+		for(auto& field : messages_[refreshReadPointer].fields)
+		{
 			xmlOut->addTextElementToParent(
-			    "message_" +
-			        messages_[refreshReadPointer_].fields[refreshIndex_].fieldName,
-			    messages_[refreshReadPointer_].getField(refreshIndex_),
+			    "message_" + field.second.fieldName,
+			    field.second.fieldValue,
 			    refreshParent_);
+		}
 
 		// give timestamp also
-		sprintf(refreshTempStr_, "%lu", messages_[refreshReadPointer_].getTime());
-		xmlOut->addTextElementToParent("message_Time", refreshTempStr_, refreshParent_);
+		xmlOut->addTextElementToParent(
+		    "message_Time", messages_[refreshReadPointer].getTime(), refreshParent_);
 		// give clock also
-		sprintf(refreshTempStr_, "%lu", messages_[refreshReadPointer_].getCount());
-		xmlOut->addTextElementToParent("message_Count", refreshTempStr_, refreshParent_);
+		xmlOut->addTextElementToParent(
+		    "message_Count",
+		    std::to_string(messages_[refreshReadPointer].getCount()),
+		    refreshParent_);
 	}
 
 	if(requestOutOfSync)  // if request was out of sync, show message
