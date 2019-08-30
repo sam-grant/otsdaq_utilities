@@ -106,6 +106,7 @@
 //		DesktopContent.getUsername()
 //		DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
 //		DesktopContent.openNewBrowserTab(name,subname,windowPath,unique,completeHandler)
+//		DesktopContent.addDesktopIcon(iconName)
 //
 //=====================================================================================
 
@@ -1861,13 +1862,44 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	window.open(url,'_blank');	
 } // end openNewBrowserTab()
 
+//=====================================================================================
+//addDesktopIcon ~~
+//	modify active contex to include the new desktop icon
+//	reset desktop icons
+DesktopContent.addDesktopIcon = function(iconName,subname,windowPath,unique) {
+
+	var iconParameters = "";
+	
+	DesktopContent.XMLHttpRequest(
+			"Request?Request=addDesktopIcon"
+			/*get data*/
+			+ "&iconName=" + iconName
+			+ "&iconEnforceOneWindowInstance=" + (unique?"1":"0") 
+			
+			,
+			/*post data*/
+			"iconParameters=" + iconParameters
+			,
+			function(req)
+			{
+		Debug.log("Successfully added icon '" +
+				iconName +
+				"!",Debug.INFO_PRIORITY);
+
+			}, //end request handler
+			0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+			false /*doNotShowLoadingOverlay*/,
+			true /*targetSupervisor*/);  //end XMLHttpRequest() call
+
+} //end addDesktopIcon()
+
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window
 DesktopContent.getDesktopWindowTitle = function() {
 	return DesktopContent._theWindow.parent.document.getElementById(
 			"DesktopWindowHeader-" + 
 			DesktopContent._theWindow.name.split('-')[1]).innerHTML;
-}
+} //end getDesktopWindowTitle()
 
 
 

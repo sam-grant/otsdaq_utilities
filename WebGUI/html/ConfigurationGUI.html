@@ -3809,6 +3809,7 @@
 				"Open Table View in new Browser Tab",
 				"Open Subset Editor in new Desktop Window",
 				"Open Subset Editor in new Browser Tab",
+				"Create Subset Editor desktop icon",
 				"Add new Record to Table"];
 			var treeNavContextMenuItems = []
 			var treeNavContextMenuItemHandlers = [];
@@ -3932,7 +3933,18 @@
 					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
 					treeNavContextMenuItemHandlers.push(newtabJS);
 				}
+				
+				//open Subset-Configuration in new browser tab link
+				{
+					//DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique)
+					newtabJS = "DesktopContent.addDesktopIcon(" +
+						"\"" + treeMemberNames_[j] +
+						" Subset\",\"\",\"" +
+						newWindowStr + "\",false /*unique*/);";
 
+					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
+					treeNavContextMenuItemHandlers.push(newtabJS);
+				}
 
 
 				//make add new row js
