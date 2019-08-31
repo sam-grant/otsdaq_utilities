@@ -510,7 +510,7 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 	size_t refreshReadPointer = 0;
 	if(lastUpdateCount != (size_t)-1)
 	{
-		while(messages_[refreshReadPointer].getCount() <= lastUpdateCount)
+		while(refreshReadPointer < messages_.size() && messages_[refreshReadPointer].getCount() <= lastUpdateCount)
 		{
 			++refreshReadPointer;
 		}

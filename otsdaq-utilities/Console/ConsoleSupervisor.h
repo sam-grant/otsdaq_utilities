@@ -44,11 +44,8 @@ class ConsoleSupervisor : public CoreSupervisorBase
 	// FILE and LINE are only printed for s67+
 	struct ConsoleMessageStruct
 	{
-		ConsoleMessageStruct(const std::string& msg, const size_t count)
+		ConsoleMessageStruct(const std::string& msg, const size_t count) : countStamp(count)
 		{
-			countStamp = count;  // this is still a valid countStamp, just unlikely
-			                     // to be reached
-
 			std::string hostname, category, application, message, hostaddr, file, line,
 			    module, eventID;
 			mf::ELseverityLevel sev;
