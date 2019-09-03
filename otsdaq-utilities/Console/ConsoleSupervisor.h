@@ -44,7 +44,8 @@ class ConsoleSupervisor : public CoreSupervisorBase
 	// FILE and LINE are only printed for s67+
 	struct ConsoleMessageStruct
 	{
-		ConsoleMessageStruct(const std::string& msg, const size_t count) : countStamp(count)
+		ConsoleMessageStruct(const std::string& msg, const size_t count)
+		    : countStamp(count)
 		{
 			std::string hostname, category, application, message, hostaddr, file, line,
 			    module, eventID;
@@ -61,99 +62,96 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			tokenizer                                             tokens(msg, sep);
 			tokenizer::iterator                                   it = tokens.begin();
 
-			   			// There may be syslog garbage in the first token before the timestamp...
+			// There may be syslog garbage in the first token before the timestamp...
 			boost::smatch res;
 			while(it != tokens.end() && !boost::regex_search(*it, res, timestamp_regex_))
 			{
 				++it;
 			}
 
-			if(it != tokens.end())
+			struct tm   tm;
+			time_t      t;
+			std::string value(res[1].first, res[1].second);
+			strptime(value.c_str(), "%d-%b-%Y %H:%M:%S", &tm);
+			tm.tm_isdst = -1;
+			t           = mktime(&tm);
+			tv.tv_sec   = t;
+			tv.tv_usec  = 0;
+			auto prevIt = it;
+			try
 			{
-				struct tm   tm;
-				time_t      t;
-				std::string value(res[1].first, res[1].second);
-				strptime(value.c_str(), "%d-%b-%Y %H:%M:%S", &tm);
-				tm.tm_isdst = -1;
-				t           = mktime(&tm);
-				tv.tv_sec   = t;
-				tv.tv_usec  = 0;
-				auto prevIt = it;
-				try
+				if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
 				{
-					if(++it != tokens.end())
-					{
-						seqNum = std::stoi(*it);
-					}
+					seqNum = std::stoi(*it);
 				}
-				catch(const std::invalid_argument& e)
-				{
-					it = prevIt;
-				}
-				if(++it != tokens.end())
-				{
-					hostname = *it;
-				}
-				if(++it != tokens.end())
-				{
-					hostaddr = *it;
-				}
-				if(++it != tokens.end())
-				{
-					sev = mf::ELseverityLevel(*it);
-				}
-				if(++it != tokens.end())
-				{
-					category = *it;
-				}
-				if(++it != tokens.end())
-				{
-					application = *it;
-				}
-				prevIt = it;
-				try
-				{
-					if(++it != tokens.end())
-					{
-						pid = std::stol(*it);
-					}
-				}
-				catch(const std::invalid_argument& e)
-				{
-					it = prevIt;
-				}
-				if(++it != tokens.end())
-				{
-					eventID = *it;
-				}
-				if(++it != tokens.end())
-				{
-					module = *it;
-				}
-				if(++it != tokens.end())
-				{
-					file = *it;
-				}
-				if(++it != tokens.end())
-				{
-					line = *it;
-				}
-				std::ostringstream oss;
-				bool               first = true;
-				while(++it != tokens.end())
-				{
-					if(!first)
-					{
-						oss << "|";
-					}
-					else
-					{
-						first = false;
-					}
-					oss << *it;
-				}
-				message = oss.str();
 			}
+			catch(const std::invalid_argument& e)
+			{
+				it = prevIt;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				hostname = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				hostaddr = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				sev = mf::ELseverityLevel(*it);
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				category = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				application = *it;
+			}
+			prevIt = it;
+			try
+			{
+				if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+				{
+					pid = std::stol(*it);
+				}
+			}
+			catch(const std::invalid_argument& e)
+			{
+				it = prevIt;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				eventID = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				module = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				file = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				line = *it;
+			}
+			std::ostringstream oss;
+			bool               first = true;
+			while(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				if(!first)
+				{
+					oss << "|";
+				}
+				else
+				{
+					first = false;
+				}
+				oss << *it;
+			}
+			message = oss.str();
 
 			// init fields to position -1 (for unknown)s
 			// NOTE: must be in order of appearance in buffer
@@ -168,12 +166,12 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			fields[FieldType::LINE].set("Line", 11, line);
 			fields[FieldType::MSG].set("Msg", 12, message);
 
-			#if 0
+#if 0
 			for (auto& field : fields) {
 				std::cout << "Field " << field.second.fieldName << ": " << field.second.fieldValue
 				          << std::endl;
 			}
-			#endif
+#endif
 		}
 
 		std::string getTime() const { return fields[FieldType::TIMESTAMP].fieldValue; }

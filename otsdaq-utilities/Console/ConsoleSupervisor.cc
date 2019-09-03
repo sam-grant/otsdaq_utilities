@@ -30,10 +30,15 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 	    "/MessageFacilityConfigurations/" \
 	    "QuietForwarder.cfg"
 
-#define CONSOLE_SPECIAL_ERROR \
-	std::string("|30-Aug-2019 15:30:17 CDT|0|||Error|Console|-1||ConsoleSupervisor|")
-#define CONSOLE_SPECIAL_WARNING \
-	std::string("|30-Aug-2019 15:30:17 CDT|0|||Warning|Console|-1||ConsoleSupervisor|")
+#define CONSOLE_SPECIAL_ERROR                                                            \
+	std::string("|30-Aug-2019 15:30:17 CDT|0|||Error|Console||-1||ConsoleSupervisor|") + \
+	    std::string(__FILE__) + std::string("|") + std::to_string(__LINE__) +            \
+	    std::string("|")
+#define CONSOLE_SPECIAL_WARNING                                                    \
+	std::string(                                                                   \
+	    "|30-Aug-2019 15:30:17 CDT|0|||Warning|Console||-1||ConsoleSupervisor|") + \
+	    std::string(__FILE__) + std::string("|") + std::to_string(__LINE__) +      \
+	    std::string("|")
 
 #undef __MF_SUBJECT__
 #define __MF_SUBJECT__ "Console"
@@ -510,7 +515,8 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 	size_t refreshReadPointer = 0;
 	if(lastUpdateCount != (size_t)-1)
 	{
-		while(refreshReadPointer < messages_.size() && messages_[refreshReadPointer].getCount() <= lastUpdateCount)
+		while(refreshReadPointer < messages_.size() &&
+		      messages_[refreshReadPointer].getCount() <= lastUpdateCount)
 		{
 			++refreshReadPointer;
 		}
