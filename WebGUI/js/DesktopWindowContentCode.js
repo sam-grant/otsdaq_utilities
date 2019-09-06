@@ -1864,27 +1864,37 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 
 //=====================================================================================
 //addDesktopIcon ~~
-//	modify active contex to include the new desktop icon
+//	modify active context to include the new desktop icon
 //	reset desktop icons
-DesktopContent.addDesktopIcon = function(iconName,subname,windowPath,unique) {
+DesktopContent.addDesktopIcon = function(caption, altText,
+		folderPath, unique, permissionString, 
+		imageURL, windowContentURL, parametersObject) {
 
 	var iconParameters = "";
-	
-	DesktopContent.XMLHttpRequest(
-			"Request?Request=addDesktopIcon"
+	for(var i in parametersObject)
+	{
+		iconParameters += encodeURIComponent(i) + "=" + 
+				encodeURIComponent(iconParameters[i]) + ";";
+	}
+	var req = "Request?RequestType=addDesktopIcon"
 			/*get data*/
-			+ "&iconName=" + iconName
-			+ "&iconEnforceOneWindowInstance=" + (unique?"1":"0") 
-			
-			,
+			+ "&iconCaption=" + encodeURIComponent(caption)
+			+ "&iconAltText=" + encodeURIComponent(altText)
+			+ "&iconFolderPath=" + encodeURIComponent(folderPath)
+			+ "&iconPermissions=" + encodeURIComponent(permissionString)
+			+ "&iconImageURL=" + encodeURIComponent(imageURL)
+			+ "&iconWindowURL=" + encodeURIComponent(windowContentURL)
+			+ "&iconEnforceOneWindowInstance=" + (unique?"1":"0") 	;
+	
+	DesktopContent.XMLHttpRequest(req,
 			/*post data*/
 			"iconParameters=" + iconParameters
 			,
 			function(req)
 			{
 		Debug.log("Successfully added icon '" +
-				iconName +
-				"!",Debug.INFO_PRIORITY);
+				caption +
+				"!'",Debug.INFO_PRIORITY);
 
 			}, //end request handler
 			0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 

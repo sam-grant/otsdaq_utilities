@@ -6000,16 +6000,23 @@
 					"value='Save Changes as Temporary Version' title='" +
 					"Save the current table view as new temporary version." +
 					"'/>";
-				str += "&nbsp;&nbsp;&nbsp;";
-				str += "<a onclick='setupSpecificTable(\"" + 
-						_currentTableName + "\",\"" +
-						(attemptedVersion?attemptedVersion:_version) + 
-						"\",\"\" /*backlink*/, 1 /*allowIllegalColumns*/); return false' " +
-						"title='Reload " + _currentTableName + "-v" +
-						(attemptedVersion?attemptedVersion:_version) + 
-						" with loose column matching.' " +
-						">" +
-						"Reload v" + attemptedVersion + " with loose column matching</a>";
+				
+				//add loose column match load link
+				if((attemptedVersion !== undefined && attemptedVersion >= 0) ||
+						(_version !== undefined && _version >= 0))
+				{		
+					str += "&nbsp;&nbsp;&nbsp;";				
+					str += "<a onclick='setupSpecificTable(\"" + 
+							_currentTableName + "\",\"" +
+							(attemptedVersion?attemptedVersion:_version) + 
+							"\",\"\" /*backlink*/, 1 /*allowIllegalColumns*/); return false' " +
+							"title='Reload " + _currentTableName + "-v" +
+							(attemptedVersion?attemptedVersion:_version) + 
+							" with loose column matching.' " +
+							">" +
+							"Reload v" + attemptedVersion + " with loose column matching</a>";
+				}
+				
 				str += "<br><br>";
 
 				newDiv.innerHTML = str;
