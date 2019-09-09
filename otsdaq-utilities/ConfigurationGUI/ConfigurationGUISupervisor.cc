@@ -3644,7 +3644,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 			             << __E__;
 
 			// create command entry at plan level
-			row = planTable.tableView_->addRow(author, "planCommand");
+			row = planTable.tableView_->addRow(author, true /*incrementUniqueData*/, "planCommand");
 			planTable.tableView_->addRowToGroup(row, groupIdCol, groupName);
 
 			// set command type
@@ -3770,7 +3770,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 						__SUP_COUT__ << target.table_ << " " << target.UID_ << __E__;
 
 						// create target entry in target table in group
-						tgtRow = targetTable.tableView_->addRow(author, "commandTarget");
+						tgtRow = targetTable.tableView_->addRow(author, true /*incrementUniqueData*/, "commandTarget");
 						targetTable.tableView_->addRowToGroup(
 						    tgtRow, targetGroupIdCol, cmdUID + "_Targets");
 

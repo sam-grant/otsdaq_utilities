@@ -3934,13 +3934,27 @@
 					treeNavContextMenuItemHandlers.push(newtabJS);
 				}
 				
-				//open Subset-Configuration in new browser tab link
+				//add Subset-Configuration desktop icon
 				{
-					//DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique)
+					//DesktopContent.addDesktopIcon = function(caption, altText,
+						//	folderPath, unique, permissionString, 
+						//	imageURL, windowContentURL, linkedApp, parameters)
+							
 					newtabJS = "DesktopContent.addDesktopIcon(" +
 						"\"" + treeMemberNames_[j] +
-						" Subset\",\"\",\"" +
-						newWindowStr + "\",false /*unique*/);";
+						" Subset\",\"CfgSub\",\"Config Subsets\"" +
+						", false /*unique*/" +
+						", 255 /*permissionsString*/" +
+						", \"icon-Configure.png\" /*imageURL*/" +
+						", \"WebPath/html/ConfigurationGUI_subset.html?urn=\" /*windowContentURL*/" +
+						", \"ots::ConfigurationGUISupervisor\" /*linkedApp*/" +
+						", /*parameters*/ \"" +
+						"&subsetBasePath=" + treeMemberNames_[j] +
+						"&groupingFieldList=AUTO" +
+						"&recordAlias=" + recordAlias +
+						"&editableFieldList=" + "!*CommentDescription" +
+						"\"" +
+						");"; newWindowStr
 
 					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
 					treeNavContextMenuItemHandlers.push(newtabJS);

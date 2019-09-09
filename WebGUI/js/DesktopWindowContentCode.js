@@ -1866,16 +1866,34 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 //addDesktopIcon ~~
 //	modify active context to include the new desktop icon
 //	reset desktop icons
+//	
+//	Note: linkedApp can be the app LID, UID, or class type 
 DesktopContent.addDesktopIcon = function(caption, altText,
 		folderPath, unique, permissionString, 
-		imageURL, windowContentURL, parametersObject) {
+		imageURL, windowContentURL, linkedApp, parameters) {
 
 	var iconParameters = "";
-	for(var i in parametersObject)
+	if(parameters && parameters.length && (typeof parameters === "string"))
+		iconParameters = parameters; //just take string, if not object
+	else //take parameters from object
+		for(var i in parametersObject)
+		{
+			iconParameters += encodeURIComponent(i) + "=" + 
+					encodeURIComponent(iconParameters[i]) + "&";
+		}
+	
+	Debug.log("iconParameters = " + iconParameters);
+	
+	var iconLinkedApp = "";
+	var iconLinkedAppLID = 0;
+	if(linkedApp)
 	{
-		iconParameters += encodeURIComponent(i) + "=" + 
-				encodeURIComponent(iconParameters[i]) + ";";
+		if((linkedApp|0) > 0)
+			iconLinkedAppLID =  linkedApp|0;
+		else 
+			iconLinkedApp = linkedApp; //could be app UID or class 
 	}
+	
 	var req = "Request?RequestType=addDesktopIcon"
 			/*get data*/
 			+ "&iconCaption=" + encodeURIComponent(caption)
@@ -1884,7 +1902,13 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 			+ "&iconPermissions=" + encodeURIComponent(permissionString)
 			+ "&iconImageURL=" + encodeURIComponent(imageURL)
 			+ "&iconWindowURL=" + encodeURIComponent(windowContentURL)
-			+ "&iconEnforceOneWindowInstance=" + (unique?"1":"0") 	;
+			+ "&iconEnforceOneWindowInstance=" + (unique?"1":"0") 
+			+ (iconLinkedAppLID?
+					("&iconLinkedAppLID=" + iconLinkedAppLID):
+					("&iconLinkedApp=" + iconLinkedApp)
+			);
+	
+	Debug.log("Create Icon req = " + req);
 	
 	DesktopContent.XMLHttpRequest(req,
 			/*post data*/
