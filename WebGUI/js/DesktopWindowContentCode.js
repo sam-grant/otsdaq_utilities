@@ -1912,7 +1912,7 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 	
 	DesktopContent.XMLHttpRequest(req,
 			/*post data*/
-			"iconParameters=" + iconParameters
+			"iconParameters=" + encodeURIComponent(iconParameters)
 			,
 			function(req)
 			{
