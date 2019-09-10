@@ -3,8 +3,8 @@
 #include <sys/stat.h>  //for stat() quickly checking if file exists
 #include <thread>      //for std::thread
 
-#include "otsdaq-core/PluginMakers/MakeSlowControls.h"
-#include "otsdaq-core/SlowControlsCore/SlowControlsVInterface.h"
+#include "otsdaq/PluginMakers/MakeSlowControls.h"
+#include "otsdaq/SlowControlsCore/SlowControlsVInterface.h"
 
 using namespace ots;
 

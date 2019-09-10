@@ -1,7 +1,7 @@
 #include "otsdaq-utilities/Visualization/VisualSupervisor.h"
-//#include "otsdaq-core/RootUtilities/DQMHistos.h"
-#include "otsdaq-core/DataManager/DataManagerSingleton.h"
-#include "otsdaq-core/Macros/BinaryStringMacros.h"
+//#include "otsdaq/RootUtilities/DQMHistos.h"
+#include "otsdaq/DataManager/DataManagerSingleton.h"
+#include "otsdaq/Macros/BinaryStringMacros.h"
 
 // ROOT documentation
 // http://root.cern.ch/root/html/index.html

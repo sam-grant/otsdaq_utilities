@@ -1,8 +1,8 @@
 #ifndef _ots_ConfigurationGUISupervisor_h_
 #define _ots_ConfigurationGUISupervisor_h_
 
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq/ConfigurationInterface/ConfigurationManagerRW.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
 namespace ots
 {

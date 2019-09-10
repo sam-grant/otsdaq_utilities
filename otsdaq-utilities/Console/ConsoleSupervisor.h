@@ -3,7 +3,7 @@
 
 #include <boost/regex.hpp>
 #include <boost/tokenizer.hpp>
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
 #include <mutex>  //for std::mutex
 

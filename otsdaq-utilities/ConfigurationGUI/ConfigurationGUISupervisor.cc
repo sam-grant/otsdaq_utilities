@@ -1,15 +1,15 @@
 #include "otsdaq-utilities/ConfigurationGUI/ConfigurationGUISupervisor.h"
 
-#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-#include "otsdaq-core/Macros/CoutMacros.h"
-#include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/TablePlugins/IterateTable.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
+#include "otsdaq/CgiDataUtilities/CgiDataUtilities.h"
+#include "otsdaq/Macros/CoutMacros.h"
+#include "otsdaq/MessageFacility/MessageFacility.h"
+#include "otsdaq/TablePlugins/IterateTable.h"
+#include "otsdaq/XmlUtilities/HttpXmlDocument.h"
 
 #include <boost/stacktrace.hpp>
 
-#include "otsdaq-core/TablePlugins/XDAQContextTable.h"  //for context relaunch
-#include "otsdaq-core/GatewaySupervisor/GatewaySupervisor.h" //for saveModifiedVersionXML()
+#include "otsdaq/TablePlugins/XDAQContextTable.h"  //for context relaunch
+#include "otsdaq/GatewaySupervisor/GatewaySupervisor.h" //for saveModifiedVersionXML()
 
 #include <xdaq/NamespaceURI.h>
 
