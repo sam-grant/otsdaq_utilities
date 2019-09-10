@@ -10,14 +10,13 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 FiniteStateMachine
 		 CoreSupervisors
 		 SupervisorInfo
+		 GatewaySupervisor
 		 CgiDataUtilities
 		 WebUsersUtilities
-		 #SOAPUtilities
 		 XmlUtilities
-         Macros
-		 #MessageFacility
+		 Macros
 		 cetlib
-	 ${MF_MESSAGELOGGER}
+	 	 ${MF_MESSAGELOGGER}
 )
 
 install_headers()
