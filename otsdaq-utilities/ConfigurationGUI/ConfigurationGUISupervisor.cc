@@ -3315,7 +3315,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 						{
 							// save all temporary tables to persistent tables
 							// finish off the version creation
-							newVersion = saveModifiedVersionXML(
+							newVersion = GatewaySupervisor::saveModifiedVersionXML(
 							    xmlOut,
 							    cfgMgr,
 							    bkey.first,
@@ -3865,7 +3865,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 	//	need to save all edits properly
 	//	if not modified, discard
 
-	TableVersion finalVersion = ConfigurationGUISupervisor::saveModifiedVersionXML(
+	TableVersion finalVersion = GatewaySupervisor::saveModifiedVersionXML(
 	    xmlOut,
 	    cfgMgr,
 	    planTable.tableName_,
@@ -3878,7 +3878,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 	__SUP_COUT__ << "Final plan version is " << planTable.tableName_ << "-v"
 	             << finalVersion << __E__;
 
-	finalVersion = saveModifiedVersionXML(
+	finalVersion = GatewaySupervisor::saveModifiedVersionXML(
 	    xmlOut,
 	    cfgMgr,
 	    targetTable.tableName_,
@@ -3908,7 +3908,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 			continue;
 		}
 
-		finalVersion = saveModifiedVersionXML(
+		finalVersion = GatewaySupervisor::saveModifiedVersionXML(
 		    xmlOut,
 		    cfgMgr,
 		    modifiedConfig.second.tableName_,
@@ -4190,7 +4190,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 					{
 						cfgView->init();  // verify new table (throws runtime_errors)
 
-						saveModifiedVersionXML(xmlOut,
+						GatewaySupervisor::saveModifiedVersionXML(xmlOut,
 						                       cfgMgr,
 						                       tableName,
 						                       version,
@@ -4353,7 +4353,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 					{
 						cfgView->init();  // verify new table (throws runtime_errors)
 
-						saveModifiedVersionXML(xmlOut,
+						GatewaySupervisor::saveModifiedVersionXML(xmlOut,
 						                       cfgMgr,
 						                       newTable,
 						                       version,
@@ -4420,7 +4420,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 		throw;
 	}
 
-	saveModifiedVersionXML(xmlOut,
+	GatewaySupervisor::saveModifiedVersionXML(xmlOut,
 	                       cfgMgr,
 	                       tableName,
 	                       version,
@@ -5043,145 +5043,6 @@ catch(...)
 }
 
 //========================================================================================================================
-// saveModifiedVersionXML
-//
-// once source version has been modified in temporary version
-//	this function finishes it off.
-TableVersion ConfigurationGUISupervisor::saveModifiedVersionXML(
-    HttpXmlDocument&        xmlOut,
-    ConfigurationManagerRW* cfgMgr,
-    const std::string&      tableName,
-    TableVersion            originalVersion,
-    bool                    makeTemporary,
-    TableBase*              table,
-    TableVersion            temporaryModifiedVersion,
-    bool                    ignoreDuplicates,
-    bool                    lookForEquivalent)
-{
-	bool needToEraseTemporarySource =
-	    (originalVersion.isTemporaryVersion() && !makeTemporary);
-
-	// check for duplicate tables already in cache
-	if(!ignoreDuplicates)
-	{
-		__SUP_COUT__ << "Checking for duplicate tables..." << __E__;
-
-		TableVersion duplicateVersion;
-
-		{
-			//"DEEP" checking
-			//	load into cache 'recent' versions for this table
-			//		'recent' := those already in cache, plus highest version numbers not
-			// in  cache
-			const std::map<std::string, TableInfo>& allTableInfo =
-			    cfgMgr->getAllTableInfo();  // do not refresh
-
-			auto versionReverseIterator =
-			    allTableInfo.at(tableName).versions_.rbegin();  // get reverse iterator
-			__SUP_COUT__ << "Filling up cached from " << table->getNumberOfStoredViews()
-			             << " to max count of " << table->MAX_VIEWS_IN_CACHE << __E__;
-			for(; table->getNumberOfStoredViews() < table->MAX_VIEWS_IN_CACHE &&
-			      versionReverseIterator != allTableInfo.at(tableName).versions_.rend();
-			    ++versionReverseIterator)
-			{
-				__SUP_COUT__ << "Versions in reverse order " << *versionReverseIterator
-				             << __E__;
-				try
-				{
-					cfgMgr->getVersionedTableByName(
-					    tableName, *versionReverseIterator);  // load to cache
-				}
-				catch(const std::runtime_error& e)
-				{
-					__SUP_COUT__
-					    << "Error loadiing historical version, but ignoring: " << e.what()
-					    << __E__;
-				}
-			}
-		}
-
-		__SUP_COUT__ << "Checking duplicate..." << __E__;
-
-		duplicateVersion = table->checkForDuplicate(
-		    temporaryModifiedVersion,
-		    (!originalVersion.isTemporaryVersion() && !makeTemporary)
-		        ? TableVersion()
-		        :  // if from persistent to persistent, then include original version in
-		           // search
-		        originalVersion);
-
-		if(lookForEquivalent && !duplicateVersion.isInvalid())
-		{
-			// found an equivalent!
-			__SUP_COUT__ << "Equivalent table found in version v" << duplicateVersion
-			             << __E__;
-
-			// if duplicate version was temporary, do not use
-			if(duplicateVersion.isTemporaryVersion() && !makeTemporary)
-			{
-				__SUP_COUT__ << "Need persistent. Duplicate version was temporary. "
-				                "Abandoning duplicate."
-				             << __E__;
-				duplicateVersion = TableVersion();  // set invalid
-			}
-			else
-			{
-				// erase and return equivalent version
-
-				// erase modified equivalent version
-				cfgMgr->eraseTemporaryVersion(tableName, temporaryModifiedVersion);
-
-				// erase original if needed
-				if(needToEraseTemporarySource)
-					cfgMgr->eraseTemporaryVersion(tableName, originalVersion);
-
-				xmlOut.addTextElementToData("savedName", tableName);
-				xmlOut.addTextElementToData("savedVersion", duplicateVersion.toString());
-				xmlOut.addTextElementToData("foundEquivalentVersion", "1");
-
-				__SUP_COUT__ << "\t\t equivalent AssignedVersion: " << duplicateVersion
-				             << __E__;
-
-				return duplicateVersion;
-			}
-		}
-
-		if(!duplicateVersion.isInvalid())
-		{
-			__SUP_SS__ << "This version of table '" << tableName
-			           << "' is identical to another version currently cached v"
-			           << duplicateVersion << ". No reason to save a duplicate." << __E__;
-			__SUP_COUT_ERR__ << "\n" << ss.str();
-
-			// delete temporaryModifiedVersion
-			table->eraseView(temporaryModifiedVersion);
-			__SS_THROW__;
-		}
-
-		__SUP_COUT__ << "Check for duplicate tables complete." << __E__;
-	}
-
-	if(makeTemporary)
-		__SUP_COUT__ << "\t\t**************************** Save as temporary table version"
-		             << __E__;
-	else
-		__SUP_COUT__ << "\t\t**************************** Save as new table version"
-		             << __E__;
-
-	TableVersion newAssignedVersion =
-	    cfgMgr->saveNewTable(tableName, temporaryModifiedVersion, makeTemporary);
-
-	if(needToEraseTemporarySource)
-		cfgMgr->eraseTemporaryVersion(tableName, originalVersion);
-
-	xmlOut.addTextElementToData("savedName", tableName);
-	xmlOut.addTextElementToData("savedVersion", newAssignedVersion.toString());
-
-	__SUP_COUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << __E__;
-	return newAssignedVersion;
-} //end saveModifiedVersionXML()
-
-//========================================================================================================================
 // handleCreateTableXML
 //
 //	Save the detail of specific table specified
@@ -5333,7 +5194,7 @@ void ConfigurationGUISupervisor::handleCreateTableXML(HttpXmlDocument&        xm
 	}
 
 	// note: if sourceTableAsIs, accept equivalent versions
-	saveModifiedVersionXML(xmlOut,
+	GatewaySupervisor::saveModifiedVersionXML(xmlOut,
 	                       cfgMgr,
 	                       tableName,
 	                       version,
@@ -5586,7 +5447,7 @@ void ConfigurationGUISupervisor::handleCreateTableGroupXML(
 
 			// finish off the version creation
 			version =
-			    saveModifiedVersionXML(xmlOut,
+					GatewaySupervisor::saveModifiedVersionXML(xmlOut,
 			                           cfgMgr,
 			                           name,
 			                           TableVersion() /*original source is mockup*/,
@@ -6135,7 +5996,7 @@ void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(
 
 		// save or find equivalent
 
-		newAssignedVersion = saveModifiedVersionXML(xmlOut,
+		newAssignedVersion = GatewaySupervisor::saveModifiedVersionXML(xmlOut,
 		                                            cfgMgr,
 		                                            table->getTableName(),
 		                                            originalVersion,
@@ -6309,7 +6170,7 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 		// newAssignedVersion  =
 		//		cfgMgr->saveNewTable(versionAliasesTableName,temporaryVersion);
 
-		newAssignedVersion = saveModifiedVersionXML(xmlOut,
+		newAssignedVersion = GatewaySupervisor::saveModifiedVersionXML(xmlOut,
 		                                            cfgMgr,
 		                                            table->getTableName(),
 		                                            originalVersion,
