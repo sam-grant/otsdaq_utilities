@@ -1,7 +1,9 @@
 #ifndef _ots_ConsoleSupervisor_h_
 #define _ots_ConsoleSupervisor_h_
 
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include <boost/regex.hpp>
+#include <boost/tokenizer.hpp>
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
 #include <mutex>  //for std::mutex
 
@@ -35,162 +37,219 @@ class ConsoleSupervisor : public CoreSupervisorBase
 
   private:
 	static void messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs);
-	void        insertMessageRefresh(HttpXmlDocument*   xmldoc,
-	                                 const clock_t      lastUpdateClock,
-	                                 const unsigned int lastUpdateIndex);
+	void insertMessageRefresh(HttpXmlDocument* xmldoc, const size_t lastUpdateCount);
 
 	// UDP Message Format:
 	// UDPMFMESSAGE|TIMESTAMP|SEQNUM|HOSTNAME|HOSTADDR|SEVERITY|CATEGORY|APPLICATION|PID|ITERATION|MODULE|(FILE|LINE)|MESSAGE
 	// FILE and LINE are only printed for s67+
 	struct ConsoleMessageStruct
 	{
-		ConsoleMessageStruct()
+		ConsoleMessageStruct(const std::string& msg, const size_t count)
+		    : countStamp(count)
 		{
-			buffer.resize(BUFFER_SZ);
-			timeStamp  = 0;           // use this being 0 to indicate uninitialized
-			countStamp = (time_t)-1;  // this is still a valid countStamp, just unlikely
-			                          // to be reached
+			std::string hostname, category, application, message, hostaddr, file, line,
+			    module, eventID;
+			mf::ELseverityLevel sev;
+			timeval             tv     = {0, 0};
+			int                 pid    = 0;
+			int                 seqNum = 0;
 
-			// init fields to position -1 (for unknown)
+			boost::regex timestamp_regex_("(\\d{2}-[^-]*-\\d{4}\\s\\d{2}:\\d{2}:\\d{2})");
+			boost::regex file_line_regex_("^\\s*([^:]*\\.[^:]{1,3}):(\\d+)(.*)");
+
+			boost::char_separator<char> sep("|", "", boost::keep_empty_tokens);
+			typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+			tokenizer                                             tokens(msg, sep);
+			tokenizer::iterator                                   it = tokens.begin();
+
+			// There may be syslog garbage in the first token before the timestamp...
+			boost::smatch res;
+			while(it != tokens.end() && !boost::regex_search(*it, res, timestamp_regex_))
+			{
+				++it;
+			}
+
+			struct tm   tm;
+			time_t      t;
+			std::string value(res[1].first, res[1].second);
+			strptime(value.c_str(), "%d-%b-%Y %H:%M:%S", &tm);
+			tm.tm_isdst = -1;
+			t           = mktime(&tm);
+			tv.tv_sec   = t;
+			tv.tv_usec  = 0;
+			auto prevIt = it;
+			try
+			{
+				if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+				{
+					seqNum = std::stoi(*it);
+				}
+			}
+			catch(const std::invalid_argument& e)
+			{
+				it = prevIt;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				hostname = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				hostaddr = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				sev = mf::ELseverityLevel(*it);
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				category = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				application = *it;
+			}
+			prevIt = it;
+			try
+			{
+				if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+				{
+					pid = std::stol(*it);
+				}
+			}
+			catch(const std::invalid_argument& e)
+			{
+				it = prevIt;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				eventID = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				module = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				file = *it;
+			}
+			if(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				line = *it;
+			}
+			std::ostringstream oss;
+			bool               first = true;
+			while(it != tokens.end() && ++it != tokens.end() /* Advances it */)
+			{
+				if(!first)
+				{
+					oss << "|";
+				}
+				else
+				{
+					first = false;
+				}
+				oss << *it;
+			}
+			message = oss.str();
+
+			// init fields to position -1 (for unknown)s
 			// NOTE: must be in order of appearance in buffer
-			fields[SEQID].set("SequenceID", 2, -1);
-			fields[LEVEL].set("Level", 5, -1);
-			fields[LABEL].set("Label", 6, -1);
-			fields[SOURCEID].set("SourceID", 7, -1);  // number
-			fields[SOURCE].set("Source", 9, -1);
-			// fields[MSG].set(
-			//   "Msg", 10, -1);
-			// the message facility contents have changed!
-#if MESSAGEFACILITY_HEX_VERSION >= 0x20201
-			fields[MSG].set("Msg", 12, -1);
-#else
-			fields[MSG].set("Msg", 10, -1);
+			fields[FieldType::TIMESTAMP].set("Timestamp", 1, std::to_string(tv.tv_sec));
+			fields[FieldType::SEQID].set("SequenceID", 2, std::to_string(seqNum));
+			fields[FieldType::LEVEL].set("Level", 5, sev.getName());
+			fields[FieldType::LABEL].set("Label", 6, category);
+			fields[FieldType::SOURCEID].set(
+			    "SourceID", 7, std::to_string(pid));  // number
+			fields[FieldType::SOURCE].set("Source", 9, application);
+			fields[FieldType::FILE].set("File", 10, file);
+			fields[FieldType::LINE].set("Line", 11, line);
+			fields[FieldType::MSG].set("Msg", 12, message);
+
+#if 0
+			for (auto& field : fields) {
+				std::cout << "Field " << field.second.fieldName << ": " << field.second.fieldValue
+				          << std::endl;
+			}
 #endif
 		}
 
-		void set(const std::string& msg, const time_t count)
+		std::string getTime() const { return fields[FieldType::TIMESTAMP].fieldValue; }
+		std::string getMsg() const { return fields[FieldType::MSG].fieldValue; }
+		std::string getLabel() const { return fields[FieldType::LABEL].fieldValue; }
+		std::string getLevel() const { return fields[FieldType::LEVEL].fieldValue; }
+
+		std::string getFile() const { return fields[FieldType::FILE].fieldValue; }
+		std::string getLine() const { return fields[FieldType::LINE].fieldValue; }
+
+		std::string getSourceID() const { return fields[FieldType::SOURCEID].fieldValue; }
+		uint32_t    getSourceIDAsNumber() const
 		{
-			buffer = (std::string)(msg.substr(0, BUFFER_SZ));  // clip to BUFFER_SZ
-
-			timeStamp  = time(0);  // get time of msg
-			countStamp = count;    // get "unique" incrementing id for message
-
-			// find fields
-			int    i = 0, m = 0;
-			size_t p = 0;
-
-			// if first field is position 0, mark it complete
-			if(fields[i].markerCount == 0)
-				fields[i++].posInString = 0;
-
-			// loop until no more markers
-			while((p = buffer.find('|', p)) != std::string::npos)
+			auto val = fields[FieldType::SOURCEID].fieldValue;
+			if(val != "")
 			{
-				++m;  // found next marker
-
-				if(i < (int)fields.size() &&
-				   m == fields[i].markerCount)  // found marker for field
-					fields[i++].posInString =
-					    p + 1;  // set position in string and move on to next field
-
-				// change all | to \0 so strings are terminated
-				buffer[p] = '\0';
-
-				// handle special Level/Label case (where | is missing)
-				if(i == LABEL && p + 1 + strlen(&buffer[p + 1]) != msg.length())
-				{
-					// std::cout << "LEN = " << strlen(&buffer[p+1]) << __E__;
-					// std::cout << "buff = " <<(&buffer[p+1]) << __E__;
-					fields[i++].posInString = p + 2 + strlen(&buffer[p + 1]);
-				}
+				return std::stoul(val);
 			}
-
-			// debug
-			//			std::cout << ":::::" << msg << "\n";
-			//			for(auto &f: fields)
-			//			{
-			//				std::cout << f.fieldName << ": ";
-			//				std::cout << (char *)&buffer[f.posInString] << std::endl;
-			//			}
+			return 0;
 		}
-
-		const char* getMsg() { return (char*)&buffer[fields[MSG].posInString]; }
-		const char* getLabel() { return (char*)&buffer[fields[LABEL].posInString]; }
-		const char* getLevel() { return (char*)&buffer[fields[LEVEL].posInString]; }
-		const char* getSourceID() { return (char*)&buffer[fields[SOURCEID].posInString]; }
-		const long long getSourceIDAsNumber()
+		std::string getSource() const { return fields[FieldType::SOURCE].fieldValue; }
+		std::string getSequenceID() const { return fields[FieldType::SEQID].fieldValue; }
+		size_t      getSequenceIDAsNumber() const
 		{
-			// signed to allow -1 to ignore sequence number
-			long long srcid;
-			sscanf((char*)&buffer[fields[SOURCEID].posInString],
-			       "%lld",
-			       &srcid);  // signed long long
-			return srcid;
-		}
-		const char* getSource() { return (char*)&buffer[fields[SOURCE].posInString]; }
-		const char* getSequenceID() { return (char*)&buffer[fields[SEQID].posInString]; }
-		const unsigned int getSequenceIDAsNumber()
-		{
-			unsigned long long longSeqid;
-			sscanf((char*)&buffer[fields[SEQID].posInString],
-			       "%llu",
-			       &longSeqid);  // unsigned long long
-			// Eric says this field is a "C++ int" which can change based on OS from 32 to
-			// 64?...  then convert to unsigned int for our sanity
-			return (unsigned int)longSeqid;
+			auto val = fields[FieldType::SEQID].fieldValue;
+			if(val != "")
+			{
+				return std::stoul(val);
+			}
+			return 0;
 		}
 
-		const char*  getField(int i) { return (char*)&buffer[fields[i].posInString]; }
-		const time_t getTime() { return timeStamp; }
-		const time_t getCount() { return countStamp; }
+		const size_t getCount() const { return countStamp; }
 
 		// define field structure
 		struct FieldStruct
 		{
-			void set(const std::string& fn, const int mc, const int ps)
+			void set(const std::string& fn, const int mc, const std::string& fv)
 			{
 				fieldName   = fn;
+				fieldValue  = fv;
 				markerCount = mc;
-				posInString = ps;
 			}
 
 			std::string fieldName;
+			std::string fieldValue;
 			int         markerCount;
-			int         posInString;
 		};
 
 		// define field index enum alias
-		enum
+		enum class FieldType
 		{  // must be in order of appearance in buffer
+			TIMESTAMP,
 			SEQID,
 			LEVEL,  // aka SEVERITY
 			LABEL,
 			SOURCEID,
 			SOURCE,
+			FILE,
+			LINE,
 			MSG,
 		};
 
-		const int                  BUFFER_SZ = 5000;
-		std::array<FieldStruct, 6> fields;
+		mutable std::unordered_map<FieldType, FieldStruct> fields;
 
 	  private:
-		std::string buffer;
-		time_t      timeStamp;
-		time_t      countStamp;
+		size_t countStamp;
 	};
 
-	std::array<ConsoleMessageStruct, 100> messages_;
-	std::mutex                            messageMutex_;
-	volatile unsigned int writePointer_;  // use volatile to avoid compiler optimizations
-	time_t                messageCount_;  //"unique" incrementing ID for messages
+	std::deque<ConsoleMessageStruct> messages_;
+	std::mutex                       messageMutex_;
+	size_t messageCount_;  //"unique" incrementing ID for messages
+	size_t maxMessageCount_;
 
 	// members for the refresh handler, ConsoleSupervisor::insertMessageRefresh
-	unsigned int         refreshReadPointer_;
-	char                 refreshTempStr_[50];
-	unsigned int         refreshIndex_;
 	xercesc::DOMElement* refreshParent_;
-	time_t               refreshCurrentLastCount_;
+	size_t               refreshCurrentLastCount_;
 };
-}
+}  // namespace ots
 
 #endif

@@ -317,8 +317,10 @@ int main(int argc, char** argv)
 			// print first part (message type)
 			if(mf_i < mf_j && mf_j < numbytes)
 			{
+				char sav       = buff[mf_j - 1];
 				buff[mf_j - 1] = '\0';
 				std::cout << &buff[mf_i - 1];
+				buff[mf_j - 1] = sav;
 
 				// tab for all types but Warning
 				if(strcmp(&buff[mf_i - 1], "|Warning") != 0)

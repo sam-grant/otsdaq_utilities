@@ -1,7 +1,7 @@
 #ifndef _ots_ControlsDashboardSupervisor_h_
 #define _ots_ControlsDashboardSupervisor_h_
 
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
 //#include "otsdaq-utilities/SlowControlsInterfacePlugins/EpicsInterface.h"
 //#include "EpicsInterface.h.bkup"

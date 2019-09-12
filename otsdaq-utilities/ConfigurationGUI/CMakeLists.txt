@@ -6,18 +6,17 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 ${CETLIB_EXCEPT}
 		 ConfigurationInterface
 		 TableCore
-		 otsdaq-core_TablePlugins_IterateTable_table
+		 otsdaq_TablePlugins_IterateTable_table
 		 FiniteStateMachine
 		 CoreSupervisors
 		 SupervisorInfo
+		 GatewaySupervisor
 		 CgiDataUtilities
 		 WebUsersUtilities
-		 #SOAPUtilities
 		 XmlUtilities
-         Macros
-		 #MessageFacility
+		 Macros
 		 cetlib
-	 ${MF_MESSAGELOGGER}
+	 	 ${MF_MESSAGELOGGER}
 )
 
 install_headers()

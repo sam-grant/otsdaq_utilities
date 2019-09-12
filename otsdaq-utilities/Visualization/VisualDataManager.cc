@@ -1,10 +1,10 @@
 #include "otsdaq-utilities/Visualization/VisualDataManager.h"
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-#include "otsdaq-core/DataManager/DQMHistosConsumerBase.h"
-#include "otsdaq-core/DataManager/DataManager.h"
-#include "otsdaq-core/DataManager/DataProcessor.h"
+#include "otsdaq/ConfigurationInterface/ConfigurationManager.h"
+#include "otsdaq/DataManager/DQMHistosConsumerBase.h"
+#include "otsdaq/DataManager/DataManager.h"
+#include "otsdaq/DataManager/DataProcessor.h"
 
-#include "otsdaq-core/DataProcessorPlugins/RawDataVisualizerConsumer.h"
+#include "otsdaq/DataProcessorPlugins/RawDataVisualizerConsumer.h"
 
 #include <cassert>
 #include <iostream>

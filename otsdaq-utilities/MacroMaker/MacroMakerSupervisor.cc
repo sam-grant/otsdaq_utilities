@@ -1,8 +1,8 @@
 #include "otsdaq-utilities/MacroMaker/MacroMakerSupervisor.h"
 
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-#include "otsdaq-core/FECore/FEVInterface.h"
-#include "otsdaq-core/CodeEditor/CodeEditor.h"
+#include "otsdaq/ConfigurationInterface/ConfigurationManager.h"
+#include "otsdaq/FECore/FEVInterface.h"
+#include "otsdaq/CodeEditor/CodeEditor.h"
 
 #include <fstream>
 #include <dirent.h>    //for DIR
@@ -10,7 +10,7 @@
 #include <sys/stat.h>  //for mkdir
 #include <cstdio>
 #include <thread>  //for std::thread
-#include "otsdaq-core/TableCore/TableGroupKey.h"
+#include "otsdaq/TableCore/TableGroupKey.h"
 
 #define MACROS_DB_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroData/"
 #define MACROS_HIST_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroHistory/"

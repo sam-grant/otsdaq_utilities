@@ -1,7 +1,7 @@
 #ifndef _ots_MacroMakerSupervisor_h_
 #define _ots_MacroMakerSupervisor_h_
 
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
 namespace ots
 {

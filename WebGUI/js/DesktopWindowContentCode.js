@@ -106,6 +106,7 @@
 //		DesktopContent.getUsername()
 //		DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
 //		DesktopContent.openNewBrowserTab(name,subname,windowPath,unique,completeHandler)
+//		DesktopContent.addDesktopIcon(iconName)
 //
 //=====================================================================================
 
@@ -1861,13 +1862,78 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	window.open(url,'_blank');	
 } // end openNewBrowserTab()
 
+//=====================================================================================
+//addDesktopIcon ~~
+//	modify active context to include the new desktop icon
+//	reset desktop icons
+//	
+//	Note: linkedApp can be the app LID, UID, or class type 
+DesktopContent.addDesktopIcon = function(caption, altText,
+		folderPath, unique, permissionString, 
+		imageURL, windowContentURL, linkedApp, parameters) {
+
+	var iconParameters = "";
+	if(parameters && parameters.length && (typeof parameters === "string"))
+		iconParameters = parameters; //just take string, if not object
+	else //take parameters from object
+		for(var i in parametersObject)
+		{
+			iconParameters += encodeURIComponent(i) + "=" + 
+					encodeURIComponent(iconParameters[i]) + "&";
+		}
+	
+	Debug.log("iconParameters = " + iconParameters);
+	
+	var iconLinkedApp = "";
+	var iconLinkedAppLID = 0;
+	if(linkedApp)
+	{
+		if((linkedApp|0) > 0)
+			iconLinkedAppLID =  linkedApp|0;
+		else 
+			iconLinkedApp = linkedApp; //could be app UID or class 
+	}
+	
+	var req = "Request?RequestType=addDesktopIcon"
+			/*get data*/
+			+ "&iconCaption=" + encodeURIComponent(caption)
+			+ "&iconAltText=" + encodeURIComponent(altText)
+			+ "&iconFolderPath=" + encodeURIComponent(folderPath)
+			+ "&iconPermissions=" + encodeURIComponent(permissionString)
+			+ "&iconImageURL=" + encodeURIComponent(imageURL)
+			+ "&iconWindowURL=" + encodeURIComponent(windowContentURL)
+			+ "&iconEnforceOneWindowInstance=" + (unique?"1":"0") 
+			+ (iconLinkedAppLID?
+					("&iconLinkedAppLID=" + iconLinkedAppLID):
+					("&iconLinkedApp=" + iconLinkedApp)
+			);
+	
+	Debug.log("Create Icon req = " + req);
+	
+	DesktopContent.XMLHttpRequest(req,
+			/*post data*/
+			"iconParameters=" + encodeURIComponent(iconParameters)
+			,
+			function(req)
+			{
+		Debug.log("Successfully added icon '" +
+				caption +
+				"!'",Debug.INFO_PRIORITY);
+
+			}, //end request handler
+			0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+			false /*doNotShowLoadingOverlay*/,
+			true /*targetSupervisor*/);  //end XMLHttpRequest() call
+
+} //end addDesktopIcon()
+
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window
 DesktopContent.getDesktopWindowTitle = function() {
 	return DesktopContent._theWindow.parent.document.getElementById(
 			"DesktopWindowHeader-" + 
 			DesktopContent._theWindow.name.split('-')[1]).innerHTML;
-}
+} //end getDesktopWindowTitle()
 
 
 

@@ -1,7 +1,7 @@
 #ifndef _ots_VisualSupervisor_h
 #define _ots_VisualSupervisor_h
 
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 #include "otsdaq-utilities/Visualization/VisualDataManager.h"
 
 namespace ots

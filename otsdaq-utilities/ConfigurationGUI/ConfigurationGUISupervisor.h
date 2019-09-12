@@ -1,8 +1,8 @@
 #ifndef _ots_ConfigurationGUISupervisor_h_
 #define _ots_ConfigurationGUISupervisor_h_
 
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq/ConfigurationInterface/ConfigurationManagerRW.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
 namespace ots
 {
@@ -225,15 +225,16 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                          const std::string&      author,
 	                          const std::string&      mergeApproach);
 
-	TableVersion saveModifiedVersionXML(HttpXmlDocument&        xmldoc,
-	                                    ConfigurationManagerRW* cfgMgr,
-	                                    const std::string&      tableName,
-	                                    TableVersion            originalVersion,
-	                                    bool                    makeTemporary,
-	                                    TableBase*              config,
-	                                    TableVersion            temporaryModifiedVersion,
-	                                    bool                    ignoreDuplicates = false,
-	                                    bool lookForEquivalent                   = false);
+	//Moved to GatewaySupervisor::
+//	TableVersion saveModifiedVersionXML(HttpXmlDocument&        xmldoc,
+//	                                    ConfigurationManagerRW* cfgMgr,
+//	                                    const std::string&      tableName,
+//	                                    TableVersion            originalVersion,
+//	                                    bool                    makeTemporary,
+//	                                    TableBase*              config,
+//	                                    TableVersion            temporaryModifiedVersion,
+//	                                    bool                    ignoreDuplicates = false,
+//	                                    bool lookForEquivalent                   = false);
 
 	void handleGetArtdaqNodeRecordsXML(HttpXmlDocument&        xmlOut,
 	                          ConfigurationManagerRW* cfgMgr,
