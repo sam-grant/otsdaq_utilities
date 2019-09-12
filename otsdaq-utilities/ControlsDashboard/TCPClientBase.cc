@@ -1,4 +1,4 @@
-#include "otsdaq-core/NetworkUtilities/TCPClientBase.h"
+#include "otsdaq/NetworkUtilities/TCPClientBase.h"
 
 #include <iostream>
 #include <strings.h>	// bzero

@@ -1,4 +1,4 @@
-#include "otsdaq-core/NetworkUtilities/TCPClient.h"
+#include "otsdaq/NetworkUtilities/TCPClient.h"
 
 using namespace ots;
 
