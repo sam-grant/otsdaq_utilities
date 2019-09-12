@@ -27,7 +27,7 @@ widgetLibrary.typeToSrc = {			   "0" :"widget_text.html",
 						   "9" :"widgets",						   
 						   "10":"widgets",						   
 						   "11":"widgets",						   
-						   "12":"widgets"	*/					   
+						   "12":"widgets"   */					   
 						  }
 widgetLibrary.typeToImgSrc =  {
 							   "0" :"label-icon.png",
@@ -38,18 +38,18 @@ widgetLibrary.typeToImgSrc =  {
 		   					   "5" :"thermometer-icon.png" /*,
 							   "3" :"Alarm-clock-icon.png",
 							   "4" :"digital-clock-icon.png",						   
-							   "5" :"thermometer-icon.png"		*/		   
+							   "5" :"thermometer-icon.png", */		   
 							  }
 widgetLibrary.typeToName = {
                                                                 "0" : "Plain Text",
-                                                                "2" : "Basic Display with name and value displays",
+                                                                "2" : "Basic Display with name & value displays",
                                                                 "3" : "Basic Guage Style Display",
                                                                 "4" : "Basic Line Chart",
                                                                 "5" : "Basic Thermometer"/*,
                                                                 "2" : "Hakeem's Widet",
                                                                 "3" : "Clock",
                                                                 "4" : "Clock",
-                                                                "5" : "Temperature"*/
+                                                                "5" : "Temperature" */
                                                                 }
 widgetLibrary.typeToPurpose = {
 								"0" : "Plain Text",
@@ -60,7 +60,7 @@ widgetLibrary.typeToPurpose = {
 								"2" : "Hakeem's Widet",
 								"3" : "Clock",
 								"4" : "Clock",
-								"5" : "Temperature"*/
+								"5" : "Temperature" */
 								}
 
 widgetLibrary.dimensions = {

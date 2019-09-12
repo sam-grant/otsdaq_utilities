@@ -69,9 +69,7 @@
 				outline: dashed thin;
 
 			}
-
-				
-			
+		
 			//Sides			
 
 			.resizeWidgetCoverTop {
@@ -356,7 +354,7 @@
 				float:left; 
 				border-right:1px solid #5d5d5d; 
 				border-left:1px solid #929292; 
-				width:22.5%;
+				width: 30%;
 				height:5%; 
 				border-bottom:1px solid #575757; 
 				border-top:1px solid #797979;
@@ -672,7 +670,8 @@
 			var addPVMenuDiv_;
 			var addPVMenu_;
 			var hud_;
-			var hudContainer_;			
+			var hudContainer_;
+			var isReadOnly_;
 			page_.createPage = function(){
 				
 				this.name = "MyPage";
@@ -720,7 +719,8 @@
 
 				
 				var datalist = document.getElementById("pvDatalist");//document.createElement("datalist");
-//				datalist.id = "pvDatalist";
+				isReadOnly_ = false;
+				//datalist.id = "pvDatalist";
 //				document.body.appendChild(datalist);
 				
 				//elPointer_[""] = document.getElementById("");
@@ -728,7 +728,7 @@
 				elPointer_["addPVMenuDiv"] = document.getElementById("addPVMenuDiv");
 				elPointer_["editWidgetAttributesPopup-body-pvlist"] = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				elPointer_["editWidgetAttributesPopup-body-attributes"] = document.getElementById("editWidgetAttributesPopup-body-attributes");
-				elPointer_["editWidgetAttributesPopup-body-macromaker"] = document.getElementById("editWidgetAttributesPopup-body-macromaker");
+				//elPointer_["editWidgetAttributesPopup-body-macromaker"] = document.getElementById("editWidgetAttributesPopup-body-macromaker");
 				elPointer_["hotkeyMenuDiv"] = document.getElementById("hotkeyMenuDiv");
 				elPointer_["hotkeyMenuDiv"].style.display = "none";
 					
@@ -755,9 +755,9 @@
                                          true /*doNoShowLoadingOverlay*/);
 				pagesList_ = "Loading";
 				DesktopContent.XMLHttpRequest(
-				                    "Request?RequestType=getPermission",
+				                    "Request?RequestType=isUserAdmin",
 				                    "",
-				                    getPermissionHandler);
+				                    isUserAdminHandler);
 
 				//get frame and set some text to loading
 
@@ -812,7 +812,14 @@
 
 
 				 if(parameterPageName == undefined)
-                                          toggleEditMode();
+                 {
+                 	toggleEditMode();
+                 }
+                 else
+                 {
+                 	Debug.log("Loading page from url");
+                 	loadPage(parameterPageName);
+                 }
 			}
 
             function checkMailbox(){
@@ -861,12 +868,26 @@
 				}
 			}
 			
-			function getPermissionHandler(req)
+			function isUserAdminHandler(req)
 	        {
-		        Debug.log("getPermissionHandler() was called. ");//Req: " + req.responseText);
+		        Debug.log("getPermissionHandler() was called. " + req.responseText);//Req: " + req.responseText);
 				
-		         userPermission = DesktopContent.getXMLValue(req, "Permission");
-		         console.log("User Permission: " + userPermission);
+		         isAdmin = JSON.parse(decodeURIComponent(DesktopContent.getXMLValue(req, "JSON")))["message"];
+		         console.log("User Permission: " + isAdmin);
+		         console.log(isAdmin);
+		         
+		         if(isAdmin == "Yes")
+		         {
+		         	isReadOnly_ = false;
+		         }
+		         else
+		         {
+		         	isReadOnly_ = true;
+		         }
+		         
+		         console.log("Interface isReadOnly=" + isReadOnly_);
+		         
+		         redrawWindow();
 	        }
 
 			function pvListReqHandler(req){
@@ -900,13 +921,27 @@
 			
 			function loadPageReqHandler(req) {
 				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
+				clearBlock(mainBlock_.el);
+				page_.widgets = {};
+
 				//console.log(req.responseText);
-				toggleFileMenu();
+				if(!fileBlock_.isHidden)
+					toggleFileMenu();
+
 				var time =  decodeURIComponent(DesktopContent.getXMLValue(req, "Time"));
 				var notes =  decodeURIComponent(DesktopContent.getXMLValue(req, "Notes"));
 				var page =  decodeURIComponent(DesktopContent.getXMLValue(req, "Page"));
-				page_ = JSON.parse(page);
 				
+				if(notes == "[\"Not Found\"]")
+				{
+					Debug.log("Page failed to load page(" + decodeURIComponent(page) + ") on server!",
+																	Debug.HIGH_PRIORITY);
+					return;
+				}
+				
+				if(page.length > 0)
+					page_ = JSON.parse(page);
+					
 				Debug.log(time);
 				Debug.log(notes);
 				Debug.log(page);
@@ -1086,16 +1121,19 @@
 			{
 				timeToPoll_ = false;
 				Debug.log("pollServer: polling server!");
-				//console.log("UID is ", UID_);
-				DesktopContent.XMLHttpRequest(
-					"Request?RequestType=poll&uid=" + UID_,
-					"", 
-					pollServerHandlerFunction /*returnHandler*/, 
-					0 /*reqParam*/, 
-					0 /*progressHandler*/, 
-					0 /*callHandlerOnErr*/, 
-					true /*doNoShowLoadingOverlay*/);	
-
+				console.log(page_.widgets);
+					//console.log("UID is ", UID_);
+					if(!page_.widgets === undefined)
+					{
+						DesktopContent.XMLHttpRequest(
+							"Request?RequestType=poll&uid=" + UID_,
+							"", 
+							pollServerHandlerFunction /*returnHandler*/, 
+							0 /*reqParam*/, 
+							0 /*progressHandler*/, 
+							0 /*callHandlerOnErr*/, 
+							true /*doNoShowLoadingOverlay*/);	
+					}
 			}
 			
 			function generateUID()
@@ -1172,14 +1210,14 @@
 		    	//var Regex = /^[\w\s]+$/;
 		    	var Regex = /^[a-zA-Z0-9\_]+$/g;
 		    	if (!Regex.test(controlsPageName)) 
-					Debug.log("Illegal characters in name. Please remove these characters and try again.");
+					Debug.log("Illegal characters in name. Please remove these characters and try again.", Debug.HIGH_PRIORITY);
 		    	else
 		    	{
 		    		var controlsPageNotes = document.getElementById("controlsPageNotes").value;
 		    		Debug.log(controlsPageNotes);
 					if(controlsPageNotes.indexOf("@") >= 0 || controlsPageNotes.indexOf("#") >= 0 || controlsPageNotes.indexOf("..") >= 0)
 					{
-						Debug.log("Illegal characters in notes. Please remove these characters and try again.");
+						Debug.log("Illegal characters in notes. Please remove these characters and try again.", Debug.HIGH_PRIORITY);
 						return;
 					}
 		    		var controlsPageLibEl = document.getElementById('listOfPrivateControlsPages');
@@ -1209,7 +1247,7 @@
 		        	}
 		        	else
 		        	{
-						DesktopContent.XMLHttpRequest("Request?RequestType=createControlsPage", 								"&isPublic="+isControlsPagePublic +
+						DesktopContent.XMLHttpRequest("Request?RequestType=createControlsPage", 								
 								//post data
 								"isPublic=" + isControlsPagePublic +
 								"&Name=" + controlsPageName +
@@ -1348,6 +1386,8 @@
 
 					if(widgetLibrary.dimensions[id])
 					{
+					
+						console.log(id);
 					
 						if(widgetLibrary.dimensions[id]["X"])
 						{
@@ -1507,14 +1547,17 @@
 				else
 				{
 					widgetFrame.id = widget;//page[widget].Display_Name;
-					
-					page_.widgets[widget].size_x = width;
-					page_.widgets[widget].size_y = height;
-					page_.widgets[widget].x = x;
-					page_.widgets[widget].y = y;
-					
+					//console.log(page_.widgets[widget]);
+					page_.widgets[widget].size_x = (width === undefined) ? page_.widgets[widget].size_x : width;
+					page_.widgets[widget].size_y = (height === undefined) ? page_.widgets[widget].size_y : height;
+					page_.widgets[widget].x = (x === undefined) ? page_.widgets[widget].x : x;
+					page_.widgets[widget].y = (y === undefined) ? page_.widgets[widget].y : y;
+					//console.log(page_.widgets[widget]);
+										
+
 					var oldContainer = document.getElementById(widgetFrame.id + "-container");
-					oldContainer.parentNode.removeChild(oldContainer);
+					if(typeof(oldContainer) != 'undefined' && oldContainer != null)
+						oldContainer.parentNode.removeChild(oldContainer);
 					
 				}
 				
@@ -1708,7 +1751,8 @@
 				
 				//END Mechanics for selecting what to display
 				page_.widgets[widget].el = widgetFrame;
-				//console.log(page_.widgets[widget].el);
+				
+				//console.log(page_.widgets[widget]);
 				//select x and y
 				containerDiv.appendChild(widgetFrame);
 				mainBlock_.el.appendChild(containerDiv);
@@ -1857,21 +1901,121 @@
 			function resizeWidget(id, resize_from = "center", new_suggested_width, new_suggested_height)
 			{
 				
-					var newWidth = new_suggested_width;
-					var newHeight = new_suggested_height;
+					var newWidth;
+					var newHeight;
 					
-					var deltaHeight = (new_suggested_height  - (parseFloat(page_.widgets[id].size_y)));
-					var deltaWidth = (new_suggested_width  - (parseFloat(page_.widgets[id].size_x)));
-					
-					var anchorX = parseFloat(page_.widgets[id].x);
-					var anchorY = parseFloat(page_.widgets[id].y);
-					
-
+					if(widgetLibrary.dimensions[page_.widgets[id].type] && widgetLibrary.dimensions[page_.widgets[id].type]["Y"] && widgetLibrary.dimensions[page_.widgets[id].type]["X"])
+					{
+						var aspect_ratio = parseFloat(widgetLibrary.dimensions[page_.widgets[id].type]["X"]) / parseFloat(widgetLibrary.dimensions[page_.widgets[id].type]["Y"]);
+						//console.log("x: " + new_suggested_width);
+						//console.log("y: " + new_suggested_height);
+						
+						var y_displacement = new_suggested_height;
+						var x_displacement = new_suggested_width;
+						
+						var adjusted_y_displacement = y_displacement * aspect_ratio;
+						var adjusted_x_displacement = x_displacement;
+//							console.log("y_displacement: " + y_displacement);
+//							console.log("adjusted_y_displacement: " + adjusted_y_displacement);
+//							console.log("adjusted_x_displacement: " + adjusted_x_displacement);
+//						if((new_suggested_height > parseFloat(page_.widgets[id].size_y)) || (new_suggested_width > parseFloat(page_.widgets[id].size_x)))//Resizing up 
+//						{
+	
+						if(true)
+						{
+							if(Math.abs(adjusted_y_displacement) >= Math.abs(adjusted_x_displacement))
+							{
+								console.log("AbsY: " + Math.abs(adjusted_y_displacement));								
+								console.log("AbsX: " + Math.abs(adjusted_x_displacement));								
+							
+								newWidth = parseFloat(y_displacement * aspect_ratio);
+								newHeight = (y_displacement);						
+							}
+							else
+							{
+								
+								console.log(parseFloat(x_displacement / aspect_ratio));								
+							
+								newWidth = (x_displacement);
+								newHeight = parseFloat(x_displacement / aspect_ratio);							
+							}
+						
+//						if((y_displacement > widgetLibrary.dimensions[page_.widgets[id].type]["Y"]) || (x_displacement > widgetLibrary.dimensions[page_.widgets[id].type]["X"]))
+//						{
+//													
+//							var adjusted_y_displacement = y_displacement * aspect_ratio;
+//							var adjusted_x_displacement = x_displacement;
+////							console.log("y_displacement: " + y_displacement);
+////							console.log("adjusted_y_displacement: " + adjusted_y_displacement);
+////							console.log("adjusted_x_displacement: " + adjusted_x_displacement);
+//							if((new_suggested_height > parseFloat(page_.widgets[id].size_y)) || (new_suggested_width > parseFloat(page_.widgets[id].size_x)))//Resizing up 
+//							{
+//								console.log("Resizing Up");
+//								if(Math.abs(adjusted_y_displacement) >= Math.abs(adjusted_x_displacement))
+//								{
+//									console.log("AbsY: " + Math.abs(adjusted_y_displacement));								
+//									console.log("AbsX: " + Math.abs(adjusted_x_displacement));								
+//								
+//									newWidth = parseFloat(y_displacement * aspect_ratio);
+//									newHeight = (y_displacement);						
+//								}
+//								else
+//								{
+//									
+//									console.log(parseFloat(x_displacement / aspect_ratio));								
+//								
+//									newWidth = (x_displacement);
+//									newHeight = parseFloat(x_displacement / aspect_ratio);							
+//								}
+//
+//							}
+//							else
+//							{
+//								console.log("Resizing Down");	
+//							
+//								if(Math.abs(adjusted_y_displacement) <= Math.abs(adjusted_x_displacement))
+//								{
+//									console.log("AbsY: " + Math.abs(adjusted_y_displacement));								
+//									console.log("AbsX: " + Math.abs(adjusted_x_displacement));								
+//								
+//									newWidth = parseFloat(y_displacement * aspect_ratio);
+//									newHeight = (y_displacement);						
+//								}
+//								else
+//								{
+//									
+//									console.log(parseFloat(x_displacement / aspect_ratio));								
+//								
+//									newWidth = (x_displacement);
+//									newHeight = parseFloat(x_displacement / aspect_ratio);							
+//								}							
+//							}
+						} //Resizing down
+						else //Widget is trying to be resized below minimum size: force size according to widget library
+						{
+								
+							newWidth = parseFloat(widgetLibrary.dimensions[page_.widgets[id].type]["X"]);
+							newHeight = parseFloat(widgetLibrary.dimensions[page_.widgets[id].type]["Y"]);
+							//console.log("y_displacement: " + newWidth);
+							//console.log("y_displacement: " + newHeight);
+						}						
+					}
+					else
+					{
+						newWidth = new_suggested_width;
+						newHeight = new_suggested_height;
+					}
+			
+			
 			
 					//The widgets are anchored by their top left point
 					//so we need to figure out the delta in order to make it appear 
 					//that it is resizing based on the side the user is pulling from
 					
+					var anchorX = parseFloat(page_.widgets[id].x);
+					var anchorY = parseFloat(page_.widgets[id].y);
+					var deltaHeight = (newHeight  - (parseFloat(page_.widgets[id].size_y)));
+					var deltaWidth = (newWidth  - (parseFloat(page_.widgets[id].size_x)));					
 					var anchorDeltaX = 0;
 					var anchorDeltaY = 0;
 			
@@ -1935,6 +2079,7 @@
 					
 					
 					drawWidget(id, false, newAnchorX, newAnchorY, newWidth, newHeight);
+					redrawWindow();
 
 //					console.log(page_.widgets[id]);
 					
@@ -1966,8 +2111,10 @@
 				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
 				editBlock_.el.style.marginBottom = 1.5 * hiddenWidth_ + "px";
 				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
+				editBlock_.el.style.marginBottom = parseInt(document.getElementById("editorPanelTitle")) + "px";
 
 			}
+			
 			
 
 			function toggleEditMode()
@@ -1975,12 +2122,14 @@
 				console.log(window.innerWidth);
 				console.log()
 				editBlock_.el.style.bottom = "-" + parseInt(editBlock_.el.style.height) + "px"; 
+				editBlock_.el.style.marginBottom = parseInt(document.getElementById("editorPanelTitle")) + "px";
+
 				var covers = document.getElementsByClassName("widgetCover");
 				var resize_covers = document.getElementsByClassName("resizewidgetCover");
                 var editButton = document.getElementById("menuli2");
 
 				
-				if(editBlock_.isHidden)
+				if(editBlock_.isHidden && !isReadOnly_)
 				{
 					//Make sure pv list is up-to-date
 					DesktopContent.XMLHttpRequest(
@@ -2450,7 +2599,7 @@
 			
 				elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display = "none";
 				elPointer_["editWidgetAttributesPopup-body-attributes"].style.display = "none";
-				elPointer_["editWidgetAttributesPopup-body-macromaker"].style.display = "none";
+				//elPointer_["editWidgetAttributesPopup-body-macromaker"].style.display = "none";
 				
 				
 				if (body == "EditAttributes")
@@ -2461,7 +2610,7 @@
 				}
 				else if (body == "Macromaker")
 				{
-					elPointer_["editWidgetAttributesPopup-body-macromaker"].style.display = "table-row";
+					//elPointer_["editWidgetAttributesPopup-body-macromaker"].style.display = "table-row";
 				}
 				else
 				{
@@ -2644,13 +2793,18 @@
 			
 			function cutWidget(widgetCover)
 			{
-				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id].el
-				cutWidget_ = page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id];
+				
+				var id = widgetCover.id.substring(0, widgetCover.id.indexOf("-cover"));
+				console.log(id);
+				delete page_.widgets[id].el
+				cutWidget_ = page_.widgets[id];
 				console.log("here");
+				console.log(widgetCover);
 //				console.log(widgetCover.parentNode.getElementsByTagName("iframe")[0].id);
 				console.log(page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id].el);
-				cutWidgetName_ = widgetCover.parentNode.getElementsByTagName("iframe")[0].id;
-				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id];
+				console.log(widgetCover.id);
+				cutWidgetName_ = id;
+				delete page_.widgets[id];
 				mainBlock_.el.removeChild(widgetCover.parentNode);
 			}
 			
@@ -2662,6 +2816,7 @@
 					cutWidget_.x = parseInt(cutWidget_.x) - pageOffSetX_;
 					cutWidget_.y = parseInt(cutWidget_.y) - pageOffSetY_;
 					page_.widgets[cutWidgetName_] = cutWidget_;
+					console.log(page_.widgets[cutWidgetName_]);
 					drawWidget(cutWidgetName_, false);
 				}
 				else
@@ -2763,7 +2918,9 @@
 					resizeBeginWidth_ = parseFloat(page_.widgets[resizeId_].size_x);
 					resizeBeginHeight_ = parseFloat(page_.widgets[resizeId_].size_y);
 	
-	
+///
+
+
 //					var resizeDiv = document.getElementById(dragTargetElement_.id).parentNode;
 //					var resizeChildren = resizeDiv.children;
 					
@@ -2989,6 +3146,8 @@
 				hiddenWidth_ = maxWidth * 0.05;
 				unhiddenWidth_ = maxWidth * 0.35;
 				
+				
+				
 
 				//DEFAULT VALUES //Sides Hidden
 				var fileTop = _MARGIN, fileWidth = unhiddenWidth_       , fileHeight = window.innerHeight;
@@ -3025,13 +3184,47 @@
 				cover.style.height     =  window.innerHeight + "px";
 				cover.style.left = mainLeft + "px";
 				
+				editBlock_.el.style.bottom = "-" + parseInt(editBlock_.el.style.height) + "px"; 
+				editBlock_.el.style.marginBottom = parseInt(document.getElementById("editorPanelTitle")) + "px";
+
+				
 				if(!editBlock_.isHidden)
 				{
-					editCover.styledisplay = "none";
+					console.log("Edit mode");
+					editCover.style.display = "none";
+//					hudContainer_.style.bottom = hiddenWidth_ + "px";
+//					editBlock_.el.style.zIndex = "50";
+//					editBlock_.el.style.bottom = hiddenWidth_ + "px";
+//					editBlock_.el.style.marginBottom = /*hiddenWidth_ +*/ "26px";
+				}
+				else
+				{			
+					console.log("Not edit mode");
+					editCover.style.display = "block";
+//					editBlock_.el.style.marginBottom = "0px";
+//					editBlock_.el.style.zIndex = "30";
+//					editBlock_.isHidden = true;
+//					hudContainer_.style.bottom = "15px";
+//					editBlock_.el.style.bottom = /*hiddenWidth_ +*/ "26px";
+//
+
+				}
+				
+				var navBar = document.getElementById("navigationBarDiv");
+
+				
+				if(isReadOnly_)
+				{
+					navBar.style.display = "none";
+					if(!editBlock_.isHidden)
+						toggleEditMode();
+						
+					console.log(navBar);
+				
 				}
 				else
 				{
-					editCover.style.display = "block";
+					navBar.style.display = "block";
 
 				}
 				
@@ -3062,7 +3255,7 @@
 		            <!--<li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>-->
 		            <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">EditMode</a></li>
 		            <li><a href="#" title="" id="menuli3" onclick="toggleHotkeyMenu()">Quick Views</a></li>
-			    <li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>
+			    <!--<li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>-->
 		        </ul>
 	        </nav>
 	    </div>
@@ -3217,17 +3410,17 @@
 					        <i class=""></i> Edit Attributes
 					      </a>
 					    </li>
-					    <li class="menu__item">
+					    <!--<li class="menu__item">
 					      <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('Macromaker')">
 					        <i class=""></i> Macromaker
 					      </a>
-					    </li>
+					    </li>-->
 				    </ul>
 				</nav>
 			</div>
 			<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-pvlist"></div>
 			<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-attributes"><p>body</p></div>
-			<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>
+			<!--<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>-->
 			<div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
 		</div>
 		<div class="HUD-coordinates-container" id="HUD-coordinates-container">
