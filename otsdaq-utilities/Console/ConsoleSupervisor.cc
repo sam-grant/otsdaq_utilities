@@ -566,6 +566,9 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 		// for all fields, give value
 		for(auto& field : msg.fields)
 		{
+			if(field.second.fieldName == "Source") continue; //skip, not userful
+			if(field.second.fieldName == "SourceID") continue; //skip, not userful
+
 			xmlOut->addTextElementToParent("message_" + field.second.fieldName,
 			                               field.second.fieldValue,
 			                               refreshParent_);

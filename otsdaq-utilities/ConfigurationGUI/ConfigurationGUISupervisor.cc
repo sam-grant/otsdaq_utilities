@@ -595,7 +595,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUT__ << "groupName: " << groupName << __E__;
 		__SUP_COUT__ << "groupKey: " << groupKey << __E__;
 
-		handleGetTableGroupXML(xmlOut, cfgMgr, groupName, TableGroupKey(groupKey));
+		ConfigurationSupervisorBase::handleGetTableGroupXML(xmlOut, cfgMgr, groupName, TableGroupKey(groupKey));
 	}
 	else if(requestType == "saveNewTableGroup")
 	{
@@ -619,7 +619,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUT__ << "lookForEquivalent: " << lookForEquivalent << __E__;
 		__SUP_COUT__ << "comment: " << comment << __E__;
 
-		handleCreateTableGroupXML(xmlOut,
+		ConfigurationSupervisorBase::handleCreateTableGroupXML(xmlOut,
 		                          cfgMgr,
 		                          groupName,
 		                          tableList,
@@ -728,7 +728,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUT__ << "sourceTableAsIs: " << sourceTableAsIs << __E__;
 		__SUP_COUT__ << "lookForEquivalent: " << lookForEquivalent << __E__;
 
-		handleCreateTableXML(xmlOut,
+		ConfigurationSupervisorBase::handleCreateTableXML(xmlOut,
 		                     cfgMgr,
 		                     tableName,
 		                     TableVersion(version),
@@ -1507,7 +1507,7 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 	}
 
 	bool        affected;
-	DOMElement* parentEl;
+	xercesc::DOMElement* parentEl;
 	std::string groupComment;
 	for(auto group : consideredGroups)
 	{
@@ -2148,7 +2148,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(
 
 				//__SUP_COUT__ << "recordUID " <<	recordUID << __E__;
 
-				DOMElement* parentEl =
+				xercesc::DOMElement* parentEl =
 				    xmlOut.addTextElementToData("fieldValues", recordUID);
 
 				// for each field, set value
@@ -2307,7 +2307,7 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 
 				__SUP_COUT__ << "recordUID " << recordUID << __E__;
 
-				DOMElement* parentEl =
+				xercesc::DOMElement* parentEl =
 				    xmlOut.addTextElementToData("fieldValues", recordUID);
 
 				// for each field, get value
@@ -2379,7 +2379,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 
 	try
 	{
-		DOMElement* parentEl = xmlOut.addTextElementToData("fields", startPath);
+		xercesc::DOMElement* parentEl = xmlOut.addTextElementToData("fields", startPath);
 
 		if(depth == 0)
 		{
@@ -2459,7 +2459,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 			    records, fieldAcceptList, fieldRejectList, depth);
 		}
 
-		DOMElement* parentTypeEl;
+		xercesc::DOMElement* parentTypeEl;
 		for(const auto& fieldInfo : retFieldList)
 		{
 			xmlOut.addTextElementToParent(
@@ -2632,7 +2632,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 			{
 				__SUP_COUTV__(field);
 
-				DOMElement* parentEl = xmlOut.addTextElementToData("field", field);
+				xercesc::DOMElement* parentEl = xmlOut.addTextElementToData("field", field);
 
 				// if groupID field, give child link index
 				//	this can be used to pre-select particular group(s)
@@ -2775,7 +2775,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 
 	try
 	{
-		DOMElement* parentEl = xmlOut.addTextElementToData("tree", startPath);
+		xercesc::DOMElement* parentEl = xmlOut.addTextElementToData("tree", startPath);
 
 		if(depth == 0)
 			return;  // already returned root node in itself
@@ -2847,7 +2847,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
                                                     unsigned int             depth,
                                                     HttpXmlDocument&         xmlOut,
-                                                    DOMElement*              parentEl,
+                                                    xercesc::DOMElement*              parentEl,
                                                     bool hideStatusFalse)
 {
 	//__COUT__ << t.getValueAsString() << __E__;
@@ -2901,7 +2901,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 				    "LinkIndex", t.getChildLinkIndex(), parentEl);
 
 				// add fixed choices (in case link has them)
-				DOMElement* choicesParentEl =
+				xercesc::DOMElement* choicesParentEl =
 				    xmlOut.addTextElementToParent("fixedChoices", "", parentEl);
 				// try
 				//{
@@ -2932,7 +2932,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 
 			// add fixed choices (in case link has them)
 			{
-				DOMElement* choicesParentEl =
+				xercesc::DOMElement* choicesParentEl =
 				    xmlOut.addTextElementToParent("fixedChoices", "", parentEl);
 				std::vector<std::string> choices = t.getFixedChoices();
 
@@ -3315,7 +3315,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 						{
 							// save all temporary tables to persistent tables
 							// finish off the version creation
-							newVersion = GatewaySupervisor::saveModifiedVersionXML(
+							newVersion = ConfigurationSupervisorBase::saveModifiedVersionXML(
 							    xmlOut,
 							    cfgMgr,
 							    bkey.first,
@@ -3865,7 +3865,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 	//	need to save all edits properly
 	//	if not modified, discard
 
-	TableVersion finalVersion = GatewaySupervisor::saveModifiedVersionXML(
+	TableVersion finalVersion = ConfigurationSupervisorBase::saveModifiedVersionXML(
 	    xmlOut,
 	    cfgMgr,
 	    planTable.tableName_,
@@ -3878,7 +3878,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 	__SUP_COUT__ << "Final plan version is " << planTable.tableName_ << "-v"
 	             << finalVersion << __E__;
 
-	finalVersion = GatewaySupervisor::saveModifiedVersionXML(
+	finalVersion = ConfigurationSupervisorBase::saveModifiedVersionXML(
 	    xmlOut,
 	    cfgMgr,
 	    targetTable.tableName_,
@@ -3908,7 +3908,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 			continue;
 		}
 
-		finalVersion = GatewaySupervisor::saveModifiedVersionXML(
+		finalVersion = ConfigurationSupervisorBase::saveModifiedVersionXML(
 		    xmlOut,
 		    cfgMgr,
 		    modifiedConfig.second.tableName_,
@@ -4190,7 +4190,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 					{
 						cfgView->init();  // verify new table (throws runtime_errors)
 
-						GatewaySupervisor::saveModifiedVersionXML(xmlOut,
+						ConfigurationSupervisorBase::saveModifiedVersionXML(xmlOut,
 						                       cfgMgr,
 						                       tableName,
 						                       version,
@@ -4353,7 +4353,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 					{
 						cfgView->init();  // verify new table (throws runtime_errors)
 
-						GatewaySupervisor::saveModifiedVersionXML(xmlOut,
+						ConfigurationSupervisorBase::saveModifiedVersionXML(xmlOut,
 						                       cfgMgr,
 						                       newTable,
 						                       version,
@@ -4420,7 +4420,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 		throw;
 	}
 
-	GatewaySupervisor::saveModifiedVersionXML(xmlOut,
+	ConfigurationSupervisorBase::saveModifiedVersionXML(xmlOut,
 	                       cfgMgr,
 	                       tableName,
 	                       version,
@@ -4442,245 +4442,6 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }
 
-//========================================================================================================================
-// handleGetTableGroupXML
-//
-//	give the detail of specific table specified
-//		groupKey=-1 returns latest
-//
-//	Find historical group keys
-//		and figure out all member configurations versions
-
-//
-//	return this information
-//	<group name=xxx key=xxx>
-//		<historical key=xxx>
-//		<historical key=xxx>
-//		....
-//		<table name=xxx version=xxx />
-//			<historical version=xxx>
-//			<historical version=xxx>
-//			...
-//		</table>
-//		<table name=xxx version=xxx>
-//		...
-//		</table>
-void ConfigurationGUISupervisor::handleGetTableGroupXML(HttpXmlDocument&        xmlOut,
-                                                        ConfigurationManagerRW* cfgMgr,
-                                                        const std::string&      groupName,
-                                                        TableGroupKey           groupKey,
-                                                        bool ignoreWarnings) try
-{
-	char        tmpIntStr[100];
-	DOMElement *parentEl, *configEl;
-
-	// steps:
-	//	if invalid key, get latest key
-	//	get specific group with key
-	//		give member names and versions
-	//		get all table groups to locate historical keys
-	//	get all groups to find historical keys
-
-	//	std::set<std::string /*name+version*/> allGroups =
-	//			cfgMgr->getConfigurationInterface()->getAllTableGroupNames(groupName);
-	//	std::string name;
-	//	TableGroupKey key;
-	//	//put them in a set to sort them as TableGroupKey defines for operator<
-	//	std::set<TableGroupKey> sortedKeys;
-	//	for(auto& group: allGroups)
-	//	{
-	//		//now uses database filter
-	//		TableGroupKey::getGroupNameAndKey(group,name,key);
-	//		//if(name == groupName)
-	//		sortedKeys.emplace(key);
-	//	}
-
-	const GroupInfo&               groupInfo  = cfgMgr->getGroupInfo(groupName);
-	const std::set<TableGroupKey>& sortedKeys = groupInfo.keys_;  // rename
-
-	if(groupKey.isInvalid() ||  // if invalid or not found, get latest
-	   sortedKeys.find(groupKey) == sortedKeys.end())
-	{
-		if(sortedKeys.size())
-			groupKey = *sortedKeys.rbegin();
-		__SUP_COUT__ << "Group key requested was invalid or not found, going with latest "
-		             << groupKey << __E__;
-	}
-
-	xmlOut.addTextElementToData("TableGroupName", groupName);
-	xmlOut.addTextElementToData("TableGroupKey", groupKey.toString());
-
-	// add all other sorted keys for this groupName
-	for(auto& keyInOrder : sortedKeys)
-		xmlOut.addTextElementToData("HistoricalTableGroupKey", keyInOrder.toString());
-
-	parentEl = xmlOut.addTextElementToData("TableGroupMembers", "");
-
-	//	get specific group with key
-	std::map<std::string /*name*/, TableVersion /*version*/> memberMap;
-	std::map<std::string /*name*/, std::string /*alias*/>    groupMemberAliases;
-
-	__SUP_COUT__ << "groupName=" << groupName << __E__;
-	__SUP_COUT__ << "groupKey=" << groupKey << __E__;
-
-	const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo();
-	std::map<std::string, TableInfo>::const_iterator it;
-
-	// load group so comments can be had
-	//	and also group metadata (author, comment, createTime)
-	try
-	{
-		std::string groupAuthor, groupComment, groupCreationTime, groupTypeString;
-		std::string accumulateTreeErrors;
-
-		__SUP_COUTV__(ignoreWarnings);
-		cfgMgr->loadTableGroup(groupName,
-		                       groupKey,
-		                       false /*doActivate*/,
-		                       &memberMap,
-		                       0 /*progressBar*/,
-		                       ignoreWarnings ? 0 : /*accumulateTreeErrors*/
-		                           &accumulateTreeErrors,
-		                       &groupComment,
-		                       &groupAuthor,
-		                       &groupCreationTime,
-		                       false /*doNotLoadMember*/,
-		                       &groupTypeString,
-		                       &groupMemberAliases);
-
-		if(accumulateTreeErrors != "")
-		{
-			__SUP_COUTV__(accumulateTreeErrors);
-			xmlOut.addTextElementToData("TreeErrors", accumulateTreeErrors);
-		}
-
-		xmlOut.addTextElementToData("TableGroupAuthor", groupAuthor);
-		xmlOut.addTextElementToData("TableGroupComment", groupComment);
-		xmlOut.addTextElementToData("TableGroupCreationTime", groupCreationTime);
-		xmlOut.addTextElementToData("TableGroupType", groupTypeString);
-	}
-	catch(const std::runtime_error& e)
-	{
-		__SUP_SS__ << "Table group \"" + groupName + "(" + groupKey.toString() + ")" +
-		                  "\" members can not be loaded!\n\n" + e.what()
-		           << __E__;
-		__SUP_COUT_ERR__ << ss.str();
-		xmlOut.addTextElementToData("Error", ss.str());
-		// return;
-	}
-	catch(...)
-	{
-		__SUP_SS__ << "Table group \"" + groupName + "(" + groupKey.toString() + ")" +
-		                  "\" members can not be loaded!"
-		           << __E__;
-		__SUP_COUT_ERR__ << ss.str();
-		xmlOut.addTextElementToData("Error", ss.str());
-		// return;
-	}
-
-	__COUTV__(StringMacros::mapToString(groupMemberAliases));
-
-	std::map<std::string, std::map<std::string, TableVersion>> versionAliases =
-	    cfgMgr->getVersionAliases();
-
-	__SUP_COUT__ << "# of table version aliases: " << versionAliases.size() << __E__;
-
-	// Seperate loop to get name and version
-	for(auto& memberPair : memberMap)
-	{
-		xmlOut.addTextElementToParent("MemberName", memberPair.first, parentEl);
-
-		// if member is in groupMemberAliases, then alias version
-		if(groupMemberAliases.find(memberPair.first) != groupMemberAliases.end())
-			configEl = xmlOut.addTextElementToParent(
-			    "MemberVersion",
-			    ConfigurationManager::ALIAS_VERSION_PREAMBLE +
-			        groupMemberAliases[memberPair.first],  // return the ALIAS:<alias>
-			    parentEl);
-		else
-			configEl = xmlOut.addTextElementToParent(
-			    "MemberVersion", memberPair.second.toString(), parentEl);
-
-		it = allTableInfo.find(memberPair.first);
-		if(it == allTableInfo.end())
-		{
-			xmlOut.addTextElementToData(
-			    "Error", "Table \"" + memberPair.first + "\" can not be retrieved!");
-			continue;
-		}
-
-		if(versionAliases.find(it->first) != versionAliases.end())
-			for(auto& aliasVersion : versionAliases[it->first])
-				xmlOut.addTextElementToParent(
-				    "TableExistingVersion",
-				    ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
-				    configEl);
-
-		for(auto& version : it->second.versions_)
-			// if(version == memberPair.second) continue; //CHANGED by RAR on 11/14/2016
-			// (might as well show all versions in list to avoid user confusion)  else
-			xmlOut.addTextElementToParent(
-			    "TableExistingVersion", version.toString(), configEl);
-	}
-	// Seperate loop just for getting the Member Comment
-	for(auto& memberPair : memberMap)
-	{
-		//__SUP_COUT__ << "\tMember table " << memberPair.first << ":" <<
-		//		memberPair.second << __E__;
-
-		// xmlOut.addTextElementToParent("MemberName", memberPair.first, parentEl);
-		// if(commentsLoaded)
-		xmlOut.addTextElementToParent(
-		    "MemberComment",
-		    allTableInfo.at(memberPair.first).tablePtr_->getView().getComment(),
-		    parentEl);
-		// else
-		//	xmlOut.addTextElementToParent("MemberComment", "", parentEl);
-
-		//	__SUP_COUT__ << "\tMember table " << memberPair.first << ":" <<
-		//	memberPair.second << __E__;
-
-		// configEl = xmlOut.addTextElementToParent("MemberVersion",
-		// memberPair.second.toString(), parentEl);
-
-		/*	it = allTableInfo.find(memberPair.first);
-		if(it == allTableInfo.end())
-		{
-		    xmlOut.addTextElementToData("Error","Table \"" +
-		            memberPair.first +
-		            "\" can not be retrieved!");
-		    return;
-		}
-		*/
-		// include aliases for this table
-		/*if(versionAliases.find(it->first) != versionAliases.end())
-		    for (auto& aliasVersion:versionAliases[it->first])
-		        xmlOut.addTextElementToParent("TableExistingVersion",
-		                ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
-		                configEl);
-
-		for (auto& version:it->second.versions_)
-		    //if(version == memberPair.second) continue; //CHANGED by RAR on 11/14/2016
-		(might as well show all versions in list to avoid user confusion)
-		    //else
-		    xmlOut.addTextElementToParent("TableExistingVersion",
-		version.toString(), configEl);
-		*/
-	}
-
-}  // end handleGetTableGroupXML()
-catch(std::runtime_error& e)
-{
-	__SUP_SS__ << ("Error!\n\n" + std::string(e.what())) << __E__;
-	__SUP_COUT_ERR__ << "\n" << ss.str();
-	xmlOut.addTextElementToData("Error", ss.str());
-}
-catch(...)
-{
-	__SUP_SS__ << ("Error!\n\n") << __E__;
-	__SUP_COUT_ERR__ << "\n" << ss.str();
-	xmlOut.addTextElementToData("Error", ss.str());
-}  // end handleGetTableGroupXML() catch
 
 //========================================================================================================================
 // handleGetTableXML
@@ -4730,7 +4491,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
                                                    bool allowIllegalColumns) try
 {
 	char        tmpIntStr[100];
-	DOMElement *parentEl, *subparentEl;
+	xercesc::DOMElement *parentEl, *subparentEl;
 
 	std::string accumulatedErrors = "";
 
@@ -4878,7 +4639,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	xmlOut.addTextElementToData("TableVersion", version.toString());  // table version
 
 	// get 'columns' of view
-	DOMElement* choicesParentEl;
+	xercesc::DOMElement* choicesParentEl;
 	parentEl = xmlOut.addTextElementToData("CurrentVersionColumnHeaders", "");
 
 	std::vector<TableViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
@@ -4930,7 +4691,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		//__SUP_COUT__ << "\t\tRow " << r << ": "  << __E__;
 
 		sprintf(tmpIntStr, "%d", r);
-		DOMElement* tmpParentEl =
+		xercesc::DOMElement* tmpParentEl =
 		    xmlOut.addTextElementToParent("Row", tmpIntStr, parentEl);
 
 		for(int c = 0; c < (int)cfgViewPtr->getNumberOfColumns(); ++c)
@@ -5042,179 +4803,6 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error getting view! ");
 }
 
-//========================================================================================================================
-// handleCreateTableXML
-//
-//	Save the detail of specific table specified
-//		by tableName and version
-//		...starting from dataOffset
-//
-//	Note: if starting version is -1 start from mock-up
-void ConfigurationGUISupervisor::handleCreateTableXML(HttpXmlDocument&        xmlOut,
-                                                      ConfigurationManagerRW* cfgMgr,
-                                                      const std::string&      tableName,
-                                                      TableVersion            version,
-                                                      bool               makeTemporary,
-                                                      const std::string& data,
-                                                      const int&         dataOffset,
-                                                      const std::string& author,
-                                                      const std::string& comment,
-                                                      bool               sourceTableAsIs,
-                                                      bool lookForEquivalent) try
-{
-	//__SUP_COUT__ << "handleCreateTableXML: " << tableName << " version: " <<
-	// version
-	//		<< " dataOffset: " << dataOffset << __E__;
-
-	//__SUP_COUT__ << "data: " << data << __E__;
-
-	// create temporary version from starting version
-	if(!version.isInvalid())  // if not using mock-up, make sure starting version is
-	                          // loaded
-	{
-		try
-		{
-			cfgMgr->getVersionedTableByName(tableName, version);
-		}
-		catch(...)
-		{
-			// force to mockup
-			version = TableVersion();
-		}
-	}
-
-	TableBase* table = cfgMgr->getTableByName(tableName);
-
-	// check that the source version has the right number of columns
-	//	if there is a mismatch, start from mockup
-	if(!version.isInvalid())  // if not using mock-up, then the starting version is the
-	                          // active one
-	{
-		// compare active to mockup column counts
-		if(table->getViewP()->getDataColumnSize() !=
-		       table->getMockupViewP()->getNumberOfColumns() ||
-		   table->getViewP()->getSourceColumnMismatch() != 0)
-		{
-			__SUP_COUT__ << "table->getViewP()->getNumberOfColumns() "
-			             << table->getViewP()->getNumberOfColumns() << __E__;
-			__SUP_COUT__ << "table->getMockupViewP()->getNumberOfColumns() "
-			             << table->getMockupViewP()->getNumberOfColumns() << __E__;
-			__SUP_COUT__ << "table->getViewP()->getSourceColumnMismatch() "
-			             << table->getViewP()->getSourceColumnMismatch() << __E__;
-			__SUP_COUT_INFO__
-			    << "Source view v" << version
-			    << " has a mismatch in the number of columns, so using mockup as source."
-			    << __E__;
-			version = TableVersion();  // invalid = mockup
-		}
-	}
-
-	// create a temporary version from the source version
-	TableVersion temporaryVersion = table->createTemporaryView(version);
-
-	__SUP_COUT__ << "\t\ttemporaryVersion: " << temporaryVersion << __E__;
-
-	TableView* cfgView = table->getTemporaryView(temporaryVersion);
-
-	int retVal;
-	try
-	{
-		// returns -1 on error that data was unchanged
-		retVal = sourceTableAsIs ? 0 : cfgView->fillFromCSV(data, dataOffset, author);
-
-		if(retVal == 1)  // data was same but columns are different!
-		{
-			__SUP_COUT__ << "Data was the same, but columns have changed!" << __E__;
-			__SUP_COUTV__(sourceTableAsIs);
-			__SUP_COUTV__(lookForEquivalent);
-		}
-
-		cfgView->setURIEncodedComment(comment);
-		__SUP_COUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << __E__;
-	}
-	catch(...)  // erase temporary view before re-throwing error
-	{
-		__SUP_COUT__ << "Caught error while editing. Erasing temporary version." << __E__;
-		table->eraseView(temporaryVersion);
-		throw;
-	}
-
-	// Note: be careful with any further table operations at this point..
-	//	must catch errors and erase temporary version on failure.
-
-	// only consider it an error if source version was persistent version
-	//	allow it if source version is temporary and we are making a persistent version now
-	//	also, allow it if version tracking is off.
-	if(retVal < 0 && (!version.isTemporaryVersion() || makeTemporary) &&
-	   ConfigurationInterface::isVersionTrackingEnabled())
-	{
-		if(!version.isInvalid() &&       // if source version was mockup, then consider it
-		                                 // attempt to create a blank table
-		   !version.isScratchVersion())  // if source version was scratch, then consider
-		                                 // it attempt to make it persistent
-		{
-			__SUP_SS__
-			    << "No rows were modified! No reason to fill a view with same content."
-			    << __E__;
-			__SUP_COUT_ERR__ << "\n" << ss.str();
-			// delete temporaryVersion
-			table->eraseView(temporaryVersion);
-			__SS_THROW__;
-		}
-		else if(version.isInvalid())
-			__SUP_COUT__ << "This was interpreted as an attempt to create a blank table."
-			             << __E__;
-		else if(version.isScratchVersion())
-			__SUP_COUT__ << "This was interpreted as an attempt to make a persistent "
-			                "version of the scratch table."
-			             << __E__;
-		else
-		{
-			__SUP_SS__;
-			__THROW__(ss.str() + "impossible!");
-		}
-	}
-	else if(retVal < 0 && (version.isTemporaryVersion() && !makeTemporary))
-	{
-		__SUP_COUT__ << "Allowing the static data because this is converting from "
-		                "temporary to persistent version."
-		             << __E__;
-	}
-	else if(retVal < 0 && !ConfigurationInterface::isVersionTrackingEnabled())
-	{
-		__SUP_COUT__ << "Allowing the static data because version tracking is OFF."
-		             << __E__;
-	}
-	else if(retVal < 0)
-	{
-		__SUP_SS__ << "This should not be possible! Fatal error." << __E__;
-		// delete temporaryVersion
-		table->eraseView(temporaryVersion);
-		__SS_THROW__;
-	}
-
-	// note: if sourceTableAsIs, accept equivalent versions
-	GatewaySupervisor::saveModifiedVersionXML(xmlOut,
-	                       cfgMgr,
-	                       tableName,
-	                       version,
-	                       makeTemporary,
-	                       table,
-	                       temporaryVersion,
-	                       false /*ignoreDuplicates*/,
-	                       lookForEquivalent || sourceTableAsIs /*lookForEquivalent*/);
-}  // end handleCreateTableXML()
-catch(std::runtime_error& e)
-{
-	__SUP_COUT__ << "Error detected!\n\n " << e.what() << __E__;
-	xmlOut.addTextElementToData("Error",
-	                            "Error saving new view!\n " + std::string(e.what()));
-}
-catch(...)
-{
-	__SUP_COUT__ << "Error detected!\n\n " << __E__;
-	xmlOut.addTextElementToData("Error", "Error saving new view! ");
-}
 
 //========================================================================================================================
 //	refreshUserSession
@@ -5303,327 +4891,6 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	return userConfigurationManagers_[mapKey];
 }
 
-//========================================================================================================================
-//	handleCreateTableGroupXML
-//
-//		Save a new TableGroup:
-//			Search for existing TableGroupKeys for this TableGroup
-//			Append a "bumped" system key to name
-//			Save based on list of tableName/TableVersion
-//
-//		tableList parameter is comma separated table name and version
-//
-//		Note: if version of -1 (INVALID/MOCKUP) is given and there are no other existing
-// table versions... 			a new table version is generated using the mockup table.
-//
-//		Table Version Alias Handling:
-//			Allow table versions to be specified as an alias with ALIAS: preamble. Aliased
-// versions 			will be translated according to the active backbone at activation
-// time.
-//
-//
-void ConfigurationGUISupervisor::handleCreateTableGroupXML(
-    HttpXmlDocument&        xmlOut,
-    ConfigurationManagerRW* cfgMgr,
-    const std::string&      groupName,
-    const std::string&      tableList,
-    bool                    allowDuplicates,
-    bool                    ignoreWarnings,
-    const std::string&      groupComment,
-    bool                    lookForEquivalent) try
-{
-	__SUP_COUT__ << "handleCreateTableGroupXML \n";
-
-	xmlOut.addTextElementToData("AttemptedNewGroupName", groupName);
-
-	// make sure not using partial tables or anything weird when creating the group
-	//	so start from scratch and load backbone
-	const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo(true);
-	cfgMgr->loadConfigurationBackbone();
-
-	std::map<std::string /*tableName*/,
-	         std::map<std::string /*aliasName*/, TableVersion /*version*/>>
-	    versionAliases = cfgMgr->getVersionAliases();
-	//	for(const auto& aliases : versionAliases)
-	//		for(const auto& alias : aliases.second)
-	//			__SUP_COUT__ << aliases.first << " " << alias.first << " " << alias.second
-	//			             << __E__;
-
-	std::map<std::string /*name*/, TableVersion /*version*/> groupMembers;
-	std::map<std::string /*name*/, std::string /*alias*/>    groupAliases;
-
-	std::string  name, versionStr, alias;
-	TableVersion version;
-	auto         c = tableList.find(',', 0);
-	auto         i = c;
-	i              = 0;  // auto used to get proper index/length type
-	while(c < tableList.length())
-	{
-		// add the table and version pair to the map
-		name = tableList.substr(i, c - i);
-		i    = c + 1;
-		c    = tableList.find(',', i);
-		if(c == std::string::npos)  // missing version list entry?!
-		{
-			__SUP_SS__ << "Incomplete Table Name-Version pair!" << __E__;
-			__SUP_COUT_ERR__ << "\n" << ss.str();
-			xmlOut.addTextElementToData("Error", ss.str());
-			return;
-		}
-
-		versionStr = tableList.substr(i, c - i);
-		i          = c + 1;
-		c          = tableList.find(',', i);
-
-		//__SUP_COUT__ << "name: " << name << __E__;
-		//__SUP_COUT__ << "versionStr: " << versionStr << __E__;
-
-		// check if version is an alias and convert
-		if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
-		{
-			alias =
-			    versionStr.substr(ConfigurationManager::ALIAS_VERSION_PREAMBLE.size());
-
-			__SUP_COUT__ << "Found alias " << name << " " << versionStr << __E__;
-
-			// convert alias to version
-			if(versionAliases.find(name) != versionAliases.end() &&
-			   versionAliases[name].find(alias) != versionAliases[name].end())
-			{
-				version = versionAliases[name][alias];
-				__SUP_COUT__ << "version alias '" << alias
-				             << "'translated to: " << version << __E__;
-
-				groupAliases[name] = alias;
-			}
-			else
-			{
-				__SUP_SS__ << "version alias '"
-				           << versionStr.substr(
-				                  ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())
-				           << "' was not found in active version aliases!" << __E__;
-				__SUP_COUT_ERR__ << "\n" << ss.str();
-				xmlOut.addTextElementToData("Error", ss.str());
-				return;
-			}
-		}
-		else
-			version = TableVersion(versionStr);
-
-		if(version.isTemporaryVersion())
-		{
-			__SUP_SS__ << "Groups can not be created using temporary member tables. "
-			           << "Table member '" << name << "' with temporary version '"
-			           << version << "' is illegal." << __E__;
-			xmlOut.addTextElementToData("Error", ss.str());
-			return;
-		}
-
-		// enforce that table exists
-		if(allTableInfo.find(name) == allTableInfo.end())
-		{
-			__SUP_SS__ << "Groups can not be created using mock-up member tables of "
-			              "undefined tables. "
-			           << "Table member '" << name << "' is not defined." << __E__;
-			xmlOut.addTextElementToData("Error", ss.str());
-			return;
-		}
-
-		if(version.isMockupVersion())
-		{
-			// if mockup, then generate a new persistent version to use based on mockup
-			TableBase* table = cfgMgr->getTableByName(name);
-			// create a temporary version from the mockup as source version
-			TableVersion temporaryVersion = table->createTemporaryView();
-			__SUP_COUT__ << "\t\ttemporaryVersion: " << temporaryVersion << __E__;
-
-			// if other versions exist check for another mockup, and use that instead
-			__SUP_COUT__ << "Creating version from mock-up for name: " << name
-			             << " inputVersionStr: " << versionStr << __E__;
-
-			// set table comment
-			table->getTemporaryView(temporaryVersion)
-			    ->setComment("Auto-generated from mock-up.");
-
-			// finish off the version creation
-			version =
-					GatewaySupervisor::saveModifiedVersionXML(xmlOut,
-			                           cfgMgr,
-			                           name,
-			                           TableVersion() /*original source is mockup*/,
-			                           false /* makeTemporary */,
-			                           table,
-			                           temporaryVersion /*temporary modified version*/,
-			                           false /*ignore duplicates*/,
-			                           true /*look for equivalent*/);
-
-			__SUP_COUT__ << "Using mockup version: " << version << __E__;
-		}
-
-		//__SUP_COUT__ << "version: " << version << __E__;
-		groupMembers[name] = version;
-	}  // end member verification loop
-
-	__COUTV__(StringMacros::mapToString(groupAliases));
-
-	if(!allowDuplicates)
-	{
-		__SUP_COUT__ << "Checking for duplicate groups..." << __E__;
-		TableGroupKey foundKey =
-		    cfgMgr->findTableGroup(groupName, groupMembers, groupAliases);
-
-		if(!foundKey.isInvalid())
-		{
-			// return found equivalent key
-			xmlOut.addTextElementToData("TableGroupName", groupName);
-			xmlOut.addTextElementToData("TableGroupKey", foundKey.toString());
-
-			if(lookForEquivalent)
-			{
-				__SUP_COUT__ << "Found equivalent group key (" << foundKey << ") for "
-				             << groupName << "." << __E__;
-				// allow this equivalent group to be the response without an error
-				xmlOut.addTextElementToData("foundEquivalentKey", "1");  // indicator
-
-				// insert get table info
-				handleGetTableGroupXML(
-				    xmlOut, cfgMgr, groupName, foundKey, ignoreWarnings);
-				return;
-			}
-			else  // treat as error, if not looking for equivalent
-			{
-				__SUP_COUT__ << "Treating duplicate group as error." << __E__;
-				__SUP_SS__ << ("Failed to create table group: " + groupName +
-				               ". It is a duplicate of an existing group key (" +
-				               foundKey.toString() + ")");
-				__SUP_COUT_ERR__ << ss.str() << __E__;
-				xmlOut.addTextElementToData("Error", ss.str());
-				return;
-			}
-		}
-
-		__SUP_COUT__ << "Check for duplicate groups complete." << __E__;
-	}
-
-	// check the group for errors before creating group
-	try
-	{
-		cfgMgr->loadMemberMap(groupMembers);
-
-		std::string accumulateErrors = "";
-		for(auto& groupMemberPair : groupMembers)
-		{
-			TableView* cfgViewPtr =
-			    cfgMgr->getTableByName(groupMemberPair.first)->getViewP();
-			if(cfgViewPtr->getDataColumnSize() != cfgViewPtr->getNumberOfColumns() ||
-			   cfgViewPtr->getSourceColumnMismatch() !=
-			       0)  // check for column size mismatch
-			{
-				__SUP_SS__ << "\n\nThere were errors found in loading a member table "
-				           << groupMemberPair.first << ":v" << cfgViewPtr->getVersion()
-				           << ". Please see the details below:\n\n"
-				           << "The source column size was found to be "
-				           << cfgViewPtr->getDataColumnSize()
-				           << ", and the current number of columns for this table is "
-				           << cfgViewPtr->getNumberOfColumns()
-				           << ". This resulted in a count of "
-				           << cfgViewPtr->getSourceColumnMismatch()
-				           << " source column mismatches, and a count of "
-				           << cfgViewPtr->getSourceColumnMissing()
-				           << " table entries missing in "
-				           << cfgViewPtr->getNumberOfRows() << " row(s) of data."
-				           << __E__;
-
-				const std::set<std::string> srcColNames =
-				    cfgViewPtr->getSourceColumnNames();
-				ss << "\n\nSource column names were as follows:\n";
-				char index = 'a';
-				for(auto& srcColName : srcColNames)
-					ss << "\n\t" << index++ << ". " << srcColName;
-				ss << __E__;
-
-				std::set<std::string> destColNames = cfgViewPtr->getColumnStorageNames();
-				ss << "\n\nCurrent table column names are as follows:\n";
-				index = 'a';
-				for(auto& destColName : destColNames)
-					ss << "\n\t" << index++ << ". " << destColName;
-				ss << __E__;
-
-				__SUP_COUT_ERR__ << "\n" << ss.str();
-				xmlOut.addTextElementToData("Error", ss.str());
-				return;
-			}
-		}
-	}
-	catch(std::runtime_error& e)
-	{
-		__SUP_SS__ << "Failed to create table group: " << groupName
-		           << ".\nThere were problems loading the chosen members:\n\n"
-		           << e.what() << __E__;
-		__SUP_COUT_ERR__ << "\n" << ss.str();
-		xmlOut.addTextElementToData("Error", ss.str());
-		return;
-	}
-	catch(...)
-	{
-		__SUP_SS__ << "Failed to create table group: " << groupName << __E__;
-		__SUP_COUT_ERR__ << "\n" << ss.str();
-		xmlOut.addTextElementToData("Error", ss.str());
-		return;
-	}
-
-	// check the tree for warnings before creating group
-	std::string accumulateTreeErrs;
-	cfgMgr->getChildren(&groupMembers, &accumulateTreeErrs);
-	if(accumulateTreeErrs != "")
-	{
-		__SUP_COUT_WARN__ << "\n" << accumulateTreeErrs << __E__;
-		if(!ignoreWarnings)
-		{
-			xmlOut.addTextElementToData("TreeErrors", accumulateTreeErrs);
-			return;
-		}
-	}
-
-	TableGroupKey newKey;
-	try
-	{
-		__COUT__ << "Saving new group..." << __E__;
-		newKey = cfgMgr->saveNewTableGroup(
-		    groupName, groupMembers, groupComment, &groupAliases);
-	}
-	catch(std::runtime_error& e)
-	{
-		__SUP_COUT_ERR__ << "Failed to create table group: " << groupName << __E__;
-		__SUP_COUT_ERR__ << "\n\n" << e.what() << __E__;
-		xmlOut.addTextElementToData(
-		    "Error", "Failed to create table group: " + groupName + ".\n\n" + e.what());
-		return;
-	}
-	catch(...)
-	{
-		__SUP_COUT_ERR__ << "Failed to create table group: " << groupName << __E__;
-		xmlOut.addTextElementToData("Error",
-		                            "Failed to create table group: " + groupName);
-		return;
-	}
-
-	// insert get table info
-	__COUT__ << "Loading new table group..." << __E__;
-	handleGetTableGroupXML(xmlOut, cfgMgr, groupName, newKey, ignoreWarnings);
-
-}  // end handleCreateTableGroupXML()
-catch(std::runtime_error& e)
-{
-	__SUP_COUT__ << "Error detected!\n\n " << e.what() << __E__;
-	xmlOut.addTextElementToData("Error",
-	                            "Error saving table group! " + std::string(e.what()));
-}
-catch(...)
-{
-	__SUP_COUT__ << "Unknown Error detected!\n\n " << __E__;
-	xmlOut.addTextElementToData("Error", "Error saving table group! ");
-}  // end handleCreateTableGroupXML() catch
 
 //========================================================================================================================
 //	handleDeleteTableInfoXML
@@ -5996,7 +5263,7 @@ void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(
 
 		// save or find equivalent
 
-		newAssignedVersion = GatewaySupervisor::saveModifiedVersionXML(xmlOut,
+		newAssignedVersion = ConfigurationSupervisorBase::saveModifiedVersionXML(xmlOut,
 		                                            cfgMgr,
 		                                            table->getTableName(),
 		                                            originalVersion,
@@ -6170,7 +5437,7 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 		// newAssignedVersion  =
 		//		cfgMgr->saveNewTable(versionAliasesTableName,temporaryVersion);
 
-		newAssignedVersion = GatewaySupervisor::saveModifiedVersionXML(xmlOut,
+		newAssignedVersion = ConfigurationSupervisorBase::saveModifiedVersionXML(xmlOut,
 		                                            cfgMgr,
 		                                            table->getTableName(),
 		                                            originalVersion,
@@ -6607,7 +5874,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
                                                       ConfigurationManagerRW* cfgMgr,
                                                       bool returnMembers)
 {
-	DOMElement* parentEl;
+	xercesc::DOMElement* parentEl;
 
 	// get all group info from cache (if no cache, get from interface)
 
@@ -6806,7 +6073,7 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
                                                  ConfigurationManagerRW* cfgMgr,
                                                  bool allowIllegalColumns)
 {
-	DOMElement* parentEl;
+	xercesc::DOMElement* parentEl;
 
 	std::string                             accumulatedErrors = "";
 	const std::map<std::string, TableInfo>& allTableInfo      = cfgMgr->getAllTableInfo(

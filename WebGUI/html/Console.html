@@ -272,11 +272,7 @@
 			
 			var _consoleHistoryFields = ["chat_entry","chat_author","chat_time"];
 			var _CONSOLE_HISTORY_MAX_LENGTH = 100000;
-			//var _lastTypedChat = "", _lastSentChat = ""; //keep last chats to prevent repeats
-			
-			var _chatUsersArray; 
-			var _chatUsersFields = ["chat_user"];
-			
+						
 			var _chatUsersTitle = "<div class='userTitle'>Chatting:</div>";
 			var _activeUsersTitle = "<div class='userTitle'>Logged In:</div>";
 			var _activeUsersStr = "";
@@ -295,15 +291,20 @@
 									"Level",
 									"Label",
 									//"Source", //not useful (innacurate)
+									//"SourceID", //not useful (innacurate)
 									"Msg",
 									"Time",
+									"File",
+									"Line",
 									//"Count" //not needed
 								  ];
 			var _MESSAGE_FIELD_LEVEL = _consoleMessageFields.indexOf("Level"),
 					_MESSAGE_FIELD_LABEL = _consoleMessageFields.indexOf("Label"), 
 					//_MESSAGE_FIELD_SOURCE = 2,
 					_MESSAGE_FIELD_MSG = _consoleMessageFields.indexOf("Msg"), 
-					_MESSAGE_FIELD_TIME = _consoleMessageFields.indexOf("Time");
+					_MESSAGE_FIELD_TIME = _consoleMessageFields.indexOf("Time"), 
+					_MESSAGE_FIELD_FILE = _consoleMessageFields.indexOf("File"), 
+					_MESSAGE_FIELD_LINE = _consoleMessageFields.indexOf("Line");
 
 			var _consoleMessageArray; 			
 			var _compactViewCheckbox, _noWrapCheckbox, _hideLineNumbersCheckbox;
@@ -357,10 +358,7 @@
 		    	_hideLineNumbersCheckbox.onmouseup = toggleHideLineNumber;
 							
 				
-			    //init chat history
-			    _consoleMessageArray = new Array();
-				for(var i=0;i<_consoleHistoryFields.length;++i)
-					_consoleMessageArray.push(new Array());
+			    //init console history
 				_consoleEl.innerHTML = "--- Console messages will be displayed here. Old messages will scroll up as new messages are received. ---";
 				
 				window.onresize = redrawConsoleWindow;
@@ -721,7 +719,6 @@
 
 
 			//initSideBar ~
-			// 	update chat users from _chatUsersArray
 			function initSideBar() {
 								
 				var str = "";
@@ -917,58 +914,64 @@
 				for(var f in _FIELDS_TO_OBSERVE) //accumulate field values and their counts
 					observedSz[_FIELDS_TO_OBSERVE[f]] = Object.keys(_observed[_FIELDS_TO_OBSERVE[f]]).length; 
 				
-				for(var i=0;i<_consoleMessageArray[0].length;++i)  //assume all fields' arrays are same length (checked by req handler)
+				 //assume all fields' arrays are same length (checked by req handler)
+				for(var i=0;i<_consoleMessageArray[0].length;++i) 
 				{		 			
 					tmp.Label = _consoleMessageArray[_MESSAGE_FIELD_LABEL][i].getAttribute('value');
 					tmp.Level = _consoleMessageArray[_MESSAGE_FIELD_LEVEL][i].getAttribute('value');
 					
-					firstMsg = "";
-					secondMsg = _consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value');
-					//if(secondMsg.indexOf(" --:0") == 0) //skip it
-					//	secondMsg = secondMsg.substr((" --:0").length);
-					secondMsgIndex = secondMsg.indexOf(']'); //find end of line number display
+					firstMsg = _consoleMessageArray[_MESSAGE_FIELD_FILE][i].getAttribute('value') +
+							"[" + _consoleMessageArray[_MESSAGE_FIELD_LINE][i].getAttribute('value') + "]\t";
 					
-					if(secondMsgIndex != -1 && ( //normal line number if tab follows, or is last character in string
-							(secondMsgIndex + 1 < secondMsg.length && secondMsg[secondMsgIndex + 1] == '\t') ||
-							(secondMsgIndex + 1 == secondMsg.length)))
-					{
-						firstMsg = secondMsg.slice(0,secondMsgIndex+2);
-						secondMsg = secondMsg.slice(secondMsgIndex+2);
-						
-						//skip all the mf line number insert
-						if((secondMsgIndex = firstMsg.indexOf(':')) >= 0)
-						{							
-							while(++secondMsgIndex < firstMsg.length && 
-									firstMsg[secondMsgIndex] >= '0' && 
-									firstMsg[secondMsgIndex] <= '9' );
-							firstMsg = firstMsg.substr(secondMsgIndex);
-						}
-					}
-					else
-					{						
-						//artdaq does one space, then <source>:<line number> then new line (ascii-10)
-						secondMsgIndex = secondMsg.indexOf(':'); //find end of line number display (artdaq style)
-						if(secondMsgIndex > 0 && // : found
-								( 		//before any spaces
-										secondMsgIndex < secondMsg.indexOf(' ',1) ||
-										secondMsgIndex < secondMsg.indexOf('\n',1) ||
-										secondMsgIndex < secondMsg.indexOf('\t',1)) && 
-								secondMsgIndex+2 < secondMsg.length && //there is at least the number at the space/newline after
-								secondMsg[secondMsgIndex+1] >= '0' &&
-								secondMsg[secondMsgIndex+1] <= '9')
-						{
-							//get space after ':##'
-							while(++secondMsgIndex < secondMsg.length &&
-									secondMsg[secondMsgIndex] >= '0' &&
-									secondMsg[secondMsgIndex] <= '9');
-							if(secondMsgIndex != -1)
-							{
-								firstMsg = secondMsg.slice(0,secondMsgIndex);
-								secondMsg = secondMsg.slice(secondMsgIndex);
-							}
-						}
-											
-					}
+					secondMsg = _consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value');
+					
+					 
+					
+//					//if(secondMsg.indexOf(" --:0") == 0) //skip it
+//					//	secondMsg = secondMsg.substr((" --:0").length);
+//					secondMsgIndex = secondMsg.indexOf(']'); //find end of line number display
+//					
+//					if(secondMsgIndex != -1 && ( //normal line number if tab follows, or is last character in string
+//							(secondMsgIndex + 1 < secondMsg.length && secondMsg[secondMsgIndex + 1] == '\t') ||
+//							(secondMsgIndex + 1 == secondMsg.length)))
+//					{
+//						firstMsg = secondMsg.slice(0,secondMsgIndex+2);
+//						secondMsg = secondMsg.slice(secondMsgIndex+2);
+//						
+//						//skip all the mf line number insert
+//						if((secondMsgIndex = firstMsg.indexOf(':')) >= 0)
+//						{							
+//							while(++secondMsgIndex < firstMsg.length && 
+//									firstMsg[secondMsgIndex] >= '0' && 
+//									firstMsg[secondMsgIndex] <= '9' );
+//							firstMsg = firstMsg.substr(secondMsgIndex);
+//						}
+//					}
+//					else
+//					{						
+//						//artdaq does one space, then <source>:<line number> then new line (ascii-10)
+//						secondMsgIndex = secondMsg.indexOf(':'); //find end of line number display (artdaq style)
+//						if(secondMsgIndex > 0 && // : found
+//								( 		//before any spaces
+//										secondMsgIndex < secondMsg.indexOf(' ',1) ||
+//										secondMsgIndex < secondMsg.indexOf('\n',1) ||
+//										secondMsgIndex < secondMsg.indexOf('\t',1)) && 
+//								secondMsgIndex+2 < secondMsg.length && //there is at least the number at the space/newline after
+//								secondMsg[secondMsgIndex+1] >= '0' &&
+//								secondMsg[secondMsgIndex+1] <= '9')
+//						{
+//							//get space after ':##'
+//							while(++secondMsgIndex < secondMsg.length &&
+//									secondMsg[secondMsgIndex] >= '0' &&
+//									secondMsg[secondMsgIndex] <= '9');
+//							if(secondMsgIndex != -1)
+//							{
+//								firstMsg = secondMsg.slice(0,secondMsgIndex);
+//								secondMsg = secondMsg.slice(secondMsgIndex);
+//							}
+//						}
+//											
+//					}
 					firstMsg = convertForClient(firstMsg);
 					secondMsg = convertForClient(secondMsg);
 					
@@ -990,7 +993,8 @@
 					for(var f in _FIELDS_TO_OBSERVE) //accumulate field values and their counts
 						_observed[_FIELDS_TO_OBSERVE[f]][tmp[_FIELDS_TO_OBSERVE[f]]] = 
 								(_observed[_FIELDS_TO_OBSERVE[f]][tmp[_FIELDS_TO_OBSERVE[f]]] | 0) + 1; //this works when undefined also
-				}
+					
+				} //end main message loop
 				
 				//check to see if filter boxes need to be updated due to new fields
 				for(var f in _FIELDS_TO_OBSERVE) //accumulate field values and their counts

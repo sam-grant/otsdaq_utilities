@@ -3951,8 +3951,8 @@
 						", /*parameters*/ \"" +
 						"subsetBasePath=" + treeMemberNames_[j] +
 						"&groupingFieldList=AUTO" +
-						"&recordAlias=" + recordAlias +
-						"&editableFieldList=" + "!*CommentDescription" +
+						"&recordAlias=" + encodeURIComponent(recordAlias) +
+						"&editableFieldList=" + encodeURIComponent("!*CommentDescription") +
 						"\"" +
 						");"; 
 
