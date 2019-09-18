@@ -1300,22 +1300,23 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//__SUP_COUT__ << "Wrapping up..." << __E__;
 
 	// always add active table groups to xml response
-	std::map<std::string /*type*/, std::pair<std::string /*groupName*/, TableGroupKey>>
-	    activeGroupMap = cfgMgr->getActiveTableGroups();
-
-	for(auto& type : activeGroupMap)
-	{
-		xmlOut.addTextElementToData(type.first + "-ActiveGroupName", type.second.first);
-		xmlOut.addTextElementToData(type.first + "-ActiveGroupKey",
-		                            type.second.second.toString());
-		//__SUP_COUT__ << "ActiveGroup " << type.first << " " << type.second.first << "("
-		//<< type.second.second << ")" << __E__;
-	}
-
-	// always add version tracking bool
-	xmlOut.addTextElementToData(
-	    "versionTracking",
-	    ConfigurationInterface::isVersionTrackingEnabled() ? "ON" : "OFF");
+	ConfigurationSupervisorBase::getConfigurationStatusXML(xmlOut,cfgMgr);
+//	std::map<std::string /*type*/, std::pair<std::string /*groupName*/, TableGroupKey>>
+//	    activeGroupMap = cfgMgr->getActiveTableGroups();
+//
+//	for(auto& type : activeGroupMap)
+//	{
+//		xmlOut.addTextElementToData(type.first + "-ActiveGroupName", type.second.first);
+//		xmlOut.addTextElementToData(type.first + "-ActiveGroupKey",
+//		                            type.second.second.toString());
+//		//__SUP_COUT__ << "ActiveGroup " << type.first << " " << type.second.first << "("
+//		//<< type.second.second << ")" << __E__;
+//	}
+//
+//	// always add version tracking bool
+//	xmlOut.addTextElementToData(
+//	    "versionTracking",
+//	    ConfigurationInterface::isVersionTrackingEnabled() ? "ON" : "OFF");
 	//
 	//	__SUP_COUT__ << __E__;
 	//	xmlOut.outputXmlDocument(0,true,true);

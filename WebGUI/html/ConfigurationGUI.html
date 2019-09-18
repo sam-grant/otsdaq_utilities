@@ -542,6 +542,7 @@
 		var _memberMapForGroupSave = {}; //used by saveTableGroupAsNewKey()
 
 		var firstInit_ = true;
+		var systemViewPreventInfiniteLoop_ = false;
 
 		//init called once body has loaded
 		function init() {
@@ -689,7 +690,7 @@
 					];
 					//console.log(_lastConfigGroups);
 
-				
+					systemViewPreventInfiniteLoop_ = true;
 					DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases&" +
 						"reloadActiveGroups=" + (firstInit_ ? "0" : "1"), 
 						//reload persistent active groups (persistent active config group will be modified when state machine configures)
@@ -699,6 +700,7 @@
 						0/*progressHandler*/, true /*callHandlerOnErr*/);
 
 					firstInit_ = false;
+					systemViewPreventInfiniteLoop_ = false;
 				}); //end getLastTableGroups
 
 
@@ -4827,13 +4829,14 @@
 
 			//if system view, refresh it to show active
 			try {
-				if (document.getElementById("display").children[0].textContent ==
+				if (!systemViewPreventInfiniteLoop_ && 
+						document.getElementById("display").children[0].textContent ==
 					"System View")
-					setupSystemViewMode();
+					setupSystemViewMode();				
 			}
 			catch (e) { ; }
 
-		}
+		} // end activateSystemConfigHandler()
 
 		//wizToActiveTableGroup ~~
 		//	groupType := 0-context, 1-backbone, 2-configuration

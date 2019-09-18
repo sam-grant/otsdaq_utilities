@@ -1919,6 +1919,12 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 		Debug.log("Successfully added icon '" +
 				caption +
 				"!'",Debug.INFO_PRIORITY);
+		
+		//if available update active system configuration handler, to display changes
+		if(activateSystemConfigHandler)
+		{
+			activateSystemConfigHandler(req);
+		}
 
 			}, //end request handler
 			0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 

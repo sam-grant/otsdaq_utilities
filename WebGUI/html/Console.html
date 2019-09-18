@@ -924,54 +924,7 @@
 							"[" + _consoleMessageArray[_MESSAGE_FIELD_LINE][i].getAttribute('value') + "]\t";
 					
 					secondMsg = _consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value');
-					
-					 
-					
-//					//if(secondMsg.indexOf(" --:0") == 0) //skip it
-//					//	secondMsg = secondMsg.substr((" --:0").length);
-//					secondMsgIndex = secondMsg.indexOf(']'); //find end of line number display
-//					
-//					if(secondMsgIndex != -1 && ( //normal line number if tab follows, or is last character in string
-//							(secondMsgIndex + 1 < secondMsg.length && secondMsg[secondMsgIndex + 1] == '\t') ||
-//							(secondMsgIndex + 1 == secondMsg.length)))
-//					{
-//						firstMsg = secondMsg.slice(0,secondMsgIndex+2);
-//						secondMsg = secondMsg.slice(secondMsgIndex+2);
-//						
-//						//skip all the mf line number insert
-//						if((secondMsgIndex = firstMsg.indexOf(':')) >= 0)
-//						{							
-//							while(++secondMsgIndex < firstMsg.length && 
-//									firstMsg[secondMsgIndex] >= '0' && 
-//									firstMsg[secondMsgIndex] <= '9' );
-//							firstMsg = firstMsg.substr(secondMsgIndex);
-//						}
-//					}
-//					else
-//					{						
-//						//artdaq does one space, then <source>:<line number> then new line (ascii-10)
-//						secondMsgIndex = secondMsg.indexOf(':'); //find end of line number display (artdaq style)
-//						if(secondMsgIndex > 0 && // : found
-//								( 		//before any spaces
-//										secondMsgIndex < secondMsg.indexOf(' ',1) ||
-//										secondMsgIndex < secondMsg.indexOf('\n',1) ||
-//										secondMsgIndex < secondMsg.indexOf('\t',1)) && 
-//								secondMsgIndex+2 < secondMsg.length && //there is at least the number at the space/newline after
-//								secondMsg[secondMsgIndex+1] >= '0' &&
-//								secondMsg[secondMsgIndex+1] <= '9')
-//						{
-//							//get space after ':##'
-//							while(++secondMsgIndex < secondMsg.length &&
-//									secondMsg[secondMsgIndex] >= '0' &&
-//									secondMsg[secondMsgIndex] <= '9');
-//							if(secondMsgIndex != -1)
-//							{
-//								firstMsg = secondMsg.slice(0,secondMsgIndex);
-//								secondMsg = secondMsg.slice(secondMsgIndex);
-//							}
-//						}
-//											
-//					}
+										 
 					firstMsg = convertForClient(firstMsg);
 					secondMsg = convertForClient(secondMsg);
 					
