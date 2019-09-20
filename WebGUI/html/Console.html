@@ -42,6 +42,7 @@
 				text-decoration: none;
 				color: #4D2600;
 				font-weight: 800;
+				cursor: pointer;
 			}
 			
 			a:hover {
@@ -277,7 +278,7 @@
 			var _activeUsersTitle = "<div class='userTitle'>Logged In:</div>";
 			var _activeUsersStr = "";
 
-			var _displaySidePane = true;
+			var _displaySidePane = false;
 			var _scrollWithNewChats = true; //true if following new chats, false if user has scrolled up into history
 			var _userMouseInput = false; //use flag to determine if scrolling is due to user mouse input
 			
@@ -640,7 +641,7 @@
 				
 			    if(_consoleUpdateTimer) //only allow one timer for updates at a time
 			    	clearTimeout(_consoleUpdateTimer);	
-			    
+
 				DesktopContent.XMLHttpRequest("Request?RequestType=GetConsoleMsgs", 
 										"lcount="+_lastUpdateCount+"&lindex="+_lastUpdateIndex,
 										handleRefreshConsole,
@@ -1180,13 +1181,13 @@
 			<div style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid rgb(15,34,105);'></div>
 			<div style='position: relative; top: 2px; width: 12px; height: 2px; display: block; background-color: rgb(15,34,105);'></div>				
 		</div>
-		
+
 		<div id='consoleInstructions'>
 			<a onclick='toggleColorScheme();' title='Toggle Color Scheme' class='consoleLink' id='userLinkColor'>Toggle Color Scheme</a>
 		</div>
 		
 		<div id='consoleConnectionStatus'>
-			<a onclick='getConsoleUpdates();' title='Attempt to Reconnect Console' class='consoleLink'>*** DISCONNECTED ***</a>
+			<a onclick='_lastUpdateCount = 0; _lastUpdateIndex = -1; getConsoleUpdates();' title='Attempt to Reconnect Console' class='consoleLink'>*** DISCONNECTED ***</a>
 		</div>
 		
 		<div id='userLink'>
