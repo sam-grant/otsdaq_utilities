@@ -726,7 +726,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				//check if failed due to cookieCode and go to login prompt
 				if(req.responseText == Globals.REQ_NO_PERMISSION_RESPONSE) 
 				{
-					errStr = "Request failed do to insufficient account permissions."; 
+					errStr = "Request failed due to insufficient account permissions."; 
 					//return;
 				}
 				else if(req.responseText == Globals.REQ_USER_LOCKOUT_RESPONSE) 

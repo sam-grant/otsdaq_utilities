@@ -334,7 +334,7 @@ void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 
 //========================================================================================================================
 // requestWrapper ~
-//	wrapper for MacroMaker mode Supervisor request call
+//	wrapper for handling very-specialized MacroMaker mode Supervisor request call
 void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
 {
 	// use default wrapper if not Macro Maker mode
@@ -343,7 +343,7 @@ void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
 		//__SUP_COUT__ << "Default request wrapper" << __E__;
 		return CoreSupervisorBase::requestWrapper(in, out);
 	}
-	// else Macro Maker mode!
+	// else very specialized Macro Maker mode!
 
 	//__SUP_COUT__ << "MacroMaker mode request handler!" << __E__;
 
