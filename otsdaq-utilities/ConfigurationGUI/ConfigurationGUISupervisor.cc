@@ -10,6 +10,7 @@
 
 #include "otsdaq/TablePlugins/XDAQContextTable.h"  //for context relaunch
 #include "otsdaq/GatewaySupervisor/GatewaySupervisor.h" //for saveModifiedVersionXML()
+#include "otsdaq/TablePlugins/ARTDAQTableBase/ARTDAQTableBase.h"//for artdaq extraction
 
 #include <xdaq/NamespaceURI.h>
 
@@ -6168,28 +6169,41 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 	// for further details (e.g. Dispatcher->isDispatcher()...)
 
 	std::vector<const XDAQContextTable::XDAQContext*> artdaqContexts[] = {
-	    contextTable->getBoardReaderContexts(),
-	    contextTable->getEventBuilderContexts(),
-	    contextTable->getDataLoggerContexts(),
-	    contextTable->getDispatcherContexts()};
+//			contextTable->getEventBuilderNodes(),
+//			contextTable->getEventBuilderNodes(),
+//			contextTable->getDataLoggerNodes(),
+//			contextTable->getDispatcherNodes(),
+			contextTable->getARTDAQSupervisorContexts(),
+			contextTable->getBoardReaderContexts()};
 
 	std::string typeString;
-	for(unsigned int i = 0; i < 4 /*context type count*/; ++i)
+	for(unsigned int i = 0; i < 2 /*context type count*/; ++i)
 	{
 		switch(i)
 		{
+//		case 0:
+//			typeString = "reader";
+//			break;
+//		case 1:
+//			typeString = "builder";
+//			break;
+//		case 2:
+//			typeString = "datalogger";
+//			break;
+//		case 3:
+//			typeString = "dispatcher";
+//			break;
 		case 0:
-			typeString = "reader";
+			typeString = "supervisorContext";
 			break;
 		case 1:
-			typeString = "builder";
+			typeString = "readerContext";
 			break;
-		case 2:
-			typeString = "datalogger";
-			break;
-		case 3:
-			typeString = "dispatcher";
-			break;
+		default:
+			{
+				__SUP_SS__ << "Illegal impossible type!";
+				__SUP_SS_THROW__;
+			}
 		}
 
 		__COUT__ << typeString << " size = " << artdaqContexts[i].size() << __E__;
@@ -6212,7 +6226,22 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 		}      // end artdaq context loop
 	}          // end artdaq type loop
 
-	__COUT__ << "Done getting artdaq nodes." << __E__;
+	std::vector<std::pair<std::string,
+			ConfigurationTree>> artdaqSupervisorNodeMap =
+					cfgMgr->getChildren();
+	for(auto& artdaqSupervisorPair:artdaqSupervisorNodeMap)
+	{
+		__SUP_COUT__ << "artdaq Supervisor " << artdaqSupervisorPair.first << __E__;
+
+//		std::unordered_map<int, ARTDAQTableBase::SubsystemInfo> subsystems;
+//		std::map<std::string /*type*/, std::list<ARTDAQTableBase::ProcessInfo>> processes;
+//
+//		ARTDAQTableBase::extractArtdaqInfo(
+//				artdaqSupervisorPair.second
+//				)
+	}
+
+	__SUP_COUT__ << "Done getting artdaq nodes." << __E__;
 
 }  // end handleGetArtdaqNodeRecordsXML()
 

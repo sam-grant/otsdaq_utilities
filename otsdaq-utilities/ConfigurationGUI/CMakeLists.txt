@@ -11,6 +11,7 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 CoreSupervisors
 		 SupervisorInfo
 		 GatewaySupervisor
+		 ARTDAQSupervisor
 		 CgiDataUtilities
 		 WebUsersUtilities
 		 XmlUtilities
