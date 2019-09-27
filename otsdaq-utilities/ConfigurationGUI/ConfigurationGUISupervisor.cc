@@ -4041,6 +4041,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 	__SUP_COUT__ << "Created temporary version " << temporaryVersion << __E__;
 
 	TableView* cfgView = table->getTemporaryView(temporaryVersion);
+	cfgView->init(); //prepare maps
 
 	// edit/verify new table (throws runtime_errors)
 	try
@@ -4279,6 +4280,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 
 				cfgView = table->getTemporaryView(temporaryVersion);
 
+				cfgView->init(); //prepare group ID map
 				col = cfgView->getColLinkGroupID(linkIndex);
 
 				__SUP_COUT__ << "target col " << col << __E__;
