@@ -108,7 +108,7 @@ void ChatSupervisor::request(const std::string&               requestType,
 	else
 		__COUT__ << "requestType request not recognized." << std::endl;
 
-} //end request()
+}  // end request()
 
 //========================================================================================================================
 // ChatSupervisor::escapeChat()

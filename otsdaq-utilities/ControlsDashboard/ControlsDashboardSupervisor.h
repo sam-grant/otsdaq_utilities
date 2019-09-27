@@ -29,9 +29,9 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 	                     cgicc::Cgicc&                    cgiIn,
 	                     HttpXmlDocument&                 xmlOut,
 	                     const WebUsers::RequestUserInfo& userInfo) override;
-	virtual void handleRequest(const std::string  Command,
-	                           HttpXmlDocument&   xmlOut,
-	                           cgicc::Cgicc&      cgiIn,
+	virtual void handleRequest(const std::string                Command,
+	                           HttpXmlDocument&                 xmlOut,
+	                           cgicc::Cgicc&                    cgiIn,
 	                           const WebUsers::RequestUserInfo& userInfo);
 
 	virtual void setSupervisorPropertyDefaults(void) override;
@@ -43,12 +43,19 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 	void Poll(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID);
 	void GetPVSettings(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void GetPVArchiverData(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
-	void GetUserPermissions(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo);
+	void GetUserPermissions(cgicc::Cgicc&                    cgiIn,
+	                        HttpXmlDocument&                 xmlOut,
+	                        const WebUsers::RequestUserInfo& userInfo);
 	void GenerateUID(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvlist);
 	void GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
-	void loadPage(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string page, const WebUsers::RequestUserInfo& userInfo);
-	void SaveControlsPage(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo);
+	void loadPage(cgicc::Cgicc&                    cgiIn,
+	              HttpXmlDocument&                 xmlOut,
+	              std::string                      page,
+	              const WebUsers::RequestUserInfo& userInfo);
+	void SaveControlsPage(cgicc::Cgicc&                    cgiIn,
+	                      HttpXmlDocument&                 xmlOut,
+	                      const WebUsers::RequestUserInfo& userInfo);
 	void Subscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void Unsubscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 

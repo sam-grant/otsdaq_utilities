@@ -1,14 +1,14 @@
 #include "otsdaq-utilities/MacroMaker/MacroMakerSupervisor.h"
 
+#include "otsdaq/CodeEditor/CodeEditor.h"
 #include "otsdaq/ConfigurationInterface/ConfigurationManager.h"
 #include "otsdaq/FECore/FEVInterface.h"
-#include "otsdaq/CodeEditor/CodeEditor.h"
 
-#include <fstream>
 #include <dirent.h>    //for DIR
 #include <stdio.h>     //for file rename
 #include <sys/stat.h>  //for mkdir
 #include <cstdio>
+#include <fstream>
 #include <thread>  //for std::thread
 #include "otsdaq/TableCore/TableGroupKey.h"
 
@@ -296,8 +296,6 @@ void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 	// filename, 0 for no image  5 - linkurl = url of the window to open  6 - folderPath =
 	// folder and subfolder location
 
-
-
 	*out << "Macro Maker "
 	        ",MM,0,1,icon-MacroMaker.png,/WebPath/html/"
 	        "MacroMaker.html?urn=290,/"
@@ -306,18 +304,18 @@ void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 	        "FEMacroTest.html?urn=290,/"
 	     << "";
 
-	//if there is a file of more icons, add to end of output
+	// if there is a file of more icons, add to end of output
 	std::string iconFile = std::string(__ENV__("USER_DATA")) + "/MacroMakerModeIcons.dat";
 	__COUT__ << "Macro Maker mode user icons file: " << iconFile << __E__;
-	FILE *fp = fopen(iconFile.c_str(),"r");
+	FILE* fp = fopen(iconFile.c_str(), "r");
 	if(fp)
 	{
 		__COUT__ << "Macro Maker mode user icons loading from " << iconFile << __E__;
 		fseek(fp, 0, SEEK_END);
 		const unsigned long fileSize = ftell(fp);
-		std::string fileString(fileSize,0);
+		std::string         fileString(fileSize, 0);
 		rewind(fp);
-		if(fread(&fileString[0],1,fileSize,fp) != fileSize)
+		if(fread(&fileString[0], 1, fileSize, fp) != fileSize)
 		{
 			__COUT_ERR__ << "Unable to read proper size string from icons file!" << __E__;
 			return;
@@ -1501,8 +1499,8 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument&   xmldoc,
 	std::string macroName     = CgiDataUtilities::getData(cgi, "MacroName");
 	std::string pluginName    = CgiDataUtilities::getData(cgi, "PluginName");
 	std::string macroSequence = CgiDataUtilities::postData(cgi, "MacroSequence");
-	std::string macroNotes    = StringMacros::decodeURIComponent(
-        CgiDataUtilities::postData(cgi, "MacroNotes"));
+	std::string macroNotes =
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "MacroNotes"));
 
 	__SUP_COUTV__(pluginName);
 	__SUP_COUTV__(macroName);
@@ -1777,8 +1775,8 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
 {
 	std::string macroName     = CgiDataUtilities::getData(cgi, "MacroName");
 	std::string macroSequence = CgiDataUtilities::postData(cgi, "MacroSequence");
-	std::string macroNotes    = StringMacros::decodeURIComponent(
-        CgiDataUtilities::postData(cgi, "MacroNotes"));
+	std::string macroNotes =
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "MacroNotes"));
 
 	__SUP_COUTV__(macroName);
 	__SUP_COUTV__(macroSequence);
@@ -2328,8 +2326,9 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 				        "\t Target front-end: '%s::%s'\n",
 				        FEtoPluginTypeMap_[feUID].c_str(),
 				        feUID.c_str());
-				fprintf(fp, "\t\t Inputs: %s\n",
-						StringMacros::decodeURIComponent(inputArgs).c_str());
+				fprintf(fp,
+				        "\t\t Inputs: %s\n",
+				        StringMacros::decodeURIComponent(inputArgs).c_str());
 			}
 
 			// have FE supervisor descriptor, so send

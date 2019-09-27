@@ -79,7 +79,6 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                       TableVersion            version,
 	                       bool                    allowIllegalColumns = false);
 
-
 	void setupActiveTablesXML(
 	    HttpXmlDocument&                                          xmldoc,
 	    ConfigurationManagerRW*                                   cfgMgr,
@@ -202,32 +201,32 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                          const std::string&      author,
 	                          const std::string&      mergeApproach);
 
-	//Moved to GatewaySupervisor::
-//	TableVersion saveModifiedVersionXML(HttpXmlDocument&        xmldoc,
-//	                                    ConfigurationManagerRW* cfgMgr,
-//	                                    const std::string&      tableName,
-//	                                    TableVersion            originalVersion,
-//	                                    bool                    makeTemporary,
-//	                                    TableBase*              config,
-//	                                    TableVersion            temporaryModifiedVersion,
-//	                                    bool                    ignoreDuplicates = false,
-//	                                    bool lookForEquivalent                   = false);
+	// Moved to GatewaySupervisor::
+	//	TableVersion saveModifiedVersionXML(HttpXmlDocument&        xmldoc,
+	//	                                    ConfigurationManagerRW* cfgMgr,
+	//	                                    const std::string&      tableName,
+	//	                                    TableVersion            originalVersion,
+	//	                                    bool                    makeTemporary,
+	//	                                    TableBase*              config,
+	//	                                    TableVersion temporaryModifiedVersion,
+	//	                                    bool                    ignoreDuplicates =
+	//false, 	                                    bool lookForEquivalent
+	//= false);
 
 	void handleGetArtdaqNodeRecordsXML(HttpXmlDocument&        xmlOut,
-	                          ConfigurationManagerRW* cfgMgr,
-                              const std::string&      modifiedTables);
-	void handleLoadArtdaqNodeLayoutXML(HttpXmlDocument&        xmlOut,
-	                          ConfigurationManagerRW* cfgMgr,
-	                          const std::string&      contextGroupName = "",
-	                          const TableGroupKey&    contextGroupKey = TableGroupKey());
-	void handleSaveArtdaqNodeLayoutXML(HttpXmlDocument&        xmlOut,
-	                          ConfigurationManagerRW* cfgMgr,
-	                          const std::string&      layoutString,
-	                          const std::string&      contextGroupName = "",
-	                          const TableGroupKey&    contextGroupKey = TableGroupKey());
-
-
-
+	                                   ConfigurationManagerRW* cfgMgr,
+	                                   const std::string&      modifiedTables);
+	void handleLoadArtdaqNodeLayoutXML(
+	    HttpXmlDocument&        xmlOut,
+	    ConfigurationManagerRW* cfgMgr,
+	    const std::string&      contextGroupName = "",
+	    const TableGroupKey&    contextGroupKey  = TableGroupKey());
+	void handleSaveArtdaqNodeLayoutXML(
+	    HttpXmlDocument&        xmlOut,
+	    ConfigurationManagerRW* cfgMgr,
+	    const std::string&      layoutString,
+	    const std::string&      contextGroupName = "",
+	    const TableGroupKey&    contextGroupKey  = TableGroupKey());
 
 	void testXDAQContext(void);
 
