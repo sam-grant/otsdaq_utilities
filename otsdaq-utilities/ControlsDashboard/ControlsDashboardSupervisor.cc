@@ -82,10 +82,41 @@ void ControlsDashboardSupervisor::init(void)
 
 		    cs->interface_->initialize();
 
+		    std::vector<std::string> pvList;
+		    while(true)
+		    {
+		      pvList = {"FIRST VALUE"};
+		      std::map<int, std::set<std::string>>::iterator mapReference = cs->pvDependencyLookupMap_.begin();
+		      while( mapReference != cs->pvDependencyLookupMap_.end()) //We have here current list of PV Dependencies
+		      {
+			for(auto pv : mapReference->second)
+			{
+			    for(size_t i = 0; i < pvList.size(); i++)
+			    {
+				if(pv != pvList[i] )
+				{
+				    pvList.push_back(pv);
+				}
+				else
+				{
+				    cs->interface_->unsubscribe(pv);
+				    cs->interface_->subscribe(pv);
+				    __COUT__  << pv << " subscribed. " << "pvList pos:"  << i << " mapReference->second.size(): " << mapReference->second.size() << std::endl;
+				}
+				sleep (1);
+			    }
+			    //__COUT__  << "All client pvs subscribed." << std::endl;
+			    sleep (1);
+			}
+			mapReference++;
+		      }
+		      //__COUT__  << "All pvs subscribed." << std::endl;
+		      sleep (30);
+		    }
 	    },
 	    this)
 	    .detach();  // thread completes after creating, subscribing, and getting
-	                //	                // parameters for all pvs
+                //	                // parameters for all pvs
 	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
 }  // end init()
@@ -293,10 +324,10 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 				JSONMessage += "\"" + pv + "\": {";
 
 				/*if(pvInfo->mostRecentBufferIndex - 1 < 0)
-			{
+				{
 				std::string value = pvInfo->dataCache[pvInfo->dataCache.size()].second
 				std::string time =
-			}*/
+				}*/
 
 				JSONMessage += "\"Timestamp\":\"" + pvInformation[0] + "\",";
 				JSONMessage += "\"Value\":\"" + pvInformation[1] + "\",";
@@ -311,6 +342,7 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 			// Handle Channels that disconnect, etc
 			if(pvInformation[3] == "INVALID")
 			{
+				interface_->unsubscribe(pv);
 				interface_->subscribe(pv);
 			}
 
@@ -330,8 +362,6 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 		{
 		    //__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << it <<
 		std::endl;
-
-
 		}*/
 		/*std::string fakeData = 	std::string("{")
 		                        + "\"Mu2e_CompStatus_daq01/system_temperature\":
@@ -343,13 +373,20 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 		                        + "\"Mu2e_CompStatus_daq01/load_one\":\"80\","
 		                        + "\"Mu2e_Weather_2/timestamp\": \"11.14.45.2016.4.8\""
 		                        + "}";
-		xmlOut.addTextElementToData("JSON", fakeData); //add to response*/
+		xmlOut.addTextElementToData("JSON", fakeData); //add to response
+		*/
 	}
 	else  // UID is not in our map so force them to generate a new one
 	{
 		xmlOut.addTextElementToData("JSON",
 		                            "{ \"message\": \"NOT_FOUND\"}");  // add to response
 	}
+}
+//========================================================================================================================
+std::array<std::string, 4> ControlsDashboardSupervisor::getLastValue(std::string pvName)
+{
+	std::array<std::string, 4> pvInformation = interface_->getCurrentValue(pvName);
+	return pvInformation;
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc&    cgiIn,

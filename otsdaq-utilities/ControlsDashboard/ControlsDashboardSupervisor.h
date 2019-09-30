@@ -49,6 +49,7 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 	void SaveControlsPage(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void Subscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void Unsubscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
+	std::array<std::string, 4> getLastValue(std::string pvName);
 
 	// Utilities, eventually to be moved
 	bool isDir(std::string dir);
