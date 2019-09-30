@@ -1,8 +1,8 @@
 #ifndef _ots_ConfigurationGUISupervisor_h_
 #define _ots_ConfigurationGUISupervisor_h_
 
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq/ConfigurationInterface/ConfigurationManagerRW.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
 namespace ots
 {
@@ -66,22 +66,9 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	void handleTableGroupsXML(HttpXmlDocument&        xmldoc,
 	                          ConfigurationManagerRW* cfgMgr,
 	                          bool                    returnMembers);
-	void handleGetTableGroupXML(HttpXmlDocument&        xmldoc,
-	                            ConfigurationManagerRW* cfgMgr,
-	                            const std::string&      groupName,
-	                            TableGroupKey           groupKey,
-	                            bool                    ignoreWarnings = false);
 	void handleGetTableGroupTypeXML(HttpXmlDocument&        xmldoc,
 	                                ConfigurationManagerRW* cfgMgr,
 	                                const std::string&      configList);
-	void handleCreateTableGroupXML(HttpXmlDocument&        xmldoc,
-	                               ConfigurationManagerRW* cfgMgr,
-	                               const std::string&      groupName,
-	                               const std::string&      configList,
-	                               bool                    allowDuplicates   = false,
-	                               bool                    ignoreWarnings    = false,
-	                               const std::string&      groupComment      = "",
-	                               bool                    lookForEquivalent = false);
 
 	void handleTablesXML(HttpXmlDocument&        xmldoc,
 	                     ConfigurationManagerRW* cfgMgr,
@@ -91,17 +78,6 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                       const std::string&      tableName,
 	                       TableVersion            version,
 	                       bool                    allowIllegalColumns = false);
-	void handleCreateTableXML(HttpXmlDocument&        xmldoc,
-	                          ConfigurationManagerRW* cfgMgr,
-	                          const std::string&      tableName,
-	                          TableVersion            version,
-	                          bool                    makeTemporary,
-	                          const std::string&      data,
-	                          const int&              dataOffset,
-	                          const std::string&      author,
-	                          const std::string&      comment,
-	                          bool                    sourceTableAsIs,
-	                          bool                    lookForEquivalent);
 
 	void setupActiveTablesXML(
 	    HttpXmlDocument&                                          xmldoc,
@@ -225,31 +201,32 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                          const std::string&      author,
 	                          const std::string&      mergeApproach);
 
-	TableVersion saveModifiedVersionXML(HttpXmlDocument&        xmldoc,
-	                                    ConfigurationManagerRW* cfgMgr,
-	                                    const std::string&      tableName,
-	                                    TableVersion            originalVersion,
-	                                    bool                    makeTemporary,
-	                                    TableBase*              config,
-	                                    TableVersion            temporaryModifiedVersion,
-	                                    bool                    ignoreDuplicates = false,
-	                                    bool lookForEquivalent                   = false);
+	// Moved to GatewaySupervisor::
+	//	TableVersion saveModifiedVersionXML(HttpXmlDocument&        xmldoc,
+	//	                                    ConfigurationManagerRW* cfgMgr,
+	//	                                    const std::string&      tableName,
+	//	                                    TableVersion            originalVersion,
+	//	                                    bool                    makeTemporary,
+	//	                                    TableBase*              config,
+	//	                                    TableVersion temporaryModifiedVersion,
+	//	                                    bool                    ignoreDuplicates =
+	//false, 	                                    bool lookForEquivalent
+	//= false);
 
 	void handleGetArtdaqNodeRecordsXML(HttpXmlDocument&        xmlOut,
-	                          ConfigurationManagerRW* cfgMgr,
-                              const std::string&      modifiedTables);
-	void handleLoadArtdaqNodeLayoutXML(HttpXmlDocument&        xmlOut,
-	                          ConfigurationManagerRW* cfgMgr,
-	                          const std::string&      contextGroupName = "",
-	                          const TableGroupKey&    contextGroupKey = TableGroupKey());
-	void handleSaveArtdaqNodeLayoutXML(HttpXmlDocument&        xmlOut,
-	                          ConfigurationManagerRW* cfgMgr,
-	                          const std::string&      layoutString,
-	                          const std::string&      contextGroupName = "",
-	                          const TableGroupKey&    contextGroupKey = TableGroupKey());
-
-
-
+	                                   ConfigurationManagerRW* cfgMgr,
+	                                   const std::string&      modifiedTables);
+	void handleLoadArtdaqNodeLayoutXML(
+	    HttpXmlDocument&        xmlOut,
+	    ConfigurationManagerRW* cfgMgr,
+	    const std::string&      contextGroupName = "",
+	    const TableGroupKey&    contextGroupKey  = TableGroupKey());
+	void handleSaveArtdaqNodeLayoutXML(
+	    HttpXmlDocument&        xmlOut,
+	    ConfigurationManagerRW* cfgMgr,
+	    const std::string&      layoutString,
+	    const std::string&      contextGroupName = "",
+	    const TableGroupKey&    contextGroupKey  = TableGroupKey());
 
 	void testXDAQContext(void);
 

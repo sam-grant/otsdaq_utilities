@@ -1,13 +1,13 @@
 #include "otsdaq-utilities/ECLWriter/ECLSupervisor.h"
-#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-#include "otsdaq-core/Macros/CoutMacros.h"
-#include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/SOAPUtilities/SOAPCommand.h"
-#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
-#include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
-#include "otsdaq-core/TablePlugins/XDAQContextTable.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
+#include "otsdaq/CgiDataUtilities/CgiDataUtilities.h"
+#include "otsdaq/ConfigurationInterface/ConfigurationManager.h"
+#include "otsdaq/Macros/CoutMacros.h"
+#include "otsdaq/MessageFacility/MessageFacility.h"
+#include "otsdaq/SOAPUtilities/SOAPCommand.h"
+#include "otsdaq/SOAPUtilities/SOAPParameters.h"
+#include "otsdaq/SOAPUtilities/SOAPUtilities.h"
+#include "otsdaq/TablePlugins/XDAQContextTable.h"
+#include "otsdaq/XmlUtilities/HttpXmlDocument.h"
 
 #include "otsdaq-utilities/ECLWriter/ECLConnection.h"
 
@@ -18,7 +18,7 @@
 
 #include <iomanip>
 #include <iostream>
-#include "otsdaq-core/TableCore/TableGroupKey.h"
+#include "otsdaq/TableCore/TableGroupKey.h"
 
 using namespace ots;
 

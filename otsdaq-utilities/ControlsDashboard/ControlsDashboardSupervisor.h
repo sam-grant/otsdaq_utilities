@@ -1,7 +1,7 @@
 #ifndef _ots_ControlsDashboardSupervisor_h_
 #define _ots_ControlsDashboardSupervisor_h_
 
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
 //#include "otsdaq-utilities/SlowControlsInterfacePlugins/EpicsInterface.h"
 //#include "EpicsInterface.h.bkup"
@@ -29,10 +29,10 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 	                     cgicc::Cgicc&                    cgiIn,
 	                     HttpXmlDocument&                 xmlOut,
 	                     const WebUsers::RequestUserInfo& userInfo) override;
-	virtual void handleRequest(const std::string  Command,
-	                           HttpXmlDocument&   xmlOut,
-	                           cgicc::Cgicc&      cgiIn,
-	                           const std::string& username);
+	virtual void handleRequest(const std::string                Command,
+	                           HttpXmlDocument&                 xmlOut,
+	                           cgicc::Cgicc&                    cgiIn,
+	                           const WebUsers::RequestUserInfo& userInfo);
 
 	virtual void setSupervisorPropertyDefaults(void) override;
 	virtual void forceSupervisorPropertyValues(void) override;  // override to force
@@ -42,11 +42,20 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 
 	void Poll(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID);
 	void GetPVSettings(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
+	void GetPVArchiverData(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
+	void GetUserPermissions(cgicc::Cgicc&                    cgiIn,
+	                        HttpXmlDocument&                 xmlOut,
+	                        const WebUsers::RequestUserInfo& userInfo);
 	void GenerateUID(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvlist);
 	void GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
-	void loadPage(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string page);
-	void SaveControlsPage(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
+	void loadPage(cgicc::Cgicc&                    cgiIn,
+	              HttpXmlDocument&                 xmlOut,
+	              std::string                      page,
+	              const WebUsers::RequestUserInfo& userInfo);
+	void SaveControlsPage(cgicc::Cgicc&                    cgiIn,
+	                      HttpXmlDocument&                 xmlOut,
+	                      const WebUsers::RequestUserInfo& userInfo);
 	void Subscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void Unsubscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	std::array<std::string, 4> getLastValue(std::string pvName);

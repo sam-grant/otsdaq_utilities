@@ -1,10 +1,10 @@
 #include "otsdaq-utilities/Console/ConsoleSupervisor.h"
 #include <xdaq/NamespaceURI.h>
-#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-#include "otsdaq-core/Macros/CoutMacros.h"
-#include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/NetworkUtilities/ReceiverSocket.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
+#include "otsdaq/CgiDataUtilities/CgiDataUtilities.h"
+#include "otsdaq/Macros/CoutMacros.h"
+#include "otsdaq/MessageFacility/MessageFacility.h"
+#include "otsdaq/NetworkUtilities/ReceiverSocket.h"
+#include "otsdaq/XmlUtilities/HttpXmlDocument.h"
 
 #include <dirent.h>    //for DIR
 #include <sys/stat.h>  //for mkdir
@@ -522,6 +522,27 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 		}
 	}
 
+	if(refreshReadPointer >= messages_.size())
+		return;
+
+	if(messages_.size() - refreshReadPointer > 250)
+	{
+		__SUP_COUT__ << "Only sending latest 250 messages!";
+
+		auto oldrrp        = refreshReadPointer;
+		refreshReadPointer = messages_.size() - 250;
+
+		// generate special message to indicate failed socket
+		__SS__ << "Skipping " << (refreshReadPointer - oldrrp)
+		       << " messages because the web console has fallen behind!" << std::endl;
+		__COUT__ << ss.str();
+
+		ConsoleMessageStruct msg(CONSOLE_SPECIAL_WARNING + ss.str(), lastUpdateCount);
+		auto                 it = messages_.begin();
+		std::advance(it, refreshReadPointer + 1);
+		messages_.insert(it, msg);
+	}
+
 	// output oldest to new
 	for(; refreshReadPointer < messages_.size(); ++refreshReadPointer)
 	{
@@ -543,6 +564,11 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 		// for all fields, give value
 		for(auto& field : msg.fields)
 		{
+			if(field.second.fieldName == "Source")
+				continue;  // skip, not userful
+			if(field.second.fieldName == "SourceID")
+				continue;  // skip, not userful
+
 			xmlOut->addTextElementToParent("message_" + field.second.fieldName,
 			                               field.second.fieldValue,
 			                               refreshParent_);

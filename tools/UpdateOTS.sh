@@ -136,11 +136,13 @@ function updateUserData
 		
 	fi
 	
-	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
-	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
-	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_MacroMaker_CMake.xml $USER_DATA/XDAQConfigurations/"
-	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_MacroMaker_CMake.xml $USER_DATA/XDAQConfigurations/
-		
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_CMake.xml $USER_DATA/XDAQConfigurations/"
+	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_CMake.xml $USER_DATA/XDAQConfigurations/
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
+	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_MacroMaker_CMake.xml $USER_DATA/XDAQConfigurations/"
+	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_MacroMaker_CMake.xml $USER_DATA/XDAQConfigurations/
+
 	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/"
 	cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/ # undo c++ style comment for Eclipse viewing*/
 		

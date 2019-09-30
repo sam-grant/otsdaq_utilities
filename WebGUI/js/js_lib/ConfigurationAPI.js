@@ -2332,7 +2332,7 @@ ConfigurationAPI.activateGroup = function(groupName, groupKey,
 		if(doneHandler) doneHandler();
 			},
 			true, 0 , true); //reqIndex, progressHandler, callHandlerOnErr
-}
+} //end activateGroup()
 
 //=====================================================================================
 //setGroupAliasInActiveBackbone ~~

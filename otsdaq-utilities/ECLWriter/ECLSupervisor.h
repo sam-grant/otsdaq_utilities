@@ -1,13 +1,13 @@
 #ifndef _ots_ECLSupervisor_h
 #define _ots_ECLSupervisor_h
 
-#include "otsdaq-core/FiniteStateMachine/RunControlStateMachine.h"
-#include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
+#include "otsdaq/FiniteStateMachine/RunControlStateMachine.h"
+#include "otsdaq/SOAPUtilities/SOAPMessenger.h"
+#include "otsdaq/WebUsersUtilities/RemoteWebUsers.h"
 
 #include <xdaq/Application.h>
 #include <xgi/Method.h>
-#include "otsdaq-core/Macros/XDAQApplicationMacros.h"
+#include "otsdaq/Macros/XDAQApplicationMacros.h"
 
 #include <cgicc/HTMLClasses.h>
 #include <cgicc/HTMLDoctype.h>
@@ -17,7 +17,7 @@
 #include <chrono>
 #include <map>
 #include <string>
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
 namespace ots
 {

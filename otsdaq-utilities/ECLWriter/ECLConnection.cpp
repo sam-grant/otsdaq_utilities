@@ -5,8 +5,8 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-#include "otsdaq-core/Macros/CoutMacros.h"
-#include "otsdaq-core/MessageFacility/MessageFacility.h"
+#include "otsdaq/Macros/CoutMacros.h"
+#include "otsdaq/MessageFacility/MessageFacility.h"
 
 ECLConnection::ECLConnection(std::string user, std::string pwd, std::string url)
 {

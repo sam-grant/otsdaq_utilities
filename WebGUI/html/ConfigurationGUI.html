@@ -542,6 +542,7 @@
 		var _memberMapForGroupSave = {}; //used by saveTableGroupAsNewKey()
 
 		var firstInit_ = true;
+		var systemViewPreventInfiniteLoop_ = false;
 
 		//init called once body has loaded
 		function init() {
@@ -689,7 +690,7 @@
 					];
 					//console.log(_lastConfigGroups);
 
-				
+					systemViewPreventInfiniteLoop_ = true;
 					DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases&" +
 						"reloadActiveGroups=" + (firstInit_ ? "0" : "1"), 
 						//reload persistent active groups (persistent active config group will be modified when state machine configures)
@@ -699,6 +700,7 @@
 						0/*progressHandler*/, true /*callHandlerOnErr*/);
 
 					firstInit_ = false;
+					systemViewPreventInfiniteLoop_ = false;
 				}); //end getLastTableGroups
 
 
@@ -3809,6 +3811,7 @@
 				"Open Table View in new Browser Tab",
 				"Open Subset Editor in new Desktop Window",
 				"Open Subset Editor in new Browser Tab",
+				"Create Subset Editor desktop icon",
 				"Add new Record to Table"];
 			var treeNavContextMenuItems = []
 			var treeNavContextMenuItemHandlers = [];
@@ -3932,7 +3935,32 @@
 					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
 					treeNavContextMenuItemHandlers.push(newtabJS);
 				}
+				
+				//add Subset-Configuration desktop icon
+				{
+					//DesktopContent.addDesktopIcon = function(caption, altText,
+						//	folderPath, unique, permissionString, 
+						//	imageURL, windowContentURL, linkedApp, parameters)
+							
+					newtabJS = "DesktopContent.addDesktopIcon(" +
+						"\"" + treeMemberNames_[j] +
+						" Subset\",\"CfgSub\",\"Config Subsets\"" +
+						", false /*unique*/" +
+						", 255 /*permissionsString*/" +
+						", \"icon-Configure.png\" /*imageURL*/" +
+						", \"ConfigurationGUI_subset.html?urn=\" /*windowContentURL*/" +
+						", \"ots::ConfigurationGUISupervisor\" /*linkedApp*/" +
+						", /*parameters*/ \"" +
+						"subsetBasePath=" + treeMemberNames_[j] +
+						"&groupingFieldList=AUTO" +
+						"&recordAlias=" + encodeURIComponent(recordAlias) +
+						"&editableFieldList=" + encodeURIComponent("!*CommentDescription") +
+						"\"" +
+						");"; 
 
+					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
+					treeNavContextMenuItemHandlers.push(newtabJS);
+				}
 
 
 				//make add new row js
@@ -4801,13 +4829,14 @@
 
 			//if system view, refresh it to show active
 			try {
-				if (document.getElementById("display").children[0].textContent ==
+				if (!systemViewPreventInfiniteLoop_ && 
+						document.getElementById("display").children[0].textContent ==
 					"System View")
-					setupSystemViewMode();
+					setupSystemViewMode();				
 			}
 			catch (e) { ; }
 
-		}
+		} // end activateSystemConfigHandler()
 
 		//wizToActiveTableGroup ~~
 		//	groupType := 0-context, 1-backbone, 2-configuration
@@ -5988,16 +6017,23 @@
 					"value='Save Changes as Temporary Version' title='" +
 					"Save the current table view as new temporary version." +
 					"'/>";
-				str += "&nbsp;&nbsp;&nbsp;";
-				str += "<a onclick='setupSpecificTable(\"" + 
-						_currentTableName + "\",\"" +
-						(attemptedVersion?attemptedVersion:_version) + 
-						"\",\"\" /*backlink*/, 1 /*allowIllegalColumns*/); return false' " +
-						"title='Reload " + _currentTableName + "-v" +
-						(attemptedVersion?attemptedVersion:_version) + 
-						" with loose column matching.' " +
-						">" +
-						"Reload v" + attemptedVersion + " with loose column matching</a>";
+				
+				//add loose column match load link
+				if((attemptedVersion !== undefined && attemptedVersion >= 0) ||
+						(_version !== undefined && _version >= 0))
+				{		
+					str += "&nbsp;&nbsp;&nbsp;";				
+					str += "<a onclick='setupSpecificTable(\"" + 
+							_currentTableName + "\",\"" +
+							(attemptedVersion?attemptedVersion:_version) + 
+							"\",\"\" /*backlink*/, 1 /*allowIllegalColumns*/); return false' " +
+							"title='Reload " + _currentTableName + "-v" +
+							(attemptedVersion?attemptedVersion:_version) + 
+							" with loose column matching.' " +
+							">" +
+							"Reload v" + attemptedVersion + " with loose column matching</a>";
+				}
+				
 				str += "<br><br>";
 
 				newDiv.innerHTML = str;

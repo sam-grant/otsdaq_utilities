@@ -114,7 +114,7 @@
 		box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
 								inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
 								rgb(100,100,100) 0 .1em 3px,
-								rgb(150,150,150) 0 .2em 1px, /* color border */
+								rgb(10,10,10) 0 .2em 1px, /* color border */
 								rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
 	}
 	

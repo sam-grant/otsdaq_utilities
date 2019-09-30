@@ -1,7 +1,7 @@
 #ifndef _ots_LogbookSupervisor_h
 #define _ots_LogbookSupervisor_h
 
-#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
 namespace ots
 {
