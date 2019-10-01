@@ -26,7 +26,7 @@ var selectedtargetBlue;
 //=====================================================================================
 function init()
 {
-	var = "This is an introduction into the Wiz-Mode Security!" +
+	var windowTooltip = "This is an introduction into the Wiz-Mode Security!" +
 		"\n\n" +
 		"There are currently two options for otsdaq Security:" +
 		"\n\t- <b>No Security:</b>\n<INDENT>" +
