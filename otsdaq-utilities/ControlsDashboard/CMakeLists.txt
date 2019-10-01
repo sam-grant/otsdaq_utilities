@@ -9,12 +9,14 @@ cet_make(LIBRARY_NAME ControlsDashboard
 		 TableCore		 
 		 PluginMakers
 		 XmlUtilities
+		 NetworkUtilities
 		 CgiDataUtilities
 		 FiniteStateMachine
 		 CoreSupervisors
          Macros
 	     ${MF_MESSAGELOGGER}
 	     ${MF_UTILITIES}
+		 ${Boost_REGEX_LIBRARY}
 )
 
 install_headers()

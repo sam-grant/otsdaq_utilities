@@ -55,7 +55,6 @@ include_directories($ENV{PYTHON_INCLUDE})
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )
 find_ups_product( cetlib v1_03_00 )
-find_ups_product(smc_compiler v6_0_0)
 find_ups_xdaq( v11_2_7 )
 find_ups_root( v5_34_00 )
 find_ups_boost( v1_50_0 filesystem

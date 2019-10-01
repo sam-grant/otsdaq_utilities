@@ -19,6 +19,7 @@ cet_make(LIBRARY_NAME Console
 #		 MessageFacility
 		 NetworkUtilities
          Macros
+		 ${Boost_REGEX_LIBRARY}
 )
 
 install_headers()
