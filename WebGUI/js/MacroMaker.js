@@ -101,17 +101,18 @@
 		Debug.log("init() was called");
 		DesktopContent.XMLHttpRequest("Request?RequestType=FElist","",FElistHandler);
 		DesktopContent.XMLHttpRequest("Request?RequestType=getPermission","",getPermissionHandler);
-		block1El = document.getElementById('fecList');
-		block2El = document.getElementById('macroLib');
-		block3El = document.getElementById('main');
+		fecListDiv = document.getElementById('fecList');
+		macroLibDiv = document.getElementById('macroLib');
+		mainDiv = document.getElementById('main');
 		
-		block4El = document.getElementById('progressBarOuter');
-		block4El.style.display = "none"; //only show while macro is running
+		progressbarOuterDiv = document.getElementById('progressBarOuter');
+		progressbarOuterDiv.style.display = "none"; //only show while macro is running
 		
-		block5El = document.getElementById('history');
-		block6El = document.getElementById('sequence');
-		block7El = document.getElementById('maker');
-		block8El = document.getElementById('popupEditMacro');
+		historyDiv = document.getElementById('history');
+		sequenceDiv = document.getElementById('sequence');
+		makerDiv = document.getElementById('maker');
+		popupEditMacroDiv = document.getElementById('popupEditMacro');
+		
 		historybox = document.getElementById('historyContent');
 		sequencebox = document.getElementById('sequenceContent');
 		privateMacroBox = document.getElementById('listOfPrivateMacros');
@@ -157,44 +158,44 @@
 		var b7 = [w/3, _MARGIN+4*_MARGIN, w/3, h/2-_MARGIN];//middle
 		var b8 = [w/2-200,h/5,2*w/3,3*h/5+15];//popup
 		
-		block1El.style.left = b1[0] + "px";
-		block1El.style.top =  b1[1] + "px";
-		block1El.style.width =  b1[2] + "px";
-		block1El.style.height =  b1[3] + "px";
+		// fecListDiv.style.left = b1[0] + "px";
+		// fecListDiv.style.top =  b1[1] + "px";
+		// fecListDiv.style.width =  b1[2] + "px";
+		// fecListDiv.style.height =  b1[3] + "px";
 		
-		block2El.style.left = b2[0] + "px";
-		block2El.style.top =  b2[1] + "px";
-		block2El.style.width =  b2[2] + "px";
-		block2El.style.height =  b2[3] + "px";
+		// macroLibDiv.style.left = b2[0] + "px";
+		// macroLibDiv.style.top =  b2[1] + "px";
+		// macroLibDiv.style.width =  b2[2] + "px";
+		// macroLibDiv.style.height =  b2[3] + "px";
 		
-		block3El.style.left = b3[0] + "px";
-		block3El.style.top =  b3[1] + "px";
-		block3El.style.width =  b3[2] + "px";
-		block3El.style.height =  b3[3] + "px";
+		// mainDiv.style.left = b3[0] + "px";
+		// mainDiv.style.top =  b3[1] + "px";
+		// mainDiv.style.width =  b3[2] + "px";
+		// mainDiv.style.height =  b3[3] + "px";
 		
-		block4El.style.left = b4[0] + "px";
-		block4El.style.top =  b4[1] + "px";
-		block4El.style.width =  b4[2] + "px";
-		block4El.style.height =  b4[3] + "px";
+		// progressbarOuterDiv.style.left = b4[0] + "px";
+		// progressbarOuterDiv.style.top =  b4[1] + "px";
+		// progressbarOuterDiv.style.width =  b4[2] + "px";
+		// progressbarOuterDiv.style.height =  b4[3] + "px";
 		
-		block5El.style.left = b5[0] + "px";
-		block5El.style.top =  b5[1] + "px";
-		block5El.style.width =  b5[2] + "px";
-		block5El.style.height =  b5[3] + "px";
+		// historyDiv.style.left = b5[0] + "px";
+		// historyDiv.style.top =  b5[1] + "px";
+		// historyDiv.style.width =  b5[2] + "px";
+		// historyDiv.style.height =  b5[3] + "px";
 		
-		block6El.style.left = b6[0] + "px";
-		block6El.style.top =  b6[1] + "px";
-		block6El.style.width =  b6[2] + "px";
-		block6El.style.height =  b6[3] + "px";
+		// sequenceDiv.style.left = b6[0] + "px";
+		// sequenceDiv.style.top =  b6[1] + "px";
+		// sequenceDiv.style.width =  b6[2] + "px";
+		// sequenceDiv.style.height =  b6[3] + "px";
 		
-		block7El.style.left = b7[0] + "px";
-		block7El.style.top =  b7[1] + "px";
-		block7El.style.width =  b7[2] + "px";
-		block7El.style.height =  b7[3] + "px";
+		// makerDiv.style.left = b7[0] + "px";
+		// makerDiv.style.top =  b7[1] + "px";
+		// makerDiv.style.width =  b7[2] + "px";
+		// makerDiv.style.height =  b7[3] + "px";
 		
-		block8El.style.left = b8[0] + "px";
-		block8El.style.top =  b8[1] + "px";
-		block8El.style.height =  b8[3] + "px";
+		popupEditMacroDiv.style.left = b8[0] + "px";
+		popupEditMacroDiv.style.top =  b8[1] + "px";
+		popupEditMacroDiv.style.height =  b8[3] + "px";
 		
 		historybox.style.height =  (h-_MARGIN*2-54) + "px"; //h*0.88 + "px";
 		sequencebox.style.height =  (h-_MARGIN*2-54) + "px"; //h*0.88 + "px";
@@ -650,6 +651,7 @@
     }
 
 	//=====================================================================================
+	// The function below sets dynamic styling for the elements on the MacroMaker html page
     function toggleDisplay(onMacro)
     {
     	 var fecListEl = document.getElementById("fecList");
@@ -666,11 +668,9 @@
     		 sequenceEl.style.display = "block";
     		 progressBarOuterEl.style.display = "none";
     		 mainEl.style.display = "none";
-    		 makerEl.style.display = "block";
-    		 document.getElementById("page1tag").style.fontWeight = "400";
-    		 document.getElementById("page2tag").style.fontWeight = "900";
-    		 document.getElementById("page2tag").style.background = "#002a52";
-    		 document.getElementById("page1tag").style.background = "#001626";
+			 makerEl.style.display = "block";
+			 document.getElementById("page2tag").style.backgroundColor = "#8A2A2B";
+			 document.getElementById("page1tag").style.backgroundColor = "#333";
 
     	 } 
     	 else 
@@ -681,12 +681,9 @@
     		 sequenceEl.style.display = "none";
     		 progressBarOuterEl.style.display = "none";
     		 mainEl.style.display = "block";
-    		 makerEl.style.display = "none";
-    		 document.getElementById("page2tag").style.fontWeight = "400";
-    		 document.getElementById("page1tag").style.fontWeight = "900";
-    		 document.getElementById("page1tag").style.background = "#002a52";
-    		 document.getElementById("page2tag").style.background = "#001626";
-
+			 makerEl.style.display = "none";
+			 document.getElementById("page1tag").style.backgroundColor = "#8A2A2B";
+			 document.getElementById("page2tag").style.backgroundColor = "#333";
 
     	 }
     }
@@ -699,10 +696,10 @@
     	if(onPublic) {
     		privateEl.style.display = "none";
     		publicEl.style.display = "block";
-    		document.getElementById("publicTag").style.fontWeight = "900";
-    		document.getElementById("privateTag").style.fontWeight = "400";
-    		document.getElementById("publicTag").style.background = "#002a52";
-    		document.getElementById("privateTag").style.background = "#001626";
+    		// document.getElementById("publicTag").style.fontWeight = "900";
+    		// document.getElementById("privateTag").style.fontWeight = "400";
+    		// document.getElementById("publicTag").style.background = "#002a52";
+    		// document.getElementById("privateTag").style.background = "#001626";
 
     		isOnPrivateMacros = false;
     	}
@@ -710,10 +707,10 @@
     	{
     		privateEl.style.display = "block";
     		publicEl.style.display = "none";
-    		document.getElementById("privateTag").style.fontWeight = "900";
-     		document.getElementById("publicTag").style.fontWeight = "400";
-    		document.getElementById("privateTag").style.background = "#002a52";
-    		document.getElementById("publicTag").style.background = "#001626";
+    		// document.getElementById("privateTag").style.fontWeight = "900";
+     		// document.getElementById("publicTag").style.fontWeight = "400";
+    		// document.getElementById("privateTag").style.background = "#002a52";
+    		// document.getElementById("publicTag").style.background = "#001626";
 
     		isOnPrivateMacros = true;
     	}

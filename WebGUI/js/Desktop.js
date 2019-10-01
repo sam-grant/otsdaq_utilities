@@ -26,7 +26,13 @@ Desktop.init = function(security) {
 	Desktop.desktop = Desktop.createDesktop(security);
 	if(Desktop.desktop)
 		Debug.log("Desktop.desktop Initalized Successfully",Debug.LOW_PRIORITY);
-}
+	
+	// Enable navigation prompt 
+	//	(to prevent accidental/back/forward/nav leaving the page)
+	window.onbeforeunload = function() {
+	    return true;
+	};	
+} //end init()
 
 Desktop.SECURITY_TYPE_NONE = "NoSecurity";
 Desktop.SECURITY_TYPE_DIGEST_ACCESS = "DigestAccessAuthentication";
@@ -412,7 +418,8 @@ Desktop.createDesktop = function(security) {
 	    //	check if a window iFrame has taken focus and tampered with z mailbox. If so 'officially' set to fore window
 		if(_windowZmailbox.innerHTML > _defaultWindowMaxZindex) 
 		{
-			Desktop.desktop.setForeWindow(Desktop.desktop.getForeWindow()); //use function just to standardize, do not change current foreground			
+			Desktop.desktop.setForeWindow(); //should pass undefined window.. to just relabel Z depth
+			//Desktop.desktop.getForeWindow()			
 			//Debug.log("Desktop Foreground Window Refreshed by Timeout",Debug.LOW_PRIORITY);
 		}
 	    
@@ -587,6 +594,13 @@ Desktop.createDesktop = function(security) {
 		//  returns new window
 	this.addWindow = function(name,subname,url,unique,extraStep) {		
 		Debug.log(name + " - " + subname + " - " + url + " - " + unique,Debug.LOW_PRIORITY);
+		
+		if(unique == 2) //open as stand-alone new tab page
+		{
+			Debug.log("Opening stand-alone new tab",Debug.LOW_PRIORITY);
+			window.open(url,'_blank');	
+			return;			
+		}
 		
 		if(unique) {
 			Debug.log("Adding window uniquely",Debug.LOW_PRIORITY);
@@ -773,7 +787,53 @@ Desktop.createDesktop = function(security) {
 	    this.setForeWindow(win);
 	    this.refreshWindow();
             console.log("Finished refreshWindow() " + id);
-  	  }
+		}
+	
+	this.windowHelpById = function (id) {
+		var win = this.getWindowById(id);
+		if (win == -1) return -1;
+
+		this.setForeWindow(win);
+		var tempwin = Desktop.desktop.getForeWindow();
+
+		console.log(tempwin);
+		console.log(tempwin.windiv);	    
+
+		var tooltipEl;
+		
+		try //try no-frameset approach (if window is not in frame)
+		{
+			tooltipEl = tempwin.windiv.childNodes[2].childNodes[0].contentWindow.document.getElementById("otsDesktopWindowTooltipElement");
+		}
+		catch(e)
+		{
+			Debug.log("Ignoring error: " + e);
+			tooltipEl = 0;
+		}
+		if(!tooltipEl)
+		{
+			try //try frameset approach (if window is in frame)
+			{
+				tooltipEl = tempwin.windiv.childNodes[2].childNodes[0].contentWindow.document.getElementsByTagName("frameset")[0].childNodes[0].contentWindow.document.getElementById("otsDesktopWindowTooltipElement");
+			}
+			catch(e)
+			{
+				Debug.log("Ignoring error: " + e);
+				tooltipEl = 0;
+			}
+		}
+					
+
+		if(!tooltipEl)
+		{
+			DesktopContent.tooltip("ALWAYS", "There is no tooltip for the " + tempwin.getWindowName() +
+					" window. Try visiting <a href='https://otsdaq.fnal.gov' target='_blank'>otsdaq.fnal.gov</a> for further assistance.");
+		}
+		else
+		{
+			DesktopContent.tooltip("ALWAYS", decodeURIComponent(tooltipEl.innerText));
+		}
+	}
 
 	this.refreshWindow = function(e) {
 	    if(!_getForeWindow()) return;
@@ -1639,6 +1699,12 @@ Desktop.handleWindowRefresh = function(mouseEvent){
         Debug.log("Refresh " + this.id.split('-')[1]);
         Desktop.desktop.refreshWindowById(this.id.split('-')[1]);
         return false;
+
+}
+Desktop.handleWindowHelp = function (mouseEvent) {
+	Debug.log("Help " + this.id.split('-')[1]);
+	Desktop.desktop.windowHelpById(this.id.split('-')[1]);
+	return false;
 
 }
 

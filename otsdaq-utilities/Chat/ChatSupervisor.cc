@@ -1,8 +1,8 @@
 #include "otsdaq-utilities/Chat/ChatSupervisor.h"
-#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-#include "otsdaq-core/Macros/CoutMacros.h"
-#include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
+#include "otsdaq/CgiDataUtilities/CgiDataUtilities.h"
+#include "otsdaq/Macros/CoutMacros.h"
+#include "otsdaq/MessageFacility/MessageFacility.h"
+#include "otsdaq/XmlUtilities/HttpXmlDocument.h"
 
 #include <xdaq/NamespaceURI.h>
 
@@ -63,7 +63,7 @@ void ChatSupervisor::request(const std::string&               requestType,
 {
 	//__COUT__ << "requestType: " << requestType << std::endl;
 
-	// Commands
+	// Commands:
 	// RefreshChat
 	// RefreshUsers
 	// SendChat
@@ -107,10 +107,8 @@ void ChatSupervisor::request(const std::string&               requestType,
 	}
 	else
 		__COUT__ << "requestType request not recognized." << std::endl;
-	//
-	//	//return xml doc holding server response
-	//	xmlOut.outputXmlDocument((std::ostringstream*)out);
-}
+
+}  // end request()
 
 //========================================================================================================================
 // ChatSupervisor::escapeChat()

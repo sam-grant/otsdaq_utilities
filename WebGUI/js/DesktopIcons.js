@@ -472,7 +472,7 @@ else {
 					currChild = currChild.nextSibling; //get next child
 				}
 			}
-      	}
+      	} //end this.addIcon()
       	
       	//this.openFolder ~~
       	//	this version is called from desktop icons
@@ -773,7 +773,7 @@ else {
    		
 		
         Debug.log("Desktop Icons created",Debug.LOW_PRIORITY);
-    }
+    } // end of createIcons()
 
 }
 

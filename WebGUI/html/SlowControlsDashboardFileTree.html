@@ -273,7 +273,7 @@
 					li.id = fullPathToPage;
 					li.className = "file";
 					var a = document.createElement("a");
-					a.innerHTML = path.substring(0, path.search(".page"));
+					a.innerHTML = path.substring(0, path.search(".dat"));
 					a.href = "";
 					a.onclick = function(){parent.loadPage(fullPathToPage)};//"addPV()";// + pv + ')';
 					li.appendChild(a);
@@ -337,6 +337,29 @@
 
 			function save()
 			{
+//				var pageName = "myDCSPage";
+//				var folderName = "";
+//				var permissionsString = "";
+//				
+//				
+//				Debug.log("Creating icon pageName=" + pageName +
+//					" folderName=" + folderName + 
+//					" permissionsString=" + permissionsString);
+//					
+//				
+//				DesktopContent.XMLHttpRequest("Request?RequestType=getList",
+//					"",
+//					function()
+//					{
+//						Debug.log("Handler()");
+//					},
+//					0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, false /*doNotShowLoadingOverlay*/,
+//					true /*targetSupervisor*/);
+//				
+//				
+//				return;
+					
+			
 				Debug.log("Saving....");
 				Debug.log(window.parent.pvList_);
                 window.parent.document.getElementById("mailbox").innerHTML = "Save";
@@ -408,9 +431,10 @@
 					closeButton.onclick = function(){close();};
 					saveButton.onclick = function(){save();};
 					saveAsButton.onclick = function(){saveAs();};
-	
+					
+					document.getElementById("saveli").innerHTML = "";
 					document.getElementById("saveli").appendChild(saveButton);
-					document.getElementById("saveli").appendChild(saveAsButton);
+					//document.getElementById("saveli").appendChild(saveAsButton);
 					document.getElementById("saveli").appendChild(closeButton);
 
 					
@@ -430,9 +454,10 @@
 						li.id = page;
 						li.className = "file";
 						var a = document.createElement("a");
-						a.innerHTML = page.substring(0, page.search(".page"));
+						a.innerHTML = page;
 						a.href = "";
 						a.onclick = function(){parent.loadPage(page)};//"addPV()";// + pv + ')';
+						console.log("Here is my file: " + a);
 						li.appendChild(a);
 
 						document.getElementById("pagesFolderol").appendChild(li);

@@ -48,10 +48,14 @@ find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( otsdaq v1_00_00 )
 find_ups_product( artdaq v0_04_02 )
 find_ups_product( artdaq_core v1_00_00 )
+find_ups_product( artdaq_utilities v1_00_00 )
 find_ups_product( art v1_06_00 )
+find_ups_product( python v2_7_14)
+include_directories($ENV{PYTHON_INCLUDE})
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )
 find_ups_product( cetlib v1_03_00 )
+find_ups_product(smc_compiler v6_0_0)
 find_ups_xdaq( v11_2_7 )
 find_ups_root( v5_34_00 )
 find_ups_boost( v1_50_0 filesystem
@@ -76,7 +80,7 @@ message("-DMESSAGEFACILITY_HEX_VERSION=0x${MESSAGEFACILITY_MAJOR_VERSION}${MESSA
 add_definitions(-DMESSAGEFACILITY_HEX_VERSION=0x${MESSAGEFACILITY_MAJOR_VERSION}${MESSAGEFACILITY_MINOR_VERSION}${MESSAGEFACILITY_PATCH_VERSION})
 
 # macros for art_dictionary and simple_plugin
-include(ArtDictionary)
+
 include(ArtMake)
 include(BuildPlugins)
 include(CetTest)

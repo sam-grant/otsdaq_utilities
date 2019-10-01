@@ -1,30 +1,16 @@
 #include "otsdaq-utilities/MacroMaker/MacroMakerSupervisor.h"
 
-//#include "otsdaq-core/MessageFacility/MessageFacility.h"
-//#include "otsdaq-core/Macros/CoutMacros.h"
-//#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-//#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
-//#include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
-//#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-//#include "otsdaq-core/Macros/CoutMacros.h"
+#include "otsdaq/CodeEditor/CodeEditor.h"
+#include "otsdaq/ConfigurationInterface/ConfigurationManager.h"
+#include "otsdaq/FECore/FEVInterface.h"
 
-#include "otsdaq-core/FECore/FEVInterface.h"
-
-#include "otsdaq-core/CodeEditor/CodeEditor.h"
-
-//#include <xdaq/NamespaceURI.h>
-//#include <string>
-//#include <vector>
-//#include <iostream>
-#include <fstream>
-//#include <sstream>
 #include <dirent.h>    //for DIR
 #include <stdio.h>     //for file rename
 #include <sys/stat.h>  //for mkdir
 #include <cstdio>
+#include <fstream>
 #include <thread>  //for std::thread
-#include "otsdaq-core/TableCore/TableGroupKey.h"
+#include "otsdaq/TableCore/TableGroupKey.h"
 
 #define MACROS_DB_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroData/"
 #define MACROS_HIST_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroHistory/"
@@ -317,12 +303,36 @@ void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 	        ",CFG,0,1,icon-Configure.png,/WebPath/html/"
 	        "FEMacroTest.html?urn=290,/"
 	     << "";
+
+	// if there is a file of more icons, add to end of output
+	std::string iconFile = std::string(__ENV__("USER_DATA")) + "/MacroMakerModeIcons.dat";
+	__COUT__ << "Macro Maker mode user icons file: " << iconFile << __E__;
+	FILE* fp = fopen(iconFile.c_str(), "r");
+	if(fp)
+	{
+		__COUT__ << "Macro Maker mode user icons loading from " << iconFile << __E__;
+		fseek(fp, 0, SEEK_END);
+		const unsigned long fileSize = ftell(fp);
+		std::string         fileString(fileSize, 0);
+		rewind(fp);
+		if(fread(&fileString[0], 1, fileSize, fp) != fileSize)
+		{
+			__COUT_ERR__ << "Unable to read proper size string from icons file!" << __E__;
+			return;
+		}
+
+		fclose(fp);
+		__COUTV__(fileString);
+		*out << fileString;
+	}
+	else
+		__COUT__ << "Macro Maker mode user icons file not found: " << iconFile << __E__;
 	return;
 }  // end requestIcons()
 
 //========================================================================================================================
 // requestWrapper ~
-//	wrapper for MacroMaker mode Supervisor request call
+//	wrapper for handling very-specialized MacroMaker mode Supervisor request call
 void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
 {
 	// use default wrapper if not Macro Maker mode
@@ -331,7 +341,7 @@ void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
 		//__SUP_COUT__ << "Default request wrapper" << __E__;
 		return CoreSupervisorBase::requestWrapper(in, out);
 	}
-	// else Macro Maker mode!
+	// else very specialized Macro Maker mode!
 
 	//__SUP_COUT__ << "MacroMaker mode request handler!" << __E__;
 
@@ -825,7 +835,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument&   xmldoc,
 	std::string interfaceIndexArray  = CgiDataUtilities::getData(cgi, "interfaceIndex");
 	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
 	std::string time =
-	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "time"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::getData(cgi, "time"));
 	std::string addressFormatStr = CgiDataUtilities::getData(cgi, "addressFormatStr");
 	std::string dataFormatStr    = CgiDataUtilities::getData(cgi, "dataFormatStr");
 
@@ -929,7 +939,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument&   xmldoc,
 	std::string interfaceIndexArray  = CgiDataUtilities::getData(cgi, "interfaceIndex");
 	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
 	std::string time =
-	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "time"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::getData(cgi, "time"));
 	std::string addressFormatStr = CgiDataUtilities::getData(cgi, "addressFormatStr");
 	std::string dataFormatStr    = CgiDataUtilities::getData(cgi, "dataFormatStr");
 
@@ -1036,7 +1046,7 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument&   xmldoc,
 	std::string Sequence = CgiDataUtilities::postData(cgi, "Sequence");
 	std::string Time     = CgiDataUtilities::postData(cgi, "Time");
 	std::string Notes =
-	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::postData(cgi, "Notes"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "Notes"));
 	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
 	std::string isMacroLSBF   = CgiDataUtilities::getData(cgi, "isLSBF");
 
@@ -1419,7 +1429,7 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument&   xmldoc,
 	std::string Sequence     = CgiDataUtilities::postData(cgi, "Sequence");
 	std::string Time         = CgiDataUtilities::postData(cgi, "Time");
 	std::string Notes =
-	    CgiDataUtilities::decodeURIComponent(CgiDataUtilities::postData(cgi, "Notes"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "Notes"));
 
 	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
 	std::string isMacroLSBF   = CgiDataUtilities::getData(cgi, "isLSBF");
@@ -1489,8 +1499,8 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument&   xmldoc,
 	std::string macroName     = CgiDataUtilities::getData(cgi, "MacroName");
 	std::string pluginName    = CgiDataUtilities::getData(cgi, "PluginName");
 	std::string macroSequence = CgiDataUtilities::postData(cgi, "MacroSequence");
-	std::string macroNotes    = CgiDataUtilities::decodeURIComponent(
-        CgiDataUtilities::postData(cgi, "MacroNotes"));
+	std::string macroNotes =
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "MacroNotes"));
 
 	__SUP_COUTV__(pluginName);
 	__SUP_COUTV__(macroName);
@@ -1765,8 +1775,8 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
 {
 	std::string macroName     = CgiDataUtilities::getData(cgi, "MacroName");
 	std::string macroSequence = CgiDataUtilities::postData(cgi, "MacroSequence");
-	std::string macroNotes    = CgiDataUtilities::decodeURIComponent(
-        CgiDataUtilities::postData(cgi, "MacroNotes"));
+	std::string macroNotes =
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "MacroNotes"));
 
 	__SUP_COUTV__(macroName);
 	__SUP_COUTV__(macroSequence);
@@ -2316,7 +2326,9 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 				        "\t Target front-end: '%s::%s'\n",
 				        FEtoPluginTypeMap_[feUID].c_str(),
 				        feUID.c_str());
-				fprintf(fp, "\t\t Inputs: %s\n", inputArgs.c_str());
+				fprintf(fp,
+				        "\t\t Inputs: %s\n",
+				        StringMacros::decodeURIComponent(inputArgs).c_str());
 			}
 
 			// have FE supervisor descriptor, so send
@@ -2367,7 +2379,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 						fprintf(fp,
 						        "\t\t Output '%s' = %s\n",
 						        argName.c_str(),
-						        argValue.c_str());
+						        StringMacros::decodeURIComponent(argValue).c_str());
 					}
 					else
 					{

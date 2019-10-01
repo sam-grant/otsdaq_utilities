@@ -1,7 +1,7 @@
 #include "otsdaq-utilities/Visualization/VisualSupervisor.h"
-//#include "otsdaq-core/RootUtilities/DQMHistos.h"
-#include "otsdaq-core/DataManager/DataManagerSingleton.h"
-#include "otsdaq-core/Macros/BinaryStringMacros.h"
+//#include "otsdaq/RootUtilities/DQMHistos.h"
+#include "otsdaq/DataManager/DataManagerSingleton.h"
+#include "otsdaq/Macros/BinaryStringMacros.h"
 
 // ROOT documentation
 // http://root.cern.ch/root/html/index.html
@@ -494,7 +494,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 					//__SUP_COUT__ << "histo length " << tbuff.Length() << __E__;
 
-					std::string destination = BinaryStringMacros::binaryToHexString(
+					std::string destination = BinaryStringMacros::binaryStringToHexString(
 					    tBuffer.Buffer(), tBuffer.Length());
 
 					xmlOut.addTextElementToData("rootType", histoClone->ClassName());

@@ -26,28 +26,29 @@ var selectedtargetBlue;
 //=====================================================================================
 function init()
 {
+	var = "This is an introduction into the Wiz-Mode Security!" +
+		"\n\n" +
+		"There are currently two options for otsdaq Security:" +
+		"\n\t- <b>No Security:</b>\n<INDENT>" +
+		"Just as it sounds, there will be no login required, and all requests " +
+		"will be treated as though they come from fully priveleged administrators. " +
+		"The only security is afforded by keeping your URL unknown (like on a private network)." +
+		"\n\n" +
+		"This mode is usually convenient during development when no hardware is at stake." +
+		"</INDENT>" +
+		"\n\t- <b>Digest Access Authentication:</b>\n<INDENT>" +
+		"This is a straightforward username and password approach to security. " +
+		"Included in this selection, when using a HTTPS gateway, is CILOGON certificate access if users associate and email " +
+		"address with their accounts." +
+		"Users can be assigned different levels of access individually." +
+		"\n\n" +
+		"This mode, behind the ots HTTPS nodejs gateway, is the recommended <i>otsdaq</i> security approach." +
+		"</INDENT>";
 	console.log("init()");
 	DesktopContent.tooltip("Security in the Wiz-Mode",
-			       "This is an introduction into the Wiz-Mode Security!" + 
-				   "\n\n" + 
-				   "There are currently two options for otsdaq Security:" +
-				   "\n\t- <b>No Security:</b>\n<INDENT>" +
-				   "Just as it sounds, there will be no login required, and all requests " +
-				   "will be treated as though they come from fully priveleged administrators. " +
-				   "The only security is afforded by keeping your URL unknown (like on a private network)." + 
-				   "\n\n" + 
-				   "This mode is usually convenient during development when no hardware is at stake." +
-				   "</INDENT>" +
-				   "\n\t- <b>Digest Access Authentication:</b>\n<INDENT>" +
-				   "This is a straightforward username and password approach to security. " +
-				   "Included in this selection, when using a HTTPS gateway, is CILOGON certificate access if users associate and email " +
-				   "address with their accounts." +
-				   "Users can be assigned different levels of access individually." +
-				   "\n\n" + 
-				   "This mode, behind the ots HTTPS nodejs gateway, is the recommended <i>otsdaq</i> security approach." +
-				   "</INDENT>"
+		windowTooltip  
 	);
-
+	DesktopContent.setWindowTooltip(windowTooltip);
 
 	for(var index = 0; index < IDs_.length; index++)
 			selection_[index] = IDs_[index];
@@ -333,9 +334,10 @@ function editSecurityHandler(req)
 	
 	if(selectedSecurityChoice_ == "DigestAccessAuthentication")
 		Debug.log("Digest Access Authentication was enabled successfully!" + 
-				"\n\nIf this is the first time you are enabling users and passwords, " +
+				"\n\n NOTE: If this is the first time you are enabling users and passwords, " +
 				"then you must get the New Account Code for the admin account from " +
-				"the printouts in the linux console when you start ots in normal mode." +
+				"the printouts in normal mode. In verbose mode ('ots -v'), the admin New Account Code will be in the linux console; " +
+				"otherwise ('ots'), the admin New Account Code can be retrieved in the Gateway log file. " +
 				"\n\nAfter the admin account has been setup, new accounts can be made and " +
 				"the admin account will have access to the New Account Codes in the settings " +
 				"web GUI.", 

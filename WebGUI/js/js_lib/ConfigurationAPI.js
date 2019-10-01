@@ -68,6 +68,7 @@ if (typeof DesktopContent == 'undefined' &&
 
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
+//	ConfigurationAPI.removeAllPopUps()
 //	ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	ConfigurationAPI.addClass(elem,class)
 //	ConfigurationAPI.removeClass(elem,class)
@@ -109,7 +110,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.handleEditableFieldEditOK()
 //	ConfigurationAPI.handleEditableFieldEditCancel()
 //	ConfigurationAPI.handleEditableFieldKeyDown(event,keyEl)
-//	ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,depth,nodeName,value,valueType,choices,path)
+//	ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,depth,nodeName,value,valueType,choices,path,isGroupLink,childLinkIndex,linkId)
 
 //"private" constants:
 ConfigurationAPI._VERSION_ALIAS_PREPEND = "ALIAS:";
@@ -722,7 +723,7 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			}, //handler
 			0, //handler param
 			0,true); //progressHandler, callHandlerOnErr
-}
+} //end getFieldsOfRecords()
 
 //=====================================================================================
 //getFieldValuesForRecords ~~
@@ -825,6 +826,9 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 				obj.fieldPath = DesktopContent.getXMLValue(FieldPaths[i]);
 				obj.fieldValue = DesktopContent.getXMLValue(FieldValues[i]);
 				recFieldValues.push(obj);
+				
+				//track last stable value, inject in object (e.g. used by child link fill field)
+				fieldObjArr[i].fieldColumnValue = obj.fieldValue;
 			}
 		}
 		
@@ -833,7 +837,7 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 			}, //handler
 			0, //handler param
 			0,true); //progressHandler, callHandlerOnErr
-}
+} //end getFieldValuesForRecords()
 
 
 //=====================================================================================
@@ -903,9 +907,15 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 		{
 			
 			var uniqueValues = fields[i].getElementsByTagName("uniqueValue");
+			var groupIdChildLinkIndex = DesktopContent.getXMLNode(
+					fields[i],"childLinkIndex");			
 			
 			var obj = {};
 			obj.fieldName = DesktopContent.getXMLValue(fields[i]);
+						
+			if(groupIdChildLinkIndex)
+				obj.childLinkIndex = DesktopContent.getXMLValue(groupIdChildLinkIndex);
+			
 			obj.fieldUniqueValueArray = [];
 			for(var j=0;j<uniqueValues.length;++j)					
 				obj.fieldUniqueValueArray.push(DesktopContent.getXMLValue(uniqueValues[j]));
@@ -2322,7 +2332,7 @@ ConfigurationAPI.activateGroup = function(groupName, groupKey,
 		if(doneHandler) doneHandler();
 			},
 			true, 0 , true); //reqIndex, progressHandler, callHandlerOnErr
-}
+} //end activateGroup()
 
 //=====================================================================================
 //setGroupAliasInActiveBackbone ~~
@@ -4140,6 +4150,18 @@ ConfigurationAPI.setCaretPosition = function(elem, caretPos, endPos)
 	elem.setSelectionRange(caretPos, endPos);
 }
 
+//=====================================================================================
+//ConfigurationAPI.removeAllPopUps()
+ConfigurationAPI.removeAllPopUps = function()
+{
+	//remove all existing dialogs
+	var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+	while(el) 
+	{
+		el.parentNode.removeChild(el); //close popup
+		el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+	}
+} //end ConfigurationAPI.removeAllPopUps()
 
 //=====================================================================================
 //setPopUpPosition ~~
@@ -4201,10 +4223,11 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		//else w,h are inputs and margin is ignored
 
 		x = (DesktopContent.getWindowScrollLeft() + ((ww-w)/2));
-		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2)) - (offsetUp|0) - 100; //bias up (looks nicer)
+		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2)) - (offsetUp|0);		
+		if(y > 110) y -= 100; //bias up (looks nicer)
 		
-		if(y<DesktopContent.getWindowScrollTop()+margin+padding) 
-			y = DesktopContent.getWindowScrollTop()+margin+padding; //don't let it bottom out though
+		if(y<DesktopContent.getWindowScrollTop()+margin)//+padding) 
+			y = DesktopContent.getWindowScrollTop()+margin;//+padding; //don't let it bottom out though
 
 		//if dialog is smaller than window, allow scrolling to see the whole thing 
 		if(w > ww-margin-padding)			
@@ -4212,14 +4235,14 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		if(ah > wh-margin-padding)
 			y = -DesktopContent.getWindowScrollTop();
 			
-		el.style.left = x + "px";
-		el.style.top = y + "px"; 
+		el.style.left = (x|0) + "px";
+		el.style.top = (y|0) + "px"; 
 	}; 
 	ConfigurationAPI.setPopUpPosition.popupResize();
 	
 	//window width and height are not manipulated on resize, only setup once
-	el.style.width = w + "px";
-	el.style.height = h + "px";
+	el.style.width = (w|0) + "px";
+	el.style.height = (h|0) + "px";
 	
 	if(!doNotResize)
 	{
@@ -4323,10 +4346,49 @@ ConfigurationAPI.createEditableFieldElement = function(fieldObj,fieldIndex,
 	var value = fieldObj.fieldColumnDefaultValue;
 	var path = fieldObj.fieldRelativePath;
 	var nodeName = fieldObj.fieldColumnName;
-
+	fieldObj.depthIndex = depth;
+	fieldObj.fieldIndex = uid;
+	fieldObj.fieldColumnValue = value; //track last stable value
+	
+	//if childLink, look up isGroupLink,childLinkIndex,linkId
+	//	in matching field
+	var isGroupLink,childLinkIndex,linkId;
+	if(valueType.indexOf("ChildLink") == 0)
+	{
+		Debug.log("Looking up matching link pair for " + nodeName);
+		
+		childLinkIndex = valueType.split('-')[1];
+		console.log("childLinkIndex",childLinkIndex);
+		
+		//should only be one other field with this childLinkIndex
+		for(var i=0;i<_fields.length;++i)
+			if(_fields[i].fieldColumnType.indexOf("ChildLink") == 0 &&
+					(_fields[i].fieldColumnType[("ChildLink").length] == 'U' ||
+					_fields[i].fieldColumnType[("ChildLink").length] == 'G') &&
+					childLinkIndex == _fields[i].fieldColumnType.split('-')[1])
+			{
+				Debug.log("Found matching pair field " + 
+						_fields[i].fieldColumnName);
+				if(_fields[i].fieldColumnType[("ChildLink").length] == 'U')
+					isGroupLink = false; //UID link
+				else 
+					isGroupLink = true; //GroupID link
+				linkId = _fields[i].fieldColumnDefaultValue;
+				break;
+			}
+		
+		if(isGroupLink === undefined)
+		{
+			Debug.log("Invalid table! Could not find matching child link columns for " +
+					nodeName, Debug.HIGH_PRIORITY);
+			return;
+		}
+	} //end special child link handling
+	
 	return ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,
-			depth,nodeName,value,valueType,choices,path);
-}
+			depth,nodeName,value,valueType,choices,path,
+			isGroupLink,childLinkIndex,linkId);
+} //end createEditableFieldElement()
 
 //=====================================================================================
 //getEditableFieldValue ~~
@@ -4339,8 +4401,12 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 
 	ConfigurationAPI.handleEditableFieldEditOK(); //make sure OK|Cancel closed
 	
-	var depth = depthIndex|0;
-	var uid = fieldIndex|0;
+	//make depthIndex and fieldIndex optional
+	var depth = fieldObj.depthIndex === undefined?
+			(depthIndex|0):fieldObj.depthIndex;
+	var uid = fieldObj.fieldIndex === undefined?
+			(fieldIndex|0):fieldObj.fieldIndex;
+	
 	var fieldEl = document.getElementById("editableFieldNode-Value-leafNode-" + 
 			( depth + "-" + uid ));
 	if(!fieldEl)
@@ -4355,7 +4421,7 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 	
 	//Debug.log("get Value " + value);
 	return value;
-}
+} //end getEditableFieldValue()
 
 //=====================================================================================
 //setEditableFieldValue ~~
@@ -4368,9 +4434,13 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 ConfigurationAPI.setEditableFieldValue = function(fieldObj,value,fieldIndex,depthIndex /*optional*/)
 {
 	//Debug.log("setEditableFieldValue " + fieldObj.fieldColumnName + " = " + value);
-
-	var depth = depthIndex|0;
-	var uid = fieldIndex|0;
+	
+	//make depthIndex and fieldIndex optional
+	var depth = fieldObj.depthIndex === undefined?
+			(depthIndex|0):fieldObj.depthIndex;
+	var uid = fieldObj.fieldIndex === undefined?
+			(fieldIndex|0):fieldObj.fieldIndex;
+	
 	var fieldEl = document.getElementById("ConfigurationAPI-EditableField-" + 
 			( depth + "-" + uid ));
 	if(!fieldEl)
@@ -4382,17 +4452,58 @@ ConfigurationAPI.setEditableFieldValue = function(fieldObj,value,fieldIndex,dept
 	var valueType = fieldObj.fieldColumnType;
 	var choices = fieldObj.fieldColumnDataChoicesArr;	
 	var path = fieldObj.fieldRelativePath;
-	var nodeName = fieldObj.fieldColumnName;
+	var nodeName = fieldObj.fieldColumnName;	
+	fieldObj.fieldColumnValue = value; //track last stable value
 	
+	//if childLink, look up isGroupLink,childLinkIndex,linkId
+	//	in matching field
+	var isGroupLink,childLinkIndex,linkId;
+	if(valueType.indexOf("ChildLink") == 0)
+	{
+		Debug.log("Looking up matching link pair for " + nodeName);
+
+		childLinkIndex = valueType.split('-')[1];
+		console.log("childLinkIndex",childLinkIndex);
+
+		//should only be one other field with this childLinkIndex
+		for(var i=0;i<_fields.length;++i)
+			if(_fields[i].fieldColumnType.indexOf("ChildLink") == 0 &&
+					(_fields[i].fieldColumnType[("ChildLink").length] == 'U' ||
+							_fields[i].fieldColumnType[("ChildLink").length] == 'G') &&
+							childLinkIndex == _fields[i].fieldColumnType.split('-')[1])
+			{
+				Debug.log("Found matching pair field " + 
+						_fields[i].fieldColumnName);
+				if(_fields[i].fieldColumnType[("ChildLink").length] == 'U')
+					isGroupLink = false; //UID link
+				else 
+					isGroupLink = true; //GroupID link
+				linkId = _fields[i].fieldColumnValue;
+				break;
+			}
+
+		if(isGroupLink === undefined)
+		{
+			Debug.log("Invalid table! Could not find matching child link columns for " +
+					nodeName, Debug.HIGH_PRIORITY);
+			return;
+		}
+	} //end special child link handling
+
 	return ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,
-			depth,nodeName,value,valueType,choices,path);
+			depth,nodeName,value,valueType,choices,path,
+			isGroupLink,childLinkIndex,linkId);
 }
 
 //=====================================================================================
 //fillEditableFieldElement ~~
 //	helper to fill element used by setEditableFieldValue and createEditableFieldElement
+//
+//	Caller should append extra parameters (isGroupLink,childLinkIndex,linkId) to ChildLink valueType
+//	to guide subset links.
 ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
-		depth,nodeName,value,valueType,choices,path)
+		depth,nodeName,value,valueType,choices,path,
+		isGroupLink,childLinkIndex,linkId)
 {
 	var str = "";
 	
@@ -4540,6 +4651,8 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 				recordAlias += ' ';
 			recordAlias += value[c];
 		}	
+		if(recordAlias.length && recordAlias[recordAlias.length-1] != 's')
+			recordAlias += 's'; //make plural
 		
 		var newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" + 
 				DesktopContent._localUrnLid + 
@@ -4548,6 +4661,21 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 				"&recordAlias=" + recordAlias +
 				"&editableFieldList=" + "!*CommentDescription";
 		
+		//include special parameters to focus on link targets
+		if(isGroupLink)
+		{
+			//for group link, pre-select GroupID value							
+			newWindowStr += "&selectedGroupIDs=" +
+					encodeURIComponent(
+							childLinkIndex + "=" +
+							linkId);
+		}
+		else
+		{
+			//for unique link, presect UID record							
+			newWindowStr += "&selectedRecords=" + linkId;							
+		}
+		
 		str += "<div style='float:left; margin-left:9px;' " +
 				" id='editableFieldNode-ChildLink-SubConfigLinkWindow-" +
 				(depth + "-" + uid) + "' " +
@@ -4555,6 +4683,7 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 				"editableFieldNode-ChildLink-SubConfigLink" +
 				"' " +
 				"onclick='" + 
+				"event.stopPropagation(); " +
 				"DesktopContent.openNewWindow(" +
 				"\"" + value +  
 				" Subset-Configuration\",\"\",\"" + 
@@ -4572,6 +4701,7 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 				"editableFieldNode-ChildLink-SubConfigLink" +
 				"' " +
 				"onclick='" + 
+				"event.stopPropagation(); " +
 				"DesktopContent.openNewBrowserTab(" +
 				"\"" + value +  
 				" Subset-Configuration\",\"\",\"" + 
@@ -4594,7 +4724,7 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 							ConfigurationAPI.editableField_SELECTED_COLOR_;
 	
 	return fieldEl;
-}
+} //end fillEditableFieldElement()
 
 //=====================================================================================
 //handleEditableFieldClick ~~

@@ -1,10 +1,10 @@
 #include "otsdaq-utilities/Logbook/LogbookSupervisor.h"
-//#include "otsdaq-core/MessageFacility/MessageFacility.h"
-//#include "otsdaq-core/Macros/CoutMacros.h"
-//#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-//#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
-//#include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
-//#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
+//#include "otsdaq/MessageFacility/MessageFacility.h"
+//#include "otsdaq/Macros/CoutMacros.h"
+//#include "otsdaq/CgiDataUtilities/CgiDataUtilities.h"
+//#include "otsdaq/XmlUtilities/HttpXmlDocument.h"
+//#include "otsdaq/SOAPUtilities/SOAPUtilities.h"
+//#include "otsdaq/SOAPUtilities/SOAPParameters.h"
 //
 //#include <xdaq/NamespaceURI.h>
 //

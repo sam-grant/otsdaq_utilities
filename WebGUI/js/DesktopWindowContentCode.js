@@ -106,6 +106,7 @@
 //		DesktopContent.getUsername()
 //		DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
 //		DesktopContent.openNewBrowserTab(name,subname,windowPath,unique,completeHandler)
+//		DesktopContent.addDesktopIcon(iconName)
 //
 //=====================================================================================
 
@@ -128,6 +129,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth, cancelFunc)
 //	DesktopContent.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	DesktopContent.tooltip(uid,tip)
+//      DesktopContent.setWindowTooltip(tip)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
 //	DesktopContent.getWindowScrollLeft()
@@ -137,7 +139,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getMouseX()
 //	DesktopContent.getMouseY()
 //	DesktopContent.getDefaultWindowColor()
-//  DesktopContent.getDefaultDashboardColor()
+//      DesktopContent.getDefaultDashboardColor()
 //	DesktopContent.getDefaultDesktopColor()
 //	DesktopContent.getUsername()
 //	DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
@@ -237,6 +239,8 @@ DesktopContent.init = function() {
 	window.onmousemove = DesktopContent.mouseMove; //setup mouse move handler
 	window.focus();	//before this fix, full screen in new tab would not give window focus
 
+	Debug.log("Window URL " + window.location.href);
+	
 	DesktopContent._serverUrnLid = DesktopContent.getDesktopWindowParameter(0,"urn");//((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
 		Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
@@ -369,6 +373,8 @@ DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, 
 
 	if(!DesktopContent._myDesktopFrame) return; //only happen if not part of desktop
 
+	//Debug.log("Focus DesktopContent._isFocused " + DesktopContent._isFocused);
+	
 	//commented below because, at times, desktop window movement led to wrong focus assumptions 
 	//if(DesktopContent._isFocused ) {Debug.log("already"); return; }//only focus when unfocused
 	DesktopContent._isFocused = true;					
@@ -376,13 +382,17 @@ DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, 
 	DesktopContent._zMailbox.innerHTML = parseInt(DesktopContent._zMailbox.innerHTML) + 1;
 	return true;
 }
-DesktopContent.handleBlur = function(e) {			
+DesktopContent.handleBlur = function(e) {	
+	//Debug.log("Blur DesktopContent._isFocused " + DesktopContent._isFocused);
 	DesktopContent._isFocused = false;
 }
-DesktopContent.handleScroll = function(e) {			
+DesktopContent.handleScroll = function(e) {		
+	//Debug.log("Scroll DesktopContent._isFocused" + DesktopContent._isFocused);
 	window.focus();	
 }
 DesktopContent.mouseMove = function(mouseEvent) {	
+	//Debug.log("Move DesktopContent._isFocused" + DesktopContent._isFocused);
+	
 	//call each subscriber
 	for(var i=0; i<DesktopContent._mouseMoveSubscribers.length; ++i)
 		DesktopContent._mouseMoveSubscribers[i](mouseEvent); 
@@ -716,7 +726,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				//check if failed due to cookieCode and go to login prompt
 				if(req.responseText == Globals.REQ_NO_PERMISSION_RESPONSE) 
 				{
-					errStr = "Request failed do to insufficient account permissions."; 
+					errStr = "Request failed due to insufficient account permissions."; 
 					//return;
 				}
 				else if(req.responseText == Globals.REQ_USER_LOCKOUT_RESPONSE) 
@@ -1182,6 +1192,17 @@ DesktopContent.tooltip = function(id,tip) {
 	},0,0,0,true,true); //show loading, and target supervisor
 	
 }
+
+//=====================================================================================
+DesktopContent.setWindowTooltip = function(tip)
+{
+    var windowTooltipElement = document.createElement("div");
+    windowTooltipElement.setAttribute("id", "otsDesktopWindowTooltipElement");
+    windowTooltipElement.setAttribute("style", "display:none");
+    
+    windowTooltipElement.innerText = encodeURIComponent(tip);
+    document.body.appendChild(windowTooltipElement);
+} //end setWindowTooltip()
 
 //=====================================================================================
 //setSecurityOne
@@ -1841,13 +1862,84 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	window.open(url,'_blank');	
 } // end openNewBrowserTab()
 
+//=====================================================================================
+//addDesktopIcon ~~
+//	modify active context to include the new desktop icon
+//	reset desktop icons
+//	
+//	Note: linkedApp can be the app LID, UID, or class type 
+DesktopContent.addDesktopIcon = function(caption, altText,
+		folderPath, unique, permissionString, 
+		imageURL, windowContentURL, linkedApp, parameters) {
+
+	var iconParameters = "";
+	if(parameters && parameters.length && (typeof parameters === "string"))
+		iconParameters = parameters; //just take string, if not object
+	else //take parameters from object
+		for(var i in parametersObject)
+		{
+			iconParameters += encodeURIComponent(i) + "=" + 
+					encodeURIComponent(iconParameters[i]) + "&";
+		}
+	
+	Debug.log("iconParameters = " + iconParameters);
+	
+	var iconLinkedApp = "";
+	var iconLinkedAppLID = 0;
+	if(linkedApp)
+	{
+		if((linkedApp|0) > 0)
+			iconLinkedAppLID =  linkedApp|0;
+		else 
+			iconLinkedApp = linkedApp; //could be app UID or class 
+	}
+	
+	var req = "Request?RequestType=addDesktopIcon"
+			/*get data*/
+			+ "&iconCaption=" + encodeURIComponent(caption)
+			+ "&iconAltText=" + encodeURIComponent(altText)
+			+ "&iconFolderPath=" + encodeURIComponent(folderPath)
+			+ "&iconPermissions=" + encodeURIComponent(permissionString)
+			+ "&iconImageURL=" + encodeURIComponent(imageURL)
+			+ "&iconWindowURL=" + encodeURIComponent(windowContentURL)
+			+ "&iconEnforceOneWindowInstance=" + (unique?"1":"0") 
+			+ (iconLinkedAppLID?
+					("&iconLinkedAppLID=" + iconLinkedAppLID):
+					("&iconLinkedApp=" + iconLinkedApp)
+			);
+	
+	Debug.log("Create Icon req = " + req);
+	
+	DesktopContent.XMLHttpRequest(req,
+			/*post data*/
+			"iconParameters=" + encodeURIComponent(iconParameters)
+			,
+			function(req)
+			{
+		Debug.log("Successfully added icon '" +
+				caption +
+				"!'",Debug.INFO_PRIORITY);
+		
+		//if available update active system configuration handler, to display changes
+		if(activateSystemConfigHandler)
+		{
+			activateSystemConfigHandler(req);
+		}
+
+			}, //end request handler
+			0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+			false /*doNotShowLoadingOverlay*/,
+			true /*targetSupervisor*/);  //end XMLHttpRequest() call
+
+} //end addDesktopIcon()
+
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window
 DesktopContent.getDesktopWindowTitle = function() {
 	return DesktopContent._theWindow.parent.document.getElementById(
 			"DesktopWindowHeader-" + 
 			DesktopContent._theWindow.name.split('-')[1]).innerHTML;
-}
+} //end getDesktopWindowTitle()
 
 
 

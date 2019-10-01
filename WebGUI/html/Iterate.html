@@ -744,44 +744,49 @@
         var _cmdTargetParentSelArr = [];
 		
 	
-		var _HEADER_ERROR_BGCLR = 		"rgb(226, 205, 197)";
-		var _HEADER_PAUSED_BGCLR = 		"rgb(197, 205, 226)";
-		var _HEADER_RUNNING_BGCLR = 	"rgb(177, 206, 178)";
-		var _HEADER_INACTIVE_BGCLR = 	"transparent";
+		var _HEADER_ERROR_BGCLR 		= "rgb(226, 205, 197)";
+		var _HEADER_PAUSED_BGCLR 		= "rgb(197, 205, 226)";
+		var _HEADER_RUNNING_BGCLR 		= "rgb(177, 206, 178)";
+		var _HEADER_INACTIVE_BGCLR 		= "transparent";
+		
+		var _FE_TABLE 					= "FEInterfaceTable";
+		var _FE_SUPERVISOR_TABLE		= "FESupervisorTable";
+		var _MACRO_DIM_LOOP_TABLE		= "IterationCommandMacroDimensionalLoopTable";
         
 
 		//=====================================================================================
 		//init ~~
 		//	init called once body has loaded
 		function init() 
-		{									
+		{		
+			var windowTooltip = "Welcome to the Iterate GUI. Here you can create 'Iteration Plans' that can facilitate " +
+				"calibrations or complex run plans. \n\n" +
+
+				"For an example calibration case, you might create an Iteration Plan to step through " +
+				"a register value from 0 to 50, counting by 10.\n\n" +
+
+				"For an example run plan case, you might create an Iteration Plan to take 5 runs for " +
+				"10 minutes each.\n\n" +
+
+				"The organization of the Iterate GUI is in the form of two panes, a top and bottom.\n\n" +
+
+				"Briefly, here is a description of the two panes: " +
+				"<INDENT> " +
+				"- <b>Top Pane</b>\n" +
+				"<INDENT> The 'Top Pane' is for controlling the selected Iteration Plan. " +
+				"You can Play, Pause, or Stop the Iteration Plan. Or if you make modifications " +
+				"you can Save or Discard them." +
+				"</INDENT>" +
+				"</INDENT>" +
+				"<INDENT> " +
+				"- <b>Bottom Pane</b>\n" +
+				"<INDENT> The 'Bottom Pane' is for viewing and modifying the selected Iteration Plan. " +
+				"</INDENT>" +
+				"</INDENT>"	;						
 			Debug.log("Iterate init ");
 			DesktopContent.tooltip("Iterate Introduction",
-					"Welcome to the Iterate GUI. Here you can create 'Iteration Plans' that can facilitate "+
-					"calibrations or complex run plans. \n\n" +
-					
-					"For an example calibration case, you might create an Iteration Plan to step through " +
-					"a register value from 0 to 50, counting by 10.\n\n" +
-					
-					"For an example run plan case, you might create an Iteration Plan to take 5 runs for " +
-					"10 minutes each.\n\n" +
-					
-					"The organization of the Iterate GUI is in the form of two panes, a top and bottom.\n\n" +
-					
-					"Briefly, here is a description of the two panes: " +
-					"<INDENT> " +
-					"- <b>Top Pane</b>\n" +
-					"<INDENT> The 'Top Pane' is for controlling the selected Iteration Plan. " +
-					"You can Play, Pause, or Stop the Iteration Plan. Or if you make modifications " +
-					"you can Save or Discard them." +
-					"</INDENT>" +
-					"</INDENT>" + 
-					"<INDENT> " +
-					"- <b>Bottom Pane</b>\n" +
-					"<INDENT> The 'Bottom Pane' is for viewing and modifying the selected Iteration Plan. " +
-					"</INDENT>" +
-					"</INDENT>"
-			);
+			windowTooltip);
+			DesktopContent.setWindowTooltip(windowTooltip);
 			
 			//extract get parameters
 			if(!extractGETParameters())
@@ -2434,7 +2439,7 @@
 													  :"")]);
 							addCommand(_COMMAND_TYPES.MODIFY_ACTIVE_GROUP,
 									[								
-									 "FEInterfaceConfiguration",//"Tables":params[0],
+									 _FE_TABLE,//"Tables":params[0],
 									 "ExampleInterface0",//"UIDs":params[1],
 									 0,//"DoTrackGroupChanges":params[2], 
 									 "LinkToFETypeTable/FirmwareVersion",//"RelativePathToField":params[3],
@@ -2977,7 +2982,7 @@
 								_COMMAND_PARAM_FIELDS.LinkToMacroDimensions)
 						{
 							if(initValue == "") //set default table name
-								initValue = "IterationCommandMacroDimensionalLoopConfiguration";
+								initValue = _MACRO_DIM_LOOP_TABLE;
 							str += htmlOpen("input",
 									{
 											"id":("popUp-param-" + i),
@@ -3528,7 +3533,7 @@
 				}
 				Debug.log("localFeCheckboxHandler " + el.checked);
 
-				var path = el.checked?"FESupervisorConfiguration":"/";
+				var path = el.checked?_FE_SUPERVISOR_TABLE:"/";
 				ConfigurationAPI.getTree(path,
 						1, //down through command parameters
 						_modifiedTables,
@@ -3656,7 +3661,7 @@
 			var allUidMode = document.getElementById("popUp-targetWizAllUIDs").checked;
 			
 			var path = feMode?
-					"FESupervisorConfiguration":"";
+					_FE_SUPERVISOR_TABLE:"";
 			
 
 			
@@ -3680,7 +3685,7 @@
 						//different, so load children and act
 						
 						parentTable = feMode?
-								"FEInterfaceConfiguration":
+								_FE_TABLE:
 								MultiSelectBox.getSelectionElementByIndex(
 									sel,i).innerText;
 
@@ -3708,7 +3713,7 @@
 			
 			
 			_cmdTargetWizParentTable = feMode?
-					"FEInterfaceConfiguration":sel.innerText;
+					_FE_TABLE:sel.innerText;
 						
 			path += "/" + sel.innerText;
 			path += feMode?
@@ -4368,9 +4373,16 @@
 							val = DesktopContent.getXMLValue(depth_iterations[i]) | 0;
 							if(val > 99) //truncate text length
 								val = "...";
-							document.getElementById("plan-command-bounceBall-text-" + 
+							try
+							{
+								document.getElementById("plan-command-bounceBall-text-" + 
 									command_index + "-depth-" + 
 									(i+1)).innerHTML = val;
+							}
+							catch(e)
+							{
+								console.log("ignoring",e);
+							}
 						}
 						val = command_iteration | 0;
 						if(val > 99) //truncate text length
