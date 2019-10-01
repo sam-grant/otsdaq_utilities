@@ -78,7 +78,7 @@ else {
 			//	private function to refresh header name based on window size
 			// 	clip text if too long
 		var _refreshHeader = function() {
-			var hdrW = _w-2*_defaultHeaderLeftMargin-5*(_defaultButtonSize+_defaultButtonLeftMargin);
+			var hdrW = _w-2*_defaultHeaderLeftMargin-5*(_defaultButtonSize+_defaultButtonLeftMargin)-1;
 			_winhdr.style.width = hdrW +"px"; 
 			_winhdr.innerHTML = _name + (_subname==""?"":" - ") + _subname;
 			while(_winhdr.scrollWidth > hdrW && _winhdr.innerHTML.length > 4)
