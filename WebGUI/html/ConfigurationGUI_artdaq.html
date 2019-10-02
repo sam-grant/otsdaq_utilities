@@ -464,6 +464,7 @@
 		var _nodesByType = {};		
 		var _selectedNodes = {}; //selected nodes get highlighted in paint()
 		
+		var _subsystems = {}; //object describing artdaq subsystems
 		
 		//constant globals -------------
 		var _NODE_TYPE_READER 		= 0;
@@ -522,6 +523,7 @@
 		
 			//openActiveGroupsDialog()
 			//nodeLayoutHasChanged()
+			//addArrow(startNodeIndex, startNodePointIndex, endNodeIndex, endNodePointIndex)
 					
 			//paint()
 			//drawGrid() 
@@ -588,10 +590,22 @@
 			//init configuration members
 			_modifiedTables = undefined; //reset
 			
+			_grid = { //size of grid, rows and cols can be added or removed
+							"rows": _GRID_ROW_MIN, 	"cols": _GRID_COL_MIN, 
+							"x0": 	0, 	"y0": 	0, 
+							"xstep":0, 	"ystep":0}; 
+			
+			_nodes = []; 
+			_arrows = {};
+			_nodesByType = {};
+			_selectedNodes = {};
+			_subsystems = {};
+			
+			//////////////
 			ArtdaqConfigurationAPI.getArtdaqNodes(
-					function(artdaqNodesObj)
+					function(artdaqObj)
 					{
-				console.log("artdaqNodesObj",artdaqNodesObj);
+				console.log("artdaqObj",artdaqObj);
 				
 				//get active configuration group
 				DesktopContent.XMLHttpRequest("Request?RequestType=loadArtdaqNodeLayout",
@@ -600,7 +614,7 @@
 						{
 					//Steps:
 					//	if layout, 
-					//		for each matching node in layout, place, delete from artdaqNodesObj 
+					//		for each matching node in layout, place, delete from artdaqObj 
 					//  for each remaining node, then use default behavior to place nodes
 					
 					// build _nodes and _nodesByType
@@ -613,7 +627,7 @@
 					if(!rows || rows == "" || !cols || cols == "")
 					{
 						//setup default grid
-						rows = Math.ceil(Math.sqrt(artdaqNodesObj.nodeCount));
+						rows = Math.ceil(Math.sqrt(artdaqObj.nodeCount));
 						cols = rows + 1;
 					}
 					_grid.rows = rows | 0;
@@ -630,27 +644,27 @@
 					var layoutNodesX 	= req.responseXML.getElementsByTagName("node-x");
 					var layoutNodesY	= req.responseXML.getElementsByTagName("node-y");
 					
-					//for every type, node match.. add to _nodes.. and delete from artdaqNodesObj
+					//for every type, node match.. add to _nodes.. and delete from artdaqObj
 					for(var i=0;i<layoutNodesType.length;++i)
 					{
 						var type = layoutNodesType[i].getAttribute('value');
 						var name = layoutNodesName[i].getAttribute('value');
-						if(artdaqNodesObj[type] && 
-								artdaqNodesObj[type][name])
+						if(artdaqObj[type] && 
+								artdaqObj[type][name])
 						{
 							Debug.log("Found " + name);
 							
 							//add to nodes
 							_nodes.push({
-								"type": 	getTypeIndex(type),
-								"name": 	name,
-								"address":	artdaqNodesObj[type][name].address,
-								"port":		artdaqNodesObj[type][name].port,
-								"x":		layoutNodesX[i].getAttribute('value')|0,
-								"y":		layoutNodesY[i].getAttribute('value')|0});
+								"type": 		getTypeIndex(type),
+								"name": 		name,
+								"hostname":		artdaqObj[type][name].hostname,
+								"subsystemId":	artdaqObj[type][name].subsystemId,
+								"x":			layoutNodesX[i].getAttribute('value')|0,
+								"y":			layoutNodesY[i].getAttribute('value')|0});
 							
 							//remove from nodes object to keep remainder accurate 
-							delete artdaqNodesObj[type][name];
+							delete artdaqObj[type][name];
 							
 						}
 						else //not found, so do not represent anymore
@@ -661,11 +675,12 @@
 					
 					//now add remaining nodes to layout automatically
 					
-					for(var t in artdaqNodesObj)
+					for(var t in ArtdaqConfigurationAPI.NODE_TYPES)
 					{
+						t = ArtdaqConfigurationAPI.NODE_TYPES[t];
 						console.log("Type",t);
 
-						for(var n in artdaqNodesObj[t])
+						for(var n in artdaqObj[t])
 						{	
 							console.log("Type",t,"Name",n);
 
@@ -675,14 +690,18 @@
 							_nodes.push({
 								"type": 		typeIndex,
 								"name": 		n,	
-								"address":		artdaqNodesObj[t][n].address,
-								"port":			artdaqNodesObj[t][n].port,
+								"hostname":		artdaqObj[t][n].hostname,
+								"subsystemId":	artdaqObj[t][n].subsystemId,
 								"x":			xy[0],
 								"y":			xy[1]});
 						}
 					}
 					
 					console.log("all nodes",_nodes);
+					
+					_subsystems = artdaqObj.subsystems;
+					
+					console.log("all subsystems",_subsystems);
 					
 					localFinishInit();
 						} //end loadArtdaqNodeLayout handler
@@ -1363,8 +1382,8 @@
 					"-headerText' class='node-headerText'>" +
 					typeName + ": " + _nodes[i].name +
 					htmlClearDiv() + 
-					_nodes[i].address + ":" +
-					_nodes[i].port +				
+					_nodes[i].hostname + ":" +
+					_subsystems[_nodes[i].subsystemId].label +				
 					"</div>";
 				
 				//add edit pencil icon
@@ -1555,7 +1574,7 @@
     			switch(_mouseMoveMode)
     			{
     			case _MMM_ARROW_DRAG:
-    				console.log("arrow drag x,y",x,y);
+    				//console.log("arrow drag x,y",x,y);
     				drawArrow(
     						_mouseMoveStart[0],
 							_mouseMoveStart[1],
@@ -1563,14 +1582,14 @@
     				//continue on
     				break;    
     			case _MMM_NODE_DRAG:
-    				console.log("node drag x,y",x,y);
+    				//console.log("node drag x,y",x,y);
     				drawNode(
     						_mouseMoveStart[2],
     						x - _mouseMoveStart[0],
 							y - _mouseMoveStart[1]);							
     				return;
     			case _MMM_SELECT_BOX:
-    				console.log("select box",x,y);
+    				//console.log("select box",x,y);
     				handleSelectionBox(e);							
     				return;
     			default:
@@ -1953,22 +1972,11 @@
 				console.log("done arrow drag end-point i,p",i,p);
 				_mouseMoveMode = _MMM_NONE;    	
 				
-				//add arrow to array if new
-				if(_arrows[_mouseMoveStart[2]] === undefined)				
-					_arrows[_mouseMoveStart[2]] = {};
-				if(_arrows[_mouseMoveStart[2]][i] === undefined)
-				{
-					_arrows[_mouseMoveStart[2]][i] = 
-							{"p0":_mouseMoveStart[3],
-						     "p1":p 
-							}; //arrow made
-					paint();
-				}
-				else
-				{
-					Debug.log("Connection already exists!",
-							Debug.HIGH_PRIORITY);
-				}
+				addArrow(
+						_mouseMoveStart[2] /*startNodeIndex*/,
+						_mouseMoveStart[3] /*startNodePointIndex*/, 
+						i /*endNodeIndex*/,
+						p /*endNodePointIndex*/);
     		}
     		
 		} //end handlePointMouseUp()
@@ -2311,6 +2319,33 @@
 					);
 			
 		} //end nodeLayoutHasChanged()
+		
+		//====================================================================================
+		//addArrow ~~
+		function addArrow(startNodeIndex, startNodePointIndex, endNodeIndex, endNodePointIndex)
+		{
+			Debug.log("addArrow " + startNodeIndex + "-" +
+					startNodePointIndex + " to " + 
+					endNodeIndex + "-" + endNodePointIndex);
+			
+			//add arrow to array if new
+			if(_arrows[startNodeIndex] === undefined)				
+				_arrows[startNodeIndex] = {};
+			if(_arrows[startNodeIndex][endNodeIndex] === undefined)
+			{
+				_arrows[startNodeIndex][endNodeIndex] = 
+					{
+							"p0":startNodePointIndex,
+							"p1":endNodePointIndex
+					}; //arrow made
+				paint();
+			}
+			else
+			{
+				Debug.log("Connection already exists!",
+						Debug.HIGH_PRIORITY);
+			}
+		} //end addArrow()
 		
 		</script>
 </head>
