@@ -55,7 +55,7 @@ if (typeof DesktopContent == 'undefined' &&
 
 //"public" constants:
 ArtdaqConfigurationAPI.NODE_TYPES = ["reader","builder",
-									 "logger","dispacher","monitor"];
+									 "logger","dispatcher","monitor"];
 
 //"private" function list:
 
@@ -103,6 +103,39 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 	{
 		Debug.log("localExtractActiveArtdaqNodes");
 		
+		//Example xml response:
+		//		<artdaqSupervisor value='ARTDAQSupervisor'>
+		//			<artdaqSupervisor-contextAddress value='http://correlator2.fnal.gov'/>
+		//			<artdaqSupervisor-contextPort value='2016'/>
+		//			<subsystem value='nullDestinationSubsystem'/>
+		//			<subsystem-id value='0'/>
+		//			<subsystem-sourcesCount value='1'/>
+		//			<subsystem-destination value='0'/>
+		//			<subsystem value='subsystem1'/>
+		//			<subsystem-id value='2'/>
+		//			<subsystem-sourcesCount value='0'/>
+		//			<subsystem-destination value='3'/>
+		//			<subsystem value='subsystem2'/>
+		//			<subsystem-id value='3'/>
+		//			<subsystem-sourcesCount value='1'/>
+		//			<subsystem-destination value='0'/>
+		//			<reader value='reader0'/>
+		//			<reader-hostname value='localhost'/>
+		//			<reader-subsystem value='2'/>
+		//			<builder value='builder0'/>
+		//			<builder-hostname value='localhost'/>
+		//			<builder-subsystem value='2'/>
+		//			<builder value='builder1'/>
+		//			<builder-hostname value='localhost'/>
+		//			<builder-subsystem value='3'/>
+		//			<logger value='logger0'/>
+		//			<logger-hostname value='localhost'/>
+		//			<logger-subsystem value='3'/>
+		//			<dispatcher value='dispatcher0'/>
+		//			<dispatcher-hostname value='localhost'/>
+		//			<dispatcher-subsystem value='3'/>
+		//		</artdaqSupervisor>
+		
 		//can call this at almost all API handlers
 		try
 		{
@@ -113,34 +146,67 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 			
 
 			retObj.nodeCount = 0;
-						
-			for(i=0;i<types.length;++i)
+			
+			var artdaqSupervisor = DesktopContent.getXMLNode(
+					req.responseXML,
+					"artdaqSupervisor");
+			
+			if(artdaqSupervisor)
 			{
-				Debug.log("Extracting " + types[i]);
-				var nodes = req.responseXML.getElementsByTagName(
-						types[i]);
-				var addresses = req.responseXML.getElementsByTagName(
-						types[i] + "-contextAddress");
-				var ports = req.responseXML.getElementsByTagName(
-						types[i] + "-contextPort");
+				//extract all processes from the artdaq supervisor object
+				
+				for(i=0;i<types.length;++i)
+				{
+					Debug.log("Extracting " + types[i]);
+					var nodes = artdaqSupervisor.getElementsByTagName(
+							types[i]);
+					var hostnames = artdaqSupervisor.getElementsByTagName(
+							types[i] + "-hostname");
+					var subsystemIds = artdaqSupervisor.getElementsByTagName(
+							types[i] + "-subsystem");
+	
+					retObj[types[i]] = {};
+	
+					for(j=0;j<nodes.length;++j)
+						retObj[types[i]][nodes[j].getAttribute('value')] = 
+							{
+								"hostname": 	hostnames[j].getAttribute('value'),
+								"subsystemId": 	subsystemIds[j].getAttribute('value') | 0, //integer
+							};
+					
+					Debug.log("Extracted " + 
+							nodes.length + " " +
+							types[i]);
+					
+					retObj.nodeCount += nodes.length;
+					
+				} //end type extraction loop
+				
+				//extract all subsystems
+				retObj.subsystems = {};
+				var subsystems = artdaqSupervisor.getElementsByTagName("subsystem");
+				var subsystemIds = artdaqSupervisor.getElementsByTagName(
+						"subsystem" + "-id");
+				var subsystemSourcesCount = artdaqSupervisor.getElementsByTagName(
+						"subsystem" + "-sourcesCount");
+				var subsystemDestination = artdaqSupervisor.getElementsByTagName(
+						"subsystem" + "-destination");
 
-				retObj[types[i]] = {};
-
-				for(j=0;j<nodes.length;++j)
-					retObj[types[i]][nodes[j].getAttribute('value')] = 
+				for(j=0;j<subsystems.length;++j)
+				{
+					retObj.subsystems[subsystemIds[j].getAttribute('value') | 0 /*integer*/] = 
 						{
-								"address": 	addresses[j].getAttribute('value'),
-								"port": 	ports[j].getAttribute('value'),
+							"label":			subsystems[j].getAttribute('value'),
+							"sourcesCount":		subsystemSourcesCount[j].getAttribute('value'),
+							"destination":		subsystemDestination[j].getAttribute('value'),
 						};
+				}
 				
-				Debug.log("Extracted " + 
-						nodes.length + " " +
-						types[i]);
 				
-				retObj.nodeCount += nodes.length;
-				
-			} //end type extraction loop
-		
+			} //end artdaq Supervisor extraction
+			else
+				Debug.log("No artdaq Supervisor found.");
+			
 			Debug.log("Total nodes extracted " +
 					retObj.nodeCount);
 		}

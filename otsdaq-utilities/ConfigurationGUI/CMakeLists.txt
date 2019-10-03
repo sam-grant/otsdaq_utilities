@@ -7,6 +7,8 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 ConfigurationInterface
 		 TableCore
 		 otsdaq_TablePlugins_IterateTable_table
+		 otsdaq_TablePlugins_XDAQContextTable_table
+		 ARTDAQTableBase
 		 FiniteStateMachine
 		 CoreSupervisors
 		 SupervisorInfo
