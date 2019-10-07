@@ -385,7 +385,7 @@ CodeEditor.create = function() {
 		var readOnlyMode = DesktopContent.getParameter(0, "readOnlyMode");
 		if (readOnlyMode !== undefined) //set read mode if parameter
 		{
-			Debug.log("Setting readonly mode to true!");
+			Debug.log("Launching readonly mode to true!");
 			_READ_ONLY = true; //readOnlyMode | 0;
 			
 			
@@ -443,7 +443,7 @@ CodeEditor.create = function() {
 			_ALLOWED_FILE_EXTENSIONS = _ALLOWED_FILE_EXTENSIONS.split(',');
 			console.log("_ALLOWED_FILE_EXTENSIONS",_ALLOWED_FILE_EXTENSIONS);
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=" +
+			DesktopContent.XMLHttpRequest("Request?RequestType=" + _requestPreamble +
 				 	 "codeEditor" + 
 					"&option=getDirectoryContent" +
 					"&path=/"
@@ -1254,7 +1254,7 @@ CodeEditor.create = function() {
 			
 			
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" +  
 					"&option=saveFileContent" +
 					"&path=" + _filePath[forPrimary] +
 					"&ext=" + _fileExtension[forPrimary]				
@@ -1717,9 +1717,9 @@ CodeEditor.create = function() {
 		if(!path || path == "") path = "/"; //defualt to root
 		Debug.log("openDirectory forPrimary=" + forPrimary +
 				" path=" + path);
-		
-		
-		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+				
+		DesktopContent.XMLHttpRequest("Request?RequestType=" + _requestPreamble +
+				"codeEditor" + 
 				"&option=getDirectoryContent" +
 				"&path=" + path
 				, "" /* data */,
@@ -1983,7 +1983,8 @@ CodeEditor.create = function() {
 		{
 			CodeEditor.editor.toggleDirectoryNav(forPrimary,false /*set val*/);
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+			DesktopContent.XMLHttpRequest("Request?RequestType=" + _requestPreamble +
+					"codeEditor" + 
 					"&option=getFileContent" +
 					"&path=" + path + 
 					"&ext=" + extension
