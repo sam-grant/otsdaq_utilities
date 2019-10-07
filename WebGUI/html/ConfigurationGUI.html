@@ -15245,8 +15245,8 @@
 				tel.parentNode.style.width = ((sel.offsetWidth > 150 ? sel.offsetWidth : 150) + 50) + "px"; //div may need to expand to accomodate pencil is display				
 				sel.style.display = "none";
 
-				if (tel.value == "") //fill with oldvalue for user convenience, if blank
-					tel.value = _editingCellElOldValue;
+				if (tel.value == "") //take value from select (rather than old value)
+					tel.value = sel.value; //_editingCellElOldValue;
 
 				tel.style.display = "block";
 				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);
