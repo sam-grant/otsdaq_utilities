@@ -385,7 +385,7 @@ CodeEditor.create = function() {
 		var readOnlyMode = DesktopContent.getParameter(0, "readOnlyMode");
 		if (readOnlyMode !== undefined) //set read mode if parameter
 		{
-			console.log("Print Print");
+			Debug.log("Setting readonly mode to true!");
 			_READ_ONLY = true; //readOnlyMode | 0;
 			
 			
@@ -426,10 +426,18 @@ CodeEditor.create = function() {
 				"codeEditor" + 
 				"&option=getAllowedExtensions" 
 				, "" /* data */,
-				function(req)
+				function(req, reqParam, errStr)
 				{	
-			console.log("getAllowedExtensions",req);
+			console.log("getAllowedExtensions",req,errStr);
 
+			if(!_READ_ONLY && !req)
+			{
+				Debug.log("Assuming invalid permissions! Attempting to revert to read-only mode.", Debug.HIGH_PRIORITY);
+				_READ_ONLY = true;
+				init();
+				return;
+			}
+			
 			_ALLOWED_FILE_EXTENSIONS = DesktopContent.getXMLValue(req,"AllowedExtensions");
 			console.log("_ALLOWED_FILE_EXTENSIONS",_ALLOWED_FILE_EXTENSIONS);
 			_ALLOWED_FILE_EXTENSIONS = _ALLOWED_FILE_EXTENSIONS.split(',');
@@ -501,7 +509,11 @@ CodeEditor.create = function() {
 				_activePaneIsPrimary = 1; //default active pane to primary
 
 					}); //end get directory contents
-				}); //end get allowed file extensions
+				},
+				0 /*reqParam*/, 
+				0 /*progressHandler*/,
+				true /*callHandlerOnErr*/			
+		); //end get allowed file extensions
 		
 	} //end init()
 	
