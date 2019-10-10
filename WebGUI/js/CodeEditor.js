@@ -432,7 +432,7 @@ CodeEditor.create = function() {
 
 			if(!_READ_ONLY && !req)
 			{
-				Debug.log("Assuming invalid permissions! Attempting to revert to read-only mode.", Debug.HIGH_PRIORITY);
+				Debug.log("Assuming invalid permissions! Reverting to read-only mode.", Debug.HIGH_PRIORITY);
 				_READ_ONLY = true;
 				init();
 				return;

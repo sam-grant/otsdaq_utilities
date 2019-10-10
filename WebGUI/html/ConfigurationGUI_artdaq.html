@@ -520,6 +520,7 @@
 			//htmlOpen()
 			//htmlClearDiv()
 			//init()	
+			//initArrows()
 		
 			//openActiveGroupsDialog()
 			//nodeLayoutHasChanged()
@@ -703,6 +704,10 @@
 					
 					console.log("all subsystems",_subsystems);
 					
+					
+					//build arrow connections now
+					initArrows();
+					
 					localFinishInit();
 						} //end loadArtdaqNodeLayout handler
 				); //end loadArtdaqNodeLayout call
@@ -752,6 +757,75 @@
 			} //end localFinishInit()									
 			
 		} //end init()	
+
+		//=====================================================================================
+		//initArrows ~~
+		function initArrows()
+		{
+			Debug.log("initArrows()");
+			
+			//	 .. arrows should get generated at startup based on subsystem settings.
+			//	Readers -> all builders of same subsystem
+			//	Builders -> all loggers of same subsystem AND builders of destination subsystem
+			//	Loggers -> all dispatchers of same subsystem
+
+			for(var i=0;i<_nodes.length;++i)
+			{
+				//
+				//if(!destinationId) continue; //skip if no destination
+				
+				if(_nodes[i].type == _NODE_TYPE_READER)
+				{
+					//connect to all board readers at destination
+					for(var j=0;j<_nodes.length;++j)
+						if(_nodes[j].type == _NODE_TYPE_BUILDER && 
+								_nodes[j].subsystemId == _nodes[i].subsystemId)
+						{
+							Debug.log("Found reader-builder connection at nodes " + 
+									i + " ==> " + j);
+							
+							addArrow(i,j);
+						}
+				}
+				else if(_nodes[i].type == _NODE_TYPE_BUILDER)
+				{
+					var destinationId = _subsystems[_nodes[i].subsystemId].destination|0;
+					
+					//connect to all board readers at destination
+					for(var j=0;j<_nodes.length;++j)
+						if(_nodes[j].type == _NODE_TYPE_LOGGER && 
+								_nodes[j].subsystemId == _nodes[i].subsystemId)
+						{
+							Debug.log("Found builder-logger connection at nodes " + 
+									i + " ==> " + j);
+
+							addArrow(i,j);
+						}
+						else if(_nodes[j].type == _NODE_TYPE_BUILDER && 
+								_nodes[j].subsystemId == destinationId)
+						{
+							Debug.log("Found builder-connection connection at nodes " + 
+									i + " ==> " + j);
+
+							addArrow(i,j);
+						}
+				}
+				else if(_nodes[i].type == _NODE_TYPE_LOGGER)
+				{
+					//connect to all board readers at destination
+					for(var j=0;j<_nodes.length;++j)
+						if(_nodes[j].type == _NODE_TYPE_DISPATCHER && 
+								_nodes[j].subsystemId == _nodes[i].subsystemId)
+						{
+							Debug.log("Found logger-dispatcher connection at nodes " + 
+									i + " ==> " + j);
+							
+							addArrow(i,j);
+						}
+				}
+			}
+			
+		} //end initArrows()
 		
 		//=====================================================================================
 		//getTypeIndex ~~
@@ -1974,8 +2048,8 @@
 				
 				addArrow(
 						_mouseMoveStart[2] /*startNodeIndex*/,
-						_mouseMoveStart[3] /*startNodePointIndex*/, 
 						i /*endNodeIndex*/,
+						_mouseMoveStart[3] /*startNodePointIndex*/, 
 						p /*endNodePointIndex*/);
     		}
     		
@@ -2322,11 +2396,37 @@
 		
 		//====================================================================================
 		//addArrow ~~
-		function addArrow(startNodeIndex, startNodePointIndex, endNodeIndex, endNodePointIndex)
+		function addArrow(startNodeIndex, endNodeIndex, startNodePointIndex, endNodePointIndex)
 		{
 			Debug.log("addArrow " + startNodeIndex + "-" +
 					startNodePointIndex + " to " + 
 					endNodeIndex + "-" + endNodePointIndex);
+			
+			var fromUserDraw = true;
+			if(startNodePointIndex == undefined || endNodePointIndex == undefined)
+			{
+				fromUserDraw = false;
+				
+				//auto select points on nodes			
+				
+				if(_nodes[endNodeIndex].x == //arrow directly above or below
+						_nodes[startNodeIndex].x
+						)
+				{
+					//arrow directly above or below
+					startNodePointIndex = (_nodes[endNodeIndex].y <
+							_nodes[startNodeIndex].y)?0:2;
+					endNodePointIndex = (_nodes[endNodeIndex].y <
+							_nodes[startNodeIndex].y)?2:0;
+				}
+				else //arrow to left or right
+				{
+					startNodePointIndex = (_nodes[endNodeIndex].x < //arrow to left
+							_nodes[startNodeIndex].x)?3:1;
+					endNodePointIndex = (_nodes[endNodeIndex].x < //arrow to left
+							_nodes[startNodeIndex].x)?1:3;
+				}
+			} //end auto point index handling
 			
 			//add arrow to array if new
 			if(_arrows[startNodeIndex] === undefined)				
@@ -2338,7 +2438,7 @@
 							"p0":startNodePointIndex,
 							"p1":endNodePointIndex
 					}; //arrow made
-				paint();
+				if(fromUserDraw && _canvas) paint();
 			}
 			else
 			{
