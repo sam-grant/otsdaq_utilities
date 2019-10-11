@@ -477,6 +477,7 @@
 		var _MMM_ARROW_DRAG			= 1;
 		var _MMM_NODE_DRAG			= 2;
 		var _MMM_SELECT_BOX			= 3;
+		var _MMM_POPUP_DIALOG		= 4;
 		
 		//mousemove globals -------------
 		var _mouseMoveMode = _MMM_NONE;
@@ -542,8 +543,12 @@
 			//handleMouseMove(e)
 			//handleMouseUp(e)
 			//handleMouseDown(e)
-			//handlePointMouseUp(i,p)
-			//handlePointMouseDown(i,p)
+		
+			//handlePointMouseUp(i,p,e)
+			//handlePointMouseDown(i,p,e)
+			//handleEditIconMouseUp(i,p,e)
+			//handleFclIconMouseUp(i,p,e)
+			//handleDeleteIconMouseUp(i,p,e)
 				
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -924,7 +929,7 @@
 		function handleNodeMouseOver(e)
 		{
 			var id = this.id.split('-')[1] | 0;
-			Debug.log("MouseOver Node id = " + id);
+			//Debug.log("MouseOver Node id = " + id);
 			
 		} //end handleNodeMouseOver()
 		
@@ -1138,12 +1143,12 @@
 			vsz = 30;
 			arrows[0].style.left 	= ((_w/2 - sz/2)|0) + "px";
 			arrows[0].style.top 	= (((_GRID_MARGIN-vsz)/2)|0) + "px";
-			arrows[1].style.left 	= ((_w - (_GRID_MARGIN-sz)/2 - sz)|0) + "px";
-			arrows[1].style.top 	= ((_h/2 - vsz/2)|0) + "px";
+			arrows[1].style.left 	= ((_w - (_GRID_MARGIN-vsz)/2 - vsz)|0) + "px";
+			arrows[1].style.top 	= ((_h/2 - sz/2)|0) + "px";
 			arrows[2].style.left 	= ((_w/2 - sz/2)|0) + "px";
 			arrows[2].style.top 	= ((_h - (_GRID_MARGIN-vsz)/2 - vsz)|0) + "px";
 			arrows[3].style.left 	= (((_GRID_MARGIN-vsz)/2)|0) + "px";
-			arrows[3].style.top 	= ((_h/2 - vsz/2)|0) + "px";
+			arrows[3].style.top 	= ((_h/2 - sz/2)|0) + "px";
 
 			//draw grid dots			
 			_gridContext.save();
@@ -1445,6 +1450,7 @@
 						"-point" + p + 
 						"' class='node-point" + p +
 						" node-point node-point-open' " +
+						"title='Use these anchors to modify or create connection arrows with other nodes.' " +
 						" onmouseup='handlePointMouseUp(" + 
 						i + "," + p + ",event);'" +
 						" onmousedown='handlePointMouseDown(" + 
@@ -1464,11 +1470,17 @@
 				str += "<div id='" + nodeid + 
 						"-editIcon' class='node-icon node-editIcon' " +
 						"title='Edit the configuration of this node.' " +
+						" onmouseup='handleEditIconMouseUp(" + 
+						i + "," + p + ",event);'" +
+						" onmousedown='event.stopPropagation() /* mousedown do nothing */;'" +
 						"></div>";
 				//add view fcl icon
 				str += "<div id='" + nodeid + 
 						"-viewFclIcon' class='node-icon node-viewFclIcon' " +
 						"title='View the generated FHiCL of this node.' " +
+						" onmouseup='handleFclIconMouseUp(" + 
+						i + "," + p + ",event);'" +
+						" onmousedown='event.stopPropagation() /* mousedown do nothing */;'" +
 						">" +
 						"<div class='node-viewFclIcon-line'></div>" +
 						"<div class='node-viewFclIcon-line'></div>" +
@@ -1476,6 +1488,9 @@
 				//add delete trash can icon
 				str += "<div id='" + nodeid + 
 						"-deleteIcon' class='node-icon node-deleteIcon' " +
+						" onmouseup='handleDeleteIconMouseUp(" + 
+						i + "," + p + ",event);'" +
+						" onmousedown='event.stopPropagation() /* mousedown do nothing */;'" +
 						"title='Delete this node.' " +
 						"></div>";
 				
@@ -1666,6 +1681,8 @@
     				//console.log("select box",x,y);
     				handleSelectionBox(e);							
     				return;
+    			case _MMM_POPUP_DIALOG: //ignore mouse move during popup
+    				return;
     			default:
     				Debug.log("Illegal _mouseMoveMode = " + _mouseMoveMode, 
     						Debug.HIGH_PRIORITY);
@@ -1699,7 +1716,7 @@
 					//----------------------------
 					//	if over node show node decription/options
 									
-					Debug.log("Node over " + xg + "," + yg);
+					//Debug.log("Node over " + xg + "," + yg);
 					
 					//if over a filled spot, remove +			
 					_addNodeEl.style.left = "-1000px"; //off screen
@@ -1736,7 +1753,7 @@
 					//do not show + if for mouse move modes
 					if(_mouseMoveMode != _MMM_NONE) return;
 					
-					Debug.log("Place + at " + xg + "," + yg);
+					//Debug.log("Place + at " + xg + "," + yg);
 	
 					var sz = 32;
 					_addNodeEl.style.left =
@@ -1845,7 +1862,9 @@
     					_selectedNodes[n] = 1;
     				_mouseMoveStart[2] = {}; //clear temporary selected nodes
     				paint();
-    				break; 				
+    				break; 	
+    			case _MMM_POPUP_DIALOG: //ignore mouse up during popup
+    				return;			
     			default:
     				Debug.log("Illegal mouseup _mouseMoveMode = " +
     						_mouseMoveMode, 
@@ -1972,15 +1991,18 @@
 			else 
 				_mouseHoverNode = -1; //clear mouse hover
 			
-			Debug.log((undoHover?"Hide ":"") + 
-					"Mouse over node " + i);
+			//Debug.log((undoHover?"Hide ":"") + "Mouse over node " + i);
 			
-			if(i < -1)
+			if(i < -1 || (i == -1 && undoHover))
 			{
 				//do not show for mouse move modes
 				if(!undoHover && _mouseMoveMode != _MMM_NONE) return; 
 				
-				Debug.log("This is +/- icon " + (3-(i+13)));
+				if(!undoHover) 
+				{
+					Debug.log("hi");
+				}
+				//Debug.log("This is +/- icon " + (3-(i+13)));
 				document.getElementsByClassName(
 						"grid-plusMinusArrows")[(3-(i+13))].style.display = 
 								undoHover?"none":"block";
@@ -2056,6 +2078,39 @@
 		} //end handlePointMouseUp()
 
 		//=====================================================================================
+		//handleEditIconMouseUp ~~
+		function handleEditIconMouseUp(i,p,e) 
+		{	   
+			e.stopPropagation();
+		
+			Debug.log("mouseup-edit i,p = " +
+				i + "," + p);
+			
+		} // end handleEditIconMouseUp(i,p,e)
+		
+		//=====================================================================================
+		//handleFclIconMouseUp ~~
+		function handleFclIconMouseUp(i,p,e) 
+		{	   
+			e.stopPropagation();
+		
+			Debug.log("mouseup-fcl i,p = " +
+				i + "," + p);				   
+			
+		} // end handleFclIconMouseUp(i,p,e)
+		
+		//=====================================================================================
+		//handleDeleteIconMouseUp ~~
+		function handleDeleteIconMouseUp(i,p,e) 
+		{	   
+			e.stopPropagation();
+		
+			Debug.log("mouseup-delete i,p = " +
+				i + "," + p);				   
+			
+		} // end handleDeleteIconMouseUp(i,p,e)
+		
+		//=====================================================================================
 		//openActiveGroupsDialog ~~
 		//	show update group options to activate
 		function openActiveGroupsDialog()
@@ -2064,6 +2119,7 @@
 			if(_mouseHoverNode != -1)
 				doNodeHover(_mouseHoverNode,true /*undoHover*/);
 			
+			_mouseMoveMode = _MMM_POPUP_DIALOG;
 			Debug.log("openActiveGroupsDialog()");
 
 			_systemGroups = {}; //reset			
@@ -2249,6 +2305,7 @@
 						//remove all existing dialogs
 						ConfigurationAPI.removeAllPopUps();
 
+						_mouseMoveMode = _MMM_NONE;
 					} //end localCloseButtonHandler()
 
 					var stepString;
@@ -2477,6 +2534,8 @@
 				class="controlsButton"						
 				style="float:left"
 				onclick="event.stopPropagation(); openActiveGroupsDialog();" 
+				onmouseup="event.stopPropagation();" 
+				onmousedown="event.stopPropagation();" 
 				title="Choose the active configuration (Ctrl + D)">
 			<div 	id="directoryNavToggleTop"></div>
 			<div 	id="directoryNavToggleBottom"></div>
@@ -2485,6 +2544,8 @@
 				class="controlsButton" 
 				style="float:left;" 
 				onclick="event.stopPropagation(); save();"
+				onmouseup="event.stopPropagation();" 
+				onmousedown="event.stopPropagation();" 
 				title="Click to Save changes to the active configuration (Ctrl + S)">
 			<div 	id="saveFileMain"></div>
 			<div 	id="saveFileMainTop"></div>
