@@ -54,6 +54,11 @@ if (typeof DesktopContent == 'undefined' &&
 //"public" members:
 
 //"public" constants:
+ArtdaqConfigurationAPI.NODE_TYPE_READER 		= 0;
+ArtdaqConfigurationAPI.NODE_TYPE_BUILDER 		= 1;
+ArtdaqConfigurationAPI.NODE_TYPE_LOGGER 		= 2;
+ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER 	= 3;
+ArtdaqConfigurationAPI.NODE_TYPE_MONITOR 		= 4;
 ArtdaqConfigurationAPI.NODE_TYPES = ["reader","builder",
 									 "logger","dispatcher","monitor"];
 

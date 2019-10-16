@@ -12,403 +12,11 @@
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
-	<style type="text/css">			
-		
-		body {
-			background-color: 		white; 
-		}
-		
-		/* make buttons and links have a hand cursor */
-		input[type="button"], button, a {
-			cursor: 				pointer;
-		}
-		
-		.controlsPane {
-			position:				absolute;			
-			top:					-2px;
-			z-index:				1002;
-		}
-		
-		.controlsButton {
-			-webkit-user-select: 	none;
-			-moz-user-select: 		none;
-			user-select:			none;
-			
-			overflow: 				hidden;				
-			cursor: 				pointer;
-			width: 					34px;
-			height: 				36px;
-			
-			background-color: 		rgb(202, 204, 210);
-			
-			
-			box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
-					inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
-					rgb(150,150,150) 0 .1em 3px,
-					rgb(175,175,175) 0 .2em 1px, /* color border */
-					rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
-		}
-
-		.controlsButton:hover,
-		.controlsButton:focus {
-			background-color: 		rgb(225, 227, 233);
-		}
-
-		.controlsButton:active {
-			background-color: 		rgb(202, 204, 210);
-			-webkit-transform: 		translateY(.1em);
-			-moz-transform: 		translateY(.1em);
-			transform: 				translateY(.1em);
-		}
-		
-		#directoryNavToggleTop {
-			float: 					left;
-			width: 					10px;
-			height: 				4px;
-			margin: 				6px 3px 0px 6px;
-			border-right: 			3px solid transparent;
-			border-bottom: 			4px solid white;
-		}
-		#directoryNavToggleBottom {
-			background-color: 		white;
-			float: 					left;
-			width: 					24px;
-			height: 				15px;
-			margin: 				0px 3px 0px 5px;
-		}
-
-		#saveFileMain {
-			border:					1px solid white;
-			border-radius:			2px;
-			float: 					left;
-			width: 					21px;
-			height: 				21px;
-			margin: 				8px 3px 0px 6px;
-		}
-		#saveFileMainTop {
-			border:					1px solid white;
-			float: 					left;
-			width: 					13px;
-			height: 				10px;
-			margin: 				-23px 0px 0px 10px;
-		}
-		#saveFileMainBottom {
-			border:					1px solid white;
-			float: 					left;
-			width: 					7px;
-			height: 				5px;
-			margin: 				-7px 0px 0px 13px;
-		}
-				
-		#theGridCanvas, #theCanvas, #theActionCanvas, #preCanvas, #postCanvas {
-			position: 				absolute;
-			left: 					0;
-			top: 					0;
-		}
-		#theCanvas, #theActionCanvas {
-			z-index:				1000;			
-		}
-		.node-point /*place on top of the canvas*/ {
-			z-index:				1001;
-		}
-				
-		.node {
-			position:				absolute;
-			cursor:					pointer;			
-		}
-		
-		.node-box {
-			background-color : 		rgb(241, 231, 231);			
-
-			box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
-									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
-									rgba(200, 200, 200,0.6) 0 .1em 3px,
-									rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
-									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
-			border-radius: 			3px;	
-			
-			position:				absolute;
-			cursor:					pointer;
-		}
-		
-		.node-box:hover {
-
-			background-color: 		rgb(230, 201, 201);
-
-			box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
-									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
-									rgba(200, 200, 200,0.6) 0 .1em 3px,
-									rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
-									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
-		}		
-		
-		.node-point {
-			background-color : 		rgb(206, 148, 148);
-			border:					3px solid rgb(132, 92, 92);
-			border-radius: 			9px;	
-			width:					9px;
-			height:					9px;
-
-			box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
-									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
-									rgba(200, 200, 200, 0.6) 0 0 3px,
-									rgba(200, 200, 200, 0.6) 0 0 1px,  /* color border */
-									rgba(0,0,0,0.2) 0 0 5px;	/* drop shadow */
-			
-			position:				absolute;
-			cursor:					pointer;
-			display:				none;
-		}
-			
-		.node-point:hover {
-			background-color: 		rgb(230, 201, 201);
-		}
-		
-		.node-boxText {
-			width: 					100%;
-			text-align: 			center;
-			color: 					black;
-
-			-webkit-user-select: 	none;
-			-moz-user-select: 		none;
-			user-select:			none;
-			
-			margin-top: 			43px;
-		}
-		
-		.node-headerText {		
-			-webkit-user-select: 	none;
-			-moz-user-select: 		none;
-			user-select:			none;
-			
-			text-align: 			center;
-			color: 					black;			
-			font-size: 				10px;
-			position: 				absolute;
-			
-			white-space:			nowrap;
-			overflow:				hidden;
-		}
-		
-		#createNodeDiv {
-			background-color: 		rgb(195, 230, 193);	
-			cursor:					pointer;
-			width: 					32px;
-			height: 				32px;
-			border-radius: 			32px;
-			border: 				0px solid rgb(6, 82, 9);
-			
-			box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
-									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
-									rgba(200, 200, 200,0.6) 0 .1em 3px,
-									rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
-									rgba(0,0,0,0.2) 0 .3em 5px;	/* drop shadow */
-			
-			left:					-1000px;			
-			position: 				absolute;
-		    z-index:				2000; 	/* to place on top of everything */
-		}
-		
-		#createNodeDiv:hover {
-			background-color: 		rgb(215, 255, 213);			
-		}
-
-		#createNode {
-			margin: 				1px 16px -10px 8px;
-			float:					left;
-			
-			text-decoration: 		none;			
-			font-size: 				30px;
-			font-weight: 			bold;
-			color: 					rgb(15, 152, 76);
-		}
-		
-		#selectionBoxDiv {
-			border:					1px dashed gray;
-			
-			left:					-1000px;			
-			position: 				absolute;
-			z-index:				2000;
-		}
-
-		.node-icon {
-			position:			absolute;
-			display:			none;	
-			z-index:			1001; /* same as node anchor points */
-		}
-				
-		.node-editIcon {			
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
-			width: 				24px;
-			height: 			20px;
-			float: 				left;
-			border: 			0;
-			margin: 			-9px 0 -7px -4px;
-		}
-		.node-editIcon:hover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
-			cursor: 			pointer;
-		}
-		
-		.node-deleteIcon {			
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
-			width: 				16px;
-			height: 			20px;
-			border: 			0;
-			margin: 			-8px 0 -10px 6px;
-		}
-		.node-deleteIcon:hover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
-			cursor: 			pointer;
-		}
-		
-		.node-viewFclIcon {
-		    border: 			2px solid rgb(202, 204, 210);
-		    width: 				16px;
-		    height: 			20px;
-		    border-radius: 		2px;
-		    margin: 			-10px 0 0 2px;
-		}
-		.node-viewFclIcon:hover {
-			border: 			2px solid rgb(101, 173, 199);
-		}
-		.node-viewFclIcon:hover * {
-			border-color: 		rgb(101, 173, 199);
-		}
-		.node-viewFclIcon-line {
-			border-top: 		2px solid rgb(202, 204, 210);
-			border-bottom: 		2px solid rgb(202, 204, 210);
-			height: 			2px;			    
-			width:				12px;
-			float:				left;
-			margin:				3px 0 -1px 2px;
-		}    
-
-		.grid-plusMinusArrows {
-			position:			absolute;
-			z-index:			1001;
-			display:			none;
-		}
-		.grid-plusMinusArrows-arrow {
-			cursor:				pointer;
-		}
-		.grid-plusMinusArrows-arrow:hover 
-		.grid-plusMinusArrows-down-body, 
-		.grid-plusMinusArrows-arrow:hover 
-		.grid-plusMinusArrows-up-body, 
-		.grid-plusMinusArrows-arrow:hover 
-		.grid-plusMinusArrows-left-body, 
-		.grid-plusMinusArrows-arrow:hover 
-		.grid-plusMinusArrows-right-body {
-			background-color:	rgb(101, 173, 199);
-		}
-		.grid-plusMinusArrows-arrow:hover 
-		.grid-plusMinusArrows-down-point {
-			border-top-color:	rgb(101, 173, 199);
-		}
-		.grid-plusMinusArrows-arrow:hover 
-		.grid-plusMinusArrows-up-point {
-			border-bottom-color:rgb(101, 173, 199);
-		}
-		.grid-plusMinusArrows-arrow:hover 
-		.grid-plusMinusArrows-left-point {
-			border-right-color:	rgb(101, 173, 199);
-		}
-		.grid-plusMinusArrows-arrow:hover 
-		.grid-plusMinusArrows-right-point {
-			border-left-color:	rgb(101, 173, 199);
-		}
-
-		.grid-plusMinusArrows-upDown {
-			width:				100px;
-			height:				30px;
-		}
-		.grid-plusMinusArrows-leftRight {
-			width:				30px;
-			height:				100px;
-		}
-		.grid-plusMinusArrows-down {
-			float:				left;
-		}
-		.grid-plusMinusArrows-up {
-			float:				right;
-			margin-top:			-6px;
-		}
-		.grid-plusMinusArrows-left {
-			float:				left;
-		}
-		.grid-plusMinusArrows-right {
-			float:				left;
-			margin:				50px -6px 0 6px;
-		}
-		.grid-plusMinusArrows-down-body,
-		.grid-plusMinusArrows-up-body {
-			display: 			block; 
-			margin-left: 		5px; 
-			height:				16px;
-			width: 				14px; 
-			background-color: 	rgb(202, 204, 210);
-		} 
-		.grid-plusMinusArrows-down-point {
-			display: 			block; 
-			width: 				0; 
-			height: 			0;
-			border-left: 		12px solid transparent; 
-			border-right: 		12px solid transparent; 
-			border-top: 		14px solid rgb(202, 204, 210);
-		}
-		.grid-plusMinusArrows-up-point {
-			display: 			block; 
-			width: 				0; 
-			height: 			0;
-			border-left: 		12px solid transparent; 
-			border-right: 		12px solid transparent; 
-			border-bottom: 		14px solid rgb(202, 204, 210);
-		}
-		.grid-plusMinusArrows-left-body,
-		.grid-plusMinusArrows-right-body {
-			display: 			block;
-			float:				left;
-			margin-top: 		5px; 
-			height:				14px;
-			width: 				16px;
-			background-color: 	rgb(202, 204, 210);
-		} 
-		.grid-plusMinusArrows-left-point {
-			display: 			block; 
-			float:				left;
-			width: 				0; 
-			height: 			0;
-			border-top: 		12px solid transparent; 
-			border-bottom: 		12px solid transparent; 
-			border-right: 		14px solid rgb(202, 204, 210);
-		}
-		.grid-plusMinusArrows-right-point {
-			display: 			block; 
-			float:				left;
-			width: 				0; 
-			height: 			0;
-			border-top: 		12px solid transparent; 
-			border-bottom: 		12px solid transparent; 
-			border-left: 		14px solid rgb(202, 204, 210);
-		}
-		
-		.preloadImage {			
-			width: 				24px;
-			height: 			20px;
-			position:			absolute;
-			left: 				-100px;
-			top: 				0;
-		}
-		#preloadImage-treeEditTrashIconHover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
-		}
-		#preloadImage-treeEditIconHover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
-		}
-		
-	</style>
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI_artdaq.css">
 	
+	<style type="text/css">
+	/* do not use html style -- instead use ConfigurationGUI_artdaq.css (for readability)*/
+	</style>	
 	
 	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
@@ -466,13 +74,7 @@
 		
 		var _subsystems = {}; //object describing artdaq subsystems
 		
-		//constant globals -------------
-		var _NODE_TYPE_READER 		= 0;
-		var _NODE_TYPE_BUILDER 		= 1;
-		var _NODE_TYPE_LOGGER 		= 2;
-		var _NODE_TYPE_DISPATCHER 	= 3;
-		var _NODE_TYPE_MONITOR 		= 4;
-		
+		//constant globals -------------		
 		var _MMM_NONE				= 0;
 		var _MMM_ARROW_DRAG			= 1;
 		var _MMM_NODE_DRAG			= 2;
@@ -488,6 +90,7 @@
 		var _modifiedTables;
 		var _systemGroups = {};
 		var _firstInit = true;
+		var _codeEditorAppId = 0; //to open fcl in code editor
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -546,9 +149,11 @@
 		
 			//handlePointMouseUp(i,p,e)
 			//handlePointMouseDown(i,p,e)
-			//handleEditIconMouseUp(i,p,e)
-			//handleFclIconMouseUp(i,p,e)
-			//handleDeleteIconMouseUp(i,p,e)
+			//handleEditIconMouseUp(i,e)
+			//handleFclIconMouseUp(i,e)
+			//handleDeleteIconMouseUp(i,e)
+		
+			//getSubsystemColor(subsystemId)
 				
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -579,13 +184,13 @@
 			{
 				var x = 0;
 				var y = 0;
-				_nodes.push({"type":_NODE_TYPE_READER,	"x":x++, 	"y":y});			
-				_nodes.push({"type":_NODE_TYPE_BUILDER,	"x":x++, 	"y":y, "nodeCount": 5});			
-				_nodes.push({"type":_NODE_TYPE_LOGGER,	"x":x++, 	"y":y, "nodeCount": 2});
+				_nodes.push({"type":ArtdaqConfigurationAPI.NODE_TYPE_READER,	"x":x++, 	"y":y});			
+				_nodes.push({"type":ArtdaqConfigurationAPI.NODE_TYPE_BUILDER,	"x":x++, 	"y":y, "nodeCount": 5});			
+				_nodes.push({"type":ArtdaqConfigurationAPI.NODE_TYPE_LOGGER,	"x":x++, 	"y":y, "nodeCount": 2});
 				x = 0;
 				y++;
-				_nodes.push({"type":_NODE_TYPE_MONITOR,	"x":x, 	"y":y});			
-				_nodes.push({"type":_NODE_TYPE_DISPATCHER,	"x":x++, 	"y":y});
+				_nodes.push({"type":ArtdaqConfigurationAPI.NODE_TYPE_MONITOR,	"x":x, 	"y":y});			
+				_nodes.push({"type":ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER,	"x":x++, 	"y":y});
 
 				_arrows[1] = {};
 				_arrows[1][0] = {"p0":1,"p1":0};
@@ -606,6 +211,22 @@
 			_nodesByType = {};
 			_selectedNodes = {};
 			_subsystems = {};
+			
+			
+			//fill in CodeEditor appId
+			DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
+					"&classNeedle=ots::CodeEditorSupervisor",
+					"", //end post data, 
+					function(req) 
+					{
+				_codeEditorAppId = DesktopContent.getXMLValue(req,"id") | 0;
+				Debug.log("_codeEditorAppId " + _codeEditorAppId);
+					}, //end handler
+					0, 0, 0,//reqParam, progressHandler, callHandlerOnErr, 
+					false,//doNotShowLoadingOverlay,
+					true //targetSupervisor
+			); //end getAppId request
+			
 			
 			//////////////
 			ArtdaqConfigurationAPI.getArtdaqNodes(
@@ -779,11 +400,11 @@
 				//
 				//if(!destinationId) continue; //skip if no destination
 				
-				if(_nodes[i].type == _NODE_TYPE_READER)
+				if(_nodes[i].type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
 				{
 					//connect to all board readers at destination
 					for(var j=0;j<_nodes.length;++j)
-						if(_nodes[j].type == _NODE_TYPE_BUILDER && 
+						if(_nodes[j].type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER && 
 								_nodes[j].subsystemId == _nodes[i].subsystemId)
 						{
 							Debug.log("Found reader-builder connection at nodes " + 
@@ -792,13 +413,13 @@
 							addArrow(i,j);
 						}
 				}
-				else if(_nodes[i].type == _NODE_TYPE_BUILDER)
+				else if(_nodes[i].type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER)
 				{
 					var destinationId = _subsystems[_nodes[i].subsystemId].destination|0;
 					
 					//connect to all board readers at destination
 					for(var j=0;j<_nodes.length;++j)
-						if(_nodes[j].type == _NODE_TYPE_LOGGER && 
+						if(_nodes[j].type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER && 
 								_nodes[j].subsystemId == _nodes[i].subsystemId)
 						{
 							Debug.log("Found builder-logger connection at nodes " + 
@@ -806,7 +427,7 @@
 
 							addArrow(i,j);
 						}
-						else if(_nodes[j].type == _NODE_TYPE_BUILDER && 
+						else if(_nodes[j].type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER && 
 								_nodes[j].subsystemId == destinationId)
 						{
 							Debug.log("Found builder-connection connection at nodes " + 
@@ -815,11 +436,11 @@
 							addArrow(i,j);
 						}
 				}
-				else if(_nodes[i].type == _NODE_TYPE_LOGGER)
+				else if(_nodes[i].type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER)
 				{
 					//connect to all board readers at destination
 					for(var j=0;j<_nodes.length;++j)
-						if(_nodes[j].type == _NODE_TYPE_DISPATCHER && 
+						if(_nodes[j].type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER && 
 								_nodes[j].subsystemId == _nodes[i].subsystemId)
 						{
 							Debug.log("Found logger-dispatcher connection at nodes " + 
@@ -837,11 +458,11 @@
 		function getTypeIndex(typeName)
 		{
 			Debug.log("getTypeIndex " + typeName);
-			t = typeName == ArtdaqConfigurationAPI.NODE_TYPES[_NODE_TYPE_READER]		?_NODE_TYPE_READER:
-					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[_NODE_TYPE_BUILDER]	?_NODE_TYPE_BUILDER:
-					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[_NODE_TYPE_LOGGER]	?_NODE_TYPE_LOGGER:
-					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[_NODE_TYPE_DISPATCHER]?_NODE_TYPE_DISPATCHER:
-					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[_NODE_TYPE_MONITOR]	?_NODE_TYPE_MONITOR:-1))));
+			t = typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_READER]		?ArtdaqConfigurationAPI.NODE_TYPE_READER:
+					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_BUILDER]	?ArtdaqConfigurationAPI.NODE_TYPE_BUILDER:
+					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_LOGGER]	?ArtdaqConfigurationAPI.NODE_TYPE_LOGGER:
+					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER]?ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER:
+					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_MONITOR]	?ArtdaqConfigurationAPI.NODE_TYPE_MONITOR:-1))));
 			
 			if(t < 0)
 			{	
@@ -874,10 +495,10 @@
 		//	i.e. readers to left, builders in middle, dataLoggers and dispatchers to right
 		function getEmptyGridSpot(type)
 		{
-			var x = type == _NODE_TYPE_READER?0:
-					(type == _NODE_TYPE_BUILDER?((_grid.cols/2)|0):
+			var x = type == ArtdaqConfigurationAPI.NODE_TYPE_READER?0:
+					(type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER?((_grid.cols/2)|0):
 					_grid.cols-1); //else dataLoggers and dispatchers on right
-			var d = type == _NODE_TYPE_READER?1:-1; //direction of search in x
+			var d = type == ArtdaqConfigurationAPI.NODE_TYPE_READER?1:-1; //direction of search in x
 			var y = 0; //start at top-ish
 			
 			//search _nodes for conflict
@@ -891,8 +512,8 @@
 				{
 					plusMinusGrid(true /*isPlus*/,0 /*directionIndex*/); //add row to top
 
-					var x = type == _NODE_TYPE_READER?0:
-							(type == _NODE_TYPE_BUILDER?((_grid.cols/2)|0):
+					var x = type == ArtdaqConfigurationAPI.NODE_TYPE_READER?0:
+							(type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER?((_grid.cols/2)|0):
 							_grid.cols-1); //else dataLoggers and dispatchers on right
 					y = 0;
 				}
@@ -923,7 +544,32 @@
 			return [x,y];
 			
 		} //end getEmptyGridSpot()
-
+		
+		//=====================================================================================
+		//getSubsystemColor ~~
+		function getSubsystemColor(subsystemId)
+		{			
+			//default: rgb(241, 231, 231);
+			var rgb = [241,231,231];
+			var i = (subsystemId-1)*70;
+			var j = 0;
+			while(i>0) //drain color counter
+			{
+				rgb[j] += i>50?50:i;
+				if(rgb[j] > 255)
+					rgb[j] = 180 + (rgb[j] - 255); //let 180 be minimum
+				
+				i -= (i>50?50:i);
+				
+				if(++j >= 3) j = 0; //wraparound
+			}
+			
+			console.log("color sub",subsystemId,rgb);
+			
+			return "rgb(" + rgb[0] + "," + rgb[1] + "," + 
+					rgb[2] + ")";
+		} //end getSubsystemColor()
+		
 		//=====================================================================================
 		//handleNodeMouseOver ~~
 		function handleNodeMouseOver(e)
@@ -1393,21 +1039,21 @@
 			Debug.log("x,y,sz = " + x + "," + y + "," + sz);
 			
 			var typeClass = 
-					type == _NODE_TYPE_READER? 		"nodeReader":
-					type == _NODE_TYPE_BUILDER? 	"nodeBuilder":
-					type == _NODE_TYPE_LOGGER? 		"nodeLogger":
-					type == _NODE_TYPE_DISPATCHER? 	"nodeDispatcher":"nodeMonitor";
+					type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"nodeReader":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 	"nodeBuilder":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"nodeLogger":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"nodeDispatcher":"nodeMonitor";
 
 			var typeName = 
-					type == _NODE_TYPE_READER? 		"Reader":
-					type == _NODE_TYPE_BUILDER? 	"Builder":
-					type == _NODE_TYPE_LOGGER? 		"Logger":
-					type == _NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
+					type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 	"Builder":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
 			var typeAcronym = 
-					type == _NODE_TYPE_READER? 		"BR":
-					type == _NODE_TYPE_BUILDER? 	"EB":
-					type == _NODE_TYPE_LOGGER? 		"DL":
-					type == _NODE_TYPE_DISPATCHER? 	"Di":"Mo";
+					type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"BR":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 	"EB":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"DL":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Di":"Mo";
 						
 			
 			Debug.log("nodeid = " + nodeid + "; typeClass = " + typeClass);
@@ -1432,6 +1078,7 @@
 					str += "<div id='" + nodeid + 
 						"-box' class='node-box' " +
 						"style='top:" + (-p*5) + "px;" +
+						"background-color: " + getSubsystemColor(_nodes[i].subsystemId) + ";" +
 						"left:" + (-p*5) + "px;' " +
 						">";
 					if(p == 0)
@@ -1471,7 +1118,7 @@
 						"-editIcon' class='node-icon node-editIcon' " +
 						"title='Edit the configuration of this node.' " +
 						" onmouseup='handleEditIconMouseUp(" + 
-						i + "," + p + ",event);'" +
+						i + ",event);'" +
 						" onmousedown='event.stopPropagation() /* mousedown do nothing */;'" +
 						"></div>";
 				//add view fcl icon
@@ -1479,7 +1126,7 @@
 						"-viewFclIcon' class='node-icon node-viewFclIcon' " +
 						"title='View the generated FHiCL of this node.' " +
 						" onmouseup='handleFclIconMouseUp(" + 
-						i + "," + p + ",event);'" +
+						i + ",event);'" +
 						" onmousedown='event.stopPropagation() /* mousedown do nothing */;'" +
 						">" +
 						"<div class='node-viewFclIcon-line'></div>" +
@@ -1489,7 +1136,7 @@
 				str += "<div id='" + nodeid + 
 						"-deleteIcon' class='node-icon node-deleteIcon' " +
 						" onmouseup='handleDeleteIconMouseUp(" + 
-						i + "," + p + ",event);'" +
+						i + ",event);'" +
 						" onmousedown='event.stopPropagation() /* mousedown do nothing */;'" +
 						"title='Delete this node.' " +
 						"></div>";
@@ -1998,10 +1645,6 @@
 				//do not show for mouse move modes
 				if(!undoHover && _mouseMoveMode != _MMM_NONE) return; 
 				
-				if(!undoHover) 
-				{
-					Debug.log("hi");
-				}
 				//Debug.log("This is +/- icon " + (3-(i+13)));
 				document.getElementsByClassName(
 						"grid-plusMinusArrows")[(3-(i+13))].style.display = 
@@ -2079,36 +1722,69 @@
 
 		//=====================================================================================
 		//handleEditIconMouseUp ~~
-		function handleEditIconMouseUp(i,p,e) 
+		function handleEditIconMouseUp(i,e) 
 		{	   
 			e.stopPropagation();
 		
-			Debug.log("mouseup-edit i,p = " +
-				i + "," + p);
+			Debug.log("mouseup-edit i = " + i);
 			
-		} // end handleEditIconMouseUp(i,p,e)
+		} // end handleEditIconMouseUp()
 		
 		//=====================================================================================
 		//handleFclIconMouseUp ~~
-		function handleFclIconMouseUp(i,p,e) 
+		function handleFclIconMouseUp(i,e) 
 		{	   
 			e.stopPropagation();
 		
-			Debug.log("mouseup-fcl i,p = " +
-				i + "," + p);				   
+			if(!_codeEditorAppId)
+			{
+				Debug.log("No active Code Editor Supervisor found. Can not open files without a Code Editor Supervisor. " + 
+						"Please edit the Context group to include a Code Editor Supervisor and relaunch ots.",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+			Debug.log("mouseup-fcl i = " + i + " - " + 
+					_nodes[i].name);				   
 			
-		} // end handleFclIconMouseUp(i,p,e)
+			var filename = "/$USER_DATA/ARTDAQConfigurations/" + 
+					ArtdaqConfigurationAPI.NODE_TYPES[_nodes[i].type] + "-" +
+					_nodes[i].name + ".fcl";
+			console.log("filename",filename);
+			
+			//DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique)
+			
+			//url should look like this:
+			//http://correlator2.fnal.gov:2015/urn:xdaq-application:lid=290/
+						//	Verify?code=fa37&requestingWindowId=1001&
+						//	windowName=Code%20Editor&windowSubname=&
+						//	windowUnique=0&windowPath=/WebPath/html/CodeEditor.html?urn=240&
+						//	startFilePrimary=/$USER_DATA/ARTDAQConfigurations/builder-builder1.fcl#0
+			
+			var newWindowStr = "/WebPath/html/CodeEditor.html?" +
+					"urn=" + _codeEditorAppId +
+					"&readOnlyMode=1" +
+					"&startFilePrimary=" + filename;
+			
+			Debug.log("newWindowStr = " + newWindowStr);
+			
+			DesktopContent.openNewBrowserTab("Code Editor", //must match desktop icon to look up URN (?)
+					"" /*subname*/,
+					newWindowStr /*windowPath*/,
+					0 /*unique*/
+			);
+			
+		} // end handleFclIconMouseUp()
 		
 		//=====================================================================================
 		//handleDeleteIconMouseUp ~~
-		function handleDeleteIconMouseUp(i,p,e) 
+		function handleDeleteIconMouseUp(i,e) 
 		{	   
 			e.stopPropagation();
 		
-			Debug.log("mouseup-delete i,p = " +
-				i + "," + p);				   
+			Debug.log("mouseup-delete i = " + i);
 			
-		} // end handleDeleteIconMouseUp(i,p,e)
+			
+		} // end handleDeleteIconMouseUp()
 		
 		//=====================================================================================
 		//openActiveGroupsDialog ~~
