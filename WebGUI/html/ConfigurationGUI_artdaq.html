@@ -53,6 +53,9 @@
 		var _SHADOW_COLOR 		= "gray";
 		var _GRID_ROW_MIN		= 2;
 		var _GRID_COL_MIN		= 3;
+
+		var _MENU_PRIMARY_COLOR = "rgb(220, 220, 220)";
+		var _MENU_SECONDARY_COLOR = _ARROW_COLOR;
 		
 		var _gridCanvas, _gridContext, _canvas, _context, _actionCanvas, _actionContext;
 		var _preCanvas, _postCanvas;
@@ -564,6 +567,13 @@
 				if(++j >= 3) j = 0; //wraparound
 			}
 			
+			//do not let the color get to white
+			j=0;
+			for(i=0;i<3;++i)
+				if(rgb[i] > 230) ++j;
+			if(j == 3)
+				rgb[subsystemId%3] = 150; 
+			
 			console.log("color sub",subsystemId,rgb);
 			
 			return "rgb(" + rgb[0] + "," + rgb[1] + "," + 
@@ -695,7 +705,10 @@
 				{ //make top up/down arrows
 					str += "<div class='grid-plusMinusArrows-down grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-plus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							"-plus' " +
+							"onmousedown='event.stopPropagation();' " +
+							"onmouseup='event.stopPropagation();" + 
+							"plusMinusGrid(false /*isPlus*/, " +
 							a + ")' title='Remove a row from the canvas grid.' >" +
 								//make up arrow
 								"<div class='grid-plusMinusArrows-down-body'></div>" +
@@ -703,7 +716,10 @@
 							"</div>";
 					str += "<div class='grid-plusMinusArrows-up grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-minus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							"-minus' " +
+							"onmousedown='event.stopPropagation();' " +
+							"onmouseup='event.stopPropagation();" + 
+							"plusMinusGrid(true /*isPlus*/, " +
 							a + ")' title='Add a row to the canvas grid.' >" +
 								//make down arrow
 								"<div class='grid-plusMinusArrows-up-point'></div>" +
@@ -718,7 +734,10 @@
 				{ //make right left/right arrows
 					str += "<div class='grid-plusMinusArrows-left grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-plus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							"-plus' " +
+							"onmousedown='event.stopPropagation();' " +
+							"onmouseup='event.stopPropagation();" + 
+							"plusMinusGrid(false /*isPlus*/, " +
 							a + ")' title='Remove a column from the canvas grid.' >" +
 							//make left arrow
 							"<div class='grid-plusMinusArrows-left-point'></div>" +
@@ -726,7 +745,10 @@
 							"</div>";
 					str += "<div class='grid-plusMinusArrows-right grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-minus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							"-minus' " +
+							"onmousedown='event.stopPropagation();' " +
+							"onmouseup='event.stopPropagation();" + 
+							"plusMinusGrid(true /*isPlus*/, " +
 							a + ")' title='Add a column to the canvas grid.' >" +
 							//make right arrow
 							"<div class='grid-plusMinusArrows-right-body'></div>" +
@@ -741,7 +763,10 @@
 				{ //make bottom up/down arrows
 					str += "<div class='grid-plusMinusArrows-up grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-plus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							"-plus' " +
+							"onmousedown='event.stopPropagation();' " +
+							"onmouseup='event.stopPropagation();" + 
+							"plusMinusGrid(false /*isPlus*/, " +
 							a + ")' title='Remove a row to the canvas grid.' >" +
 								//make up arrow
 								"<div class='grid-plusMinusArrows-up-point'></div>" +
@@ -749,7 +774,10 @@
 							"</div>";
 					str += "<div class='grid-plusMinusArrows-down grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-minus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							"-minus' " + 
+							"onmousedown='event.stopPropagation();' " +
+							"onmouseup='event.stopPropagation();" + 
+							"plusMinusGrid(true /*isPlus*/, " +
 							a + ")' title='Add a row to the canvas grid.' >" +
 								//make down arrow
 								"<div class='grid-plusMinusArrows-down-body'></div>" +
@@ -764,7 +792,10 @@
 				{ //make left left/right arrows
 					str += "<div class='grid-plusMinusArrows-left grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-plus' onmouseup='plusMinusGrid(true /*isPlus*/, " +
+							"-plus' " + 
+							"onmousedown='event.stopPropagation();' " +
+							"onmouseup='event.stopPropagation();" + 
+							"plusMinusGrid(true /*isPlus*/, " +
 							a + ")' title='Add a column to the canvas grid.' >" +
 							//make left arrow
 							"<div class='grid-plusMinusArrows-left-point'></div>" +
@@ -772,7 +803,10 @@
 							"</div>";
 					str += "<div class='grid-plusMinusArrows-right grid-plusMinusArrows-arrow' " +
 							"id='grid-plusMinusArrows" + a +
-							"-minus' onmouseup='plusMinusGrid(false /*isPlus*/, " +
+							"-minus' " + 
+							"onmousedown='event.stopPropagation();' " +
+							"onmouseup='event.stopPropagation();" + 
+							"plusMinusGrid(false /*isPlus*/, " +
 							a + ")' title='Remove a column from the canvas grid.' >" +
 							//make right arrow
 							"<div class='grid-plusMinusArrows-right-body'></div>" +
@@ -1726,7 +1760,55 @@
 		{	   
 			e.stopPropagation();
 		
-			Debug.log("mouseup-edit i = " + i);
+			Debug.log("mouseup-edit i = " + i + " - " + 
+					_nodes[i].name);
+			
+			var menuItems = [
+							 "Open " + _nodes[i].name + "'s this in a desktop window",
+							 "Open " + _nodes[i].name + "'s that in a new browser tab"
+							 ];
+			var menuItemHandlers = [];
+
+			var newwindowJS;
+			var newWindowStr;
+
+			newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
+					DesktopContent._localUrnLid +
+					"&subsetBasePath=" + "/XDAQContextTable" +
+					"&groupingFieldList=AUTO" +
+					"&recordAlias=" + "artdaq" +
+					"&editableFieldList=" + "!*CommentDescription";
+
+			newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+
+			newwindowJS = "DesktopContent.openNewWindow(" +
+					"\"Code Editor\" /*name*/," + 
+					"\"\" /*subname*/,\"" +
+					newWindowStr + "\"," +
+					"false /*unique*/);";
+			
+			Debug.log("newwindowJS = " + newwindowJS);
+
+			menuItemHandlers.push(newwindowJS);
+
+			newwindowJS = "DesktopContent.openNewBrowserTab(" +
+					"\"Code Editor\" /*name*/," + 
+					"\"\" /*subname*/,\"" +
+					newWindowStr + "\"," +
+					"false /*unique*/);";
+
+			Debug.log("newwindowJS = " + newwindowJS);
+
+			menuItemHandlers.push(newwindowJS);
+
+			SimpleContextMenu.createMenu(
+					menuItems,
+					menuItemHandlers,
+					"openFclMenuForArtdaqNode",		//element ID
+					event.pageX - 1, event.pageY - 1, 		//top left position
+					_MENU_PRIMARY_COLOR,
+					_MENU_SECONDARY_COLOR
+			);			
 			
 		} // end handleEditIconMouseUp()
 		
@@ -1743,35 +1825,79 @@
 						Debug.HIGH_PRIORITY);
 				return;
 			}
+					
 			Debug.log("mouseup-fcl i = " + i + " - " + 
 					_nodes[i].name);				   
-			
+		
+			var menuItems = [
+							 "Open FHiCL for " + _nodes[i].name + " in a desktop window",
+							 "Open FHiCL for " + _nodes[i].name + " in a new browser tab"
+									 ];
+			var menuItemHandlers = [];
+
 			var filename = "/$USER_DATA/ARTDAQConfigurations/" + 
 					ArtdaqConfigurationAPI.NODE_TYPES[_nodes[i].type] + "-" +
 					_nodes[i].name + ".fcl";
 			console.log("filename",filename);
 			
+
 			//DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique)
-			
+
 			//url should look like this:
 			//http://correlator2.fnal.gov:2015/urn:xdaq-application:lid=290/
-						//	Verify?code=fa37&requestingWindowId=1001&
-						//	windowName=Code%20Editor&windowSubname=&
-						//	windowUnique=0&windowPath=/WebPath/html/CodeEditor.html?urn=240&
-						//	startFilePrimary=/$USER_DATA/ARTDAQConfigurations/builder-builder1.fcl#0
+			//	Verify?code=fa37&requestingWindowId=1001&
+			//	windowName=Code%20Editor&windowSubname=&
+			//	windowUnique=0&windowPath=/WebPath/html/CodeEditor.html?urn=240&
+			//	startFilePrimary=/$USER_DATA/ARTDAQConfigurations/builder-builder1.fcl#0
+
+			var newwindowJS;
+			var newWindowStr;
 			
-			var newWindowStr = "/WebPath/html/CodeEditor.html?" +
+			newWindowStr = "/WebPath/html/CodeEditor.html?" +
 					"urn=" + _codeEditorAppId +
 					"&readOnlyMode=1" +
 					"&startFilePrimary=" + filename;
+						
+			newWindowStr = newWindowStr.replace(/"/g, "\\\"");
 			
 			Debug.log("newWindowStr = " + newWindowStr);
 			
-			DesktopContent.openNewBrowserTab("Code Editor", //must match desktop icon to look up URN (?)
-					"" /*subname*/,
-					newWindowStr /*windowPath*/,
-					0 /*unique*/
-			);
+			newwindowJS = "DesktopContent.openNewWindow(" +
+					"\"Code Editor\" /*name*/," + 
+					"\"\" /*subname*/,\"" +
+					newWindowStr + "\"," +
+					"false /*unique*/);";
+			
+			Debug.log("newwindowJS = " + newwindowJS);
+
+			menuItemHandlers.push(newwindowJS);
+			
+			newwindowJS = "DesktopContent.openNewBrowserTab(" +
+					"\"Code Editor\" /*name*/," + 
+					"\"\" /*subname*/,\"" +
+					newWindowStr + "\"," +
+					"false /*unique*/);";
+
+			Debug.log("newwindowJS = " + newwindowJS);
+
+			menuItemHandlers.push(newwindowJS);
+//			DesktopContent.openNewBrowserTab(
+//					"Code Editor", //must match desktop icon to look up URN (?)
+//					"" /*subname*/,
+//					newWindowStr /*windowPath*/,
+//					0 /*unique*/
+//			);
+			
+			
+			
+			SimpleContextMenu.createMenu(
+					menuItems,
+					menuItemHandlers,
+					"openFclMenuForArtdaqNode",		//element ID
+					event.pageX - 1, event.pageY - 1, 		//top left position
+					_MENU_PRIMARY_COLOR,
+					_MENU_SECONDARY_COLOR
+			);			
 			
 		} // end handleFclIconMouseUp()
 		
@@ -2198,7 +2324,10 @@
 	<div id='postCanvas'></div>
 		
 	<div id='createNodeDiv'>
-		<a id='createNode' onclick='createNode(); return false;'
+		<a id='createNode' 
+				onclick='createNode(); return false;'
+				onmouseup="event.stopPropagation();" 
+				onmousedown="event.stopPropagation();" 
 				title='Create a new node'>+</a>
 	</div>
 		
