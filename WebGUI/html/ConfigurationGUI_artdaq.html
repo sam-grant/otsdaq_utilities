@@ -144,6 +144,7 @@
 			//getTypeName(typeIndex)
 			//getEmptyGridSpot(type)
 			//plusMinusGrid(isPlus,directionIndex)
+			//getNodeFontSize()
 		
 			//handleNodeMouseOver(e)
 			//handleMouseMove(e)
@@ -153,6 +154,7 @@
 			//handlePointMouseUp(i,p,e)
 			//handlePointMouseDown(i,p,e)
 			//handleEditIconMouseUp(i,e)
+			//handleEditIconMenuSelection(i);
 			//handleFclIconMouseUp(i,e)
 			//handleDeleteIconMouseUp(i,e)
 		
@@ -585,7 +587,7 @@
 		function handleNodeMouseOver(e)
 		{
 			var id = this.id.split('-')[1] | 0;
-			//Debug.log("MouseOver Node id = " + id);
+			Debug.log("MouseOver Node id = " + id);
 			
 		} //end handleNodeMouseOver()
 		
@@ -981,6 +983,14 @@
 		} //end plusMinusGrid()
 
 		//=====================================================================================
+		//getNodeFontSize ~~
+		function getNodeFontSize()
+		{
+			var fontSz = _NODE_SIZE/10;
+			return (fontSz < 6)?6:fontSz;
+		} //end getNodeFontSize()
+		
+		//=====================================================================================
 		//handleSelectionBox ~~
 		//	draw selection box,	and handle identifying
 		//	nodes within selection area.
@@ -1074,18 +1084,18 @@
 			
 			var typeClass = 
 					type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"nodeReader":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 	"nodeBuilder":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"nodeBuilder":
 					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"nodeLogger":
 					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"nodeDispatcher":"nodeMonitor";
 
 			var typeName = 
 					type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 	"Builder":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
 					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
 					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
 			var typeAcronym = 
 					type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"BR":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 	"EB":
+					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"EB":
 					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"DL":
 					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Di":"Mo";
 						
@@ -1140,11 +1150,11 @@
 				
 				//header text
 				str += "<div id='" + nodeid + 
-					"-headerText' class='node-headerText'>" +
-					typeName + ": " + _nodes[i].name +
-					htmlClearDiv() + 
-					_nodes[i].hostname + ":" +
-					_subsystems[_nodes[i].subsystemId].label +				
+						"-headerText' class='node-headerText'>" +
+						typeName + "::" + _nodes[i].name +
+						htmlClearDiv() + 
+						_subsystems[_nodes[i].subsystemId].label + 
+						" @ " + _nodes[i].hostname +			
 					"</div>";
 				
 				//add edit pencil icon
@@ -1209,14 +1219,14 @@
 				points[p].style.top 	= (pxy[1] - y - pointSz/2) + "px";
 			}
 			
-			var fontSz = sz/10;
-			if(fontSz < 6) fontSz = 6;
+			var fontSz = getNodeFontSize();//sz/10;
+			//if(fontSz < 6) fontSz = 6;
 			el = document.getElementById(nodeid + "-headerText");
-			el.style.left = (- (_grid.xstep-sz)/2) + "px";
+			el.style.left = (- (_grid.xstep*2-sz)/2) + "px";
 			el.style.fontSize = ((fontSz)|0) + "px";
-			el.style.top = ((-fontSz*3-10)|0) + "px";
+			el.style.top = ((-fontSz*3-fontSz/2)|0) + "px";
 			el.style.height = ((fontSz*3)|0) + "px";
-			el.style.width = (_grid.xstep) + "px";
+			el.style.width = (_grid.xstep*2) + "px";
 			
 			fontSz = sz/5;
 			if(fontSz < 6) fontSz = 6;
@@ -1704,6 +1714,14 @@
 			el = document.getElementById(nodeid + "-deleteIcon");
 			el.style.display = undoHover?"none":"block";
 			
+			var fontSz = getNodeFontSize();
+			fontSz = undoHover?fontSz:fontSz*2;
+			el = document.getElementById(nodeid + "-headerText");
+			el.style.left = (- (_grid.xstep*2-_NODE_SIZE)/2) + "px";
+			el.style.fontSize = ((fontSz)|0) + "px";
+			el.style.top = ((-fontSz*3-fontSz/2)|0) + "px";
+			el.style.height = ((fontSz*3)|0) + "px";
+			el.style.width = (_grid.xstep*2) + "px";
 		} //end doNodeHover()
 
 		//=====================================================================================
@@ -1760,46 +1778,85 @@
 		{	   
 			e.stopPropagation();
 		
-			Debug.log("mouseup-edit i = " + i + " - " + 
+			var type = _nodes[i].type;
+						
+			var typeName = 
+				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
+			
+			
+			Debug.log("mouseup-edit i = " + i + " - " +
+					typeName + "::" +
 					_nodes[i].name);
 			
-			var menuItems = [
-							 "Open " + _nodes[i].name + "'s this in a desktop window",
-							 "Open " + _nodes[i].name + "'s that in a new browser tab"
+			var editTypes = [
+							 "Top-level Parameters"
 							 ];
-			var menuItemHandlers = [];
-
-			var newwindowJS;
-			var newWindowStr;
-
-			newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
-					DesktopContent._localUrnLid +
-					"&subsetBasePath=" + "/XDAQContextTable" +
-					"&groupingFieldList=AUTO" +
-					"&recordAlias=" + "artdaq" +
-					"&editableFieldList=" + "!*CommentDescription";
-
-			newWindowStr = newWindowStr.replace(/"/g, "\\\"");
-
-			newwindowJS = "DesktopContent.openNewWindow(" +
-					"\"Code Editor\" /*name*/," + 
-					"\"\" /*subname*/,\"" +
-					newWindowStr + "\"," +
-					"false /*unique*/);";
 			
-			Debug.log("newwindowJS = " + newwindowJS);
+			
+//			if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+//			{
+//				editTypes.push("DAQ Parameters");
+//				editTypePath.push(typeBaseTable + "/" + )
+//				editTypes.push("DAQ Metrics");
+//				
+//			}
+			
+			var menuItems = [];
+			var menuItemHandlers = [];
+			
+			for(var t=0;t<editTypes.length;++t)
+			{
+				menuItems.push( "Edit " + typeName + "::" + 
+						_nodes[i].name + "'s " + editTypes[t] +
+						" ");
+				menuItemHandlers.push("handleEditIconMenuSelection(" +
+						i + "," + t + ")");
+				menuItems.push( "Edit " + typeName + "::" +
+						_nodes[i].name + "'s " + editTypes[t] +
+						" in a new browser tab");
+				menuItemHandlers.push("handleEditIconMenuSelection(" +
+						i + "," + t + ", true /*newTab*/)");
+			}
+				
+			
+//							 "Open " + _nodes[i].name + "'s this in a desktop window",
+//							 "Open " + _nodes[i].name + "'s that in a new browser tab"
+//							 ];
 
-			menuItemHandlers.push(newwindowJS);
-
-			newwindowJS = "DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\" /*name*/," + 
-					"\"\" /*subname*/,\"" +
-					newWindowStr + "\"," +
-					"false /*unique*/);";
-
-			Debug.log("newwindowJS = " + newwindowJS);
-
-			menuItemHandlers.push(newwindowJS);
+//			var newwindowJS;
+//			var newWindowStr;
+//
+//			newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
+//					DesktopContent._localUrnLid +
+//					"&subsetBasePath=" + "/XDAQContextTable" +
+//					"&groupingFieldList=AUTO" +
+//					"&recordAlias=" + "artdaq" +
+//					"&editableFieldList=" + "!*CommentDescription";
+//
+//			newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+//
+//			newwindowJS = "DesktopContent.openNewWindow(" +
+//					"\"Code Editor\" /*name*/," + 
+//					"\"\" /*subname*/,\"" +
+//					newWindowStr + "\"," +
+//					"false /*unique*/);";
+//			
+//			Debug.log("newwindowJS = " + newwindowJS);
+//
+//			menuItemHandlers.push(newwindowJS);
+//
+//			newwindowJS = "DesktopContent.openNewBrowserTab(" +
+//					"\"Code Editor\" /*name*/," + 
+//					"\"\" /*subname*/,\"" +
+//					newWindowStr + "\"," +
+//					"false /*unique*/);";
+//
+//			Debug.log("newwindowJS = " + newwindowJS);
+//
+//			menuItemHandlers.push(newwindowJS);
 
 			SimpleContextMenu.createMenu(
 					menuItems,
@@ -1811,6 +1868,59 @@
 			);			
 			
 		} // end handleEditIconMouseUp()
+
+		//=====================================================================================
+		//handleEditIconMenuSelection ~~
+		//	handle menu selection for node i
+		//	based on editType
+		function handleEditIconMenuSelection(i,editType, newTab) 
+		{	   
+			Debug.log("handleEditIconMenuSelection " + i + "-" + editType);
+
+			var type = _nodes[i].type;
+			
+			var typeName = 
+				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
+			
+			var typeBaseTable = 
+				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"ARTDAQBoardReaderTable":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"ARTDAQBuilderTable":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"ARTDAQDataLoggerTable":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"ARTDAQDispatcherTable":"ARTDAQMonitorTable";
+
+			switch(editType)
+			{
+			case 0: //top-level parameters
+
+				var newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
+					DesktopContent._localUrnLid +
+					"&subsetBasePath=" + typeBaseTable +
+					"&groupingFieldList=AUTO" +
+					"&recordAlias=" + typeName + "s" +
+					"&editableFieldList=" + "!*CommentDescription";
+				
+				//for unique link, presect UID record							
+				newWindowStr += "&selectedRecords=" + _nodes[i].name;
+				
+				if(newTab)
+					DesktopContent.openNewBrowserTab(
+						typeName + " Top-level Subset",
+						"",
+						newWindowStr, false /*unique*/);
+				else
+					DesktopContent.openNewWindow(
+						typeName + " Top-level Subset",
+						"",
+						newWindowStr, false /*unique*/);
+				
+				break;
+			default:
+				Debug.log("Unknown impossible (notify admins) editType = " + editType, Debug.HIGH_PRIORITY);
+			}
+		} // end handleEditIconMenuSelection()
 		
 		//=====================================================================================
 		//handleFclIconMouseUp ~~

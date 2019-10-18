@@ -292,7 +292,7 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	if(title)
 	{
 		str += "<div id='" + name + "header' " +
-				"style='margin-top:20px;width:100%;white-space:nowrap'><b>"
+				"style='margin-top:20px; width:100%; white-space:nowrap; height:21px'><b>"; //had to add height for new Chrome bug
 		str += title;
 		str += "</b></div>";
 	}

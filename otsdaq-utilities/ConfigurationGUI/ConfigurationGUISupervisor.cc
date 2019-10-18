@@ -2613,7 +2613,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 				    records, fieldAcceptList, fieldRejectList, 5, true /*auto*/);
 
 				for(const auto& retField : retFieldList)
-					fieldsToGet.push_back(retField.columnName_);
+					fieldsToGet.push_back(retField.relativePath_ + retField.columnName_);
 			}
 			else
 			{
