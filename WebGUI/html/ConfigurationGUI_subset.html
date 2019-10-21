@@ -416,6 +416,13 @@
 			//get grouping field values
 			//	for record list
 			_rightPaneFields.innerHTML = ""; //clear any existing fields
+			
+			if(!vals.length)
+			{
+				Debug.log("No records match filters, so not proceeding with field lookup.");
+				return;
+			}
+			
 			ConfigurationAPI.getFieldsOfRecords(
 					_subsetBasePath,
 					_subsetUIDs,

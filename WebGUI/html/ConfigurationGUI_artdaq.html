@@ -67,15 +67,18 @@
 				"rows": _GRID_ROW_MIN, 	"cols": _GRID_COL_MIN, 
 				"x0": 	0, 	"y0": 	0, 
 				"xstep":0, 	"ystep":0}; 
-		var _nodes = []; 	// array of node objects (can be multi-node vector at location)
-							//	node: 	{type,name,x-grid,y-grid,node-count}
+		var _nodes = []; 	// array of node objects (can be multi-node vector at location, using nodeCount and nodeVectorIndexMap
+							//	node: 	{type, name, hostname, subsystemId, originalName, xGrid, yGrid, nodeCount, nodeVectorIndexMap, nodeVectorIndexReverseMap, nodeVectorIndexString}
 		var _arrows = {}; 	//multi-dim map of arrow objects 
 							//	arrow:	[i0][i1] = {p0,p1} (start and end i,p - where i := node index, p := 1 of 4 positions starting from top going clock-wise)
 		
 		var _nodesByType = {};		
-		var _selectedNodes = {}; //selected nodes get highlighted in paint()
+		var _selectedNodes = {}; //selected nodes get highlighted with paint()
 		
 		var _subsystems = {}; //object describing artdaq subsystems
+						// id: {label, sourcesCount, destination}
+		
+		var _hostnames = {}; //set of hostnames (i.e. map to 1)
 		
 		//constant globals -------------		
 		var _MMM_NONE				= 0;
@@ -131,6 +134,7 @@
 		
 			//openActiveGroupsDialog()
 			//nodeLayoutHasChanged()
+			//nodesHaveChanged()
 			//addArrow(startNodeIndex, startNodePointIndex, endNodeIndex, endNodePointIndex)
 					
 			//paint()
@@ -153,8 +157,13 @@
 		
 			//handlePointMouseUp(i,p,e)
 			//handlePointMouseDown(i,p,e)
+		
 			//handleEditIconMouseUp(i,e)
-			//handleEditIconMenuSelection(i);
+			//handleEditIconMenuSelection(i)
+			//launchEditNodeDialog(i)
+			//handleEditNodeDialogMultiNodeCheckbox(i)
+			//handleEditNodeSelectEditIcon(t)
+		
 			//handleFclIconMouseUp(i,e)
 			//handleDeleteIconMouseUp(i,e)
 		
@@ -216,6 +225,7 @@
 			_nodesByType = {};
 			_selectedNodes = {};
 			_subsystems = {};
+			_hostnames = {};
 			
 			
 			//fill in CodeEditor appId
@@ -285,11 +295,15 @@
 								artdaqObj[type][name])
 						{
 							Debug.log("Found " + name);
-							
+
+							//enter in hostnames
+							_hostnames[artdaqObj[type][name].hostname] = 1;
+									   
 							//add to nodes
 							_nodes.push({
 								"type": 		getTypeIndex(type),
 								"name": 		name,
+								"originalName": name, //useful when saving
 								"hostname":		artdaqObj[type][name].hostname,
 								"subsystemId":	artdaqObj[type][name].subsystemId,
 								"x":			layoutNodesX[i].getAttribute('value')|0,
@@ -318,10 +332,15 @@
 
 							var typeIndex = getTypeIndex(t);
 							var xy = getEmptyGridSpot(typeIndex);
+
+							//enter in hostnames
+							_hostnames[artdaqObj[t][n].hostname] = 1;
+									   							
 							//add to nodes
 							_nodes.push({
 								"type": 		typeIndex,
 								"name": 		n,	
+								"originalName": n, //useful when saving
 								"hostname":		artdaqObj[t][n].hostname,
 								"subsystemId":	artdaqObj[t][n].subsystemId,
 								"x":			xy[0],
@@ -587,7 +606,7 @@
 		function handleNodeMouseOver(e)
 		{
 			var id = this.id.split('-')[1] | 0;
-			Debug.log("MouseOver Node id = " + id);
+			//Debug.log("MouseOver Node id = " + id);
 			
 		} //end handleNodeMouseOver()
 		
@@ -1115,8 +1134,21 @@
 										
 				//box
 				var count = _nodes[i].nodeCount?_nodes[i].nodeCount:1;
+				
+				var nodeName = _nodes[i].name;
+				if(count > 1)
+				{
+					//special multi-node name handling
+					
+					nodeName = nodeName.replace(new RegExp("\\*",'g'), 
+							"[" + 
+							_nodes[i].nodeVectorIndexString + 
+							"]"); 
+				}
+				
 				if(count > 4) count = 4; //cap at 4
-				console.log(i,count);				
+				console.log("i,count",i,count);				
+				
 				for(var p=count-1;p>=0;--p)
 				{
 					str += "<div id='" + nodeid + 
@@ -1151,7 +1183,7 @@
 				//header text
 				str += "<div id='" + nodeid + 
 						"-headerText' class='node-headerText'>" +
-						typeName + "::" + _nodes[i].name +
+						typeName + "::" + nodeName +
 						htmlClearDiv() + 
 						_subsystems[_nodes[i].subsystemId].label + 
 						" @ " + _nodes[i].hostname +			
@@ -1219,12 +1251,13 @@
 				points[p].style.top 	= (pxy[1] - y - pointSz/2) + "px";
 			}
 			
-			var fontSz = getNodeFontSize();//sz/10;
-			//if(fontSz < 6) fontSz = 6;
+			var fontSz = getNodeFontSize();
+			var count = (_nodes[i].nodeCount && _nodes[i].nodeCount > 4)?4:(_nodes[i].nodeCount|0);		
+									
 			el = document.getElementById(nodeid + "-headerText");
-			el.style.left = (- (_grid.xstep*2-sz)/2) + "px";
+			el.style.left = (- (_grid.xstep*2-sz)/2 - (count?(count-1)*2:0)) + "px";
 			el.style.fontSize = ((fontSz)|0) + "px";
-			el.style.top = ((-fontSz*3-fontSz/2)|0) + "px";
+			el.style.top = ((-fontSz*3-fontSz/2 - (count?(count-1)*5:0))|0) + "px";
 			el.style.height = ((fontSz*3)|0) + "px";
 			el.style.width = (_grid.xstep*2) + "px";
 			
@@ -1489,7 +1522,7 @@
     		var x = e.clientX;
     		var y = e.clientY;
 			
-    		console.log("mouseup x,y",x,y);
+    		//console.log("mouseup x,y",x,y);
     		    		
     		//debug visually
     		//_context.fillRect((x)|0,(y)|0,3,3 );
@@ -1574,7 +1607,7 @@
     		var x = e.clientX;
     		var y = e.clientY;
     		
-    		console.log("mousedown x,y",x,y);
+    		//console.log("mousedown x,y",x,y);
     		
     		
 			if(_mouseMoveMode == _MMM_NONE && 
@@ -1715,11 +1748,13 @@
 			el.style.display = undoHover?"none":"block";
 			
 			var fontSz = getNodeFontSize();
-			fontSz = undoHover?fontSz:fontSz*2;
+			fontSz = undoHover?fontSz:fontSz*2;			
+			var count = (_nodes[i].nodeCount && _nodes[i].nodeCount > 4)?4:(_nodes[i].nodeCount|0);		
+						
 			el = document.getElementById(nodeid + "-headerText");
-			el.style.left = (- (_grid.xstep*2-_NODE_SIZE)/2) + "px";
+			el.style.left = (- (_grid.xstep*2-_NODE_SIZE)/2 - (count?(count-1)*2:0)) + "px";
 			el.style.fontSize = ((fontSz)|0) + "px";
-			el.style.top = ((-fontSz*3-fontSz/2)|0) + "px";
+			el.style.top = ((-fontSz*3-fontSz/2 - (count?(count-1)*5:0))|0) + "px";
 			el.style.height = ((fontSz*3)|0) + "px";
 			el.style.width = (_grid.xstep*2) + "px";
 		} //end doNodeHover()
@@ -1774,10 +1809,44 @@
 
 		//=====================================================================================
 		//handleEditIconMouseUp ~~
-		function handleEditIconMouseUp(i,e) 
+		function handleEditIconMouseUp(i,e,x) 
 		{	   
-			e.stopPropagation();
+			if(e) e.stopPropagation();
 		
+			if(x == undefined && _nodes[i].nodeCount && _nodes[i].nodeCount > 1)
+			{
+				Debug.log("Showing multi-node menu");
+				
+				//handle node vector level first
+				var menuItems = [];
+				var menuItemHandlers = [];
+
+				menuItems.push("Edit the multi-node size");
+				menuItemHandlers.push("launchEditNodeDialog(" + i + ")");
+				
+				for(var j=0;j<_nodes[i].nodeCount;++j)
+				{
+					menuItems.push( "Edit vector node[" + j +
+							"]");
+					menuItemHandlers.push("handleEditIconMouseUp(" +
+							i + ", undefined /*e*/, " +
+							(event.pageX - 10) + " /*x*/" +
+							")");
+				}
+
+				SimpleContextMenu.createMenu(
+						menuItems,
+						menuItemHandlers,
+						"openFclMenuForArtdaqNode",		//element ID
+						event.pageX - 10, event.pageY - 10, 		//top left position
+						_MENU_PRIMARY_COLOR,
+						_MENU_SECONDARY_COLOR
+				);	
+				
+				return;
+			}
+			//else handle single node
+			
 			var type = _nodes[i].type;
 						
 			var typeName = 
@@ -1791,78 +1860,52 @@
 					typeName + "::" +
 					_nodes[i].name);
 			
-			var editTypes = [
+			var editTypes = [						 
 							 "Top-level Parameters"
-							 ];
+							 ];			
 			
+			if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+			{
+				editTypes.push("DAQ Parameters");
+				editTypes.push("DAQ Metrics");				
+			}
+			else if(type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER)
+			{
+				editTypes.push("Preamble Parameters");
+				editTypes.push("DAQ Parameters");
+				editTypes.push("DAQ Metrics");	
+				editTypes.push("ART Physics Analyzers");
+				editTypes.push("ART Physics Producers");
+				editTypes.push("ART Physics Filters");	
+				editTypes.push("ART Physics Other Parameters");		
+				editTypes.push("Add-on Parameters");				
+			}
 			
-//			if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
-//			{
-//				editTypes.push("DAQ Parameters");
-//				editTypePath.push(typeBaseTable + "/" + )
-//				editTypes.push("DAQ Metrics");
-//				
-//			}
 			
 			var menuItems = [];
 			var menuItemHandlers = [];
 			
+			menuItems.push("Edit name, subsystem, host, and multi-node intances");
+			menuItemHandlers.push("launchEditNodeDialog(" + i + ")");
+			
 			for(var t=0;t<editTypes.length;++t)
 			{
-				menuItems.push( "Edit " + typeName + "::" + 
-						_nodes[i].name + "'s " + editTypes[t] +
-						" ");
+				menuItems.push( "Edit " + editTypes[t] +
+						" of " + typeName + "::" + 
+						_nodes[i].name);
 				menuItemHandlers.push("handleEditIconMenuSelection(" +
-						i + "," + t + ")");
-				menuItems.push( "Edit " + typeName + "::" +
-						_nodes[i].name + "'s " + editTypes[t] +
-						" in a new browser tab");
-				menuItemHandlers.push("handleEditIconMenuSelection(" +
-						i + "," + t + ", true /*newTab*/)");
-			}
-				
-			
-//							 "Open " + _nodes[i].name + "'s this in a desktop window",
-//							 "Open " + _nodes[i].name + "'s that in a new browser tab"
-//							 ];
-
-//			var newwindowJS;
-//			var newWindowStr;
-//
-//			newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
-//					DesktopContent._localUrnLid +
-//					"&subsetBasePath=" + "/XDAQContextTable" +
-//					"&groupingFieldList=AUTO" +
-//					"&recordAlias=" + "artdaq" +
-//					"&editableFieldList=" + "!*CommentDescription";
-//
-//			newWindowStr = newWindowStr.replace(/"/g, "\\\"");
-//
-//			newwindowJS = "DesktopContent.openNewWindow(" +
-//					"\"Code Editor\" /*name*/," + 
-//					"\"\" /*subname*/,\"" +
-//					newWindowStr + "\"," +
-//					"false /*unique*/);";
-//			
-//			Debug.log("newwindowJS = " + newwindowJS);
-//
-//			menuItemHandlers.push(newwindowJS);
-//
-//			newwindowJS = "DesktopContent.openNewBrowserTab(" +
-//					"\"Code Editor\" /*name*/," + 
-//					"\"\" /*subname*/,\"" +
-//					newWindowStr + "\"," +
-//					"false /*unique*/);";
-//
-//			Debug.log("newwindowJS = " + newwindowJS);
-//
-//			menuItemHandlers.push(newwindowJS);
-
+						i + "," + t + ", undefined /*newTab*/, " +
+						(event.pageX - 10) + ", " +
+						(event.pageY - 10) + 
+						")");
+			} //end edit type loop
+						
 			SimpleContextMenu.createMenu(
 					menuItems,
 					menuItemHandlers,
 					"openFclMenuForArtdaqNode",		//element ID
-					event.pageX - 1, event.pageY - 1, 		//top left position
+					(x?x:(event.pageX - 10)),
+					event.pageY - 10, 		//top left position
 					_MENU_PRIMARY_COLOR,
 					_MENU_SECONDARY_COLOR
 			);			
@@ -1873,9 +1916,12 @@
 		//handleEditIconMenuSelection ~~
 		//	handle menu selection for node i
 		//	based on editType
-		function handleEditIconMenuSelection(i,editType, newTab) 
+		function handleEditIconMenuSelection(i,editType, newTab, x, y) 
 		{	   
-			Debug.log("handleEditIconMenuSelection " + i + "-" + editType);
+			
+			Debug.log("handleEditIconMenuSelection " + i + "-" + 
+					editType + "-" + newTab);
+			
 
 			var type = _nodes[i].type;
 			
@@ -1891,11 +1937,63 @@
 				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"ARTDAQDataLoggerTable":
 				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"ARTDAQDispatcherTable":"ARTDAQMonitorTable";
 
+			var subsetName;
+			switch(editType)
+			{
+			case 0: //top-level parameters
+				subsetName = "Top-level Parameters";
+				break;
+			case 1:
+				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+					subsetName = "DAQ Parameters";
+				break;
+			case 2:
+				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+					subsetName = "DAQ Metrics";
+				break;
+			default:
+				Debug.log("Unknown impossible (notify admins) editType = " + editType, Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			if(newTab === undefined)
+			{
+				//create menu to choose new tab or not
+				var menuItems = [];
+				var menuItemHandlers = [];
+
+				menuItems.push( "Edit " + subsetName +
+						" of " + typeName + "::" + 
+						_nodes[i].name);
+				menuItemHandlers.push("handleEditIconMenuSelection(" +
+						i + "," + editType + ", false /*newTab*/)");
+				menuItems.push( "Edit " + subsetName +
+						" of " + typeName + "::" + 
+						_nodes[i].name + 
+						" in a new browser tab");
+				menuItemHandlers.push("handleEditIconMenuSelection(" +
+						i + "," + editType + ", true /*newTab*/)");
+
+
+				SimpleContextMenu.createMenu(
+						menuItems,
+						menuItemHandlers,
+						"openFclMenuForArtdaqNode",		//element ID
+						x, event.pageY - 10, 		//top left position
+						_MENU_PRIMARY_COLOR,
+						_MENU_SECONDARY_COLOR
+				);			
+				return;
+			}
+			
+			var newWindowStr;
+			
 			switch(editType)
 			{
 			case 0: //top-level parameters
 
-				var newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
+				
+				newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
 					DesktopContent._localUrnLid +
 					"&subsetBasePath=" + typeBaseTable +
 					"&groupingFieldList=AUTO" +
@@ -1905,22 +2003,626 @@
 				//for unique link, presect UID record							
 				newWindowStr += "&selectedRecords=" + _nodes[i].name;
 				
-				if(newTab)
-					DesktopContent.openNewBrowserTab(
-						typeName + " Top-level Subset",
-						"",
-						newWindowStr, false /*unique*/);
-				else
-					DesktopContent.openNewWindow(
-						typeName + " Top-level Subset",
-						"",
-						newWindowStr, false /*unique*/);
+				localLaunchWindow();
 				
+				break;
+
+			case 1: 
+
+				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+				{
+					//Reader DAQ parameters
+					Debug.log("Reader DAQ parameters");
+					
+
+					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
+						DesktopContent._localUrnLid +
+						"&subsetBasePath=" + "ARTDAQDaqParameterTable" +
+						"&groupingFieldList=AUTO" +
+						"&recordAlias=" + encodeURIComponent(typeName + " " + subsetName) +
+						"&editableFieldList=" + "!*CommentDescription";
+										
+					localGetLinkId("daqParametersLink",
+							function(childLinkIndex, linkId)
+							{
+						Debug.log("daqParametersLink childLinkIndex = '" +
+								childLinkIndex + "' linkId = '" + 
+								linkId + "'");
+
+						//for group link, pre-select GroupID value							
+						newWindowStr += "&selectedGroupIDs=" +
+								encodeURIComponent(
+										childLinkIndex + "=" +
+										linkId);
+
+						localLaunchWindow();
+						
+							}); //end localGetLinkId handler
+				}
+
+				break;
+			case 2: 
+
+				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+				{
+					//Reader DAQ Metrics
+					Debug.log("Reader DAQ Metrics");
+					
+					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
+							DesktopContent._localUrnLid +
+							"&subsetBasePath=" + "ARTDAQMetricTable" +
+							"&groupingFieldList=AUTO" +
+							"&recordAlias=" + encodeURIComponent(typeName + " " + subsetName) +
+							"&editableFieldList=" + "!*CommentDescription";
+
+					localGetLinkId("daqMetricsLink",
+							function(childLinkIndex, linkId)
+							{
+						Debug.log("daqMetricsLink childLinkIndex = '" +
+								childLinkIndex + "' linkId = '" + 
+								linkId + "'");
+
+						//for group link, pre-select GroupID value							
+						newWindowStr += "&selectedGroupIDs=" +
+								encodeURIComponent(
+										childLinkIndex + "=" +
+										linkId);
+
+						localLaunchWindow();
+
+							}); //end localGetLinkId handler
+				}
 				break;
 			default:
 				Debug.log("Unknown impossible (notify admins) editType = " + editType, Debug.HIGH_PRIORITY);
 			}
+
+			return;
+			
+			//===============
+			function localLaunchWindow(fieldPath, handler)
+			{
+				Debug.log("newWindowStr " + newWindowStr);
+				if(newTab)
+					DesktopContent.openNewBrowserTab(
+						typeName + " " + subsetName,
+						"",
+						newWindowStr, false /*unique*/);
+				else
+					DesktopContent.openNewWindow(
+						typeName + " " + subsetName,
+						"",
+						newWindowStr, false /*unique*/);
+			} //end localLaunchWindow()
+						
+
+			//===============
+			function localGetLinkId(fieldPath, handler)
+			{
+				Debug.log("localGetLinkId");
+				
+				//ConfigurationAPI.getFieldsOfRecords(
+				//	subsetBasePath,recordArr,fieldList,
+				//		maxDepth,responseHandler,modifiedTables)
+				ConfigurationAPI.getFieldsOfRecords(
+						typeBaseTable,
+						_nodes[i].name,
+						fieldPath,
+						1,
+						function(fieldRetObj)
+						{
+					console.log("localGetLinkId getFieldsOfRecords",fieldRetObj);
+
+					if(fieldRetObj[0].fieldColumnType.indexOf("ChildLink-") != 0 ||
+							fieldRetObj.length != 2)
+					{
+						Debug.log("Invalid link to get '" + fieldPath +
+								"' - notify admins! (returned field objects = " +
+								fieldRetObj.length + ")", Debug.HIGH_PRIORITY);
+						return;
+					}
+					
+
+					//ConfigurationAPI.getFieldValuesForRecords(
+					//	subsetBasePath,recordArr,fieldObjArr,
+					//	responseHandler,modifiedTables)
+					ConfigurationAPI.getFieldValuesForRecords(
+							typeBaseTable,
+							_nodes[i].name,
+							fieldRetObj[1].fieldRelativePath + 
+							fieldRetObj[1].fieldColumnName,
+							function(retObj)
+							{
+						console.log("localGetLinkId getFieldValuesForRecords",retObj);
+						
+						//pass link index and link ID to handler
+						handler(
+								fieldRetObj[0].fieldColumnType.split('-')[1], 
+								retObj[0].fieldValue);
+
+							}); //end ConfigurationAPI.getFieldValuesForRecords() call
+					
+						}); //end ConfigurationAPI.getFieldsOfRecords() call
+
+			} //end localGetLinkId()
+			
 		} // end handleEditIconMenuSelection()
+
+		//=====================================================================================
+		//launchEditNodeDialog ~~
+		function launchEditNodeDialog(i) 
+		{	   
+			Debug.log("launchEditNodeDialog node size " + _nodes[i].nodeCount);
+
+			var type = _nodes[i].type;
+			var typeName = 
+				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
+		
+			
+			//undo hover node, if any
+			if(_mouseHoverNode != -1)
+				doNodeHover(_mouseHoverNode,true /*undoHover*/);
+
+			_mouseMoveMode = _MMM_POPUP_DIALOG;
+			Debug.log("openActiveGroupsDialog()");
+			
+			var ctrlStr = "";
+			ctrlStr += htmlOpen("input",
+					{
+							"class": "closeButton",
+							"type": "button",
+							"style": "margin:20px;",
+							"value": "Close",
+							"title": "Close this dialog."
+					},
+					0 /*html*/, true /*closeTag*/);	
+
+			var str = "";
+			
+			str += "Editing settings for node originally named " + 
+					typeName + "::" + _nodes[i].name + "..."; 
+
+			str += htmlClearDiv();
+			str += "<br><table style='margin-bottom: 10px;'>";
+			str += "<tr><td><b>Node Name:</b></td><td>";
+			str += htmlOpen("input",
+					{
+							"id": "ediNode-" + "nodeName",
+							"type": "text",
+							"value": _nodes[i].name,
+							"title": "Set the node name template with * syntax.",
+					},
+					0 /*html*/, true /*closeTag*/);	
+			str += "</td></tr>";
+			
+			str += "<tr><td colspan='2'>";
+
+			str += htmlOpen("input",
+					{
+							"type": "checkbox",
+							"id": "enableMultiNodeCheckbox",
+							"class": "enableMultiNodeCheckbox",
+
+							"onclick": "handleEditNodeDialogMultiNodeCheckbox(" + i + ",this);",
+					},
+					htmlOpen("a",
+							{
+									"style": "text-decoration:none;color:black;",
+									"onclick": "var el = document.getElementsByClassName(\"enableMultiNodeCheckbox\");" +
+									"var forFirefox = (el[0].checked = !el[0].checked); " +
+									"handleEditNodeDialogMultiNodeCheckbox(" + i + ",el[0]);"
+									,
+							},
+							"Enable Multi-node" /*innerHTML*/,
+							true /*doCloseTag*/
+					) /*innerHTML*/,
+					true /*doCloseTag*/);
+			str += "</td></tr>";
+			str += "</table>";
+
+			str += htmlClearDiv();
+			str += "<div id='multiNodeSettings' style='display:none'>";
+			{ //start multi-node
+				str += "Set the size of the multi-node by using 'printer page syntax.'" + 
+
+						"<br>" + 
+						"For example, to make 4 nodes named reader0, reader4, reader5, reader6, " + 
+						"Set the node name to 'reader*' and set the multi-node indices to '" +
+						"0,4-6'" +
+						"<br>";
+
+				str += htmlClearDiv();
+				str += "<br><table style='margin-bottom: 10px;'>";
+						
+
+				str += "<tr><td><b>Multi-Node Indices:</b></td><td>";
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "nodeIndices",
+								"type": "text",
+								"value": (_nodes[i].nodeVectorIndexString?_nodes[i].nodeVectorIndexString:""),
+								"title": "Set the multi-node indices with printer page syntax.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+				str += "</td></tr>";
+
+
+
+				str += "</table>";
+			} //end multi-node
+			str += "</div>"; //close multi-node settings div
+			
+			str += htmlClearDiv();
+			
+			str += "<br><table style='margin-bottom: 10px;'>";
+			str += "<tr><td style='text-align:right'><b>Subsystem Name:</b></td><td>";
+			{ //start subsystems
+				str += htmlOpen("select",
+						{
+								"id": "ediNode-" + "subsystem",
+								"style": "float: left; margin: 7px;",
+						});
+
+				for(var j in _subsystems)
+				{
+					if(j == 0) continue; //skip null destination subsystem
+					
+					str += htmlOpen("option",
+							{		
+							},
+							_subsystems[j].label /*innerHTML*/, true /*closeTag*/);
+				}
+				str += "</select>"; //end aliases dropdown
+
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "subsystemText",
+								"style": "display:none; float: left;",
+								"type": "text",
+								"value": "",
+								"title": "Set the node name template with * syntax.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+
+				str += htmlOpen("div",
+						{
+								"id": "subsystem-editIcon",
+								"class": "node-editIcon",
+								"style": "display:block; float:right; margin: 6px 0 0 1px",
+								"onclick": "handleEditNodeSelectEditIcon(0);",
+								"title": "Toggle free-form hostname editing",
+						},
+						0 /*html*/, true /*closeTag*/);	
+			} //end subsystems
+			str += "</td></tr>";
+			
+
+			str += "<tr><td style='text-align:right'><b>Host Name:</b></td><td>";
+			{ //start hostnames
+				str += htmlOpen("select",
+						{
+								"id": "ediNode-" + "hostname",
+								"style": "float: left; margin: 7px;",
+						});
+
+				for(var j in _hostnames)
+				{
+					str += htmlOpen("option",
+							{		
+							},
+							j /*innerHTML*/, true /*closeTag*/);
+				}
+				str += "</select>"; //end aliases dropdown
+
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "hostnameText",
+								"style": "display:none; float: left;",
+								"type": "text",
+								"value": "",
+								"title": "Set the node name template with * syntax.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+
+				str += htmlOpen("div",
+						{
+								"id": "hostname-editIcon",
+								"class": "node-editIcon",
+								"style": "display:block; float:right; margin: 6px 0 0 1px",
+								"onclick": "handleEditNodeSelectEditIcon(1);",
+								"title": "Toggle free-form hostname editing",
+						},
+						0 /*html*/, true /*closeTag*/);	
+				
+			} //end hostnames
+			str += "</td></tr>";
+			str += "</table>";
+
+			str += htmlClearDiv();
+
+			
+			str += htmlOpen("input",
+					{
+							"id": "ediNode-" + "saveNode",
+							"type": "button",
+							"value": "Save Node Settings",
+							"title": "Save the settings for this node."
+					},
+					0 /*html*/, true /*closeTag*/);	
+			
+			//remove all existing dialogs
+			ConfigurationAPI.removeAllPopUps();
+
+			//make popup element
+			el = document.createElement("div");			
+			el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
+
+			ConfigurationAPI.setPopUpPosition(el,
+					undefined /*w*/,
+					undefined /*h*/, 
+					undefined /*padding*/, 
+					undefined /*border*/,
+					50 /*margin*/);
+
+			el.innerHTML = ctrlStr + htmlClearDiv() + 
+					str + htmlClearDiv() + ctrlStr;
+			document.body.appendChild(el);
+
+			localAddHandlers();
+
+			return;
+			
+			//==========
+			function localAddHandlers()
+			{ //start localAddHandlers			
+
+				var closeButtons = document.getElementsByClassName("closeButton");
+				for(var b=0;b<closeButtons.length;++b)
+					closeButtons[b].onclick = 
+							localCloseButtonHandler;
+
+				/////////////////////////////////
+				function localCloseButtonHandler()
+				{
+					Debug.log("localCloseButtonHandler()");
+
+					//remove all existing dialogs
+					ConfigurationAPI.removeAllPopUps();
+
+					_mouseMoveMode = _MMM_NONE;
+				} //end localCloseButtonHandler()
+
+				/////////////////////////////////
+				document.getElementById("ediNode-" + "saveNode").onclick = 
+						function()
+						{
+					//since multiple, use id to identify
+					Debug.log("Saving multi-node settings for node " + i);
+					
+					
+					var nodeNameTemplate = document.getElementById("ediNode-" + "nodeName").value;
+					var nodeIndices = document.getElementById("ediNode-" + "nodeIndices").value;
+					var subsystem = document.getElementById("ediNode-" + "subsystem").value;
+					var hostname = document.getElementById("ediNode-" + "hostname").value;
+					
+					Debug.log("Node name template = " + nodeNameTemplate);
+					Debug.log("Node indices = " + nodeIndices);
+
+					var nodeVectorIndexString = nodeIndices;
+					var nodeVectorIndexMap = []; //reset
+					var nodeVectorIndexReverseMap = {}; //reset
+					
+					nodeIndices = nodeIndices.split(',');
+					var nodeCount = 0;
+					for(var j=0;j<nodeIndices.length;j++)
+					{
+						var nodeSubindices = nodeIndices[j].split('-');
+						
+						if(nodeSubindices.length == 1)
+						{
+							var index = nodeSubindices[0].trim();
+							
+							if(nodeVectorIndexReverseMap[index])
+							{
+								Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
+										index + "') are not allowed.",
+										Debug.HIGH_PRIORITY);
+								return;								
+							}
+							nodeVectorIndexReverseMap[index] = nodeCount++;
+							nodeVectorIndexMap.push(index);							
+						}
+						else if(nodeSubindices.length == 2)
+						{
+							var hi = nodeSubindices[1].trim() | 0;
+							var lo = nodeSubindices[0].trim() | 0;
+							if(hi <= lo)
+							{
+								Debug.log("Illegal Node Indices - please you print page syntax (e.g. '0,4-6').",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+							
+							for(var k=lo;k<=hi;++k)
+							{
+								if(nodeVectorIndexReverseMap[k])
+								{
+									Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
+											k + "') are not allowed.",
+											Debug.HIGH_PRIORITY);
+									return;								
+								}
+								nodeVectorIndexReverseMap[k] = nodeCount++;
+								nodeVectorIndexMap.push(k);								
+							}
+						}
+						else
+						{
+							Debug.log("Illegal Node Indices - please use print page syntax (e.g. '0,4-6').",
+									Debug.HIGH_PRIORITY);
+							return;
+						}
+					}
+					console.log("nodeCount",nodeCount); 
+					console.log("nodeVectorIndexMap",nodeVectorIndexMap); 
+					console.log("nodeVectorIndexReverseMap",nodeVectorIndexReverseMap); 
+					
+					if(nodeCount> 1 && 
+							nodeNameTemplate.indexOf('*') < 0)
+					{
+						Debug.log("Illegal Node Name for multi-node - please use * to indicate were the instance index should be (e.g. 'reader*' to make reader0, reader1, etc..).",
+								Debug.HIGH_PRIORITY);
+						return;
+					}
+					
+					//at this point, the change has been verified!
+					// so set node values
+					_nodes[i].nodeCount = nodeCount;
+					_nodes[i].nodeVectorIndexString = nodeVectorIndexString;
+					_nodes[i].nodeVectorIndexMap = nodeVectorIndexMap;
+					_nodes[i].nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
+					_nodes[i].name = nodeNameTemplate;
+					
+					//handle hostname change
+					if(_nodes[i].hostname != hostname)
+					{
+						//enter in hostnames
+						_hostnames[hostname] = 1;
+						_nodes[i].hostname = hostname;
+					}
+
+					//handle subsystem change
+					var subsystemId = 0;
+					for(var j in _subsystems)
+						if(_subsystems[j].label == subsystem)
+						{
+							subsystemId = j;
+							break;
+						}
+					if(subsystemId == 0 && 
+							subsystem != ArtdaqConfigurationAPI.NULL_SUBSYSTEM)
+					{
+						//create new subsystem
+						subsystemId = j+2;
+						Debug.log("Creating subsystem " + 
+								subsystemId + ":" + subsystem);
+						_susbsystems[subsystemId] = {"label" : subsystem};
+					}
+					
+					if(_nodes[i].subsystemId != subsystemId)
+					{
+						Debug.log("handling subsystem change from " + 
+								_nodes[i].subsystemId + ":" + 
+								_susbsystems[j].label + " to " +
+								_nodes[subsystemId].subsystemId + ":" + 
+								_susbsystems[subsystemId].label)
+										
+						//remove from sources and destinations:
+						//	if reader, logger, dispatcher, monitor should be no effect
+						//	if builder, could change sources and destinations
+						//TODO!!!
+								
+						_nodes[i].subsystemId = subsystemId;
+						initArrows();
+					}
+					
+					nodesHaveChanged();
+					
+					//delete element to force new paint
+					var nodeid = "node-" + i;
+					var el = document.getElementById(nodeid);
+					el.parentNode.removeChild(el);
+					
+					paint();
+					
+					//remove all existing dialogs
+					ConfigurationAPI.removeAllPopUps();
+
+					_mouseMoveMode = _MMM_NONE;
+					
+						}; //end saveMultiNode click handler
+				
+			} //end localAddHandlers()
+			
+		} // end launchEditNodeDialog()
+				
+		//=====================================================================================
+		//handleEditNodeDialogMultiNodeCheckbox ~~
+		function handleEditNodeDialogMultiNodeCheckbox(i,obj) 
+		{
+			Debug.log("handleEditNodeDialogMultiNodeCheckbox " + i + 
+					" - " + obj.checked);
+			
+				
+			document.getElementById("multiNodeSettings").style.display =
+					obj.checked?"block":"none";
+			
+
+			var nodeNameValue = _nodes[i].name;
+			if(nodeNameValue.indexOf('*') < 0)
+			{
+				//check for a number in the name to help with default wildcard placement
+				//	from back
+				for(var j=nodeNameValue.length-1;j >= 0; --j)
+				{
+					if(nodeNameValue[j] >= '0' && nodeNameValue[j] <= '9')
+					{
+						//found first number, see if it continues
+						var k = j;
+						for(j=j-1;j >= 0; --j)
+							if(nodeNameValue[j] < '0' || nodeNameValue[j] > '9')
+							{
+								//done with number, so set value
+
+								nodeNameValue = 
+										nodeNameValue.substr(0,j+1) + '*' +
+										nodeNameValue.substr(k+1);
+								break;
+							}
+						break;
+					}
+				}
+			}
+		} //end handleEditNodeDialogMultiNodeCheckbox()
+		
+		
+		//=====================================================================================
+		//handleEditNodeSelectEditIcon ~~
+		function handleEditNodeSelectEditIcon(t) 
+		{	   
+			Debug.log("handleEditNodeSelectEditIcon " + t);
+			
+			var sel, tel;
+			if(t == 0) //toggle subsystem select/text
+			{
+				sel = document.getElementById("ediNode-" + "subsystem");
+				tel = document.getElementById("ediNode-" + "subsystemText");				
+			}
+			else if(t == 1) //toggle hostname select/text
+			{
+				sel = document.getElementById("ediNode-" + "hostname");
+				tel = document.getElementById("ediNode-" + "hostnameText");
+			}
+
+			Debug.log("sel.style.display  " + sel.style.display);
+			if (sel.style.display == "none") 
+			{
+				sel.style.display = "block";
+				tel.style.display = "none";
+			}
+			else 
+			{
+				tel.style.width = ((sel.offsetWidth > 200 ? sel.offsetWidth : 200) - 8) + "px";
+				sel.style.display = "none";
+				tel.style.display = "block";
+				if(tel.value == "")
+					tel.value = sel.value; //take value from select
+				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);
+			}
+		} //end handleEditNodeSelectEditIcon()
 		
 		//=====================================================================================
 		//handleFclIconMouseUp ~~
@@ -2362,6 +3064,17 @@
 					);
 			
 		} //end nodeLayoutHasChanged()
+
+		//====================================================================================
+		//nodeLayoutHasChanged ~~
+		function nodesHaveChanged()
+		{
+			Debug.log("nodesHaveChanged");
+			
+			var el = document.getElementById("Status");
+			el.innerHTML = "( Unsaved Changes! )";			
+		} //end nodesHaveChanged()
+		
 		
 		//====================================================================================
 		//addArrow ~~
@@ -2466,6 +3179,8 @@
 			<div 	id="saveFileMainTop"></div>
 			<div 	id="saveFileMainBottom"></div>
 		</div>
+		<div 	id="Status" 					
+				style="float:left; margin: 12px 0 0 10px; color: red;"></div>		
 	</div>
 	<!-- End controls pane, Copied from Code Editor -->
 		
