@@ -5703,7 +5703,8 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 		           << " is a required member of the Backbone table group."
 		           << "\n\nLikely you need to activate a valid Backbone table group."
 		           << __E__;
-		xmlOut.addTextElementToData("Error", ss.str());
+		__SUP_COUT__ << ss.str(); //just output findings, and return empty xml to avoid infinite error loops in GUI
+		//xmlOut.addTextElementToData("Error", ss.str());
 		return;
 	}
 	__SUP_COUT__ << "activeVersions[\"" << groupAliasesTableName
