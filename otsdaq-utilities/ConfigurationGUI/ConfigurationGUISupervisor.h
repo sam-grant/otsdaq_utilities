@@ -177,48 +177,54 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                               const std::string&      linkIndex,
 	                               const std::string&      linkInitId);
 
-	void  					handleSavePlanCommandSequenceXML(HttpXmlDocument&        xmldoc,
-	                                      ConfigurationManagerRW* cfgMgr,
-	                                      const std::string&      groupName,
-	                                      const TableGroupKey&    groupKey,
-	                                      const std::string&      modifiedTables,
-	                                      const std::string&      author,
-	                                      const std::string&      planName,
-	                                      const std::string&      commandString);
+	void  					handleSavePlanCommandSequenceXML	(
+																	HttpXmlDocument&        xmldoc,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      groupName,
+																	const TableGroupKey&    groupKey,
+																	const std::string&      modifiedTables,
+																	const std::string&      author,
+																	const std::string&      planName,
+																	const std::string&      commandString);
 
-	void  					handleMergeGroupsXML(HttpXmlDocument&        xmlOut,
-	                          ConfigurationManagerRW* cfgMgr,
-	                          const std::string&      groupANameContext,
-	                          const TableGroupKey&    groupAKeyContext,
-	                          const std::string&      groupBNameContext,
-	                          const TableGroupKey&    groupBKeyContext,
-	                          const std::string&      groupANameConfig,
-	                          const TableGroupKey&    groupAKeyConfig,
-	                          const std::string&      groupBNameConfig,
-	                          const TableGroupKey&    groupBKeyConfig,
-	                          const std::string&      author,
-	                          const std::string&      mergeApproach);
+	void  					handleMergeGroupsXML				(
+																	HttpXmlDocument&        xmlOut,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      groupANameContext,
+																	const TableGroupKey&    groupAKeyContext,
+																	const std::string&      groupBNameContext,
+																	const TableGroupKey&    groupBKeyContext,
+																	const std::string&      groupANameConfig,
+																	const TableGroupKey&    groupAKeyConfig,
+																	const std::string&      groupBNameConfig,
+																	const TableGroupKey&    groupBKeyConfig,
+																	const std::string&      author,
+																	const std::string&      mergeApproach);
 
 
-	void  					handleGetArtdaqNodeRecordsXML(HttpXmlDocument&        xmlOut,
-	                                   ConfigurationManagerRW* cfgMgr,
-	                                   const std::string&      modifiedTables);
-	void  					handleSaveArtdaqNodeRecordsXML(HttpXmlDocument&        xmlOut,
-	                                   ConfigurationManagerRW* cfgMgr,
-	                                   const std::string&      modifiedTables);
-	void  					handleLoadArtdaqNodeLayoutXML(
-	    HttpXmlDocument&        xmlOut,
-	    ConfigurationManagerRW* cfgMgr,
-	    const std::string&      contextGroupName = "",
-	    const TableGroupKey&    contextGroupKey  = TableGroupKey());
-	void  					handleSaveArtdaqNodeLayoutXML(
-	    HttpXmlDocument&        xmlOut,
-	    ConfigurationManagerRW* cfgMgr,
-	    const std::string&      layoutString,
-	    const std::string&      contextGroupName = "",
-	    const TableGroupKey&    contextGroupKey  = TableGroupKey());
+	void  					handleGetArtdaqNodeRecordsXML		(
+																	HttpXmlDocument&        xmlOut,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      modifiedTables);
+	void  					handleSaveArtdaqNodeRecordsXML		(
+																	const std::string&      nodeString,
+																	const std::string&      subsystemString,
+																	HttpXmlDocument&        xmlOut,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      modifiedTables);
+	void  					handleLoadArtdaqNodeLayoutXML		(
+																	HttpXmlDocument&        xmlOut,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      contextGroupName = "",
+																	const TableGroupKey&    contextGroupKey  = TableGroupKey());
+	void  					handleSaveArtdaqNodeLayoutXML		(
+																	HttpXmlDocument&        xmlOut,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      layoutString,
+																	const std::string&      contextGroupName = "",
+																	const TableGroupKey&    contextGroupKey  = TableGroupKey());
 
-	void  					testXDAQContext(void);
+	void  					testXDAQContext						(void);
 
 	enum
 	{

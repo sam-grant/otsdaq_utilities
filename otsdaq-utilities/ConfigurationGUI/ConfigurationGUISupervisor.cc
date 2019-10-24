@@ -985,10 +985,14 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	else if(requestType == "saveArtdaqNodes")
 	{
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+		std::string nodeString = CgiDataUtilities::postData(cgiIn, "nodeString");
+		std::string subsystemString = CgiDataUtilities::postData(cgiIn, "subsystemString");
 
 		__SUP_COUTV__(modifiedTables);
+		__SUP_COUTV__(nodeString);
+		__SUP_COUTV__(subsystemString);
 
-		handleSaveArtdaqNodeRecordsXML(xmlOut, cfgMgr, modifiedTables);
+		handleSaveArtdaqNodeRecordsXML(nodeString, subsystemString, xmlOut, cfgMgr, modifiedTables);
 	}
 	else if(requestType == "loadArtdaqNodeLayout")
 	{
@@ -5764,7 +5768,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 		xmlOut.addTextElementToData("GroupComment", groupComment);
 		xmlOut.addTextElementToData("GroupType", groupType);
 	}
-}
+} //end handleGroupAliasesXML
 
 //========================================================================================================================
 //	handleTableVersionAliasesXML
@@ -6310,11 +6314,13 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 //	modifiedTables := CSV of table/version pairs
 //
 void ConfigurationGUISupervisor::handleSaveArtdaqNodeRecordsXML(
-    HttpXmlDocument&        xmlOut,
-    ConfigurationManagerRW* cfgMgr,
-    const std::string&      modifiedTables)
+		const std::string&      nodeString,
+		const std::string&      subsystemString,
+		HttpXmlDocument&        xmlOut,
+		ConfigurationManagerRW* cfgMgr,
+		const std::string&      modifiedTables)
 {
-	__COUT__ << "Saving artdaq nodes..." << __E__;
+	__SUP_COUT__ << "Saving artdaq nodes..." << __E__;
 
 	//	setup active tables based on active groups and modified tables
 	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
@@ -6334,7 +6340,99 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeRecordsXML(
 	};
 
 	const std::string typeString = "artdaqSupervisor";
-	__COUT__ << "Done saving artdaq nodes." << __E__;
+
+
+	//start node object extraction from nodeString
+	std::map<std::string /*type*/,
+		std::map<std::string /*record*/,
+			std::vector<std::string /*property*/>>> nodeTypeToObjectMap;
+	{
+		//nodeString format:
+		//	<type>:<nodeName>=<originalName>,<hostname>,<subsystemName>;<nodeName>=<originalName>,<hostname>,<subsystemName>;
+		//	... |<type>:...|
+		//	repeat | separated types
+		std::map<std::string /*type*/, std::string /*typeRecordSetString*/> nodeTypeToStringMap;
+		StringMacros::getMapFromString(nodeString,nodeTypeToStringMap,{'|'},{':'});
+
+		__SUP_COUTV__(StringMacros::mapToString(nodeTypeToStringMap));
+
+		for(auto& typePair:nodeTypeToStringMap)
+		{
+			if(typePair.first == "") continue;
+
+			__SUP_COUTV__(StringMacros::decodeURIComponent(typePair.first));
+
+			nodeTypeToObjectMap.emplace(
+					std::make_pair(StringMacros::decodeURIComponent(typePair.first),
+							std::map<std::string /*record*/,
+							std::vector<std::string /*property*/>>()));
+
+
+			std::map<std::string /*node*/, std::string /*nodeRecordSetString*/> nodeRecordToStringMap;
+
+			StringMacros::getMapFromString(typePair.second,nodeRecordToStringMap,{';'},{'='});
+
+			__SUP_COUTV__(StringMacros::mapToString(nodeRecordToStringMap));
+
+			for(auto& nodePair:nodeRecordToStringMap)
+			{
+				__SUP_COUTV__(StringMacros::decodeURIComponent(nodePair.first));
+
+				std::vector<std::string /*property*/> nodePropertyVector;
+
+				StringMacros::getVectorFromString(nodePair.second,nodePropertyVector,{','});
+
+				__SUP_COUTV__(StringMacros::vectorToString(nodePropertyVector));
+
+				//decode all properties
+				for(unsigned int i=0;i<nodePropertyVector.size();++i)
+				{
+					__SUP_COUTV__(StringMacros::decodeURIComponent(nodePropertyVector[i]));
+
+					nodePropertyVector[i] = StringMacros::decodeURIComponent(nodePropertyVector[i]);
+				}
+
+
+				nodeTypeToObjectMap[typePair.first].emplace(
+						std::make_pair(
+								StringMacros::decodeURIComponent(nodePair.first),
+								nodePropertyVector));
+			}
+		}
+	} //end node object extraction from nodeString
+
+
+	//start subsystem object extraction from subsystemString
+	std::map<std::string /*subsystemName*/,
+		std::string /*destinationSubsystemName*/> subsystemObjectMap;
+	{
+		//subsystemString format:
+		//	<name>:<destination>;<name>:<destination>; ...;
+		//	repeat ; separated subsystems
+
+		std::map<std::string /*subsystemName*/,
+			std::string /*destinationSubsystemName*/> tmpSubsystemObjectMap;
+		StringMacros::getMapFromString(subsystemString,tmpSubsystemObjectMap,{';'},{':'});
+
+		__SUP_COUTV__(StringMacros::mapToString(tmpSubsystemObjectMap));
+
+		//decode all values (probably unnecessary, but more future proof)
+		for(auto& subsystemPair:tmpSubsystemObjectMap)
+		{
+			__SUP_COUTV__(StringMacros::decodeURIComponent(subsystemPair.first));
+			__SUP_COUTV__(StringMacros::decodeURIComponent(subsystemPair.second));
+
+			subsystemObjectMap.emplace(
+					std::make_pair(
+							StringMacros::decodeURIComponent(subsystemPair.first),
+							StringMacros::decodeURIComponent(subsystemPair.second)));
+		}
+	} //end subsystem object extraction from subsystemString
+
+
+	ARTDAQTableBase::setAndActivateArtdaqSystem(cfgMgr,nodeTypeToObjectMap,subsystemObjectMap);
+
+	__SUP_COUT__ << "Done saving artdaq nodes." << __E__;
 } //end handleSaveArtdaqNodeRecordsXML()
 
 //========================================================================================================================

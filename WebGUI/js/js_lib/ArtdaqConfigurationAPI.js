@@ -191,7 +191,7 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 						{
 							"label":			subsystems[j].getAttribute('value'),
 							"sourcesCount":		subsystemSourcesCount[j].getAttribute('value'),
-							"destination":		subsystemDestination[j].getAttribute('value'),
+							"destinationId":	(subsystemDestination[j].getAttribute('value') | 0) /*integer*/,
 						};
 				}
 				
@@ -224,7 +224,7 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 // <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
 //
 //		subsystemObj = {}
-//			subsystemObj.<subsystemName> = {destination}
+//			subsystemObj.<subsystemName> = {destinationName}
 //
 ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject, responseHandler,
 		modifiedTables)
@@ -240,37 +240,40 @@ ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 				modifiedTables[i].tableVersion;
 	}
 	
-	var nodeStr = "";
-	var subsystemStr = "";
+	var nodeString = "";
+	var subsystemString = "";
 	
 	for(var i in nodesObject)
 	{
-		nodeStr += encodeURIComponent(i) + ":";
+		nodeString += encodeURIComponent(i) + ":";
 		for(var j in nodesObject[i])
 		{
-			nodeStr += encodeURIComponent(j) + "=";
-			nodeStr += encodeURIComponent(nodesObject[i][j].originalHostname) + ",";
-			nodeStr += encodeURIComponent(nodesObject[i][j].hostname) + ",";
-			nodeStr += encodeURIComponent(nodesObject[i][j].subsystemName) + "";
-			nodeStr += ";"; //end node
+			nodeString += encodeURIComponent(j) + "=";
+			
+			//map undefined to "" so it is not confused with an actual record UID
+			nodeString += encodeURIComponent(nodesObject[i][j].originalName === undefined?"":nodesObject[i][j].originalName) + ",";
+			
+			nodeString += encodeURIComponent(nodesObject[i][j].hostname) + ",";
+			nodeString += encodeURIComponent(nodesObject[i][j].subsystemName) + "";
+			nodeString += ";"; //end node
 		}
-		nodeStr += "|"; //end artdaq type		
+		nodeString += "|"; //end artdaq type		
 	}
 	for(var i in subsystemsObject)
 	{
-		subsystemStr += encodeURIComponent(i) + ":";
-		subsystemStr += encodeURIComponent(subsystemStr[i].destination);
-		subsystemStr += ";"; //end subsystem 	
+		subsystemString += encodeURIComponent(i) + ":";
+		subsystemString += encodeURIComponent(subsystemsObject[i].destinationName);
+		subsystemString += ";"; //end subsystem 	
 	}
 	
-	console.log("nodeStr",nodeStr);
-	console.log("subsystemStr",subsystemStr);
+	console.log("nodeString",nodeString);
+	console.log("subsystemStr",subsystemString);
 
 	//get active configuration group
 	DesktopContent.XMLHttpRequest("Request?RequestType=saveArtdaqNodes",			
 			"modifiedTables=" + modifiedTablesListStr + 
-			"&nodeStr=" + nodeStr +
-			"&subsystemStr=" + subsystemStr, //end post data, 
+			"&nodeString=" + nodeString +
+			"&subsystemString=" + subsystemString, //end post data, 
 			function(req) 
 			{
 		console.log("response",req);

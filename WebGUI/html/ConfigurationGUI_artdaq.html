@@ -76,7 +76,7 @@
 		var _selectedNodes = {}; //selected nodes get highlighted with paint()
 		
 		var _subsystems = {}; //object describing artdaq subsystems
-						// id: {label, sourcesCount, destination}
+						// id: {label, sourcesCount, destinationId}
 		
 		var _hostnames = {}; //set of hostnames (i.e. map to 1)
 		
@@ -184,19 +184,31 @@
 		{									
 			Debug.log("CfgGUI_artdaq init ");			
 			
-			
+			var windowTooltip = "Welcome to the <i>artdaq</i> Configuration GUI. Here you can manipulate every configuration " +
+					"parameter associated with the <i>artdaq</i> nodes in your system. \n\n" +
+					"The organization of the <i>artdaq</i> Configuration GUI is as follows: " +
+					"there are control buttons at the top-left of the window, and the body of the window" +
+					" is an interactive grid for editing the <i>artdaq</i> nodes in your system. \n\n" +
+					"There are two control buttons at the top-left of the window, along with a status string: \n\n" +
+					"\n\t- <b>Choose Active Configuration:</b>\n<INDENT>This button opens a dialog to select the active Context and Configuration group, which together fully define the <i>artdaq</i> nodes in your system.</INDENT>" +
+					"\n\t- <b>Save Changes:</b>\n<INDENT>This buttons saves any changes your make to the <i>artdaq</i> node topology and settings, and will create and activate new a Context and Configuration group depending on the changes made.</INDENT>" +
+					"\n\t- <b>Status string:</b>\n<INDENT>A multi-color status string will appear, next to the buttons, in context with user actions.</INDENT>" +
+					"\n\n" +
+					"The remaining body of the window is a canvas for visualizing and manipulating <i>artdaq</i> nodes. Briefly, here is a description of the main canvas: \n\n" +
+					"\n\t- <b>Grid:</b>\n<INDENT>The grid is an X,Y coordinate plane purely for visualization convenience. <i>artdaq</i> nodes can be create, dragged, and placed at each X,Y coordinate. The grid can be re-sized by adding rows and columns using the arrows at each edge of the grid..</INDENT>" +
+					"\n\t- <b>Nodes:</b>\n<INDENT>Each <i>artdaq</i> node or multi-node is represented by a square at an X,Y coordinate position on the grid. Hovering your mouse cursor over a node will bring up icons for manipulating the node. Nodes can be repositioned by dragging the node. Nodes can be connected to other nodes by dragging from one of the four anchors to another node's anchor. Making arrow connections has implications on subsystem topology; also, only certain node types are valid connections. Pop-up context errors and info will validate attempted user connections.</INDENT>" +
+					"\n\t- <b>Subsystems:</b>\n<INDENT>The subsystem concept in <i>artdaq</i> defines the rules for data transfer between node types. Subsystem are color coordinated in the <artdaq> Configuration GUI.</INDENT>" +
+					"\n\t- <b>Arrows:</b>\n<INDENT>Arrows indicate data flow from one node to another, and from one subsystem to another.</INDENT>" +
+					"\n\n" +
+					"";
 
-			//			DesktopContent.tooltip("Configuration-Subset GUI Introduction",
-			//					"Welcome to the Configuration-Subset GUI targeting " + _recordsAlias + 
-			//					". Here you can manipulate the fields "+
-			//					"of a subset of your <i>otsdaq</i> system. \n\n" +
-			//					"The organization of the Configuration-Subset GUI is in the form of two panes, a left and right.\n\n" +
-			//
-			//					"Briefly, here is a description of the two panes: " +
-			//					"\n\t- 'Left Pane' is for selecting one or many records to target." +
-			//					"\n\t- 'Right Pane' is for modifying the common fields associated with the selected records."
-			//			);
 
+			DesktopContent.tooltip("artdaq Configuration GUI Introduction",
+					windowTooltip
+			);
+			DesktopContent.setWindowTooltip(windowTooltip);
+
+		
 			if(0) //example nodes and arrows
 			{
 				var x = 0;
@@ -425,38 +437,44 @@
 			// <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
 			//
 			//		subsystemObj = {}
-			//			subsystemObj.<subsystemName> = {destination}
-			var nodeObj = {};
-			var subsystemObj = {};
+			//			subsystemObj.<subsystemName> = {destinationName}
+			var nodesObj = {};
+			var subsystemsObj = {};
 
 			var types = ArtdaqConfigurationAPI.NODE_TYPES;
 
 			for(var i=0;i<types.length;++i)
-				nodeObj[types[i]] = {};
+				nodesObj[types[i]] = {};
 			
 			var type,name,node;
 			for(var i=0;i<_nodes.length;++i)
 			{
 				node = _nodes[i];
-				type = node.type;
+				type = types[node.type];
 				name = node.name;
-				nodeObj[type][name] = {};
-				nodeObj[type][name].originalName = node.originalName;
-				nodeObj[type][name].hostname = node.hostname;
-				nodeObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
+				nodesObj[type][name] = {};
+				nodesObj[type][name].originalName = node.originalName;
+				nodesObj[type][name].hostname = node.hostname;
+				nodesObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
 			
-				subsystemObj[_subsystems[node.subsystemId].label] = {};
-				if(subsystemObj[_subsystems[node.subsystemId].label].destination !== undefined &&
-						subsystemObj[_subsystems[node.subsystemId].label].destination != 
-								_subsystems[node.subsystemId].destination)
+				subsystemsObj[_subsystems[node.subsystemId].label] = {};
+				if(subsystemsObj[_subsystems[node.subsystemId].label].destinationName !== undefined &&
+						subsystemsObj[_subsystems[node.subsystemId].label].destinationName != 
+								_subsystems[_subsystems[node.subsystemId].destinationId].label)
 				{
 					//should never have a destination mismatch
 					Debug.log("Illegal destination mismatch! Notify admins.", Debug.HIGH_PRIORITY);
 					return;
 				}
-				subsystemObj[_subsystems[node.subsystemId].label].destination = _subsystems[node.subsystemId].destination;
+				subsystemsObj[_subsystems[node.subsystemId].label].destinationName =
+						_subsystems[_subsystems[node.subsystemId].destinationId].label;
 			}
 			
+			ArtdaqConfigurationAPI.saveArtdaqNodes(nodesObj, subsystemsObj,
+					function(response)
+					{
+				console.log("response",response);
+					}); //end saveArtdaqNodes response handler
 		} //end save()	
 		
 		//=====================================================================================
@@ -491,7 +509,7 @@
 				}
 				else if(_nodes[i].type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER)
 				{
-					var destinationId = _subsystems[_nodes[i].subsystemId].destination|0;
+					var destinationId = _subsystems[_nodes[i].subsystemId].destinationId|0;
 					
 					//connect to all board readers at destination
 					for(var j=0;j<_nodes.length;++j)
