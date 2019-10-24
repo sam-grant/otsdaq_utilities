@@ -187,11 +187,12 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//	deleteTreeNodeRecords
 	//		---- end associated with JavaScript Table API
 	//
-	//		---- associated with JavaScript artdaq Table API
+	//		---- associated with JavaScript artdaq API
 	//	getArtdaqNodes
+    //	saveArtdaqNodes
 	//  loadArtdaqNodeLayout
 	//  saveArtdaqNodeLayout
-	//		---- end associated with JavaScript artdaq Table API
+	//		---- end associated with JavaScript artdaq API
 	//
 	//	activateTableGroup
 	//	getActiveTableGroups
@@ -980,6 +981,14 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUTV__(modifiedTables);
 
 		handleGetArtdaqNodeRecordsXML(xmlOut, cfgMgr, modifiedTables);
+	}
+	else if(requestType == "saveArtdaqNodes")
+	{
+		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+
+		__SUP_COUTV__(modifiedTables);
+
+		handleSaveArtdaqNodeRecordsXML(xmlOut, cfgMgr, modifiedTables);
 	}
 	else if(requestType == "loadArtdaqNodeLayout")
 	{
@@ -6291,6 +6300,41 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 	__SUP_COUT__ << "Done getting artdaq nodes." << __E__;
 
 }  // end handleGetArtdaqNodeRecordsXML()
+
+//========================================================================================================================
+// handleSaveArtdaqNodeRecordsXML
+//	save artdaq nodes into active groups
+//
+// parameters
+//	modifiedTables := CSV of table/version pairs
+//
+void ConfigurationGUISupervisor::handleSaveArtdaqNodeRecordsXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      modifiedTables)
+{
+	__COUT__ << "Saving artdaq nodes..." << __E__;
+
+	//	setup active tables based on active groups and modified tables
+	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
+
+	const XDAQContextTable* contextTable = cfgMgr->__GET_CONFIG__(XDAQContextTable);
+
+	// for each artdaq context, output all artdaq apps
+
+	const XDAQContextTable::XDAQContext* artdaqContext =
+	    contextTable->getTheARTDAQSupervisorContext();
+
+	const ARTDAQTableBase::ARTDAQAppType artdaqProcessTypes[] = {
+			ARTDAQTableBase::ARTDAQAppType::BoardReader,
+			ARTDAQTableBase::ARTDAQAppType::EventBuilder,
+			ARTDAQTableBase::ARTDAQAppType::DataLogger,
+			ARTDAQTableBase::ARTDAQAppType::Dispatcher
+	};
+
+	const std::string typeString = "artdaqSupervisor";
+	__COUT__ << "Done saving artdaq nodes." << __E__;
+} //end handleSaveArtdaqNodeRecordsXML()
 
 //========================================================================================================================
 // handleLoadArtdaqNodeLayoutXML

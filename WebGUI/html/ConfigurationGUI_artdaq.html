@@ -131,6 +131,7 @@
 			//htmlClearDiv()
 			//init()	
 			//initArrows()
+			//save()
 		
 			//openActiveGroupsDialog()
 			//nodeLayoutHasChanged()
@@ -161,6 +162,8 @@
 			//handleEditIconMouseUp(i,e)
 			//handleEditIconMenuSelection(i)
 			//launchEditNodeDialog(i)
+			//		localCloseButtonHandler()
+			//		getElementById("ediNode-" + "saveNode").onclick()
 			//handleEditNodeDialogMultiNodeCheckbox(i)
 			//handleEditNodeSelectEditIcon(t)
 		
@@ -409,10 +412,59 @@
 		} //end init()	
 
 		//=====================================================================================
+		//save ~~
+		function save()
+		{
+			Debug.log("save()");
+			
+			//create node object by type for save function from _nodes array
+			//		nodeObj := {}
+			//			nodeObj.<nodeType> = {}
+			//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName}
+			//
+			// <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
+			//
+			//		subsystemObj = {}
+			//			subsystemObj.<subsystemName> = {destination}
+			var nodeObj = {};
+			var subsystemObj = {};
+
+			var types = ArtdaqConfigurationAPI.NODE_TYPES;
+
+			for(var i=0;i<types.length;++i)
+				nodeObj[types[i]] = {};
+			
+			var type,name,node;
+			for(var i=0;i<_nodes.length;++i)
+			{
+				node = _nodes[i];
+				type = node.type;
+				name = node.name;
+				nodeObj[type][name] = {};
+				nodeObj[type][name].originalName = node.originalName;
+				nodeObj[type][name].hostname = node.hostname;
+				nodeObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
+			
+				subsystemObj[_subsystems[node.subsystemId].label] = {};
+				if(subsystemObj[_subsystems[node.subsystemId].label].destination !== undefined &&
+						subsystemObj[_subsystems[node.subsystemId].label].destination != 
+								_subsystems[node.subsystemId].destination)
+				{
+					//should never have a destination mismatch
+					Debug.log("Illegal destination mismatch! Notify admins.", Debug.HIGH_PRIORITY);
+					return;
+				}
+				subsystemObj[_subsystems[node.subsystemId].label].destination = _subsystems[node.subsystemId].destination;
+			}
+			
+		} //end save()	
+		
+		//=====================================================================================
 		//initArrows ~~
 		function initArrows()
 		{
 			Debug.log("initArrows()");
+			_arrows = {}; //reset
 			
 			//	 .. arrows should get generated at startup based on subsystem settings.
 			//	Readers -> all builders of same subsystem
@@ -595,7 +647,7 @@
 			if(j == 3)
 				rgb[subsystemId%3] = 150; 
 			
-			console.log("color sub",subsystemId,rgb);
+			//console.log("color sub",subsystemId,rgb);
 			
 			return "rgb(" + rgb[0] + "," + rgb[1] + "," + 
 					rgb[2] + ")";
@@ -1099,7 +1151,7 @@
 			if(xoff) x += xoff;
 			if(yoff) y += yoff;
 			
-			Debug.log("x,y,sz = " + x + "," + y + "," + sz);
+			//Debug.log("x,y,sz = " + x + "," + y + "," + sz);
 			
 			var typeClass = 
 					type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"nodeReader":
@@ -1119,7 +1171,7 @@
 					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Di":"Mo";
 						
 			
-			Debug.log("nodeid = " + nodeid + "; typeClass = " + typeClass);
+			//Debug.log("nodeid = " + nodeid + "; typeClass = " + typeClass);
 
 			//if node exists, get element
 			var el = document.getElementById(nodeid);
@@ -1147,7 +1199,7 @@
 				}
 				
 				if(count > 4) count = 4; //cap at 4
-				console.log("i,count",i,count);				
+				//console.log("i,count",i,count);				
 				
 				for(var p=count-1;p>=0;--p)
 				{
@@ -1289,7 +1341,7 @@
 				{
 					xy0 = getNodePoint(i|0,_arrows[i][j].p0);
 					xy1 = getNodePoint(j|0,_arrows[i][j].p1);
-					console.log("xy01",xy0,xy1);
+					//console.log("xy01",xy0,xy1);
 					drawArrow(xy0[0],xy0[1],xy1[0],xy1[1]);
 				}
 			
@@ -2405,8 +2457,14 @@
 					
 					var nodeNameTemplate = document.getElementById("ediNode-" + "nodeName").value;
 					var nodeIndices = document.getElementById("ediNode-" + "nodeIndices").value;
-					var subsystem = document.getElementById("ediNode-" + "subsystem").value;
-					var hostname = document.getElementById("ediNode-" + "hostname").value;
+					var subsystem = document.getElementById("ediNode-" + 
+							"subsystem").style.display == "none"?
+									document.getElementById("ediNode-" + "subsystemText").value:
+									document.getElementById("ediNode-" + "subsystem").value;
+					var hostname = document.getElementById("ediNode-" + 
+							"hostname").style.display == "none"?
+									document.getElementById("ediNode-" + "hostnameText").value:
+									document.getElementById("ediNode-" + "hostname").value;
 					
 					Debug.log("Node name template = " + nodeNameTemplate);
 					Debug.log("Node indices = " + nodeIndices);
@@ -2509,16 +2567,17 @@
 						subsystemId = j+2;
 						Debug.log("Creating subsystem " + 
 								subsystemId + ":" + subsystem);
-						_susbsystems[subsystemId] = {"label" : subsystem};
+						_subsystems[subsystemId] = {"label" : subsystem};
+						console.log("_subsystems",_subsystems);
 					}
 					
 					if(_nodes[i].subsystemId != subsystemId)
 					{
 						Debug.log("handling subsystem change from " + 
 								_nodes[i].subsystemId + ":" + 
-								_susbsystems[j].label + " to " +
+								_subsystems[j].label + " to " +
 								_nodes[subsystemId].subsystemId + ":" + 
-								_susbsystems[subsystemId].label)
+								_subsystems[subsystemId].label)
 										
 						//remove from sources and destinations:
 						//	if reader, logger, dispatcher, monitor should be no effect
@@ -2529,6 +2588,7 @@
 						initArrows();
 					}
 					
+					console.log("_nodes[i]",_nodes[i]);
 					nodesHaveChanged();
 					
 					//delete element to force new paint
