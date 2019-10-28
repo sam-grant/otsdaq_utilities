@@ -83,39 +83,56 @@ void ControlsDashboardSupervisor::init(void)
 		    cs->interface_->initialize();
 
 		    std::vector<std::string> pvList;
+		    std::vector<int> pvRefreshRates;
 		    while(true)
 		    {
 		      pvList = {"FIRST VALUE"};
+		      pvRefreshRates = {};
 		      std::map<int, std::set<std::string>>::iterator mapReference = cs->pvDependencyLookupMap_.begin();
 		      while( mapReference != cs->pvDependencyLookupMap_.end()) //We have here current list of PV Dependencies
 		      {
-			for(auto pv : mapReference->second)
-			{
-			    for(size_t i = 0; i < pvList.size(); i++)
-			    {
-				if(pv != pvList[i] )
+				for(auto pv : mapReference->second)
 				{
-				    pvList.push_back(pv);
-				}
-				else
-				{
+				  int refreshRate = 1; //seconds
+				  if (pv.find(":") != pv.size() - 1){
+				    try {
+					  refreshRate = stoi(pv.substr(pv.find(":")+1))/1000.;
+					  pvRefreshRates.push_back(refreshRate);
+				    }catch (const std::exception& e) {continue;}
+				  }
+	
+				  pv = pv.substr(0,pv.find(":"));
+				  __COUT__  << "THREAD actual time: " << std::time(NULL) << "; uidPollTimeMap + 10 * refreshTime: " << cs->uidPollTimeMap_.at(mapReference->first) + 10*refreshRate << " seconds" << std::endl;
+				  if (std::time(NULL) > cs->uidPollTimeMap_.at(mapReference->first) + 10*refreshRate)
+				  {
+				    try {
+				   		cs->pvDependencyLookupMap_.erase(mapReference->first); 
+				    	continue;
+				    }catch (const std::exception& e) {continue;}
+				  }
+	
+				  std::vector<std::string>::iterator it = find (pvList.begin(), pvList.end(), pv);
+				  if (it == pvList.end())
+				  {
 				    cs->interface_->unsubscribe(pv);
 				    cs->interface_->subscribe(pv);
-				    __COUT__  << pv << " subscribed. " << "pvList pos:"  << i << " mapReference->second.size(): " << mapReference->second.size() << std::endl;
+				    pvList.push_back(pv);
+				    __COUT__  << "PV: " << pv << " refreshRate:  " << refreshRate << " seconds" << std::endl;
+				    __COUT__  << "pvDependencyLookupMap_.size(): " <<  cs->pvDependencyLookupMap_.size() << " UID: " << mapReference->first  << " mapReference->second.size(): " << mapReference->second.size() << std::endl;
+				  }
+
+				  sleep (1);
 				}
-				sleep (1);
-			    }
-			    //__COUT__  << "All client pvs subscribed." << std::endl;
-			    sleep (1);
-			}
-			mapReference++;
+				mapReference++;
 		      }
-		      //__COUT__  << "All pvs subscribed." << std::endl;
-		      sleep (30);
+		      int minTime =30; //seconds
+		      if (pvRefreshRates.size()>0) minTime = *min_element(pvRefreshRates.begin(), pvRefreshRates.end());
+		      sleep (minTime);
+		      __COUT__  << "Loop over pvs subscribing - waiting time: " << minTime << " seconds" << std::endl;
 		    }
 	    },
 	    this)
-	    .detach();  // thread completes after creating, subscribing, and getting
+	    .detach(); // thread completes after creating, subscribing, and getting
                 //	                // parameters for all pvs
 	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
@@ -224,6 +241,7 @@ void ControlsDashboardSupervisor::handleRequest(const std::string               
 	{
 		__SUP_COUT__ << "Archived PV data requested from server! " << std::endl;
 		GetPVArchiverData(cgiIn, xmlOut);
+		xmlOut.addTextElementToData("id", CgiDataUtilities::getData(cgiIn, "id"));
 	}
 	else if(Command == "getList")
 	{
@@ -273,15 +291,17 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 	   (mapReference = pvDependencyLookupMap_.find(std::stoi(UID))) !=
 	       pvDependencyLookupMap_.end())  // We have their current list of PV Dependencies
 	{
+	        uidPollTimeMap_.at(std::stoi(UID)) = std::time(NULL);
 		std::string JSONMessage = "{ ";
 
 		for(auto pv : mapReference->second)
 		{
+		        pv = pv.substr(0,pv.find(":"));
+
 			__SUP_COUT__ << pv << std::endl;
-			// PVInfo * pvInfo = interface_->mapOfPVInfo_.find(pv)->second;
-			//__SUP_COUT__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
-			// interface_->getCurrentPVValue(pv);
+
 			std::array<std::string, 4> pvInformation = interface_->getCurrentValue(pv);
+
 			__SUP_COUT__ << pv << ": " << pvInformation[1] << " : " << pvInformation[3]
 			             << std::endl;
 
@@ -349,12 +369,7 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 		                            "{ \"message\": \"NOT_FOUND\"}");  // add to response
 	}
 }
-//========================================================================================================================
-std::array<std::string, 4> ControlsDashboardSupervisor::getLastValue(std::string pvName)
-{
-	std::array<std::string, 4> pvInformation = interface_->getCurrentValue(pvName);
-	return pvInformation;
-}
+
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc&    cgiIn,
                                                 HttpXmlDocument& xmlOut)
@@ -417,6 +432,62 @@ void ControlsDashboardSupervisor::GetPVArchiverData(cgicc::Cgicc&    cgiIn,
 {
 	__SUP_COUT__ << "Requesting archived data!" << std::endl;
 
+	std::string pvList = CgiDataUtilities::postData(cgiIn, "PVList");
+
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
+	             << "Getting History for " << pvList << std::endl;
+
+	std::string JSONMessage = "{ ";
+
+	std::string pv;
+	size_t      pos = 0;
+	size_t      nextPos;
+	size_t      lastIndex = pvList.find_last_of(",");
+	std::cout << "**********************" << pvList.size() << std::endl;
+	if(pvList.size() > 0)
+	{
+		while((nextPos = pvList.find(",", pos)) != std::string::npos)
+		{
+			pv = pvList.substr(pos, nextPos - pos);
+
+			__SUP_COUT__ << pv << std::endl;
+			std::array<std::array<std::string, 5>, 10> pvInformation = interface_->getPVHistory(pv);
+			__SUP_COUT__ << pv << ": " << pvInformation[0][1] << " : " << pvInformation[0][3] << std::endl;
+
+			for(auto pvData : pvInformation)
+			{
+			  std::string JSONMessage = "{ ";
+			  JSONMessage += "\"" + pv + "\": {";
+			  JSONMessage += "\"Timestamp\":\"" + pvData[0] + "\",";
+			  JSONMessage += "\"Value\":\"" + pvData[1] + "\",";
+			  JSONMessage += "\"Status\":\"" + pvData[2] + "\",";
+			  JSONMessage += "\"Severity\":\"" + pvData[3] + "\"},";
+
+			  JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
+			  JSONMessage += "}";
+			  __SUP_COUT__ << JSONMessage << std::endl;
+			  xmlOut.addTextElementToData("JSON", JSONMessage);  // add to response
+			}
+
+			pos = nextPos + 1;
+		}
+
+		JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
+		JSONMessage += "}";
+
+		__SUP_COUT__ << JSONMessage << std::endl;
+		xmlOut.addTextElementToData("JSON", JSONMessage);  // add to response
+	}
+	else
+	{
+		__SUP_COUT__ << "Did not find any settings because PV list is length zero!"
+		             << std::endl;
+
+		xmlOut.addTextElementToData(
+		    "JSON", "{ \"message\": \"GetPVSettings\"}");  // add to response
+	}
+
+/*
 	// FAKE NEWS RESPONSE
 	//		xmlOut.addTextElementToData(
 	//		    "JSON",
@@ -464,8 +535,10 @@ void ControlsDashboardSupervisor::GetPVArchiverData(cgicc::Cgicc&    cgiIn,
 	std::string response = "";
 
 	return;
+*/
 
 }  // end GetPVArchiverData()
+
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetUserPermissions(
     cgicc::Cgicc&                    cgiIn,
@@ -474,6 +547,7 @@ void ControlsDashboardSupervisor::GetUserPermissions(
 {
 	return;
 }
+
 //========================================================================================================================
 void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
                                               HttpXmlDocument& xmlOut,
@@ -507,6 +581,8 @@ void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
 		    std::pair<int, std::set<std::string>>(++UID_, pvDependencies));
 
 		uid = (std::string("{ \"message\": \"") + std::to_string(UID_) + "\"}");
+
+		uidPollTimeMap_.insert( std::pair<int, long int>(UID_, std::time(NULL)));
 	}
 	else
 	{
@@ -773,6 +849,7 @@ bool ControlsDashboardSupervisor::isDir(std::string dir)
 		return false;
 	}
 }
+
 //========================================================================================================================
 void ControlsDashboardSupervisor::listFiles(std::string               baseDir,
                                             bool                      recursive,

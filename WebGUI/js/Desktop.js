@@ -470,18 +470,18 @@ Desktop.createDesktop = function(security) {
 	    
 	    //system messages check (and submit current window layout)
 	    ++_sysMsgCounter;
-		if(_sysMsgCounter == _SYS_MSG_MAX_COUNT)
-		{  		
-			//windows can request a blackout, to avoid logging out 
-			if(_blockSystemCheckMailbox.innerHTML == "1" || 
-					Desktop.desktop.login.isBlackout())
-			{
-				Debug.log("System blackout (likely rebooting)...");
-				_sysMsgCounter = 0; // reset since not going to handler
-			}
-			else
-				Desktop.XMLHttpRequest("Request?RequestType=getSystemMessages","",_handleSystemMessages);
+	    if(0)//_sysMsgCounter == _SYS_MSG_MAX_COUNT)
+	    {  		
+		//windows can request a blackout, to avoid logging out 
+		if(_blockSystemCheckMailbox.innerHTML == "1" || 
+		   Desktop.desktop.login.isBlackout())
+		{
+		    Debug.log("System blackout (likely rebooting)...");
+		    _sysMsgCounter = 0; // reset since not going to handler
 		}
+		else
+		    Desktop.XMLHttpRequest("Request?RequestType=getSystemMessages","",_handleSystemMessages);
+	    }
 	}
 	
 	//===========================================================

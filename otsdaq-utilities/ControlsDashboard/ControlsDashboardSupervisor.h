@@ -58,7 +58,6 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 	                      const WebUsers::RequestUserInfo& userInfo);
 	void Subscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void Unsubscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
-	std::array<std::string, 4> getLastValue(std::string pvName);
 
 	// Utilities, eventually to be moved
 	bool isDir(std::string dir);
@@ -73,6 +72,7 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 	//    RemoteWebUsers							theRemoteWebUsers_;
 	//	std::string                             username;
 	std::map<int, std::set<std::string>> pvDependencyLookupMap_;
+	std::map<int, long int>              uidPollTimeMap_;
 	int                                  UID_;
 
   public:
