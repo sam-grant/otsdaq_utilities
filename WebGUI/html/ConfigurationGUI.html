@@ -12336,9 +12336,11 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases" +
 					"",
 					"",
-					function (req) {
+					function (req) 
+					{
 						var err = DesktopContent.getXMLValue(req, "Error");
-						if (err) {
+						if (err) 
+						{
 							Debug.log(err, Debug.HIGH_PRIORITY);
 
 							localFinishDialog();
@@ -12366,7 +12368,8 @@
 
 							//find alias
 							modTblStr = ""; //re-use
-							for (var j = 0; j < aliasGroupNames.length; ++j) {
+							for (var j = 0; j < aliasGroupNames.length; ++j)
+							{
 								alias = DesktopContent.getXMLValue(aliases[j]);
 								aliasGroupName = DesktopContent.getXMLValue(aliasGroupNames[j]);
 								aliasGroupKey = DesktopContent.getXMLValue(aliasGroupKeys[j]);
@@ -12378,9 +12381,11 @@
 								modTblStr += "<option value='" + alias + "' ";
 
 								//consider any alias with same groupName
-								if (aliasGroupName == groupName) {
+								if (aliasGroupName == groupName) 
+								{
 									if (groupOptionIndex[i][0] == -1 ||	//take best match
-										Math.abs(groupKey - aliasGroupKey) < groupOptionIndex[i][1]) {
+										Math.abs(groupKey - aliasGroupKey) < groupOptionIndex[i][1]) 
+									{
 										Debug.log("found alias");
 										groupOptionIndex[i][0] = j; //index
 										groupOptionIndex[i][1] = Math.abs(groupKey - aliasGroupKey); //distance
@@ -15245,8 +15250,8 @@
 				tel.parentNode.style.width = ((sel.offsetWidth > 150 ? sel.offsetWidth : 150) + 50) + "px"; //div may need to expand to accomodate pencil is display				
 				sel.style.display = "none";
 
-				if (tel.value == "") //fill with oldvalue for user convenience, if blank
-					tel.value = _editingCellElOldValue;
+				if (tel.value == "") //take value from select (rather than old value)
+					tel.value = sel.value; //_editingCellElOldValue;
 
 				tel.style.display = "block";
 				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);

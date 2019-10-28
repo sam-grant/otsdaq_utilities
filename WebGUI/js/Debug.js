@@ -286,7 +286,7 @@ Debug.errorPop = function(err,severity) {
 			el.style.display = "none";
 			var str = "<a class='" + 
 				Debug._errBoxId + 
-				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmouseup='event.stopPropagation();'>Close Errors</a>";
+				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmouseup='event.stopPropagation();' onmousedown='event.stopPropagation();'>Close Errors</a>";
 			str = 
 					"<div class='" + 
 					Debug._errBoxId + 
@@ -302,7 +302,7 @@ Debug.errorPop = function(err,severity) {
 				"<div style='color:white;font-size:16px;padding-bottom:5px;'>" +
 				"Note: Newest messages are at the top." +
 				"<label style='color:white;font-size:11px;'><br>(Press [ESC] to close and [SHIFT + ESC] to re-open)</font>" +
-				"<div id='downloadIconDiv' onmouseup='Debug.downloadMessages()' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
+				"<div id='downloadIconDiv' onclick='Debug.downloadMessages()' onmouseup='event.stopPropagation();' onmousedown='event.stopPropagation();' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
 				//make download arrow
 					"<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: white;'></div>" +
 					"<div style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid white;'></div>" +

@@ -607,7 +607,7 @@ DesktopContent.hideLoading = function()	{
 			return;
 		
 		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
-		Debug.log("DesktopContent.hideLoading");
+		//Debug.log("DesktopContent.hideLoading");
 		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
 		
 	} //end localHideLoadBox
@@ -1621,8 +1621,8 @@ DesktopContent.getColorAsRGBA = function(colorStr) {
 
 //=====================================================================================
 //get window and mouse info ~~
-DesktopContent.getWindowWidth = function() { return window.innerWidth; }
-DesktopContent.getWindowHeight = function() { return window.innerHeight; }
+DesktopContent.getWindowWidth = function() { return window.innerWidth-1; } //-1 to avoid weird rounding effects by browser that cause scroll bars
+DesktopContent.getWindowHeight = function() { return window.innerHeight-1; } //-1 to avoid weird rounding effects by browser that cause scroll bars
 DesktopContent.getBodyWidth = function() { return document.body.offsetWidth; }
 DesktopContent.getBodyHeight = function() { return document.body.offsetHeight; }
 DesktopContent.getWindowScrollLeft = function() { return document.documentElement.scrollLeft || document.body.scrollLeft || 0; }

@@ -173,6 +173,13 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 		       buffer, 1 /*timeoutSeconds*/, 0 /*timeoutUSeconds*/, false /*verbose*/) !=
 		   -1)
 		{
+			//use 1-byte "ping" to keep socket alive
+			if(buffer.size() == 1)
+			{
+				//std::cout << "Ping!" << __E__;
+				continue;
+			}
+
 			if(i != 200)
 			{
 				__COUT__ << "Console has first message." << __E__;
@@ -251,20 +258,20 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			// every 60 heartbeatCount (2 seconds each = 1 sleep and 1 timeout) print a
 			// heartbeat message
 			if(i != 200 ||                // show first message, if not already a message
-			                              //(heartbeatCount < 60 * 5 &&
-			   heartbeatCount % 60 == 59  //)
+					(heartbeatCount < 60 * 5 &&
+							heartbeatCount % 60 == 59  )
 			   )                          // every ~2 min for first 5 messages
 			{
 				++selfGeneratedMessageCount;  // increment internal message count
 				__MOUT__ << "Console is alive and waiting... (if no messages, next "
-				            "heartbeat is in approximately two minutes)"
+				            "heartbeat is in two minutes)"
 				         << std::endl;
 			}
 			else if(heartbeatCount % (60 * 30) == 59)  // approx every hour
 			{
 				++selfGeneratedMessageCount;  // increment internal message count
 				__MOUT__ << "Console is alive and waiting a long time... (if no "
-				            "messages, next heartbeat is in approximately one hour)"
+				            "messages, next heartbeat is in one hour)"
 				         << std::endl;
 			}
 

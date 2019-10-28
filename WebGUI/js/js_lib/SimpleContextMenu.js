@@ -155,6 +155,7 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 				//"this.style.backgroundColor = \"" + secondaryColor + "\"; " +
 				//"this.style.color = \"" + primaryColor + "\"; ";
 				//"' " +
+				"onmousedown='event.stopPropagation();' " +
 				"onmouseup='SimpleContextMenu.callMenuItemHandler(event," + i + ");' " +
 				">" +
 				menuItems[i] +
@@ -243,6 +244,7 @@ SimpleContextMenu.callMenuItemHandler = function(event,index) {
 
 	event.cancelBubble = true;
 	event.preventDefault();
+	event.stopPropagation();
 	
 	//Debug.log("SimpleContextMenu.callMenuItemHandler " + handler);
 	if(handler && (typeof handler) == "string") //if handler supplied as string

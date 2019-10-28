@@ -34,8 +34,8 @@
 		}
 		#leftPane {
 			/*background-color : rgb(241, 231, 231);*/
-			overflow-x: scroll;
-			overflow-y: scroll;
+			overflow-x: auto;
+			overflow-y: auto;
 			
 		    border-top: 1px solid rgb(224, 196, 196);
 						
@@ -416,6 +416,13 @@
 			//get grouping field values
 			//	for record list
 			_rightPaneFields.innerHTML = ""; //clear any existing fields
+			
+			if(!vals.length)
+			{
+				Debug.log("No records match filters, so not proceeding with field lookup.");
+				return;
+			}
+			
 			ConfigurationAPI.getFieldsOfRecords(
 					_subsetBasePath,
 					_subsetUIDs,

@@ -16,20 +16,7 @@
 //				<script type="text/JavaScript" src="/WebPath/js/js_lib/ArtdaqConfiguraitonAPI.js"></script>
 //
 //		...anywhere inside the <head></head> tag of a window content html page
-//	 2. for proper functionality certain handlers are used:
-//   		cannot overwrite handlers for window: onfocus, onscroll, onblur, onmousemove
-//			(if you must overwrite, try to call the DesktopContent handlers from your handlers)
 //
-//	Recommendations:
-//	 1. use Debug to output status and errors, e.g.:
-//				Debug.log("this is my status",Debug.LOW_PRIORITY); //LOW_PRIORITY, MED_PRIORITY, INFO_PRIORITY, WARN_PRIORITY, HIGH_PRIORITY
-//	 2. call window.focus() to bring your window to the front of the Desktop
-//
-//	The code of Requirement #1 should be inserted in the header of each page that will be 
-//  the content of a window in the ots desktop.
-//
-//  This code handles bringing the window to the front when the content
-//  is clicked or scrolled.
 //
 // Example usage: 	/WebPath/html/ConfigurationGUI_artdaq.html
 //
@@ -37,29 +24,32 @@
 
 var ArtdaqConfigurationAPI = ArtdaqConfigurationAPI || {}; //define ArtdaqConfigurationAPI namespace
 
-if (typeof Debug == 'undefined') 
-	alert('ERROR: Debug is undefined! Must include Debug.js before ConfigurationAPI.js');
-if (typeof Globals == 'undefined') 
-	alert('ERROR: Globals is undefined! Must include Globals.js before ConfigurationAPI.js');
-if (typeof DesktopContent == 'undefined' && 
-		typeof Desktop == 'undefined') 
-	alert('ERROR: DesktopContent is undefined! Must include DesktopContent.js before ConfigurationAPI.js');
-
+if (typeof ConfigurationAPI == 'undefined') 
+	alert('ERROR: ConfigurationAPI is undefined! Must include ConfigurationAPI.js before ArtdaqConfigurationAPI.js');
 
 //"public" function list: 
 //	ArtdaqConfigurationAPI.getArtdaqNodes(responseHandler,modifiedTables)
+//	ArtdaqConfigurationAPI.saveArtdaqNodes(responseHandler,modifiedTables)
 
 //"public" helpers:
 
 //"public" members:
 
 //"public" constants:
+ArtdaqConfigurationAPI.NODE_TYPE_READER 		= 0;
+ArtdaqConfigurationAPI.NODE_TYPE_BUILDER 		= 1;
+ArtdaqConfigurationAPI.NODE_TYPE_LOGGER 		= 2;
+ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER 	= 3;
+ArtdaqConfigurationAPI.NODE_TYPE_MONITOR 		= 4;
 ArtdaqConfigurationAPI.NODE_TYPES = ["reader","builder",
 									 "logger","dispatcher","monitor"];
 
 //"private" function list:
 
 //"private" constants:
+
+
+//Function definitions:
 
 //=====================================================================================
 //getArtdaqNodes ~~
@@ -68,13 +58,16 @@ ArtdaqConfigurationAPI.NODE_TYPES = ["reader","builder",
 //	when complete, the responseHandler is called with an object parameter.
 //		on failure, the object will be empty.
 //		on success, the object of Active artdaq nodes
-//		artdaqNodes := {}
-//			artdaqNodes.<nodeType> = {}
-//			artdaqNodes.<nodeType>.<nodeName> = {} //for now node empty, but could put context url/etc., or just look it up as needed with server
+//		retObj := {}
+//			retObj.<nodeType> = {}
+//			retObj.<nodeType>.<nodeName> = {hostname,subsystemId}
 //			...
+//			retObj.subsystems = {}
+//			retObj.subsystems.<subsystemId> = {label,sourcesCount,destination}
 //
-//		<nodeType> = reader, builder, aggregator, dispatcher
+//		<nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
 //
+//		
 ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 		modifiedTables)
 {	
@@ -198,7 +191,7 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 						{
 							"label":			subsystems[j].getAttribute('value'),
 							"sourcesCount":		subsystemSourcesCount[j].getAttribute('value'),
-							"destination":		subsystemDestination[j].getAttribute('value'),
+							"destinationId":	(subsystemDestination[j].getAttribute('value') | 0) /*integer*/,
 						};
 				}
 				
@@ -221,7 +214,78 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 	
 } // end getArtdaqNodes()
 
+//====================================================================================
+//saveArtdaqNodes ~~
+//	save artdaq nodes and subsystems to active groups (with modified tables)
+//		nodeObj := {}
+//			nodeObj.<nodeType> = {}
+//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName}
+//
+// <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
+//
+//		subsystemObj = {}
+//			subsystemObj.<subsystemName> = {destinationName}
+//
+ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject, responseHandler,
+		modifiedTables)
+{	
+	console.log("nodesObject",nodesObject);
+	console.log("subsystemsObject",subsystemsObject);
+	
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+	
+	var nodeString = "";
+	var subsystemString = "";
+	
+	for(var i in nodesObject)
+	{
+		nodeString += encodeURIComponent(i) + ":";
+		for(var j in nodesObject[i])
+		{
+			nodeString += encodeURIComponent(j) + "=";
+			
+			//map undefined to "" so it is not confused with an actual record UID
+			nodeString += encodeURIComponent(nodesObject[i][j].originalName === undefined?"":nodesObject[i][j].originalName) + ",";
+			
+			nodeString += encodeURIComponent(nodesObject[i][j].hostname) + ",";
+			nodeString += encodeURIComponent(nodesObject[i][j].subsystemName) + "";
+			nodeString += ";"; //end node
+		}
+		nodeString += "|"; //end artdaq type		
+	}
+	for(var i in subsystemsObject)
+	{
+		subsystemString += encodeURIComponent(i) + ":";
+		subsystemString += encodeURIComponent(subsystemsObject[i].destinationName);
+		subsystemString += ";"; //end subsystem 	
+	}
+	
+	console.log("nodeString",nodeString);
+	console.log("subsystemStr",subsystemString);
 
+	//get active configuration group
+	DesktopContent.XMLHttpRequest("Request?RequestType=saveArtdaqNodes",			
+			"modifiedTables=" + modifiedTablesListStr + 
+			"&nodeString=" + nodeString +
+			"&subsystemString=" + subsystemString, //end post data, 
+			function(req) 
+			{
+		console.log("response",req);
+		//responseHandler(localExtractActiveArtdaqNodes(req));
+			},
+			0,0,true  //reqParam, progressHandler, callHandlerOnErr
+	); //end of getActiveTableGroups handler
+
+	return;
+	
+	
+} // end saveArtdaqNodes()
 
 
 
