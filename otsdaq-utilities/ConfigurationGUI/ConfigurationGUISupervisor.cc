@@ -6198,7 +6198,8 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 			ARTDAQTableBase::ARTDAQAppType::BoardReader,
 			ARTDAQTableBase::ARTDAQAppType::EventBuilder,
 			ARTDAQTableBase::ARTDAQAppType::DataLogger,
-			ARTDAQTableBase::ARTDAQAppType::Dispatcher
+			ARTDAQTableBase::ARTDAQAppType::Dispatcher,
+			ARTDAQTableBase::ARTDAQAppType::Monitor
 	};
 
 	const std::string typeString = "artdaqSupervisor";
@@ -6325,22 +6326,6 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeRecordsXML(
 	//	setup active tables based on active groups and modified tables
 	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
 
-	const XDAQContextTable* contextTable = cfgMgr->__GET_CONFIG__(XDAQContextTable);
-
-	// for each artdaq context, output all artdaq apps
-
-	const XDAQContextTable::XDAQContext* artdaqContext =
-	    contextTable->getTheARTDAQSupervisorContext();
-
-	const ARTDAQTableBase::ARTDAQAppType artdaqProcessTypes[] = {
-			ARTDAQTableBase::ARTDAQAppType::BoardReader,
-			ARTDAQTableBase::ARTDAQAppType::EventBuilder,
-			ARTDAQTableBase::ARTDAQAppType::DataLogger,
-			ARTDAQTableBase::ARTDAQAppType::Dispatcher
-	};
-
-	const std::string typeString = "artdaqSupervisor";
-
 
 	//start node object extraction from nodeString
 	std::map<std::string /*type*/,
@@ -6358,7 +6343,7 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeRecordsXML(
 
 		for(auto& typePair:nodeTypeToStringMap)
 		{
-			if(typePair.first == "") continue;
+			if(typePair.first == "") continue; //skip empty names
 
 			__SUP_COUTV__(StringMacros::decodeURIComponent(typePair.first));
 
@@ -6376,6 +6361,8 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeRecordsXML(
 
 			for(auto& nodePair:nodeRecordToStringMap)
 			{
+				if(nodePair.first == "") continue;  //skip empty names
+
 				__SUP_COUTV__(StringMacros::decodeURIComponent(nodePair.first));
 
 				std::vector<std::string /*property*/> nodePropertyVector;
@@ -6452,11 +6439,11 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 
 	const std::string& finalContextGroupName =
 	    usingActiveGroups
-	        ? cfgMgr->getActiveGroupName(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        ? cfgMgr->getActiveGroupName(ConfigurationManager::GroupType::CONTEXT_TYPE)
 	        : contextGroupName;
 	const TableGroupKey& finalContextGroupKey =
 	    usingActiveGroups
-	        ? cfgMgr->getActiveGroupKey(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        ? cfgMgr->getActiveGroupKey(ConfigurationManager::GroupType::CONTEXT_TYPE)
 	        : contextGroupKey;
 
 	std::stringstream layoutPath;
@@ -6533,11 +6520,11 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
 
 	const std::string& finalContextGroupName =
 	    usingActiveGroups
-	        ? cfgMgr->getActiveGroupName(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        ? cfgMgr->getActiveGroupName(ConfigurationManager::GroupType::CONTEXT_TYPE)
 	        : contextGroupName;
 	const TableGroupKey& finalContextGroupKey =
 	    usingActiveGroups
-	        ? cfgMgr->getActiveGroupKey(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        ? cfgMgr->getActiveGroupKey(ConfigurationManager::GroupType::CONTEXT_TYPE)
 	        : contextGroupKey;
 
 	__SUP_COUTV__(layoutString);

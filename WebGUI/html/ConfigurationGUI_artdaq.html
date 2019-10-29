@@ -97,6 +97,8 @@
 		var _systemGroups = {};
 		var _firstInit = true;
 		var _codeEditorAppId = 0; //to open fcl in code editor
+		var _layoutHasChanged = false;
+		var _nodesHaveChanged = false;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -132,6 +134,7 @@
 			//init()	
 			//initArrows()
 			//save()
+			//saveLayout()
 		
 			//openActiveGroupsDialog()
 			//nodeLayoutHasChanged()
@@ -474,6 +477,12 @@
 					function(response)
 					{
 				console.log("response",response);
+				
+				Debug.log("save() complete");				
+				_nodesHaveChanged = false;
+				
+				//always save layout just in case
+				saveLayout();
 					}); //end saveArtdaqNodes response handler
 		} //end save()	
 		
@@ -3107,14 +3116,12 @@
 
 			} //end localOpenActiveGroupsDialog()
 		} //end openActiveGroupsDialog()
-		
+
 		//====================================================================================
-		//nodeLayoutHasChanged ~~
-		//	handle when node layout has changed
-		//	for now, auto-save layout for active group
-		function nodeLayoutHasChanged()
+		//saveLayout ~~
+		function saveLayout()
 		{
-			Debug.log("nodeLayoutHasChanged()");
+			Debug.log("saveLayout()");
 
 			var postData = "layout=";
 			
@@ -3138,8 +3145,31 @@
 			//get active configuration group
 			DesktopContent.XMLHttpRequest(
 					"Request?RequestType=saveArtdaqNodeLayout",
-					postData
+					postData,
+					function()
+					{
+				Debug.log("saveLayout() complete");				
+				_layoutHasChanged = false;
+					}
 					);
+		} //end saveLayout()
+		
+		//====================================================================================
+		//nodeLayoutHasChanged ~~
+		//	handle when node layout has changed
+		//	for now, auto-save layout for active group
+		function nodeLayoutHasChanged()
+		{
+			Debug.log("nodeLayoutHasChanged()");
+			
+			if(_nodesHaveChanged)
+			{
+				//do not save layout, until nodes are saved
+				_layoutHasChanged = true;
+				return;
+			}
+			
+			saveLayout();
 			
 		} //end nodeLayoutHasChanged()
 
@@ -3149,6 +3179,7 @@
 		{
 			Debug.log("nodesHaveChanged");
 			
+			_nodesHaveChanged = true;
 			var el = document.getElementById("Status");
 			el.innerHTML = "( Unsaved Changes! )";			
 		} //end nodesHaveChanged()
