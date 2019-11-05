@@ -696,11 +696,14 @@
 						//reload persistent active groups (persistent active config group will be modified when state machine configures)
 						//firstInit_ should be used to stop the reload -- for example, after a group activation with warnings ignored
 						"",
-						groupAliasesRequestHandler, anchorTarget,
+						function(req,anchorTarget) 
+						{
+							groupAliasesRequestHandler(req,anchorTarget);
+							systemViewPreventInfiniteLoop_ = false;
+						}, anchorTarget,
 						0/*progressHandler*/, true /*callHandlerOnErr*/);
 
 					firstInit_ = false;
-					systemViewPreventInfiniteLoop_ = false;
 				}); //end getLastTableGroups
 
 
