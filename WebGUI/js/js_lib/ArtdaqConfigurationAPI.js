@@ -277,7 +277,7 @@ ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 	console.log("nodeString",nodeString);
 	console.log("subsystemStr",subsystemString);
 
-	//get active configuration group
+	//save nodes and subsystems to server
 	DesktopContent.XMLHttpRequest("Request?RequestType=saveArtdaqNodes",			
 			"modifiedTables=" + modifiedTablesListStr + 
 			"&nodeString=" + nodeString +
@@ -285,7 +285,19 @@ ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 			function(req) 
 			{
 		console.log("response",req);
-		//responseHandler(localExtractActiveArtdaqNodes(req));
+		
+		var errArr = DesktopContent.getXMLRequestErrors(req);
+		var errStr = "";
+		for(var i=0;i<errArr.length;++i)
+		{
+			errStr += (i?"\n\n":"") + errArr[i];
+			Debug.log("Error: " + errArr[i], Debug.HIGH_PRIORITY);
+		}
+		
+		if(errArr.length) return; // do not proceed on error
+		//else call response handler
+		responseHandler();
+		
 			},
 			0,0,true  //reqParam, progressHandler, callHandlerOnErr
 	); //end of getActiveTableGroups handler
