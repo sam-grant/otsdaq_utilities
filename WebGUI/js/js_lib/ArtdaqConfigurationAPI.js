@@ -84,6 +84,14 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 			"modifiedTables=" + modifiedTablesListStr, //end post data, 
 			function(req) 
 			{
+		var errArr = DesktopContent.getXMLRequestErrors(req);
+		var errStr = "";
+		for(var i=0;i<errArr.length;++i)
+		{
+			errStr += (i?"\n\n":"") + errArr[i];
+			Debug.log("Error: " + errArr[i], Debug.HIGH_PRIORITY);
+		}
+		
 		responseHandler(localExtractActiveArtdaqNodes(req));
 			},
 			0,0,true  //reqParam, progressHandler, callHandlerOnErr
@@ -198,14 +206,14 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 				
 			} //end artdaq Supervisor extraction
 			else
-				Debug.log("No artdaq Supervisor found.");
+				Debug.log("No artdaq Supervisor found.", Debug.HIGH_PRIORITY);
 			
 			Debug.log("Total nodes extracted " +
 					retObj.nodeCount);
 		}
 		catch(e)
 		{
-			Debug.log("Error extracting active artdaq nodes: " + e);
+			Debug.log("Error extracting active artdaq nodes: " + e, Debug.HIGH_PRIORITY);
 			return undefined;
 		}
 
