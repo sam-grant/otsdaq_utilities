@@ -802,13 +802,13 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		int         depth          = CgiDataUtilities::getDataAsInt(cgiIn, "depth");
 		bool hideStatusFalse = CgiDataUtilities::getDataAsInt(cgiIn, "hideStatusFalse");
 
-		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
-		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
-		__SUP_COUT__ << "startPath: " << startPath << __E__;
-		__SUP_COUT__ << "depth: " << depth << __E__;
-		__SUP_COUT__ << "hideStatusFalse: " << hideStatusFalse << __E__;
-		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
-		__SUP_COUT__ << "filterList: " << filterList << __E__;
+//		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+//		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
+//		__SUP_COUT__ << "startPath: " << startPath << __E__;
+//		__SUP_COUT__ << "depth: " << depth << __E__;
+//		__SUP_COUT__ << "hideStatusFalse: " << hideStatusFalse << __E__;
+//		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
+//		__SUP_COUT__ << "filterList: " << filterList << __E__;
 
 		handleFillTreeViewXML(xmlOut,
 		                      cfgMgr,
