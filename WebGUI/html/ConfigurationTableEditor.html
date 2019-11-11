@@ -71,8 +71,13 @@
 		var _CONFIG_FIXED_CELLS = 3;
 		
 
-		var _typeArray = []; //filled by request to getColumnTypes, e.g.:  ["Data", "UniqueData", "FixedChoiceData", "MultilineData", "BitMap", "OnOff", "TrueFalse", "YesNo", "ChildLinkUID", "ChildLinkGroupID", "ChildLink", "GroupID"]
-		var _dataTypeArray = ["VARCHAR2","NUMBER","TIMESTAMP WITH TIMEZONE"];
+		var _typeArray = []; //filled by request to getColumnTypes, e.g.: ["Data", "UniqueData", "FixedChoiceData", "MultilineData", "BitMap", "OnOff", "TrueFalse", "YesNo", "ChildLinkUID", "ChildLinkGroupID", "ChildLink", "GroupID"]
+		
+		var _STRING_TYPE = "STRING";
+		var _NUMBER_TYPE = "NUMBER";
+		var _DATE_TYPE = "TIMESTAMP WITH TIMEZONE";
+		
+		var _dataTypeArray = [_STRING_TYPE, _NUMBER_TYPE, _DATE_TYPE];
 		var _defaultArray = {};
 				
 		var _editingCell = false;
@@ -490,7 +495,7 @@
 		function setupEmptyTable() {
 			
 			var colTypes = ["UID","Comment","Author","Timestamp"];
-			var colDataTypes = ["VARCHAR2","VARCHAR2","VARCHAR2","TIMESTAMP WITH TIMEZONE"];
+			var colDataTypes = [_STRING_TYPE, _STRING_TYPE, _STRING_TYPE, _DATE_TYPE];
 			var colHdrs = ["UID","CommentDescription","Author","RecordInsertionTime"];
 			var colHdrs = ["UID","CommentDescription","Author","RecordInsertionTime"];
 			var colChoices = ["","","",""];
@@ -1603,7 +1608,7 @@
 			
 			_colHdrArr.splice(c,0,"DefaultColumnName");
 			_colTypeArr.splice(c,0,"Data");
-			_colDataTypeArr.splice(c,0,"VARCHAR2");
+			_colDataTypeArr.splice(c,0, _STRING_TYPE);
 			_colChoicesArr.splice(c,0,"");
 			
 			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colChoicesArr);

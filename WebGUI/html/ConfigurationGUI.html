@@ -2460,7 +2460,7 @@
 			//four corners for last +/- (w & w/o transpose)
 			str += "<table><tr><td>";
 			//display table
-			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
+			str += "<table id='SubSystemTable' border='0' cellspacing='3' cellpadding='2'>";
 
 
 			//create structure for call to createTableViewOutputStr
@@ -6025,11 +6025,20 @@
 				if((attemptedVersion !== undefined && attemptedVersion >= 0) ||
 						(_version !== undefined && _version >= 0))
 				{		
+					var backLinkStr = _tableViewBackLinkStr;
+					//Note: be careful with the source of backLinkStr.. don't use both quote styles!
+					if (backLinkStr.indexOf("'") >= 0)
+						backLinkStr = backLinkStr.replace(/'/g, "\\\"");
+					else
+						backLinkStr = backLinkStr.replace(/"/g, "\\\"");
+					Debug.log("Back-link = " + backLinkStr);
+
 					str += "&nbsp;&nbsp;&nbsp;";				
 					str += "<a onclick='setupSpecificTable(\"" + 
 							_currentTableName + "\",\"" +
 							(attemptedVersion?attemptedVersion:_version) + 
-							"\",\"\" /*backlink*/, 1 /*allowIllegalColumns*/); return false' " +
+							"\",\"" + backLinkStr +
+							"\" /*backlink*/, 1 /*allowIllegalColumns*/); return false' " +
 							"title='Reload " + _currentTableName + "-v" +
 							(attemptedVersion?attemptedVersion:_version) + 
 							" with loose column matching.' " +
@@ -6040,6 +6049,7 @@
 				str += "<br><br>";
 
 				newDiv.innerHTML = str;
+				newDiv.style.whiteSpace = "nowrap";
 
 				//insert a new div before and after table
 				el = document.getElementById("display");
@@ -6047,6 +6057,7 @@
 				el.insertBefore(newDiv, targetEl[0]);
 				newDiv = document.createElement("div");
 				newDiv.innerHTML = "<br>" + str;
+				newDiv.style.whiteSpace = "nowrap";
 				el.appendChild(newDiv);
 			}
 		} //end versionHasChanged()

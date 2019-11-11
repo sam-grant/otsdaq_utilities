@@ -161,7 +161,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 	unsigned int newSequenceId;
 
 	// force a starting message
-	__MCOUT__("DEBUG messages look like this." << __E__);
+	__MOUT__ << "DEBUG messages look like this." << __E__;
 
 	while(1)
 	{

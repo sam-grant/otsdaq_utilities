@@ -59,6 +59,8 @@ SimpleContextMenu._menuItemHandlers = [];
 SimpleContextMenu._primaryColor = "";
 SimpleContextMenu._secondaryColor = "";
 
+SimpleContextMenu._styleEl = 0;
+
 //=====================================================================================
 //SimpleContextMenu.createMenu
 // 	if from event, for left and top use, e.g event.pageX-1,event.pageY-1
@@ -112,11 +114,18 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 			"top:" + topLeftY + "px;" +
 			"z-index: 1000000;" + //one million!
 			"background-color: " + primaryColor + ";" +
-			"border: 1px solid " + secondaryColor + ";" +
-			"padding: 5px;" +
+			"border: 				0px solid " + secondaryColor + ";" +
+			"padding: 				8px 0 8px 0;" +
+			"border-radius:			2px;" +
+			"box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em," +
+			"		inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */" +
+			"		rgb(150,150,150) 0 .1em 3px," +			
+			"		rgb(175,175,175) 0 .2em 1px, /* color border */" +
+			"		rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */" +
 			"}\n\n";
 	css += "#" + popupID + " div" +
 			"{" +
+			"padding: 				0 10px 0 10px;" +
 			"color: " + secondaryColor + ";" +
 			"-webkit-user-select: 	none;" +
 			"-moz-user-select: 		none;" +
@@ -124,10 +133,14 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 			"}\n\n";
 	css += "#" + popupID + " div:hover" +
 			"{" + 
-			//"text-decoration: underline;" +
 			"background-color: " + secondaryColor + ";" +
 			"color: " + primaryColor + ";" +
 			"cursor: pointer;" +
+			"}\n\n";
+	css += "#" + popupID + " *" +
+			"{" +
+			"font-size:				14px;" +
+			"font:					arial;" +
 			"}\n\n";
 
 	//add style element to HEAD tag
@@ -140,6 +153,8 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 	}
 
 	document.getElementsByTagName('head')[0].appendChild(style);
+	
+	SimpleContextMenu._styleEl = style;
 		
 
 	//////////=======================	
@@ -150,11 +165,7 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 		str += 
 				"<div class='SimpleContextMenu-menuItem' " +
 				"id='SimpleContextMenu-menuItem-" + i + "' " +
-				"onmousemove='SimpleContextMenu.handleMouseOverMenuItem(event," + i + ");' " +
-				//"Debug.log(this.style.backgroundColor);" +
-				//"this.style.backgroundColor = \"" + secondaryColor + "\"; " +
-				//"this.style.color = \"" + primaryColor + "\"; ";
-				//"' " +
+				"onmousemove='SimpleContextMenu.handleMouseOverMenuItem(event," + i + ");' " +				
 				"onmousedown='event.stopPropagation();' " +
 				"onmouseup='SimpleContextMenu.callMenuItemHandler(event," + i + ");' " +
 				">" +
@@ -225,6 +236,9 @@ SimpleContextMenu.mouseMoveHandler = function(e) {
 		Debug.log("Removing SimpleContextMenu");
 		SimpleContextMenu._popUpEl.parentNode.removeChild(SimpleContextMenu._popUpEl);
 		SimpleContextMenu._popUpEl = 0;
+		
+		SimpleContextMenu._styleEl.parentNode.removeChild(SimpleContextMenu._popUpEl);
+		SimpleContextMenu._styleEl = 0;
 	}
 }
 //subscribe the mouse move handler (if desktop content or part of actual desktop)

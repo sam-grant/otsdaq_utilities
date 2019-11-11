@@ -4545,6 +4545,9 @@ try
 
 	TableBase* table = cfgMgr->getTableByName(tableName);
 
+
+	__COUTV__(allowIllegalColumns);
+
 	// send all table names along with
 	//	and check for specific version
 	xmlOut.addTextElementToData("ExistingTableNames",
@@ -4627,6 +4630,8 @@ try
 	}
 	else  // use view version
 	{
+		__COUTV__(allowIllegalColumns);
+
 		try
 		{
 			// locally accumulate 'manageable' errors getting the version to avoid
@@ -4767,11 +4772,11 @@ try
 	if(accumulatedErrors != "")  // add accumulated errors to xmlOut
 	{
 		__SUP_SS__ << (std::string("Column errors were allowed for this request, so "
-		                           "maybe you can ignore this, ") +
-		               "but please note the following errors:\n" + accumulatedErrors)
+		                           "perhaps you can ignore this, ") +
+		               "but please note the following warnings:\n" + accumulatedErrors)
 		           << __E__;
 		__SUP_COUT_ERR__ << ss.str();
-		xmlOut.addTextElementToData("Error", ss.str());
+		xmlOut.addTextElementToData("TableWarnings", ss.str());
 	}
 	else if(!version.isTemporaryVersion() &&  // not temporary (these are not filled from
 	                                          // interface source)
@@ -6209,13 +6214,13 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 	const XDAQContextTable::XDAQContext* artdaqContext =
 	    contextTable->getTheARTDAQSupervisorContext();
 
-	const ARTDAQTableBase::ARTDAQAppType artdaqProcessTypes[] = {
+	const std::vector<ARTDAQTableBase::ARTDAQAppType> artdaqProcessTypes({
 		ARTDAQTableBase::ARTDAQAppType::RoutingMaster,
 	    ARTDAQTableBase::ARTDAQAppType::BoardReader,
 	    ARTDAQTableBase::ARTDAQAppType::EventBuilder,
 	    ARTDAQTableBase::ARTDAQAppType::DataLogger,
 	    ARTDAQTableBase::ARTDAQAppType::Dispatcher,
-	    ARTDAQTableBase::ARTDAQAppType::Monitor};
+	    ARTDAQTableBase::ARTDAQAppType::Monitor});
 
 	const std::string typeString = "artdaqSupervisor";
 	if(artdaqContext)
@@ -6224,7 +6229,9 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 		__SUP_COUTV__(artdaqContext->applications_.size());
 
 		for(auto& artdaqApp : artdaqContext->applications_)
-		{
+		{			
+			if(artdaqApp.class_ != "ots::ARTDAQSupervisor") continue;
+			
 			__SUP_COUTV__(artdaqApp.applicationUID_);
 
 			auto parentEl =
@@ -6236,7 +6243,7 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 			                              std::to_string(artdaqContext->port_),
 			                              parentEl);
 
-			auto            info = ARTDAQTableBase::extractArtdaqInfo(
+			const ARTDAQTableBase::ARTDAQInfo& info = ARTDAQTableBase::extractARTDAQInfo(
                 XDAQContextTable::getSupervisorConfigNode(
                     cfgMgr, artdaqContext->contextUID_, artdaqApp.applicationUID_));
 
@@ -6272,7 +6279,7 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 			__SUP_COUT__ << "========== "
 			             << "Found " << info.processes.size() << " process types." << __E__;
 
-			for(unsigned int i = 0; i < 4 /*process type count*/; ++i)
+			for(unsigned int i = 0; i < artdaqProcessTypes.size() /*process type count*/; ++i)
 			{
 				const std::string& subtypeString =
 				    ARTDAQTableBase::getTypeString(artdaqProcessTypes[i]);
@@ -6423,7 +6430,7 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeRecordsXML(
 		}
 	}  // end subsystem object extraction from subsystemString
 
-	ARTDAQTableBase::setAndActivateArtdaqSystem(
+	ARTDAQTableBase::setAndActivateARTDAQSystem(
 	    cfgMgr, nodeTypeToObjectMap, subsystemObjectMap);
 
 	__SUP_COUT__ << "Done saving artdaq nodes." << __E__;

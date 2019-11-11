@@ -1444,12 +1444,13 @@ CodeEditor.create = function() {
 				")'>" + 
 				"srcs</a>";
 
-			
+			name = "srcs"; //take last name encoutered as folder name
 			for(i=0;i<pathSplit.length;++i)
 			{
 				pathSplitName = pathSplit[i].trim();
 				if(pathSplitName == "") continue; //skip blanks
 				Debug.log("pathSplitName " + pathSplitName);
+				name = pathSplitName; //take last name encoutered as folder name
 				
 				buildPath += "/" + pathSplitName;
 				
@@ -1483,7 +1484,7 @@ CodeEditor.create = function() {
 					"title":"Open folder in a new browser tab: \n" +
 					"srcs" + buildPath,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\",\"\"," + 
+					"\"" + name  + "\",\"\"," + 
 					"\"/WebPath/html/CodeEditor.html?urn=" +
 					DesktopContent._localUrnLid + "&" +
 					"openDirectoryPrimary=" +
@@ -1509,7 +1510,7 @@ CodeEditor.create = function() {
 					"title":"Open folder in a new browser tab: \n" +
 					"srcs" + path + "/" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\",\"\"," + 
+					"\"" + name + "\",\"\"," + 
 					"\"/WebPath/html/CodeEditor.html?urn=" +
 					DesktopContent._localUrnLid + "&" +
 					"openDirectoryPrimary=" +
@@ -1554,16 +1555,17 @@ CodeEditor.create = function() {
 		for(i=0;i<specialFiles.length;++i)
 		{
 			name = specialFiles[i].getAttribute('value');
+			nameSplit = name.split('/');	
 			
 			str += "<tr><td>";
-			
+						
 			//open in new window
 			str += htmlOpen("a",
 				{
 					"title":"Open file in a new browser tab: \n" +
 					"srcs" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\",\"\"," + 
+					"\"" + nameSplit[nameSplit.length-1] + "\",\"\"," + 
 					"\"/WebPath/html/CodeEditor.html?urn=" +
 					DesktopContent._localUrnLid + "&" +
 					"startFilePrimary=" +
@@ -1594,7 +1596,7 @@ CodeEditor.create = function() {
 				name + "\",\"" +
 				name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 				")' title='Open file: \nsrcs" + name + "' >";
-			nameSplit = name.split('/');			
+					
 			str += nameSplit[nameSplit.length-1] + "</a>";			
 			
 			
@@ -1615,10 +1617,10 @@ CodeEditor.create = function() {
 			//open in new window
 			str += htmlOpen("a",
 				{
-					"title":"Open file in a new browser tab: \n" +
+					"title":"Open folder in a new browser tab: \n" +
 					"srcs" + path + "/" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\",\"\"," + 
+					"\"" + name + "\",\"\"," + 
 					"\"/WebPath/html/CodeEditor.html?urn=" +
 					DesktopContent._localUrnLid + "&" +
 					"openDirectoryPrimary=" +
@@ -1664,7 +1666,7 @@ CodeEditor.create = function() {
 					"title":"Open file in a new browser tab: \n" +
 					"srcs" + path + "/" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\",\"\"," + 
+					"\"" + name + "\",\"\"," + 
 					"\"/WebPath/html/CodeEditor.html?urn=" +
 					DesktopContent._localUrnLid + "&" +
 					"startFilePrimary=" +
@@ -2939,7 +2941,7 @@ CodeEditor.create = function() {
 										"title":"Open file in a new browser tab: \n" +
 										"srcs" + name,
 										"onclick":"DesktopContent.openNewBrowserTab(" +
-										"\"Code Editor\",\"\"," + 
+										"\"" + nameArr[nameArr.length-1] + "\",\"\"," + 
 										"\"/WebPath/html/CodeEditor.html?urn=" +
 										DesktopContent._localUrnLid + "&" +
 										"startFilePrimary=" +
@@ -6603,6 +6605,8 @@ CodeEditor.create = function() {
 		
 		str += htmlClearDiv();
 		
+		var nameArr = path.split('/');
+		
 		//table for open icons and filename select
 		str += "<table><tr><td>";	
 		//open in new window
@@ -6611,7 +6615,7 @@ CodeEditor.create = function() {
 				"title":"Open file in a new browser tab: \n" +
 				"srcs" + path + "." + extension,	
 				"onclick":"DesktopContent.openNewBrowserTab(" +
-				"\"Code Editor\",\"\"," + 
+				"\"" + nameArr[nameArr.length-1] + "." + extension + "\",\"\"," + 
 				"\"/WebPath/html/CodeEditor.html?urn=" +
 				DesktopContent._localUrnLid + "&" +
 				"startFilePrimary=" +
