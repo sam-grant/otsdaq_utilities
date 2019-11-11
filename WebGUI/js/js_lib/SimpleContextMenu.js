@@ -236,9 +236,12 @@ SimpleContextMenu.mouseMoveHandler = function(e) {
 		Debug.log("Removing SimpleContextMenu");
 		SimpleContextMenu._popUpEl.parentNode.removeChild(SimpleContextMenu._popUpEl);
 		SimpleContextMenu._popUpEl = 0;
-		
-		SimpleContextMenu._styleEl.parentNode.removeChild(SimpleContextMenu._popUpEl);
-		SimpleContextMenu._styleEl = 0;
+	
+		if(SimpleContextMenu._styleEl)
+		{
+			SimpleContextMenu._styleEl.parentNode.removeChild(SimpleContextMenu._styleEl);
+			SimpleContextMenu._styleEl = 0;
+		}
 	}
 }
 //subscribe the mouse move handler (if desktop content or part of actual desktop)

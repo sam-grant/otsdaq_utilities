@@ -67,8 +67,8 @@
 				"rows": _GRID_ROW_MIN, 	"cols": _GRID_COL_MIN, 
 				"x0": 	0, 	"y0": 	0, 
 				"xstep":0, 	"ystep":0}; 
-		var _nodes = []; 	// array of node objects (can be multi-node vector at location, using nodeCount and nodeVectorIndexMap
-							//	node: 	{type, name, hostname, subsystemId, originalName, xGrid, yGrid, nodeCount, nodeVectorIndexMap, nodeVectorIndexReverseMap, nodeVectorIndexString}
+		var _nodes = []; 	// array of node objects (can be multi-node vector at location, using nodeCount and nodeVectorIndexArr
+							//	node: 	{type, name, hostname, subsystemId, originalName, xGrid, yGrid, nodeCount, nodeVectorIndexArr, nodeVectorIndexReverseMap, nodeVectorIndexString, hostnameVectorIndexArr, hostnameVectorIndexString}
 		var _arrows = {}; 	//multi-dim map of arrow objects 
 							//	arrow:	[i0][i1] = {p0,p1} (start and end i,p - where i := node index, p := 1 of 4 positions starting from top going clock-wise)
 		
@@ -173,6 +173,8 @@
 			//		localCloseButtonHandler()
 			//		getElementById("ediNode-" + "saveNode").onclick()
 			//handleEditNodeDialogMultiNodeCheckbox(i)
+			//handleEditNodeDialogHostnameArrayCheckbox(i)
+			//handleEditNodeDialogHostnameFixedWidthCheckbox(i)
 			//handleEditNodeSelectEditIcon(t)
 		
 			//handleFclIconMouseUp(i,e)
@@ -457,13 +459,30 @@
 			var type,name,node;
 			for(var i=0;i<_nodes.length;++i)
 			{
-				node = _nodes[i];
+				node = _nodes[i];				
 				type = types[node.type];
-				name = node.name;
-				nodesObj[type][name] = {};
-				nodesObj[type][name].originalName = node.originalName;
-				nodesObj[type][name].hostname = node.hostname;
-				nodesObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
+				
+				if(node.nodeCount > 1)
+				{
+					Debug.log("Saving multi-node...");
+					for(var j=0;j<nodeVectorIndexArr.length;++j)
+					{
+						name = node.name.replace(new RegExp("\\*",'g'), 
+								nodeVectorIndexArr[j]);
+						nodesObj[type][name] = {};
+						nodesObj[type][name].originalName = node.originalName;
+						nodesObj[type][name].hostname = node.hostname;
+						nodesObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
+					}				
+				}
+				else
+				{
+					name = node.name;
+					nodesObj[type][name] = {};
+					nodesObj[type][name].originalName = node.originalName;
+					nodesObj[type][name].hostname = node.hostname;
+					nodesObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
+				}
 			
 				subsystemsObj[_subsystems[node.subsystemId].label] = {};
 				if(subsystemsObj[_subsystems[node.subsystemId].label].destinationName !== undefined &&
@@ -2593,8 +2612,127 @@
 
 
 				str += "</table>";
+				
+				str += htmlOpen("input",
+						{
+								"type": "checkbox",
+								"id": "enableHostnameArrayCheckbox",
+								"class": "enableHostnameArrayCheckbox",
+								"checked": (isHostnameArray?1:0),
+								"onclick": "handleEditNodeDialogHostnameArrayCheckbox(" + i + ",this);",
+						},
+						htmlOpen("a",
+								{
+										"style": "text-decoration:none;color:black;",
+										"onclick": "var el = document.getElementsByClassName(\"enableHostnameArrayCheckbox\");" +
+										"var forFirefox = (el[0].checked = !el[0].checked); " +
+										"handleEditNodeDialogHostnameArrayCheckbox(" + i + ",el[0]);"
+										,
+								},
+								"Enable Multi-node Instances" /*innerHTML*/,
+								true /*doCloseTag*/
+						) /*innerHTML*/,
+						true /*doCloseTag*/);
 			} //end multi-node
 			str += "</div>"; //close multi-node settings div
+			
+			str += htmlClearDiv();
+			str += "<div id='hostnameArraySettings' style='display:" + 
+					(isHostnameArray?"block":"none") + "'>";
+			{ //start hostnameArraySettings 
+				str += "Use 'printer page syntax' for the hostname too!" +
+						"<br>";
+
+				str += htmlClearDiv();
+				str += "<br><table style='margin-bottom: 10px;'>";
+
+
+				str += "<tr><td><b>Hostname Indices:</b></td><td>";
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "hostnameIndices",
+								"type": "text",
+								"value": (_nodes[i].hostnameVectorIndexString?_nodes[i].hostnameVectorIndexString:""),
+								"title": "Set the hostname indices with printer page syntax.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+				str += "</td></tr>";
+
+
+
+				str += "</table>";
+
+				str += htmlOpen("input",
+						{
+								"type": "checkbox",
+								"id": "enableHostnameFixedWidthCheckbox",
+								"class": "enableHostnameFixedWidthCheckbox",
+								"checked": (isHostnameFixedWidth?1:0),
+								"onclick": "handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",this);",
+						},
+						htmlOpen("a",
+								{
+										"style": "text-decoration:none;color:black;",
+										"onclick": "var el = document.getElementsByClassName(\"enableHostnameFixedWidthCheckbox\");" +
+										"var forFirefox = (el[0].checked = !el[0].checked); " +
+										"handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",el[0]);"
+										,
+								},
+								"Enable Fixed-Width Hostnames" /*innerHTML*/,
+								true /*doCloseTag*/
+						) /*innerHTML*/,
+						true /*doCloseTag*/);
+			} //end hostnameArraySettings
+			str += "</div>"; //close hostnameArray settings div
+			
+			str += htmlClearDiv();
+			str += "<div id='hostnameFixedWidthSettings' style='display:" + 
+					(isHostnameArray?"block":"none") + "'>";
+			{ //start hostname fixed-width
+				str += "Set the number of digits for the hostname  for the hostname too!" +
+						"<br>";
+
+				str += htmlClearDiv();
+				str += "<br><table style='margin-bottom: 10px;'>";
+
+
+				str += "<tr><td><b>Hostname Indices:</b></td><td>";
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "hostnameIndices",
+								"type": "text",
+								"value": (_nodes[i].hostnameVectorIndexString?_nodes[i].hostnameVectorIndexString:""),
+								"title": "Set the hostname indices with printer page syntax.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+				str += "</td></tr>";
+
+
+
+				str += "</table>";
+
+				str += htmlOpen("input",
+						{
+								"type": "checkbox",
+								"id": "enableHostnameFixedWidthCheckbox",
+								"class": "enableHostnameFixedWidthCheckbox",
+								"checked": (isHostnameFixedWidth?1:0),
+								"onclick": "handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",this);",
+						},
+						htmlOpen("a",
+								{
+										"style": "text-decoration:none;color:black;",
+										"onclick": "var el = document.getElementsByClassName(\"enableHostnameFixedWidthCheckbox\");" +
+										"var forFirefox = (el[0].checked = !el[0].checked); " +
+										"handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",el[0]);"
+										,
+								},
+								"Enable Fixed-Width Hostnames" /*innerHTML*/,
+								true /*doCloseTag*/
+						) /*innerHTML*/,
+						true /*doCloseTag*/);
+			} //end hostname fixed-width
+			str += "</div>"; //close hostname fixed-width settings div
 			
 			str += htmlClearDiv();
 			
@@ -2745,7 +2883,7 @@
 					
 					
 					var nodeNameTemplate = document.getElementById("ediNode-" + "nodeName").value;
-					var nodeIndices = document.getElementById("ediNode-" + "nodeIndices").value;
+					var nodeIndices = document.getElementById("ediNode-" + "nodeIndices").value;					
 					var subsystem = document.getElementById("ediNode-" + 
 							"subsystem").style.display == "none"?
 									document.getElementById("ediNode-" + "subsystemText").value:
@@ -2756,10 +2894,14 @@
 									document.getElementById("ediNode-" + "hostname").value;
 					
 					Debug.log("Node name template = " + nodeNameTemplate);
-					Debug.log("Node indices = " + nodeIndices);
+					
+					var el = document.getElementsByClassName("enableMultiNodeCheckbox");
+					if(el.length && !el[0].checked) nodeIndices = ""; //clear multi-node string if not checked
 
+					Debug.log("Node indices = " + nodeIndices);
+					
 					var nodeVectorIndexString = nodeIndices;
-					var nodeVectorIndexMap = []; //reset
+					var nodeVectorIndexArr = []; //reset
 					var nodeVectorIndexReverseMap = {}; //reset
 					
 					nodeIndices = nodeIndices.split(',');
@@ -2780,7 +2922,7 @@
 								return;								
 							}
 							nodeVectorIndexReverseMap[index] = nodeCount++;
-							nodeVectorIndexMap.push(index);							
+							nodeVectorIndexArr.push(index);							
 						}
 						else if(nodeSubindices.length == 2)
 						{
@@ -2803,7 +2945,7 @@
 									return;								
 								}
 								nodeVectorIndexReverseMap[k] = nodeCount++;
-								nodeVectorIndexMap.push(k);								
+								nodeVectorIndexArr.push(k);								
 							}
 						}
 						else
@@ -2814,7 +2956,7 @@
 						}
 					}
 					console.log("nodeCount",nodeCount); 
-					console.log("nodeVectorIndexMap",nodeVectorIndexMap); 
+					console.log("nodeVectorIndexArr",nodeVectorIndexArr); 
 					console.log("nodeVectorIndexReverseMap",nodeVectorIndexReverseMap); 
 					
 					if(nodeCount> 1 && 
@@ -2829,7 +2971,7 @@
 					// so set node values
 					_nodes[i].nodeCount = nodeCount;
 					_nodes[i].nodeVectorIndexString = nodeVectorIndexString;
-					_nodes[i].nodeVectorIndexMap = nodeVectorIndexMap;
+					_nodes[i].nodeVectorIndexArr = nodeVectorIndexArr;
 					_nodes[i].nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
 					_nodes[i].name = nodeNameTemplate;
 					
@@ -2909,7 +3051,19 @@
 			document.getElementById("multiNodeSettings").style.display =
 					obj.checked?"block":"none";
 			
-
+			if(!obj.checked)
+			{
+				var nodeNameValue = _nodes[i].originalName;
+				if(nodeNameValue.indexOf('*') >= 0) //remove all *
+					nodeNameValue = nodeNameValue.replace(new RegExp("\\*",'g'), 
+													'0');
+				document.getElementById("ediNode-" + "nodeName").value = 
+						nodeNameValue;	
+				return;
+			}
+			
+			//else try to place * for user
+			
 			var nodeNameValue = _nodes[i].name;
 			if(nodeNameValue.indexOf('*') < 0)
 			{
@@ -2935,8 +3089,38 @@
 					}
 				}
 			}
+			if(nodeNameValue.indexOf('*') < 0) //if still no *, add
+				nodeNameValue += '*';
+			
+			document.getElementById("ediNode-" + "nodeName").value = nodeNameValue;
+			
 		} //end handleEditNodeDialogMultiNodeCheckbox()
-		
+				
+		//=====================================================================================
+		//handleEditNodeDialogHostnameArrayCheckbox ~~
+		function handleEditNodeDialogHostnameArrayCheckbox(i,obj) 
+		{
+			Debug.log("handleEditNodeDialogHostnameArrayCheckbox " + i + 
+					" - " + obj.checked);
+			
+				
+			document.getElementById("hostnameArraySettings").style.display =
+					obj.checked?"block":"none";			
+			
+		} //end handleEditNodeDialogHostnameArrayCheckbox()
+
+		//=====================================================================================
+		//handleEditNodeDialogHostnameFixedWidthCheckbox
+		function handleEditNodeDialogHostnameFixedWidthCheckbox(i,obj) 
+		{
+			Debug.log("handleEditNodeDialogHostnameFixedWidthCheckbox " + i + 
+					" - " + obj.checked);
+			
+				
+			document.getElementById("hostnameFixedWidthSettings").style.display =
+					obj.checked?"block":"none";			
+			
+		} //end handleEditNodeDialogHostnameFixedWidthCheckbox()
 		
 		//=====================================================================================
 		//handleEditNodeSelectEditIcon ~~
