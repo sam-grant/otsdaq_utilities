@@ -148,8 +148,7 @@ void ConfigurationGUISupervisor::forceSupervisorPropertyValues()
 void ConfigurationGUISupervisor::request(const std::string&               requestType,
                                          cgicc::Cgicc&                    cgiIn,
                                          HttpXmlDocument&                 xmlOut,
-                                         const WebUsers::RequestUserInfo& userInfo)
-try
+                                         const WebUsers::RequestUserInfo& userInfo) try
 {
 	// Commands
 
@@ -803,13 +802,13 @@ try
 		int         depth          = CgiDataUtilities::getDataAsInt(cgiIn, "depth");
 		bool hideStatusFalse = CgiDataUtilities::getDataAsInt(cgiIn, "hideStatusFalse");
 
-//		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
-//		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
-//		__SUP_COUT__ << "startPath: " << startPath << __E__;
-//		__SUP_COUT__ << "depth: " << depth << __E__;
-//		__SUP_COUT__ << "hideStatusFalse: " << hideStatusFalse << __E__;
-//		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
-//		__SUP_COUT__ << "filterList: " << filterList << __E__;
+		//		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		//		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
+		//		__SUP_COUT__ << "startPath: " << startPath << __E__;
+		//		__SUP_COUT__ << "depth: " << depth << __E__;
+		//		__SUP_COUT__ << "hideStatusFalse: " << hideStatusFalse << __E__;
+		//		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
+		//		__SUP_COUT__ << "filterList: " << filterList << __E__;
 
 		handleFillTreeViewXML(xmlOut,
 		                      cfgMgr,
@@ -1395,8 +1394,7 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
     ConfigurationManagerRW* cfgMgr,
     const std::string&      rootGroupName,
     const TableGroupKey&    rootGroupKey,
-    const std::string&      modifiedTables)
-try
+    const std::string&      modifiedTables) try
 {
 	// determine type of rootGroup
 	// replace the matching type in considered groups
@@ -1616,8 +1614,7 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
     bool                                                      doGetGroupInfo,
     std::map<std::string /*name*/, TableVersion /*version*/>* returnMemberMap,
     bool                                                      outputActiveTables,
-    std::string*                                              accumulatedErrors)
-try
+    std::string*                                              accumulatedErrors) try
 {
 	// if(accumulatedErrors)
 	//	*accumulatedErrors = "";
@@ -1924,8 +1921,7 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(
 // handleFillModifiedTablesXML
 //	fills <modified tables> as used by ConfigurationAPI
 void ConfigurationGUISupervisor::handleFillModifiedTablesXML(
-    HttpXmlDocument& xmlOut, ConfigurationManagerRW* cfgMgr)
-try
+    HttpXmlDocument& xmlOut, ConfigurationManagerRW* cfgMgr) try
 {
 	// return modified <modified tables>
 	const std::map<std::string, TableInfo>& allTableInfo   = cfgMgr->getAllTableInfo();
@@ -3015,8 +3011,7 @@ void ConfigurationGUISupervisor::handleGetLinkToChoicesXML(
     const TableVersion&     linkToTableVersion,
     const std::string&      linkIdType,
     const std::string&      linkIndex,
-    const std::string&      linkInitId)
-try
+    const std::string&      linkInitId) try
 {
 	// get table
 	//	if uid link
@@ -3132,8 +3127,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
     const std::string&      groupBNameConfig,
     const TableGroupKey&    groupBKeyConfig,
     const std::string&      author,
-    const std::string&      mergeApproach)
-try
+    const std::string&      mergeApproach) try
 {
 	__SUP_COUT__ << "Merging context group pair " << groupANameContext << " ("
 	             << groupAKeyContext << ") & " << groupBNameContext << " ("
@@ -3443,8 +3437,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
     const std::string&      modifiedTables,
     const std::string&      author,
     const std::string&      planName,
-    const std::string&      commandString)
-try
+    const std::string&      commandString) try
 {
 	__MOUT__ << "handleSavePlanCommandSequenceXML" << __E__;
 
@@ -3986,8 +3979,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
                                                            const std::string& uid,
                                                            const std::string& colName,
                                                            const std::string& newValue,
-                                                           const std::string& author)
-try
+                                                           const std::string& author) try
 {
 	__SUP_COUT__ << "table " << tableName << "(" << version << ")" << __E__;
 
@@ -4524,8 +4516,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
                                                    ConfigurationManagerRW* cfgMgr,
                                                    const std::string&      tableName,
                                                    TableVersion            version,
-                                                   bool allowIllegalColumns)
-try
+                                                   bool allowIllegalColumns) try
 {
 	char                 tmpIntStr[100];
 	xercesc::DOMElement *parentEl, *subparentEl;
@@ -4544,7 +4535,6 @@ try
 	                            tableName);  // filter errors by tableName
 
 	TableBase* table = cfgMgr->getTableByName(tableName);
-
 
 	__COUTV__(allowIllegalColumns);
 
@@ -5187,8 +5177,7 @@ void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(
     const std::string&      groupAlias,
     const std::string&      groupName,
     TableGroupKey           groupKey,
-    const std::string&      author)
-try
+    const std::string&      author) try
 {
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, TableVersion> activeVersions = cfgMgr->getActiveVersions();
@@ -5357,8 +5346,7 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
     const std::string&      versionAlias,
     const std::string&      tableName,
     TableVersion            version,
-    const std::string&      author)
-try
+    const std::string&      author) try
 {
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, TableVersion> activeVersions = cfgMgr->getActiveVersions();
@@ -5530,8 +5518,7 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
     const std::string&      versionAlias,
     const std::string&      groupName,
     TableGroupKey           groupKey,
-    const std::string&      author)
-try
+    const std::string&      author) try
 {
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, TableVersion> activeVersions = cfgMgr->getActiveVersions();
@@ -6214,13 +6201,13 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 	const XDAQContextTable::XDAQContext* artdaqContext =
 	    contextTable->getTheARTDAQSupervisorContext();
 
-	const std::vector<ARTDAQTableBase::ARTDAQAppType> artdaqProcessTypes({
-		ARTDAQTableBase::ARTDAQAppType::RoutingMaster,
-	    ARTDAQTableBase::ARTDAQAppType::BoardReader,
-	    ARTDAQTableBase::ARTDAQAppType::EventBuilder,
-	    ARTDAQTableBase::ARTDAQAppType::DataLogger,
-	    ARTDAQTableBase::ARTDAQAppType::Dispatcher,
-	    ARTDAQTableBase::ARTDAQAppType::Monitor});
+	const std::vector<ARTDAQTableBase::ARTDAQAppType> artdaqProcessTypes(
+	    {ARTDAQTableBase::ARTDAQAppType::RoutingMaster,
+	     ARTDAQTableBase::ARTDAQAppType::BoardReader,
+	     ARTDAQTableBase::ARTDAQAppType::EventBuilder,
+	     ARTDAQTableBase::ARTDAQAppType::DataLogger,
+	     ARTDAQTableBase::ARTDAQAppType::Dispatcher,
+	     ARTDAQTableBase::ARTDAQAppType::Monitor});
 
 	const std::string typeString = "artdaqSupervisor";
 	if(artdaqContext)
@@ -6229,9 +6216,10 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 		__SUP_COUTV__(artdaqContext->applications_.size());
 
 		for(auto& artdaqApp : artdaqContext->applications_)
-		{			
-			if(artdaqApp.class_ != "ots::ARTDAQSupervisor") continue;
-			
+		{
+			if(artdaqApp.class_ != "ots::ARTDAQSupervisor")
+				continue;
+
 			__SUP_COUTV__(artdaqApp.applicationUID_);
 
 			auto parentEl =
@@ -6244,8 +6232,8 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 			                              parentEl);
 
 			const ARTDAQTableBase::ARTDAQInfo& info = ARTDAQTableBase::extractARTDAQInfo(
-                XDAQContextTable::getSupervisorConfigNode(
-                    cfgMgr, artdaqContext->contextUID_, artdaqApp.applicationUID_));
+			    XDAQContextTable::getSupervisorConfigNode(
+			        cfgMgr, artdaqContext->contextUID_, artdaqApp.applicationUID_));
 
 			__SUP_COUT__ << "========== "
 			             << "Found " << info.subsystems.size() << " subsystems." << __E__;
@@ -6277,9 +6265,11 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 			}  // end subsystem handling
 
 			__SUP_COUT__ << "========== "
-			             << "Found " << info.processes.size() << " process types." << __E__;
+			             << "Found " << info.processes.size() << " process types."
+			             << __E__;
 
-			for(unsigned int i = 0; i < artdaqProcessTypes.size() /*process type count*/; ++i)
+			for(unsigned int i = 0; i < artdaqProcessTypes.size() /*process type count*/;
+			    ++i)
 			{
 				const std::string& subtypeString =
 				    ARTDAQTableBase::getTypeString(artdaqProcessTypes[i]);
