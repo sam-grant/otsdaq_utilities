@@ -45,8 +45,8 @@ if (typeof DesktopContent == 'undefined' &&
 
 
 //"public" function list: 
-//	SimpleContextMenu.createMenu(menuItems,menuItemHandlers,popupID,topLeftX,topLeftY, primaryColor, secondaryColor)
-//	SimpleContextMenu.createMenuCallAsString(menuItems,menuItemHandlers,popupID,topLeftX,topLeftY, primaryColor, secondaryColor)
+//	SimpleContextMenu.createMenu(menuItems,menuItemHandlers,popupID,topLeftX,topLeftY, primaryColor, secondaryColor, useDefaultHighlightColors)
+//	SimpleContextMenu.createMenuCallAsString(menuItems,menuItemHandlers,popupID,topLeftX,topLeftY, primaryColor, secondaryColor, useDefaultHighlightColors)
 
 //"private" function list:
 //	SimpleContextMenu.mouseMoveHandler(event)
@@ -65,7 +65,7 @@ SimpleContextMenu._styleEl = 0;
 //SimpleContextMenu.createMenu
 // 	if from event, for left and top use, e.g event.pageX-1,event.pageY-1
 SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
-		popupID,topLeftX,topLeftY, primaryColor, secondaryColor)	{
+		popupID,topLeftX,topLeftY, primaryColor, secondaryColor, useDefaultHighlightColors)	{
 
 	//	Debug.log("Creating SimpleContextMenu...");
 	//	Debug.log("menuItems=" + menuItems);
@@ -79,6 +79,7 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 	SimpleContextMenu._menuItemHandlers = menuItemHandlers;
 	SimpleContextMenu._primaryColor = primaryColor;
 	SimpleContextMenu._secondaryColor = secondaryColor;
+	SimpleContextMenu._useDefaultHighlightColors = useDefaultHighlightColors;
 
 	var body = document.getElementsByTagName("BODY")[0];
 	var el = SimpleContextMenu._popUpEl;
@@ -114,14 +115,14 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 			"top:" + topLeftY + "px;" +
 			"z-index: 1000000;" + //one million!
 			"background-color: " + primaryColor + ";" +
-			"border: 				0px solid " + secondaryColor + ";" +
+			//"border: 				0px solid " + secondaryColor + ";" +
 			"padding: 				8px 0 8px 0;" +
 			"border-radius:			2px;" +
-			"box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em," +
-			"		inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */" +
-			"		rgb(150,150,150) 0 .1em 3px," +			
-			"		rgb(175,175,175) 0 .2em 1px, /* color border */" +
-			"		rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */" +
+			"box-shadow: 			inset rgba(255,254,255,0.6) 0 0 0 /*top-bottom glow*/," +
+			"		inset rgba(0,0,0,0.35) 0 0 3px /* inner shadow */, " +
+			"		rgb(150,150,150) 0 0 3px /* outer glow */," +			
+			"		rgb(175,175,175) 0 0 3px  /* color border */," +
+			"		rgba(0,0,0,0.7) -5px 5px 5px /* drop shadow */;	" +
 			"}\n\n";
 	css += "#" + popupID + " div" +
 			"{" +
@@ -133,8 +134,8 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 			"}\n\n";
 	css += "#" + popupID + " div:hover" +
 			"{" + 
-			"background-color: " + secondaryColor + ";" +
-			"color: " + primaryColor + ";" +
+			"background-color: " + (useDefaultHighlightColors?"rgb(91,148,240)":secondaryColor) + ";" +
+			"color: " + (useDefaultHighlightColors?"white":primaryColor) + ";" +
 			"cursor: pointer;" +
 			"}\n\n";
 	css += "#" + popupID + " *" +
@@ -186,7 +187,7 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 //	this string can be put into an event handler string
 //	  e.g. "onmousedown='" + createTreeLinkContextMenuString(...) + "'"
 SimpleContextMenu.createMenuCallAsString = function(menuItems,menuItemHandlers,
-		popupID, primaryColor, secondaryColor)	{
+		popupID, primaryColor, secondaryColor, useDefaultHighlightColors)	{
 
 	var str = "";
 	str += "SimpleContextMenu.createMenu([";
@@ -219,7 +220,8 @@ SimpleContextMenu.createMenuCallAsString = function(menuItems,menuItemHandlers,
 	str += "]" + //end menuItemHandlers array
 			",\"" + popupID + "\",event.pageX-1,event.pageY-1, " +
 			"\"" + primaryColor + 
-			"\", \"" + secondaryColor + "\");";					
+			"\", \"" + secondaryColor + 
+			"\", " + (useDefaultHighlightColors?1:0) + ");";					
 	
 	return str;
 }
@@ -229,7 +231,7 @@ SimpleContextMenu.createMenuCallAsString = function(menuItems,menuItemHandlers,
 //	subscribe the mouse move handler to DesktopContent.mouseMoveSubscriber
 //	OR if (typeof DesktopContent == 'undefined' then subscribe to Desktop
 SimpleContextMenu.mouseMoveHandler = function(e) {
-
+	
 	//Debug.log("moving " + e.pageX + "-" + e.pageY);
 	if(SimpleContextMenu._popUpEl) //delete popup
 	{
@@ -258,6 +260,12 @@ SimpleContextMenu.callMenuItemHandler = function(event,index) {
 	Debug.log("Removing SimpleContextMenu");
 	SimpleContextMenu._popUpEl.parentNode.removeChild(SimpleContextMenu._popUpEl);
 	SimpleContextMenu._popUpEl = 0;
+
+	if(SimpleContextMenu._styleEl)
+	{
+		SimpleContextMenu._styleEl.parentNode.removeChild(SimpleContextMenu._styleEl);
+		SimpleContextMenu._styleEl = 0;
+	}
 
 	event.cancelBubble = true;
 	event.preventDefault();
@@ -291,8 +299,8 @@ SimpleContextMenu.handleMouseOverMenuItem = function(event,index) {
 		el = document.getElementById("SimpleContextMenu-menuItem-" + i);
 		if(i == index) //hovered one
 		{
-			el.style.backgroundColor = 	SimpleContextMenu._secondaryColor;
-			el.style.color = 			SimpleContextMenu._primaryColor;
+			el.style.backgroundColor = 	(SimpleContextMenu._useDefaultHighlightColors?"rgb(91,148,240)":SimpleContextMenu._secondaryColor);
+			el.style.color = 			(SimpleContextMenu._useDefaultHighlightColors?"white"			:SimpleContextMenu._primaryColor);		
 		}
 		else
 		{

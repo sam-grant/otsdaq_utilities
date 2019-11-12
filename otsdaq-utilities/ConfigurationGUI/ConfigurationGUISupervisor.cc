@@ -6201,14 +6201,6 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 	const XDAQContextTable::XDAQContext* artdaqContext =
 	    contextTable->getTheARTDAQSupervisorContext();
 
-	const std::vector<ARTDAQTableBase::ARTDAQAppType> artdaqProcessTypes(
-	    {ARTDAQTableBase::ARTDAQAppType::RoutingMaster,
-	     ARTDAQTableBase::ARTDAQAppType::BoardReader,
-	     ARTDAQTableBase::ARTDAQAppType::EventBuilder,
-	     ARTDAQTableBase::ARTDAQAppType::DataLogger,
-	     ARTDAQTableBase::ARTDAQAppType::Dispatcher,
-	     ARTDAQTableBase::ARTDAQAppType::Monitor});
-
 	const std::string typeString = "artdaqSupervisor";
 	if(artdaqContext)
 	{
@@ -6268,13 +6260,11 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 			             << "Found " << info.processes.size() << " process types."
 			             << __E__;
 
-			for(unsigned int i = 0; i < artdaqProcessTypes.size() /*process type count*/;
-			    ++i)
+			for(auto& nameTypePair : ARTDAQTableBase::processTypes_.mapToType_)
 			{
-				const std::string& subtypeString =
-				    ARTDAQTableBase::getTypeString(artdaqProcessTypes[i]);
+				const std::string& subtypeString = nameTypePair.first;
 
-				auto it = info.processes.find(artdaqProcessTypes[i]);
+				auto it = info.processes.find(nameTypePair.second);
 				if(it == info.processes.end())
 				{
 					__SUP_COUT__ << "\t"

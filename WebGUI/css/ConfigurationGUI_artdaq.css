@@ -4,7 +4,7 @@
 		}
 		
 		b, h3, h1 { /* overwrite ConfigurationGUI.css:41 */
-			color:					rgb(92, 169, 173);
+			color:					rgb(12, 10, 113);
 		}
 		
 		/* make buttons and links have a hand cursor */
@@ -190,6 +190,7 @@
 									
 			background:				white;
 			padding:				5px;
+			overflow-x:				auto;
 		}
 		
 		#createNodeDiv {

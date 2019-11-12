@@ -68,7 +68,7 @@
 				"x0": 	0, 	"y0": 	0, 
 				"xstep":0, 	"ystep":0}; 
 		var _nodes = []; 	// array of node objects (can be multi-node vector at location, using nodeCount and nodeVectorIndexArr
-							//	node: 	{type, name, hostname, subsystemId, originalName, xGrid, yGrid, nodeCount, nodeVectorIndexArr, nodeVectorIndexReverseMap, nodeVectorIndexString, hostnameVectorIndexArr, hostnameVectorIndexString}
+							//	node: 	{type, name, hostname, subsystemId, originalName, xGrid, yGrid, nodeCount, nodeVectorIndexArr, nodeVectorIndexReverseMap, nodeVectorIndexString, hostnameVectorIndexArr, hostnameVectorIndexReverseMap, hostnameVectorIndexString, hostnameFixedWidth}
 		var _arrows = {}; 	//multi-dim map of arrow objects 
 							//	arrow:	[i0][i1] = {p0,p1} (start and end i,p - where i := node index, p := 1 of 4 positions starting from top going clock-wise)
 		
@@ -442,7 +442,7 @@
 			//create node object by type for save function from _nodes array
 			//		nodeObj := {}
 			//			nodeObj.<nodeType> = {}
-			//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName}
+			//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName,(nodeArrString),(hostnameArrString),(hostnameFixedWidth)}
 			//
 			// <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
 			//
@@ -461,28 +461,24 @@
 			{
 				node = _nodes[i];				
 				type = types[node.type];
-				
+
+				name = node.name;
+				nodesObj[type][name] = {};
+				nodesObj[type][name].originalName = node.originalName;
+				nodesObj[type][name].hostname = node.hostname;
+				nodesObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
 				if(node.nodeCount > 1)
 				{
 					Debug.log("Saving multi-node...");
-					for(var j=0;j<nodeVectorIndexArr.length;++j)
+					nodesObj[type][name].nodeArrString = node.nodeVectorIndexString;
+					
+					if(node.hostname.indexOf('*') >= 0)
 					{
-						name = node.name.replace(new RegExp("\\*",'g'), 
-								nodeVectorIndexArr[j]);
-						nodesObj[type][name] = {};
-						nodesObj[type][name].originalName = node.originalName;
-						nodesObj[type][name].hostname = node.hostname;
-						nodesObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
-					}				
-				}
-				else
-				{
-					name = node.name;
-					nodesObj[type][name] = {};
-					nodesObj[type][name].originalName = node.originalName;
-					nodesObj[type][name].hostname = node.hostname;
-					nodesObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
-				}
+						nodesObj[type][name].hostnameArrString = node.hostnameVectorIndexString;
+						if(node.hostnameFixedWidth && node.hostnameFixedWidth > 1)
+							nodesObj[type][name].hostnameFixedWidth = node.hostnameFixedWidth;							
+					}					
+				} //end multi-node handling
 			
 				subsystemsObj[_subsystems[node.subsystemId].label] = {};
 				if(subsystemsObj[_subsystems[node.subsystemId].label].destinationName !== undefined &&
@@ -1240,6 +1236,7 @@
 				var count = _nodes[i].nodeCount?_nodes[i].nodeCount:1;
 				
 				var nodeName = _nodes[i].name;
+				var hostname = _nodes[i].hostname;
 				if(count > 1)
 				{
 					//special multi-node name handling
@@ -1247,6 +1244,15 @@
 					nodeName = nodeName.replace(new RegExp("\\*",'g'), 
 							"[" + 
 							_nodes[i].nodeVectorIndexString + 
+							"]"); 
+				}
+				if(hostname.indexOf('*') >= 0)
+				{
+					//special hostname array handling
+					
+					hostname = hostname.replace(new RegExp("\\*",'g'), 
+							"[" + 
+							_nodes[i].hostnameVectorIndexString + 
 							"]"); 
 				}
 				
@@ -1290,7 +1296,7 @@
 						typeName + "::" + nodeName +
 						htmlClearDiv() + 
 						_subsystems[_nodes[i].subsystemId].label + 
-						" @ " + _nodes[i].hostname +			
+						" @ " + hostname +			
 					"</div>";
 				
 				//add edit pencil icon
@@ -2196,7 +2202,8 @@
 						"openFclMenuForArtdaqNode",		//element ID
 						event.pageX - 10, event.pageY - 10, 		//top left position
 						_MENU_PRIMARY_COLOR,
-						_MENU_SECONDARY_COLOR
+						_MENU_SECONDARY_COLOR,
+						true /*defaultHighlighting*/
 				);	
 				
 				return;
@@ -2264,7 +2271,8 @@
 					(x?x:(event.pageX - 10)),
 					event.pageY - 10, 		//top left position
 					_MENU_PRIMARY_COLOR,
-					_MENU_SECONDARY_COLOR
+					_MENU_SECONDARY_COLOR,
+					true /*defaultHighlighting*/
 			);			
 			
 		} // end handleEditIconMouseUp()
@@ -2338,7 +2346,8 @@
 						"openFclMenuForArtdaqNode",		//element ID
 						x, event.pageY - 10, 		//top left position
 						_MENU_PRIMARY_COLOR,
-						_MENU_SECONDARY_COLOR
+						_MENU_SECONDARY_COLOR,
+						true /*defaultHighlighting*/
 				);			
 				return;
 			}
@@ -2543,6 +2552,8 @@
 					typeName + "::" + _nodes[i].name + "..."; 
 					
 			var isMultiNode = _nodes[i].name.indexOf('*') >= 0;
+			var isHostnameArray = _nodes[i].hostname.indexOf('*') >= 0;
+			var isHostnameFixedWidth = _nodes[i].hostnameFixedWidthSize && _nodes[i].hostnameFixedWidthSize > 1;
 
 			str += htmlClearDiv();
 			str += "<br><table style='margin-bottom: 10px;'>";
@@ -2566,6 +2577,7 @@
 							"class": "enableMultiNodeCheckbox",
 							"checked": (isMultiNode?1:0),
 							"onclick": "handleEditNodeDialogMultiNodeCheckbox(" + i + ",this);",
+							"title": "Enable multi-node instances using printer syntax.",
 					},
 					htmlOpen("a",
 							{
@@ -2574,6 +2586,7 @@
 									"var forFirefox = (el[0].checked = !el[0].checked); " +
 									"handleEditNodeDialogMultiNodeCheckbox(" + i + ",el[0]);"
 									,
+									"title": "Enable multi-node instances using printer syntax.",
 							},
 							"Enable Multi-node Instances" /*innerHTML*/,
 							true /*doCloseTag*/
@@ -2620,6 +2633,7 @@
 								"class": "enableHostnameArrayCheckbox",
 								"checked": (isHostnameArray?1:0),
 								"onclick": "handleEditNodeDialogHostnameArrayCheckbox(" + i + ",this);",
+								"title": "Enable associating the nodes with an array of hostnames.",
 						},
 						htmlOpen("a",
 								{
@@ -2628,19 +2642,23 @@
 										"var forFirefox = (el[0].checked = !el[0].checked); " +
 										"handleEditNodeDialogHostnameArrayCheckbox(" + i + ",el[0]);"
 										,
+										"title": "Enable associating the nodes with an array of hostnames.",
 								},
-								"Enable Multi-node Instances" /*innerHTML*/,
+								"Associate multi-node instances with an array of hostnames." /*innerHTML*/,
 								true /*doCloseTag*/
 						) /*innerHTML*/,
 						true /*doCloseTag*/);
+				
 			} //end multi-node
 			str += "</div>"; //close multi-node settings div
 			
 			str += htmlClearDiv();
+			
 			str += "<div id='hostnameArraySettings' style='display:" + 
 					(isHostnameArray?"block":"none") + "'>";
 			{ //start hostnameArraySettings 
-				str += "Use 'printer page syntax' for the hostname too!" +
+				str += "<br>Use 'printer page syntax' and *'s for the hostnames too!" +
+						"<br>(Do not forget to add the * to the hostname field.)" +
 						"<br>";
 
 				str += htmlClearDiv();
@@ -2682,55 +2700,36 @@
 								true /*doCloseTag*/
 						) /*innerHTML*/,
 						true /*doCloseTag*/);
+				
 			} //end hostnameArraySettings
 			str += "</div>"; //close hostnameArray settings div
-			
+
 			str += htmlClearDiv();
 			str += "<div id='hostnameFixedWidthSettings' style='display:" + 
-					(isHostnameArray?"block":"none") + "'>";
+					(isHostnameFixedWidth?"block":"none") + "'>";
 			{ //start hostname fixed-width
-				str += "Set the number of digits for the hostname  for the hostname too!" +
+				str += "<br>Force the number of digits to a fixed-width within" +
+						" each hostname (e.g. 3 would yield numbers like 001, 002, etc.)." +
 						"<br>";
 
 				str += htmlClearDiv();
 				str += "<br><table style='margin-bottom: 10px;'>";
 
 
-				str += "<tr><td><b>Hostname Indices:</b></td><td>";
+				str += "<tr><td><b>Fixed-width Size:</b></td><td>";
 				str += htmlOpen("input",
 						{
-								"id": "ediNode-" + "hostnameIndices",
+								"id": "ediNode-" + "hostnameFixedWidth",
 								"type": "text",
-								"value": (_nodes[i].hostnameVectorIndexString?_nodes[i].hostnameVectorIndexString:""),
-								"title": "Set the hostname indices with printer page syntax.",
+								"style": "width:50px;",
+								"value": (_nodes[i].hostnameFixedWidthSize?_nodes[i].hostnameFixedWidthSize:2),
+								"title": "Set the number of digits for fixed-width numbering in the hostname.",
 						},
 						0 /*html*/, true /*closeTag*/);	
 				str += "</td></tr>";
 
-
-
 				str += "</table>";
-
-				str += htmlOpen("input",
-						{
-								"type": "checkbox",
-								"id": "enableHostnameFixedWidthCheckbox",
-								"class": "enableHostnameFixedWidthCheckbox",
-								"checked": (isHostnameFixedWidth?1:0),
-								"onclick": "handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",this);",
-						},
-						htmlOpen("a",
-								{
-										"style": "text-decoration:none;color:black;",
-										"onclick": "var el = document.getElementsByClassName(\"enableHostnameFixedWidthCheckbox\");" +
-										"var forFirefox = (el[0].checked = !el[0].checked); " +
-										"handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",el[0]);"
-										,
-								},
-								"Enable Fixed-Width Hostnames" /*innerHTML*/,
-								true /*doCloseTag*/
-						) /*innerHTML*/,
-						true /*doCloseTag*/);
+				
 			} //end hostname fixed-width
 			str += "</div>"; //close hostname fixed-width settings div
 			
@@ -2762,7 +2761,7 @@
 								"style": "display:none; float: left;",
 								"type": "text",
 								"value": "",
-								"title": "Set the node name template with * syntax.",
+								"title": "Set the subsystem for this node.",
 						},
 						0 /*html*/, true /*closeTag*/);	
 
@@ -2779,7 +2778,7 @@
 			str += "</td></tr>";
 			
 
-			str += "<tr><td style='text-align:right'><b>Host Name:</b></td><td>";
+			str += "<tr><td style='text-align:right'><b>Hostname:</b></td><td>";
 			{ //start hostnames
 				str += htmlOpen("select",
 						{
@@ -2802,7 +2801,7 @@
 								"style": "display:none; float: left;",
 								"type": "text",
 								"value": "",
-								"title": "Set the node name template with * syntax.",
+								"title": "Set the hostname for this node.",
 						},
 						0 /*html*/, true /*closeTag*/);	
 
@@ -2893,12 +2892,29 @@
 									document.getElementById("ediNode-" + "hostnameText").value:
 									document.getElementById("ediNode-" + "hostname").value;
 					
+					var hostnameIndices = document.getElementById("ediNode-" + "hostnameIndices").value;					
+					var hostnameFixedWidth = document.getElementById("ediNode-" + "hostnameFixedWidth").value | 0;					
+																
+					
 					Debug.log("Node name template = " + nodeNameTemplate);
 					
 					var el = document.getElementsByClassName("enableMultiNodeCheckbox");
-					if(el.length && !el[0].checked) nodeIndices = ""; //clear multi-node string if not checked
+					if(el.length && !el[0].checked) 
+						nodeIndices = ""; //clear multi-node string if not checked
+					el = document.getElementsByClassName("enableHostnameArrayCheckbox");
+					if(el.length && !el[0].checked) 
+					{
+						//clear hostnameIndices string and hostnameFixedWidth if not checked
+						hostnameIndices = ""; 
+						hostnameFixedWidth = 0;
+					}
+					el = document.getElementsByClassName("enableHostnameFixedWidthCheckbox");
+					if(el.length && !el[0].checked) 
+						hostnameFixedWidth = 0; //clear hostnameFixedWidth if not checked
 
 					Debug.log("Node indices = " + nodeIndices);
+					Debug.log("Hostname indices = " + hostnameIndices);
+					Debug.log("hostnameFixedWidth = " + hostnameFixedWidth);
 					
 					var nodeVectorIndexString = nodeIndices;
 					var nodeVectorIndexArr = []; //reset
@@ -2930,7 +2946,7 @@
 							var lo = nodeSubindices[0].trim() | 0;
 							if(hi <= lo)
 							{
-								Debug.log("Illegal Node Indices - please you print page syntax (e.g. '0,4-6').",
+								Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
 										Debug.HIGH_PRIORITY);
 								return;
 							}
@@ -2950,11 +2966,11 @@
 						}
 						else
 						{
-							Debug.log("Illegal Node Indices - please use print page syntax (e.g. '0,4-6').",
+							Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
 									Debug.HIGH_PRIORITY);
 							return;
 						}
-					}
+					} //end extract node indices
 					console.log("nodeCount",nodeCount); 
 					console.log("nodeVectorIndexArr",nodeVectorIndexArr); 
 					console.log("nodeVectorIndexReverseMap",nodeVectorIndexReverseMap); 
@@ -2967,6 +2983,87 @@
 						return;
 					}
 					
+
+					var hostnameVectorIndexString = hostnameIndices;
+					var hostnameVectorIndexArr = []; //reset
+					var hostnameVectorIndexReverseMap = {}; //reset
+					
+
+					hostnameIndices = hostnameIndices.split(',');
+					var hostnameCount = 0;
+					for(var j=0;j<hostnameIndices.length;j++)
+					{
+						var hostnameSubindices = hostnameIndices[j].split('-');
+						
+						if(hostnameSubindices.length == 1)
+						{
+							var index = hostnameSubindices[0].trim();
+							
+							if(hostnameVectorIndexReverseMap[index])
+							{
+								Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
+										index + "') are not allowed.",
+										Debug.HIGH_PRIORITY);
+								return;								
+							}
+							hostnameVectorIndexReverseMap[index] = hostnameCount++;
+							hostnameVectorIndexArr.push(index);							
+						}
+						else if(hostnameSubindices.length == 2)
+						{
+							var hi = hostnameSubindices[1].trim() | 0;
+							var lo = hostnameSubindices[0].trim() | 0;
+							if(hi <= lo)
+							{
+								Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+							
+							for(var k=lo;k<=hi;++k)
+							{
+								if(hostnameVectorIndexReverseMap[k])
+								{
+									Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
+											k + "') are not allowed.",
+											Debug.HIGH_PRIORITY);
+									return;								
+								}
+								hostnameVectorIndexReverseMap[k] = hostnameCount++;
+								hostnameVectorIndexArr.push(k);								
+							}
+						}
+						else
+						{
+							Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
+									Debug.HIGH_PRIORITY);
+							return;
+						}
+					} //end extract node indices
+					console.log("hostnameCount",hostnameCount); 
+					console.log("hostnameVectorIndexArr",hostnameVectorIndexArr); 
+					console.log("hostnameVectorIndexReverseMap",hostnameVectorIndexReverseMap); 
+					
+					if(hostnameCount> 1 && 
+							hostname.indexOf('*') < 0)
+					{
+						Debug.log("Illegal Hostname for associating an array of hostnames to multiple " +
+								"node instances - please use * in the hostname (click the pencil to type in the hostname field) to indicate where the hostname index should be (e.g. 'host*' to make host0, host1, etc..).",
+								Debug.HIGH_PRIORITY);
+						return;
+					}
+					if(hostnameCount> 1 && 
+							hostnameCount != nodeCount)
+					{
+						Debug.log("Illegal array of hostnames. Size " + hostnameCount +
+								" is not equal to the number of node instances which is " +
+								nodeCount + " - there must be a one-to-one correspondence " +
+								"between hostname and node, or else all nodes must be placed on the same host.",
+								Debug.HIGH_PRIORITY);
+						return;
+					}
+					
+					
 					//at this point, the change has been verified!
 					// so set node values
 					_nodes[i].nodeCount = nodeCount;
@@ -2974,7 +3071,11 @@
 					_nodes[i].nodeVectorIndexArr = nodeVectorIndexArr;
 					_nodes[i].nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
 					_nodes[i].name = nodeNameTemplate;
-					
+
+					_nodes[i].hostnameVectorIndexString = hostnameVectorIndexString;
+					_nodes[i].hostnameVectorIndexArr = hostnameVectorIndexArr;
+					_nodes[i].hostnameVectorIndexReverseMap = hostnameVectorIndexReverseMap;
+					_nodes[i].hostnameFixedWidth = hostnameFixedWidth;
 					//handle hostname change
 					if(_nodes[i].hostname != hostname)
 					{
@@ -3009,13 +3110,10 @@
 								_subsystems[j].label + " to " +
 								_nodes[subsystemId].subsystemId + ":" + 
 								_subsystems[subsystemId].label)
-										
-						//remove from sources and destinations:
-						//	if reader, logger, dispatcher, monitor should be no effect
-						//	if builder, could change sources and destinations
-						//TODO!!!
-								
-						_nodes[i].subsystemId = subsystemId;	
+														
+						_nodes[i].subsystemId = subsystemId;
+						
+						//subsystem change liekly affects arrows, so update
 						initArrows();
 					}
 					
@@ -3241,7 +3339,8 @@
 					"openFclMenuForArtdaqNode",		//element ID
 					event.pageX - 1, event.pageY - 1, 		//top left position
 					_MENU_PRIMARY_COLOR,
-					_MENU_SECONDARY_COLOR
+					_MENU_SECONDARY_COLOR,
+					true /*defaultHighlighting*/
 			);			
 			
 		} // end handleFclIconMouseUp()

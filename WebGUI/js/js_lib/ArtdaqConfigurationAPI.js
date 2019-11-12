@@ -227,7 +227,7 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 //	save artdaq nodes and subsystems to active groups (with modified tables)
 //		nodeObj := {}
 //			nodeObj.<nodeType> = {}
-//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName}
+//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName,(nodeArrString),(hostnameArrString),(hostnameFixedWidth)}
 //
 // <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
 //
@@ -263,6 +263,15 @@ ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 			
 			nodeString += encodeURIComponent(nodesObject[i][j].hostname) + ",";
 			nodeString += encodeURIComponent(nodesObject[i][j].subsystemName) + "";
+
+			//now optional node parameters
+			if(nodesObject[i][j].nodeArrString)
+				nodeString += "," + encodeURIComponent(nodesObject[i][j].nodeArrString);
+			if(nodesObject[i][j].hostnameArrString)
+				nodeString += "," + encodeURIComponent(nodesObject[i][j].hostnameArrString);
+			if(nodesObject[i][j].hostnameFixedWidth)
+				nodeString += "," + encodeURIComponent(nodesObject[i][j].hostnameFixedWidth);
+			
 			nodeString += ";"; //end node
 		}
 		nodeString += "|"; //end artdaq type		
@@ -303,7 +312,6 @@ ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 	); //end of getActiveTableGroups handler
 
 	return;
-	
 	
 } // end saveArtdaqNodes()
 
