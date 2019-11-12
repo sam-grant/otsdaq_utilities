@@ -230,8 +230,8 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			{
 				// missed some messages!
 				__SS__ << "Missed packets from " << cs->messages_.back().getSource()
-				       << "! Sequence IDs " << sourceLastSequenceID[newSourceId] << " to "
-				       << newSequenceId << "." << std::endl;
+				       << "! Sequence IDs " << sourceLastSequenceID[newSourceId] + 1 << " to "
+				       << newSequenceId - 1 << "." << __E__;
 				std::cout << ss.str();
 
 				// generate special message to indicate missed packets
