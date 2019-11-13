@@ -103,7 +103,8 @@
 				
 		.node {
 			position:				absolute;
-			cursor:					pointer;			
+			cursor:					pointer;
+			z-index:				1000; /*get above arrows*/
 		}
 		
 		.node-box {

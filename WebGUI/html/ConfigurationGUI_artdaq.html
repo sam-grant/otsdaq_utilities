@@ -337,6 +337,11 @@
 							//remove from nodes object to keep remainder accurate 
 							delete artdaqObj[type][name];
 							
+							if(_nodes[_nodes.length-1].y >= _grid.rows)
+								_grid.rows = _nodes[_nodes.length-1].y + 1;
+							if(_nodes[_nodes.length-1].x >= _grid.cols)
+								_grid.cols = _nodes[_nodes.length-1].x + 1;
+							
 						}
 						else //not found, so do not represent anymore
 							Debug.log("Not Found " + name);
@@ -2588,7 +2593,7 @@
 									,
 									"title": "Enable multi-node instances using printer syntax.",
 							},
-							"Enable Multi-node Instances" /*innerHTML*/,
+							"<b>Enable Multi-node Instances</b>" /*innerHTML*/,
 							true /*doCloseTag*/
 					) /*innerHTML*/,
 					true /*doCloseTag*/);
@@ -2644,7 +2649,7 @@
 										,
 										"title": "Enable associating the nodes with an array of hostnames.",
 								},
-								"Associate multi-node instances with an array of hostnames." /*innerHTML*/,
+								"<b>Associate Multi-node Instances with an Array of Hostnames</b>" /*innerHTML*/,
 								true /*doCloseTag*/
 						) /*innerHTML*/,
 						true /*doCloseTag*/);
@@ -2696,7 +2701,7 @@
 										"handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",el[0]);"
 										,
 								},
-								"Enable Fixed-Width Hostnames" /*innerHTML*/,
+								"<b>Enable Fixed-Width Hostnames</b>" /*innerHTML*/,
 								true /*doCloseTag*/
 						) /*innerHTML*/,
 						true /*doCloseTag*/);
