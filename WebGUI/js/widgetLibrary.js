@@ -12,23 +12,15 @@
 //
 //=====================================================================================
 var widgetLibrary = widgetLibrary || {};
-widgetLibrary.typeToSrc = {			   "0" :"widget_text.html",
-						   "1" :"widget_basicDisplay.html",
-						   "2" :"widget_text_with_title.html",
-						   "3" :"guage_widget.html",
-						   "4" :"simple_bar_chart.html",
-						   "5" :"thermometer.html"/*,
-						   "3" :"widgets",
-						   "4" :"widgets",						   
-						   "5" :"widgets/thermometer.html",						   
-						   "6" :"widgets",						   
-						   "7" :"widgets",						   
-						   "8" :"widgets",						   
-						   "9" :"widgets",						   
-						   "10":"widgets",						   
-						   "11":"widgets",						   
-						   "12":"widgets"   */					   
-						  }
+widgetLibrary.typeToSrc =	  {
+								"0" :"widget_text.html",
+								"1" :"widget_basicDisplay.html",
+								"2" :"widget_text_with_title.html",
+						   		"3" :"guage_widget.html",
+						   		//"4" :"simple_bar_chart.html",
+						   		"4" :"plotly_bar_chart.html",
+								"5" :"thermometer.html"					   
+							  }
 widgetLibrary.typeToImgSrc =  {
 							   "0" :"label-icon.png",
 							   "1" :"digital-clock-icon.png",
@@ -40,7 +32,7 @@ widgetLibrary.typeToImgSrc =  {
 							   "4" :"digital-clock-icon.png",						   
 							   "5" :"thermometer-icon.png", */		   
 							  }
-widgetLibrary.typeToName = {
+widgetLibrary.typeToName =    {
                                                                 "0" : "Plain Text",
                                                                 "2" : "Basic Display with name & value displays",
                                                                 "3" : "Basic Guage Style Display",
@@ -50,7 +42,7 @@ widgetLibrary.typeToName = {
                                                                 "3" : "Clock",
                                                                 "4" : "Clock",
                                                                 "5" : "Temperature" */
-                                                                }
+                              }
 widgetLibrary.typeToPurpose = {
 								"0" : "Plain Text",
 								"2" : "Plain Text",

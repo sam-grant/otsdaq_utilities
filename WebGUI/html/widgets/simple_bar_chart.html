@@ -144,7 +144,7 @@
 				    width = window.innerWidth - margin.left - margin.right,
 				    height = window.innerHeight - margin.top - margin.bottom;
 
-			        var parseTime = d3.timeParse("%I:%M");
+			    var parseTime = d3.timeParse("%I:%M");
 
 				//var x = d3.scaleLinear()
 				var x = d3.scaleTime()
@@ -163,8 +163,8 @@
 				x.domain(d3.extent(data, function(d) { return d.time; }));
 				y.domain(d3.extent(data, function(d) { return d.value; }));
 
-			        context.lineWidth = 2.0;
-			        context.strokeStyle = 'blue';
+			    context.lineWidth = 2.0;
+			    context.strokeStyle = 'blue';
 				line.context(context);
 				context.beginPath();
 

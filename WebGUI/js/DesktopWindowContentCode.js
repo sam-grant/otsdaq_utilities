@@ -958,7 +958,9 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 //returns xml entry value for attribue 'value'
 //	if !name assume req is xml node already
 DesktopContent.getXMLValue = function(req, name) {
-	if(!name)
+    if(!req) return undefined;
+    
+    if(!name)
 		return req.getAttribute("value");	
 	return DesktopContent.getXMLAttributeValue(req,name,"value");
 }

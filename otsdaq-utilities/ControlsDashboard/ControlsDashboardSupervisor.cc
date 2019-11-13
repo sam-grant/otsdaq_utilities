@@ -70,7 +70,8 @@ void ControlsDashboardSupervisor::init(void)
 	                              CorePropertySupervisorBase::getContextTreeNode(),
 	                              supervisorConfigurationPath);
 	__COUT__ << std::endl;
-	//
+
+//
 	//
 	// interface_->initialize();
 	std::thread(
@@ -81,62 +82,82 @@ void ControlsDashboardSupervisor::init(void)
 		    std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
 
 		    cs->interface_->initialize();
-
-		    std::vector<std::string> pvList;
-		    std::vector<int> pvRefreshRates;
-		    while(true)
-		    {
-		      pvList = {"FIRST VALUE"};
-		      pvRefreshRates = {};
-		      std::map<int, std::set<std::string>>::iterator mapReference = cs->pvDependencyLookupMap_.begin();
-		      while( mapReference != cs->pvDependencyLookupMap_.end()) //We have here current list of PV Dependencies
-		      {
-				for(auto pv : mapReference->second)
-				{
-				  int refreshRate = 1; //seconds
-				  if (pv.find(":") != pv.size() - 1){
-				    try {
-					  refreshRate = stoi(pv.substr(pv.find(":")+1))/1000.;
-					  pvRefreshRates.push_back(refreshRate);
-				    }catch (const std::exception& e) {continue;}
-				  }
-	
-				  pv = pv.substr(0,pv.find(":"));
-				  __COUT__  << "THREAD actual time: " << std::time(NULL) << "; uidPollTimeMap + 10 * refreshTime: " << cs->uidPollTimeMap_.at(mapReference->first) + 10*refreshRate << " seconds" << std::endl;
-				  if (std::time(NULL) > cs->uidPollTimeMap_.at(mapReference->first) + 10*refreshRate)
-				  {
-				    try {
-				   		cs->pvDependencyLookupMap_.erase(mapReference->first); 
-				    	continue;
-				    }catch (const std::exception& e) {continue;}
-				  }
-	
-				  std::vector<std::string>::iterator it = find (pvList.begin(), pvList.end(), pv);
-				  if (it == pvList.end())
-				  {
-				    cs->interface_->unsubscribe(pv);
-				    cs->interface_->subscribe(pv);
-				    pvList.push_back(pv);
-				    __COUT__  << "PV: " << pv << " refreshRate:  " << refreshRate << " seconds" << std::endl;
-				    __COUT__  << "pvDependencyLookupMap_.size(): " <<  cs->pvDependencyLookupMap_.size() << " UID: " << mapReference->first  << " mapReference->second.size(): " << mapReference->second.size() << std::endl;
-				  }
-
-				  sleep (1);
-				}
-				mapReference++;
-		      }
-		      int minTime =30; //seconds
-		      if (pvRefreshRates.size()>0) minTime = *min_element(pvRefreshRates.begin(), pvRefreshRates.end());
-		      sleep (minTime);
-		      __COUT__  << "Loop over pvs subscribing - waiting time: " << minTime << " seconds" << std::endl;
-		    }
 	    },
 	    this)
 	    .detach(); // thread completes after creating, subscribing, and getting
                 //	                // parameters for all pvs
+
+	//
+	//
+	// checkSubscription
+	std::thread(
+	    [](ControlsDashboardSupervisor* cs) {
+
+		    // lockout the messages array for the remainder of the scope
+		    // this guarantees the reading thread can safely access the messages
+		    std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
+		    cs->checkSubscriptions(cs);
+	    },
+	    this)
+	    .detach(); // thread check clients subscription for all pvs
+
 	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
 }  // end init()
+
+//========================================================================================================================
+//Manage PVs sibscriptions to Epics
+void ControlsDashboardSupervisor::checkSubscriptions(ControlsDashboardSupervisor* cs)
+{
+  std::vector<std::string> pvList;
+  std::vector<int> pvRefreshRates;
+  while(true)
+  {
+    pvList = {"FIRST VALUE"};
+    pvRefreshRates = {};
+    std::map<int, std::set<std::string>>::iterator mapReference = cs->pvDependencyLookupMap_.begin();
+    while( mapReference != cs->pvDependencyLookupMap_.end()) //We have here current list of PV Dependencies
+    {
+	for(auto pv : mapReference->second)
+	{
+	  int refreshRate = 1; //seconds
+	  if (pv.find(":") != pv.size() - 1){
+	    try {
+		  refreshRate = stoi(pv.substr(pv.find(":")+1))/1000.;
+		  pvRefreshRates.push_back(refreshRate);
+	    }catch (const std::exception& e) {continue;}
+	  }
+
+	  pv = pv.substr(0,pv.find(":"));
+	  __COUT__  << "THREAD actual time: " << std::time(NULL) << "; uidPollTimeMap + 10 * refreshTime: " << cs->uidPollTimeMap_.at(mapReference->first) + 10*refreshRate << " seconds" << std::endl;
+	  if (std::time(NULL) > cs->uidPollTimeMap_.at(mapReference->first) + 10*refreshRate)
+	  {
+	    try {
+	   		cs->pvDependencyLookupMap_.erase(mapReference->first); 
+	    	continue;
+	    }catch (const std::exception& e) {continue;}
+	  }
+
+	  std::vector<std::string>::iterator it = find (pvList.begin(), pvList.end(), pv);
+	  if (it == pvList.end())
+	  {
+	    //cs->interface_->unsubscribe(pv);
+	    //cs->interface_->subscribe(pv);
+	    pvList.push_back(pv);
+	    __COUT__  << "PV: " << pv << " refreshRate:  " << refreshRate << " seconds" << std::endl;
+	    __COUT__  << "pvDependencyLookupMap_.size(): " <<  cs->pvDependencyLookupMap_.size() << " UID: " << mapReference->first  << " mapReference->second.size(): " << mapReference->second.size() << std::endl;
+	  }
+
+	  sleep (1);
+	}
+	mapReference++;
+    }
+	int minTime =30; //seconds
+    if (pvRefreshRates.size()>0) minTime = *min_element(pvRefreshRates.begin(), pvRefreshRates.end());
+    sleep (minTime);
+    __COUT__  << "Loop over pvs subscribing - waiting time: " << minTime << " seconds" << std::endl;
+  }
+}
 
 //========================================================================================================================
 // setSupervisorPropertyDefaults
@@ -451,7 +472,7 @@ void ControlsDashboardSupervisor::GetPVArchiverData(cgicc::Cgicc&    cgiIn,
 			pv = pvList.substr(pos, nextPos - pos);
 
 			__SUP_COUT__ << pv << std::endl;
-			std::array<std::array<std::string, 5>, 10> pvInformation = interface_->getPVHistory(pv);
+			std::vector<std::vector<std::string>> pvInformation = interface_->getPVHistory(pv);
 			__SUP_COUT__ << pv << ": " << pvInformation[0][1] << " : " << pvInformation[0][3] << std::endl;
 
 			for(auto pvData : pvInformation)

@@ -141,17 +141,17 @@
 						
 			.titleDiv {
                                 
-                                background-color: white;
-                        }
-                        .editorPanelTitle {
+                background-color: white;
+            }
+            .editorPanelTitle {
 				color: #d3d3d3;
-                                font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:22px;
-                                appearance: none;
-                                -webkit-appearance: none;
-                                -moz-appearance: none;
-                        }
+                font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:22px;
+                appearance: none;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+        	}
 
-			
+	
 			#widgetSearch {
 				padding: 0px;
 				border: none;
@@ -220,20 +220,20 @@
 			}
 			
 			#colorPickersDiv {
-			  float: left;
+			   float: left;
 			}
 
 			.toggle {
-			  position:relative;
-			  display:inline-block;
-			  width:40px;
-			  height:60px;
-			  float:left;
-			  background-color:#bbb;
-			  -webkit-border-radius:4px;
-			  -moz-border-radius:4px;
-			  border-radius:4px;
-			  text-align:center;
+				position:relative;
+			  	display:inline-block;
+			 	width:40px;
+				height:60px;
+				float:left;
+				background-color:#bbb;
+			 	-webkit-border-radius:4px;
+			  	-moz-border-radius:4px;
+			 	border-radius:4px;
+			  	text-align:center;
 			}
 
 			.toggle_settings {
@@ -358,21 +358,17 @@
 			  text-shadow:none;
 			  z-index:4;
 			}
-		
-			
+
 		</style>
-		
-		
+
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
 
-		
+
 		<script>		
-			
-			
-		
+
 			//functions:			
 				//init()	
 			var dimensions;
@@ -386,10 +382,9 @@
 			var defaultBackgroundColor_;
 			var codeEditor_ = 12345678910;
 
-					
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
-			
+
 			//init called once body has loaded
 			function initEdit() {			
 				Debug.log("*****************************************init() was called");
@@ -619,6 +614,8 @@
 							else
 								tileIMG.onclick = setupForDrawSelectionRectangle(indexReferenceArray[tileNumber]); 
 
+							console.log("name and indexReferenceArray[tileNumber]: " + name + " " +  indexReferenceArray[tileNumber]);
+
 							//tileIMG.style.width = tile.style.width;
 							//tileIMG.style.height = "100%";
 							//tileIMG.onclick = setupForDrawSelectionRectangle(indexReferenceArray[tileNumber]); 
@@ -775,8 +772,7 @@
 	
 	
 	<body onload='Javascript:initEdit();'>	
-			
-		
+
                 <div id="titleDiv" class="mainBlock">
                                 <h2 class="editorPanelTitle">Editor Panel</h2>
                 </div>

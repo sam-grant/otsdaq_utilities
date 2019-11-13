@@ -5,10 +5,10 @@
 		<style type="text/css">			
 			body {
 				background-color: rgb(41,46,55);
-				margin:0px !important;
+				margin: 0px !important;
 			}
 			a{
-				color: green;
+				color: green;Quick Views
 				height: auto;
 		    	text-align: center;
 			}
@@ -22,26 +22,33 @@
 				margin: auto;
 				padding: auto;
 			}
-									
+			#td{
+				writing-mode: vertical-lr;
+				transform: rotate(90deg);
+				text-align: left;
+				vertical-align: bottom;
+				font-size: 100%;
+				color: white;
+				height: 1px;
+				width: 1px;
+				//float: left;
+
+			}
 		</style>
-		
+
 			<script src="https://d3js.org/d3.v5.min.js"></script>
 			<script type="text/javascript" src="libraries/thermometer.js"></script>
-		
+
 		<script>		
-			
-			
-		
-			//functions:			
-				//init()					
-				
-								
+
+			//functions:
+				//init()
+
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 			var rows = 1;
 			var columns = 1;
-			
-						
+
 			//init called once body has loaded
 			function init()
 			{
@@ -49,15 +56,14 @@
 				console.log(window.frameElement.id)
 				window.parent.setupWidget(window.frameElement.id, getParameters());
 			}
-			
+
 			function setupPVs(settings)
 			{
 				console.log("setupPVs() : " , settings);
 			}
 
 			function newWidget(widget, parameters) 
-			{	
-				
+			{
 				var table = document.createElement('table');
 				table.id = "display-table";
 				table.style.height = "100%";//(parseInt(window.innerHeight) - 26) + "px";
@@ -68,17 +74,16 @@
 				{
 					counter++;
 				}
-				
+
 				if(counter<1)
 					++counter;
-				
+
 				var rows = Math.round(Math.sqrt(counter)); 
 				var columns = Math.ceil(counter / rows);
 
 				var hght = (parseInt(window.innerHeight) - 16) / rows;//((parseInt(window.innerHeight) - 26) * 0.9) / rows;
 				var wdth = (parseInt(window.innerWidth) - 16) / columns;
 
-				
 				for(var col = 1; col <= columns; col++)
 				{
 					var tr = document.createElement('tr');
@@ -88,6 +93,13 @@
 					{
 						var td = document.createElement('td');
 						td.id = "td" + col + "-" + cell;
+						var tr1 = document.createElement('tr');
+						tr1.id = "tr-1" + td.id;
+						var tr2 = document.createElement('tr');
+						tr2.id = "tr-2" + td.id;
+						td.appendChild(tr1);
+						td.appendChild(tr2);
+
 						//td.style.height = td.parentElement.innerHeight / rows;
 						//console.log(td.id);
 						tr.appendChild(td);
@@ -101,16 +113,26 @@
 				display.style.width = (parseInt(window.innerWidth) - 16)+ "px";;
 				display.style.height = (parseInt(window.innerHeight) - 16) + "px";//window.innerHeight;
 				display.appendChild(table);
-				
-
-
 
 				//console.log("newWidget() called *************************************");
 				if(counter > 1){counter = 2;}
 				console.log("counter" + counter);
 				for(var pv in widget.PVList)
 				{
-					
+					var first = Math.floor(counter/columns);
+					if(first < 1) {first = 1;}	
+
+					var pvDiv = document.createElement('div');
+					pvDiv.id = "td" + first + "-" + (counter%rows +1);
+					pvDiv.title = pv;
+					pvDiv.style.color = "white";
+					pvDiv.style.marginRight = "15px";
+
+					pvDiv.innerHTML = pv;
+					var pvCenter = document.createElement("center");
+					pvCenter.appendChild(pvDiv);
+					document.getElementById("tr-1td" + first + "-" + (counter%rows +1)).appendChild(pvCenter);
+
 					var a = document.createElement('div');
 					a.id = pv;
 					a.title = pv;
@@ -120,24 +142,23 @@
 //					document.getElementById("display").appendChild(a);	
 //					a = document.getElementById(pv);
 //					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
+					//Create Span for pv name Container
+
 					var center = document.createElement("center");
 					center.appendChild(a);
-					console.log(document.body);
-					var first = Math.floor(counter/columns);
-					if(first < 1) {first = 1;}				
 					console.log("td" + first + "-" + (counter%rows +1));
-					document.getElementById("td" + first + "-" + (counter%rows +1)).appendChild(center);
-					
+					document.getElementById("tr-2td" + first + "-" + (counter%rows +1)).appendChild(center);
+
 					drawThermometer(pv, 50, 0, 100);
+					console.log(document.body);			
 
 					counter++;
 //					console.log(counter);
 //					console.log(columns);
 //					console.log(rows);
-
 				}
 			}
-			
+
 			function getParameters()
 			{
 				parameters = {
@@ -155,11 +176,11 @@
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 
-				console.log("newValue() reached", pvName, pvValue);
+				console.log("Termometer newValue() reached", pvName, pvValue);
 				drawThermometer(pvName, pvValue, (pvValue * 0.5), (pvValue * 1.5));
 
 			}
-			
+
 			function drawThermometer(container_id, val, min, max)
 			{
 				var hght = (parseInt(window.innerHeight) - 16);//window.innerHeight / rows;
@@ -167,7 +188,7 @@
 
 				var thermometer = new Thermometer();
 				var thermometer = new Thermometer({
-					
+
 					// SVG width
 					width: wdth , //80,
 				    // SVG height
@@ -186,7 +207,7 @@
 				    bulbRadius: 18,
 				    // Horizontal width of the tube (pixels)
 				    tubeWidth: 18.5
-  
+ 
 				});
 				var container = document.getElementById(container_id);
 				container.innerHTML = "";
@@ -194,15 +215,13 @@
 			}
 
 		</script>
-		
-	</head>
-	
-	
+
+</head>
+
 	<body onload='Javascript:init();'>	
-			
+
 	<div id="display"></div>
-				
-		
+
 	</body>
-	
+
 </html>
