@@ -84,6 +84,14 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 			"modifiedTables=" + modifiedTablesListStr, //end post data, 
 			function(req) 
 			{
+		var errArr = DesktopContent.getXMLRequestErrors(req);
+		var errStr = "";
+		for(var i=0;i<errArr.length;++i)
+		{
+			errStr += (i?"\n\n":"") + errArr[i];
+			Debug.log("Error: " + errArr[i], Debug.HIGH_PRIORITY);
+		}
+		
 		responseHandler(localExtractActiveArtdaqNodes(req));
 			},
 			0,0,true  //reqParam, progressHandler, callHandlerOnErr
@@ -198,14 +206,14 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 				
 			} //end artdaq Supervisor extraction
 			else
-				Debug.log("No artdaq Supervisor found.");
+				Debug.log("No artdaq Supervisor found.", Debug.HIGH_PRIORITY);
 			
 			Debug.log("Total nodes extracted " +
 					retObj.nodeCount);
 		}
 		catch(e)
 		{
-			Debug.log("Error extracting active artdaq nodes: " + e);
+			Debug.log("Error extracting active artdaq nodes: " + e, Debug.HIGH_PRIORITY);
 			return undefined;
 		}
 
@@ -219,7 +227,7 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 //	save artdaq nodes and subsystems to active groups (with modified tables)
 //		nodeObj := {}
 //			nodeObj.<nodeType> = {}
-//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName}
+//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName,(nodeArrString),(hostnameArrString),(hostnameFixedWidth)}
 //
 // <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
 //
@@ -255,6 +263,15 @@ ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 			
 			nodeString += encodeURIComponent(nodesObject[i][j].hostname) + ",";
 			nodeString += encodeURIComponent(nodesObject[i][j].subsystemName) + "";
+
+			//now optional node parameters
+			if(nodesObject[i][j].nodeArrString)
+				nodeString += "," + encodeURIComponent(nodesObject[i][j].nodeArrString);
+			if(nodesObject[i][j].hostnameArrString)
+				nodeString += "," + encodeURIComponent(nodesObject[i][j].hostnameArrString);
+			if(nodesObject[i][j].hostnameFixedWidth)
+				nodeString += "," + encodeURIComponent(nodesObject[i][j].hostnameFixedWidth);
+			
 			nodeString += ";"; //end node
 		}
 		nodeString += "|"; //end artdaq type		
@@ -269,7 +286,7 @@ ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 	console.log("nodeString",nodeString);
 	console.log("subsystemStr",subsystemString);
 
-	//get active configuration group
+	//save nodes and subsystems to server
 	DesktopContent.XMLHttpRequest("Request?RequestType=saveArtdaqNodes",			
 			"modifiedTables=" + modifiedTablesListStr + 
 			"&nodeString=" + nodeString +
@@ -277,13 +294,24 @@ ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 			function(req) 
 			{
 		console.log("response",req);
-		//responseHandler(localExtractActiveArtdaqNodes(req));
+		
+		var errArr = DesktopContent.getXMLRequestErrors(req);
+		var errStr = "";
+		for(var i=0;i<errArr.length;++i)
+		{
+			errStr += (i?"\n\n":"") + errArr[i];
+			Debug.log("Error: " + errArr[i], Debug.HIGH_PRIORITY);
+		}
+		
+		if(errArr.length) return; // do not proceed on error
+		//else call response handler
+		responseHandler();
+		
 			},
 			0,0,true  //reqParam, progressHandler, callHandlerOnErr
 	); //end of getActiveTableGroups handler
 
 	return;
-	
 	
 } // end saveArtdaqNodes()
 

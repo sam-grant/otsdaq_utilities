@@ -28,154 +28,153 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	virtual void 			forceSupervisorPropertyValues		(void) override;  // override to force supervisor property values (and ignore user settings)
 
   private:
-	void					handleSaveTableInfoXML(
-														HttpXmlDocument&        xmldoc,
-														ConfigurationManagerRW* cfgMgr,
-														std::string&            tableName,
-														const std::string&      columnCSV,
-														const std::string&      tableDescription,
-														const std::string&      columnChoicesCSV,
-														bool                    allowOverwrite = false);
-	void 					handleDeleteTableInfoXML(
-														HttpXmlDocument&        xmldoc,
-														ConfigurationManagerRW* cfgMgr,
-														std::string&            tableName);
+	void					handleSaveTableInfoXML				(
+																	HttpXmlDocument&        xmldoc,
+																	ConfigurationManagerRW* cfgMgr,
+																	std::string&            tableName,
+																	const std::string&      columnCSV,
+																	const std::string&      tableDescription,
+																	const std::string&      columnChoicesCSV,
+																	bool                    allowOverwrite = false);
+	void 					handleDeleteTableInfoXML			(
+																	HttpXmlDocument&        xmldoc,
+																	ConfigurationManagerRW* cfgMgr,
+																	std::string&            tableName);
 
-	void 					handleGroupAliasesXML(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr);
-	void 					handleSetGroupAliasInBackboneXML(HttpXmlDocument&        xmldoc,
-														  ConfigurationManagerRW* cfgMgr,
-														  const std::string&      groupAlias,
-														  const std::string&      groupName,
-														  TableGroupKey           groupKey,
-														  const std::string&      author);
-	void 					handleSetVersionAliasInBackboneXML(HttpXmlDocument&        xmldoc,
-														ConfigurationManagerRW* cfgMgr,
-														const std::string&      versionAlias,
-														const std::string&      tableName,
-														TableVersion            version,
-														const std::string&      author);
+	void 					handleGroupAliasesXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr);
+	void 					handleSetGroupAliasInBackboneXML	(HttpXmlDocument&        xmldoc,
+																  ConfigurationManagerRW* cfgMgr,
+																  const std::string&      groupAlias,
+																  const std::string&      groupName,
+																  TableGroupKey           groupKey,
+																  const std::string&      author);
+	void 					handleSetVersionAliasInBackboneXML	(HttpXmlDocument&        xmldoc,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      versionAlias,
+																	const std::string&      tableName,
+																	TableVersion            version,
+																	const std::string&      author);
 	void 					handleAliasGroupMembersInBackboneXML(HttpXmlDocument&        xmldoc,
-	                                          ConfigurationManagerRW* cfgMgr,
-	                                          const std::string&      versionAlias,
-	                                          const std::string&      groupName,
-	                                          TableGroupKey           groupKey,
-	                                          const std::string&      author);
-	void 					handleVersionAliasesXML(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr);
-	void 					handleTableGroupsXML(HttpXmlDocument&        xmldoc,
-	                          ConfigurationManagerRW* cfgMgr,
-	                          bool                    returnMembers);
-	void 					handleGetTableGroupTypeXML(HttpXmlDocument&        xmldoc,
-	                                ConfigurationManagerRW* cfgMgr,
-	                                const std::string&      configList);
+																  ConfigurationManagerRW* cfgMgr,
+																  const std::string&      versionAlias,
+																  const std::string&      groupName,
+																  TableGroupKey           groupKey,
+																  const std::string&      author);
+	void 					handleVersionAliasesXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr);
+	void 					handleTableGroupsXML				(HttpXmlDocument&        xmldoc,
+																  ConfigurationManagerRW* cfgMgr,
+																  bool                    returnMembers);
+	void 					handleGetTableGroupTypeXML			(HttpXmlDocument&        xmldoc,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      configList);
 
-	void 					handleTablesXML(HttpXmlDocument&        xmldoc,
-	                     ConfigurationManagerRW* cfgMgr,
-	                     bool                    allowIllegalColumns);
-	void 					handleGetTableXML(HttpXmlDocument&        xmldoc,
-	                       ConfigurationManagerRW* cfgMgr,
-	                       const std::string&      tableName,
-	                       TableVersion            version,
-	                       bool                    allowIllegalColumns = false);
+	void 					handleTablesXML						(HttpXmlDocument&        xmldoc,
+																 ConfigurationManagerRW* cfgMgr,
+																 bool                    allowIllegalColumns);
+	void 					handleGetTableXML					(HttpXmlDocument&        xmldoc,
+																   ConfigurationManagerRW* cfgMgr,
+																   const std::string&      tableName,
+																   TableVersion            version,
+																   bool                    allowIllegalColumns = false);
 
-	void 					setupActiveTablesXML(
-													HttpXmlDocument&                                          xmldoc,
-													ConfigurationManagerRW*                                   cfgMgr,
-													const std::string&                                        groupName,
-													const TableGroupKey&                                      groupKey,
-													const std::string&                                        modifiedTables,
-													bool                                                      refreshAll      = true,
-													bool                                                      getGroupInfo    = false,
-													std::map<std::string /*name*/, TableVersion /*version*/>* returnMemberMap = 0,
-													bool         outputActiveTables                                           = true,
-													std::string* accumulatedErrors                                            = 0);
-	void    				handleFillTreeViewXML(HttpXmlDocument&        xmldoc,
-	                                  ConfigurationManagerRW* cfgMgr,
-	                                  const std::string&      groupName,
-	                                  const TableGroupKey&    groupKey,
-	                                  const std::string&      startPath,
-	                                  unsigned int            depth,
-	                                  bool                    hideStatusFalse,
-	                                  const std::string&      modifiedTables,
-	                                  const std::string&      filterList);
-	static void 			recursiveTreeToXML(const ConfigurationTree& t,
-	                               unsigned int             depth,
-	                               HttpXmlDocument&         xmldoc,
-	                               DOMElement*              parentEl,
-	                               bool                     hideStatusFalse);
-	void        			handleFillTreeNodeCommonFieldsXML(HttpXmlDocument&        xmldoc,
-	                                              ConfigurationManagerRW* cfgMgr,
-	                                              const std::string&      groupName,
-	                                              const TableGroupKey&    groupKey,
-	                                              const std::string&      startPath,
-	                                              unsigned int            depth,
-	                                              const std::string&      modifiedTables,
-	                                              const std::string&      recordList,
-	                                              const std::string&      fieldList);
+	void 					setupActiveTablesXML				(
+																HttpXmlDocument&                                          xmldoc,
+																ConfigurationManagerRW*                                   cfgMgr,
+																const std::string&                                        groupName,
+																const TableGroupKey&                                      groupKey,
+																const std::string&                                        modifiedTables,
+																bool                                                      refreshAll      = true,
+																bool                                                      getGroupInfo    = false,
+																std::map<std::string /*name*/, TableVersion /*version*/>* returnMemberMap = 0,
+																bool         outputActiveTables                                           = true,
+																std::string* accumulatedErrors                                            = 0);
+	void    				handleFillTreeViewXML				(HttpXmlDocument&        xmldoc,
+																  ConfigurationManagerRW* cfgMgr,
+																  const std::string&      groupName,
+																  const TableGroupKey&    groupKey,
+																  const std::string&      startPath,
+																  unsigned int            depth,
+																  bool                    hideStatusFalse,
+																  const std::string&      modifiedTables,
+																  const std::string&      filterList);
+	static void 			recursiveTreeToXML					(const ConfigurationTree& t,
+															   unsigned int             depth,
+															   HttpXmlDocument&         xmldoc,
+															   DOMElement*              parentEl,
+															   bool                     hideStatusFalse);
+	void        			handleFillTreeNodeCommonFieldsXML	(HttpXmlDocument&        xmldoc,
+																  ConfigurationManagerRW* cfgMgr,
+																  const std::string&      groupName,
+																  const TableGroupKey&    groupKey,
+																  const std::string&      startPath,
+																  unsigned int            depth,
+																  const std::string&      modifiedTables,
+																  const std::string&      recordList,
+																  const std::string&      fieldList);
 	void         			handleFillUniqueFieldValuesForRecordsXML(HttpXmlDocument&        xmldoc,
-	                                                     ConfigurationManagerRW* cfgMgr,
-	                                                     const std::string&      groupName,
-	                                                     const TableGroupKey&    groupKey,
-	                                                     const std::string&      startPath,
-	                                                     const std::string&      modifiedTables,
-	                                                     const std::string&      recordList,
-	                                                     const std::string&      fieldList);
-	void        			handleFillGetTreeNodeFieldValuesXML(HttpXmlDocument&        xmldoc,
-	                                                ConfigurationManagerRW* cfgMgr,
-	                                                const std::string&      groupName,
-	                                                const TableGroupKey&    groupKey,
-	                                                const std::string&      startPath,
-	                                                const std::string&      modifiedTables,
-	                                                const std::string&      recordList,
-	                                                const std::string&      fieldList);
-	void         			handleFillSetTreeNodeFieldValuesXML(HttpXmlDocument&        xmldoc,
-	                                                ConfigurationManagerRW* cfgMgr,
-	                                                const std::string&      groupName,
-	                                                const TableGroupKey&    groupKey,
-	                                                const std::string&      startPath,
-	                                                const std::string&      modifiedTables,
-	                                                const std::string&      recordList,
-	                                                const std::string&      fieldList,
-	                                                const std::string&      valueList,
-	                                                const std::string&      author);
-	void         			handleFillCreateTreeNodeRecordsXML(HttpXmlDocument&        xmldoc,
-	                                               ConfigurationManagerRW* cfgMgr,
-	                                               const std::string&      groupName,
-	                                               const TableGroupKey&    groupKey,
-	                                               const std::string&      startPath,
-	                                               const std::string&      modifiedTables,
-	                                               const std::string&      recordList,
-	                                               const std::string&      author);
-	void         			handleFillDeleteTreeNodeRecordsXML(HttpXmlDocument&        xmldoc,
-	                                               ConfigurationManagerRW* cfgMgr,
-	                                               const std::string&      groupName,
-	                                               const TableGroupKey&    groupKey,
-	                                               const std::string&      startPath,
-	                                               const std::string&      modifiedTables,
-	                                               const std::string&      recordList);
-	void         			handleFillModifiedTablesXML(HttpXmlDocument&        xmldoc,
-	                                        ConfigurationManagerRW* cfgMgr);
+																 ConfigurationManagerRW* cfgMgr,
+																 const std::string&      groupName,
+																 const TableGroupKey&    groupKey,
+																 const std::string&      startPath,
+																 const std::string&      modifiedTables,
+																 const std::string&      recordList,
+																 const std::string&      fieldList);
+	void        			handleFillGetTreeNodeFieldValuesXML	(HttpXmlDocument&        xmldoc,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      groupName,
+																	const TableGroupKey&    groupKey,
+																	const std::string&      startPath,
+																	const std::string&      modifiedTables,
+																	const std::string&      recordList,
+																	const std::string&      fieldList);
+	void         			handleFillSetTreeNodeFieldValuesXML	(HttpXmlDocument&        xmldoc,
+																ConfigurationManagerRW* cfgMgr,
+																const std::string&      groupName,
+																const TableGroupKey&    groupKey,
+																const std::string&      startPath,
+																const std::string&      modifiedTables,
+																const std::string&      recordList,
+																const std::string&      fieldList,
+																const std::string&      valueList,
+																const std::string&      author);
+	void         			handleFillCreateTreeNodeRecordsXML	(HttpXmlDocument&        xmldoc,
+															   ConfigurationManagerRW* cfgMgr,
+															   const std::string&      groupName,
+															   const TableGroupKey&    groupKey,
+															   const std::string&      startPath,
+															   const std::string&      modifiedTables,
+															   const std::string&      recordList,
+															   const std::string&      author);
+	void         			handleFillDeleteTreeNodeRecordsXML	(HttpXmlDocument&        xmldoc,
+															   ConfigurationManagerRW* cfgMgr,
+															   const std::string&      groupName,
+															   const TableGroupKey&    groupKey,
+															   const std::string&      startPath,
+															   const std::string&      modifiedTables,
+															   const std::string&      recordList);
+	void         			handleFillModifiedTablesXML			(HttpXmlDocument&        xmldoc, ConfigurationManagerRW* cfgMgr);
 
-	void  					handleSaveTreeNodeEditXML(HttpXmlDocument&        xmldoc,
-	                               ConfigurationManagerRW* cfgMgr,
-	                               const std::string&      tableName,
-	                               TableVersion            version,
-	                               const std::string&      type,
-	                               const std::string&      uid,
-	                               const std::string&      column,
-	                               const std::string&      newValue,
-	                               const std::string&      author);
-	void  					handleGetAffectedGroupsXML(HttpXmlDocument&        xmldoc,
-	                                ConfigurationManagerRW* cfgMgr,
-	                                const std::string&      rootGroupName,
-	                                const TableGroupKey&    rootGroupKey,
-	                                const std::string&      modifiedTables);
-	void  					handleGetLinkToChoicesXML(HttpXmlDocument&        xmldoc,
-	                               ConfigurationManagerRW* cfgMgr,
-	                               const std::string&      linkToTableName,
-	                               const TableVersion&     linkToTableVersion,
-	                               const std::string&      linkIdType,
-	                               const std::string&      linkIndex,
-	                               const std::string&      linkInitId);
+	void  					handleSaveTreeNodeEditXML			(HttpXmlDocument&        xmldoc,
+															   ConfigurationManagerRW* cfgMgr,
+															   const std::string&      tableName,
+															   TableVersion            version,
+															   const std::string&      type,
+															   const std::string&      uid,
+															   const std::string&      column,
+															   const std::string&      newValue,
+															   const std::string&      author);
+	void  					handleGetAffectedGroupsXML			(HttpXmlDocument&        xmldoc,
+															ConfigurationManagerRW* cfgMgr,
+															const std::string&      rootGroupName,
+															const TableGroupKey&    rootGroupKey,
+															const std::string&      modifiedTables);
+	void  					handleGetLinkToChoicesXML			(HttpXmlDocument&        xmldoc,
+														   ConfigurationManagerRW* cfgMgr,
+														   const std::string&      linkToTableName,
+														   const TableVersion&     linkToTableVersion,
+														   const std::string&      linkIdType,
+														   const std::string&      linkIndex,
+														   const std::string&      linkInitId);
 
 	void  					handleSavePlanCommandSequenceXML	(
 																	HttpXmlDocument&        xmldoc,

@@ -255,7 +255,7 @@ int main(int argc, char** argv)
 
 		if(FD_ISSET(sockfd, &readfds))
 		{
-			pingCounter = 0; //reset ping counter
+			pingCounter = 0;  // reset ping counter
 
 			// packet received
 			// cout << "hw: Line " << __LINE__ << ":::" << "Packet Received!" << endl;
@@ -357,12 +357,12 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-			sleep(1);  // one second
-			if(++pingCounter > 2*60) //two minutes
+			sleep(1);                   // one second
+			if(++pingCounter > 2 * 60)  // two minutes
 			{
-				//send 1-byte "ping" to keep socket alive
-				if((numbytes = sendto(
-						sendSockfd, buff, 1, 0, p->ai_addr, p->ai_addrlen)) == -1)
+				// send 1-byte "ping" to keep socket alive
+				if((numbytes =
+				        sendto(sendSockfd, buff, 1, 0, p->ai_addr, p->ai_addrlen)) == -1)
 				{
 					__COUT__ << "error: ping sendto...\n\n" << __E__;
 					perror("hw: ping sendto");

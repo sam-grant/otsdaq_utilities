@@ -727,6 +727,27 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				if(req.responseText == Globals.REQ_NO_PERMISSION_RESPONSE) 
 				{
 					errStr = "Request failed due to insufficient account permissions."; 
+					
+					if(DesktopContent._sequence)
+					{
+						Debug.log("In wiz mode, attempting to fix access code on the fly...");
+						
+						DesktopContent._sequence = prompt(errStr + " Please enter a valid access code: ");
+						DesktopContent._sequence = DesktopContent._sequence.trim();
+
+						Debug.log("Resulting sequence code: " + DesktopContent._sequence);
+						
+						if(DesktopContent._sequence)
+						{							
+							Debug.log("Retrying request with new access code...");
+							DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, 
+								reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
+								targetSupervisor, ignoreSystemBlock);
+							return;
+						}
+						
+						DesktopContent._sequence = "a"; //set so retry is possible 
+					}
 					//return;
 				}
 				else if(req.responseText == Globals.REQ_USER_LOCKOUT_RESPONSE) 
@@ -879,16 +900,17 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		}
 	}
 
+	var reqData;
 	if(!sequence)
 	{        
 		if(!DesktopContent._cookieCodeMailbox) //attempt to fix (e.g. for Desktop)
 			DesktopContent._cookieCodeMailbox = document.getElementById("DesktopContent-cookieCodeMailbox");
 		var cc = DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
-		data = "CookieCode="+cc+((data===undefined)?"":("&"+data));
+		reqData = "CookieCode="+cc+((data===undefined)?"":("&"+data));
 	}
 	else
 	{   	
-		data = "sequence="+sequence+"&"+((data===undefined)?"":("&"+data));
+		reqData = "sequence="+sequence+"&"+((data===undefined)?"":("&"+data));
 	}
 	
 	
@@ -906,11 +928,11 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		DesktopContent.showLoading();
 	
 	
-	requestURL = origin+"/urn:xdaq-application:lid="+urn+"/"+requestURL;
-	//Debug.log("Post " + requestURL + "\n\tData: " + data);
-	req.open("POST",requestURL,true);
+	var reqURL = origin+"/urn:xdaq-application:lid="+urn+"/"+requestURL;
+	//Debug.log("Post " + reqURL + "\n\tData: " + reqData);
+	req.open("POST", reqURL,true);
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");		
-	req.send(data);	
+	req.send(reqData);	
 } // end XMLHttpRequest()
 
 //check cookie code race conditions
@@ -1193,7 +1215,7 @@ DesktopContent.tooltip = function(id,tip) {
 		}
 	},0,0,0,true,true); //show loading, and target supervisor
 	
-}
+} //end tooltip()
 
 //=====================================================================================
 DesktopContent.setWindowTooltip = function(tip)

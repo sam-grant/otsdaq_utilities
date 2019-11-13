@@ -71,7 +71,6 @@ void ControlsDashboardSupervisor::init(void)
 	                              supervisorConfigurationPath);
 	__COUT__ << std::endl;
 
-//
 	//
 	// interface_->initialize();
 	std::thread(
@@ -100,7 +99,7 @@ void ControlsDashboardSupervisor::init(void)
 	    },
 	    this)
 	    .detach(); // thread check clients subscription for all pvs
-
+ 
 	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
 }  // end init()
@@ -134,7 +133,7 @@ void ControlsDashboardSupervisor::checkSubscriptions(ControlsDashboardSupervisor
 	  {
 	    try {
 	   		cs->pvDependencyLookupMap_.erase(mapReference->first); 
-	    	continue;
+			continue;
 	    }catch (const std::exception& e) {continue;}
 	  }
 
@@ -312,12 +311,12 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 	   (mapReference = pvDependencyLookupMap_.find(std::stoi(UID))) !=
 	       pvDependencyLookupMap_.end())  // We have their current list of PV Dependencies
 	{
-	        uidPollTimeMap_.at(std::stoi(UID)) = std::time(NULL);
-		std::string JSONMessage = "{ ";
+		uidPollTimeMap_.at(std::stoi(UID)) = std::time(NULL);
+		std::string JSONMessage            = "{ ";
 
 		for(auto pv : mapReference->second)
 		{
-		        pv = pv.substr(0,pv.find(":"));
+			pv = pv.substr(0, pv.find(":"));
 
 			__SUP_COUT__ << pv << std::endl;
 
@@ -472,22 +471,23 @@ void ControlsDashboardSupervisor::GetPVArchiverData(cgicc::Cgicc&    cgiIn,
 			pv = pvList.substr(pos, nextPos - pos);
 
 			__SUP_COUT__ << pv << std::endl;
+
 			std::vector<std::vector<std::string>> pvInformation = interface_->getPVHistory(pv);
 			__SUP_COUT__ << pv << ": " << pvInformation[0][1] << " : " << pvInformation[0][3] << std::endl;
 
 			for(auto pvData : pvInformation)
 			{
-			  std::string JSONMessage = "{ ";
-			  JSONMessage += "\"" + pv + "\": {";
-			  JSONMessage += "\"Timestamp\":\"" + pvData[0] + "\",";
-			  JSONMessage += "\"Value\":\"" + pvData[1] + "\",";
-			  JSONMessage += "\"Status\":\"" + pvData[2] + "\",";
-			  JSONMessage += "\"Severity\":\"" + pvData[3] + "\"},";
+				std::string JSONMessage = "{ ";
+				JSONMessage += "\"" + pv + "\": {";
+				JSONMessage += "\"Timestamp\":\"" + pvData[0] + "\",";
+				JSONMessage += "\"Value\":\"" + pvData[1] + "\",";
+				JSONMessage += "\"Status\":\"" + pvData[2] + "\",";
+				JSONMessage += "\"Severity\":\"" + pvData[3] + "\"},";
 
-			  JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
-			  JSONMessage += "}";
-			  __SUP_COUT__ << JSONMessage << std::endl;
-			  xmlOut.addTextElementToData("JSON", JSONMessage);  // add to response
+				JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
+				JSONMessage += "}";
+				__SUP_COUT__ << JSONMessage << std::endl;
+				xmlOut.addTextElementToData("JSON", JSONMessage);  // add to response
 			}
 
 			pos = nextPos + 1;
@@ -508,55 +508,55 @@ void ControlsDashboardSupervisor::GetPVArchiverData(cgicc::Cgicc&    cgiIn,
 		    "JSON", "{ \"message\": \"GetPVSettings\"}");  // add to response
 	}
 
-/*
-	// FAKE NEWS RESPONSE
-	//		xmlOut.addTextElementToData(
-	//		    "JSON",
-	//					"{    \"ROOM:LI30:1:OUTSIDE_TEMP\": {
-	//					        \"nanos\": 823158037,
-	//					        \"secs\": 1540229999,
-	//					        \"severity\": 0,
-	//					        \"status\": 0,
-	//					        \"val\": 60.358551025390625
-	//					    },
-	//					    \"VPIO:IN20:111:VRAW\": {
-	//					        \"nanos\": 754373158,
-	//					        \"secs\": 1540229999,
-	//					        \"severity\": 0,
-	//					        \"status\": 0,
-	//					        \"val\": 5.529228687286377
-	//					    },
-	//					    \"YAGS:UND1:1005:Y_BM_CTR\": {
-	//					        \"nanos\": 164648807,
-	//					        \"secs\": 1537710595,
-	//					        \"severity\": 0,
-	//					        \"status\": 0,
-	//					        \"val\": 0.008066000000000002
-	//					    }
-	//					}");  // add to response
+	/*
+	    // FAKE NEWS RESPONSE
+	    //		xmlOut.addTextElementToData(
+	    //		    "JSON",
+	    //					"{    \"ROOM:LI30:1:OUTSIDE_TEMP\": {
+	    //					        \"nanos\": 823158037,
+	    //					        \"secs\": 1540229999,
+	    //					        \"severity\": 0,
+	    //					        \"status\": 0,
+	    //					        \"val\": 60.358551025390625
+	    //					    },
+	    //					    \"VPIO:IN20:111:VRAW\": {
+	    //					        \"nanos\": 754373158,
+	    //					        \"secs\": 1540229999,
+	    //					        \"severity\": 0,
+	    //					        \"status\": 0,
+	    //					        \"val\": 5.529228687286377
+	    //					    },
+	    //					    \"YAGS:UND1:1005:Y_BM_CTR\": {
+	    //					        \"nanos\": 164648807,
+	    //					        \"secs\": 1537710595,
+	    //					        \"severity\": 0,
+	    //					        \"status\": 0,
+	    //					        \"val\": 0.008066000000000002
+	    //					    }
+	    //					}");  // add to response
 
-	return;
+	    return;
 
-	// Where parameters
-	std::string data_retrieval_url     = "";
-	std::string data_retrieval_servlet = "";
-	std::string mime_type              = ".json";
+	    // Where parameters
+	    std::string data_retrieval_url     = "";
+	    std::string data_retrieval_servlet = "";
+	    std::string mime_type              = ".json";
 
-	// What/when paramaeters
-	std::string pv, from, to;
+	    // What/when paramaeters
+	    std::string pv, from, to;
 
-	// Optional parameters
-	//	boolean fetchLatestMetadata, donotchunk;
-	//	std::string timeranges;
-	//	int ca_count, ca_how;
+	    // Optional parameters
+	    //	boolean fetchLatestMetadata, donotchunk;
+	    //	std::string timeranges;
+	    //	int ca_count, ca_how;
 
-	std::string req = data_retrieval_url + data_retrieval_servlet + mime_type + "?" +
-	                  "pv=" + pv + "&from=" + from + "&to=" + to;
+	    std::string req = data_retrieval_url + data_retrieval_servlet + mime_type + "?" +
+	                      "pv=" + pv + "&from=" + from + "&to=" + to;
 
-	std::string response = "";
+	    std::string response = "";
 
-	return;
-*/
+	    return;
+	*/
 
 }  // end GetPVArchiverData()
 
@@ -603,7 +603,7 @@ void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
 
 		uid = (std::string("{ \"message\": \"") + std::to_string(UID_) + "\"}");
 
-		uidPollTimeMap_.insert( std::pair<int, long int>(UID_, std::time(NULL)));
+		uidPollTimeMap_.insert(std::pair<int, long int>(UID_, std::time(NULL)));
 	}
 	else
 	{
