@@ -68,7 +68,12 @@
 				"x0": 	0, 	"y0": 	0, 
 				"xstep":0, 	"ystep":0}; 
 		var _nodes = []; 	// array of node objects (can be multi-node vector at location, using nodeCount and nodeVectorIndexArr
-							//	node: 	{type, name, hostname, subsystemId, originalName, xGrid, yGrid, nodeCount, nodeVectorIndexArr, nodeVectorIndexReverseMap, nodeVectorIndexString, hostnameVectorIndexArr, hostnameVectorIndexReverseMap, hostnameVectorIndexString, hostnameFixedWidth}
+							//	node: 	{type, name, hostname, subsystemId, 
+							//		originalName, xGrid, yGrid, nodeCount, 
+							//		nodeVectorIndexArr, nodeVectorIndexReverseMap, 
+							//		nodeVectorIndexString, nodeNameFixedWidth,
+							//		hostnameVectorIndexArr, hostnameVectorIndexReverseMap, 
+							//		hostnameVectorIndexString, hostnameFixedWidth}
 		var _arrows = {}; 	//multi-dim map of arrow objects 
 							//	arrow:	[i0][i1] = {p0,p1} (start and end i,p - where i := node index, p := 1 of 4 positions starting from top going clock-wise)
 		
@@ -136,6 +141,8 @@
 			//htmlOpen()
 			//htmlClearDiv()
 			//init()	
+			//	localFinishInit()
+			//handleOptionalNodeParameters(node,nodeNameTemplate,nodeVectorIndexString,nodeNameFixedWidth,hostname,hostnameVectorIndexString,hostnameFixedWidth)
 			//initArrows()
 			//save()
 			//saveLayout(completionHandler)
@@ -333,7 +340,18 @@
 								"subsystemId":	artdaqObj[type][name].subsystemId,
 								"x":			layoutNodesX[i].getAttribute('value')|0,
 								"y":			layoutNodesY[i].getAttribute('value')|0});
-							
+
+							//add optional parameters
+							handleOptionalNodeParameters(
+									_nodes[_nodes.length-1],
+									_nodes[_nodes.length-1].name,
+									artdaqObj[type][name].multiNodeString,
+									artdaqObj[type][name].nodeFixedWidth,
+									_nodes[_nodes.length-1].hostname,
+									artdaqObj[type][name].hostArrayString,
+									artdaqObj[type][name].hostFixedWidth);
+										
+								
 							//remove from nodes object to keep remainder accurate 
 							delete artdaqObj[type][name];
 							
@@ -375,6 +393,16 @@
 								"subsystemId":	artdaqObj[t][n].subsystemId,
 								"x":			xy[0],
 								"y":			xy[1]});
+							
+							//add optional parameters
+							handleOptionalNodeParameters(
+									_nodes[_nodes.length-1],
+									_nodes[_nodes.length-1].name,
+									artdaqObj[t][n].multiNodeString,
+									artdaqObj[t][n].nodeFixedWidth,
+									_nodes[_nodes.length-1].hostname,
+									artdaqObj[t][n].hostArrayString,
+									artdaqObj[t][n].hostFixedWidth);
 						}
 					}
 					
@@ -389,6 +417,8 @@
 					initArrows();
 					
 					localFinishInit();
+					
+					
 						} //end loadArtdaqNodeLayout handler
 				); //end loadArtdaqNodeLayout call
 				
@@ -438,6 +468,217 @@
 			
 		} //end init()	
 
+		//=====================================================================================
+		//handleOptionalNodeParameters ~~
+		//	return false on failure/error, true on success
+		//	On success, the node object is modified!
+		function handleOptionalNodeParameters(node,
+				nodeNameTemplate,
+				nodeVectorIndexString,nodeNameFixedWidth,
+				hostname,
+				hostnameVectorIndexString,hostnameFixedWidth)
+		{
+			var nodeCount = 0;
+			if(nodeVectorIndexString !== undefined)
+			{
+				var nodeVectorIndexArr = []; //reset
+				var nodeVectorIndexReverseMap = {}; //reset
+	
+				var nodeIndices = nodeVectorIndexString.split(',');
+				for(var j=0;j<nodeIndices.length;j++)
+				{
+					var nodeSubindices = nodeIndices[j].split('-');
+	
+					if(nodeSubindices.length == 1)
+					{
+						var index = nodeSubindices[0].trim();
+	
+						if(nodeVectorIndexReverseMap[index])
+						{
+							Debug.log("Illegal Node Indices for node '" +
+									node.name + "' - repeat indices (i.e. '" +
+									index + "') are not allowed.",
+									Debug.HIGH_PRIORITY);
+							return false;								
+						}
+						nodeVectorIndexReverseMap[index] = nodeCount++;
+						nodeVectorIndexArr.push(index);							
+					}
+					else if(nodeSubindices.length == 2)
+					{
+						var hi = nodeSubindices[1].trim() | 0;
+						var lo = nodeSubindices[0].trim() | 0;
+						if(hi <= lo)
+						{
+							Debug.log("Illegal Node Indices for node '" +
+									node.name + "' - please use printer page syntax (e.g. '0,4-6').",
+									Debug.HIGH_PRIORITY);
+							return false;
+						}
+	
+						for(var k=lo;k<=hi;++k)
+						{
+							if(nodeVectorIndexReverseMap[k])
+							{
+								Debug.log("Illegal Node Indices for node '" +
+									node.name + "' - repeat indices (i.e. '" +
+										k + "') are not allowed.",
+										Debug.HIGH_PRIORITY);
+								return false;								
+							}
+							nodeVectorIndexReverseMap[k] = nodeCount++;
+							nodeVectorIndexArr.push(k);								
+						}
+					}
+					else
+					{
+						Debug.log("Illegal Node Indices for node '" +
+									node.name + "' - please use printer page syntax (e.g. '0,4-6').",
+								Debug.HIGH_PRIORITY);
+						return false;
+					}
+				} //end extract node indices
+				console.log("nodeCount",nodeCount); 
+				console.log("nodeVectorIndexArr",nodeVectorIndexArr); 
+				console.log("nodeVectorIndexReverseMap",nodeVectorIndexReverseMap); 
+	
+				if(nodeCount> 1 && 
+						nodeNameTemplate.indexOf('*') < 0)
+				{
+					Debug.log("Illegal Node Name for multi-node for node '" +
+									node.name + "' - please use * to indicate where the instance index should be (e.g. 'reader*' to make reader0, reader1, etc..).",
+							Debug.HIGH_PRIORITY);
+					return false;
+				}
+			}
+			else if(nodeNameTemplate.indexOf('*') >= 0)
+			{
+				Debug.log("Illegal Node Name for multi-node for node '" +
+								node.name + "' - * found without printer syntax indices.",
+						Debug.HIGH_PRIORITY);
+				return false;
+			}
+
+			if(hostnameVectorIndexString !== undefined)
+			{
+				var hostnameVectorIndexArr = []; //reset
+				var hostnameVectorIndexReverseMap = {}; //reset
+
+
+				hostnameIndices = hostnameVectorIndexString.split(',');
+				var hostnameCount = 0;
+				for(var j=0;j<hostnameIndices.length;j++)
+				{
+					var hostnameSubindices = hostnameIndices[j].split('-');
+
+					if(hostnameSubindices.length == 1)
+					{
+						var index = hostnameSubindices[0].trim();
+
+						if(hostnameVectorIndexReverseMap[index])
+						{
+							Debug.log("Illegal Hostname Indices for node '" +
+									node.name + "' - repeat indices (i.e. '" +
+									index + "') are not allowed.",
+									Debug.HIGH_PRIORITY);
+							return false;								
+						}
+						hostnameVectorIndexReverseMap[index] = hostnameCount++;
+						hostnameVectorIndexArr.push(index);							
+					}
+					else if(hostnameSubindices.length == 2)
+					{
+						var hi = hostnameSubindices[1].trim() | 0;
+						var lo = hostnameSubindices[0].trim() | 0;
+						if(hi <= lo)
+						{
+							Debug.log("Illegal Hostname Indices for node '" +
+									node.name + "' - please use printer page syntax (e.g. '0,4-6').",
+									Debug.HIGH_PRIORITY);
+							return false;
+						}
+
+						for(var k=lo;k<=hi;++k)
+						{
+							if(hostnameVectorIndexReverseMap[k])
+							{
+								Debug.log("Illegal Hostname Indices for node '" +
+										node.name + "' - repeat indices (i.e. '" +
+										k + "') are not allowed.",
+										Debug.HIGH_PRIORITY);
+								return false;								
+							}
+							hostnameVectorIndexReverseMap[k] = hostnameCount++;
+							hostnameVectorIndexArr.push(k);								
+						}
+					}
+					else
+					{
+						Debug.log("Illegal Hostname Indices for node '" +
+								node.name + "' - please use printer page syntax (e.g. '0,4-6').",
+								Debug.HIGH_PRIORITY);
+						return false;
+					}
+				} //end extract node indices
+				console.log("hostnameCount",hostnameCount); 
+				console.log("hostnameVectorIndexArr",hostnameVectorIndexArr); 
+				console.log("hostnameVectorIndexReverseMap",hostnameVectorIndexReverseMap); 
+
+				if(hostnameCount> 1 && 
+						hostname.indexOf('*') < 0)
+				{
+					Debug.log("Illegal Hostname for node '" +
+							node.name + "' for associating an array of hostnames to multiple " +
+							"node instances - please use * in the hostname (click the pencil to type in the hostname field) to indicate where the hostname index should be (e.g. 'host*' to make host0, host1, etc..).",
+							Debug.HIGH_PRIORITY);
+					return false;
+				}
+				if(hostnameCount> 1 && 
+						hostnameCount != nodeCount)
+				{
+					Debug.log("Illegal array of hostnames for node '" +
+							node.name + ".' Size " + hostnameCount +
+							" is not equal to the number of node instances which is " +
+							nodeCount + " - there must be a one-to-one correspondence " +
+							"between hostname and node, or else all nodes must be placed on the same host.",
+							Debug.HIGH_PRIORITY);
+					return false;
+				}
+			}
+			else if(hostname.indexOf('*') >= 0)
+			{
+				Debug.log("Illegal Host Name for multi-node for node '" +
+								node.name + "' - * found without printer syntax indices.",
+						Debug.HIGH_PRIORITY);
+				return false;
+			}
+			
+
+
+			//at this point, the change has been verified!
+			// so set node values
+			node.nodeCount = nodeCount;
+			node.nodeVectorIndexString = nodeVectorIndexString;
+			node.nodeVectorIndexArr = nodeVectorIndexArr;
+			node.nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
+			node.name = nodeNameTemplate;
+
+			node.hostnameVectorIndexString = hostnameVectorIndexString;
+			node.hostnameVectorIndexArr = hostnameVectorIndexArr;
+			node.hostnameVectorIndexReverseMap = hostnameVectorIndexReverseMap;
+			node.hostnameFixedWidth = hostnameFixedWidth;
+
+			//handle hostname change
+			if(node.hostname != hostname)
+			{
+				//enter in hostnames
+				_hostnames[hostname] = 1;
+				node.hostname = hostname;
+			}
+			
+			return true;
+		} //end handleOptionalNodeParameters()
+		
 		//=====================================================================================
 		//save ~~
 		function save()
@@ -2921,173 +3162,183 @@
 					Debug.log("Hostname indices = " + hostnameIndices);
 					Debug.log("hostnameFixedWidth = " + hostnameFixedWidth);
 					
-					var nodeVectorIndexString = nodeIndices;
-					var nodeVectorIndexArr = []; //reset
-					var nodeVectorIndexReverseMap = {}; //reset
+					if(!handleOptionalNodeParameters(
+							_nodes[i],
+							nodeNameTemplate,
+							nodeIndices,
+							0 /*TODO nodeNameFixedWidth*/,
+							hostname,
+							hostnameIndices,
+							hostnameFixedWidth))
+						return; //end progress if failed to handle (function should display error message)
 					
-					nodeIndices = nodeIndices.split(',');
-					var nodeCount = 0;
-					for(var j=0;j<nodeIndices.length;j++)
-					{
-						var nodeSubindices = nodeIndices[j].split('-');
-						
-						if(nodeSubindices.length == 1)
-						{
-							var index = nodeSubindices[0].trim();
-							
-							if(nodeVectorIndexReverseMap[index])
-							{
-								Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
-										index + "') are not allowed.",
-										Debug.HIGH_PRIORITY);
-								return;								
-							}
-							nodeVectorIndexReverseMap[index] = nodeCount++;
-							nodeVectorIndexArr.push(index);							
-						}
-						else if(nodeSubindices.length == 2)
-						{
-							var hi = nodeSubindices[1].trim() | 0;
-							var lo = nodeSubindices[0].trim() | 0;
-							if(hi <= lo)
-							{
-								Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
-										Debug.HIGH_PRIORITY);
-								return;
-							}
-							
-							for(var k=lo;k<=hi;++k)
-							{
-								if(nodeVectorIndexReverseMap[k])
-								{
-									Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
-											k + "') are not allowed.",
-											Debug.HIGH_PRIORITY);
-									return;								
-								}
-								nodeVectorIndexReverseMap[k] = nodeCount++;
-								nodeVectorIndexArr.push(k);								
-							}
-						}
-						else
-						{
-							Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
-									Debug.HIGH_PRIORITY);
-							return;
-						}
-					} //end extract node indices
-					console.log("nodeCount",nodeCount); 
-					console.log("nodeVectorIndexArr",nodeVectorIndexArr); 
-					console.log("nodeVectorIndexReverseMap",nodeVectorIndexReverseMap); 
-					
-					if(nodeCount> 1 && 
-							nodeNameTemplate.indexOf('*') < 0)
-					{
-						Debug.log("Illegal Node Name for multi-node - please use * to indicate where the instance index should be (e.g. 'reader*' to make reader0, reader1, etc..).",
-								Debug.HIGH_PRIORITY);
-						return;
-					}
-					
-
-					var hostnameVectorIndexString = hostnameIndices;
-					var hostnameVectorIndexArr = []; //reset
-					var hostnameVectorIndexReverseMap = {}; //reset
-					
-
-					hostnameIndices = hostnameIndices.split(',');
-					var hostnameCount = 0;
-					for(var j=0;j<hostnameIndices.length;j++)
-					{
-						var hostnameSubindices = hostnameIndices[j].split('-');
-						
-						if(hostnameSubindices.length == 1)
-						{
-							var index = hostnameSubindices[0].trim();
-							
-							if(hostnameVectorIndexReverseMap[index])
-							{
-								Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
-										index + "') are not allowed.",
-										Debug.HIGH_PRIORITY);
-								return;								
-							}
-							hostnameVectorIndexReverseMap[index] = hostnameCount++;
-							hostnameVectorIndexArr.push(index);							
-						}
-						else if(hostnameSubindices.length == 2)
-						{
-							var hi = hostnameSubindices[1].trim() | 0;
-							var lo = hostnameSubindices[0].trim() | 0;
-							if(hi <= lo)
-							{
-								Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
-										Debug.HIGH_PRIORITY);
-								return;
-							}
-							
-							for(var k=lo;k<=hi;++k)
-							{
-								if(hostnameVectorIndexReverseMap[k])
-								{
-									Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
-											k + "') are not allowed.",
-											Debug.HIGH_PRIORITY);
-									return;								
-								}
-								hostnameVectorIndexReverseMap[k] = hostnameCount++;
-								hostnameVectorIndexArr.push(k);								
-							}
-						}
-						else
-						{
-							Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
-									Debug.HIGH_PRIORITY);
-							return;
-						}
-					} //end extract node indices
-					console.log("hostnameCount",hostnameCount); 
-					console.log("hostnameVectorIndexArr",hostnameVectorIndexArr); 
-					console.log("hostnameVectorIndexReverseMap",hostnameVectorIndexReverseMap); 
-					
-					if(hostnameCount> 1 && 
-							hostname.indexOf('*') < 0)
-					{
-						Debug.log("Illegal Hostname for associating an array of hostnames to multiple " +
-								"node instances - please use * in the hostname (click the pencil to type in the hostname field) to indicate where the hostname index should be (e.g. 'host*' to make host0, host1, etc..).",
-								Debug.HIGH_PRIORITY);
-						return;
-					}
-					if(hostnameCount> 1 && 
-							hostnameCount != nodeCount)
-					{
-						Debug.log("Illegal array of hostnames. Size " + hostnameCount +
-								" is not equal to the number of node instances which is " +
-								nodeCount + " - there must be a one-to-one correspondence " +
-								"between hostname and node, or else all nodes must be placed on the same host.",
-								Debug.HIGH_PRIORITY);
-						return;
-					}
-					
-					
-					//at this point, the change has been verified!
-					// so set node values
-					_nodes[i].nodeCount = nodeCount;
-					_nodes[i].nodeVectorIndexString = nodeVectorIndexString;
-					_nodes[i].nodeVectorIndexArr = nodeVectorIndexArr;
-					_nodes[i].nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
-					_nodes[i].name = nodeNameTemplate;
-
-					_nodes[i].hostnameVectorIndexString = hostnameVectorIndexString;
-					_nodes[i].hostnameVectorIndexArr = hostnameVectorIndexArr;
-					_nodes[i].hostnameVectorIndexReverseMap = hostnameVectorIndexReverseMap;
-					_nodes[i].hostnameFixedWidth = hostnameFixedWidth;
-					//handle hostname change
-					if(_nodes[i].hostname != hostname)
-					{
-						//enter in hostnames
-						_hostnames[hostname] = 1;
-						_nodes[i].hostname = hostname;
-					}
+//					var nodeVectorIndexString = nodeIndices;
+//					var nodeVectorIndexArr = []; //reset
+//					var nodeVectorIndexReverseMap = {}; //reset
+//					
+//					nodeIndices = nodeIndices.split(',');
+//					var nodeCount = 0;
+//					for(var j=0;j<nodeIndices.length;j++)
+//					{
+//						var nodeSubindices = nodeIndices[j].split('-');
+//						
+//						if(nodeSubindices.length == 1)
+//						{
+//							var index = nodeSubindices[0].trim();
+//							
+//							if(nodeVectorIndexReverseMap[index])
+//							{
+//								Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
+//										index + "') are not allowed.",
+//										Debug.HIGH_PRIORITY);
+//								return;								
+//							}
+//							nodeVectorIndexReverseMap[index] = nodeCount++;
+//							nodeVectorIndexArr.push(index);							
+//						}
+//						else if(nodeSubindices.length == 2)
+//						{
+//							var hi = nodeSubindices[1].trim() | 0;
+//							var lo = nodeSubindices[0].trim() | 0;
+//							if(hi <= lo)
+//							{
+//								Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
+//										Debug.HIGH_PRIORITY);
+//								return;
+//							}
+//							
+//							for(var k=lo;k<=hi;++k)
+//							{
+//								if(nodeVectorIndexReverseMap[k])
+//								{
+//									Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
+//											k + "') are not allowed.",
+//											Debug.HIGH_PRIORITY);
+//									return;								
+//								}
+//								nodeVectorIndexReverseMap[k] = nodeCount++;
+//								nodeVectorIndexArr.push(k);								
+//							}
+//						}
+//						else
+//						{
+//							Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
+//									Debug.HIGH_PRIORITY);
+//							return;
+//						}
+//					} //end extract node indices
+//					console.log("nodeCount",nodeCount); 
+//					console.log("nodeVectorIndexArr",nodeVectorIndexArr); 
+//					console.log("nodeVectorIndexReverseMap",nodeVectorIndexReverseMap); 
+//					
+//					if(nodeCount> 1 && 
+//							nodeNameTemplate.indexOf('*') < 0)
+//					{
+//						Debug.log("Illegal Node Name for multi-node - please use * to indicate where the instance index should be (e.g. 'reader*' to make reader0, reader1, etc..).",
+//								Debug.HIGH_PRIORITY);
+//						return;
+//					}
+//					
+//
+//					var hostnameVectorIndexString = hostnameIndices;
+//					var hostnameVectorIndexArr = []; //reset
+//					var hostnameVectorIndexReverseMap = {}; //reset
+//					
+//
+//					hostnameIndices = hostnameIndices.split(',');
+//					var hostnameCount = 0;
+//					for(var j=0;j<hostnameIndices.length;j++)
+//					{
+//						var hostnameSubindices = hostnameIndices[j].split('-');
+//						
+//						if(hostnameSubindices.length == 1)
+//						{
+//							var index = hostnameSubindices[0].trim();
+//							
+//							if(hostnameVectorIndexReverseMap[index])
+//							{
+//								Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
+//										index + "') are not allowed.",
+//										Debug.HIGH_PRIORITY);
+//								return;								
+//							}
+//							hostnameVectorIndexReverseMap[index] = hostnameCount++;
+//							hostnameVectorIndexArr.push(index);							
+//						}
+//						else if(hostnameSubindices.length == 2)
+//						{
+//							var hi = hostnameSubindices[1].trim() | 0;
+//							var lo = hostnameSubindices[0].trim() | 0;
+//							if(hi <= lo)
+//							{
+//								Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
+//										Debug.HIGH_PRIORITY);
+//								return;
+//							}
+//							
+//							for(var k=lo;k<=hi;++k)
+//							{
+//								if(hostnameVectorIndexReverseMap[k])
+//								{
+//									Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
+//											k + "') are not allowed.",
+//											Debug.HIGH_PRIORITY);
+//									return;								
+//								}
+//								hostnameVectorIndexReverseMap[k] = hostnameCount++;
+//								hostnameVectorIndexArr.push(k);								
+//							}
+//						}
+//						else
+//						{
+//							Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
+//									Debug.HIGH_PRIORITY);
+//							return;
+//						}
+//					} //end extract node indices
+//					console.log("hostnameCount",hostnameCount); 
+//					console.log("hostnameVectorIndexArr",hostnameVectorIndexArr); 
+//					console.log("hostnameVectorIndexReverseMap",hostnameVectorIndexReverseMap); 
+//					
+//					if(hostnameCount> 1 && 
+//							hostname.indexOf('*') < 0)
+//					{
+//						Debug.log("Illegal Hostname for associating an array of hostnames to multiple " +
+//								"node instances - please use * in the hostname (click the pencil to type in the hostname field) to indicate where the hostname index should be (e.g. 'host*' to make host0, host1, etc..).",
+//								Debug.HIGH_PRIORITY);
+//						return;
+//					}
+//					if(hostnameCount> 1 && 
+//							hostnameCount != nodeCount)
+//					{
+//						Debug.log("Illegal array of hostnames. Size " + hostnameCount +
+//								" is not equal to the number of node instances which is " +
+//								nodeCount + " - there must be a one-to-one correspondence " +
+//								"between hostname and node, or else all nodes must be placed on the same host.",
+//								Debug.HIGH_PRIORITY);
+//						return;
+//					}
+//					
+//					
+//					//at this point, the change has been verified!
+//					// so set node values
+//					_nodes[i].nodeCount = nodeCount;
+//					_nodes[i].nodeVectorIndexString = nodeVectorIndexString;
+//					_nodes[i].nodeVectorIndexArr = nodeVectorIndexArr;
+//					_nodes[i].nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
+//					_nodes[i].name = nodeNameTemplate;
+//
+//					_nodes[i].hostnameVectorIndexString = hostnameVectorIndexString;
+//					_nodes[i].hostnameVectorIndexArr = hostnameVectorIndexArr;
+//					_nodes[i].hostnameVectorIndexReverseMap = hostnameVectorIndexReverseMap;
+//					_nodes[i].hostnameFixedWidth = hostnameFixedWidth;
+//					//handle hostname change
+//					if(_nodes[i].hostname != hostname)
+//					{
+//						//enter in hostnames
+//						_hostnames[hostname] = 1;
+//						_nodes[i].hostname = hostname;
+//					}
 
 					//handle subsystem change
 					var subsystemId = 0;
