@@ -5,7 +5,10 @@
 #include "otsdaq/DataManager/DataManagerSingleton.h"
 #include "otsdaq/RootUtilities/RootFileExplorer.h"
 #include "otsdaq/Macros/BinaryStringMacros.h"
-#include "otsdaq_cmsoutertracker/otsdaq-cmsoutertracker/Ph2_ACF/Utils/MessageTools.h"
+//#include "otsdaq_cmsoutertracker/otsdaq-cmsoutertracker/Ph2_ACF/Utils/MessageTools.h"
+
+#define STDLINE(X,Y) __COUT_WARN__ << X << __E__;
+
 #include <boost/regex.hpp>
 
 // ROOT documentation

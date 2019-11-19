@@ -6217,7 +6217,7 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 			<< "Found " << info.subsystems.size() << " subsystems." << __E__;
 
 	auto parentEl =
-	    xmlOut.addTextElementToData("ots::ARTDAQSupervisor", artdaqSupervisorInfo[0]);
+	    xmlOut.addTextElementToData("artdaqSupervisor", artdaqSupervisorInfo[0]);
 
 	std::string typeString = "artdaqSupervisor";
 	xmlOut.addTextElementToParent(
@@ -6268,8 +6268,9 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 			__SUP_COUT__ << "\t\t"
 					<< "Found '" << artdaqNode.first << "' "
 					<< typeString << __E__;
+			__SUP_COUTV__(StringMacros::vectorToString(artdaqNode.second));
 
-			if(artdaqNode.second.size() < 3)
+			if(artdaqNode.second.size() < 2)
 			{
 				__SUP_SS__ << "Impossible parameter size for node '" << artdaqNode.first << "' "
 					<< typeString << " - please notify admins!" << __E__;
@@ -6278,9 +6279,13 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 
 			auto nodeEl = xmlOut.addTextElementToParent(
 					typeString, artdaqNode.first, parentEl);
-			if(artdaqNode.second.size() > 3)
+			if(artdaqNode.second.size() > 2)
 				xmlOut.addTextElementToParent(
 						typeString + "-multinode",
+						artdaqNode.second[2], nodeEl);
+			if(artdaqNode.second.size() > 3)
+				xmlOut.addTextElementToParent(
+						typeString + "-nodefixedwidth",
 						artdaqNode.second[3], nodeEl);
 			if(artdaqNode.second.size() > 4)
 				xmlOut.addTextElementToParent(
@@ -6291,10 +6296,10 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 						typeString + "-hostfixedwidth",
 						artdaqNode.second[5], nodeEl);
 			xmlOut.addTextElementToParent(
-					typeString + "-hostname", artdaqNode.second[1], parentEl);
+					typeString + "-hostname", artdaqNode.second[0], parentEl);
 			xmlOut.addTextElementToParent(
 					typeString + "-subsystem",
-					artdaqNode.second[2],
+					artdaqNode.second[1],
 					parentEl);
 		}
 	}  // end processor type handling

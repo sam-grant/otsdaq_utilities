@@ -123,9 +123,11 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 		//			<reader value='reader0'/>
 		//			<reader-hostname value='localhost'/>
 		//			<reader-subsystem value='2'/>
-		//			<builder value='builder0'/>
-		//			<builder-hostname value='localhost'/>
-		//			<builder-subsystem value='2'/>
+		//			<builder value='builder*'>
+		//				<builder-multinode value='0'/>
+		//				<builder-hostfixedwidth value='3-6'/>
+		//				<builder-hostarray value='2'/>
+		//			</builder>
 		//			<builder value='builder1'/>
 		//			<builder-hostname value='localhost'/>
 		//			<builder-subsystem value='3'/>
@@ -169,11 +171,38 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 					retObj[types[i]] = {};
 	
 					for(j=0;j<nodes.length;++j)
-						retObj[types[i]][nodes[j].getAttribute('value')] = 
+					{
+						var multiNodeString = nodes[j].getElementsByTagName(types[i] + "-multinode");
+						var nodeFixedWidth = nodes[j].getElementsByTagName(types[i] + "-nodefixedwidth");
+						var hostArrayString = nodes[j].getElementsByTagName(types[i] + "-hostarray");
+						var hostFixedWidth = nodes[j].getElementsByTagName(types[i] + "-hostfixedwidth");
+						
+						console.log("parameters",multiNodeString,
+								nodeFixedWidth,hostArrayString,hostFixedWidth);
+						
+						var nodeName = nodes[j].getAttribute('value');
+						retObj[types[i]][nodeName] = 
 							{
 								"hostname": 	hostnames[j].getAttribute('value'),
 								"subsystemId": 	subsystemIds[j].getAttribute('value') | 0, //integer
 							};
+							
+						if(multiNodeString.length)
+							retObj[types[i]][nodeName].multiNodeString = multiNodeString[0].getAttribute('value');
+
+
+						if(nodeFixedWidth.length)
+							retObj[types[i]][nodeName].nodeFixedWidth = nodeFixedWidth[0].getAttribute('value') | 0;
+							
+
+						if(hostArrayString.length)
+							retObj[types[i]][nodeName].hostArrayString = hostArrayString[0].getAttribute('value');
+							
+
+						if(hostFixedWidth.length)
+							retObj[types[i]][nodeName].hostFixedWidth = hostFixedWidth[0].getAttribute('value') | 0;
+							
+					}
 					
 					Debug.log("Extracted " + 
 							nodes.length + " " +
@@ -194,7 +223,7 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 						"subsystem" + "-destination");
 
 				for(j=0;j<subsystems.length;++j)
-				{
+				{				
 					retObj.subsystems[subsystemIds[j].getAttribute('value') | 0 /*integer*/] = 
 						{
 							"label":			subsystems[j].getAttribute('value'),

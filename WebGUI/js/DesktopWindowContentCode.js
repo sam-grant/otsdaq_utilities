@@ -732,21 +732,36 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 					{
 						Debug.log("In wiz mode, attempting to fix access code on the fly...");
 						
-						DesktopContent._sequence = prompt(errStr + " Please enter a valid access code: ");
-						DesktopContent._sequence = DesktopContent._sequence.trim();
-
-						Debug.log("Resulting sequence code: " + DesktopContent._sequence);
+						DesktopContent.popUpVerification(
+							/*prompt*/ errStr + "<br><br>Please enter a valid access code: ", 
+							/*func*/
+							function(newSequence) 
+							{
+								DesktopContent._sequence = newSequence.trim();
+								Debug.log("Resulting sequence code: " + DesktopContent._sequence);
+								
+								if(DesktopContent._sequence)
+								{							
+									Debug.log("Retrying request with new access code...");
+									DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, 
+										reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
+										targetSupervisor, ignoreSystemBlock);
+									return;
+								}
+								
+								DesktopContent._sequence = "a"; //set so retry is possible 
+								
+							}, /*val*/ undefined, 
+							/*bgColor*/ undefined,
+								/*textColor*/ undefined,
+								/*borderColor*/ undefined,
+								/*getUserInput*/ true,
+								/*dialogWidth*/ undefined,
+								/*cancelFunc*/ undefined,
+								/*yesButtonText*/ "Retry",
+								/*noAutoComplete*/ true);
 						
-						if(DesktopContent._sequence)
-						{							
-							Debug.log("Retrying request with new access code...");
-							DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, 
-								reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
-								targetSupervisor, ignoreSystemBlock);
-							return;
-						}
-						
-						DesktopContent._sequence = "a"; //set so retry is possible 
+						return;						
 					}
 					//return;
 				}
@@ -1291,7 +1306,7 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,neverShow,temp
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
 DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, 
-		dialogWidth, cancelFunc, yesButtonText) {		
+		dialogWidth, cancelFunc, yesButtonText, noAutoComplete) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1357,8 +1372,9 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	if(getUserInput)
 		userInputStr +=
 				"<input type='text' id='DesktopContent_popUpUserInput' " + 
-				"onclick='event.stopPropagation(); '" +
-				">"; 
+				"onclick='event.stopPropagation();'" +
+				(noAutoComplete?"autocomplete='off' ":"") + 
+				">";
 							
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
 			prompt + "<br>" + userInputStr + "</div>" +
