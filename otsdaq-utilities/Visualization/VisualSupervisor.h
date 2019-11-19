@@ -1,8 +1,33 @@
 #ifndef _ots_VisualSupervisor_h
 #define _ots_VisualSupervisor_h
 
-#include "otsdaq-utilities/Visualization/VisualDataManager.h"
 #include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
+#include "otsdaq-utilities/Visualization/VisualDataManager.h"
+//================ new Dario
+#include <unistd.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <stdio.h>
+#include <string.h>
+#include <iostream>
+#include <sstream>
+#include <map>
+#include <sstream>
+#include <xercesc/util/PlatformUtils.hpp>
+#include <xercesc/util/XMLString.hpp>
+#include <xercesc/dom/DOM.hpp>
+#include <xercesc/util/OutOfMemoryException.hpp>
+#include <xercesc/framework/StdOutFormatTarget.hpp>
+#include <xercesc/framework/LocalFileFormatTarget.hpp>
+
+#if defined(XERCES_NEW_IOSTREAMS)
+#include <iostream>
+#else
+#include <iostream.h>
+#endif
+
+#define X(str) XStr(str).unicodeForm()
+//================ new Dario
 
 namespace ots
 {
