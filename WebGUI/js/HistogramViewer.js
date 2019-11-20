@@ -227,9 +227,9 @@ Ext.onReady(function()
                                         style : 'background-color: #5E99CC'                              ,
                                         id    : 'histogram1'                                             ,
                                         itemId: 'canvas'                                                 ,
-                                        html  : '<p><p><center><h1>Canvas to display plots</h1></center>',
+                                       //html  : '<p><p><center><h1>Canvas to display plots</h1></center>',
                                         height: canvasH                                                  ,
-                                        width : canvasW          
+                                        width : 1         
                                        }
                                       ]
                          }
@@ -583,15 +583,18 @@ Ext.onReady(function()
                                }
                                var rootName  = getXMLValue (response,"path"    );                                       
                                var rootJSON  = getXMLValue (response,"rootJSON");                                   
-                               var object    = JSROOT.parse(rootJSON           );                                              
+                               var object    = JSROOT.parse(rootJSON           );  
                                displayPlot_(object) ; // This is to get an immediate response
-                               periodicPlotID_ = setInterval(
-                                                             function()
-                                                             {
-                                                              displayPlot_(object) ; // This is delayed
-                                                             }, 
-                                                             2000
-                                                            );
+                               if( object._typename != "TCanvas") 
+                               {
+                                periodicPlotID_ = setInterval(
+                                                              function()
+                                                              {
+                                                               displayPlot_(object) ; // This is delayed
+                                                              }, 
+                                                              2000
+                                                             ) ;
+                                }
                               }
                              },                                                                                                           
                     failure: function(response, options)                                                                                  
@@ -609,7 +612,6 @@ Ext.onReady(function()
  displayPlot_ = function(object)
                 {
 //mdi_ = new JSROOT.GridDisplay('drawing', layout);
-
                  var rootTitle = object.fTitle     ;                                                                     
                  if( doReset_ )
                  {
