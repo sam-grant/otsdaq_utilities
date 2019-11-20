@@ -182,6 +182,7 @@
 			//handleEditNodeDialogMultiNodeCheckbox(i)
 			//handleEditNodeDialogHostnameArrayCheckbox(i)
 			//handleEditNodeDialogHostnameFixedWidthCheckbox(i)
+			//handleEditNodeDialogNodeNameFixedWidthCheckbox(i)
 			//handleEditNodeSelectEditIcon(t)
 		
 			//handleFclIconMouseUp(i,e)
@@ -661,6 +662,7 @@
 			node.nodeVectorIndexString = nodeVectorIndexString;
 			node.nodeVectorIndexArr = nodeVectorIndexArr;
 			node.nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
+			node.nodeNameFixedWidth = nodeNameFixedWidth;
 			node.name = nodeNameTemplate;
 
 			node.hostnameVectorIndexString = hostnameVectorIndexString;
@@ -688,7 +690,9 @@
 			//create node object by type for save function from _nodes array
 			//		nodeObj := {}
 			//			nodeObj.<nodeType> = {}
-			//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName,(nodeArrString),(hostnameArrString),(hostnameFixedWidth)}
+			//			nodeObj.<nodeType>.<nodeName> = 
+			//				{originalName,hostname,subsystemName,
+			//				(nodeArrString),(hostnameArrString),(nodeNameFixedWidth),(hostnameFixedWidth)}
 			//
 			// <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
 			//
@@ -716,8 +720,11 @@
 				if(node.nodeCount > 1)
 				{
 					Debug.log("Saving multi-node...");
-					nodesObj[type][name].nodeArrString = node.nodeVectorIndexString;
 					
+					nodesObj[type][name].nodeArrString = node.nodeVectorIndexString;
+					if(node.nodeNameFixedWidth && node.nodeNameFixedWidth > 1)
+						nodesObj[type][name].nodeNameFixedWidth = node.nodeNameFixedWidth;							
+										
 					if(node.hostname.indexOf('*') >= 0)
 					{
 						nodesObj[type][name].hostnameArrString = node.hostnameVectorIndexString;
@@ -1508,7 +1515,7 @@
 				for(var p=count-1;p>=0;--p)
 				{
 					str += "<div id='" + nodeid + 
-						"-box' class='node-box' " +
+						(p == 0?"":("-multi" + p)) + "-box' class='node-box' " +
 						"style='top:" + (-p*5) + "px;" +
 						"background-color: " + getSubsystemColor(_nodes[i].subsystemId) + ";" +
 						"left:" + (-p*5) + "px;' " +
@@ -1589,10 +1596,10 @@
 					(_mouseMoveMode == _MMM_SELECT_BOX &&
 							_mouseMoveStart[2][i] !== undefined))
 			{ //selected node
-				boxes[0].style.border = "3px solid green";
+				boxes[boxes.length-1].style.border = "3px solid green";
 			}
 			else
-				boxes[0].style.border = "0";
+				boxes[boxes.length-1].style.border = "0";
 			
 			el.style.left 	= x + "px";
 			el.style.top 	= y + "px";		
@@ -1672,8 +1679,11 @@
 			
             var angle = Math.atan2(y-y0,x-x0);
             
-            x -= HEAD_SZ*Math.cos(angle);
-            y -= HEAD_SZ*Math.sin(angle);
+            var shortOffset = HEAD_SZ*3;
+            if(y0 == y) shortOffset = HEAD_SZ*1;
+            
+            x -= shortOffset*Math.cos(angle);
+            y -= shortOffset*Math.sin(angle);
 
             //starting path of the arrow from the start square to the end square and drawing the stroke
             context.beginPath();
@@ -2039,11 +2049,17 @@
 			var x = (_grid.x0 + x * _grid.xstep - sz/2) | 0;
 			var y = (_grid.y0 + y * _grid.ystep - sz/2) | 0;
 
+			var count = _nodes[i].nodeCount?_nodes[i].nodeCount:1;
+			if(count > 4) count = 4; //cap at 4
+			if(count < 1) count = 1; 
+			var multiOff = (count-1)*5;
+			
+			
 			switch(p)
 			{
 			case 0: //top
 				return [(x + sz/2)|0,
-						(y)|0];
+						(y - multiOff)|0];
 			case 1: //right
 				return [(x + sz)|0,
 						(y + sz/2)|0];
@@ -2051,7 +2067,7 @@
 				return [(x + sz/2)|0,
 						(y + sz - 1)|0];
 			case 3: //left
-				return [(x - 1)|0,
+				return [(x - 1 - multiOff)|0,
 						(y + sz/2)|0];
 			default:
 				Debug.log("illegal point request! " + p,
@@ -2794,27 +2810,75 @@
 
 			var str = "";
 			
-			str += "You are editing the node originally named " + 
-					typeName + "::" + _nodes[i].name + "..."; 
+			str += "You are editing the node originally named <b>" + 
+					typeName + "::" + _nodes[i].name + "</b>..."; 
 					
 			var isMultiNode = _nodes[i].name.indexOf('*') >= 0;
-			var isHostnameArray = _nodes[i].hostname.indexOf('*') >= 0;
-			var isHostnameFixedWidth = _nodes[i].hostnameFixedWidthSize && _nodes[i].hostnameFixedWidthSize > 1;
+			var isNodeNameFixedWidth = _nodes[i].nodeNameFixedWidth && _nodes[i].nodeNameFixedWidth > 1;
+			var isHostnameArray = _nodes[i].hostname.indexOf('*') >= 0;			
+			var isHostnameFixedWidth = _nodes[i].hostnameFixedWidth && _nodes[i].hostnameFixedWidth > 1;
 
 			str += htmlClearDiv();
-			str += "<br><table style='margin-bottom: 10px;'>";
-			str += "<tr><td><b>Node Name:</b></td><td>";
+			
+			str += "<br><center><table class='editNodeDialog-table'>";
+			
+			//======== Subsystem Field
+			str += "<tr><td class='editNodeDialog-fieldCol'><b>Subsystem Name:</b></td><td class='editNodeDialog-valueCol'>";
+			{ //start subsystems
+				str += htmlOpen("select",
+						{
+								"id": "ediNode-" + "subsystem",
+								"style": "float:left; margin:7px; width:187px;",
+						});
+
+				for(var j in _subsystems)
+				{
+					if(j == 0) continue; //skip null destination subsystem
+
+					str += "<option " + 	
+							(j == _nodes[i].subsystemId?"selected":"") + ">" +
+							_subsystems[j].label + 
+							"</option>";
+				}
+				str += "</select>"; //end aliases dropdown
+
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "subsystemText",
+								"type": "text",
+								"style": "display:none; float:left; width:180px;",
+								"value": "",
+								"title": "Set the subsystem for this node.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+
+				str += htmlOpen("div",
+						{
+								"id": "subsystem-editIcon",
+								"class": "node-editIcon",
+								"style": "display:block; float:right; margin: 6px -30px 0 1px",
+								"onclick": "handleEditNodeSelectEditIcon(0);",
+								"title": "Toggle free-form hostname editing",
+						},
+						0 /*html*/, true /*closeTag*/);	
+			} //end subsystems
+			str += "</td></tr>";
+			//======== end Subsystem Field
+
+			//======== Node Name Field
+			str += "<tr><td class='editNodeDialog-fieldCol'><b>Node Name:</b></td><td class='editNodeDialog-valueCol'>";						
 			str += htmlOpen("input",
 					{
 							"id": "ediNode-" + "nodeName",
 							"type": "text",
+							"style": "width:180px;",
 							"value": _nodes[i].name,
 							"title": "Set the node name template with * syntax.",
 					},
 					0 /*html*/, true /*closeTag*/);	
 			str += "</td></tr>";
 			
-			str += "<tr><td colspan='2'>";
+			str += "<tr><td colspan='2' style='text-align:right'>";
 
 			str += htmlOpen("input",
 					{
@@ -2838,26 +2902,28 @@
 							true /*doCloseTag*/
 					) /*innerHTML*/,
 					true /*doCloseTag*/);
+			str += "<div style='margin:-5px -28px -30px 0; float:right;'><a onclick='var el = document.getElementsByClassName(\"enableMultiNodeCheckbox\");" +
+					"handleEditNodeDialogMultiNodeCheckbox(" + i + ",el[0],1);' " +
+					"title='Click for more information on editing multi-node instances.'>" +
+					"<img src='/WebPath/images/dashboardImages/icon-Help.png'></a></div>";
 			str += "</td></tr>";
-			str += "</table>";
+			//======== end Node Name Field
+			str += "</table>"
 
 			str += htmlClearDiv();
+			
+			//======== Multi Node Settings
 			str += "<div id='multiNodeSettings' style='display:" + 
 				(isMultiNode?"block":"none") + "'>";
 			{ //start multi-node
-				str += "Set the size of the multi-node by using 'printer page syntax' and one or many * characters." + 
-
-						"<br>" + 
-						"For example, to make 4 nodes named reader0_east, reader4_east, reader5_east, reader6_east, " + 
-						"Set the node name to 'reader*_east' and set the multi-node indices to '" +
-						"0,4-6'" +
-						"<br>";
-
-				str += htmlClearDiv();
-				str += "<br><table style='margin-bottom: 10px;'>";
+				str += "For Multi-Node Instances, use 'printer page syntax' (e.g. '0,4-6'), and * in the Node Name..."
 						
-
-				str += "<tr><td><b>Multi-Node Indices:</b></td><td>";
+				str += htmlClearDiv();
+				str += "<br><table class='editNodeDialog-table'>";
+						
+				//======== Multi Node Settings
+				str += "<tr><td class='editNodeDialog-fieldCol'><b>Multi-Node Indices:</b></td><td class='editNodeDialog-valueCol'>";
+										
 				str += htmlOpen("input",
 						{
 								"id": "ediNode-" + "nodeIndices",
@@ -2868,10 +2934,62 @@
 						0 /*html*/, true /*closeTag*/);	
 				str += "</td></tr>";
 
+				str += "<tr><td colspan='2' style='text-align:right'>";
 
-
+				//checkbox for node name fixed width settings
+				str += htmlOpen("input",
+						{
+								"type": "checkbox",
+								"id": "enableNodeNameFixedWidthCheckbox",
+								"class": "enableNodeNameFixedWidthCheckbox",
+								"checked": (isNodeNameFixedWidth?1:0),
+								"onclick": "handleEditNodeDialogNodeNameFixedWidthCheckbox(" + i + ",this);",
+						},
+						htmlOpen("a",
+								{
+										"style": "text-decoration:none;color:black;",
+										"onclick": "var el = document.getElementsByClassName(\"enableNodeNameFixedWidthCheckbox\");" +
+										"var forFirefox = (el[0].checked = !el[0].checked); " +
+										"handleEditNodeDialogNodeNameFixedWidthCheckbox(" + i + ",el[0]);"
+										,
+								},
+								"<b>Enable Fixed-Width Node Names</b>" /*innerHTML*/,
+								true /*doCloseTag*/
+						) /*innerHTML*/,
+						true /*doCloseTag*/);
+				str += "</td></tr>";
 				str += "</table>";
+
+				str += htmlClearDiv();
+				str += "<div id='nodeNameFixedWidthSettings' style='display:" + 
+						(isNodeNameFixedWidth?"block":"none") + "'>";
+				{ //start node name fixed-width
+					str += "<br>Force the number of digits to a fixed-width within" +
+							" each Node Name (e.g. 3 would yield numbers like 001, 002, etc.)." +
+							"<br>";
+
+					str += htmlClearDiv();
+					str += "<br><table class='editNodeDialog-table'>";
+					str += "<tr><td class='editNodeDialog-fieldCol'><b>Node Name Fixed-width:</b></td><td class='editNodeDialog-valueCol'>";										
+					str += htmlOpen("input",
+							{
+									"id": "ediNode-" + "nodeNameFixedWidth",
+									"type": "text",
+									"style": "width:50px;",
+									"value": (_nodes[i].nodeNameFixedWidth?_nodes[i].nodeNameFixedWidth:2),
+									"title": "Set the number of digits for fixed-width numbering in the Node Name.",
+							},
+							0 /*html*/, true /*closeTag*/);	
+					str += "</td></tr>";
+
+					str += "</table>";
+				} //end node name fixed width settings
+				str += "</div>"; //close nodeName Fixed Width Settings
 				
+				str += htmlClearDiv();
+				str += "<br><table class='editNodeDialog-table'>";
+				str += "<tr><td style='text-align:right; white-space:nowrap;'>";										
+
 				str += htmlOpen("input",
 						{
 								"type": "checkbox",
@@ -2890,141 +3008,20 @@
 										,
 										"title": "Enable associating the nodes with an array of hostnames.",
 								},
-								"<b>Associate Multi-node Instances with an Array of Hostnames</b>" /*innerHTML*/,
+								"<b>Associate Multi-node Instances with Array of Hostnames</b>" /*innerHTML*/,
 								true /*doCloseTag*/
 						) /*innerHTML*/,
 						true /*doCloseTag*/);
+				str += "</td></tr>";
+				str += "</table>";
 				
 			} //end multi-node
 			str += "</div>"; //close multi-node settings div
 			
 			str += htmlClearDiv();
-			
-			str += "<div id='hostnameArraySettings' style='display:" + 
-					(isHostnameArray?"block":"none") + "'>";
-			{ //start hostnameArraySettings 
-				str += "<br>Use 'printer page syntax' and *'s for the hostnames too!" +
-						"<br>(Do not forget to add the * to the hostname field.)" +
-						"<br>";
 
-				str += htmlClearDiv();
-				str += "<br><table style='margin-bottom: 10px;'>";
-
-
-				str += "<tr><td><b>Hostname Indices:</b></td><td>";
-				str += htmlOpen("input",
-						{
-								"id": "ediNode-" + "hostnameIndices",
-								"type": "text",
-								"value": (_nodes[i].hostnameVectorIndexString?_nodes[i].hostnameVectorIndexString:""),
-								"title": "Set the hostname indices with printer page syntax.",
-						},
-						0 /*html*/, true /*closeTag*/);	
-				str += "</td></tr>";
-
-
-
-				str += "</table>";
-
-				str += htmlOpen("input",
-						{
-								"type": "checkbox",
-								"id": "enableHostnameFixedWidthCheckbox",
-								"class": "enableHostnameFixedWidthCheckbox",
-								"checked": (isHostnameFixedWidth?1:0),
-								"onclick": "handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",this);",
-						},
-						htmlOpen("a",
-								{
-										"style": "text-decoration:none;color:black;",
-										"onclick": "var el = document.getElementsByClassName(\"enableHostnameFixedWidthCheckbox\");" +
-										"var forFirefox = (el[0].checked = !el[0].checked); " +
-										"handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",el[0]);"
-										,
-								},
-								"<b>Enable Fixed-Width Hostnames</b>" /*innerHTML*/,
-								true /*doCloseTag*/
-						) /*innerHTML*/,
-						true /*doCloseTag*/);
-				
-			} //end hostnameArraySettings
-			str += "</div>"; //close hostnameArray settings div
-
-			str += htmlClearDiv();
-			str += "<div id='hostnameFixedWidthSettings' style='display:" + 
-					(isHostnameFixedWidth?"block":"none") + "'>";
-			{ //start hostname fixed-width
-				str += "<br>Force the number of digits to a fixed-width within" +
-						" each hostname (e.g. 3 would yield numbers like 001, 002, etc.)." +
-						"<br>";
-
-				str += htmlClearDiv();
-				str += "<br><table style='margin-bottom: 10px;'>";
-
-
-				str += "<tr><td><b>Fixed-width Size:</b></td><td>";
-				str += htmlOpen("input",
-						{
-								"id": "ediNode-" + "hostnameFixedWidth",
-								"type": "text",
-								"style": "width:50px;",
-								"value": (_nodes[i].hostnameFixedWidthSize?_nodes[i].hostnameFixedWidthSize:2),
-								"title": "Set the number of digits for fixed-width numbering in the hostname.",
-						},
-						0 /*html*/, true /*closeTag*/);	
-				str += "</td></tr>";
-
-				str += "</table>";
-				
-			} //end hostname fixed-width
-			str += "</div>"; //close hostname fixed-width settings div
-			
-			str += htmlClearDiv();
-			
-			str += "<br><table style='margin-bottom: 10px;'>";
-			str += "<tr><td style='text-align:right'><b>Subsystem Name:</b></td><td>";
-			{ //start subsystems
-				str += htmlOpen("select",
-						{
-								"id": "ediNode-" + "subsystem",
-								"style": "float: left; margin: 7px;",
-						});
-
-				for(var j in _subsystems)
-				{
-					if(j == 0) continue; //skip null destination subsystem
-					
-					str += "<option " + 	
-							(j == _nodes[i].subsystemId?"selected":"") + ">" +
-							_subsystems[j].label + 
-							"</option>";
-				}
-				str += "</select>"; //end aliases dropdown
-
-				str += htmlOpen("input",
-						{
-								"id": "ediNode-" + "subsystemText",
-								"style": "display:none; float: left;",
-								"type": "text",
-								"value": "",
-								"title": "Set the subsystem for this node.",
-						},
-						0 /*html*/, true /*closeTag*/);	
-
-				str += htmlOpen("div",
-						{
-								"id": "subsystem-editIcon",
-								"class": "node-editIcon",
-								"style": "display:block; float:right; margin: 6px 0 0 1px",
-								"onclick": "handleEditNodeSelectEditIcon(0);",
-								"title": "Toggle free-form hostname editing",
-						},
-						0 /*html*/, true /*closeTag*/);	
-			} //end subsystems
-			str += "</td></tr>";
-			
-
-			str += "<tr><td style='text-align:right'><b>Hostname:</b></td><td>";
+			str += "<br><table class='editNodeDialog-table'>";
+			str += "<tr><td class='editNodeDialog-fieldCol'><b>Hostname:</b></td><td class='editNodeDialog-valueCol'>";
 			{ //start hostnames
 				str += htmlOpen("select",
 						{
@@ -3060,10 +3057,89 @@
 								"title": "Toggle free-form hostname editing",
 						},
 						0 /*html*/, true /*closeTag*/);	
-				
+
 			} //end hostnames
 			str += "</td></tr>";
 			str += "</table>";
+
+			str += htmlClearDiv();
+			
+			
+			str += "<div id='hostnameArraySettings' style='display:" + 
+					(isHostnameArray?"block":"none") + "'>";
+			{ //start hostnameArraySettings 
+				str += "Use 'printer page syntax' (e.g. '0,4-6'), and * in the Hostname..."
+
+				str += htmlClearDiv();
+				str += "<br><table class='editNodeDialog-table'>";
+
+				str += "<tr><td class='editNodeDialog-fieldCol'><b>Hostname Indices:</b></td><td class='editNodeDialog-valueCol'>";
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "hostnameIndices",
+								"type": "text",
+								"value": (_nodes[i].hostnameVectorIndexString?_nodes[i].hostnameVectorIndexString:""),
+								"title": "Set the hostname indices with printer page syntax.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+				str += "</td></tr>";
+
+				str += "<tr><td colspan='2' style='text-align:right; white-space:nowrap;'>";
+
+				str += htmlOpen("input",
+						{
+								"type": "checkbox",
+								"id": "enableHostnameFixedWidthCheckbox",
+								"class": "enableHostnameFixedWidthCheckbox",
+								"checked": (isHostnameFixedWidth?1:0),
+								"onclick": "handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",this);",
+						},
+						htmlOpen("a",
+								{
+										"style": "text-decoration:none;color:black;",
+										"onclick": "var el = document.getElementsByClassName(\"enableHostnameFixedWidthCheckbox\");" +
+										"var forFirefox = (el[0].checked = !el[0].checked); " +
+										"handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",el[0]);"
+										,
+								},
+								"<b>Enable Fixed-Width Hostnames</b>" /*innerHTML*/,
+								true /*doCloseTag*/
+						) /*innerHTML*/,
+						true /*doCloseTag*/);
+				str += "</td></tr>";
+				str += "</table>";
+				
+			} //end hostnameArraySettings
+			str += "</div>"; //close hostnameArray settings div
+
+			str += htmlClearDiv();
+			str += "<div id='hostnameFixedWidthSettings' style='display:" + 
+					(isHostnameFixedWidth?"block":"none") + "'>";
+			{ //start hostname fixed-width
+				str += "<br>Force the number of digits to a fixed-width within" +
+						" each hostname (e.g. 3 would yield numbers like 001, 002, etc.)." +
+						"<br>";
+
+				str += htmlClearDiv();
+				str += "<br><table class='editNodeDialog-table'>";
+				str += "<tr><td class='editNodeDialog-fieldCol'><b>Hostname Fixed-width:</b></td><td class='editNodeDialog-valueCol'>";
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "hostnameFixedWidth",
+								"type": "text",
+								"style": "width:50px;",
+								"value": (_nodes[i].hostnameFixedWidth?_nodes[i].hostnameFixedWidth:2),
+								"title": "Set the number of digits for fixed-width numbering in the hostname.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+				str += "</td></tr>";
+
+				str += "</table>";
+				
+			} //end hostname fixed-width
+			str += "</div>"; //close hostname fixed-width settings div
+			
+			
 
 			str += htmlClearDiv();
 
@@ -3128,6 +3204,7 @@
 					
 					
 					var nodeNameTemplate = document.getElementById("ediNode-" + "nodeName").value;
+					var nodeNameFixedWidth = document.getElementById("ediNode-" + "nodeNameFixedWidth").value | 0;
 					var nodeIndices = document.getElementById("ediNode-" + "nodeIndices").value;					
 					var subsystem = document.getElementById("ediNode-" + 
 							"subsystem").style.display == "none"?
@@ -3143,6 +3220,7 @@
 																
 					
 					Debug.log("Node name template = " + nodeNameTemplate);
+					Debug.log("nodeNameFixedWidth = " + nodeNameFixedWidth);
 					
 					var el = document.getElementsByClassName("enableMultiNodeCheckbox");
 					if(el.length && !el[0].checked) 
@@ -3166,7 +3244,7 @@
 							_nodes[i],
 							nodeNameTemplate,
 							nodeIndices,
-							0 /*TODO nodeNameFixedWidth*/,
+							nodeNameFixedWidth,
 							hostname,
 							hostnameIndices,
 							hostnameFixedWidth))
@@ -3396,7 +3474,7 @@
 				
 		//=====================================================================================
 		//handleEditNodeDialogMultiNodeCheckbox ~~
-		function handleEditNodeDialogMultiNodeCheckbox(i,obj) 
+		function handleEditNodeDialogMultiNodeCheckbox(i,obj,showtooltip) 
 		{
 			Debug.log("handleEditNodeDialogMultiNodeCheckbox " + i + 
 					" - " + obj.checked);
@@ -3414,6 +3492,33 @@
 				document.getElementById("ediNode-" + "nodeName").value = 
 						nodeNameValue;	
 				return;
+			}
+			else 
+			{
+				//enabled, so show tooltip
+				DesktopContent.tooltip(showtooltip?"ALWAYS":"Multi-node Editing",
+						"This text provides extra details on how to create a multi-node, which is intended to be multiple " +
+						"instances of the same type of <i>artdaq</i> node (i.e. reader, builder, logger, etc.). The most common use case "+
+						"is repeating the same node configuration across multiple computers." +
+						"\n\n" +						
+						"To setup a multi-node, first set the size (i.e. the node count) of the multi-node by using <b>printer page syntax</b>" +
+						" in the Multi-Node Indices field, and one or many <b>*</b> characters in the Node Name field." +
+						"\n\n" + 
+						"For example, you can make 4 nodes named as follows:" +
+						"\n\n\t <i>reader0_east</i>" +
+						"\n\t <i>reader4_east</i>" +
+						"\n\t <i>reader5_east</i>" +
+						"\n\t <i>reader6_east</i>" + 
+						"\n\nTo achieve the above instances, you would set the following field values:" +
+						"\n\n<TAB><table><tr><td style='text-align:right'><b>Node Name:</b></td><td><i>reader*_east</i></td></tr>" +
+						"<tr><td style='text-align:right'><b>Multi-Node Indices:</b></td><td><i>0,4-6</i></td></tr></table></TAB>" +
+						"\n" + 
+						"If you want to go a step further and apply a fixed-width naming scheme (e.g. <i>reader006_east</i>), " +
+						"check the <b>Enable Fixed-width Node Names</b> checkbox (e.g. to get <i>006</i>, set the fixed-width value to <i>3</i>)." +
+						"\n\n" + 
+						"Finally, to associate an array of hostnames with your multi-node instances, enable the <b>Associate Multi-node Instances with an Array of Hostnames</b> checkbox." +
+						"You can use same <b>printer page syntax</b> and <b>*</b> characters to create an array of hostnames."
+				);
 			}
 			
 			//else try to place * for user
@@ -3459,7 +3564,16 @@
 			
 				
 			document.getElementById("hostnameArraySettings").style.display =
-					obj.checked?"block":"none";			
+					obj.checked?"block":"none";	
+			
+			if(obj.checked) //enabled, so show tooltip			
+				DesktopContent.tooltip("Hostname Array Editing Help",
+					"It may be the case that you want your multi-node instances to run on different computer; in this case, " +
+					"you will want to make use of the hostname array." +
+					"\n\n" +
+					"For example, to associate 4 nodes named reader0, reader4, reader5, reader6 to 4 hosts named cpu3.fnal.gov, cpu4.fnal.gov, cpu4.fnal.gov, cpu8.fnal.gov... " +
+					"You would enter a Node Name of 'reader*', Multi-node Indices of '0,4-6', Hostname of 'cpu*.fnal.gov', and Hostname Indices of '3,4,4,8'..."																	
+			);
 			
 		} //end handleEditNodeDialogHostnameArrayCheckbox()
 
@@ -3473,8 +3587,32 @@
 				
 			document.getElementById("hostnameFixedWidthSettings").style.display =
 					obj.checked?"block":"none";			
-			
+
+			if(obj.checked) //if checked, select text
+			{
+				var tel = document.getElementById("ediNode-" + "hostnameFixedWidth");
+				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);
+			}
 		} //end handleEditNodeDialogHostnameFixedWidthCheckbox()
+
+		//=====================================================================================
+		//handleEditNodeDialogNodeNameFixedWidthCheckbox
+		function handleEditNodeDialogNodeNameFixedWidthCheckbox(i,obj) 
+		{
+			Debug.log("handleEditNodeDialogNodeNameFixedWidthCheckbox " + i + 
+					" - " + obj.checked);
+			
+				
+			document.getElementById("nodeNameFixedWidthSettings").style.display =
+					obj.checked?"block":"none";		
+			
+			if(obj.checked) //if checked, select text
+			{
+				var tel = document.getElementById("ediNode-" + "nodeNameFixedWidth");
+				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);
+			}				
+			
+		} //end handleEditNodeDialogNodeNameFixedWidthCheckbox()
 		
 		//=====================================================================================
 		//handleEditNodeSelectEditIcon ~~
@@ -3502,7 +3640,6 @@
 			}
 			else 
 			{
-				tel.style.width = ((sel.offsetWidth > 200 ? sel.offsetWidth : 200) - 8) + "px";
 				sel.style.display = "none";
 				tel.style.display = "block";
 				if(tel.value == "")
