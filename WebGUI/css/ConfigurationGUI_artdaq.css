@@ -104,7 +104,6 @@
 		.node {
 			position:				absolute;
 			cursor:					pointer;
-			z-index:				1000; /*get above arrows*/
 		}
 		
 		.node-box {
@@ -119,6 +118,7 @@
 			
 			position:				absolute;
 			cursor:					pointer;
+			z-index:				1000; /*get above arrows*/					
 		}
 		
 		.node-box:hover {
@@ -178,6 +178,7 @@
 			
 			white-space:			nowrap;
 			overflow:				hidden;
+			
 		}
 		.node-headerTextHover {
 			z-index:				3000; /*get above arrows*/
