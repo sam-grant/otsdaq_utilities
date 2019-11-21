@@ -174,8 +174,8 @@
 			//		localHandleCleanup()
 			//handlePointMouseDown(i,p,e)
 		
-			//handleEditIconMouseUp(i,e)
-			//handleEditIconMenuSelection(i)
+			//handleEditIconMouseUp(i,e,x,subi)
+			//handleEditIconMenuSelection(i,editType, newTab, x, y, editTypeString, subi)
 			//launchEditNodeDialog(i)
 			//		localCloseButtonHandler()
 			//		getElementById("ediNode-" + "saveNode").onclick()
@@ -351,7 +351,16 @@
 									_nodes[_nodes.length-1].hostname,
 									artdaqObj[type][name].hostArrayString,
 									artdaqObj[type][name].hostFixedWidth);
-										
+							
+							//modify original node name to give full multi-node description
+							if(_nodes[_nodes.length-1].nodeCount > 1)
+							{
+								_nodes[_nodes.length-1].originalName = 
+										":" + (_nodes[_nodes.length-1].nodeNameFixedWidth?
+												_nodes[_nodes.length-1].nodeNameFixedWidth:1) +
+										":" + _nodes[_nodes.length-1].nodeVectorIndexString + ":" +
+										_nodes[_nodes.length-1].name;
+							}
 								
 							//remove from nodes object to keep remainder accurate 
 							delete artdaqObj[type][name];
@@ -404,6 +413,17 @@
 									_nodes[_nodes.length-1].hostname,
 									artdaqObj[t][n].hostArrayString,
 									artdaqObj[t][n].hostFixedWidth);
+							
+
+							//modify original node name to give full multi-node description
+							if(_nodes[_nodes.length-1].nodeCount > 1)
+							{
+								_nodes[_nodes.length-1].originalName = 
+										":" + (_nodes[_nodes.length-1].nodeNameFixedWidth?
+												_nodes[_nodes.length-1].nodeNameFixedWidth:1) +
+										":" + _nodes[_nodes.length-1].nodeVectorIndexString + ":" +
+										_nodes[_nodes.length-1].name;
+							}
 						}
 					}
 					
@@ -676,7 +696,8 @@
 				//enter in hostnames
 				_hostnames[hostname] = 1;
 				node.hostname = hostname;
-			}
+			}		
+			
 			
 			return true;
 		} //end handleOptionalNodeParameters()
@@ -1618,7 +1639,7 @@
 			var count = (_nodes[i].nodeCount && _nodes[i].nodeCount > 4)?4:(_nodes[i].nodeCount|0);		
 									
 			el = document.getElementById(nodeid + "-headerText");
-			el.style.left = (- (_grid.xstep*2-sz)/2 - (count?(count-1)*2:0)) + "px";
+			el.style.left = (- (_grid.xstep*2-sz)/2 - (count?(count-1)*2:0) - 5) + "px"; //-5 because grid/arrow left is biased to 0 position
 			el.style.fontSize = ((fontSz)|0) + "px";
 			el.style.top = ((-fontSz*3-fontSz/2 - (count?(count-1)*5:0))|0) + "px";
 			el.style.height = ((fontSz*3)|0) + "px";
@@ -2136,13 +2157,15 @@
 			{
 				ConfigurationAPI.removeClass(el,"node-headerTextHover");
 				el.style.top = ((-fontSz*3-fontSz/2 - (count?(count-1)*5:0))|0) + "px";
+				el.style.zIndex = 1000;
 			}
 			else
 			{
 				ConfigurationAPI.addClass(el,"node-headerTextHover");
 				el.style.top = ((-fontSz*3-fontSz/2 -13 - (count?(count-1)*5:0))|0) + "px";
+				el.style.zIndex = 10000;
 			}
-			el.style.left = (- (_grid.xstep*2-_NODE_SIZE)/2 - (count?(count-1)*2:0)) + "px";
+			el.style.left = (- (_grid.xstep*2-_NODE_SIZE)/2 - (count?(count-1)*2:0) - 5) + "px";
 			el.style.fontSize = ((fontSz)|0) + "px";
 			
 			el.style.height = ((fontSz*3)|0) + "px";
@@ -2433,7 +2456,7 @@
 
 		//=====================================================================================
 		//handleEditIconMouseUp ~~
-		function handleEditIconMouseUp(i,e,x) 
+		function handleEditIconMouseUp(i,e,x,subi) 
 		{	   
 			if(e) e.stopPropagation();
 		
@@ -2454,7 +2477,8 @@
 							"]</u></b>");
 					menuItemHandlers.push("handleEditIconMouseUp(" +
 							i + ", undefined /*e*/, " +
-							(event.pageX - 10) + " /*x*/" +
+							(event.pageX - 10) + " /*x*/," +
+							j + " /*subi*/" +
 							")");
 				}
 
@@ -2481,7 +2505,8 @@
 				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
 			
 			
-			Debug.log("mouseup-edit i = " + i + " - " +
+			Debug.log("mouseup-edit i = " + i + "[" + 
+					subi + "] - " +
 					typeName + "::" +
 					_nodes[i].name);
 			
@@ -2513,16 +2538,37 @@
 			menuItems.push("Edit <b><u>Node</u></b> (i.e. name, subsystem, host, instances)");
 			menuItemHandlers.push("launchEditNodeDialog(" + i + ")");
 			
+			var nodeName = _nodes[i].name;
+			if(subi !== undefined) //dealing with a particular multi-node node
+			{
+				var namePieces = nodeName.split('*');
+				if(namePieces.length)
+				{
+					nodeName = namePieces[0];
+					var nameIndex = subi + ""; //make a 'string'
+					while(_nodes[i].nodeNameFixedWidth && 
+							nameIndex.length < (_nodes[i].nodeNameFixedWidth|0))
+						nameIndex = "0" + nameIndex;
+					
+					for(var p=1;p<namePieces.length;++p)
+						nodeName += nameIndex + namePieces[p];
+				}
+				else
+					Debug.log("Invalid multi-node name for subi=" + subi,
+							Debug.MED_PRIORITY);
+			} //end create multi-node name
+			
 			for(var t=0;t<editTypes.length;++t)
 			{
 				menuItems.push( "Edit <b><u>" + editTypes[t] +
 						"</u></b> of " + typeName + "::" + 
-						_nodes[i].name);
+						nodeName);
 				menuItemHandlers.push("handleEditIconMenuSelection(" +
 						i + "," + t + ", undefined /*newTab*/, " +
 						(event.pageX - 10) + ", " +
-						(event.pageY - 10) + ", " 
-						+ "\"" + editTypes[t]  + "\"" +
+						(event.pageY - 10) + ", " +
+						"\"" + editTypes[t]  + "\"," +
+						subi + " /*subi*/" +
 						")");
 			} //end edit type loop
 						
@@ -2543,10 +2589,13 @@
 		//handleEditIconMenuSelection ~~
 		//	handle menu selection for node i
 		//	based on editType
-		function handleEditIconMenuSelection(i,editType, newTab, x, y, editTypeString) 
+		//	subi used to index multi-node
+		function handleEditIconMenuSelection(i,editType, newTab, 
+				x, y, editTypeString, subi) 
 		{	   
 			
-			Debug.log("handleEditIconMenuSelection " + i + "-" + 
+			Debug.log("handleEditIconMenuSelection " + i + 
+					"[" + subi + "] -" + 
 					editType + "-" + newTab);
 			
 
@@ -2560,7 +2609,7 @@
 			
 			var typeBaseTable = 
 				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"ARTDAQBoardReaderTable":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"ARTDAQBuilderTable":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"ARTDAQEventBuilderTable":
 				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"ARTDAQDataLoggerTable":
 				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"ARTDAQDispatcherTable":"ARTDAQMonitorTable";
 
@@ -2583,6 +2632,26 @@
 //				return;
 //			}
 
+			var nodeName = _nodes[i].name;
+			if(subi !== undefined) //dealing with a particular multi-node node
+			{
+				var namePieces = nodeName.split('*');
+				if(namePieces.length)
+				{
+					nodeName = namePieces[0];
+					var nameIndex = subi + ""; //make a 'string'
+					while(_nodes[i].nodeNameFixedWidth && 
+							nameIndex.length < (_nodes[i].nodeNameFixedWidth|0))
+						nameIndex = "0" + nameIndex;
+
+					for(var p=1;p<namePieces.length;++p)
+						nodeName += nameIndex + namePieces[p];
+				}
+				else
+					Debug.log("Invalid multi-node name for subi=" + subi,
+							Debug.MED_PRIORITY);
+			} //end create multi-node name
+
 			if(newTab === undefined)
 			{
 				//create menu to choose new tab or not
@@ -2591,15 +2660,25 @@
 
 				menuItems.push( "Edit <b><u>" + subsetName +
 						"</u></b> of " + typeName + "::" + 
-						_nodes[i].name);
+						nodeName);
 				menuItemHandlers.push("handleEditIconMenuSelection(" +
-						i + "," + editType + ", false /*newTab*/)");
+						i + "," + editType + ", false /*newTab*/,"+
+						x + ", " +
+						y + ", " +
+						"\"" + editTypeString  + "\"," +
+						subi + " /*subi*/" +
+						")");
 				menuItems.push( "Edit <b><u>" + subsetName +
 						"</u></b> of " + typeName + "::" + 
-						_nodes[i].name + 
+						nodeName + 
 						" in a <label style='color:rgb(251, 128, 67);font-weight:bold;'>new browser tab</font>");
 				menuItemHandlers.push("handleEditIconMenuSelection(" +
-						i + "," + editType + ", true /*newTab*/)");
+						i + "," + editType + ", true /*newTab*/,"+
+						x + ", " +
+						y + ", " +
+						"\"" + editTypeString  + "\"," +
+						subi + " /*subi*/" +
+						")");
 
 
 				SimpleContextMenu.createMenu(
@@ -2629,7 +2708,7 @@
 					"&editableFieldList=" + "!*CommentDescription";
 				
 				//for unique link, presect UID record							
-				newWindowStr += "&selectedRecords=" + _nodes[i].name;
+				newWindowStr += "&selectedRecords=" + nodeName;
 				
 				localLaunchWindow();
 				
@@ -2647,7 +2726,8 @@
 						DesktopContent._localUrnLid +
 						"&subsetBasePath=" + "ARTDAQDaqParameterTable" +
 						"&groupingFieldList=AUTO" +
-						"&recordAlias=" + encodeURIComponent(typeName + " " + subsetName) +
+						"&recordAlias=" + encodeURIComponent(typeName + " " + 
+								subsetName) +
 						"&editableFieldList=" + "!*CommentDescription";
 										
 					localGetLinkId("daqParametersLink",
@@ -2680,7 +2760,8 @@
 							DesktopContent._localUrnLid +
 							"&subsetBasePath=" + "ARTDAQMetricTable" +
 							"&groupingFieldList=AUTO" +
-							"&recordAlias=" + encodeURIComponent(typeName + " " + subsetName) +
+							"&recordAlias=" + encodeURIComponent(typeName + 
+									" " + subsetName) +
 							"&editableFieldList=" + "!*CommentDescription";
 
 					localGetLinkId("daqMetricsLink",
@@ -2702,7 +2783,8 @@
 				}
 				break;
 			default:
-				Debug.log("Unknown impossible (notify admins) editType = " + editType, Debug.HIGH_PRIORITY);
+				Debug.log("Unknown impossible (notify admins) editType = " +
+						editType, Debug.HIGH_PRIORITY);
 			}
 
 			return;
