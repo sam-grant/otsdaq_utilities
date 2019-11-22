@@ -174,7 +174,7 @@
 			//		localHandleCleanup()
 			//handlePointMouseDown(i,p,e)
 		
-			//handleEditIconMouseUp(i,e,x,subi)
+			//handleEditIconMouseUp(i,e,x,y,subi)
 			//handleEditIconMenuSelection(i,editType, newTab, x, y, editTypeString, subi)
 			//launchEditNodeDialog(i)
 			//		localCloseButtonHandler()
@@ -185,10 +185,12 @@
 			//handleEditNodeDialogNodeNameFixedWidthCheckbox(i)
 			//handleEditNodeSelectEditIcon(t)
 		
-			//handleFclIconMouseUp(i,e)
+			//handleFclIconMouseUp(i,e,x,y,subi)
 			//handleDeleteIconMouseUp(i,e)
 		
 			//getSubsystemColor(subsystemId)
+			//getMultiNodeName(i,subi)
+			//getPrinterSyntaxStringWithWidth(s,w)
 				
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -1517,7 +1519,10 @@
 					
 					nodeName = nodeName.replace(new RegExp("\\*",'g'), 
 							"[" + 
-							_nodes[i].nodeVectorIndexString + 
+							getPrinterSyntaxStringWithWidth(
+							_nodes[i].nodeVectorIndexString,
+							_nodes[i].nodeNameFixedWidth)
+							+ 
 							"]"); 
 				}
 				if(hostname.indexOf('*') >= 0)
@@ -1526,7 +1531,9 @@
 					
 					hostname = hostname.replace(new RegExp("\\*",'g'), 
 							"[" + 
-							_nodes[i].hostnameVectorIndexString + 
+							getPrinterSyntaxStringWithWidth(
+							_nodes[i].hostnameVectorIndexString,
+							_nodes[i].hostnameFixedWidth) + 
 							"]"); 
 				}
 				
@@ -2460,6 +2467,15 @@
 		{	   
 			if(e) e.stopPropagation();
 		
+			var type = _nodes[i].type;
+								
+			var typeName = 
+				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
+					
+					
 			if(x == undefined && _nodes[i].nodeCount && _nodes[i].nodeCount > 1)
 			{
 				Debug.log("Showing multi-node menu");
@@ -2473,11 +2489,12 @@
 				
 				for(var j=0;j<_nodes[i].nodeCount;++j)
 				{
-					menuItems.push( "Edit <b><u>node[" + j +
-							"]</u></b>");
+					menuItems.push( "Edit <b><u>" + typeName + 
+							"::" + getMultiNodeName(i,j) +
+							"</u></b> node instance");
 					menuItemHandlers.push("handleEditIconMouseUp(" +
 							i + ", undefined /*e*/, " +
-							(event.pageX - 10) + " /*x*/," +
+							(e.pageX - 10) + " /*x*/," +
 							j + " /*subi*/" +
 							")");
 				}
@@ -2485,8 +2502,8 @@
 				SimpleContextMenu.createMenu(
 						menuItems,
 						menuItemHandlers,
-						"openFclMenuForArtdaqNode",		//element ID
-						event.pageX - 10, event.pageY - 10, 		//top left position
+						"simpleContextMenuPopup",		//element ID
+						e.pageX - 10, e.pageY - 10, 		//top left position
 						_MENU_PRIMARY_COLOR,
 						_MENU_SECONDARY_COLOR,
 						true /*defaultHighlighting*/
@@ -2496,14 +2513,9 @@
 			}
 			//else handle single node
 			
-			var type = _nodes[i].type;
-						
-			var typeName = 
-				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
-			
+			if(!x) x = event.pageX - 10;
+			var y = event.pageY - 10; //always follow mouse -- otherwise menu may become impossible to navigate
+		
 			
 			Debug.log("mouseup-edit i = " + i + "[" + 
 					subi + "] - " +
@@ -2540,23 +2552,7 @@
 			
 			var nodeName = _nodes[i].name;
 			if(subi !== undefined) //dealing with a particular multi-node node
-			{
-				var namePieces = nodeName.split('*');
-				if(namePieces.length)
-				{
-					nodeName = namePieces[0];
-					var nameIndex = subi + ""; //make a 'string'
-					while(_nodes[i].nodeNameFixedWidth && 
-							nameIndex.length < (_nodes[i].nodeNameFixedWidth|0))
-						nameIndex = "0" + nameIndex;
-					
-					for(var p=1;p<namePieces.length;++p)
-						nodeName += nameIndex + namePieces[p];
-				}
-				else
-					Debug.log("Invalid multi-node name for subi=" + subi,
-							Debug.MED_PRIORITY);
-			} //end create multi-node name
+				nodeName = getMultiNodeName(i,subi);
 			
 			for(var t=0;t<editTypes.length;++t)
 			{
@@ -2565,8 +2561,7 @@
 						nodeName);
 				menuItemHandlers.push("handleEditIconMenuSelection(" +
 						i + "," + t + ", undefined /*newTab*/, " +
-						(event.pageX - 10) + ", " +
-						(event.pageY - 10) + ", " +
+						x + ", " +
 						"\"" + editTypes[t]  + "\"," +
 						subi + " /*subi*/" +
 						")");
@@ -2575,9 +2570,9 @@
 			SimpleContextMenu.createMenu(
 					menuItems,
 					menuItemHandlers,
-					"openFclMenuForArtdaqNode",		//element ID
-					(x?x:(event.pageX - 10)),
-					event.pageY - 10, 		//top left position
+					"simpleContextMenuPopup",		//element ID
+					x,
+					y, 		//top left position
 					_MENU_PRIMARY_COLOR,
 					_MENU_SECONDARY_COLOR,
 					true /*defaultHighlighting*/
@@ -2591,14 +2586,13 @@
 		//	based on editType
 		//	subi used to index multi-node
 		function handleEditIconMenuSelection(i,editType, newTab, 
-				x, y, editTypeString, subi) 
+				x, editTypeString, subi) 
 		{	   
 			
 			Debug.log("handleEditIconMenuSelection " + i + 
 					"[" + subi + "] -" + 
 					editType + "-" + newTab);
 			
-
 			var type = _nodes[i].type;
 			
 			var typeName = 
@@ -2614,6 +2608,12 @@
 				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"ARTDAQDispatcherTable":"ARTDAQMonitorTable";
 
 			var subsetName = editTypeString;
+			
+
+			if(!x) x = event.pageX - 10;
+			var y = event.pageY - 10; //always follow mouse -- otherwise menu may become impossible to navigate
+			
+			
 //			switch(editType)
 //			{
 //			case 0: //top-level parameters
@@ -2634,23 +2634,7 @@
 
 			var nodeName = _nodes[i].name;
 			if(subi !== undefined) //dealing with a particular multi-node node
-			{
-				var namePieces = nodeName.split('*');
-				if(namePieces.length)
-				{
-					nodeName = namePieces[0];
-					var nameIndex = subi + ""; //make a 'string'
-					while(_nodes[i].nodeNameFixedWidth && 
-							nameIndex.length < (_nodes[i].nodeNameFixedWidth|0))
-						nameIndex = "0" + nameIndex;
-
-					for(var p=1;p<namePieces.length;++p)
-						nodeName += nameIndex + namePieces[p];
-				}
-				else
-					Debug.log("Invalid multi-node name for subi=" + subi,
-							Debug.MED_PRIORITY);
-			} //end create multi-node name
+				nodeName = getMultiNodeName(i,subi);
 
 			if(newTab === undefined)
 			{
@@ -2664,7 +2648,6 @@
 				menuItemHandlers.push("handleEditIconMenuSelection(" +
 						i + "," + editType + ", false /*newTab*/,"+
 						x + ", " +
-						y + ", " +
 						"\"" + editTypeString  + "\"," +
 						subi + " /*subi*/" +
 						")");
@@ -2675,7 +2658,6 @@
 				menuItemHandlers.push("handleEditIconMenuSelection(" +
 						i + "," + editType + ", true /*newTab*/,"+
 						x + ", " +
-						y + ", " +
 						"\"" + editTypeString  + "\"," +
 						subi + " /*subi*/" +
 						")");
@@ -2684,8 +2666,8 @@
 				SimpleContextMenu.createMenu(
 						menuItems,
 						menuItemHandlers,
-						"openFclMenuForArtdaqNode",		//element ID
-						x, event.pageY - 10, 		//top left position
+						"simpleContextMenuPopup",		//element ID
+						x, y, 		//same menu position
 						_MENU_PRIMARY_COLOR,
 						_MENU_SECONDARY_COLOR,
 						true /*defaultHighlighting*/
@@ -3729,12 +3711,12 @@
 				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);
 			}
 		} //end handleEditNodeSelectEditIcon()
-		
+						
 		//=====================================================================================
 		//handleFclIconMouseUp ~~
-		function handleFclIconMouseUp(i,e) 
+		function handleFclIconMouseUp(i,e,x,y,subi) 
 		{	   
-			e.stopPropagation();
+			if(e) e.stopPropagation();
 		
 			if(!_codeEditorAppId)
 			{
@@ -3743,19 +3725,75 @@
 						Debug.HIGH_PRIORITY);
 				return;
 			}
+			
+
+			var type = _nodes[i].type;
+								
+			var typeName = 
+				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
 					
-			Debug.log("mouseup-fcl i = " + i + " - " + 
-					_nodes[i].name);				   
+					
+			
+			if(x == undefined && _nodes[i].nodeCount && _nodes[i].nodeCount > 1)
+			{
+				Debug.log("Showing multi-node menu");//handle node vector level first
+				var menuItems = [];
+				var menuItemHandlers = [];
+
+				
+				for(var j=0;j<_nodes[i].nodeCount;++j)
+				{
+					menuItems.push( "Open FHiCL for <b><u>" + typeName + 
+						"::" + getMultiNodeName(i,j) +
+						"</u></b>");
+					menuItemHandlers.push("handleFclIconMouseUp(" +
+							i + ", undefined /*e*/, " +
+							(e.pageX - 10) + " /*x*/," +
+							j + " /*subi*/" +
+							")");
+				}
+
+				SimpleContextMenu.createMenu(
+						menuItems,
+						menuItemHandlers,
+						"simpleContextMenuPopup",		//element ID
+						e.pageX - 10, e.pageY - 10, 		//top left position
+						_MENU_PRIMARY_COLOR,
+						_MENU_SECONDARY_COLOR,
+						true /*defaultHighlighting*/
+				);	
+				
+				return;
+			}
+			//else handle single node
+			
+			if(!x) x = event.pageX - 10;
+			var y = event.pageY - 10; //always follow mouse -- otherwise menu may become impossible to navigate
+			
+			Debug.log("mouseup-fcl i = " + i + 
+					"[" + subi + "] - " + 
+					_nodes[i].name);	
+
+			var nodeName = _nodes[i].name;
+			if(subi !== undefined) //dealing with a particular multi-node node
+				nodeName = getMultiNodeName(i,subi);
 		
 			var menuItems = [
-							 "Open FHiCL for " + _nodes[i].name + " in a desktop window",
-							 "Open FHiCL for " + _nodes[i].name + " in a new browser tab"
+							 "Open FHiCL for " + typeName + 
+								"::" + nodeName,
+							 "Open FHiCL for " + typeName + 
+								"::" + nodeName + " in a " +
+								"<label style='color:rgb(251, 128, 67);font-weight:bold;'>" +
+								"new browser tab</label>"
 									 ];
 			var menuItemHandlers = [];
 
 			var filename = "/$USER_DATA/ARTDAQConfigurations/" + 
-					ArtdaqConfigurationAPI.NODE_TYPES[_nodes[i].type] + "-" +
-					_nodes[i].name + ".fcl";
+					ArtdaqConfigurationAPI.NODE_TYPES[type] + "-" +
+					nodeName + ".fcl";
 			console.log("filename",filename);
 			
 
@@ -3811,8 +3849,8 @@
 			SimpleContextMenu.createMenu(
 					menuItems,
 					menuItemHandlers,
-					"openFclMenuForArtdaqNode",		//element ID
-					event.pageX - 1, event.pageY - 1, 		//top left position
+					"simpleContextMenuPopup",		//element ID
+					x, y, 		//top left position
 					_MENU_PRIMARY_COLOR,
 					_MENU_SECONDARY_COLOR,
 					true /*defaultHighlighting*/
@@ -3830,6 +3868,64 @@
 			
 			
 		} // end handleDeleteIconMouseUp()
+
+		//=====================================================================================
+		//getMultiNodeName ~~
+		function getMultiNodeName(i,subi) 
+		{	
+			var namePieces = _nodes[i].name.split('*');
+			if(namePieces.length > 1)
+			{
+				var nodeName = namePieces[0];
+				var nameIndex = subi + ""; //make a 'string'
+				while(_nodes[i].nodeNameFixedWidth && 
+						nameIndex.length < (_nodes[i].nodeNameFixedWidth|0))
+					nameIndex = "0" + nameIndex;
+
+				for(var p=1;p<namePieces.length;++p)
+					nodeName += nameIndex + namePieces[p];
+				
+				return nodeName; //on success				
+			}
+			else
+			{
+				Debug.log("Invalid multi-node name for subi=" + subi,
+						Debug.MED_PRIORITY);
+				return _nodes[i].name; //on failure
+			}			
+			
+		} //end getMultiNodeName()
+
+		//=====================================================================================
+		//getPrinterSyntaxStringWithWidth ~~
+		function getPrinterSyntaxStringWithWidth(s,w) 
+		{	
+			var sarr = s.split(',');
+			s = "";
+			
+			var v;
+			var isFirst = true;
+			for(var i=0;i<sarr.length;++i)
+			{
+				var rangeArr = sarr[i].split('-');
+				if(!rangeArr.length) continue;
+				
+				v = rangeArr[0] + ""; //make string
+				while(w && v.length < w) v = "0" + v;
+				
+				s += (isFirst?"":",") + v;
+				isFirst = false;
+						
+				if(rangeArr.length == 1) continue;
+				//else range
+				
+				v = rangeArr[1] + ""; //make string
+				while(w && v.length < w) v = "0" + v;
+				
+				s += "-" + v;
+			}
+			return s;
+		} //end getPrinterSyntaxStringWithWidth()
 		
 		//=====================================================================================
 		//openActiveGroupsDialog ~~
