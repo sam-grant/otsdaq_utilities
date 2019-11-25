@@ -1355,6 +1355,10 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			"{" +
 			"color: " + textColor + ";" +
 			"}\n\n";
+	css += "#" + DesktopContent._verifyPopUpId + " input" +
+			"{" +
+			"cursor: pointer;" +
+			"}\n\n";
 
 	//add style element to HEAD tag
 	var style = document.createElement('style');
@@ -1372,11 +1376,14 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 
 	var el = document.createElement("div");
 	el.setAttribute("id", DesktopContent._verifyPopUpId);
+	el.onmouseup = function(e) {e.stopPropagation();};
+	el.onmousedown = function(e) {e.stopPropagation();};
+	el.onmouseover = function(e) {e.stopPropagation();};
 	
 	var userInputStr = "";
 	if(getUserInput)
 		userInputStr +=
-				"<input type='text' id='DesktopContent_popUpUserInput' " + 
+				"<input type='text' id='DesktopContent_popUpUserInput' " +
 				"onclick='event.stopPropagation();'" +
 				(noAutoComplete?"autocomplete='off' ":"") + 
 				">";

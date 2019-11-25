@@ -348,56 +348,6 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 				__SUP_COUT_ERR__ << "Unable to open command file: " << fn << __E__;
 		}
 	}
-	//	else if(requestType == "launchOTS")
-	//	{
-	//		__SUP_COUT_WARN__ << "launchOTS command received! Launching... " << __E__;
-	//
-	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//				"/StartOTS_action.cmd").c_str(),"w");
-	//		if(fp)
-	//		{
-	//			fprintf(fp,"LAUNCH_OTS");
-	//			fclose(fp);
-	//		}
-	//		else
-	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//					"/StartOTS_action.cmd") << __E__;
-	//	}
-	//	else if(requestType == "launchWiz")
-	//	{
-	//		__SUP_COUT_WARN__ << "launchWiz command received! Launching... " << __E__;
-	//
-	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//				"/StartOTS_action.cmd").c_str(),"w");
-	//		if(fp)
-	//		{
-	//			fprintf(fp,"LAUNCH_WIZ");
-	//			fclose(fp);
-	//		}
-	//		else
-	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//					"/StartOTS_action.cmd") << __E__;
-	//	}
-	//	else if(requestType == "flattenToSystemAliases")
-	//	{
-	//		__SUP_COUT_WARN__ << "flattenToSystemAliases command received! Launching... "
-	//<<
-	//__E__;
-	//
-	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//				"/StartOTS_action.cmd").c_str(),"w");
-	//		if(fp)
-	//		{
-	//			fprintf(fp,"FLATTEN_TO_SYSTEM_ALIASES");
-	//			fclose(fp);
-	//		}
-	//		else
-	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//					"/StartOTS_action.cmd") << __E__;
-	//	}
 	else if(requestType == "versionTracking")
 	{
 		std::string type = CgiDataUtilities::getData(cgiIn, "Type");  // from GET
@@ -1318,28 +1268,6 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 	// always add active table groups to xml response
 	ConfigurationSupervisorBase::getConfigurationStatusXML(xmlOut, cfgMgr);
-	//	std::map<std::string /*type*/, std::pair<std::string /*groupName*/,
-	// TableGroupKey>> 	    activeGroupMap = cfgMgr->getActiveTableGroups();
-	//
-	//	for(auto& type : activeGroupMap)
-	//	{
-	//		xmlOut.addTextElementToData(type.first + "-ActiveGroupName",
-	// type.second.first); 		xmlOut.addTextElementToData(type.first +
-	//"-ActiveGroupKey",
-	//		                            type.second.second.toString());
-	//		//__SUP_COUT__ << "ActiveGroup " << type.first << " " << type.second.first <<
-	//"("
-	//		//<< type.second.second << ")" << __E__;
-	//	}
-	//
-	//	// always add version tracking bool
-	//	xmlOut.addTextElementToData(
-	//	    "versionTracking",
-	//	    ConfigurationInterface::isVersionTrackingEnabled() ? "ON" : "OFF");
-	//
-	//	__SUP_COUT__ << __E__;
-	//	xmlOut.outputXmlDocument(0,true,true);
-	//	__SUP_COUT__ << __E__;
 
 }  // end ::request()
 catch(const std::runtime_error& e)
