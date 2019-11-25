@@ -117,6 +117,7 @@ Ext.onReady(function()
  var displayPlot_       = ""                                                                      ;
  var periodicPlotID_    = ""                                                                      ;
  var mdi_               = ""                                                                      ;
+ var treeDisplayField_  = "fDisplayName"                                                          ;
  var doReset_           = true                                                                    ;
  var _cookieCodeMailbox = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
  var _cookieCode        = _cookieCodeMailbox.innerHTML                                            ;
@@ -399,7 +400,7 @@ theControls_ = Ext.create     (
  function makeGrid(where,what)
  { 
   if( grid_ ) grid_.destroy()     ;
-  theStore_.sort('fDisplayName', 'ASC');
+  theStore_.sort(treeDisplayField_, 'ASC');
 
   mdi_ = new JSROOT.GridDisplay('histogram1', ''); // gridi2x2
  
@@ -511,11 +512,13 @@ theControls_ = Ext.create     (
                                                   fFoldersPath_ = selection[i].data.fFoldersPath                 ;
                                                   //fRootPath_    = selection[i].data.fRootPath                    ;
                                                   fHistName_    = selection[i].data.fHistName                    ;
+                                                  fFileName_    = selection[i].data.fFileName                    ;
                                                   if( typeof fFoldersPath_ === "undefined" ) fFoldersPath_ = ""      ;
                                                   STDLINE("--> fSystemPath_ : "+fSystemPath_ )                        ;
                                                   STDLINE("--> fFoldersPath_: "+fFoldersPath_)                        ;
                                                   STDLINE("--> fRootPath_   : "+fRootPath_   )                        ;
                                                   STDLINE("--> fHistName_   : "+fHistName_   )                        ;
+                                                  STDLINE("--> fFileName_   : "+fFileName_   )                        ;
                                                 }  
                                                  STDLINE("Selected "+selection.length+" items")                     ;
                                                  STDLINE(item.innerText) ;  
@@ -536,6 +539,7 @@ theControls_ = Ext.create     (
                                                  {
                                                   if( selectedItem_ == "getDirectories" )
                                                   {
+                                                   treeDisplayField_  = 'fDisplayName'                     ;
                                                    selectedItem_      = "getRootObject"                    ;
                                                    currentTree_       = 'fileContent'                      ;
                                                 //    currentDirectory_ = theSourcesCB_.getValue()           +
@@ -551,8 +555,12 @@ theControls_ = Ext.create     (
                                                                        "/"                                +
                                                                        fHistName_  ;
                                                    STDLINE('RequestType      : getMeRootFile'     )        ;
+                                                   STDLINE('fSystemPath_     : '+fSystemPath_     )        ;
+                                                   STDLINE('fRootPath_       : '+fRootPath_       )        ;
+                                                   STDLINE('fFoldersPath_    : '+fFoldersPath_    )        ;
+                                                   STDLINE('fHistName_       : '+fHistName_       )        ;
+                                                   STDLINE('fFileName_       : '+fFileName_       )        ;
                                                    STDLINE('currentDirectory_: '+currentDirectory_)        ;
-                                                   STDLINE("--> fHistName   : "+fHistName_   )             ;
                                                    makeStore(currentDirectory_,'RequestType=getMeRootFile');
                                                    makeGrid (currentDirectory_,'ROOT file content'        );
                                                   }
