@@ -463,7 +463,7 @@ void ControlsDashboardSupervisor::GetPVArchiverData(cgicc::Cgicc&    cgiIn,
 	size_t      pos = 0;
 	size_t      nextPos;
 	size_t      lastIndex = pvList.find_last_of(",");
-	std::cout << "**********************" << pvList.size() << std::endl;
+	std::cout << "pvList.size(): " << pvList.size() << std::endl;
 	if(pvList.size() > 0)
 	{
 		while((nextPos = pvList.find(",", pos)) != std::string::npos)

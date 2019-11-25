@@ -95,6 +95,16 @@
 				console.log("DrawGraph pv: " + pvName);
 			}
 
+			window.onresize = function() {
+				//Plotly.Plots.resize(window.frameElement);
+				Plotly.relayout(document.getElementById("display"),
+				{
+					width: window.innerWidth,
+					height: window.innerHeight
+				});
+					console.log("window.onresize Plotly.relayout");
+			};
+
 		</script>
 
 	</head>
