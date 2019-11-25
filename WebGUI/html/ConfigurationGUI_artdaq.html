@@ -105,6 +105,10 @@
 		var _layoutHasChanged = false;
 		var _nodesHaveChanged = false;
 		
+		var _checkActiveGroupsOffset = 0;
+		var _CHECK_ACTIVE_GROUPS_PERIOD = 5000; //ms
+		var _lastActiveGroups = [];
+		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 
@@ -191,6 +195,9 @@
 			//getSubsystemColor(subsystemId)
 			//getMultiNodeName(i,subi)
 			//getPrinterSyntaxStringWithWidth(s,w)
+		
+			//checkForActiveGroupChange(init)
+			//	localHandleChange(activeConfigGroups)
 				
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -246,7 +253,6 @@
 
 			}
 						
-			
 			//init configuration members
 			_modifiedTables = undefined; //reset
 			
@@ -276,7 +282,8 @@
 					false,//doNotShowLoadingOverlay,
 					true //targetSupervisor
 			); //end getAppId request
-			
+
+			checkForActiveGroupChange(true /*init*/); //get initial groups
 			
 			//////////////
 			ArtdaqConfigurationAPI.getArtdaqNodes(
@@ -439,7 +446,7 @@
 					//build arrow connections now
 					initArrows();
 					
-					localFinishInit();
+					localFinishInit();					
 					
 					
 						} //end loadArtdaqNodeLayout handler
@@ -4106,7 +4113,8 @@
 							")</b>";
 					str += htmlClearDiv();
 					str += "<br><table style='margin-bottom: 10px;'>";
-					if(_systemGroups.aliases[groupTypes[g]].length)
+					if(_systemGroups.aliases[groupTypes[g]] &&
+							_systemGroups.aliases[groupTypes[g]].length)
 					{
 						str += "<tr><td><b>System Aliases:</b></td><td>";
 						{ //start aliases
@@ -4244,8 +4252,9 @@
 					{
 						stepString = "chooseActiveGroups-" + 
 								groupTypes[g] + "-";
-						/////////////////////////////////
-						document.getElementById(stepString + "activateAlias").onclick = 
+						var actionEl = document.getElementById(stepString + "activateAlias");
+						if(actionEl) /////////////////////////////////
+							actionEl.onclick = 
 								function()
 								{
 							//since multiple, use id to identify
@@ -4286,8 +4295,9 @@
 									}); //end activate group handler
 								}; //end activate alias handler
 
-						/////////////////////////////////
-						document.getElementById(stepString + "groupNames").onchange = 
+						actionEl = document.getElementById(stepString + "groupNames");
+						if(actionEl) //////////////////////////////////////////////////////////////////
+							actionEl.onchange = 
 								function()
 								{
 							//since multiple, use id to identify
@@ -4312,8 +4322,9 @@
 									str;
 								}; //end group names dropdown handler
 
-						/////////////////////////////////
-						document.getElementById(stepString + "activateGroup").onclick = 
+						actionEl = document.getElementById(stepString + "activateGroup");
+						if(actionEl) //////////////////////////////////////////////////////////////////
+							actionEl.onclick = 
 								function()
 								{
 							//since multiple, use id to identify
@@ -4473,6 +4484,101 @@
 						Debug.HIGH_PRIORITY);
 			}
 		} //end addArrow()
+		
+
+		//=====================================================================================
+		//checkForActiveGroupChange ~~
+		function checkForActiveGroupChange(init)
+		{
+			Debug.log("checkForActiveGroupChange() " + init);
+			
+			//get active table groups
+			DesktopContent.XMLHttpRequest("Request?RequestType=getActiveTableGroups",
+					"", function (req) {
+				
+
+				if(_checkActiveGroupsOffset)
+					window.clearTimeout(_checkActiveGroupsOffset);
+				_checkActiveGroupsOffset = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+
+				var activeConfigGroups = [
+					DesktopContent.getXMLValue(req, "Context-ActiveGroupName"),
+					DesktopContent.getXMLValue(req, "Context-ActiveGroupKey"),
+					DesktopContent.getXMLValue(req, "Configuration-ActiveGroupName"),
+					DesktopContent.getXMLValue(req, "Configuration-ActiveGroupKey")];
+
+				console.log("activeConfigGroups",activeConfigGroups);
+				
+				//check for changes
+				if(init || _lastActiveGroups.length != activeConfigGroups.length)
+				{
+					if(!init && _lastActiveGroups.length) //treat as change
+					{
+						localHandleChange(activeConfigGroups);
+						return;
+					}
+					else //treat as initializing active groups
+						_lastActiveGroups = activeConfigGroups;					
+				}
+				
+				for(var i=0;i<_lastActiveGroups.length && activeConfigGroups.length;++i)
+				{
+					if(_lastActiveGroups[i] != activeConfigGroups[i])
+					{
+						localHandleChange(activeConfigGroups);
+						return;
+					}
+				}
+
+			},
+			0, 0, true,  //reqParam, progressHandler, callHandlerOnErr
+			true /*doNotShowLoadingOverlay*/
+			); //end of getActiveTableGroups handler
+			
+			return;
+			
+			//===========
+			function localHandleChange(activeConfigGroups)
+			{
+				if(_checkActiveGroupsOffset)
+				{
+					window.clearTimeout(_checkActiveGroupsOffset);
+					_checkActiveGroupsOffset = 0;
+				}
+				
+				DesktopContent.popUpVerification(
+						"A configuration change was detected! " +
+						"Do you want to reload the artdaq Configuration GUI (any modifications in this window will be lost!)?",
+						function() /*yes-to-reload handler*/
+						{
+							Debug.log("Reloading artdaq nodes...");
+		
+							if(_checkActiveGroupsOffset)
+								window.clearTimeout(_checkActiveGroupsOffset);
+							_checkActiveGroupsOffset = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+
+
+						} /*end yes-to-reload handler*/,
+						0,0,// val [optional], bgColor [optional], 
+						0,0,0, //			textColor [optional], borderColor [optional], getUserInput [optional], 
+						0, //			dialogWidth [optional], 
+						function() /*cancelFunc [optional]*/
+						{
+							Debug.log("Canceled...");
+
+							if(_checkActiveGroupsOffset)
+								window.clearTimeout(_checkActiveGroupsOffset);
+							_checkActiveGroupsOffset = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+
+						} //end cancelFunc handler
+				);
+
+				//save for next time
+				_lastActiveGroups = activeConfigGroups;
+
+			} //end localHandleChange()
+			
+		} //end checkForActiveGroupChange()
 		
 		</script>
 </head>

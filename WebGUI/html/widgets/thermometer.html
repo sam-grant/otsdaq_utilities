@@ -4,50 +4,66 @@
 		<title>Text</title>
 		<style type="text/css">			
 			body {
-				background-color: rgb(41,46,55);
-				margin: 0px !important;
+				font: 10px arial;
+				//background-color: rgb(41,46,55);
+				//margin: 0px !important;
 			}
-			a{
-				color: green;Quick Views
-				height: auto;
-		    	text-align: center;
+
+			.wrapper {
+			  display: grid;
+			  grid-template-columns: repeat(2, 1fr);
+			  //grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
+			  grid-gap: 10px;
+			  grid-auto-rows: minmax(100px, auto);
+			  //grid-auto-columns: 200px 200px;
 			}
+
 			div{
+				//display: flex;
+	    		//white-space: nowrap;
+    			//text-overflow: ellipsis;
+			    //display: block;
+    			//overflow: hidden
+    			//resize: both;
+				//overflow: auto;
 			}
+
 			table{
-				border-spacing:0px !important;
+				//table-layout: auto
+				//border-spacing: 0px !important;
 			}
-			}
+
 			tr {
-				margin: auto;
-				padding: auto;
+				//margin: auto;
+				//padding: auto;
 			}
 			#td{
-				writing-mode: vertical-lr;
-				transform: rotate(90deg);
-				text-align: left;
-				vertical-align: bottom;
-				font-size: 100%;
-				color: white;
-				height: 1px;
-				width: 1px;
+				//writing-mode: vertical-lr;
+				//transform: rotate(90deg);
+				//text-align: left;
+				//vertical-align: bottom;
+				//font-size: 100%;
+				//color: white;
+				//height: 1px;
+				//width: 1px;
 				//float: left;
-
 			}
 		</style>
 
-			<script src="https://d3js.org/d3.v5.min.js"></script>
-			<script type="text/javascript" src="libraries/thermometer.js"></script>
+		<script src="https://d3js.org/d3.v5.min.js"></script>
+		<script type="text/javascript" src="libraries/thermometer.js"></script>
 
 		<script>		
 
 			//functions:
-				//init()
+			//init()
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 			var rows = 1;
 			var columns = 1;
+			var thermometers = [];
+			var containers = [];
 
 			//init called once body has loaded
 			function init()
@@ -62,101 +78,37 @@
 				console.log("setupPVs() : " , settings);
 			}
 
-			function newWidget(widget, parameters) 
+			var counter;
+			function newWidget(widget, parameters)
 			{
-				var table = document.createElement('table');
-				table.id = "display-table";
-				table.style.height = "100%";//(parseInt(window.innerHeight) - 26) + "px";
-				table.style.width = "100%";//window.innerWidth + "px";
-
-				var counter = 0;
+				counter = 0;
 				for(var pv in widget.PVList)
 				{
 					counter++;
 				}
 
-				if(counter<1)
-					++counter;
+				var olddiv = document.getElementById("dispaly-div");
+				if (olddiv != null)
+					document.getElementById("display").removeChild(olddiv);
 
-				var rows = Math.round(Math.sqrt(counter)); 
-				var columns = Math.ceil(counter / rows);
+				var div = document.createElement('div');
+				div.className="wrapper";
+				div.id = "dispaly-div";
+				document.getElementById("display").appendChild(div);
 
-				var hght = (parseInt(window.innerHeight) - 16) / rows;//((parseInt(window.innerHeight) - 26) * 0.9) / rows;
-				var wdth = (parseInt(window.innerWidth) - 16) / columns;
-
-				for(var col = 1; col <= columns; col++)
-				{
-					var tr = document.createElement('tr');
-					tr.id = "tr" + col;
-					//tr.style.width = tr.parentElement.innerWidth / columns;
-					for(var cell = 1; cell <= rows; cell++)
-					{
-						var td = document.createElement('td');
-						td.id = "td" + col + "-" + cell;
-						var tr1 = document.createElement('tr');
-						tr1.id = "tr-1" + td.id;
-						var tr2 = document.createElement('tr');
-						tr2.id = "tr-2" + td.id;
-						td.appendChild(tr1);
-						td.appendChild(tr2);
-
-						//td.style.height = td.parentElement.innerHeight / rows;
-						//console.log(td.id);
-						tr.appendChild(td);
-					}
-					table.appendChild(tr);
-				}
-				var display = document.getElementById("display");
-				console.log(window.innerWidth + " : " + window.innerHeight);
-				console.log(wdth + " : " + hght);
-				display.innerHTML = "";
-				display.style.width = (parseInt(window.innerWidth) - 16)+ "px";;
-				display.style.height = (parseInt(window.innerHeight) - 16) + "px";//window.innerHeight;
-				display.appendChild(table);
-
-				//console.log("newWidget() called *************************************");
-				if(counter > 1){counter = 2;}
-				console.log("counter" + counter);
 				for(var pv in widget.PVList)
 				{
-					var first = Math.floor(counter/columns);
-					if(first < 1) {first = 1;}	
-
-					var pvDiv = document.createElement('div');
-					pvDiv.id = "td" + first + "-" + (counter%rows +1);
-					pvDiv.title = pv;
-					pvDiv.style.color = "white";
-					pvDiv.style.marginRight = "15px";
-
-					pvDiv.innerHTML = pv;
-					var pvCenter = document.createElement("center");
-					pvCenter.appendChild(pvDiv);
-					document.getElementById("tr-1td" + first + "-" + (counter%rows +1)).appendChild(pvCenter);
-
-					var a = document.createElement('div');
-					a.id = pv;
-					a.title = pv;
-					a.innerHTML = "N/A";
-					a.style.width = wdth + "px";
-					a.style.height = hght + "px";
-//					document.getElementById("display").appendChild(a);	
-//					a = document.getElementById(pv);
-//					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
-					//Create Span for pv name Container
-
-					var center = document.createElement("center");
-					center.appendChild(a);
-					console.log("td" + first + "-" + (counter%rows +1));
-					document.getElementById("tr-2td" + first + "-" + (counter%rows +1)).appendChild(center);
-
-					drawThermometer(pv, 50, 0, 100);
-					console.log(document.body);			
-
-					counter++;
-//					console.log(counter);
-//					console.log(columns);
-//					console.log(rows);
+					var divtemp = document.createElement('div');
+					divtemp.style.color = "white";
+					divtemp.style.fontSize = "2vw";
+					divtemp.innerHTML = pv;
+					//divtemp.style.width = "100%";
+					//divtemp.style.height = "100%";
+					div.appendChild(divtemp);
+					containers[pv] = divtemp;
+					drawThermometer(pv, divtemp, 50, 0, 100);
 				}
+				console.log(document.body);	
 			}
 
 			function getParameters()
@@ -175,18 +127,21 @@
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
-
 				console.log("Termometer newValue() reached", pvName, pvValue);
-				drawThermometer(pvName, pvValue, (pvValue * 0.5), (pvValue * 1.5));
-
+				//updateThermometer(pvName, containers[pvName], pvValue, (pvValue * 0.5), (pvValue * 1.5));
+				thermometers[pvName].setCurrentValue(pvValue);
+				thermometers[pvName].setMinValue((pvValue * 0.5));
+				thermometers[pvName].setMaxValue((pvValue * 1.5));			
 			}
 
-			function drawThermometer(container_id, val, min, max)
+			function drawThermometer(name, container, val, min, max)
 			{
 				var hght = (parseInt(window.innerHeight) - 16);//window.innerHeight / rows;
 				var wdth = (parseInt(window.innerWidth) - 16);//hght / 2;
 
-				var thermometer = new Thermometer();
+				if(hght < 100) hght = 100;
+				if(wdth < 100) wdth = 100;
+
 				var thermometer = new Thermometer({
 
 					// SVG width
@@ -209,9 +164,35 @@
 				    tubeWidth: 18.5
  
 				});
-				var container = document.getElementById(container_id);
-				container.innerHTML = "";
-				thermometer.render(container, val, min, max);
+
+				thermometers[name] = thermometer;
+				thermometers[name].render(container, val, min, max);
+				var svg = container.lastChild;
+				svg.setAttribute("preserveAspectRatio", "none");
+				//svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
+
+				if (counter == 1)
+				{
+					svg.setAttribute("viewBox", "0 0 100 300");
+					svg.style.width = "200%";
+					svg.style.height = "100%";					
+				}
+				else if (counter > 1)
+				{
+					svg.setAttribute("viewBox", "0 0 270 400");
+					svg.style.width = "150%";
+					svg.style.height = "100%";
+				}
+			}
+
+			function resizeWidget()
+			{
+				console.log("Thermometer() resize");
+			}
+
+			function updateThermometer(name, container, val, min, max)
+			{
+				thermometers[name].render(container, val, min, max);
 			}
 
 		</script>
