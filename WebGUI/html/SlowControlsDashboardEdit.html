@@ -387,7 +387,7 @@
 
 			//init called once body has loaded
 			function initEdit() {			
-				Debug.log("*****************************************init() was called");
+				Debug.log("*****************************************initEdit() was called");
 
 //				DesktopContent.XMLHttpRequest("Request?RequestType=getList","",handlerFunction);
 				tilesDiv = document.getElementById("tilesDiv");
@@ -630,9 +630,23 @@
 				}
 			}
 			
+			var lastTileNumber_;
 			function setupForDrawSelectionRectangle(tileNumber)
-			{
-				return function(){parent.setupForDrawSelectionRectangle(tileNumber)};
+			{			
+				return function(){
+					var el;
+					if(lastTileNumber_ !== undefined) //revert border
+					{
+						el = document.getElementById("tiles-" + lastTileNumber_ );
+						el.style.border = "thin solid rgba(0,0,0,0.1)";
+					}
+					
+					el = document.getElementById("tiles-" + tileNumber);
+					el.style.border = "2px dotted orange";
+					lastTileNumber_  = tileNumber;
+					
+					parent.setupForDrawSelectionRectangle(tileNumber);
+				};
 			}
 			
 			function searchWidgets(searchField)

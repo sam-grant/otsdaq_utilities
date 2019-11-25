@@ -18,8 +18,8 @@
 
 		<script>
 			//functions:			
-				//init()					
-	
+			//init()					
+
 			var gauges = [];
 			var guages_settings = [];
 
@@ -34,13 +34,13 @@
 				console.log("Dimensions: " + window.innerWidth + " : " + window.innerHeight);
 				window.parent.setupWidget(window.frameElement.id, getParameters());
 			}
-			
+
 			function setupPVs(settings)
 			{
 				console.log("Gauge setupPVs() : " , settings);
 				guages_settings = settings;
 			}
-			
+
 			function newWidget(widget, parameters) 
 			{		
 				var table = document.createElement('table');
@@ -56,12 +56,12 @@
 
 				var rows = Math.round(Math.sqrt(counter));
 				var columns = Math.ceil(counter / rows);
-				
+
 				for(var col = 1; col <= columns; col++)
 				{
 					var tr = document.createElement('tr');
 					tr.id = "tr" + col;
-					//tr.style.width = tr.parentElement.innerWidth / columns;
+
 					for(var cell = 1; cell <= rows; cell++)
 					{
 						var td = document.createElement('td');
@@ -72,8 +72,6 @@
 						tr2.id = "tr-2" + td.id;
 						td.appendChild(tr1);
 						td.appendChild(tr2);
-						//td.style.height = td.parentElement.innerHeight / rows;
-						//console.log(td.id);
 						tr.appendChild(td);
 					}
 					table.appendChild(tr);
@@ -81,56 +79,32 @@
 				document.getElementById("display").innerHTML = "";
 				document.getElementById("display").appendChild(table);
 
-				//console.log("newWidget() called *************************************");
 				if(counter > 1){counter = 2;}
 				var pv_number = 0;
 				console.log("counter" + counter);
 				for(var pv in widget.PVList)
 				{
-//					var a = document.createElement('a');
-//					a.id = pv;
-//					a.title = pv;
-//					a.innerHTML = "N/A";
-//					a.style.width = "100%";
-//					a.style.height = "100%";
-
-//					document.getElementById("display").appendChild(a);	
-//					a = document.getElementById(pv);
-//					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
-
 					var first = Math.floor(counter/columns);
 					if(first < 1) {first = 1;}	
 
 					//Create Span for pv name Container
 					var pvSpan = document.createElement('span');
-					pvSpan.id = "td" + first + "-" + (counter%rows +1) + "-GuageContainer-title";
+					pvSpan.id = "td" + first + "-" + (counter%rows + 1) + "-GuageContainer-title";
 					pvSpan.title = pv;
 					pvSpan.style.color = "white";
 					pvSpan.style.marginRight = "5px";
 
 					pvSpan.innerHTML = pv;
-					//var pvCenter = document.createElement("center");
-					//pvCenter.appendChild(pvSpan);
-					document.getElementById("tr-1td" + first + "-" + (counter%rows +1)).appendChild(pvSpan);
+					document.getElementById("tr-1td" + first + "-" + (counter%rows + 1)).appendChild(pvSpan);
 
 					//Create Span for Guage Container
 					var span = document.createElement('span');
-					span.id = "td" + first + "-" + (counter%rows +1) + "-GuageContainer";
+					span.id = "td" + first + "-" + (counter%rows + 1 ) + "-GuageContainer";
 					span.title = pv;
-
-					//Create Center for gouge
-					var center = document.createElement("center");
-					center.appendChild(span);
-					console.log(document.body);
-
-					console.log("td" + first + "-" + (counter%rows +1));
-					document.getElementById("tr-2td" + first + "-" + (counter%rows +1)).appendChild(center);
+					console.log("td" + first + "-" + (counter%rows + 1));
+					document.getElementById("tr-2td" + first + "-" + (counter%rows + 1)).appendChild(span);
 
 					var max_size = Math.min(window.innerHeight, window.innerWidth) / Math.max(rows, columns);
-
-//					var label = parameters["label_" + pv_number] == "" ? pv : parameters["label_" + pv_number];
-//					var min   = parameters["min_" + pv_number] == "" ? 0 : parameters["min_" + pv_number];
-//					var max   = parameters["max_" + pv_number] == "" ? 100 : parameters["max_" + pv_number];
 
 					console.log("Gauge pv: " + guages_settings[pv]);
 					console.log("Gauge Units: " + guages_settings[pv].Units);
@@ -148,9 +122,6 @@
 
 					counter++;
 					pv_number++;
-//					console.log(counter);
-//					console.log(columns);
-//					console.log(rows);
 				}
 			}
 
