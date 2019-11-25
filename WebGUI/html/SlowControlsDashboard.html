@@ -2521,16 +2521,28 @@
 				console.log("window.parent.onresize!");
 				for(widget in page_.widgets)
 				{
-					page_.widgets[widget].size_x = oldWidgetReferences_[widget].size_x *window.innerWidth*0.0020;
-				 	page_.widgets[widget].size_y  = oldWidgetReferences_[widget].size_y*window.innerHeight*0.0020;
+					var newSize_x = oldWidgetReferences_[widget].size_x * window.innerWidth * 0.0020;
+					var newSize_y = oldWidgetReferences_[widget].size_y * window.innerHeight * 0.0020;
+					var minSize_x = oldWidgetReferences_[widget].size_x > 100 ? 100: oldWidgetReferences_[widget].size_x;
+					var minSize_y = oldWidgetReferences_[widget].size_y > 100 ? 100: oldWidgetReferences_[widget].size_y;
+					var maxSize_x = 500;//oldWidgetReferences_[widget].size_x < 500 ? 500: oldWidgetReferences_[widget].size_x;
+					var maxSize_y = 400;//oldWidgetReferences_[widget].size_y < 400 ? 400: oldWidgetReferences_[widget].size_y;
+					page_.widgets[widget].size_x = (newSize_x < maxSize_x) ? (newSize_x > minSize_x ? newSize_x : minSize_x): maxSize_x;
+				 	page_.widgets[widget].size_y = (newSize_y < maxSize_y) ? (newSize_y > minSize_y ? newSize_y : minSize_y) : maxSize_y;
 
-					//page_.widgets[widget].x = window.innerWidth*oldWidgetReferences_[widget].x*0.0020;
-				 	//page_.widgets[widget].y  = window.innerHeight*oldWidgetReferences_[widget].y*0.0020;
+					var new_x = oldWidgetReferences_[widget].x * window.innerWidth * 0.0020;
+					var new_y = oldWidgetReferences_[widget].y * window.innerHeight * 0.0020;
+					var min_x = oldWidgetReferences_[widget].x - 30;
+					var min_y = oldWidgetReferences_[widget].y - 30;
+					var max_x = oldWidgetReferences_[widget].x + 30;
+					var max_y = oldWidgetReferences_[widget].y + 30;
+					page_.widgets[widget].x = (new_x < max_x) ? (new_x > min_x ? new_x : min_x): max_x;;
+				 	page_.widgets[widget].y = (new_y < max_y) ? (new_y > min_y ? new_y : min_y) : max_y;;
 
 					drawWidget(widget, false, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y);
-				 	page_.widgets[widget].el.style.display = "block";
-					//page_.widgets[widget].el.parentNode.style.zIndex = "5";
 				}
+
+				toggleWidgetSelection();
 				redrawWindow();
 			};
 
