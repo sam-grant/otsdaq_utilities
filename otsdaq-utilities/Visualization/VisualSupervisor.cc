@@ -846,9 +846,11 @@ void VisualSupervisor::request(const std::string&               requestType,
          boost::regex re("%2F") ;
          fRootPath = boost::regex_replace(fRootPath,re,"/") ;
          std::string fullPath = fSystemPath + fRootPath ;
-         STDLINE(string("Begin: fSystemPath = ")+fSystemPath,ACWhite) ;
-         STDLINE(string("Begin: fRootPath   = ")+fRootPath  ,ACWhite) ;
-         STDLINE(string("Begin: fullPath    = ")+fullPath   ,ACWhite) ;
+		//  fFoldersPath_ = "pippo" ;
+         STDLINE(string("Begin: fSystemPath  = ")+fSystemPath  ,ACWhite) ;
+         STDLINE(string("Begin: fRootPath    = ")+fRootPath    ,ACWhite) ;
+         STDLINE(string("Begin: fullPath     = ")+fullPath     ,ACWhite) ;
+        //  STDLINE(string("Begin: fFoldersPath = ")+fFoldersPath_,ACCyan ) ;
 
          xmlOut.setRootPath            (fRootPath                       ) ;
          xmlOut.makeDirectoryBinaryTree(fSystemPath, fRootPath , 0, NULL) ;
@@ -862,13 +864,16 @@ void VisualSupervisor::request(const std::string&               requestType,
 	     std::string fRootPath    = CgiDataUtilities::postData(cgiIn, "fRootPath"   );
 	     std::string fFoldersPath = CgiDataUtilities::postData(cgiIn, "fFoldersPath");
 	     std::string fHistName    = CgiDataUtilities::postData(cgiIn, "fHistName"   );
+	     std::string fFileName    = CgiDataUtilities::postData(cgiIn, "fFileName"   );
          boost::regex re("%2F") ;
-         fRootPath = boost::regex_replace(fRootPath,re,"/") ;
+         fRootPath    = boost::regex_replace(fRootPath   ,re,"/") ;
+         fFoldersPath = boost::regex_replace(fFoldersPath,re,"/") ;
 		 STDLINE(std::string("fSystemPath : ")+fSystemPath ,ACCyan);
 		 STDLINE(std::string("fRootPath   : ")+fRootPath   ,ACCyan);
 		 STDLINE(std::string("fFoldersPath: ")+fFoldersPath,ACCyan);
 		 STDLINE(std::string("fHistName   : ")+fHistName   ,ACCyan);
-         RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, fRootPath, fFoldersPath, fHistName, xmlOut) ;
+ 		 STDLINE(std::string("fFileName   : ")+fFileName   ,ACCyan);
+        RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, fRootPath, fFoldersPath, fHistName, fFileName, xmlOut) ;
          xmlOut.setDocument(theExplorer->initialize()) ;
          //std::ostringstream* out ;
 	     //xmlOut.outputXmlDocument((std::ostringstream*) out, true);
