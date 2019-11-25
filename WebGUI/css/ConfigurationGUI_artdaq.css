@@ -104,7 +104,6 @@
 		.node {
 			position:				absolute;
 			cursor:					pointer;
-			z-index:				1000; /*get above arrows*/
 		}
 		
 		.node-box {
@@ -119,6 +118,7 @@
 			
 			position:				absolute;
 			cursor:					pointer;
+			z-index:				1000; /*get above arrows*/					
 		}
 		
 		.node-box:hover {
@@ -178,6 +178,7 @@
 			
 			white-space:			nowrap;
 			overflow:				hidden;
+			
 		}
 		.node-headerTextHover {
 			z-index:				3000; /*get above arrows*/
@@ -289,6 +290,23 @@
 			margin:				3px 0 -1px 2px;
 		}    
 
+		.editNodeDialog-table {
+			margin-bottom: 		10px; 
+			width:				400px;
+		}
+		.editNodeDialog-fieldCol {
+			text-align:			right;
+			width:				180px;
+			white-space:		nowrap;
+		}
+		.editNodeDialog-valueCol {
+			text-align:			left;
+			width:				220px;
+		}
+		#ConfigurationAPI-popUpDialog a b {
+			color: 				rgb(138, 99, 99) !important;
+		}
+		
 		.grid-plusMinusArrows {
 			position:			absolute;
 			z-index:			1001;

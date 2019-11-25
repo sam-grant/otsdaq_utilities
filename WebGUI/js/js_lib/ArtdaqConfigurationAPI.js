@@ -256,7 +256,9 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 //	save artdaq nodes and subsystems to active groups (with modified tables)
 //		nodeObj := {}
 //			nodeObj.<nodeType> = {}
-//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName,(nodeArrString),(hostnameArrString),(hostnameFixedWidth)}
+//			nodeObj.<nodeType>.<nodeName> = 
+//				{originalName,hostname,subsystemName,
+//				(nodeArrString),(hostnameArrString),(nodeNameFixedWidth),(hostnameFixedWidth)}
 //
 // <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
 //
@@ -296,10 +298,12 @@ ArtdaqConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 			//now optional node parameters
 			if(nodesObject[i][j].nodeArrString)
 				nodeString += "," + encodeURIComponent(nodesObject[i][j].nodeArrString);
+			if(nodesObject[i][j].nodeNameFixedWidth)
+				nodeString += "," + encodeURIComponent("nnfw," + nodesObject[i][j].nodeNameFixedWidth);
 			if(nodesObject[i][j].hostnameArrString)
 				nodeString += "," + encodeURIComponent(nodesObject[i][j].hostnameArrString);
 			if(nodesObject[i][j].hostnameFixedWidth)
-				nodeString += "," + encodeURIComponent(nodesObject[i][j].hostnameFixedWidth);
+				nodeString += "," + encodeURIComponent("hnfw," + nodesObject[i][j].hostnameFixedWidth);
 			
 			nodeString += ";"; //end node
 		}
