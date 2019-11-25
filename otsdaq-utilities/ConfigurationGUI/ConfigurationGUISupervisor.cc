@@ -348,56 +348,6 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 				__SUP_COUT_ERR__ << "Unable to open command file: " << fn << __E__;
 		}
 	}
-	//	else if(requestType == "launchOTS")
-	//	{
-	//		__SUP_COUT_WARN__ << "launchOTS command received! Launching... " << __E__;
-	//
-	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//				"/StartOTS_action.cmd").c_str(),"w");
-	//		if(fp)
-	//		{
-	//			fprintf(fp,"LAUNCH_OTS");
-	//			fclose(fp);
-	//		}
-	//		else
-	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//					"/StartOTS_action.cmd") << __E__;
-	//	}
-	//	else if(requestType == "launchWiz")
-	//	{
-	//		__SUP_COUT_WARN__ << "launchWiz command received! Launching... " << __E__;
-	//
-	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//				"/StartOTS_action.cmd").c_str(),"w");
-	//		if(fp)
-	//		{
-	//			fprintf(fp,"LAUNCH_WIZ");
-	//			fclose(fp);
-	//		}
-	//		else
-	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//					"/StartOTS_action.cmd") << __E__;
-	//	}
-	//	else if(requestType == "flattenToSystemAliases")
-	//	{
-	//		__SUP_COUT_WARN__ << "flattenToSystemAliases command received! Launching... "
-	//<<
-	//__E__;
-	//
-	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//				"/StartOTS_action.cmd").c_str(),"w");
-	//		if(fp)
-	//		{
-	//			fprintf(fp,"FLATTEN_TO_SYSTEM_ALIASES");
-	//			fclose(fp);
-	//		}
-	//		else
-	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//					"/StartOTS_action.cmd") << __E__;
-	//	}
 	else if(requestType == "versionTracking")
 	{
 		std::string type = CgiDataUtilities::getData(cgiIn, "Type");  // from GET
@@ -1318,28 +1268,6 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 	// always add active table groups to xml response
 	ConfigurationSupervisorBase::getConfigurationStatusXML(xmlOut, cfgMgr);
-	//	std::map<std::string /*type*/, std::pair<std::string /*groupName*/,
-	// TableGroupKey>> 	    activeGroupMap = cfgMgr->getActiveTableGroups();
-	//
-	//	for(auto& type : activeGroupMap)
-	//	{
-	//		xmlOut.addTextElementToData(type.first + "-ActiveGroupName",
-	// type.second.first); 		xmlOut.addTextElementToData(type.first +
-	//"-ActiveGroupKey",
-	//		                            type.second.second.toString());
-	//		//__SUP_COUT__ << "ActiveGroup " << type.first << " " << type.second.first <<
-	//"("
-	//		//<< type.second.second << ")" << __E__;
-	//	}
-	//
-	//	// always add version tracking bool
-	//	xmlOut.addTextElementToData(
-	//	    "versionTracking",
-	//	    ConfigurationInterface::isVersionTrackingEnabled() ? "ON" : "OFF");
-	//
-	//	__SUP_COUT__ << __E__;
-	//	xmlOut.outputXmlDocument(0,true,true);
-	//	__SUP_COUT__ << __E__;
 
 }  // end ::request()
 catch(const std::runtime_error& e)
@@ -2420,8 +2348,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 			if(startNode.isLinkNode() && startNode.isDisconnected())
 			{
 				__SUP_SS__ << "Start path was a disconnected link node!" << __E__;
-				__SUP_COUT_ERR__ << "\n" << ss.str();
-				__SS_THROW__;
+				__SUP_SS_THROW__;
 				return;  // quietly ignore disconnected links at depth
 				         // note: at the root level they will be flagged for the user
 			}
@@ -2475,8 +2402,10 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 				}
 			}
 
+			//=== get common fields call!
 			retFieldList = startNode.getCommonFields(
 			    records, fieldAcceptList, fieldRejectList, depth);
+			//=== end get common fields call!
 		}
 
 		xercesc::DOMElement* parentTypeEl;
@@ -6189,112 +6118,225 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
     ConfigurationManagerRW* cfgMgr,
     const std::string&      modifiedTables)
 {
-	__COUT__ << "Getting artdaq nodes..." << __E__;
+	__COUT__ << "Retrieving artdaq nodes..." << __E__;
 
 	//	setup active tables based on active groups and modified tables
 	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
 
-	const XDAQContextTable* contextTable = cfgMgr->__GET_CONFIG__(XDAQContextTable);
 
-	// for each artdaq context, output all artdaq apps
+	std::map<std::string /*type*/,
+		std::map<std::string /*record*/, std::vector<std::string /*property*/>>>
+			nodeTypeToObjectMap;
+	std::map<std::string /*subsystemName*/, std::string /*destinationSubsystemName*/>
+		    subsystemObjectMap;
 
-	const XDAQContextTable::XDAQContext* artdaqContext =
-	    contextTable->getTheARTDAQSupervisorContext();
+	std::vector<std::string /*property*/> artdaqSupervisorInfo;
 
-	const std::string typeString = "artdaqSupervisor";
-	if(artdaqContext)
+	std::string artdaqSupervisorName;
+	const ARTDAQTableBase::ARTDAQInfo& info = ARTDAQTableBase::getARTDAQSystem(
+	    cfgMgr, nodeTypeToObjectMap, subsystemObjectMap, artdaqSupervisorInfo);
+
+	if(artdaqSupervisorInfo.size() != 3)
 	{
-		__SUP_COUTV__(artdaqContext->contextUID_);
-		__SUP_COUTV__(artdaqContext->applications_.size());
+		__SUP_COUT__ << "No artdaq supervisor found." << __E__;
+		return;
+	}
 
-		for(auto& artdaqApp : artdaqContext->applications_)
+	__SUP_COUT__ << "========== "
+			<< "Found " << info.subsystems.size() << " subsystems." << __E__;
+
+	auto parentEl =
+	    xmlOut.addTextElementToData("artdaqSupervisor", artdaqSupervisorInfo[0]);
+
+	std::string typeString = "artdaqSupervisor";
+	xmlOut.addTextElementToParent(
+			typeString + "-contextAddress", artdaqSupervisorInfo[1], parentEl);
+	xmlOut.addTextElementToParent(typeString + "-contextPort",
+			artdaqSupervisorInfo[2],
+			parentEl);
+	for(auto& subsystem : info.subsystems)
+	{
+		typeString = "subsystem";
+
+		__SUP_COUT__ << "\t\t"
+				<< "Found " << typeString << " " << subsystem.first
+				<< " \t := '" << subsystem.second.label << "'" << __E__;
+
+		xmlOut.addTextElementToParent(
+				typeString, subsystem.second.label, parentEl);
+		xmlOut.addTextElementToParent(
+				typeString + "-id", std::to_string(subsystem.first), parentEl);
+
+		xmlOut.addTextElementToParent(
+				typeString + "-sourcesCount",
+				std::to_string(subsystem.second.sources.size()),
+				parentEl);
+
+		// destination
+		xmlOut.addTextElementToParent(
+				typeString + "-destination",
+				std::to_string(subsystem.second.destination),
+				parentEl);
+
+	}  // end subsystem handling
+
+	__SUP_COUT__ << "========== "
+			<< "Found " << nodeTypeToObjectMap.size() << " process types."
+			<< __E__;
+
+	for(auto& nameTypePair : nodeTypeToObjectMap)
+	{
+		typeString = nameTypePair.first;
+
+		__SUP_COUT__ << "\t"
+				<< "Found " << nameTypePair.second.size() << " " << typeString
+				<< "(s)" << __E__;
+
+		for(auto& artdaqNode : nameTypePair.second)
 		{
-			if(artdaqApp.class_ != "ots::ARTDAQSupervisor")
-				continue;
+			__SUP_COUT__ << "\t\t"
+					<< "Found '" << artdaqNode.first << "' "
+					<< typeString << __E__;
+			__SUP_COUTV__(StringMacros::vectorToString(artdaqNode.second));
 
-			__SUP_COUTV__(artdaqApp.applicationUID_);
+			if(artdaqNode.second.size() < 2)
+			{
+				__SUP_SS__ << "Impossible parameter size for node '" << artdaqNode.first << "' "
+					<< typeString << " - please notify admins!" << __E__;
+				__SUP_SS_THROW__;
+			}
 
-			auto parentEl =
-			    xmlOut.addTextElementToData(typeString, artdaqApp.applicationUID_);
-
+			auto nodeEl = xmlOut.addTextElementToParent(
+					typeString, artdaqNode.first, parentEl);
+			if(artdaqNode.second.size() > 2)
+				xmlOut.addTextElementToParent(
+						typeString + "-multinode",
+						artdaqNode.second[2], nodeEl);
+			if(artdaqNode.second.size() > 3)
+				xmlOut.addTextElementToParent(
+						typeString + "-nodefixedwidth",
+						artdaqNode.second[3], nodeEl);
+			if(artdaqNode.second.size() > 4)
+				xmlOut.addTextElementToParent(
+						typeString + "-hostarray",
+						artdaqNode.second[4], nodeEl);
+			if(artdaqNode.second.size() > 5)
+				xmlOut.addTextElementToParent(
+						typeString + "-hostfixedwidth",
+						artdaqNode.second[5], nodeEl);
 			xmlOut.addTextElementToParent(
-			    typeString + "-contextAddress", artdaqContext->address_, parentEl);
-			xmlOut.addTextElementToParent(typeString + "-contextPort",
-			                              std::to_string(artdaqContext->port_),
-			                              parentEl);
+					typeString + "-hostname", artdaqNode.second[0], parentEl);
+			xmlOut.addTextElementToParent(
+					typeString + "-subsystem",
+					artdaqNode.second[1],
+					parentEl);
+		}
+	}  // end processor type handling
 
-			const ARTDAQTableBase::ARTDAQInfo& info = ARTDAQTableBase::extractARTDAQInfo(
-			    XDAQContextTable::getSupervisorConfigNode(
-			        cfgMgr, artdaqContext->contextUID_, artdaqApp.applicationUID_));
-
-			__SUP_COUT__ << "========== "
-			             << "Found " << info.subsystems.size() << " subsystems." << __E__;
-
-			for(auto& subsystem : info.subsystems)
-			{
-				const std::string subtypeString = "subsystem";
-
-				__SUP_COUT__ << "\t\t"
-				             << "Found " << subtypeString << " " << subsystem.first
-				             << " \t := '" << subsystem.second.label << "'" << __E__;
-
-				xmlOut.addTextElementToParent(
-				    subtypeString, subsystem.second.label, parentEl);
-				xmlOut.addTextElementToParent(
-				    subtypeString + "-id", std::to_string(subsystem.first), parentEl);
-
-				xmlOut.addTextElementToParent(
-				    subtypeString + "-sourcesCount",
-				    std::to_string(subsystem.second.sources.size()),
-				    parentEl);
-
-				// destination
-				xmlOut.addTextElementToParent(
-				    subtypeString + "-destination",
-				    std::to_string(subsystem.second.destination),
-				    parentEl);
-
-			}  // end subsystem handling
-
-			__SUP_COUT__ << "========== "
-			             << "Found " << info.processes.size() << " process types."
-			             << __E__;
-
-			for(auto& nameTypePair : ARTDAQTableBase::processTypes_.mapToType_)
-			{
-				const std::string& subtypeString = nameTypePair.first;
-
-				auto it = info.processes.find(nameTypePair.second);
-				if(it == info.processes.end())
-				{
-					__SUP_COUT__ << "\t"
-					             << "Found 0 " << subtypeString << __E__;
-					continue;
-				}
-				__SUP_COUT__ << "\t"
-				             << "Found " << it->second.size() << " " << subtypeString
-				             << "(s)" << __E__;
-
-				for(auto& artdaqProcess : it->second)
-				{
-					__SUP_COUT__ << "\t\t"
-					             << "Found '" << artdaqProcess.label << "' "
-					             << subtypeString << __E__;
-
-					xmlOut.addTextElementToParent(
-					    subtypeString, artdaqProcess.label, parentEl);
-					xmlOut.addTextElementToParent(
-					    subtypeString + "-hostname", artdaqProcess.hostname, parentEl);
-					xmlOut.addTextElementToParent(subtypeString + "-subsystem",
-					                              std::to_string(artdaqProcess.subsystem),
-					                              parentEl);
-				}
-			}  // end processor type handling
-
-		}  // end artdaq app loop
-	}      // end artdaq context handling
-
-	__SUP_COUT__ << "Done getting artdaq nodes." << __E__;
+	__SUP_COUT__ << "Done retrieving artdaq nodes." << __E__;
+	return;
+//
+//	const XDAQContextTable* contextTable = cfgMgr->__GET_CONFIG__(XDAQContextTable);
+//
+//	// for each artdaq context, output all artdaq apps
+//
+//	const XDAQContextTable::XDAQContext* artdaqContext =
+//	    contextTable->getTheARTDAQSupervisorContext();
+//
+//	const std::string typeString = "artdaqSupervisor";
+//	if(artdaqContext)
+//	{
+//		__SUP_COUTV__(artdaqContext->contextUID_);
+//		__SUP_COUTV__(artdaqContext->applications_.size());
+//
+//		for(auto& artdaqApp : artdaqContext->applications_)
+//		{
+//			if(artdaqApp.class_ != "ots::ARTDAQSupervisor")
+//				continue;
+//
+//			__SUP_COUTV__(artdaqApp.applicationUID_);
+//
+//			auto parentEl =
+//			    xmlOut.addTextElementToData(typeString, artdaqApp.applicationUID_);
+//
+//			xmlOut.addTextElementToParent(
+//			    typeString + "-contextAddress", artdaqContext->address_, parentEl);
+//			xmlOut.addTextElementToParent(typeString + "-contextPort",
+//			                              std::to_string(artdaqContext->port_),
+//			                              parentEl);
+//
+//			const ARTDAQTableBase::ARTDAQInfo& info = ARTDAQTableBase::extractARTDAQInfo(
+//			    XDAQContextTable::getSupervisorConfigNode(
+//			        cfgMgr, artdaqContext->contextUID_, artdaqApp.applicationUID_));
+//
+//			__SUP_COUT__ << "========== "
+//			             << "Found " << info.subsystems.size() << " subsystems." << __E__;
+//
+//			for(auto& subsystem : info.subsystems)
+//			{
+//				const std::string subtypeString = "subsystem";
+//
+//				__SUP_COUT__ << "\t\t"
+//				             << "Found " << subtypeString << " " << subsystem.first
+//				             << " \t := '" << subsystem.second.label << "'" << __E__;
+//
+//				xmlOut.addTextElementToParent(
+//				    subtypeString, subsystem.second.label, parentEl);
+//				xmlOut.addTextElementToParent(
+//				    subtypeString + "-id", std::to_string(subsystem.first), parentEl);
+//
+//				xmlOut.addTextElementToParent(
+//				    subtypeString + "-sourcesCount",
+//				    std::to_string(subsystem.second.sources.size()),
+//				    parentEl);
+//
+//				// destination
+//				xmlOut.addTextElementToParent(
+//				    subtypeString + "-destination",
+//				    std::to_string(subsystem.second.destination),
+//				    parentEl);
+//
+//			}  // end subsystem handling
+//
+//			__SUP_COUT__ << "========== "
+//			             << "Found " << info.processes.size() << " process types."
+//			             << __E__;
+//
+//			for(auto& nameTypePair : ARTDAQTableBase::processTypes_.mapToType_)
+//			{
+//				const std::string& subtypeString = nameTypePair.first;
+//
+//				auto it = info.processes.find(nameTypePair.second);
+//				if(it == info.processes.end())
+//				{
+//					__SUP_COUT__ << "\t"
+//					             << "Found 0 " << subtypeString << __E__;
+//					continue;
+//				}
+//				__SUP_COUT__ << "\t"
+//				             << "Found " << it->second.size() << " " << subtypeString
+//				             << "(s)" << __E__;
+//
+//				for(auto& artdaqProcess : it->second)
+//				{
+//					__SUP_COUT__ << "\t\t"
+//					             << "Found '" << artdaqProcess.label << "' "
+//					             << subtypeString << __E__;
+//
+//					xmlOut.addTextElementToParent(
+//					    subtypeString, artdaqProcess.label, parentEl);
+//					xmlOut.addTextElementToParent(
+//					    subtypeString + "-hostname", artdaqProcess.hostname, parentEl);
+//					xmlOut.addTextElementToParent(subtypeString + "-subsystem",
+//					                              std::to_string(artdaqProcess.subsystem),
+//					                              parentEl);
+//				}
+//			}  // end process type handling
+//
+//		}  // end artdaq app loop
+//	}      // end artdaq context handling
+//
+//	__SUP_COUT__ << "Done getting artdaq nodes." << __E__;
 
 }  // end handleGetArtdaqNodeRecordsXML()
 

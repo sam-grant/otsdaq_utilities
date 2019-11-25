@@ -732,21 +732,36 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 					{
 						Debug.log("In wiz mode, attempting to fix access code on the fly...");
 						
-						DesktopContent._sequence = prompt(errStr + " Please enter a valid access code: ");
-						DesktopContent._sequence = DesktopContent._sequence.trim();
-
-						Debug.log("Resulting sequence code: " + DesktopContent._sequence);
+						DesktopContent.popUpVerification(
+							/*prompt*/ errStr + "<br><br>Please enter a valid access code: ", 
+							/*func*/
+							function(newSequence) 
+							{
+								DesktopContent._sequence = newSequence.trim();
+								Debug.log("Resulting sequence code: " + DesktopContent._sequence);
+								
+								if(DesktopContent._sequence)
+								{							
+									Debug.log("Retrying request with new access code...");
+									DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, 
+										reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
+										targetSupervisor, ignoreSystemBlock);
+									return;
+								}
+								
+								DesktopContent._sequence = "a"; //set so retry is possible 
+								
+							}, /*val*/ undefined, 
+							/*bgColor*/ undefined,
+								/*textColor*/ undefined,
+								/*borderColor*/ undefined,
+								/*getUserInput*/ true,
+								/*dialogWidth*/ undefined,
+								/*cancelFunc*/ undefined,
+								/*yesButtonText*/ "Retry",
+								/*noAutoComplete*/ true);
 						
-						if(DesktopContent._sequence)
-						{							
-							Debug.log("Retrying request with new access code...");
-							DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, 
-								reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
-								targetSupervisor, ignoreSystemBlock);
-							return;
-						}
-						
-						DesktopContent._sequence = "a"; //set so retry is possible 
+						return;						
 					}
 					//return;
 				}
@@ -1037,6 +1052,17 @@ DesktopContent.getXMLDataNode = function(req, name) {
 }
 
 //=====================================================================================
+//tooltipConditionString ~~
+//	use to modify tooltip string with special keywords like INDENT and TAB
+DesktopContent.tooltipConditionString = function(str) {
+	return str.replace(/<INDENT>/g,
+			"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
+					"</div>").replace(/<TAB>/g,
+							"<div style='margin-left:60px;'>").replace(/<\/TAB>/g,
+									"</div>");
+} //end tooltipConditionString()
+
+//=====================================================================================
 //tooltip ~~
 //	use uid to determine if tip should still be displayed
 //		- ask server about user/file/function/id combo
@@ -1044,13 +1070,7 @@ DesktopContent.getXMLDataNode = function(req, name) {
 //			then show 
 //			add checkbox to never show again
 // id of "ALWAYS".. disables never show handling (no checkboxes)
-
-DesktopContent.tooltipConditionString = function(str) {
-	return str.replace(/<INDENT>/g,
-			"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
-					"</div>");
-}
-
+//
 DesktopContent.tooltip = function(id,tip) {
 
 	if(typeof Desktop !== 'undefined') //This call is from Desktop page.. so can use it
@@ -1291,7 +1311,7 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,neverShow,temp
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
 DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, 
-		dialogWidth, cancelFunc, yesButtonText) {		
+		dialogWidth, cancelFunc, yesButtonText, noAutoComplete) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1335,6 +1355,10 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			"{" +
 			"color: " + textColor + ";" +
 			"}\n\n";
+	css += "#" + DesktopContent._verifyPopUpId + " input" +
+			"{" +
+			"cursor: pointer;" +
+			"}\n\n";
 
 	//add style element to HEAD tag
 	var style = document.createElement('style');
@@ -1352,13 +1376,17 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 
 	var el = document.createElement("div");
 	el.setAttribute("id", DesktopContent._verifyPopUpId);
+	el.onmouseup = function(e) {e.stopPropagation();};
+	el.onmousedown = function(e) {e.stopPropagation();};
+	el.onmouseover = function(e) {e.stopPropagation();};
 	
 	var userInputStr = "";
 	if(getUserInput)
 		userInputStr +=
-				"<input type='text' id='DesktopContent_popUpUserInput' " + 
-				"onclick='event.stopPropagation(); '" +
-				">"; 
+				"<input type='text' id='DesktopContent_popUpUserInput' " +
+				"onclick='event.stopPropagation();'" +
+				(noAutoComplete?"autocomplete='off' ":"") + 
+				">";
 							
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
 			prompt + "<br>" + userInputStr + "</div>" +
