@@ -49,16 +49,16 @@ class VisualSupervisor : public CoreSupervisorBase
 	// xgi::Output* out) override;  void 					safariDefaultPage (xgi::Input*
 	// in, xgi::Output* out) ;
 
-	virtual void request(const std::string&               requestType,
-	                     cgicc::Cgicc&                    cgiIn,
-	                     HttpXmlDocument&                 xmlOut,
-	                     const WebUsers::RequestUserInfo& userInfo) override;
+	virtual void request                      (const std::string               & requestType          ,
+	                                                 cgicc::Cgicc              & cgiIn                ,
+	                                                 HttpXmlDocument           & xmlOut               ,
+	                                           const WebUsers::RequestUserInfo & userInfo   ) override ;
 
-	virtual void setSupervisorPropertyDefaults(void) override;
-	virtual void forceSupervisorPropertyValues(void) override;  // override to force
-	                                                            // supervisor property
-	                                                            // values (and ignore user
-	                                                            // settings)
+	virtual void setSupervisorPropertyDefaults(void                                         ) override ;
+	virtual void forceSupervisorPropertyValues(void                                         ) override ;  // override to force
+	                                                                                                     // supervisor property
+	                                                                                                     // values (and ignore user
+	                                                                                                     // settings)
 
 	// RAR commented out below.. better/safer handling (of errors) done by
 	// CoreSupervisorBase
