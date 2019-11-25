@@ -1335,6 +1335,8 @@
 					Debug.log("Unrecognized direction index - should be impossible!",
 							Debug.HIGH_PRIORITY);
 				}
+
+				nodeLayoutHasChanged();
 				
 				//re-paint adjustments
 				paint(); 
@@ -1371,6 +1373,8 @@
 				Debug.log("Unrecognized direction index - should be impossible!",
 						Debug.HIGH_PRIORITY);
 			}
+
+			nodeLayoutHasChanged();
 			
 			//re-paint adjustments
 			paint(); 
@@ -1464,7 +1468,7 @@
 			//add to _grid.rowColMap
 			if(_grid.rowColMap[x] == undefined) 
 				_grid.rowColMap[x] = {};
-			_grid.rowColMap[x][y] = i; //fill x,y position
+			_grid.rowColMap[x][y] = i | 0; //fill x,y position
 			
 			var nodeid = "node-" + i;
 						
@@ -1790,10 +1794,25 @@
     				break;    
     			case _MMM_NODE_DRAG:
     				//console.log("node drag x,y",x,y);
-    				drawNode(
+    				
+    				//if node is in selection nodes, then move all of them
+    				//else just move node
+    				
+    				if(_selectedNodes && 
+    						_selectedNodes[_mouseMoveStart[2]] !== undefined)
+    				{
+    					for(var i in _selectedNodes)
+        					drawNode(
+        						i,
+        						x - _mouseMoveStart[0],
+    							y - _mouseMoveStart[1]);
+    				}
+    				else //not in selection
+    					drawNode(
     						_mouseMoveStart[2],
     						x - _mouseMoveStart[0],
-							y - _mouseMoveStart[1]);							
+							y - _mouseMoveStart[1]);
+    				
     				return;
     			case _MMM_SELECT_BOX:
     				//console.log("select box",x,y);
@@ -1950,18 +1969,80 @@
     				if(yg < 0) yg = -1; //clip to -1 for +/- icons			
     				else yg |= 0;
     				
+    				//copy grid map, so we can invalidate all positions in current group
+    				var gridMapCopy = {};
+    				for(var i in _grid.rowColMap)
+    				{
+    					gridMapCopy[i] = {};
+
+    					for(var j in _grid.rowColMap[i])
+    						gridMapCopy[i][j] = 1;
+    				}
+    				//invalidate/delete selected nodes, so the move can go into those spots
+    				if(_selectedNodes)
+    					for(var i in _selectedNodes)
+    						delete gridMapCopy[_nodes[i].x][_nodes[i].y];
+
     				if(xg >= 0 && yg >= 0 && 
     						xg < _grid.cols && 
 							yg < _grid.rows &&
 							(
-								_grid.rowColMap[xg] === undefined ||
-								_grid.rowColMap[xg][yg] === undefined
+								gridMapCopy[xg] === undefined ||
+								gridMapCopy[xg][yg] === undefined
 							))
     				{
     					Debug.log("Node drag to new open spot " + 
     							xg + "," + yg);
-    					_nodes[_mouseMoveStart[2]].x = xg;
-    					_nodes[_mouseMoveStart[2]].y = yg;
+    					
+    					if(_selectedNodes && 
+    							_selectedNodes[_mouseMoveStart[2]] !== undefined)
+    					{
+    						Debug.log("Checking group drag...");
+    						
+    						var gridStepX = xg - _nodes[_mouseMoveStart[2]].x;
+    						var gridStepY = yg - _nodes[_mouseMoveStart[2]].y;
+    						
+    						var allSpotsOpen = true;
+        					for(var i in _selectedNodes)
+        					{
+        						if(!(_nodes[i].x+gridStepX >= 0 && 
+        								_nodes[i].y+gridStepY >= 0 && 
+										_nodes[i].x+gridStepX < _grid.cols && 
+										_nodes[i].y+gridStepY < _grid.rows &&
+										(
+									gridMapCopy[_nodes[i].x+gridStepX] === undefined ||
+									gridMapCopy[_nodes[i].x+gridStepX][_nodes[i].y+gridStepY] === undefined
+        						)))
+        						{
+        							console.log("done node group drag NO VALID END i,x,y",
+        									i,
+											_nodes[i].x+gridStepX,_nodes[i].y+gridStepY);
+        							            					
+        							allSpotsOpen = false;
+        							break;
+        						}
+        					}
+        					
+        					if(!allSpotsOpen)
+        					{
+            					console.log("done node group drag NO GROUP VALID END x,y",
+            							xg,yg);
+            					paint();
+            					break;
+        					}
+
+        					//success, so apply changes
+        					for(var i in _selectedNodes)
+        					{
+    							_nodes[i].x += gridStepX;
+    							_nodes[i].y += gridStepY;
+        					}
+    					}
+    					else
+    					{    					
+							_nodes[_mouseMoveStart[2]].x = xg;
+							_nodes[_mouseMoveStart[2]].y = yg;
+    					}
     					
     					nodeLayoutHasChanged();
     				}
@@ -2542,6 +2623,28 @@
 				editTypes.push("ART Physics Other Parameters");		
 				editTypes.push("Add-on Parameters");				
 			}
+			else if(type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER)
+			{
+				editTypes.push("Preamble Parameters");
+				editTypes.push("DAQ Parameters");
+				editTypes.push("DAQ Metrics");	
+				editTypes.push("ART Physics Analyzers");
+				editTypes.push("ART Physics Producers");
+				editTypes.push("ART Physics Filters");	
+				editTypes.push("ART Physics Other Parameters");		
+				editTypes.push("Add-on Parameters");				
+			}
+			else if(type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER)
+			{
+				editTypes.push("Preamble Parameters");
+				editTypes.push("DAQ Parameters");
+				editTypes.push("DAQ Metrics");	
+				editTypes.push("ART Physics Analyzers");
+				editTypes.push("ART Physics Producers");
+				editTypes.push("ART Physics Filters");	
+				editTypes.push("ART Physics Other Parameters");		
+				editTypes.push("Add-on Parameters");				
+			}
 			
 			
 			var menuItems = [];
@@ -2613,25 +2716,8 @@
 			if(!x) x = event.pageX - 10;
 			var y = event.pageY - 10; //always follow mouse -- otherwise menu may become impossible to navigate
 			
+			if(editType>5) y -= 50;
 			
-//			switch(editType)
-//			{
-//			case 0: //top-level parameters
-//				subsetName = "Top-level Parameters";
-//				break;
-//			case 1:
-//				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
-//					subsetName = "DAQ Parameters";
-//				break;
-//			case 2:
-//				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
-//					subsetName = "DAQ Metrics";
-//				break;
-//			default:
-//				Debug.log("Unknown impossible (notify admins) editType = " + editType, Debug.HIGH_PRIORITY);
-//				return;
-//			}
-
 			var nodeName = _nodes[i].name;
 			if(subi !== undefined) //dealing with a particular multi-node node
 				nodeName = getMultiNodeName(i,subi);
@@ -2677,10 +2763,9 @@
 			
 			var newWindowStr;
 			
-			switch(editType)
-			{
-			case 0: //top-level parameters
-
+			if(editType == 0)
+			{	
+				//top-level parameters
 				
 				newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
 					DesktopContent._localUrnLid +
@@ -2693,65 +2778,87 @@
 				newWindowStr += "&selectedRecords=" + nodeName;
 				
 				localLaunchWindow();
+			}
+			else
+			{
+				var doMap = {};
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER] = [];
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER].push({
+					"table" : 		"ARTDAQDaqParameterTable",
+					"groupLink"	: 	"daqParametersLink"
+				}); //Reader DAQ parameters
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER].push({
+					"table" : 		"ARTDAQMetricTable",
+					"groupLink"	: 	"daqMetricsLink"
+				}); //Reader DAQ metrics
 				
-				break;
-
-			case 1: 
-
-				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+				//--------------------
+				var equivalentTypes = [ArtdaqConfigurationAPI.NODE_TYPE_BUILDER,
+									   ArtdaqConfigurationAPI.NODE_TYPE_LOGGER,
+									   ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER];
+				for(var t=0;t<equivalentTypes.length;++t)
 				{
-					//Reader DAQ parameters
-					Debug.log("Reader DAQ parameters");
-					
+					doMap[equivalentTypes[t]] = [];
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQDaqParameterTable",
+						"groupLink"	: 	"preambleParametersLink"
+					}); //Preamble Parameters
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQDaqParameterTable",
+						"groupLink"	: 	"daqLink/daqParametersLink"
+					}); //DAQ Parameters
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQMetricTable",
+						"groupLink"	: 	"daqLink/daqMetricsLink"
+					}); //DAQ Metrics
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQPhysicsAnalyzerTable",
+						"groupLink"	: 	"artLink/physicsLink/analyzersLink"
+					}); //ART Physics Analyzers
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQPhysicsProducerTable",
+						"groupLink"	: 	"artLink/physicsLink/producersLink"
+					}); //ART Physics Producers
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQPhysicsFilterTable",
+						"groupLink"	: 	"artLink/physicsLink/filtersLink"
+					}); //ART Physics Filters
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQPhysicsParameterTable",
+						"groupLink"	: 	"physicsOtherParametersLink"
+					}); //ART Physics Other Parameters
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQDaqParameterTable",
+						"groupLink"	: 	"addOnParametersLink"
+					}); //Add-on Parameters
+				}
 
+				try
+				{
+					--editType; //because first one is always 'Top-level Parameters'
+					console.log("type",type,"editType",editType,
+							"table",doMap[type][editType].table,
+							"groupLink",doMap[type][editType].groupLink);
 					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
-						DesktopContent._localUrnLid +
-						"&subsetBasePath=" + "ARTDAQDaqParameterTable" +
-						"&groupingFieldList=AUTO" +
-						"&recordAlias=" + encodeURIComponent(typeName + " " + 
-								subsetName) +
-						"&editableFieldList=" + "!*CommentDescription";
-										
-					localGetLinkId("daqParametersLink",
+							DesktopContent._localUrnLid +
+							"&subsetBasePath=" + 
+							doMap[type][editType].table +
+							"&groupingFieldList=AUTO" +
+							"&recordAlias=" + encodeURIComponent(typeName + " " + 
+									subsetName) +
+									"&editableFieldList=" + "!*CommentDescription";
+
+					//TODO -- GET OR MAKE LINK ID
+					localGetLinkId(doMap[type][editType].groupLink,
 							function(childLinkIndex, linkId)
 							{
 						Debug.log("daqParametersLink childLinkIndex = '" +
 								childLinkIndex + "' linkId = '" + 
 								linkId + "'");
-
-						//for group link, pre-select GroupID value							
-						newWindowStr += "&selectedGroupIDs=" +
-								encodeURIComponent(
-										childLinkIndex + "=" +
-										linkId);
-
-						localLaunchWindow();
 						
-							}); //end localGetLinkId handler
-				}
-
-				break;
-			case 2: 
-
-				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
-				{
-					//Reader DAQ Metrics
-					Debug.log("Reader DAQ Metrics");
-					
-					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
-							DesktopContent._localUrnLid +
-							"&subsetBasePath=" + "ARTDAQMetricTable" +
-							"&groupingFieldList=AUTO" +
-							"&recordAlias=" + encodeURIComponent(typeName + 
-									" " + subsetName) +
-							"&editableFieldList=" + "!*CommentDescription";
-
-					localGetLinkId("daqMetricsLink",
-							function(childLinkIndex, linkId)
-							{
-						Debug.log("daqMetricsLink childLinkIndex = '" +
-								childLinkIndex + "' linkId = '" + 
-								linkId + "'");
+						var childLinkIndexArr = childLinkIndex.split(' ');
+						if(childLinkIndexArr.length > 1) //if there are multiple indices, choose second one as destination child index
+							childLinkIndex = childLinkIndexArr[1];
 
 						//for group link, pre-select GroupID value							
 						newWindowStr += "&selectedGroupIDs=" +
@@ -2761,13 +2868,19 @@
 
 						localLaunchWindow();
 
-							}); //end localGetLinkId handler
+							}); //end localGetLinkId handle
 				}
-				break;
-			default:
-				Debug.log("Unknown impossible (notify admins) editType = " +
-						editType, Debug.HIGH_PRIORITY);
+				catch(e)
+				{
+					Debug.log("Unknown impossible error (notify admins) editType = " +
+							editType + ": " + e, Debug.HIGH_PRIORITY);
+				}
 			}
+//			else
+//			{
+//				Debug.log("Unknown impossible (notify admins) editType = " +
+//						editType, Debug.HIGH_PRIORITY);
+//			}
 
 			return;
 			
@@ -2800,15 +2913,16 @@
 						typeBaseTable,
 						_nodes[i].name,
 						fieldPath,
-						1,
+						5,
 						function(fieldRetObj)
 						{
 					console.log("localGetLinkId getFieldsOfRecords",fieldRetObj);
 
-					if(fieldRetObj[0].fieldColumnType.indexOf("ChildLink-") != 0 ||
+					if(!fieldRetObj || !fieldRetObj.length ||
+							fieldRetObj[0].fieldColumnType.indexOf("ChildLink-") != 0 ||
 							fieldRetObj.length != 2)
 					{
-						Debug.log("Invalid link to get '" + fieldPath +
+						Debug.log("Invalid " + typeName + " link to get '" + fieldPath +
 								"' - notify admins! (returned field objects = " +
 								fieldRetObj.length + ")", Debug.HIGH_PRIORITY);
 						return;
