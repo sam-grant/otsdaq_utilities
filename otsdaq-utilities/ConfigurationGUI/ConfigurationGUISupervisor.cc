@@ -2420,8 +2420,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 			if(startNode.isLinkNode() && startNode.isDisconnected())
 			{
 				__SUP_SS__ << "Start path was a disconnected link node!" << __E__;
-				__SUP_COUT_ERR__ << "\n" << ss.str();
-				__SS_THROW__;
+				__SUP_SS_THROW__;
 				return;  // quietly ignore disconnected links at depth
 				         // note: at the root level they will be flagged for the user
 			}
@@ -2475,8 +2474,10 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 				}
 			}
 
+			//=== get common fields call!
 			retFieldList = startNode.getCommonFields(
 			    records, fieldAcceptList, fieldRejectList, depth);
+			//=== end get common fields call!
 		}
 
 		xercesc::DOMElement* parentTypeEl;

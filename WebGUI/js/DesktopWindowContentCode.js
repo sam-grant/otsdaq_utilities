@@ -1052,6 +1052,17 @@ DesktopContent.getXMLDataNode = function(req, name) {
 }
 
 //=====================================================================================
+//tooltipConditionString ~~
+//	use to modify tooltip string with special keywords like INDENT and TAB
+DesktopContent.tooltipConditionString = function(str) {
+	return str.replace(/<INDENT>/g,
+			"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
+					"</div>").replace(/<TAB>/g,
+							"<div style='margin-left:60px;'>").replace(/<\/TAB>/g,
+									"</div>");
+} //end tooltipConditionString()
+
+//=====================================================================================
 //tooltip ~~
 //	use uid to determine if tip should still be displayed
 //		- ask server about user/file/function/id combo
@@ -1059,13 +1070,7 @@ DesktopContent.getXMLDataNode = function(req, name) {
 //			then show 
 //			add checkbox to never show again
 // id of "ALWAYS".. disables never show handling (no checkboxes)
-
-DesktopContent.tooltipConditionString = function(str) {
-	return str.replace(/<INDENT>/g,
-			"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
-					"</div>");
-}
-
+//
 DesktopContent.tooltip = function(id,tip) {
 
 	if(typeof Desktop !== 'undefined') //This call is from Desktop page.. so can use it
