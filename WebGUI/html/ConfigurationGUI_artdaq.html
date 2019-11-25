@@ -68,7 +68,12 @@
 				"x0": 	0, 	"y0": 	0, 
 				"xstep":0, 	"ystep":0}; 
 		var _nodes = []; 	// array of node objects (can be multi-node vector at location, using nodeCount and nodeVectorIndexArr
-							//	node: 	{type, name, hostname, subsystemId, originalName, xGrid, yGrid, nodeCount, nodeVectorIndexArr, nodeVectorIndexReverseMap, nodeVectorIndexString, hostnameVectorIndexArr, hostnameVectorIndexReverseMap, hostnameVectorIndexString, hostnameFixedWidth}
+							//	node: 	{type, name, hostname, subsystemId, 
+							//		originalName, xGrid, yGrid, nodeCount, 
+							//		nodeVectorIndexArr, nodeVectorIndexReverseMap, 
+							//		nodeVectorIndexString, nodeNameFixedWidth,
+							//		hostnameVectorIndexArr, hostnameVectorIndexReverseMap, 
+							//		hostnameVectorIndexString, hostnameFixedWidth}
 		var _arrows = {}; 	//multi-dim map of arrow objects 
 							//	arrow:	[i0][i1] = {p0,p1} (start and end i,p - where i := node index, p := 1 of 4 positions starting from top going clock-wise)
 		
@@ -99,6 +104,10 @@
 		var _codeEditorAppId = 0; //to open fcl in code editor
 		var _layoutHasChanged = false;
 		var _nodesHaveChanged = false;
+		
+		var _checkActiveGroupsOffset = 0;
+		var _CHECK_ACTIVE_GROUPS_PERIOD = 5000; //ms
+		var _lastActiveGroups = [];
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -136,6 +145,8 @@
 			//htmlOpen()
 			//htmlClearDiv()
 			//init()	
+			//	localFinishInit()
+			//handleOptionalNodeParameters(node,nodeNameTemplate,nodeVectorIndexString,nodeNameFixedWidth,hostname,hostnameVectorIndexString,hostnameFixedWidth)
 			//initArrows()
 			//save()
 			//saveLayout(completionHandler)
@@ -167,20 +178,26 @@
 			//		localHandleCleanup()
 			//handlePointMouseDown(i,p,e)
 		
-			//handleEditIconMouseUp(i,e)
-			//handleEditIconMenuSelection(i)
+			//handleEditIconMouseUp(i,e,x,y,subi)
+			//handleEditIconMenuSelection(i,editType, newTab, x, y, editTypeString, subi)
 			//launchEditNodeDialog(i)
 			//		localCloseButtonHandler()
 			//		getElementById("ediNode-" + "saveNode").onclick()
 			//handleEditNodeDialogMultiNodeCheckbox(i)
 			//handleEditNodeDialogHostnameArrayCheckbox(i)
 			//handleEditNodeDialogHostnameFixedWidthCheckbox(i)
+			//handleEditNodeDialogNodeNameFixedWidthCheckbox(i)
 			//handleEditNodeSelectEditIcon(t)
 		
-			//handleFclIconMouseUp(i,e)
+			//handleFclIconMouseUp(i,e,x,y,subi)
 			//handleDeleteIconMouseUp(i,e)
 		
 			//getSubsystemColor(subsystemId)
+			//getMultiNodeName(i,subi)
+			//getPrinterSyntaxStringWithWidth(s,w)
+		
+			//checkForActiveGroupChange(init)
+			//	localHandleChange(activeConfigGroups)
 				
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -236,7 +253,6 @@
 
 			}
 						
-			
 			//init configuration members
 			_modifiedTables = undefined; //reset
 			
@@ -266,7 +282,8 @@
 					false,//doNotShowLoadingOverlay,
 					true //targetSupervisor
 			); //end getAppId request
-			
+
+			checkForActiveGroupChange(true /*init*/); //get initial groups
 			
 			//////////////
 			ArtdaqConfigurationAPI.getArtdaqNodes(
@@ -333,7 +350,27 @@
 								"subsystemId":	artdaqObj[type][name].subsystemId,
 								"x":			layoutNodesX[i].getAttribute('value')|0,
 								"y":			layoutNodesY[i].getAttribute('value')|0});
+
+							//add optional parameters
+							handleOptionalNodeParameters(
+									_nodes[_nodes.length-1],
+									_nodes[_nodes.length-1].name,
+									artdaqObj[type][name].multiNodeString,
+									artdaqObj[type][name].nodeFixedWidth,
+									_nodes[_nodes.length-1].hostname,
+									artdaqObj[type][name].hostArrayString,
+									artdaqObj[type][name].hostFixedWidth);
 							
+							//modify original node name to give full multi-node description
+							if(_nodes[_nodes.length-1].nodeCount > 1)
+							{
+								_nodes[_nodes.length-1].originalName = 
+										":" + (_nodes[_nodes.length-1].nodeNameFixedWidth?
+												_nodes[_nodes.length-1].nodeNameFixedWidth:1) +
+										":" + _nodes[_nodes.length-1].nodeVectorIndexString + ":" +
+										_nodes[_nodes.length-1].name;
+							}
+								
 							//remove from nodes object to keep remainder accurate 
 							delete artdaqObj[type][name];
 							
@@ -375,6 +412,27 @@
 								"subsystemId":	artdaqObj[t][n].subsystemId,
 								"x":			xy[0],
 								"y":			xy[1]});
+							
+							//add optional parameters
+							handleOptionalNodeParameters(
+									_nodes[_nodes.length-1],
+									_nodes[_nodes.length-1].name,
+									artdaqObj[t][n].multiNodeString,
+									artdaqObj[t][n].nodeFixedWidth,
+									_nodes[_nodes.length-1].hostname,
+									artdaqObj[t][n].hostArrayString,
+									artdaqObj[t][n].hostFixedWidth);
+							
+
+							//modify original node name to give full multi-node description
+							if(_nodes[_nodes.length-1].nodeCount > 1)
+							{
+								_nodes[_nodes.length-1].originalName = 
+										":" + (_nodes[_nodes.length-1].nodeNameFixedWidth?
+												_nodes[_nodes.length-1].nodeNameFixedWidth:1) +
+										":" + _nodes[_nodes.length-1].nodeVectorIndexString + ":" +
+										_nodes[_nodes.length-1].name;
+							}
 						}
 					}
 					
@@ -388,7 +446,9 @@
 					//build arrow connections now
 					initArrows();
 					
-					localFinishInit();
+					localFinishInit();					
+					
+					
 						} //end loadArtdaqNodeLayout handler
 				); //end loadArtdaqNodeLayout call
 				
@@ -439,6 +499,219 @@
 		} //end init()	
 
 		//=====================================================================================
+		//handleOptionalNodeParameters ~~
+		//	return false on failure/error, true on success
+		//	On success, the node object is modified!
+		function handleOptionalNodeParameters(node,
+				nodeNameTemplate,
+				nodeVectorIndexString,nodeNameFixedWidth,
+				hostname,
+				hostnameVectorIndexString,hostnameFixedWidth)
+		{
+			var nodeCount = 0;
+			if(nodeVectorIndexString !== undefined)
+			{
+				var nodeVectorIndexArr = []; //reset
+				var nodeVectorIndexReverseMap = {}; //reset
+	
+				var nodeIndices = nodeVectorIndexString.split(',');
+				for(var j=0;j<nodeIndices.length;j++)
+				{
+					var nodeSubindices = nodeIndices[j].split('-');
+	
+					if(nodeSubindices.length == 1)
+					{
+						var index = nodeSubindices[0].trim();
+	
+						if(nodeVectorIndexReverseMap[index])
+						{
+							Debug.log("Illegal Node Indices for node '" +
+									node.name + "' - repeat indices (i.e. '" +
+									index + "') are not allowed.",
+									Debug.HIGH_PRIORITY);
+							return false;								
+						}
+						nodeVectorIndexReverseMap[index] = nodeCount++;
+						nodeVectorIndexArr.push(index);							
+					}
+					else if(nodeSubindices.length == 2)
+					{
+						var hi = nodeSubindices[1].trim() | 0;
+						var lo = nodeSubindices[0].trim() | 0;
+						if(hi <= lo)
+						{
+							Debug.log("Illegal Node Indices for node '" +
+									node.name + "' - please use printer page syntax (e.g. '0,4-6').",
+									Debug.HIGH_PRIORITY);
+							return false;
+						}
+	
+						for(var k=lo;k<=hi;++k)
+						{
+							if(nodeVectorIndexReverseMap[k])
+							{
+								Debug.log("Illegal Node Indices for node '" +
+									node.name + "' - repeat indices (i.e. '" +
+										k + "') are not allowed.",
+										Debug.HIGH_PRIORITY);
+								return false;								
+							}
+							nodeVectorIndexReverseMap[k] = nodeCount++;
+							nodeVectorIndexArr.push(k);								
+						}
+					}
+					else
+					{
+						Debug.log("Illegal Node Indices for node '" +
+									node.name + "' - please use printer page syntax (e.g. '0,4-6').",
+								Debug.HIGH_PRIORITY);
+						return false;
+					}
+				} //end extract node indices
+				console.log("nodeCount",nodeCount); 
+				console.log("nodeVectorIndexArr",nodeVectorIndexArr); 
+				console.log("nodeVectorIndexReverseMap",nodeVectorIndexReverseMap); 
+	
+				if(nodeCount> 1 && 
+						nodeNameTemplate.indexOf('*') < 0)
+				{
+					Debug.log("Illegal Node Name for multi-node for node '" +
+									node.name + "' - please use * to indicate where the instance index should be (e.g. 'reader*' to make reader0, reader1, etc..).",
+							Debug.HIGH_PRIORITY);
+					return false;
+				}
+			}
+			else if(nodeNameTemplate.indexOf('*') >= 0)
+			{
+				Debug.log("Illegal Node Name for multi-node for node '" +
+								node.name + "' - * found without printer syntax indices.",
+						Debug.HIGH_PRIORITY);
+				return false;
+			}
+
+			if(hostnameVectorIndexString !== undefined)
+			{
+				var hostnameVectorIndexArr = []; //reset
+				var hostnameVectorIndexReverseMap = {}; //reset
+
+
+				hostnameIndices = hostnameVectorIndexString.split(',');
+				var hostnameCount = 0;
+				for(var j=0;j<hostnameIndices.length;j++)
+				{
+					var hostnameSubindices = hostnameIndices[j].split('-');
+
+					if(hostnameSubindices.length == 1)
+					{
+						var index = hostnameSubindices[0].trim();
+
+						if(hostnameVectorIndexReverseMap[index])
+						{
+							Debug.log("Illegal Hostname Indices for node '" +
+									node.name + "' - repeat indices (i.e. '" +
+									index + "') are not allowed.",
+									Debug.HIGH_PRIORITY);
+							return false;								
+						}
+						hostnameVectorIndexReverseMap[index] = hostnameCount++;
+						hostnameVectorIndexArr.push(index);							
+					}
+					else if(hostnameSubindices.length == 2)
+					{
+						var hi = hostnameSubindices[1].trim() | 0;
+						var lo = hostnameSubindices[0].trim() | 0;
+						if(hi <= lo)
+						{
+							Debug.log("Illegal Hostname Indices for node '" +
+									node.name + "' - please use printer page syntax (e.g. '0,4-6').",
+									Debug.HIGH_PRIORITY);
+							return false;
+						}
+
+						for(var k=lo;k<=hi;++k)
+						{
+							if(hostnameVectorIndexReverseMap[k])
+							{
+								Debug.log("Illegal Hostname Indices for node '" +
+										node.name + "' - repeat indices (i.e. '" +
+										k + "') are not allowed.",
+										Debug.HIGH_PRIORITY);
+								return false;								
+							}
+							hostnameVectorIndexReverseMap[k] = hostnameCount++;
+							hostnameVectorIndexArr.push(k);								
+						}
+					}
+					else
+					{
+						Debug.log("Illegal Hostname Indices for node '" +
+								node.name + "' - please use printer page syntax (e.g. '0,4-6').",
+								Debug.HIGH_PRIORITY);
+						return false;
+					}
+				} //end extract node indices
+				console.log("hostnameCount",hostnameCount); 
+				console.log("hostnameVectorIndexArr",hostnameVectorIndexArr); 
+				console.log("hostnameVectorIndexReverseMap",hostnameVectorIndexReverseMap); 
+
+				if(hostnameCount> 1 && 
+						hostname.indexOf('*') < 0)
+				{
+					Debug.log("Illegal Hostname for node '" +
+							node.name + "' for associating an array of hostnames to multiple " +
+							"node instances - please use * in the hostname (click the pencil to type in the hostname field) to indicate where the hostname index should be (e.g. 'host*' to make host0, host1, etc..).",
+							Debug.HIGH_PRIORITY);
+					return false;
+				}
+				if(hostnameCount> 1 && 
+						hostnameCount != nodeCount)
+				{
+					Debug.log("Illegal array of hostnames for node '" +
+							node.name + ".' Size " + hostnameCount +
+							" is not equal to the number of node instances which is " +
+							nodeCount + " - there must be a one-to-one correspondence " +
+							"between hostname and node, or else all nodes must be placed on the same host.",
+							Debug.HIGH_PRIORITY);
+					return false;
+				}
+			}
+			else if(hostname.indexOf('*') >= 0)
+			{
+				Debug.log("Illegal Host Name for multi-node for node '" +
+								node.name + "' - * found without printer syntax indices.",
+						Debug.HIGH_PRIORITY);
+				return false;
+			}
+			
+
+
+			//at this point, the change has been verified!
+			// so set node values
+			node.nodeCount = nodeCount;
+			node.nodeVectorIndexString = nodeVectorIndexString;
+			node.nodeVectorIndexArr = nodeVectorIndexArr;
+			node.nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
+			node.nodeNameFixedWidth = nodeNameFixedWidth;
+			node.name = nodeNameTemplate;
+
+			node.hostnameVectorIndexString = hostnameVectorIndexString;
+			node.hostnameVectorIndexArr = hostnameVectorIndexArr;
+			node.hostnameVectorIndexReverseMap = hostnameVectorIndexReverseMap;
+			node.hostnameFixedWidth = hostnameFixedWidth;
+
+			//handle hostname change
+			if(node.hostname != hostname)
+			{
+				//enter in hostnames
+				_hostnames[hostname] = 1;
+				node.hostname = hostname;
+			}		
+			
+			
+			return true;
+		} //end handleOptionalNodeParameters()
+		
+		//=====================================================================================
 		//save ~~
 		function save()
 		{
@@ -447,7 +720,9 @@
 			//create node object by type for save function from _nodes array
 			//		nodeObj := {}
 			//			nodeObj.<nodeType> = {}
-			//			nodeObj.<nodeType>.<nodeName> = {originalName,hostname,subsystemName,(nodeArrString),(hostnameArrString),(hostnameFixedWidth)}
+			//			nodeObj.<nodeType>.<nodeName> = 
+			//				{originalName,hostname,subsystemName,
+			//				(nodeArrString),(hostnameArrString),(nodeNameFixedWidth),(hostnameFixedWidth)}
 			//
 			// <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
 			//
@@ -475,8 +750,11 @@
 				if(node.nodeCount > 1)
 				{
 					Debug.log("Saving multi-node...");
-					nodesObj[type][name].nodeArrString = node.nodeVectorIndexString;
 					
+					nodesObj[type][name].nodeArrString = node.nodeVectorIndexString;
+					if(node.nodeNameFixedWidth && node.nodeNameFixedWidth > 1)
+						nodesObj[type][name].nodeNameFixedWidth = node.nodeNameFixedWidth;							
+										
 					if(node.hostname.indexOf('*') >= 0)
 					{
 						nodesObj[type][name].hostnameArrString = node.hostnameVectorIndexString;
@@ -1064,6 +1342,8 @@
 					Debug.log("Unrecognized direction index - should be impossible!",
 							Debug.HIGH_PRIORITY);
 				}
+
+				nodeLayoutHasChanged();
 				
 				//re-paint adjustments
 				paint(); 
@@ -1100,6 +1380,8 @@
 				Debug.log("Unrecognized direction index - should be impossible!",
 						Debug.HIGH_PRIORITY);
 			}
+
+			nodeLayoutHasChanged();
 			
 			//re-paint adjustments
 			paint(); 
@@ -1193,7 +1475,7 @@
 			//add to _grid.rowColMap
 			if(_grid.rowColMap[x] == undefined) 
 				_grid.rowColMap[x] = {};
-			_grid.rowColMap[x][y] = i; //fill x,y position
+			_grid.rowColMap[x][y] = i | 0; //fill x,y position
 			
 			var nodeid = "node-" + i;
 						
@@ -1248,7 +1530,10 @@
 					
 					nodeName = nodeName.replace(new RegExp("\\*",'g'), 
 							"[" + 
-							_nodes[i].nodeVectorIndexString + 
+							getPrinterSyntaxStringWithWidth(
+							_nodes[i].nodeVectorIndexString,
+							_nodes[i].nodeNameFixedWidth)
+							+ 
 							"]"); 
 				}
 				if(hostname.indexOf('*') >= 0)
@@ -1257,7 +1542,9 @@
 					
 					hostname = hostname.replace(new RegExp("\\*",'g'), 
 							"[" + 
-							_nodes[i].hostnameVectorIndexString + 
+							getPrinterSyntaxStringWithWidth(
+							_nodes[i].hostnameVectorIndexString,
+							_nodes[i].hostnameFixedWidth) + 
 							"]"); 
 				}
 				
@@ -1267,7 +1554,7 @@
 				for(var p=count-1;p>=0;--p)
 				{
 					str += "<div id='" + nodeid + 
-						"-box' class='node-box' " +
+						(p == 0?"":("-multi" + p)) + "-box' class='node-box' " +
 						"style='top:" + (-p*5) + "px;" +
 						"background-color: " + getSubsystemColor(_nodes[i].subsystemId) + ";" +
 						"left:" + (-p*5) + "px;' " +
@@ -1348,10 +1635,10 @@
 					(_mouseMoveMode == _MMM_SELECT_BOX &&
 							_mouseMoveStart[2][i] !== undefined))
 			{ //selected node
-				boxes[0].style.border = "3px solid green";
+				boxes[boxes.length-1].style.border = "3px solid green";
 			}
 			else
-				boxes[0].style.border = "0";
+				boxes[boxes.length-1].style.border = "0";
 			
 			el.style.left 	= x + "px";
 			el.style.top 	= y + "px";		
@@ -1370,7 +1657,7 @@
 			var count = (_nodes[i].nodeCount && _nodes[i].nodeCount > 4)?4:(_nodes[i].nodeCount|0);		
 									
 			el = document.getElementById(nodeid + "-headerText");
-			el.style.left = (- (_grid.xstep*2-sz)/2 - (count?(count-1)*2:0)) + "px";
+			el.style.left = (- (_grid.xstep*2-sz)/2 - (count?(count-1)*2:0) - 5) + "px"; //-5 because grid/arrow left is biased to 0 position
 			el.style.fontSize = ((fontSz)|0) + "px";
 			el.style.top = ((-fontSz*3-fontSz/2 - (count?(count-1)*5:0))|0) + "px";
 			el.style.height = ((fontSz*3)|0) + "px";
@@ -1431,8 +1718,11 @@
 			
             var angle = Math.atan2(y-y0,x-x0);
             
-            x -= HEAD_SZ*Math.cos(angle);
-            y -= HEAD_SZ*Math.sin(angle);
+            var shortOffset = HEAD_SZ*3;
+            if(y0 == y) shortOffset = HEAD_SZ*1;
+            
+            x -= shortOffset*Math.cos(angle);
+            y -= shortOffset*Math.sin(angle);
 
             //starting path of the arrow from the start square to the end square and drawing the stroke
             context.beginPath();
@@ -1511,10 +1801,25 @@
     				break;    
     			case _MMM_NODE_DRAG:
     				//console.log("node drag x,y",x,y);
-    				drawNode(
+    				
+    				//if node is in selection nodes, then move all of them
+    				//else just move node
+    				
+    				if(_selectedNodes && 
+    						_selectedNodes[_mouseMoveStart[2]] !== undefined)
+    				{
+    					for(var i in _selectedNodes)
+        					drawNode(
+        						i,
+        						x - _mouseMoveStart[0],
+    							y - _mouseMoveStart[1]);
+    				}
+    				else //not in selection
+    					drawNode(
     						_mouseMoveStart[2],
     						x - _mouseMoveStart[0],
-							y - _mouseMoveStart[1]);							
+							y - _mouseMoveStart[1]);
+    				
     				return;
     			case _MMM_SELECT_BOX:
     				//console.log("select box",x,y);
@@ -1671,18 +1976,80 @@
     				if(yg < 0) yg = -1; //clip to -1 for +/- icons			
     				else yg |= 0;
     				
+    				//copy grid map, so we can invalidate all positions in current group
+    				var gridMapCopy = {};
+    				for(var i in _grid.rowColMap)
+    				{
+    					gridMapCopy[i] = {};
+
+    					for(var j in _grid.rowColMap[i])
+    						gridMapCopy[i][j] = 1;
+    				}
+    				//invalidate/delete selected nodes, so the move can go into those spots
+    				if(_selectedNodes)
+    					for(var i in _selectedNodes)
+    						delete gridMapCopy[_nodes[i].x][_nodes[i].y];
+
     				if(xg >= 0 && yg >= 0 && 
     						xg < _grid.cols && 
 							yg < _grid.rows &&
 							(
-								_grid.rowColMap[xg] === undefined ||
-								_grid.rowColMap[xg][yg] === undefined
+								gridMapCopy[xg] === undefined ||
+								gridMapCopy[xg][yg] === undefined
 							))
     				{
     					Debug.log("Node drag to new open spot " + 
     							xg + "," + yg);
-    					_nodes[_mouseMoveStart[2]].x = xg;
-    					_nodes[_mouseMoveStart[2]].y = yg;
+    					
+    					if(_selectedNodes && 
+    							_selectedNodes[_mouseMoveStart[2]] !== undefined)
+    					{
+    						Debug.log("Checking group drag...");
+    						
+    						var gridStepX = xg - _nodes[_mouseMoveStart[2]].x;
+    						var gridStepY = yg - _nodes[_mouseMoveStart[2]].y;
+    						
+    						var allSpotsOpen = true;
+        					for(var i in _selectedNodes)
+        					{
+        						if(!(_nodes[i].x+gridStepX >= 0 && 
+        								_nodes[i].y+gridStepY >= 0 && 
+										_nodes[i].x+gridStepX < _grid.cols && 
+										_nodes[i].y+gridStepY < _grid.rows &&
+										(
+									gridMapCopy[_nodes[i].x+gridStepX] === undefined ||
+									gridMapCopy[_nodes[i].x+gridStepX][_nodes[i].y+gridStepY] === undefined
+        						)))
+        						{
+        							console.log("done node group drag NO VALID END i,x,y",
+        									i,
+											_nodes[i].x+gridStepX,_nodes[i].y+gridStepY);
+        							            					
+        							allSpotsOpen = false;
+        							break;
+        						}
+        					}
+        					
+        					if(!allSpotsOpen)
+        					{
+            					console.log("done node group drag NO GROUP VALID END x,y",
+            							xg,yg);
+            					paint();
+            					break;
+        					}
+
+        					//success, so apply changes
+        					for(var i in _selectedNodes)
+        					{
+    							_nodes[i].x += gridStepX;
+    							_nodes[i].y += gridStepY;
+        					}
+    					}
+    					else
+    					{    					
+							_nodes[_mouseMoveStart[2]].x = xg;
+							_nodes[_mouseMoveStart[2]].y = yg;
+    					}
     					
     					nodeLayoutHasChanged();
     				}
@@ -1798,11 +2165,17 @@
 			var x = (_grid.x0 + x * _grid.xstep - sz/2) | 0;
 			var y = (_grid.y0 + y * _grid.ystep - sz/2) | 0;
 
+			var count = _nodes[i].nodeCount?_nodes[i].nodeCount:1;
+			if(count > 4) count = 4; //cap at 4
+			if(count < 1) count = 1; 
+			var multiOff = (count-1)*5;
+			
+			
 			switch(p)
 			{
 			case 0: //top
 				return [(x + sz/2)|0,
-						(y)|0];
+						(y - multiOff)|0];
 			case 1: //right
 				return [(x + sz)|0,
 						(y + sz/2)|0];
@@ -1810,7 +2183,7 @@
 				return [(x + sz/2)|0,
 						(y + sz - 1)|0];
 			case 3: //left
-				return [(x - 1)|0,
+				return [(x - 1 - multiOff)|0,
 						(y + sz/2)|0];
 			default:
 				Debug.log("illegal point request! " + p,
@@ -1879,13 +2252,15 @@
 			{
 				ConfigurationAPI.removeClass(el,"node-headerTextHover");
 				el.style.top = ((-fontSz*3-fontSz/2 - (count?(count-1)*5:0))|0) + "px";
+				el.style.zIndex = 1000;
 			}
 			else
 			{
 				ConfigurationAPI.addClass(el,"node-headerTextHover");
 				el.style.top = ((-fontSz*3-fontSz/2 -13 - (count?(count-1)*5:0))|0) + "px";
+				el.style.zIndex = 10000;
 			}
-			el.style.left = (- (_grid.xstep*2-_NODE_SIZE)/2 - (count?(count-1)*2:0)) + "px";
+			el.style.left = (- (_grid.xstep*2-_NODE_SIZE)/2 - (count?(count-1)*2:0) - 5) + "px";
 			el.style.fontSize = ((fontSz)|0) + "px";
 			
 			el.style.height = ((fontSz*3)|0) + "px";
@@ -2176,10 +2551,19 @@
 
 		//=====================================================================================
 		//handleEditIconMouseUp ~~
-		function handleEditIconMouseUp(i,e,x) 
+		function handleEditIconMouseUp(i,e,x,subi) 
 		{	   
 			if(e) e.stopPropagation();
 		
+			var type = _nodes[i].type;
+								
+			var typeName = 
+				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
+					
+					
 			if(x == undefined && _nodes[i].nodeCount && _nodes[i].nodeCount > 1)
 			{
 				Debug.log("Showing multi-node menu");
@@ -2193,19 +2577,21 @@
 				
 				for(var j=0;j<_nodes[i].nodeCount;++j)
 				{
-					menuItems.push( "Edit <b><u>node[" + j +
-							"]</u></b>");
+					menuItems.push( "Edit <b><u>" + typeName + 
+							"::" + getMultiNodeName(i,j) +
+							"</u></b> node instance");
 					menuItemHandlers.push("handleEditIconMouseUp(" +
 							i + ", undefined /*e*/, " +
-							(event.pageX - 10) + " /*x*/" +
+							(e.pageX - 10) + " /*x*/," +
+							j + " /*subi*/" +
 							")");
 				}
 
 				SimpleContextMenu.createMenu(
 						menuItems,
 						menuItemHandlers,
-						"openFclMenuForArtdaqNode",		//element ID
-						event.pageX - 10, event.pageY - 10, 		//top left position
+						"simpleContextMenuPopup",		//element ID
+						e.pageX - 10, e.pageY - 10, 		//top left position
 						_MENU_PRIMARY_COLOR,
 						_MENU_SECONDARY_COLOR,
 						true /*defaultHighlighting*/
@@ -2215,16 +2601,12 @@
 			}
 			//else handle single node
 			
-			var type = _nodes[i].type;
-						
-			var typeName = 
-				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
+			if(!x) x = event.pageX - 10;
+			var y = event.pageY - 10; //always follow mouse -- otherwise menu may become impossible to navigate
+		
 			
-			
-			Debug.log("mouseup-edit i = " + i + " - " +
+			Debug.log("mouseup-edit i = " + i + "[" + 
+					subi + "] - " +
 					typeName + "::" +
 					_nodes[i].name);
 			
@@ -2248,6 +2630,28 @@
 				editTypes.push("ART Physics Other Parameters");		
 				editTypes.push("Add-on Parameters");				
 			}
+			else if(type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER)
+			{
+				editTypes.push("Preamble Parameters");
+				editTypes.push("DAQ Parameters");
+				editTypes.push("DAQ Metrics");	
+				editTypes.push("ART Physics Analyzers");
+				editTypes.push("ART Physics Producers");
+				editTypes.push("ART Physics Filters");	
+				editTypes.push("ART Physics Other Parameters");		
+				editTypes.push("Add-on Parameters");				
+			}
+			else if(type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER)
+			{
+				editTypes.push("Preamble Parameters");
+				editTypes.push("DAQ Parameters");
+				editTypes.push("DAQ Metrics");	
+				editTypes.push("ART Physics Analyzers");
+				editTypes.push("ART Physics Producers");
+				editTypes.push("ART Physics Filters");	
+				editTypes.push("ART Physics Other Parameters");		
+				editTypes.push("Add-on Parameters");				
+			}
 			
 			
 			var menuItems = [];
@@ -2256,25 +2660,29 @@
 			menuItems.push("Edit <b><u>Node</u></b> (i.e. name, subsystem, host, instances)");
 			menuItemHandlers.push("launchEditNodeDialog(" + i + ")");
 			
+			var nodeName = _nodes[i].name;
+			if(subi !== undefined) //dealing with a particular multi-node node
+				nodeName = getMultiNodeName(i,subi);
+			
 			for(var t=0;t<editTypes.length;++t)
 			{
 				menuItems.push( "Edit <b><u>" + editTypes[t] +
 						"</u></b> of " + typeName + "::" + 
-						_nodes[i].name);
+						nodeName);
 				menuItemHandlers.push("handleEditIconMenuSelection(" +
 						i + "," + t + ", undefined /*newTab*/, " +
-						(event.pageX - 10) + ", " +
-						(event.pageY - 10) + ", " 
-						+ "\"" + editTypes[t]  + "\"" +
+						x + ", " +
+						"\"" + editTypes[t]  + "\"," +
+						subi + " /*subi*/" +
 						")");
 			} //end edit type loop
 						
 			SimpleContextMenu.createMenu(
 					menuItems,
 					menuItemHandlers,
-					"openFclMenuForArtdaqNode",		//element ID
-					(x?x:(event.pageX - 10)),
-					event.pageY - 10, 		//top left position
+					"simpleContextMenuPopup",		//element ID
+					x,
+					y, 		//top left position
 					_MENU_PRIMARY_COLOR,
 					_MENU_SECONDARY_COLOR,
 					true /*defaultHighlighting*/
@@ -2286,13 +2694,15 @@
 		//handleEditIconMenuSelection ~~
 		//	handle menu selection for node i
 		//	based on editType
-		function handleEditIconMenuSelection(i,editType, newTab, x, y, editTypeString) 
+		//	subi used to index multi-node
+		function handleEditIconMenuSelection(i,editType, newTab, 
+				x, editTypeString, subi) 
 		{	   
 			
-			Debug.log("handleEditIconMenuSelection " + i + "-" + 
+			Debug.log("handleEditIconMenuSelection " + i + 
+					"[" + subi + "] -" + 
 					editType + "-" + newTab);
 			
-
 			var type = _nodes[i].type;
 			
 			var typeName = 
@@ -2303,28 +2713,21 @@
 			
 			var typeBaseTable = 
 				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"ARTDAQBoardReaderTable":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"ARTDAQBuilderTable":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"ARTDAQEventBuilderTable":
 				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"ARTDAQDataLoggerTable":
 				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"ARTDAQDispatcherTable":"ARTDAQMonitorTable";
 
 			var subsetName = editTypeString;
-//			switch(editType)
-//			{
-//			case 0: //top-level parameters
-//				subsetName = "Top-level Parameters";
-//				break;
-//			case 1:
-//				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
-//					subsetName = "DAQ Parameters";
-//				break;
-//			case 2:
-//				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
-//					subsetName = "DAQ Metrics";
-//				break;
-//			default:
-//				Debug.log("Unknown impossible (notify admins) editType = " + editType, Debug.HIGH_PRIORITY);
-//				return;
-//			}
+			
+
+			if(!x) x = event.pageX - 10;
+			var y = event.pageY - 10; //always follow mouse -- otherwise menu may become impossible to navigate
+			
+			if(editType>5) y -= 50;
+			
+			var nodeName = _nodes[i].name;
+			if(subi !== undefined) //dealing with a particular multi-node node
+				nodeName = getMultiNodeName(i,subi);
 
 			if(newTab === undefined)
 			{
@@ -2334,22 +2737,30 @@
 
 				menuItems.push( "Edit <b><u>" + subsetName +
 						"</u></b> of " + typeName + "::" + 
-						_nodes[i].name);
+						nodeName);
 				menuItemHandlers.push("handleEditIconMenuSelection(" +
-						i + "," + editType + ", false /*newTab*/)");
+						i + "," + editType + ", false /*newTab*/,"+
+						x + ", " +
+						"\"" + editTypeString  + "\"," +
+						subi + " /*subi*/" +
+						")");
 				menuItems.push( "Edit <b><u>" + subsetName +
 						"</u></b> of " + typeName + "::" + 
-						_nodes[i].name + 
+						nodeName + 
 						" in a <label style='color:rgb(251, 128, 67);font-weight:bold;'>new browser tab</font>");
 				menuItemHandlers.push("handleEditIconMenuSelection(" +
-						i + "," + editType + ", true /*newTab*/)");
+						i + "," + editType + ", true /*newTab*/,"+
+						x + ", " +
+						"\"" + editTypeString  + "\"," +
+						subi + " /*subi*/" +
+						")");
 
 
 				SimpleContextMenu.createMenu(
 						menuItems,
 						menuItemHandlers,
-						"openFclMenuForArtdaqNode",		//element ID
-						x, event.pageY - 10, 		//top left position
+						"simpleContextMenuPopup",		//element ID
+						x, y, 		//same menu position
 						_MENU_PRIMARY_COLOR,
 						_MENU_SECONDARY_COLOR,
 						true /*defaultHighlighting*/
@@ -2359,10 +2770,9 @@
 			
 			var newWindowStr;
 			
-			switch(editType)
-			{
-			case 0: //top-level parameters
-
+			if(editType == 0)
+			{	
+				//top-level parameters
 				
 				newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
 					DesktopContent._localUrnLid +
@@ -2372,66 +2782,90 @@
 					"&editableFieldList=" + "!*CommentDescription";
 				
 				//for unique link, presect UID record							
-				newWindowStr += "&selectedRecords=" + _nodes[i].name;
+				newWindowStr += "&selectedRecords=" + nodeName;
 				
 				localLaunchWindow();
+			}
+			else
+			{
+				var doMap = {};
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER] = [];
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER].push({
+					"table" : 		"ARTDAQDaqParameterTable",
+					"groupLink"	: 	"daqParametersLink"
+				}); //Reader DAQ parameters
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER].push({
+					"table" : 		"ARTDAQMetricTable",
+					"groupLink"	: 	"daqMetricsLink"
+				}); //Reader DAQ metrics
 				
-				break;
-
-			case 1: 
-
-				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+				//--------------------
+				var equivalentTypes = [ArtdaqConfigurationAPI.NODE_TYPE_BUILDER,
+									   ArtdaqConfigurationAPI.NODE_TYPE_LOGGER,
+									   ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER];
+				for(var t=0;t<equivalentTypes.length;++t)
 				{
-					//Reader DAQ parameters
-					Debug.log("Reader DAQ parameters");
-					
+					doMap[equivalentTypes[t]] = [];
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQDaqParameterTable",
+						"groupLink"	: 	"preambleParametersLink"
+					}); //Preamble Parameters
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQDaqParameterTable",
+						"groupLink"	: 	"daqLink/daqParametersLink"
+					}); //DAQ Parameters
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQMetricTable",
+						"groupLink"	: 	"daqLink/daqMetricsLink"
+					}); //DAQ Metrics
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQPhysicsAnalyzerTable",
+						"groupLink"	: 	"artLink/physicsLink/analyzersLink"
+					}); //ART Physics Analyzers
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQPhysicsProducerTable",
+						"groupLink"	: 	"artLink/physicsLink/producersLink"
+					}); //ART Physics Producers
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQPhysicsFilterTable",
+						"groupLink"	: 	"artLink/physicsLink/filtersLink"
+					}); //ART Physics Filters
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQPhysicsParameterTable",
+						"groupLink"	: 	"physicsOtherParametersLink"
+					}); //ART Physics Other Parameters
+					doMap[equivalentTypes[t]].push({
+						"table" : 		"ARTDAQDaqParameterTable",
+						"groupLink"	: 	"addOnParametersLink"
+					}); //Add-on Parameters
+				}
 
+				try
+				{
+					--editType; //because first one is always 'Top-level Parameters'
+					console.log("type",type,"editType",editType,
+							"table",doMap[type][editType].table,
+							"groupLink",doMap[type][editType].groupLink);
 					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
-						DesktopContent._localUrnLid +
-						"&subsetBasePath=" + "ARTDAQDaqParameterTable" +
-						"&groupingFieldList=AUTO" +
-						"&recordAlias=" + encodeURIComponent(typeName + " " + subsetName) +
-						"&editableFieldList=" + "!*CommentDescription";
-										
-					localGetLinkId("daqParametersLink",
+							DesktopContent._localUrnLid +
+							"&subsetBasePath=" + 
+							doMap[type][editType].table +
+							"&groupingFieldList=AUTO" +
+							"&recordAlias=" + encodeURIComponent(typeName + " " + 
+									subsetName) +
+									"&editableFieldList=" + "!*CommentDescription";
+
+					//TODO -- GET OR MAKE LINK ID
+					localGetLinkId(doMap[type][editType].groupLink,
 							function(childLinkIndex, linkId)
 							{
 						Debug.log("daqParametersLink childLinkIndex = '" +
 								childLinkIndex + "' linkId = '" + 
 								linkId + "'");
-
-						//for group link, pre-select GroupID value							
-						newWindowStr += "&selectedGroupIDs=" +
-								encodeURIComponent(
-										childLinkIndex + "=" +
-										linkId);
-
-						localLaunchWindow();
 						
-							}); //end localGetLinkId handler
-				}
-
-				break;
-			case 2: 
-
-				if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
-				{
-					//Reader DAQ Metrics
-					Debug.log("Reader DAQ Metrics");
-					
-					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
-							DesktopContent._localUrnLid +
-							"&subsetBasePath=" + "ARTDAQMetricTable" +
-							"&groupingFieldList=AUTO" +
-							"&recordAlias=" + encodeURIComponent(typeName + " " + subsetName) +
-							"&editableFieldList=" + "!*CommentDescription";
-
-					localGetLinkId("daqMetricsLink",
-							function(childLinkIndex, linkId)
-							{
-						Debug.log("daqMetricsLink childLinkIndex = '" +
-								childLinkIndex + "' linkId = '" + 
-								linkId + "'");
+						var childLinkIndexArr = childLinkIndex.split(' ');
+						if(childLinkIndexArr.length > 1) //if there are multiple indices, choose second one as destination child index
+							childLinkIndex = childLinkIndexArr[1];
 
 						//for group link, pre-select GroupID value							
 						newWindowStr += "&selectedGroupIDs=" +
@@ -2441,12 +2875,19 @@
 
 						localLaunchWindow();
 
-							}); //end localGetLinkId handler
+							}); //end localGetLinkId handle
 				}
-				break;
-			default:
-				Debug.log("Unknown impossible (notify admins) editType = " + editType, Debug.HIGH_PRIORITY);
+				catch(e)
+				{
+					Debug.log("Unknown impossible error (notify admins) editType = " +
+							editType + ": " + e, Debug.HIGH_PRIORITY);
+				}
 			}
+//			else
+//			{
+//				Debug.log("Unknown impossible (notify admins) editType = " +
+//						editType, Debug.HIGH_PRIORITY);
+//			}
 
 			return;
 			
@@ -2479,15 +2920,16 @@
 						typeBaseTable,
 						_nodes[i].name,
 						fieldPath,
-						1,
+						5,
 						function(fieldRetObj)
 						{
 					console.log("localGetLinkId getFieldsOfRecords",fieldRetObj);
 
-					if(fieldRetObj[0].fieldColumnType.indexOf("ChildLink-") != 0 ||
+					if(!fieldRetObj || !fieldRetObj.length ||
+							fieldRetObj[0].fieldColumnType.indexOf("ChildLink-") != 0 ||
 							fieldRetObj.length != 2)
 					{
-						Debug.log("Invalid link to get '" + fieldPath +
+						Debug.log("Invalid " + typeName + " link to get '" + fieldPath +
 								"' - notify admins! (returned field objects = " +
 								fieldRetObj.length + ")", Debug.HIGH_PRIORITY);
 						return;
@@ -2553,27 +2995,75 @@
 
 			var str = "";
 			
-			str += "You are editing the node originally named " + 
-					typeName + "::" + _nodes[i].name + "..."; 
+			str += "You are editing the node originally named <b>" + 
+					typeName + "::" + _nodes[i].name + "</b>..."; 
 					
 			var isMultiNode = _nodes[i].name.indexOf('*') >= 0;
-			var isHostnameArray = _nodes[i].hostname.indexOf('*') >= 0;
-			var isHostnameFixedWidth = _nodes[i].hostnameFixedWidthSize && _nodes[i].hostnameFixedWidthSize > 1;
+			var isNodeNameFixedWidth = _nodes[i].nodeNameFixedWidth && _nodes[i].nodeNameFixedWidth > 1;
+			var isHostnameArray = _nodes[i].hostname.indexOf('*') >= 0;			
+			var isHostnameFixedWidth = _nodes[i].hostnameFixedWidth && _nodes[i].hostnameFixedWidth > 1;
 
 			str += htmlClearDiv();
-			str += "<br><table style='margin-bottom: 10px;'>";
-			str += "<tr><td><b>Node Name:</b></td><td>";
+			
+			str += "<br><center><table class='editNodeDialog-table'>";
+			
+			//======== Subsystem Field
+			str += "<tr><td class='editNodeDialog-fieldCol'><b>Subsystem Name:</b></td><td class='editNodeDialog-valueCol'>";
+			{ //start subsystems
+				str += htmlOpen("select",
+						{
+								"id": "ediNode-" + "subsystem",
+								"style": "float:left; margin:7px; width:187px;",
+						});
+
+				for(var j in _subsystems)
+				{
+					if(j == 0) continue; //skip null destination subsystem
+
+					str += "<option " + 	
+							(j == _nodes[i].subsystemId?"selected":"") + ">" +
+							_subsystems[j].label + 
+							"</option>";
+				}
+				str += "</select>"; //end aliases dropdown
+
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "subsystemText",
+								"type": "text",
+								"style": "display:none; float:left; width:180px;",
+								"value": "",
+								"title": "Set the subsystem for this node.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+
+				str += htmlOpen("div",
+						{
+								"id": "subsystem-editIcon",
+								"class": "node-editIcon",
+								"style": "display:block; float:right; margin: 6px -30px 0 1px",
+								"onclick": "handleEditNodeSelectEditIcon(0);",
+								"title": "Toggle free-form hostname editing",
+						},
+						0 /*html*/, true /*closeTag*/);	
+			} //end subsystems
+			str += "</td></tr>";
+			//======== end Subsystem Field
+
+			//======== Node Name Field
+			str += "<tr><td class='editNodeDialog-fieldCol'><b>Node Name:</b></td><td class='editNodeDialog-valueCol'>";						
 			str += htmlOpen("input",
 					{
 							"id": "ediNode-" + "nodeName",
 							"type": "text",
+							"style": "width:180px;",
 							"value": _nodes[i].name,
 							"title": "Set the node name template with * syntax.",
 					},
 					0 /*html*/, true /*closeTag*/);	
 			str += "</td></tr>";
 			
-			str += "<tr><td colspan='2'>";
+			str += "<tr><td colspan='2' style='text-align:right'>";
 
 			str += htmlOpen("input",
 					{
@@ -2597,26 +3087,28 @@
 							true /*doCloseTag*/
 					) /*innerHTML*/,
 					true /*doCloseTag*/);
+			str += "<div style='margin:-5px -28px -30px 0; float:right;'><a onclick='var el = document.getElementsByClassName(\"enableMultiNodeCheckbox\");" +
+					"handleEditNodeDialogMultiNodeCheckbox(" + i + ",el[0],1);' " +
+					"title='Click for more information on editing multi-node instances.'>" +
+					"<img src='/WebPath/images/dashboardImages/icon-Help.png'></a></div>";
 			str += "</td></tr>";
-			str += "</table>";
+			//======== end Node Name Field
+			str += "</table>"
 
 			str += htmlClearDiv();
+			
+			//======== Multi Node Settings
 			str += "<div id='multiNodeSettings' style='display:" + 
 				(isMultiNode?"block":"none") + "'>";
 			{ //start multi-node
-				str += "Set the size of the multi-node by using 'printer page syntax' and one or many * characters." + 
-
-						"<br>" + 
-						"For example, to make 4 nodes named reader0_east, reader4_east, reader5_east, reader6_east, " + 
-						"Set the node name to 'reader*_east' and set the multi-node indices to '" +
-						"0,4-6'" +
-						"<br>";
-
-				str += htmlClearDiv();
-				str += "<br><table style='margin-bottom: 10px;'>";
+				str += "For Multi-Node Instances, use 'printer page syntax' (e.g. '0,4-6'), and * in the Node Name..."
 						
-
-				str += "<tr><td><b>Multi-Node Indices:</b></td><td>";
+				str += htmlClearDiv();
+				str += "<br><table class='editNodeDialog-table'>";
+						
+				//======== Multi Node Settings
+				str += "<tr><td class='editNodeDialog-fieldCol'><b>Multi-Node Indices:</b></td><td class='editNodeDialog-valueCol'>";
+										
 				str += htmlOpen("input",
 						{
 								"id": "ediNode-" + "nodeIndices",
@@ -2627,10 +3119,62 @@
 						0 /*html*/, true /*closeTag*/);	
 				str += "</td></tr>";
 
+				str += "<tr><td colspan='2' style='text-align:right'>";
 
-
+				//checkbox for node name fixed width settings
+				str += htmlOpen("input",
+						{
+								"type": "checkbox",
+								"id": "enableNodeNameFixedWidthCheckbox",
+								"class": "enableNodeNameFixedWidthCheckbox",
+								"checked": (isNodeNameFixedWidth?1:0),
+								"onclick": "handleEditNodeDialogNodeNameFixedWidthCheckbox(" + i + ",this);",
+						},
+						htmlOpen("a",
+								{
+										"style": "text-decoration:none;color:black;",
+										"onclick": "var el = document.getElementsByClassName(\"enableNodeNameFixedWidthCheckbox\");" +
+										"var forFirefox = (el[0].checked = !el[0].checked); " +
+										"handleEditNodeDialogNodeNameFixedWidthCheckbox(" + i + ",el[0]);"
+										,
+								},
+								"<b>Enable Fixed-Width Node Names</b>" /*innerHTML*/,
+								true /*doCloseTag*/
+						) /*innerHTML*/,
+						true /*doCloseTag*/);
+				str += "</td></tr>";
 				str += "</table>";
+
+				str += htmlClearDiv();
+				str += "<div id='nodeNameFixedWidthSettings' style='display:" + 
+						(isNodeNameFixedWidth?"block":"none") + "'>";
+				{ //start node name fixed-width
+					str += "<br>Force the number of digits to a fixed-width within" +
+							" each Node Name (e.g. 3 would yield numbers like 001, 002, etc.)." +
+							"<br>";
+
+					str += htmlClearDiv();
+					str += "<br><table class='editNodeDialog-table'>";
+					str += "<tr><td class='editNodeDialog-fieldCol'><b>Node Name Fixed-width:</b></td><td class='editNodeDialog-valueCol'>";										
+					str += htmlOpen("input",
+							{
+									"id": "ediNode-" + "nodeNameFixedWidth",
+									"type": "text",
+									"style": "width:50px;",
+									"value": (_nodes[i].nodeNameFixedWidth?_nodes[i].nodeNameFixedWidth:2),
+									"title": "Set the number of digits for fixed-width numbering in the Node Name.",
+							},
+							0 /*html*/, true /*closeTag*/);	
+					str += "</td></tr>";
+
+					str += "</table>";
+				} //end node name fixed width settings
+				str += "</div>"; //close nodeName Fixed Width Settings
 				
+				str += htmlClearDiv();
+				str += "<br><table class='editNodeDialog-table'>";
+				str += "<tr><td style='text-align:right; white-space:nowrap;'>";										
+
 				str += htmlOpen("input",
 						{
 								"type": "checkbox",
@@ -2649,141 +3193,20 @@
 										,
 										"title": "Enable associating the nodes with an array of hostnames.",
 								},
-								"<b>Associate Multi-node Instances with an Array of Hostnames</b>" /*innerHTML*/,
+								"<b>Associate Multi-node Instances with Array of Hostnames</b>" /*innerHTML*/,
 								true /*doCloseTag*/
 						) /*innerHTML*/,
 						true /*doCloseTag*/);
+				str += "</td></tr>";
+				str += "</table>";
 				
 			} //end multi-node
 			str += "</div>"; //close multi-node settings div
 			
 			str += htmlClearDiv();
-			
-			str += "<div id='hostnameArraySettings' style='display:" + 
-					(isHostnameArray?"block":"none") + "'>";
-			{ //start hostnameArraySettings 
-				str += "<br>Use 'printer page syntax' and *'s for the hostnames too!" +
-						"<br>(Do not forget to add the * to the hostname field.)" +
-						"<br>";
 
-				str += htmlClearDiv();
-				str += "<br><table style='margin-bottom: 10px;'>";
-
-
-				str += "<tr><td><b>Hostname Indices:</b></td><td>";
-				str += htmlOpen("input",
-						{
-								"id": "ediNode-" + "hostnameIndices",
-								"type": "text",
-								"value": (_nodes[i].hostnameVectorIndexString?_nodes[i].hostnameVectorIndexString:""),
-								"title": "Set the hostname indices with printer page syntax.",
-						},
-						0 /*html*/, true /*closeTag*/);	
-				str += "</td></tr>";
-
-
-
-				str += "</table>";
-
-				str += htmlOpen("input",
-						{
-								"type": "checkbox",
-								"id": "enableHostnameFixedWidthCheckbox",
-								"class": "enableHostnameFixedWidthCheckbox",
-								"checked": (isHostnameFixedWidth?1:0),
-								"onclick": "handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",this);",
-						},
-						htmlOpen("a",
-								{
-										"style": "text-decoration:none;color:black;",
-										"onclick": "var el = document.getElementsByClassName(\"enableHostnameFixedWidthCheckbox\");" +
-										"var forFirefox = (el[0].checked = !el[0].checked); " +
-										"handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",el[0]);"
-										,
-								},
-								"<b>Enable Fixed-Width Hostnames</b>" /*innerHTML*/,
-								true /*doCloseTag*/
-						) /*innerHTML*/,
-						true /*doCloseTag*/);
-				
-			} //end hostnameArraySettings
-			str += "</div>"; //close hostnameArray settings div
-
-			str += htmlClearDiv();
-			str += "<div id='hostnameFixedWidthSettings' style='display:" + 
-					(isHostnameFixedWidth?"block":"none") + "'>";
-			{ //start hostname fixed-width
-				str += "<br>Force the number of digits to a fixed-width within" +
-						" each hostname (e.g. 3 would yield numbers like 001, 002, etc.)." +
-						"<br>";
-
-				str += htmlClearDiv();
-				str += "<br><table style='margin-bottom: 10px;'>";
-
-
-				str += "<tr><td><b>Fixed-width Size:</b></td><td>";
-				str += htmlOpen("input",
-						{
-								"id": "ediNode-" + "hostnameFixedWidth",
-								"type": "text",
-								"style": "width:50px;",
-								"value": (_nodes[i].hostnameFixedWidthSize?_nodes[i].hostnameFixedWidthSize:2),
-								"title": "Set the number of digits for fixed-width numbering in the hostname.",
-						},
-						0 /*html*/, true /*closeTag*/);	
-				str += "</td></tr>";
-
-				str += "</table>";
-				
-			} //end hostname fixed-width
-			str += "</div>"; //close hostname fixed-width settings div
-			
-			str += htmlClearDiv();
-			
-			str += "<br><table style='margin-bottom: 10px;'>";
-			str += "<tr><td style='text-align:right'><b>Subsystem Name:</b></td><td>";
-			{ //start subsystems
-				str += htmlOpen("select",
-						{
-								"id": "ediNode-" + "subsystem",
-								"style": "float: left; margin: 7px;",
-						});
-
-				for(var j in _subsystems)
-				{
-					if(j == 0) continue; //skip null destination subsystem
-					
-					str += "<option " + 	
-							(j == _nodes[i].subsystemId?"selected":"") + ">" +
-							_subsystems[j].label + 
-							"</option>";
-				}
-				str += "</select>"; //end aliases dropdown
-
-				str += htmlOpen("input",
-						{
-								"id": "ediNode-" + "subsystemText",
-								"style": "display:none; float: left;",
-								"type": "text",
-								"value": "",
-								"title": "Set the subsystem for this node.",
-						},
-						0 /*html*/, true /*closeTag*/);	
-
-				str += htmlOpen("div",
-						{
-								"id": "subsystem-editIcon",
-								"class": "node-editIcon",
-								"style": "display:block; float:right; margin: 6px 0 0 1px",
-								"onclick": "handleEditNodeSelectEditIcon(0);",
-								"title": "Toggle free-form hostname editing",
-						},
-						0 /*html*/, true /*closeTag*/);	
-			} //end subsystems
-			str += "</td></tr>";
-			
-
-			str += "<tr><td style='text-align:right'><b>Hostname:</b></td><td>";
+			str += "<br><table class='editNodeDialog-table'>";
+			str += "<tr><td class='editNodeDialog-fieldCol'><b>Hostname:</b></td><td class='editNodeDialog-valueCol'>";
 			{ //start hostnames
 				str += htmlOpen("select",
 						{
@@ -2819,10 +3242,89 @@
 								"title": "Toggle free-form hostname editing",
 						},
 						0 /*html*/, true /*closeTag*/);	
-				
+
 			} //end hostnames
 			str += "</td></tr>";
 			str += "</table>";
+
+			str += htmlClearDiv();
+			
+			
+			str += "<div id='hostnameArraySettings' style='display:" + 
+					(isHostnameArray?"block":"none") + "'>";
+			{ //start hostnameArraySettings 
+				str += "Use 'printer page syntax' (e.g. '0,4-6'), and * in the Hostname..."
+
+				str += htmlClearDiv();
+				str += "<br><table class='editNodeDialog-table'>";
+
+				str += "<tr><td class='editNodeDialog-fieldCol'><b>Hostname Indices:</b></td><td class='editNodeDialog-valueCol'>";
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "hostnameIndices",
+								"type": "text",
+								"value": (_nodes[i].hostnameVectorIndexString?_nodes[i].hostnameVectorIndexString:""),
+								"title": "Set the hostname indices with printer page syntax.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+				str += "</td></tr>";
+
+				str += "<tr><td colspan='2' style='text-align:right; white-space:nowrap;'>";
+
+				str += htmlOpen("input",
+						{
+								"type": "checkbox",
+								"id": "enableHostnameFixedWidthCheckbox",
+								"class": "enableHostnameFixedWidthCheckbox",
+								"checked": (isHostnameFixedWidth?1:0),
+								"onclick": "handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",this);",
+						},
+						htmlOpen("a",
+								{
+										"style": "text-decoration:none;color:black;",
+										"onclick": "var el = document.getElementsByClassName(\"enableHostnameFixedWidthCheckbox\");" +
+										"var forFirefox = (el[0].checked = !el[0].checked); " +
+										"handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",el[0]);"
+										,
+								},
+								"<b>Enable Fixed-Width Hostnames</b>" /*innerHTML*/,
+								true /*doCloseTag*/
+						) /*innerHTML*/,
+						true /*doCloseTag*/);
+				str += "</td></tr>";
+				str += "</table>";
+				
+			} //end hostnameArraySettings
+			str += "</div>"; //close hostnameArray settings div
+
+			str += htmlClearDiv();
+			str += "<div id='hostnameFixedWidthSettings' style='display:" + 
+					(isHostnameFixedWidth?"block":"none") + "'>";
+			{ //start hostname fixed-width
+				str += "<br>Force the number of digits to a fixed-width within" +
+						" each hostname (e.g. 3 would yield numbers like 001, 002, etc.)." +
+						"<br>";
+
+				str += htmlClearDiv();
+				str += "<br><table class='editNodeDialog-table'>";
+				str += "<tr><td class='editNodeDialog-fieldCol'><b>Hostname Fixed-width:</b></td><td class='editNodeDialog-valueCol'>";
+				str += htmlOpen("input",
+						{
+								"id": "ediNode-" + "hostnameFixedWidth",
+								"type": "text",
+								"style": "width:50px;",
+								"value": (_nodes[i].hostnameFixedWidth?_nodes[i].hostnameFixedWidth:2),
+								"title": "Set the number of digits for fixed-width numbering in the hostname.",
+						},
+						0 /*html*/, true /*closeTag*/);	
+				str += "</td></tr>";
+
+				str += "</table>";
+				
+			} //end hostname fixed-width
+			str += "</div>"; //close hostname fixed-width settings div
+			
+			
 
 			str += htmlClearDiv();
 
@@ -2887,6 +3389,7 @@
 					
 					
 					var nodeNameTemplate = document.getElementById("ediNode-" + "nodeName").value;
+					var nodeNameFixedWidth = document.getElementById("ediNode-" + "nodeNameFixedWidth").value | 0;
 					var nodeIndices = document.getElementById("ediNode-" + "nodeIndices").value;					
 					var subsystem = document.getElementById("ediNode-" + 
 							"subsystem").style.display == "none"?
@@ -2902,6 +3405,7 @@
 																
 					
 					Debug.log("Node name template = " + nodeNameTemplate);
+					Debug.log("nodeNameFixedWidth = " + nodeNameFixedWidth);
 					
 					var el = document.getElementsByClassName("enableMultiNodeCheckbox");
 					if(el.length && !el[0].checked) 
@@ -2921,173 +3425,183 @@
 					Debug.log("Hostname indices = " + hostnameIndices);
 					Debug.log("hostnameFixedWidth = " + hostnameFixedWidth);
 					
-					var nodeVectorIndexString = nodeIndices;
-					var nodeVectorIndexArr = []; //reset
-					var nodeVectorIndexReverseMap = {}; //reset
+					if(!handleOptionalNodeParameters(
+							_nodes[i],
+							nodeNameTemplate,
+							nodeIndices,
+							nodeNameFixedWidth,
+							hostname,
+							hostnameIndices,
+							hostnameFixedWidth))
+						return; //end progress if failed to handle (function should display error message)
 					
-					nodeIndices = nodeIndices.split(',');
-					var nodeCount = 0;
-					for(var j=0;j<nodeIndices.length;j++)
-					{
-						var nodeSubindices = nodeIndices[j].split('-');
-						
-						if(nodeSubindices.length == 1)
-						{
-							var index = nodeSubindices[0].trim();
-							
-							if(nodeVectorIndexReverseMap[index])
-							{
-								Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
-										index + "') are not allowed.",
-										Debug.HIGH_PRIORITY);
-								return;								
-							}
-							nodeVectorIndexReverseMap[index] = nodeCount++;
-							nodeVectorIndexArr.push(index);							
-						}
-						else if(nodeSubindices.length == 2)
-						{
-							var hi = nodeSubindices[1].trim() | 0;
-							var lo = nodeSubindices[0].trim() | 0;
-							if(hi <= lo)
-							{
-								Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
-										Debug.HIGH_PRIORITY);
-								return;
-							}
-							
-							for(var k=lo;k<=hi;++k)
-							{
-								if(nodeVectorIndexReverseMap[k])
-								{
-									Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
-											k + "') are not allowed.",
-											Debug.HIGH_PRIORITY);
-									return;								
-								}
-								nodeVectorIndexReverseMap[k] = nodeCount++;
-								nodeVectorIndexArr.push(k);								
-							}
-						}
-						else
-						{
-							Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
-									Debug.HIGH_PRIORITY);
-							return;
-						}
-					} //end extract node indices
-					console.log("nodeCount",nodeCount); 
-					console.log("nodeVectorIndexArr",nodeVectorIndexArr); 
-					console.log("nodeVectorIndexReverseMap",nodeVectorIndexReverseMap); 
-					
-					if(nodeCount> 1 && 
-							nodeNameTemplate.indexOf('*') < 0)
-					{
-						Debug.log("Illegal Node Name for multi-node - please use * to indicate where the instance index should be (e.g. 'reader*' to make reader0, reader1, etc..).",
-								Debug.HIGH_PRIORITY);
-						return;
-					}
-					
-
-					var hostnameVectorIndexString = hostnameIndices;
-					var hostnameVectorIndexArr = []; //reset
-					var hostnameVectorIndexReverseMap = {}; //reset
-					
-
-					hostnameIndices = hostnameIndices.split(',');
-					var hostnameCount = 0;
-					for(var j=0;j<hostnameIndices.length;j++)
-					{
-						var hostnameSubindices = hostnameIndices[j].split('-');
-						
-						if(hostnameSubindices.length == 1)
-						{
-							var index = hostnameSubindices[0].trim();
-							
-							if(hostnameVectorIndexReverseMap[index])
-							{
-								Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
-										index + "') are not allowed.",
-										Debug.HIGH_PRIORITY);
-								return;								
-							}
-							hostnameVectorIndexReverseMap[index] = hostnameCount++;
-							hostnameVectorIndexArr.push(index);							
-						}
-						else if(hostnameSubindices.length == 2)
-						{
-							var hi = hostnameSubindices[1].trim() | 0;
-							var lo = hostnameSubindices[0].trim() | 0;
-							if(hi <= lo)
-							{
-								Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
-										Debug.HIGH_PRIORITY);
-								return;
-							}
-							
-							for(var k=lo;k<=hi;++k)
-							{
-								if(hostnameVectorIndexReverseMap[k])
-								{
-									Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
-											k + "') are not allowed.",
-											Debug.HIGH_PRIORITY);
-									return;								
-								}
-								hostnameVectorIndexReverseMap[k] = hostnameCount++;
-								hostnameVectorIndexArr.push(k);								
-							}
-						}
-						else
-						{
-							Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
-									Debug.HIGH_PRIORITY);
-							return;
-						}
-					} //end extract node indices
-					console.log("hostnameCount",hostnameCount); 
-					console.log("hostnameVectorIndexArr",hostnameVectorIndexArr); 
-					console.log("hostnameVectorIndexReverseMap",hostnameVectorIndexReverseMap); 
-					
-					if(hostnameCount> 1 && 
-							hostname.indexOf('*') < 0)
-					{
-						Debug.log("Illegal Hostname for associating an array of hostnames to multiple " +
-								"node instances - please use * in the hostname (click the pencil to type in the hostname field) to indicate where the hostname index should be (e.g. 'host*' to make host0, host1, etc..).",
-								Debug.HIGH_PRIORITY);
-						return;
-					}
-					if(hostnameCount> 1 && 
-							hostnameCount != nodeCount)
-					{
-						Debug.log("Illegal array of hostnames. Size " + hostnameCount +
-								" is not equal to the number of node instances which is " +
-								nodeCount + " - there must be a one-to-one correspondence " +
-								"between hostname and node, or else all nodes must be placed on the same host.",
-								Debug.HIGH_PRIORITY);
-						return;
-					}
-					
-					
-					//at this point, the change has been verified!
-					// so set node values
-					_nodes[i].nodeCount = nodeCount;
-					_nodes[i].nodeVectorIndexString = nodeVectorIndexString;
-					_nodes[i].nodeVectorIndexArr = nodeVectorIndexArr;
-					_nodes[i].nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
-					_nodes[i].name = nodeNameTemplate;
-
-					_nodes[i].hostnameVectorIndexString = hostnameVectorIndexString;
-					_nodes[i].hostnameVectorIndexArr = hostnameVectorIndexArr;
-					_nodes[i].hostnameVectorIndexReverseMap = hostnameVectorIndexReverseMap;
-					_nodes[i].hostnameFixedWidth = hostnameFixedWidth;
-					//handle hostname change
-					if(_nodes[i].hostname != hostname)
-					{
-						//enter in hostnames
-						_hostnames[hostname] = 1;
-						_nodes[i].hostname = hostname;
-					}
+//					var nodeVectorIndexString = nodeIndices;
+//					var nodeVectorIndexArr = []; //reset
+//					var nodeVectorIndexReverseMap = {}; //reset
+//					
+//					nodeIndices = nodeIndices.split(',');
+//					var nodeCount = 0;
+//					for(var j=0;j<nodeIndices.length;j++)
+//					{
+//						var nodeSubindices = nodeIndices[j].split('-');
+//						
+//						if(nodeSubindices.length == 1)
+//						{
+//							var index = nodeSubindices[0].trim();
+//							
+//							if(nodeVectorIndexReverseMap[index])
+//							{
+//								Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
+//										index + "') are not allowed.",
+//										Debug.HIGH_PRIORITY);
+//								return;								
+//							}
+//							nodeVectorIndexReverseMap[index] = nodeCount++;
+//							nodeVectorIndexArr.push(index);							
+//						}
+//						else if(nodeSubindices.length == 2)
+//						{
+//							var hi = nodeSubindices[1].trim() | 0;
+//							var lo = nodeSubindices[0].trim() | 0;
+//							if(hi <= lo)
+//							{
+//								Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
+//										Debug.HIGH_PRIORITY);
+//								return;
+//							}
+//							
+//							for(var k=lo;k<=hi;++k)
+//							{
+//								if(nodeVectorIndexReverseMap[k])
+//								{
+//									Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
+//											k + "') are not allowed.",
+//											Debug.HIGH_PRIORITY);
+//									return;								
+//								}
+//								nodeVectorIndexReverseMap[k] = nodeCount++;
+//								nodeVectorIndexArr.push(k);								
+//							}
+//						}
+//						else
+//						{
+//							Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
+//									Debug.HIGH_PRIORITY);
+//							return;
+//						}
+//					} //end extract node indices
+//					console.log("nodeCount",nodeCount); 
+//					console.log("nodeVectorIndexArr",nodeVectorIndexArr); 
+//					console.log("nodeVectorIndexReverseMap",nodeVectorIndexReverseMap); 
+//					
+//					if(nodeCount> 1 && 
+//							nodeNameTemplate.indexOf('*') < 0)
+//					{
+//						Debug.log("Illegal Node Name for multi-node - please use * to indicate where the instance index should be (e.g. 'reader*' to make reader0, reader1, etc..).",
+//								Debug.HIGH_PRIORITY);
+//						return;
+//					}
+//					
+//
+//					var hostnameVectorIndexString = hostnameIndices;
+//					var hostnameVectorIndexArr = []; //reset
+//					var hostnameVectorIndexReverseMap = {}; //reset
+//					
+//
+//					hostnameIndices = hostnameIndices.split(',');
+//					var hostnameCount = 0;
+//					for(var j=0;j<hostnameIndices.length;j++)
+//					{
+//						var hostnameSubindices = hostnameIndices[j].split('-');
+//						
+//						if(hostnameSubindices.length == 1)
+//						{
+//							var index = hostnameSubindices[0].trim();
+//							
+//							if(hostnameVectorIndexReverseMap[index])
+//							{
+//								Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
+//										index + "') are not allowed.",
+//										Debug.HIGH_PRIORITY);
+//								return;								
+//							}
+//							hostnameVectorIndexReverseMap[index] = hostnameCount++;
+//							hostnameVectorIndexArr.push(index);							
+//						}
+//						else if(hostnameSubindices.length == 2)
+//						{
+//							var hi = hostnameSubindices[1].trim() | 0;
+//							var lo = hostnameSubindices[0].trim() | 0;
+//							if(hi <= lo)
+//							{
+//								Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
+//										Debug.HIGH_PRIORITY);
+//								return;
+//							}
+//							
+//							for(var k=lo;k<=hi;++k)
+//							{
+//								if(hostnameVectorIndexReverseMap[k])
+//								{
+//									Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
+//											k + "') are not allowed.",
+//											Debug.HIGH_PRIORITY);
+//									return;								
+//								}
+//								hostnameVectorIndexReverseMap[k] = hostnameCount++;
+//								hostnameVectorIndexArr.push(k);								
+//							}
+//						}
+//						else
+//						{
+//							Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
+//									Debug.HIGH_PRIORITY);
+//							return;
+//						}
+//					} //end extract node indices
+//					console.log("hostnameCount",hostnameCount); 
+//					console.log("hostnameVectorIndexArr",hostnameVectorIndexArr); 
+//					console.log("hostnameVectorIndexReverseMap",hostnameVectorIndexReverseMap); 
+//					
+//					if(hostnameCount> 1 && 
+//							hostname.indexOf('*') < 0)
+//					{
+//						Debug.log("Illegal Hostname for associating an array of hostnames to multiple " +
+//								"node instances - please use * in the hostname (click the pencil to type in the hostname field) to indicate where the hostname index should be (e.g. 'host*' to make host0, host1, etc..).",
+//								Debug.HIGH_PRIORITY);
+//						return;
+//					}
+//					if(hostnameCount> 1 && 
+//							hostnameCount != nodeCount)
+//					{
+//						Debug.log("Illegal array of hostnames. Size " + hostnameCount +
+//								" is not equal to the number of node instances which is " +
+//								nodeCount + " - there must be a one-to-one correspondence " +
+//								"between hostname and node, or else all nodes must be placed on the same host.",
+//								Debug.HIGH_PRIORITY);
+//						return;
+//					}
+//					
+//					
+//					//at this point, the change has been verified!
+//					// so set node values
+//					_nodes[i].nodeCount = nodeCount;
+//					_nodes[i].nodeVectorIndexString = nodeVectorIndexString;
+//					_nodes[i].nodeVectorIndexArr = nodeVectorIndexArr;
+//					_nodes[i].nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
+//					_nodes[i].name = nodeNameTemplate;
+//
+//					_nodes[i].hostnameVectorIndexString = hostnameVectorIndexString;
+//					_nodes[i].hostnameVectorIndexArr = hostnameVectorIndexArr;
+//					_nodes[i].hostnameVectorIndexReverseMap = hostnameVectorIndexReverseMap;
+//					_nodes[i].hostnameFixedWidth = hostnameFixedWidth;
+//					//handle hostname change
+//					if(_nodes[i].hostname != hostname)
+//					{
+//						//enter in hostnames
+//						_hostnames[hostname] = 1;
+//						_nodes[i].hostname = hostname;
+//					}
 
 					//handle subsystem change
 					var subsystemId = 0;
@@ -3145,7 +3659,7 @@
 				
 		//=====================================================================================
 		//handleEditNodeDialogMultiNodeCheckbox ~~
-		function handleEditNodeDialogMultiNodeCheckbox(i,obj) 
+		function handleEditNodeDialogMultiNodeCheckbox(i,obj,showtooltip) 
 		{
 			Debug.log("handleEditNodeDialogMultiNodeCheckbox " + i + 
 					" - " + obj.checked);
@@ -3163,6 +3677,33 @@
 				document.getElementById("ediNode-" + "nodeName").value = 
 						nodeNameValue;	
 				return;
+			}
+			else 
+			{
+				//enabled, so show tooltip
+				DesktopContent.tooltip(showtooltip?"ALWAYS":"Multi-node Editing",
+						"This text provides extra details on how to create a multi-node, which is intended to be multiple " +
+						"instances of the same type of <i>artdaq</i> node (i.e. reader, builder, logger, etc.). The most common use case "+
+						"is repeating the same node configuration across multiple computers." +
+						"\n\n" +						
+						"To setup a multi-node, first set the size (i.e. the node count) of the multi-node by using <b>printer page syntax</b>" +
+						" in the Multi-Node Indices field, and one or many <b>*</b> characters in the Node Name field." +
+						"\n\n" + 
+						"For example, you can make 4 nodes named as follows:" +
+						"\n\n\t <i>reader0_east</i>" +
+						"\n\t <i>reader4_east</i>" +
+						"\n\t <i>reader5_east</i>" +
+						"\n\t <i>reader6_east</i>" + 
+						"\n\nTo achieve the above instances, you would set the following field values:" +
+						"\n\n<TAB><table><tr><td style='text-align:right'><b>Node Name:</b></td><td><i>reader*_east</i></td></tr>" +
+						"<tr><td style='text-align:right'><b>Multi-Node Indices:</b></td><td><i>0,4-6</i></td></tr></table></TAB>" +
+						"\n" + 
+						"If you want to go a step further and apply a fixed-width naming scheme (e.g. <i>reader006_east</i>), " +
+						"check the <b>Enable Fixed-width Node Names</b> checkbox (e.g. to get <i>006</i>, set the fixed-width value to <i>3</i>)." +
+						"\n\n" + 
+						"Finally, to associate an array of hostnames with your multi-node instances, enable the <b>Associate Multi-node Instances with an Array of Hostnames</b> checkbox." +
+						"You can use same <b>printer page syntax</b> and <b>*</b> characters to create an array of hostnames."
+				);
 			}
 			
 			//else try to place * for user
@@ -3208,7 +3749,16 @@
 			
 				
 			document.getElementById("hostnameArraySettings").style.display =
-					obj.checked?"block":"none";			
+					obj.checked?"block":"none";	
+			
+			if(obj.checked) //enabled, so show tooltip			
+				DesktopContent.tooltip("Hostname Array Editing Help",
+					"It may be the case that you want your multi-node instances to run on different computer; in this case, " +
+					"you will want to make use of the hostname array." +
+					"\n\n" +
+					"For example, to associate 4 nodes named reader0, reader4, reader5, reader6 to 4 hosts named cpu3.fnal.gov, cpu4.fnal.gov, cpu4.fnal.gov, cpu8.fnal.gov... " +
+					"You would enter a Node Name of 'reader*', Multi-node Indices of '0,4-6', Hostname of 'cpu*.fnal.gov', and Hostname Indices of '3,4,4,8'..."																	
+			);
 			
 		} //end handleEditNodeDialogHostnameArrayCheckbox()
 
@@ -3222,8 +3772,32 @@
 				
 			document.getElementById("hostnameFixedWidthSettings").style.display =
 					obj.checked?"block":"none";			
-			
+
+			if(obj.checked) //if checked, select text
+			{
+				var tel = document.getElementById("ediNode-" + "hostnameFixedWidth");
+				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);
+			}
 		} //end handleEditNodeDialogHostnameFixedWidthCheckbox()
+
+		//=====================================================================================
+		//handleEditNodeDialogNodeNameFixedWidthCheckbox
+		function handleEditNodeDialogNodeNameFixedWidthCheckbox(i,obj) 
+		{
+			Debug.log("handleEditNodeDialogNodeNameFixedWidthCheckbox " + i + 
+					" - " + obj.checked);
+			
+				
+			document.getElementById("nodeNameFixedWidthSettings").style.display =
+					obj.checked?"block":"none";		
+			
+			if(obj.checked) //if checked, select text
+			{
+				var tel = document.getElementById("ediNode-" + "nodeNameFixedWidth");
+				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);
+			}				
+			
+		} //end handleEditNodeDialogNodeNameFixedWidthCheckbox()
 		
 		//=====================================================================================
 		//handleEditNodeSelectEditIcon ~~
@@ -3251,7 +3825,6 @@
 			}
 			else 
 			{
-				tel.style.width = ((sel.offsetWidth > 200 ? sel.offsetWidth : 200) - 8) + "px";
 				sel.style.display = "none";
 				tel.style.display = "block";
 				if(tel.value == "")
@@ -3259,12 +3832,12 @@
 				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);
 			}
 		} //end handleEditNodeSelectEditIcon()
-		
+						
 		//=====================================================================================
 		//handleFclIconMouseUp ~~
-		function handleFclIconMouseUp(i,e) 
+		function handleFclIconMouseUp(i,e,x,y,subi) 
 		{	   
-			e.stopPropagation();
+			if(e) e.stopPropagation();
 		
 			if(!_codeEditorAppId)
 			{
@@ -3273,19 +3846,75 @@
 						Debug.HIGH_PRIORITY);
 				return;
 			}
+			
+
+			var type = _nodes[i].type;
+								
+			var typeName = 
+				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
+				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
 					
-			Debug.log("mouseup-fcl i = " + i + " - " + 
-					_nodes[i].name);				   
+					
+			
+			if(x == undefined && _nodes[i].nodeCount && _nodes[i].nodeCount > 1)
+			{
+				Debug.log("Showing multi-node menu");//handle node vector level first
+				var menuItems = [];
+				var menuItemHandlers = [];
+
+				
+				for(var j=0;j<_nodes[i].nodeCount;++j)
+				{
+					menuItems.push( "Open FHiCL for <b><u>" + typeName + 
+						"::" + getMultiNodeName(i,j) +
+						"</u></b>");
+					menuItemHandlers.push("handleFclIconMouseUp(" +
+							i + ", undefined /*e*/, " +
+							(e.pageX - 10) + " /*x*/," +
+							j + " /*subi*/" +
+							")");
+				}
+
+				SimpleContextMenu.createMenu(
+						menuItems,
+						menuItemHandlers,
+						"simpleContextMenuPopup",		//element ID
+						e.pageX - 10, e.pageY - 10, 		//top left position
+						_MENU_PRIMARY_COLOR,
+						_MENU_SECONDARY_COLOR,
+						true /*defaultHighlighting*/
+				);	
+				
+				return;
+			}
+			//else handle single node
+			
+			if(!x) x = event.pageX - 10;
+			var y = event.pageY - 10; //always follow mouse -- otherwise menu may become impossible to navigate
+			
+			Debug.log("mouseup-fcl i = " + i + 
+					"[" + subi + "] - " + 
+					_nodes[i].name);	
+
+			var nodeName = _nodes[i].name;
+			if(subi !== undefined) //dealing with a particular multi-node node
+				nodeName = getMultiNodeName(i,subi);
 		
 			var menuItems = [
-							 "Open FHiCL for " + _nodes[i].name + " in a desktop window",
-							 "Open FHiCL for " + _nodes[i].name + " in a new browser tab"
+							 "Open FHiCL for " + typeName + 
+								"::" + nodeName,
+							 "Open FHiCL for " + typeName + 
+								"::" + nodeName + " in a " +
+								"<label style='color:rgb(251, 128, 67);font-weight:bold;'>" +
+								"new browser tab</label>"
 									 ];
 			var menuItemHandlers = [];
 
 			var filename = "/$USER_DATA/ARTDAQConfigurations/" + 
-					ArtdaqConfigurationAPI.NODE_TYPES[_nodes[i].type] + "-" +
-					_nodes[i].name + ".fcl";
+					ArtdaqConfigurationAPI.NODE_TYPES[type] + "-" +
+					nodeName + ".fcl";
 			console.log("filename",filename);
 			
 
@@ -3341,8 +3970,8 @@
 			SimpleContextMenu.createMenu(
 					menuItems,
 					menuItemHandlers,
-					"openFclMenuForArtdaqNode",		//element ID
-					event.pageX - 1, event.pageY - 1, 		//top left position
+					"simpleContextMenuPopup",		//element ID
+					x, y, 		//top left position
 					_MENU_PRIMARY_COLOR,
 					_MENU_SECONDARY_COLOR,
 					true /*defaultHighlighting*/
@@ -3360,6 +3989,64 @@
 			
 			
 		} // end handleDeleteIconMouseUp()
+
+		//=====================================================================================
+		//getMultiNodeName ~~
+		function getMultiNodeName(i,subi) 
+		{	
+			var namePieces = _nodes[i].name.split('*');
+			if(namePieces.length > 1)
+			{
+				var nodeName = namePieces[0];
+				var nameIndex = subi + ""; //make a 'string'
+				while(_nodes[i].nodeNameFixedWidth && 
+						nameIndex.length < (_nodes[i].nodeNameFixedWidth|0))
+					nameIndex = "0" + nameIndex;
+
+				for(var p=1;p<namePieces.length;++p)
+					nodeName += nameIndex + namePieces[p];
+				
+				return nodeName; //on success				
+			}
+			else
+			{
+				Debug.log("Invalid multi-node name for subi=" + subi,
+						Debug.MED_PRIORITY);
+				return _nodes[i].name; //on failure
+			}			
+			
+		} //end getMultiNodeName()
+
+		//=====================================================================================
+		//getPrinterSyntaxStringWithWidth ~~
+		function getPrinterSyntaxStringWithWidth(s,w) 
+		{	
+			var sarr = s.split(',');
+			s = "";
+			
+			var v;
+			var isFirst = true;
+			for(var i=0;i<sarr.length;++i)
+			{
+				var rangeArr = sarr[i].split('-');
+				if(!rangeArr.length) continue;
+				
+				v = rangeArr[0] + ""; //make string
+				while(w && v.length < w) v = "0" + v;
+				
+				s += (isFirst?"":",") + v;
+				isFirst = false;
+						
+				if(rangeArr.length == 1) continue;
+				//else range
+				
+				v = rangeArr[1] + ""; //make string
+				while(w && v.length < w) v = "0" + v;
+				
+				s += "-" + v;
+			}
+			return s;
+		} //end getPrinterSyntaxStringWithWidth()
 		
 		//=====================================================================================
 		//openActiveGroupsDialog ~~
@@ -3426,7 +4113,8 @@
 							")</b>";
 					str += htmlClearDiv();
 					str += "<br><table style='margin-bottom: 10px;'>";
-					if(_systemGroups.aliases[groupTypes[g]].length)
+					if(_systemGroups.aliases[groupTypes[g]] &&
+							_systemGroups.aliases[groupTypes[g]].length)
 					{
 						str += "<tr><td><b>System Aliases:</b></td><td>";
 						{ //start aliases
@@ -3564,8 +4252,9 @@
 					{
 						stepString = "chooseActiveGroups-" + 
 								groupTypes[g] + "-";
-						/////////////////////////////////
-						document.getElementById(stepString + "activateAlias").onclick = 
+						var actionEl = document.getElementById(stepString + "activateAlias");
+						if(actionEl) /////////////////////////////////
+							actionEl.onclick = 
 								function()
 								{
 							//since multiple, use id to identify
@@ -3606,8 +4295,9 @@
 									}); //end activate group handler
 								}; //end activate alias handler
 
-						/////////////////////////////////
-						document.getElementById(stepString + "groupNames").onchange = 
+						actionEl = document.getElementById(stepString + "groupNames");
+						if(actionEl) //////////////////////////////////////////////////////////////////
+							actionEl.onchange = 
 								function()
 								{
 							//since multiple, use id to identify
@@ -3632,8 +4322,9 @@
 									str;
 								}; //end group names dropdown handler
 
-						/////////////////////////////////
-						document.getElementById(stepString + "activateGroup").onclick = 
+						actionEl = document.getElementById(stepString + "activateGroup");
+						if(actionEl) //////////////////////////////////////////////////////////////////
+							actionEl.onclick = 
 								function()
 								{
 							//since multiple, use id to identify
@@ -3793,6 +4484,101 @@
 						Debug.HIGH_PRIORITY);
 			}
 		} //end addArrow()
+		
+
+		//=====================================================================================
+		//checkForActiveGroupChange ~~
+		function checkForActiveGroupChange(init)
+		{
+			Debug.log("checkForActiveGroupChange() " + init);
+			
+			//get active table groups
+			DesktopContent.XMLHttpRequest("Request?RequestType=getActiveTableGroups",
+					"", function (req) {
+				
+
+				if(_checkActiveGroupsOffset)
+					window.clearTimeout(_checkActiveGroupsOffset);
+				_checkActiveGroupsOffset = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+
+				var activeConfigGroups = [
+					DesktopContent.getXMLValue(req, "Context-ActiveGroupName"),
+					DesktopContent.getXMLValue(req, "Context-ActiveGroupKey"),
+					DesktopContent.getXMLValue(req, "Configuration-ActiveGroupName"),
+					DesktopContent.getXMLValue(req, "Configuration-ActiveGroupKey")];
+
+				console.log("activeConfigGroups",activeConfigGroups);
+				
+				//check for changes
+				if(init || _lastActiveGroups.length != activeConfigGroups.length)
+				{
+					if(!init && _lastActiveGroups.length) //treat as change
+					{
+						localHandleChange(activeConfigGroups);
+						return;
+					}
+					else //treat as initializing active groups
+						_lastActiveGroups = activeConfigGroups;					
+				}
+				
+				for(var i=0;i<_lastActiveGroups.length && activeConfigGroups.length;++i)
+				{
+					if(_lastActiveGroups[i] != activeConfigGroups[i])
+					{
+						localHandleChange(activeConfigGroups);
+						return;
+					}
+				}
+
+			},
+			0, 0, true,  //reqParam, progressHandler, callHandlerOnErr
+			true /*doNotShowLoadingOverlay*/
+			); //end of getActiveTableGroups handler
+			
+			return;
+			
+			//===========
+			function localHandleChange(activeConfigGroups)
+			{
+				if(_checkActiveGroupsOffset)
+				{
+					window.clearTimeout(_checkActiveGroupsOffset);
+					_checkActiveGroupsOffset = 0;
+				}
+				
+				DesktopContent.popUpVerification(
+						"A configuration change was detected! " +
+						"Do you want to reload the artdaq Configuration GUI (any modifications in this window will be lost!)?",
+						function() /*yes-to-reload handler*/
+						{
+							Debug.log("Reloading artdaq nodes...");
+		
+							if(_checkActiveGroupsOffset)
+								window.clearTimeout(_checkActiveGroupsOffset);
+							_checkActiveGroupsOffset = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+
+
+						} /*end yes-to-reload handler*/,
+						0,0,// val [optional], bgColor [optional], 
+						0,0,0, //			textColor [optional], borderColor [optional], getUserInput [optional], 
+						0, //			dialogWidth [optional], 
+						function() /*cancelFunc [optional]*/
+						{
+							Debug.log("Canceled...");
+
+							if(_checkActiveGroupsOffset)
+								window.clearTimeout(_checkActiveGroupsOffset);
+							_checkActiveGroupsOffset = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+
+						} //end cancelFunc handler
+				);
+
+				//save for next time
+				_lastActiveGroups = activeConfigGroups;
+
+			} //end localHandleChange()
+			
+		} //end checkForActiveGroupChange()
 		
 		</script>
 </head>
