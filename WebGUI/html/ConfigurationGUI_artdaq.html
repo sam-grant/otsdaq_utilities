@@ -69,7 +69,7 @@
 				"xstep":0, 	"ystep":0}; 
 		var _nodes = []; 	// array of node objects (can be multi-node vector at location, using nodeCount and nodeVectorIndexArr
 							//	node: 	{type, name, hostname, subsystemId, 
-							//		originalName, xGrid, yGrid, nodeCount, 
+							//		originalName, x, y, nodeCount, 
 							//		nodeVectorIndexArr, nodeVectorIndexReverseMap, 
 							//		nodeVectorIndexString, nodeNameFixedWidth,
 							//		hostnameVectorIndexArr, hostnameVectorIndexReverseMap, 
@@ -146,6 +146,7 @@
 			//htmlClearDiv()
 			//init()	
 			//	localFinishInit()
+			//initArtdaqNodes()
 			//handleOptionalNodeParameters(node,nodeNameTemplate,nodeVectorIndexString,nodeNameFixedWidth,hostname,hostnameVectorIndexString,hostnameFixedWidth)
 			//initArrows()
 			//save()
@@ -154,8 +155,10 @@
 			//openActiveGroupsDialog()
 			//nodeLayoutHasChanged()
 			//nodesHaveChanged(hasChanged)
+			//createNode()
+			//	localAddHandlers()
 			//addArrow(startNodeIndex, startNodePointIndex, endNodeIndex, endNodePointIndex)
-					
+								
 			//paint()
 			//drawGrid() 
 			//drawNode(i,xoff,yoff) 
@@ -163,8 +166,6 @@
 		
 			//getNodePoint(i,p)
 			//doNodeHover(i)
-			//getTypeIndex(typeName)
-			//getTypeName(typeIndex)
 			//getEmptyGridSpot(type)
 			//plusMinusGrid(isPlus,directionIndex)
 			//getNodeFontSize()
@@ -252,7 +253,18 @@
 				_arrows[1][0] = {"p0":1,"p1":0};
 
 			}
-						
+			
+			initArtdaqNodes();
+			
+		} //end init()
+		
+		//=====================================================================================
+		//initArtdaqNodes ~~
+		//	init called once body has loaded
+		function initArtdaqNodes() 
+		{				
+			Debug.log("initArtdaqNodes()");
+					
 			//init configuration members
 			_modifiedTables = undefined; //reset
 			
@@ -343,7 +355,7 @@
 									   
 							//add to nodes
 							_nodes.push({
-								"type": 		getTypeIndex(type),
+								"type": 		ArtdaqConfigurationAPI.getTypeIndex(type),
 								"name": 		name,
 								"originalName": name, //useful when saving
 								"hostname":		artdaqObj[type][name].hostname,
@@ -397,7 +409,7 @@
 						{	
 							console.log("Type",t,"Name",n);
 
-							var typeIndex = getTypeIndex(t);
+							var typeIndex = ArtdaqConfigurationAPI.getTypeIndex(t);
 							var xy = getEmptyGridSpot(typeIndex);
 
 							//enter in hostnames
@@ -496,7 +508,7 @@
 				document.body.addEventListener("keyup",handleMouseMove);
 			} //end localFinishInit()									
 			
-		} //end init()	
+		} //end initArtdaqNodes()	
 
 		//=====================================================================================
 		//handleOptionalNodeParameters ~~
@@ -859,41 +871,7 @@
 			}
 			
 		} //end initArrows()
-		
-		//=====================================================================================
-		//getTypeIndex ~~
-		function getTypeIndex(typeName)
-		{
-			Debug.log("getTypeIndex " + typeName);
-			t = typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_READER]		?ArtdaqConfigurationAPI.NODE_TYPE_READER:
-					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_BUILDER]	?ArtdaqConfigurationAPI.NODE_TYPE_BUILDER:
-					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_LOGGER]	?ArtdaqConfigurationAPI.NODE_TYPE_LOGGER:
-					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER]?ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER:
-					(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_MONITOR]	?ArtdaqConfigurationAPI.NODE_TYPE_MONITOR:-1))));
-			
-			if(t < 0)
-			{	
-				Debug.log("Illegal type name " + typeName + 
-						". Tell admins how you got here!", Debug.HIGH_PRIORITY);
-				return; 
-			}
-			return t;
-		} //end getTypeIndex()
-		
-		//=====================================================================================
-		//getTypeName ~~
-		function getTypeName(typeIndex)
-		{
-			Debug.log("getTypeName " + typeIndex);
-			
-			if(ArtdaqConfigurationAPI.NODE_TYPES[typeIndex] === undefined)
-			{	
-				Debug.log("Illegal type index " + typeIndex + 
-						". Tell admins how you got here!", Debug.HIGH_PRIORITY);
-				return; 
-			}
-			return ArtdaqConfigurationAPI.NODE_TYPES[typeIndex];
-		} //end getTypeName()	
+				
 
 		//=====================================================================================
 		//getEmptyGridSpot ~~
@@ -1002,9 +980,9 @@
 			_w = DesktopContent.getWindowWidth();
 			_h = DesktopContent.getWindowHeight();
 			
-			console.log("_grid",_grid);
-			console.log("_nodes",_nodes);
-			console.log("_arrows",_arrows);
+			//console.log("_grid",_grid);
+			//console.log("_nodes",_nodes);
+			//console.log("_arrows",_arrows);
 
 			var MIN_H = 280;
 			var MIN_W = 280;
@@ -1013,7 +991,7 @@
 			if(_h < MIN_H)
 				_h = MIN_H;
 			
-			Debug.log("paint w,h=" + _w + "," + _h);
+			//Debug.log("paint w,h=" + _w + "," + _h);
 
 			_canvas.style.width = (_w - _CANVAS_MARGIN*2) + "px";
 			_canvas.style.height = (_h - _CANVAS_MARGIN*2) + "px";
@@ -1090,7 +1068,7 @@
 				_grid.y0 = _grid.y0 + _grid.ystep/2;
 			}
 
-			console.log("drawGrid _grid",_grid);
+			//console.log("drawGrid _grid",_grid);
 			
 			//draw grid +/- arrows
 			//if node exists, get element
@@ -1413,7 +1391,7 @@
 					   e.clientY:_mouseMoveStart[1]
 			 ]; //box top-left ==> bot-right
 			
-			console.log("box",box);
+			//console.log("box",box);
 			
 			var el = document.getElementById("selectionBoxDiv");
 			el.style.left 	= box[0] + "px";
@@ -1446,7 +1424,7 @@
 					_grid.y0 + nodeBox[3]  * _grid.ystep - _NODE_SIZE/2)
 				--nodeBox[3]; //lose selection
 			
-			console.log("node box selection",nodeBox);
+			//console.log("node box selection",nodeBox);
 			
 			for(var xg=nodeBox[0];xg<=nodeBox[2];++xg)
 				for(var yg=nodeBox[1];yg<=nodeBox[3];++yg)
@@ -1458,7 +1436,7 @@
 						_mouseMoveStart[2][_grid.rowColMap[xg][yg]] = 1;
 					}
 
-			console.log("nodes in box selection",_mouseMoveStart[2]);
+			//console.log("nodes in box selection",_mouseMoveStart[2]);
 
 			paint();
 		} //end handleSelectionBox()
@@ -1487,25 +1465,11 @@
 			if(yoff) y += yoff;
 			
 			//Debug.log("x,y,sz = " + x + "," + y + "," + sz);
-			
-			var typeClass = 
-					type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"nodeReader":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"nodeBuilder":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"nodeLogger":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"nodeDispatcher":"nodeMonitor";
 
-			var typeName = 
-					type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
-			var typeAcronym = 
-					type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"BR":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"EB":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"DL":
-					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Di":"Mo";
-						
-			
+			var typeName = ArtdaqConfigurationAPI.getShortTypeName(type);
+			var typeClass = "node" + typeName;
+			var typeAcronym = ArtdaqConfigurationAPI.NODE_TYPE_ACRONYM[type];
+									
 			//Debug.log("nodeid = " + nodeid + "; typeClass = " + typeClass);
 
 			//if node exists, get element
@@ -1758,8 +1722,9 @@
 		//handleMouseMove ~~
 		function handleMouseMove(e) 
 		{	
-			if(document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID))
-				return; //disable while popup
+			if(document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID) ||
+					!_grid || !_grid.rowColMap)
+				return; //disable while popup or initializing
 				
     		var x = e.clientX;//- this.offsetLeft - _CANVAS_MARGIN - 2;
     		var y = e.clientY;//- this.offsetTop - _CANVAS_MARGIN - 2;
@@ -1899,6 +1864,10 @@
 					
 					//Debug.log("Place + at " + xg + "," + yg);
 	
+					//hijack _mouseMoveStart to record + position
+					_mouseMoveStart[0] = xg;
+					_mouseMoveStart[1] = yg;
+					
 					var sz = 32;
 					_addNodeEl.style.left =
 							((_grid.x0 + xg * _grid.xstep - sz/2) | 0) + "px";
@@ -2077,7 +2046,7 @@
     				paint();
     				break; 	
     			case _MMM_POPUP_DIALOG: //ignore mouse up during popup
-    				return;			
+    				return;		
     			default:
     				Debug.log("Illegal mouseup _mouseMoveMode = " +
     						_mouseMoveMode, 
@@ -2091,6 +2060,8 @@
 		//handleMouseDown ~~
 		function handleMouseDown(e) 
 		{	
+			if(_mouseMoveMode == _MMM_POPUP_DIALOG) return; //ignore!
+				
 			e.stopPropagation();
 
     		var x = e.clientX;
@@ -2212,7 +2183,22 @@
 			
 			//Debug.log((undoHover?"Hide ":"") + "Mouse over node " + i);
 			
-			if(i < -1 || (i == -1 && undoHover))
+			//if no particular target, undo extraneous
+			if(i == -1 && undoHover)
+			{
+				//remove +			
+				_addNodeEl.style.left = "-1000px"; //off screen
+				
+				var els = document.getElementsByClassName(
+						"grid-plusMinusArrows");
+				for(var j=0;j<els.length;++j)
+					els[j].style.display = "none";
+
+				return;
+			}
+			
+			//if targeting +/- arrows
+			if(i < -1)
 			{
 				//do not show for mouse move modes
 				if(!undoHover && _mouseMoveMode != _MMM_NONE) return; 
@@ -2555,15 +2541,9 @@
 		{	   
 			if(e) e.stopPropagation();
 		
-			var type = _nodes[i].type;
-								
-			var typeName = 
-				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
-					
-					
+			var type = _nodes[i].type;								
+			var typeName = ArtdaqConfigurationAPI.getShortTypeName(type);
+										
 			if(x == undefined && _nodes[i].nodeCount && _nodes[i].nodeCount > 1)
 			{
 				Debug.log("Showing multi-node menu");
@@ -2703,19 +2683,9 @@
 					"[" + subi + "] -" + 
 					editType + "-" + newTab);
 			
-			var type = _nodes[i].type;
-			
-			var typeName = 
-				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
-			
-			var typeBaseTable = 
-				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"ARTDAQBoardReaderTable":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"ARTDAQEventBuilderTable":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"ARTDAQDataLoggerTable":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"ARTDAQDispatcherTable":"ARTDAQMonitorTable";
+			var type = _nodes[i].type;			
+			var typeName = ArtdaqConfigurationAPI.getShortTypeNameonAPI(type);			
+			var typeBaseTable = ArtdaqConfigurationAPI.NODE_TYPE_BASE_TABLE[type]; //use above call for type safety
 
 			var subsetName = editTypeString;
 			
@@ -2791,11 +2761,11 @@
 				var doMap = {};
 				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER] = [];
 				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER].push({
-					"table" : 		"ARTDAQDaqParameterTable",
+					"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
 					"groupLink"	: 	"daqParametersLink"
 				}); //Reader DAQ parameters
 				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER].push({
-					"table" : 		"ARTDAQMetricTable",
+					"table" : 		ArtdaqConfigurationAPI.DAQ_METRIC_TABLE,
 					"groupLink"	: 	"daqMetricsLink"
 				}); //Reader DAQ metrics
 				
@@ -2807,15 +2777,15 @@
 				{
 					doMap[equivalentTypes[t]] = [];
 					doMap[equivalentTypes[t]].push({
-						"table" : 		"ARTDAQDaqParameterTable",
+						"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
 						"groupLink"	: 	"preambleParametersLink"
 					}); //Preamble Parameters
 					doMap[equivalentTypes[t]].push({
-						"table" : 		"ARTDAQDaqParameterTable",
+						"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
 						"groupLink"	: 	"daqLink/daqParametersLink"
 					}); //DAQ Parameters
 					doMap[equivalentTypes[t]].push({
-						"table" : 		"ARTDAQMetricTable",
+						"table" : 		ArtdaqConfigurationAPI.DAQ_METRIC_TABLE,
 						"groupLink"	: 	"daqLink/daqMetricsLink"
 					}); //DAQ Metrics
 					doMap[equivalentTypes[t]].push({
@@ -2835,7 +2805,7 @@
 						"groupLink"	: 	"physicsOtherParametersLink"
 					}); //ART Physics Other Parameters
 					doMap[equivalentTypes[t]].push({
-						"table" : 		"ARTDAQDaqParameterTable",
+						"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
 						"groupLink"	: 	"addOnParametersLink"
 					}); //Add-on Parameters
 				}
@@ -2968,19 +2938,12 @@
 			Debug.log("launchEditNodeDialog node size " + _nodes[i].nodeCount);
 
 			var type = _nodes[i].type;
-			var typeName = 
-				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
-		
-			
-			//undo hover node, if any
-			if(_mouseHoverNode != -1)
-				doNodeHover(_mouseHoverNode,true /*undoHover*/);
+			var typeName = ArtdaqConfigurationAPI.NODE_SHORT_TYPE_NAMES[type];
+					
+			//undo hover node
+			doNodeHover(_mouseHoverNode,true /*undoHover*/);
 
 			_mouseMoveMode = _MMM_POPUP_DIALOG;
-			Debug.log("openActiveGroupsDialog()");
 			
 			var ctrlStr = "";
 			ctrlStr += htmlOpen("input",
@@ -3093,7 +3056,7 @@
 					"<img src='/WebPath/images/dashboardImages/icon-Help.png'></a></div>";
 			str += "</td></tr>";
 			//======== end Node Name Field
-			str += "</table>"
+			str += "</table>";
 
 			str += htmlClearDiv();
 			
@@ -3435,174 +3398,6 @@
 							hostnameFixedWidth))
 						return; //end progress if failed to handle (function should display error message)
 					
-//					var nodeVectorIndexString = nodeIndices;
-//					var nodeVectorIndexArr = []; //reset
-//					var nodeVectorIndexReverseMap = {}; //reset
-//					
-//					nodeIndices = nodeIndices.split(',');
-//					var nodeCount = 0;
-//					for(var j=0;j<nodeIndices.length;j++)
-//					{
-//						var nodeSubindices = nodeIndices[j].split('-');
-//						
-//						if(nodeSubindices.length == 1)
-//						{
-//							var index = nodeSubindices[0].trim();
-//							
-//							if(nodeVectorIndexReverseMap[index])
-//							{
-//								Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
-//										index + "') are not allowed.",
-//										Debug.HIGH_PRIORITY);
-//								return;								
-//							}
-//							nodeVectorIndexReverseMap[index] = nodeCount++;
-//							nodeVectorIndexArr.push(index);							
-//						}
-//						else if(nodeSubindices.length == 2)
-//						{
-//							var hi = nodeSubindices[1].trim() | 0;
-//							var lo = nodeSubindices[0].trim() | 0;
-//							if(hi <= lo)
-//							{
-//								Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
-//										Debug.HIGH_PRIORITY);
-//								return;
-//							}
-//							
-//							for(var k=lo;k<=hi;++k)
-//							{
-//								if(nodeVectorIndexReverseMap[k])
-//								{
-//									Debug.log("Illegal Node Indices - repeat indices (i.e. '" +
-//											k + "') are not allowed.",
-//											Debug.HIGH_PRIORITY);
-//									return;								
-//								}
-//								nodeVectorIndexReverseMap[k] = nodeCount++;
-//								nodeVectorIndexArr.push(k);								
-//							}
-//						}
-//						else
-//						{
-//							Debug.log("Illegal Node Indices - please use printer page syntax (e.g. '0,4-6').",
-//									Debug.HIGH_PRIORITY);
-//							return;
-//						}
-//					} //end extract node indices
-//					console.log("nodeCount",nodeCount); 
-//					console.log("nodeVectorIndexArr",nodeVectorIndexArr); 
-//					console.log("nodeVectorIndexReverseMap",nodeVectorIndexReverseMap); 
-//					
-//					if(nodeCount> 1 && 
-//							nodeNameTemplate.indexOf('*') < 0)
-//					{
-//						Debug.log("Illegal Node Name for multi-node - please use * to indicate where the instance index should be (e.g. 'reader*' to make reader0, reader1, etc..).",
-//								Debug.HIGH_PRIORITY);
-//						return;
-//					}
-//					
-//
-//					var hostnameVectorIndexString = hostnameIndices;
-//					var hostnameVectorIndexArr = []; //reset
-//					var hostnameVectorIndexReverseMap = {}; //reset
-//					
-//
-//					hostnameIndices = hostnameIndices.split(',');
-//					var hostnameCount = 0;
-//					for(var j=0;j<hostnameIndices.length;j++)
-//					{
-//						var hostnameSubindices = hostnameIndices[j].split('-');
-//						
-//						if(hostnameSubindices.length == 1)
-//						{
-//							var index = hostnameSubindices[0].trim();
-//							
-//							if(hostnameVectorIndexReverseMap[index])
-//							{
-//								Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
-//										index + "') are not allowed.",
-//										Debug.HIGH_PRIORITY);
-//								return;								
-//							}
-//							hostnameVectorIndexReverseMap[index] = hostnameCount++;
-//							hostnameVectorIndexArr.push(index);							
-//						}
-//						else if(hostnameSubindices.length == 2)
-//						{
-//							var hi = hostnameSubindices[1].trim() | 0;
-//							var lo = hostnameSubindices[0].trim() | 0;
-//							if(hi <= lo)
-//							{
-//								Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
-//										Debug.HIGH_PRIORITY);
-//								return;
-//							}
-//							
-//							for(var k=lo;k<=hi;++k)
-//							{
-//								if(hostnameVectorIndexReverseMap[k])
-//								{
-//									Debug.log("Illegal Hostname Indices - repeat indices (i.e. '" +
-//											k + "') are not allowed.",
-//											Debug.HIGH_PRIORITY);
-//									return;								
-//								}
-//								hostnameVectorIndexReverseMap[k] = hostnameCount++;
-//								hostnameVectorIndexArr.push(k);								
-//							}
-//						}
-//						else
-//						{
-//							Debug.log("Illegal Hostname Indices - please use printer page syntax (e.g. '0,4-6').",
-//									Debug.HIGH_PRIORITY);
-//							return;
-//						}
-//					} //end extract node indices
-//					console.log("hostnameCount",hostnameCount); 
-//					console.log("hostnameVectorIndexArr",hostnameVectorIndexArr); 
-//					console.log("hostnameVectorIndexReverseMap",hostnameVectorIndexReverseMap); 
-//					
-//					if(hostnameCount> 1 && 
-//							hostname.indexOf('*') < 0)
-//					{
-//						Debug.log("Illegal Hostname for associating an array of hostnames to multiple " +
-//								"node instances - please use * in the hostname (click the pencil to type in the hostname field) to indicate where the hostname index should be (e.g. 'host*' to make host0, host1, etc..).",
-//								Debug.HIGH_PRIORITY);
-//						return;
-//					}
-//					if(hostnameCount> 1 && 
-//							hostnameCount != nodeCount)
-//					{
-//						Debug.log("Illegal array of hostnames. Size " + hostnameCount +
-//								" is not equal to the number of node instances which is " +
-//								nodeCount + " - there must be a one-to-one correspondence " +
-//								"between hostname and node, or else all nodes must be placed on the same host.",
-//								Debug.HIGH_PRIORITY);
-//						return;
-//					}
-//					
-//					
-//					//at this point, the change has been verified!
-//					// so set node values
-//					_nodes[i].nodeCount = nodeCount;
-//					_nodes[i].nodeVectorIndexString = nodeVectorIndexString;
-//					_nodes[i].nodeVectorIndexArr = nodeVectorIndexArr;
-//					_nodes[i].nodeVectorIndexReverseMap = nodeVectorIndexReverseMap;
-//					_nodes[i].name = nodeNameTemplate;
-//
-//					_nodes[i].hostnameVectorIndexString = hostnameVectorIndexString;
-//					_nodes[i].hostnameVectorIndexArr = hostnameVectorIndexArr;
-//					_nodes[i].hostnameVectorIndexReverseMap = hostnameVectorIndexReverseMap;
-//					_nodes[i].hostnameFixedWidth = hostnameFixedWidth;
-//					//handle hostname change
-//					if(_nodes[i].hostname != hostname)
-//					{
-//						//enter in hostnames
-//						_hostnames[hostname] = 1;
-//						_nodes[i].hostname = hostname;
-//					}
-
 					//handle subsystem change
 					var subsystemId = 0;
 					for(var j in _subsystems)
@@ -3848,15 +3643,8 @@
 			}
 			
 
-			var type = _nodes[i].type;
-								
-			var typeName = 
-				type == ArtdaqConfigurationAPI.NODE_TYPE_READER? 		"Reader":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER? 		"Builder":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER? 		"Logger":
-				type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER? 	"Dispatcher":"Monitor";
-					
-					
+			var type = _nodes[i].type;								
+			var typeName = ArtdaqConfigurationAPI.getShortTypeName(type);
 			
 			if(x == undefined && _nodes[i].nodeCount && _nodes[i].nodeCount > 1)
 			{
@@ -4375,7 +4163,7 @@
 			
 			for(var i=0;i<_nodes.length;++i)
 			{
-				postData += "," + getTypeName(_nodes[i].type);
+				postData += "," + ArtdaqConfigurationAPI.getTypeName(_nodes[i].type);
 				postData += "," + _nodes[i].name;
 				postData += "," + _nodes[i].x;
 				postData += "," + _nodes[i].y;				
@@ -4431,6 +4219,187 @@
 						
 		} //end nodesHaveChanged()
 		
+		//====================================================================================
+		//createNode ~~
+		function createNode()
+		{
+			Debug.log("createNode() " + 
+					_mouseMoveStart[0] + "," + _mouseMoveStart[1]);
+			
+			//undo hover node
+			doNodeHover(_mouseHoverNode,true /*undoHover*/);
+
+			_mouseMoveMode = _MMM_POPUP_DIALOG;
+
+			var ctrlStr = "";
+			ctrlStr += htmlOpen("input",
+					{
+							"class": "closeButton",
+							"type": "button",
+							"style": "margin:20px;",
+							"value": "Close",
+							"title": "Close this dialog."
+					},
+					0 /*html*/, true /*closeTag*/);	
+
+			var str = "";
+
+			str += "Choose the node type to add...";
+
+			str += htmlClearDiv();
+
+			str += "<br><center><table class='editNodeDialog-table'>";
+			
+			//======== Subsystem Field
+			str += "<tr><td class='editNodeDialog-fieldCol'><b>Node Type:</b></td><td class='editNodeDialog-valueCol'>";
+			{ //start subsystems
+				str += htmlOpen("select",
+						{
+								"id": "ediNode-" + "nodeType",
+								"style": "float:left; margin:7px; width:187px;",
+						});
+
+				for(var j=0;j<ArtdaqConfigurationAPI.NODE_FULL_TYPE_NAMES.length;++j)
+				{					
+					str += "<option >" +	
+							ArtdaqConfigurationAPI.NODE_FULL_TYPE_NAMES[j] + 
+							"</option>";
+				}
+				str += "</select>"; //end aliases dropdown
+
+			} //end subsystems
+			str += "</td></tr>";
+			//======== end Subsystem Field
+
+			str += "</table>";
+			
+
+			
+			str += htmlOpen("input",
+					{
+							"id": "ediNode-" + "addNode",
+							"type": "button",
+							"value": "Add Node",
+							"title": "Add the new node."
+					},
+					0 /*html*/, true /*closeTag*/);	
+
+			//remove all existing dialogs
+			ConfigurationAPI.removeAllPopUps();
+			
+			//make popup element
+			el = document.createElement("div");			
+			el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
+
+			ConfigurationAPI.setPopUpPosition(el,
+					undefined /*w*/,
+					undefined /*h*/, 
+					undefined /*padding*/, 
+					undefined /*border*/,
+					50 /*margin*/);
+
+			el.innerHTML = ctrlStr + htmlClearDiv() + 
+					str + htmlClearDiv(); // + ctrlStr;
+			document.body.appendChild(el);
+
+			localAddHandlers();
+
+			return;
+			
+			//==========
+			function localAddHandlers()
+			{ //start localAddHandlers			
+
+				var closeButtons = document.getElementsByClassName("closeButton");
+				for(var b=0;b<closeButtons.length;++b)
+					closeButtons[b].onclick = 
+							localCloseButtonHandler;
+
+				/////////////////////////////////
+				function localCloseButtonHandler()
+				{
+					Debug.log("localCloseButtonHandler()");
+
+					//remove all existing dialogs
+					ConfigurationAPI.removeAllPopUps();
+
+					_mouseMoveMode = _MMM_NONE;
+				} //end localCloseButtonHandler()
+
+				/////////////////////////////////
+				document.getElementById("ediNode-" + "addNode").onclick = 
+						function()
+						{
+					Debug.log("Adding node ");
+					
+					var type = document.getElementById("ediNode-" + "nodeType").selectedIndex;
+					console.log("type",type);
+					
+					//Steps:
+					// 	- create a new node, find index i of new node
+					//	- set defaults for _nodes[i] object
+					//	- call launchEditNodeDialog(i) for initial editing
+					
+					_nodes.push({});
+					var i = _nodes.length-1;
+					
+					var n = 0;					
+					
+					//check for name conflicts
+					var conflict;
+					do
+					{
+						conflict = false;
+						_nodes[i].name = ArtdaqConfigurationAPI.getTypeName(type) + n;
+						for(var j=0;j<i;++j)
+							if(_nodes[j].type == _nodes[i].type &&
+									_nodes[j].name == _nodes[i].name)
+							{
+								conflict = true;
+								++n; //increment name index
+							}						
+					} while(conflict);
+					
+					Debug.log("New default name = " + _nodes[i].name);
+					
+					//guess at hostname
+					var keys = Object.keys(_hostnames);
+					if(keys.length)
+						_nodes[i].hostname = keys[0];
+					else
+					{
+						_nodes[i].hostname = "localhost";
+						_hostnames[_nodes[i].hostname] = 1;
+					}
+					
+					//guess at subsystem
+					keys = Object.keys(_subsystems);
+					if(keys.length > 1)
+						_nodes[i].subsystemId = keys[1] | 0;
+					else //create a subsystem
+					{
+						_subsystems[1] = {
+								"label" : 			"subsystem1", 
+								"destinationId" : 	0 /*default to null destination*/ 
+						};
+						_nodes[i].subsystemId = 1;
+					}
+					
+					_nodes[i].x 	= _mouseMoveStart[0];
+					_nodes[i].y 	= _mouseMoveStart[1];
+					_nodes[i].type 	= type;
+					
+					console.log("_nodes[i]",_nodes[i]);
+					nodesHaveChanged();
+					
+					paint();
+					
+					launchEditNodeDialog(i);
+										
+						}; //end addNode click handler
+			} //end localAddHandlers()
+			
+		} //end createNode()
 		
 		//====================================================================================
 		//addArrow ~~
@@ -4488,12 +4457,13 @@
 
 		//=====================================================================================
 		//checkForActiveGroupChange ~~
-		function checkForActiveGroupChange(init)
+		function checkForActiveGroupChange(doInit)
 		{
-			Debug.log("checkForActiveGroupChange() " + init);
+			//Debug.log("checkForActiveGroupChange() " + doInit);
 			
 			//get active table groups
-			DesktopContent.XMLHttpRequest("Request?RequestType=getActiveTableGroups",
+			DesktopContent.XMLHttpRequest(
+					"Request?RequestType=getActiveTableGroups",
 					"", function (req) {
 				
 
@@ -4507,12 +4477,12 @@
 					DesktopContent.getXMLValue(req, "Configuration-ActiveGroupName"),
 					DesktopContent.getXMLValue(req, "Configuration-ActiveGroupKey")];
 
-				console.log("activeConfigGroups",activeConfigGroups);
+				//console.log("activeConfigGroups",activeConfigGroups);
 				
 				//check for changes
-				if(init || _lastActiveGroups.length != activeConfigGroups.length)
+				if(doInit || _lastActiveGroups.length != activeConfigGroups.length)
 				{
-					if(!init && _lastActiveGroups.length) //treat as change
+					if(!doInit && _lastActiveGroups.length) //treat as change
 					{
 						localHandleChange(activeConfigGroups);
 						return;
@@ -4546,19 +4516,13 @@
 					_checkActiveGroupsOffset = 0;
 				}
 				
+				console.log("activeConfigGroups",activeConfigGroups);
+												
 				DesktopContent.popUpVerification(
 						"A configuration change was detected! " +
-						"Do you want to reload the artdaq Configuration GUI (any modifications in this window will be lost!)?",
-						function() /*yes-to-reload handler*/
-						{
-							Debug.log("Reloading artdaq nodes...");
-		
-							if(_checkActiveGroupsOffset)
-								window.clearTimeout(_checkActiveGroupsOffset);
-							_checkActiveGroupsOffset = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
-
-
-						} /*end yes-to-reload handler*/,
+						"Do you want to <b>reload</b> the artdaq Configuration GUI (any modifications in this window will be lost!)?",
+						initArtdaqNodes /*yes-to-reload handler*/
+						,
 						0,0,// val [optional], bgColor [optional], 
 						0,0,0, //			textColor [optional], borderColor [optional], getUserInput [optional], 
 						0, //			dialogWidth [optional], 
@@ -4576,7 +4540,7 @@
 				//save for next time
 				_lastActiveGroups = activeConfigGroups;
 
-			} //end localHandleChange()
+			} //end localHandleChange()			
 			
 		} //end checkForActiveGroupChange()
 		
@@ -4597,12 +4561,12 @@
 	<canvas id='theActionCanvas'></canvas>
 	<div id='postCanvas'></div>
 		
-	<div id='createNodeDiv'>
-		<a id='createNode' 
-				onclick='createNode(); return false;'
-				onmouseup="event.stopPropagation();" 
-				onmousedown="event.stopPropagation();" 
-				title='Create a new node'>+</a>
+	<div id='createNodeDiv' 
+			onclick='createNode(); event.stopPropagation();'
+			onmouseup="event.stopPropagation();" 
+			onmousedown="event.stopPropagation();" 
+			title='Create a new artdaq node'>
+		<div id='createNode' >+</div>
 	</div>
 		
 	<div id='selectionBoxDiv'></div>
