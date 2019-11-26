@@ -613,6 +613,7 @@ DesktopContent.hideLoading = function()	{
 	} //end localHideLoadBox
 	
 } //end hideLoading()
+
 //=====================================================================================
 //DesktopContent.XMLHttpRequest
 // forms request properly for ots server, POSTs data

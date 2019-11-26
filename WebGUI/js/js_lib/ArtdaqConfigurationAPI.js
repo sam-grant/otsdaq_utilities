@@ -30,6 +30,10 @@ if (typeof ConfigurationAPI == 'undefined')
 //"public" function list: 
 //	ArtdaqConfigurationAPI.getArtdaqNodes(responseHandler,modifiedTables)
 //	ArtdaqConfigurationAPI.saveArtdaqNodes(responseHandler,modifiedTables)
+//	ArtdaqConfigurationAPI.getTypeIndex(typeName)
+//	ArtdaqConfigurationAPI.getTypeName(typeIndex)
+//	ArtdaqConfigurationAPI.getShortTypeName(typeIndex)
+//	ArtdaqConfigurationAPI.getFullTypeName(typeIndex)
 
 //"public" helpers:
 
@@ -41,8 +45,20 @@ ArtdaqConfigurationAPI.NODE_TYPE_BUILDER 		= 1;
 ArtdaqConfigurationAPI.NODE_TYPE_LOGGER 		= 2;
 ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER 	= 3;
 ArtdaqConfigurationAPI.NODE_TYPE_MONITOR 		= 4;
-ArtdaqConfigurationAPI.NODE_TYPES = ["reader","builder",
-									 "logger","dispatcher","monitor"];
+ArtdaqConfigurationAPI.NODE_TYPE_ROUTER 		= 5;
+ArtdaqConfigurationAPI.NODE_TYPES 				= ["reader","builder",
+												   "logger","dispatcher","monitor","router"];
+ArtdaqConfigurationAPI.NODE_SHORT_TYPE_NAMES 	= ["Reader","Builder",
+												   "Logger","Dispatcher","Monitor","Router"];
+ArtdaqConfigurationAPI.NODE_FULL_TYPE_NAMES 	= ["Board Reader","Event Builder",
+												   "Data Logger","Dispatcher","Monitor","Routing Master"];
+ArtdaqConfigurationAPI.NODE_TYPE_ACRONYM 		= ["BR","EB",
+												   "DL","Di","Mo","RM"];
+ArtdaqConfigurationAPI.NODE_TYPE_BASE_TABLE		= ["ARTDAQBoardReaderTable","ARTDAQEventBuilderTable",
+												   "ARTDAQDataLoggerTable","ARTDAQDispatcherTable",
+												   "ARTDAQMonitorTable","ARTDAQRoutingMasterTable"];
+ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE		= "ARTDAQDaqParameterTable";
+ArtdaqConfigurationAPI.DAQ_METRIC_TABLE			= "ARTDAQMetricTable";
 
 //"private" function list:
 
@@ -50,6 +66,71 @@ ArtdaqConfigurationAPI.NODE_TYPES = ["reader","builder",
 
 
 //Function definitions:
+
+//=====================================================================================
+//getTypeIndex ~~
+ArtdaqConfigurationAPI.getTypeIndex = function(typeName)
+{
+	Debug.log("getTypeIndex " + typeName);
+	t = typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_READER]		?ArtdaqConfigurationAPI.NODE_TYPE_READER:
+			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_BUILDER]	?ArtdaqConfigurationAPI.NODE_TYPE_BUILDER:
+			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_LOGGER]	?ArtdaqConfigurationAPI.NODE_TYPE_LOGGER:
+			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER]?ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER:
+			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_MONITOR]	?ArtdaqConfigurationAPI.NODE_TYPE_MONITOR:-1))));
+	
+	if(t < 0)
+	{	
+		Debug.log("Illegal type name " + typeName + 
+				". Tell admins how you got here!", Debug.HIGH_PRIORITY);
+		return; 
+	}
+	return t;
+} //end getTypeIndex()
+
+//=====================================================================================
+//getTypeName ~~
+ArtdaqConfigurationAPI.getTypeName = function(typeIndex)
+{
+	//Debug.log("getTypeName " + typeIndex);
+	
+	if(ArtdaqConfigurationAPI.NODE_TYPES[typeIndex] === undefined)
+	{	
+		Debug.log("Illegal type index " + typeIndex + 
+				". Tell admins how you got here!", Debug.HIGH_PRIORITY);
+		return; 
+	}
+	return ArtdaqConfigurationAPI.NODE_TYPES[typeIndex];
+} //end getTypeName()
+
+//=====================================================================================
+//getShortTypeName ~~
+ArtdaqConfigurationAPI.getShortTypeName = function(typeIndex)
+{
+	//Debug.log("getShortTypeName " + typeIndex);
+	
+	if(ArtdaqConfigurationAPI.NODE_SHORT_TYPE_NAMES[typeIndex] === undefined)
+	{	
+		Debug.log("Illegal type index " + typeIndex + 
+				". Tell admins how you got here!", Debug.HIGH_PRIORITY);
+		return; 
+	}
+	return ArtdaqConfigurationAPI.NODE_SHORT_TYPE_NAMES[typeIndex];
+} //end getShortTypeName()
+
+//=====================================================================================
+//getFullTypeName ~~
+ArtdaqConfigurationAPI.getFullTypeName = function(typeIndex)
+{
+	//Debug.log("getFullTypeName " + typeIndex);
+	
+	if(ArtdaqConfigurationAPI.NODE_FULL_TYPE_NAMES[typeIndex] === undefined)
+	{	
+		Debug.log("Illegal type index " + typeIndex + 
+				". Tell admins how you got here!", Debug.HIGH_PRIORITY);
+		return; 
+	}
+	return ArtdaqConfigurationAPI.NODE_FULL_TYPE_NAMES[typeIndex];
+} //end getFullTypeName()
 
 //=====================================================================================
 //getArtdaqNodes ~~
