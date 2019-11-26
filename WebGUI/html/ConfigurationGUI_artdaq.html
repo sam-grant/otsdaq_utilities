@@ -4389,6 +4389,9 @@
 					_nodes[i].y 	= _mouseMoveStart[1];
 					_nodes[i].type 	= type;
 					
+					//subsystem change liekly affects arrows, so update
+					initArrows();
+					
 					console.log("_nodes[i]",_nodes[i]);
 					nodesHaveChanged();
 					
