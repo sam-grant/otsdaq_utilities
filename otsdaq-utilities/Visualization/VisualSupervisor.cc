@@ -484,6 +484,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 		}
 		else
 		{
+			ss.str("") ; ss << "rootFileName " << rootFileName ;
+			STDLINE(ss.str(),"") ;
 			rootFile = TFile::Open(rootFileName.c_str());
 			ss.str("") ; ss << "rootFile " << rootFile->GetName() ;
 			STDLINE(ss.str(),"") ;
@@ -866,7 +868,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 		 STDLINE(std::string("fFoldersPath: ")+fFoldersPath,ACCyan);
 		 STDLINE(std::string("fHistName   : ")+fHistName   ,ACCyan);
  		 STDLINE(std::string("fFileName   : ")+fFileName   ,ACCyan);
-        RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, fRootPath, fFoldersPath, fHistName, fFileName, xmlOut) ;
+         RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, fRootPath, fFoldersPath, fHistName, fFileName, xmlOut) ;
          xmlOut.setDocument(theExplorer->initialize()) ;
          //std::ostringstream* out ;
 	     //xmlOut.outputXmlDocument((std::ostringstream*) out, true);
