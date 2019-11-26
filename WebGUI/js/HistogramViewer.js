@@ -565,36 +565,14 @@ theControls_ = Ext.create     (
                                                   }
                                                   else if( selectedItem_ == "getRootObject" )
                                                   { 
-                                                   STDLINE("selected getRootObject") ;
-                                                //    currentRootObject_ = "/"                               + 
-                                                //                        currentDirectory_                  +
-                                                //                        ":/"                               +
-                                                //                        fFoldersPath_                      +
-                                                //                        "/"                                +
-                                                //                        objectName                          ; 
-                                                  xmlKeysPrintout("Getting the content of a root file in particular")
-                                                  // currentRootObject_ = fSystemPath_                       +
-                                                  //                      '/'                                +
-                                                  //                      fRootPath_                         +
-                                                  //                      "/"                                +
-                                                  //                      fFoldersPath_                      +
-                                                  //                      "/"                                +
-                                                  //                      fFileName_                         +
-                                                  //                      "/"                                +
-                                                  //                      fHistName_  ;
-                                                  //  currentRootObject_ = fFoldersPath_                      +
-                                                  //                      "/"                                +
-                                                  //                      fFileName_                         +
-                                                  //                      "/"                                +
-                                                  //                      fHistName_  ;
-                                                  currentRootObject_  = "/"                                +
-                                                                        fRootPath_                         +
-                                                                        "/"                                +
-                                                                        fFoldersPath_                      +
-                                                                        //"/"                                +
-                                                                        fFileName_                         +
-                                                                        "/"                                +
-                                                                        fHistName_  ;
+                                                   xmlKeysPrintout("Getting the content of a root file in particular (getRootObject)")
+                                                   currentRootObject_  = "/"                                +
+                                                                         fRootPath_                         +
+                                                                         "/"                                +
+                                                                         fFoldersPath_                      +
+                                                                         fFileName_                         +
+                                                                         "/"                                +
+                                                                         fHistName_  ;
                                                    STDLINE('RequestType       : getRootObject'      )      ;
                                                    STDLINE('currentRootObject_: '+currentRootObject_)      ;
                                                    theAjaxRequest(
@@ -769,12 +747,8 @@ theControls_ = Ext.create     (
  displayPlot_ = function(object)
                 {
                  var index = canvasPos % mdi_.NumGridFrames() ;
-                //  STDLINE("index    : "+index);
-                //  STDLINE("NumFrames: "+mdi_.NumGridFrames()) ;
-                //  STDLINE("canvasPos: "+canvasPos) ;
                 //  if( index > mdi_.NumGridFrames()) {index = 0}
                 //  var pos = "item" + index ;
-                //  STDLINE("Placing into "+pos)
 
                 //  if (mdi_!=null) theFrame = mdi_.FindFrame(pos, true);
                  theFrame = 'histogram1' ;
