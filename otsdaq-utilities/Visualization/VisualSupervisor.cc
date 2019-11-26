@@ -498,16 +498,9 @@ void VisualSupervisor::request(const std::string&               requestType,
 		else
 		{
 			xmlOut.addTextElementToData("path", path);
-			ss.str("") ; ss << "xmlOut.addTextElementToData: " << path ;
-			STDLINE(ss.str(),"") ;
-			ss.str("") ; ss << "rootDirectoryName: " << rootDirectoryName ;
-			STDLINE(ss.str(),"") ;
 
 			TDirectory* directory;
-			
 			directory = rootFile->GetDirectory(rootDirectoryName.c_str()) ;
-			
-			STDLINE(std::string("directory: ")+directory->GetName(),ACCyan) ;
 			if(directory == 0)
 			{
 				//__SUP_COUT__ << "This is not a directory!" << __E__;

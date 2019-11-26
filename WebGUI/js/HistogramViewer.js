@@ -582,12 +582,19 @@ theControls_ = Ext.create     (
                                                   //                      fFileName_                         +
                                                   //                      "/"                                +
                                                   //                      fHistName_  ;
-                                                  currentRootObject_ = fFoldersPath_                      +
-                                                                       "/"                                +
-                                                                       fFileName_                         +
-                                                                       "/"                                +
-                                                                       fHistName_  ;
-                                                  //currentRootObject_ = 
+                                                  //  currentRootObject_ = fFoldersPath_                      +
+                                                  //                      "/"                                +
+                                                  //                      fFileName_                         +
+                                                  //                      "/"                                +
+                                                  //                      fHistName_  ;
+                                                  currentRootObject_  = "/"                                +
+                                                                        fRootPath_                         +
+                                                                        "/"                                +
+                                                                        fFoldersPath_                      +
+                                                                        //"/"                                +
+                                                                        fFileName_                         +
+                                                                        "/"                                +
+                                                                        fHistName_  ;
                                                    STDLINE('RequestType       : getRootObject'      )      ;
                                                    STDLINE('currentRootObject_: '+currentRootObject_)      ;
                                                    theAjaxRequest(
@@ -702,7 +709,7 @@ theControls_ = Ext.create     (
                              }            ,                                                                                                           
                     params : theParams    ,                                                                                                          
                     rawData: theRawData   ,                                                                                                  
-                    timeout: 20000        ,                                                                                                       
+                    timeout: 50000        ,                                                                                                       
                     success: function(response, request)                                                                                  
                              { 
                               STDLINE("Successful") ;
