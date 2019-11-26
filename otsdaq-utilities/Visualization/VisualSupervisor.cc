@@ -441,17 +441,17 @@ void VisualSupervisor::request(const std::string&               requestType,
 		path = boost::regex_replace(path,re,"/") ;// Dario: should be transparent for Ryan's purposes but required by Extjs
 		boost::regex re1("%3A") ;
 		path = boost::regex_replace(path,re1,"") ;// Dario: should be transparent for Ryan's purposes but required by Extjs
-		//ss.str("") ; ss << "path    : " << path ;
-		////STDLINE(ss.str(),ACCyan) ;
+		ss.str("") ; ss << "path    : " << path ;
+		STDLINE(ss.str(),ACCyan) ;
 		std::string fullPath = std::string(__ENV__("ROOT_BROWSER_PATH")) + path;
-		//ss.str("") ; ss << "fullPath: " << fullPath ;
-		////STDLINE(ss.str(),"") ;
+		ss.str("") ; ss << "fullPath: " << fullPath ;
+		STDLINE(ss.str(),"") ;
 
 		//__SUP_COUT__ << "Full path:-" << fullPath << "-" << __E__;
 
 		std::string rootFileName = fullPath.substr(0, fullPath.find(".root") + 5);
-		//ss.str("") ; ss << "rootFileName " << rootFileName ;
-		////STDLINE(ss.str(),"") ;
+		ss.str("") ; ss << "rootFileName " << rootFileName ;
+		STDLINE(ss.str(),"") ;
 		std::string rootDirectoryName = rootFileName + ":" +
 				fullPath.substr(
 						fullPath.find(".root") + 5,
@@ -459,17 +459,17 @@ void VisualSupervisor::request(const std::string&               requestType,
 				);
 
 		ss.str("") ; ss << "rootDirectoryName " << rootDirectoryName ;
-		////STDLINE(ss.str(),"") ;
+		STDLINE(ss.str(),"") ;
 		std::string::size_type LDQM_pos = path.find("/" + LIVEDQM_DIR + ".root/");
 		TFile * rootFile;
 
 		if(theDataManager_->getLiveDQMHistos() != nullptr && LDQM_pos == 0)
 		{
-			////STDLINE("=========> From file","") ;
+			STDLINE("=========> From file","") ;
 			//__SUP_COUT__ << "Attempting to get LIVE file." << __E__;
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
 			//ss.str("") ; ss << "rootFile " << rootFile->GetName() ;
-			////STDLINE(ss.str(),"") ;
+			STDLINE(ss.str(),"") ;
 			if(!rootFile)
 				__SUP_COUT__ << "File was closed." << __E__;
 			else
@@ -477,16 +477,16 @@ void VisualSupervisor::request(const std::string&               requestType,
 				__SUP_COUT__ << "LIVE file name: " << rootFile->GetName() << __E__;
 				rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
 				//ss.str("") ; ss << "rootDirectoryName " << rootDirectoryName ;
-				////STDLINE(ss.str(),"") ;
+				STDLINE(ss.str(),"") ;
 			}
 			//ss.str("") ; ss << "rootDirectoryName " << rootDirectoryName ;
-			////STDLINE(ss.str(),"") ;
+			STDLINE(ss.str(),"") ;
 		}
 		else
 		{
 			rootFile = TFile::Open(rootFileName.c_str());
 			ss.str("") ; ss << "rootFile " << rootFile->GetName() ;
-			////STDLINE(ss.str(),"") ;
+			STDLINE(ss.str(),"") ;
 		}
 
 		__SUP_COUT__ << "FileName : " << rootFileName << " Object: " << rootDirectoryName << __E__;
@@ -498,14 +498,16 @@ void VisualSupervisor::request(const std::string&               requestType,
 		else
 		{
 			xmlOut.addTextElementToData("path", path);
-			// ss.str("") ; ss << "xmlOut.addTextElementToData: " << path ;
-			// //STDLINE(ss.str(),"") ;
+			ss.str("") ; ss << "xmlOut.addTextElementToData: " << path ;
+			STDLINE(ss.str(),"") ;
 			ss.str("") ; ss << "rootDirectoryName: " << rootDirectoryName ;
-			////STDLINE(ss.str(),"") ;
+			STDLINE(ss.str(),"") ;
 
 			TDirectory* directory;
+			
 			directory = rootFile->GetDirectory(rootDirectoryName.c_str()) ;
-//			STDLINE(std::string("directory: ")+directory->GetName(),ACCyan) ;
+			
+			STDLINE(std::string("directory: ")+directory->GetName(),ACCyan) ;
 			if(directory == 0)
 			{
 				//__SUP_COUT__ << "This is not a directory!" << __E__;
@@ -513,25 +515,25 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 				// failed directory so assume it's file
 				// __SUP_COUT__ << "Getting object name: " << rootDirectoryName << __E__;
-				// ss.str("") ; ss << "rootDirectoryName: |" << rootDirectoryName << "| rootFile->GetName()" << rootFile->GetName() ;
-				// //STDLINE(ss.str(),"") ;
+				ss.str("") ; ss << "rootDirectoryName: |" << rootDirectoryName << "| rootFile->GetName()" << rootFile->GetName() ;
+				STDLINE(ss.str(),"") ;
 				rootFile->ls() ;
 				TObject* histoClone = nullptr;
 				TObject* histo      = (TObject*)rootFile->Get(rootDirectoryName.c_str());
 				ss.str("") ; ss << "histo ptr: |" << histo ;
-				////STDLINE(ss.str(),"") ;
+				STDLINE(ss.str(),"") ;
 
 				if(histo != nullptr)  // turns out was a root object path
 				{
 					// Clone histo to avoid conflict when it is filled by other threads
-					////STDLINE("","") ;
+					STDLINE("","") ;
 					histoClone       = histo->Clone();
-					////STDLINE("","") ;
+					STDLINE("","") ;
 					TString     json = TBufferJSON::ConvertToJSON(histoClone);
-					////STDLINE("","") ;
+					STDLINE("","") ;
 					TBufferFile tBuffer(TBuffer::kWrite);
 					histoClone->Streamer(tBuffer);
-					////STDLINE("","") ;
+					STDLINE("","") ;
 
 					//__SUP_COUT__ << "histo length " << tbuff.Length() << __E__;
 
@@ -543,20 +545,18 @@ void VisualSupervisor::request(const std::string&               requestType,
 					xmlOut.addTextElementToData("rootType", histoClone->ClassName());
 					xmlOut.addTextElementToData("rootData", destination);
 					xmlOut.addTextElementToData("rootJSON", json.Data());
-					// ss.str("") ; ss << "histoClone->GetName(): " << histoClone->GetName() ;
-					// //STDLINE(ss.str(),"") ;
-					// ss.str("") ; ss << "histoClone->ClassName(): " << histoClone->ClassName() ;
-					// //STDLINE(ss.str(),"") ;
+					ss.str("") ; ss << "histoClone->GetName(): " << histoClone->GetName() ;
+					STDLINE(ss.str(),"") ;
+					ss.str("") ; ss << "histoClone->ClassName(): " << histoClone->ClassName() ;
+					STDLINE(ss.str(),"") ;
 					// ss.str("") ; ss << "json.Data(): " <<json.Data() ;
 					// //STDLINE(ss.str(),"") ;
-					//STDLINE("","") ;
 					delete histoClone;
-					//STDLINE("","") ;
 				}
 				else
 					__SUP_COUT_ERR__ << "Failed to access:-" << rootDirectoryName << "-"
 					<< __E__;
-				////STDLINE("Done with it!",ACBlue) ;
+				STDLINE("Done with it!",ACBlue) ;
 			}
 			else
 			{

@@ -96,6 +96,23 @@ function repositionDiv(id,top,left)
 //==============================================================================
 Ext.onReady(function()
 {
+  function xmlKeysPrintout(fromWhere)
+  {
+       const e = new Error();
+       const a = e.stack.split("\n")[1] ;
+       const w = a.split("/") ;
+       const s = w.length -1 ;
+       const l = w[s].split(":")[1] ;
+       STDLINE("----------- Line: " + l + "-----------")  ;
+       STDLINE("From: '"+fromWhere+"'"                 )  ;
+       STDLINE("   --> fSystemPath_  : "+fSystemPath_  )  ;
+       STDLINE("   --> fRootPath_    : "+fRootPath_    )  ;
+       STDLINE("   --> fFoldersPath_ : "+fFoldersPath_ )  ;
+       STDLINE("   --> fFileName_    : "+fFileName_    )  ;
+       STDLINE("   --> fRFoldersPath_: "+fRFoldersPath_)  ;
+       STDLINE("   --> fHistName_    : "+fHistName_    )  ;
+       STDLINE("--------------------------------------")  ;
+  }
 
  var currentDirectory_  = ""                                                                      ;  
  var currentRootObject_ = ""                                                                      ;  
@@ -107,7 +124,8 @@ Ext.onReady(function()
  var fSystemPath_       = ""                                                                      ;
  var fRootPath_         = ""                                                                      ;
  var fFoldersPath_      = ""                                                                      ;
- var fFileName          = ""                                                                      ;
+ var fFileName_         = ""                                                                      ;
+ var fRFoldersPath_     = ""                                                                      ;
  var fHistName_         = ""                                                                      ;
  var fRFoldersPath      = ""                                                                      ;
  var theSources_        = ""                                                                      ;
@@ -438,7 +456,7 @@ theControls_ = Ext.create     (
                                                         {
                                                          if( currentTree_ = 'fileContent' )
                                                          {
-                                                          selectedItem_ = "getDirectories"                  ;
+                                                          selectedItem_ = "getDirectories"               ;
                                                           makeStore(fRootPath_, 'RequestType=getMeDirs') ; 
                                                           makeGrid (fRootPath_, 'Directories and files') ;
                                                          }
@@ -510,31 +528,16 @@ theControls_ = Ext.create     (
                                                  {  
                                                   fSystemPath_  = selection[i].data.fSystemPath                  ;
                                                   fFoldersPath_ = selection[i].data.fFoldersPath                 ;
-                                                  //fRootPath_    = selection[i].data.fRootPath                    ;
+                                                  fRootPath_    = selection[i].data.fRootPath                    ;
                                                   fHistName_    = selection[i].data.fHistName                    ;
                                                   fFileName_    = selection[i].data.fFileName                    ;
                                                   if( typeof fFoldersPath_ === "undefined" ) fFoldersPath_ = ""      ;
-                                                  STDLINE("--> fSystemPath_ : "+fSystemPath_ )                        ;
-                                                  STDLINE("--> fFoldersPath_: "+fFoldersPath_)                        ;
-                                                  STDLINE("--> fRootPath_   : "+fRootPath_   )                        ;
-                                                  STDLINE("--> fHistName_   : "+fHistName_   )                        ;
-                                                  STDLINE("--> fFileName_   : "+fFileName_   )                        ;
+                                                  xmlKeysPrintout("Clicked on a tree item")
                                                 }  
                                                  STDLINE("Selected "+selection.length+" items")                     ;
-                                                 STDLINE(item.innerText) ;  
                                                  //clearInterval(periodicPlotID_)                                   ;
                                                  var itemSplit     = item.innerText.split("\n\t\n")                 ;
-                                                //  var objectName    = itemSplit[0]                                   ;
                                                  var isLeaf        = itemSplit[1].replace("\n","").replace("\t","") ;
-                                                //  var provenance    = itemSplit[2]                                   ;
-                                                //  var fFoldersPath_ = itemSplit[3]                                   ;
-                                                //  STDLINE('item.innerText   = |'+item.innerText   +'|')            ;
-                                                //  STDLINE('objectName       = |'+objectName       +'|')            ;
-                                                //  STDLINE('isLeaf           = |'+isLeaf           +'|')            ;
-                                                //  STDLINE('provenance       = |'+provenance       +'|')            ;
-                                                //  STDLINE('currentDirectory_= |'+currentDirectory_+'|')            ;
-                                                  STDLINE('fFoldersPath_    = |'+fFoldersPath_    +'|')            ;
-                                                //  STDLINE('selectedItem_    = |'+selectedItem_    +'|')            ;
                                                  if( isLeaf == "true" ) 
                                                  {
                                                   if( selectedItem_ == "getDirectories" )
@@ -555,11 +558,7 @@ theControls_ = Ext.create     (
                                                                        "/"                                +
                                                                        fHistName_  ;
                                                    STDLINE('RequestType      : getMeRootFile'     )        ;
-                                                   STDLINE('fSystemPath_     : '+fSystemPath_     )        ;
-                                                   STDLINE('fRootPath_       : '+fRootPath_       )        ;
-                                                   STDLINE('fFoldersPath_    : '+fFoldersPath_    )        ;
-                                                   STDLINE('fHistName_       : '+fHistName_       )        ;
-                                                   STDLINE('fFileName_       : '+fFileName_       )        ;
+                                                   xmlKeysPrintout("Getting directories in particular")
                                                    STDLINE('currentDirectory_: '+currentDirectory_)        ;
                                                    makeStore(currentDirectory_,'RequestType=getMeRootFile');
                                                    makeGrid (currentDirectory_,'ROOT file content'        );
@@ -573,15 +572,19 @@ theControls_ = Ext.create     (
                                                 //                        fFoldersPath_                      +
                                                 //                        "/"                                +
                                                 //                        objectName                          ; 
-                                                  STDLINE("--> fSystemPath_ : "+fSystemPath_ )                        ;
-                                                  STDLINE("--> fFoldersPath_: "+fFoldersPath_)                        ;
-                                                  STDLINE("--> fRootPath_   : "+fRootPath_   )                        ;
-                                                  STDLINE("--> fHistName_   : "+fHistName_   )                        ;
-                                                  currentRootObject_ = fSystemPath_                       +
-                                                                       '/'                                +
-                                                                       fRootPath_                         +
+                                                  xmlKeysPrintout("Getting the content of a root file in particular")
+                                                  // currentRootObject_ = fSystemPath_                       +
+                                                  //                      '/'                                +
+                                                  //                      fRootPath_                         +
+                                                  //                      "/"                                +
+                                                  //                      fFoldersPath_                      +
+                                                  //                      "/"                                +
+                                                  //                      fFileName_                         +
+                                                  //                      "/"                                +
+                                                  //                      fHistName_  ;
+                                                  currentRootObject_ = fFoldersPath_                      +
                                                                        "/"                                +
-                                                                       fFoldersPath_                      +
+                                                                       fFileName_                         +
                                                                        "/"                                +
                                                                        fHistName_  ;
                                                   //currentRootObject_ = 
@@ -634,7 +637,7 @@ theControls_ = Ext.create     (
  //-----------------------------------------------------------------------------
  function makeStore(path, reqType)
  { 
-  STDLINE("--> fHistName   : "+fHistName_   )                        ;
+  xmlKeysPrintout("Sending parameters block to server")
   theStore_ = Ext.create(
                          'Ext.data.TreeStore', 
                          {
@@ -654,7 +657,8 @@ theControls_ = Ext.create     (
                                                       "Path"        : path          , // used by Ryan's part
                                                       "fRootPath"   : fRootPath_    ,
                                                       "fFoldersPath": fFoldersPath_ ,
-                                                      "fHistName"   : fHistName_
+                                                      "fHistName"   : fHistName_    ,
+                                                      "fFileName"   : fFileName_
                                                      },
                                       url          : _requestURL + reqType,
                                       reader       : {
