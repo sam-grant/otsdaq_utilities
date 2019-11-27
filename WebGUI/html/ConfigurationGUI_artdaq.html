@@ -192,6 +192,7 @@
 		
 			//handleFclIconMouseUp(i,e,x,y,subi)
 			//handleDeleteIconMouseUp(i,e)
+			//	localDeleteNode();
 		
 			//getSubsystemColor(subsystemId)
 			//getMultiNodeName(i,subi)
@@ -280,6 +281,10 @@
 			_subsystems = {};
 			_hostnames = {};
 			
+			//clear all nodes from display
+			var nodeEls = document.getElementsByClassName("node");
+			for(var i=0;i<nodeEls.length;++i)
+				nodeEls[i].parentNode.removeChild(nodeEls[i]);			
 			
 			//fill in CodeEditor appId
 			DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
@@ -800,7 +805,10 @@
 				saveLayout(function()
 						{
 					Debug.log("Changes have been successfully saved!",
-							Debug.INFO_PRIORITY);							
+							Debug.INFO_PRIORITY);		
+					
+					initArtdaqNodes(); //completely reload
+					
 						}); //end saveLayout completion handler
 					}); //end saveArtdaqNodes response handler
 		} //end save()	
@@ -2213,13 +2221,16 @@
 			var nodeid = "node-" + i;
 			var el = document.getElementById(nodeid);	
 			
+			if(!el) return; //ignore missing node element
+			
 			//handle points
 			var points = el.getElementsByClassName("node-point");		
 			for(var p=0;p<4;++p)
 				points[p].style.display = undoHover?"none":"block";
 			
 			//do not show icons for mouse move modes
-			if(!undoHover && _mouseMoveMode != _MMM_NONE) return;
+			if(!_nodes || i >= _nodes.length ||
+					(!undoHover && _mouseMoveMode != _MMM_NONE)) return;
 			
 			el = document.getElementById(nodeid + "-editIcon");
 			el.style.display = undoHover?"none":"block";
@@ -3773,8 +3784,42 @@
 		{	   
 			e.stopPropagation();
 		
-			Debug.log("mouseup-delete i = " + i);
+			if(i < 0 || !_nodes || i >= _nodes.length) return; //ignore illegal index
 			
+			Debug.log("mouseup-delete i = " + i);
+
+			DesktopContent.popUpVerification(
+					"Are you sure want to <u><b>delete</b></u> the node <b>" +
+					ArtdaqConfigurationAPI.getShortTypeName(_nodes[i].type) + 
+					"::" + _nodes[i].name + "</b>?",
+					localDeleteNode /*yes-to-reload handler*/					
+			);
+			
+			
+			return;
+			
+
+			//===========
+			function localDeleteNode(activeConfigGroups)
+			{
+				Debug.log("localDeleteNode() " + i);
+				
+				_nodes.splice(i,1);
+				
+				//subsystem change liekly affects arrows, so update
+				initArrows();
+
+				console.log("_nodes",_nodes);
+				nodesHaveChanged();
+				
+				//delete element to force new paint
+				var nodeid = "node-" + i;
+				var el = document.getElementById(nodeid);
+				if(el)
+					el.parentNode.removeChild(el);
+
+				paint();
+			} //end localDeleteNode()
 			
 		} // end handleDeleteIconMouseUp()
 
@@ -4079,7 +4124,7 @@
 										"' (" + aliasObj.name + " (" + 
 										aliasObj.key + ")) was successfully activated!", Debug.INFO_PRIORITY);
 
-								init();
+								initArtdaqNodes();
 									}); //end activate group handler
 								}; //end activate alias handler
 
@@ -4136,7 +4181,7 @@
 								Debug.log("The Group '" + name + " (" + 
 										key + ") was successfully activated!", Debug.INFO_PRIORITY);
 
-								init();
+								initArtdaqNodes();
 									}); //end activate group handler
 								}; //end activate alias handler
 
@@ -4468,12 +4513,13 @@
 			DesktopContent.XMLHttpRequest(
 					"Request?RequestType=getActiveTableGroups",
 					"", function (req) {
-				
-
+								
 				if(_checkActiveGroupsOffset)
 					window.clearTimeout(_checkActiveGroupsOffset);
 				_checkActiveGroupsOffset = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
-
+				
+				if(!req) return; //ignore disconnected requests
+					
 				var activeConfigGroups = [
 					DesktopContent.getXMLValue(req, "Context-ActiveGroupName"),
 					DesktopContent.getXMLValue(req, "Context-ActiveGroupKey"),

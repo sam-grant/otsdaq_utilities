@@ -1342,7 +1342,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	//pop up div style
 	//note: z-index of 2000 is above config gui treeview
 	css += "#" + DesktopContent._verifyPopUpId + " " +
-			"{position: absolute; z-index: 2000; border-radius: 5px; padding: 10px;" +			
+			"{position: absolute; z-index: 10000; border-radius: 5px; padding: 10px;" +			
 			"background-color: " + bgColor + "; border: 2px solid " + borderColor + ";" +
 			"color: " + textColor + ";text-align: center; overflow: auto;" +
 			"}\n\n";
@@ -1470,10 +1470,10 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	var x = DesktopContent.getMouseX();
 	var y = DesktopContent.getMouseY();
 	x -= w/2; //center on x, but try to avoid having mouse lineup with buttons to avoid accidental double click by user
-	Debug.log("X: " + x + 
-			" Y: " + y + 
-			" W: " + w + 
-			" H: " + h);		
+//	Debug.log("X: " + x + 
+//			" Y: " + y + 
+//			" W: " + w + 
+//			" H: " + h);		
 	
 	while(x+w > DesktopContent.getWindowWidth())
 		x -= w;
