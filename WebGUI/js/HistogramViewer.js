@@ -531,7 +531,7 @@ theControls_ = Ext.create     (
                                                   fRootPath_    = selection[i].data.fRootPath                    ;
                                                   fHistName_    = selection[i].data.fHistName                    ;
                                                   fFileName_    = selection[i].data.fFileName                    ;
-                                                  if( typeof fFoldersPath_ === "undefined" ) fFoldersPath_ = ""      ;
+                                                  if( typeof fFoldersPath_ === "undefined" ) fFoldersPath_ = ""  ;
                                                   xmlKeysPrintout("Clicked on a tree item")
                                                 }  
                                                  STDLINE("Selected "+selection.length+" items")                     ;
@@ -545,18 +545,13 @@ theControls_ = Ext.create     (
                                                    treeDisplayField_  = 'fDisplayName'                     ;
                                                    selectedItem_      = "getRootObject"                    ;
                                                    currentTree_       = 'fileContent'                      ;
-                                                //    currentDirectory_ = theSourcesCB_.getValue()           +
-                                                //                        '/'                                +
-                                                //                        fFoldersPath_                      +
-                                                //                        "/"                                +
-                                                //                        fHistName_  ;
                                                    currentDirectory_ = fSystemPath_                       +
                                                                        '/'                                +
                                                                        fRootPath_                         +
                                                                        "/"                                +
                                                                        fFoldersPath_                      +
                                                                        "/"                                +
-                                                                       fHistName_  ;
+                                                                       fHistName_                          ;
                                                    STDLINE('RequestType      : getMeRootFile'     )        ;
                                                    xmlKeysPrintout("Getting directories in particular")
                                                    STDLINE('currentDirectory_: '+currentDirectory_)        ;
