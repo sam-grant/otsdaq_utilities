@@ -6,7 +6,7 @@
 
 		<style>
 
-		    body {  
+		    body {
 			  font: 10px sans-serif;
 			  background: rgba(255, 255, 255, 1);
 			  margin: 0px !important;
@@ -59,7 +59,7 @@
 			var plotData = {};
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
-			{				
+			{
 				var date = new Date(pvTime*1000);
 				if (timeData.length)
 					if (date <= timeData[timeData.length-1]) { console.log("return"); return;}
@@ -82,10 +82,10 @@
 			    { y: [],  type: 'scatter', mode: 'lines' }
 			    ], {
 			        title: pvName,
-			        titlefont: { size: 20 },
-			        xaxis: { title: 'time', 'titlefont': { size: 20 }, showticklabels: true },
-			        yaxis: { title: 'amplitude', titlefont: { size: 20 }, zeroline: true }
-					,margin: { l: 50, r: 50, b: 120, t: 30 }
+			        titlefont: { size: 12 },
+			        xaxis: { title: 'time', 'titlefont': { size: 10 }, showticklabels: true },
+			        yaxis: { title: 'amplitude', titlefont: { size: 10 }, zeroline: true }
+					,margin: { l:45, r: 10, b: 60, t: 20 }
 					,legend: {x: 0, y: 1}
 	    		}, {responsive: true});
 

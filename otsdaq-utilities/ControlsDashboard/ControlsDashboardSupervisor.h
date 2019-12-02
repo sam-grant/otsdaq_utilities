@@ -24,6 +24,7 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 
 	void init(void);
 	void checkSubscriptions(ControlsDashboardSupervisor* cs);
+	void checkAlarms(ControlsDashboardSupervisor* cs);
 	void destroy(void);
 
 	virtual void request(const std::string&               requestType,
