@@ -1,7 +1,7 @@
 /*===============================================================================*
  * HistogramViewer.js: the javascript code to instantiate a root objects         *
  *                     navigator in the otsdaq framework                         *
- *                                                                               *
+ *                                                                                      *
  * Copyright (C) 2019                                                            *
  *                                                                               *
  * Authors: Dario Menasce                                                        *
@@ -125,9 +125,8 @@ Ext.onReady(function()
  var fRootPath_         = ""                                                                      ;
  var fFoldersPath_      = ""                                                                      ;
  var fFileName_         = ""                                                                      ;
- var fRFoldersPath_     = ""                                                                      ;
  var fHistName_         = ""                                                                      ;
- var fRFoldersPath      = ""                                                                      ;
+ var fRFoldersPath_     = ""                                                                      ;
  var theSources_        = ""                                                                      ;
  var theControls_       = ""                                                                      ;
  var thetheSourcesCB__  = ""                                                                      ;
@@ -466,47 +465,54 @@ theControls_ = Ext.create     (
                                    ],
                       columns    : [
                                     {
-                                     xtype    : 'treecolumn'  ,
-                                     id       : 'provenance'  ,
-                                     text     : where         ,
-                                     flex     : 1             ,
+                                     xtype    : 'treecolumn'    ,
+                                     id       : 'provenance'    ,
+                                     text     : where           ,
+                                     flex     : 1               ,
                                      dataIndex: 'fDisplayName' 
                                     }, 
                                     { 
-                                     xtype    : 'treecolumn'  ,
-                                     hidden   : false         ,
-                                     text     : 'type'        ,
-                                     width    : 1             ,
+                                     xtype    : 'treecolumn'    ,
+                                     hidden   : false           ,
+                                     text     : 'type'          ,
+                                     width    : 1               ,
                                      dataIndex: 'leaf'                 
                                     }, 
                                     { 
-                                     xtype    : 'treecolumn'  ,
-                                     hidden   : false         ,
-                                     text     : 'fSystemPath' ,
-                                     width    : 1             ,
+                                     xtype    : 'treecolumn'    ,
+                                     hidden   : false           ,
+                                     text     : 'fSystemPath'   ,
+                                     width    : 1               ,
                                      dataIndex: 'fSystemPath'                 
                                     }, 
                                     { 
-                                     xtype    : 'treecolumn'  ,
-                                     hidden   : false         ,
-                                     text     : 'fRootPath'   ,
-                                     width    : 1             ,
+                                     xtype    : 'treecolumn'    ,
+                                     hidden   : false           ,
+                                     text     : 'fRootPath'     ,
+                                     width    : 1               ,
                                      dataIndex: 'fRootPath'                
                                     }, 
                                     { 
-                                     xtype    : 'treecolumn'  ,
-                                     hidden   : false         ,
-                                     text     : 'fFoldersPath',
-                                     width    : 1             ,
+                                     xtype    : 'treecolumn'    ,
+                                     hidden   : false           ,
+                                     text     : 'fFoldersPath'  ,
+                                     width    : 1               ,
                                      dataIndex: 'fFoldersPath'                
                                     }, 
                                     { 
-                                     xtype    : 'treecolumn'  ,
-                                     hidden   : false         ,
-                                     text     : 'fFileName'   ,
-                                     width    : 1             ,
-                                     dataIndex: 'fFileName'                
-                                    }, 
+                                      xtype    : 'treecolumn'   ,
+                                      hidden   : false          ,
+                                      text     : 'fFileName'    ,
+                                      width    : 1              ,
+                                      dataIndex: 'fFileName'                
+                                     }, 
+                                     { 
+                                      xtype    : 'treecolumn'   ,
+                                      hidden   : false          ,
+                                      text     : 'fRFoldersPath',
+                                      width    : 1              ,
+                                      dataIndex: 'fRFoldersPath'                
+                                     }, 
                                     { 
                                       xtype    : 'treecolumn'  ,
                                       hidden   : false         ,
@@ -526,12 +532,14 @@ theControls_ = Ext.create     (
                                                  STDLINE("Selected "+selection.length+" items")                     ;
                                                  for(var i=0; i<selection.length; i++)  
                                                  {  
-                                                  fSystemPath_  = selection[i].data.fSystemPath                  ;
-                                                  fFoldersPath_ = selection[i].data.fFoldersPath                 ;
-                                                  fRootPath_    = selection[i].data.fRootPath                    ;
-                                                  fHistName_    = selection[i].data.fHistName                    ;
-                                                  fFileName_    = selection[i].data.fFileName                    ;
-                                                  if( typeof fFoldersPath_ === "undefined" ) fFoldersPath_ = ""  ;
+                                                  fSystemPath_   = selection[i].data.fSystemPath                    ;
+                                                  fRootPath_     = selection[i].data.fRootPath                      ;
+                                                  fFoldersPath_  = selection[i].data.fFoldersPath                   ;
+                                                  fFileName_     = selection[i].data.fFileName                      ;
+                                                  fRFoldersPath_ = selection[i].data.fRFoldersPath                  ;
+                                                  fHistName_     = selection[i].data.fHistName                      ;
+                                                  if( typeof fFoldersPath_  === "undefined" ) fFoldersPath_  = ""   ;
+                                                  if( typeof fRFoldersPath_ === "undefined" ) fRFoldersPath_ = ""   ;
                                                   xmlKeysPrintout("Clicked on a tree item")
                                                 }  
                                                  STDLINE("Selected "+selection.length+" items")                     ;
@@ -551,7 +559,7 @@ theControls_ = Ext.create     (
                                                                        "/"                                +
                                                                        fFoldersPath_                      +
                                                                        "/"                                +
-                                                                       fHistName_                          ;
+                                                                       fFileName_                          ;
                                                    STDLINE('RequestType      : getMeRootFile'     )        ;
                                                    xmlKeysPrintout("Getting directories in particular")
                                                    STDLINE('currentDirectory_: '+currentDirectory_)        ;
@@ -566,6 +574,8 @@ theControls_ = Ext.create     (
                                                                          "/"                                +
                                                                          fFoldersPath_                      +
                                                                          fFileName_                         +
+                                                                         "/"                                +
+                                                                         fRFoldersPath_                     +
                                                                          "/"                                +
                                                                          fHistName_  ;
                                                    STDLINE('RequestType       : getRootObject'      )      ;

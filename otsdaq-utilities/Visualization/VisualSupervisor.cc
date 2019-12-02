@@ -9,7 +9,7 @@
 #include <boost/regex.hpp>
 
 // ROOT documentation
-// http://root.cern.ch/root/html/index.html
+// http://root.cern.ch/root/html/index.html 
 
 #include <TBuffer.h>
 #include <TBufferJSON.h>
@@ -521,14 +521,10 @@ void VisualSupervisor::request(const std::string&               requestType,
 				if(histo != nullptr)  // turns out was a root object path
 				{
 					// Clone histo to avoid conflict when it is filled by other threads
-					STDLINE("","") ;
 					histoClone       = histo->Clone();
-					STDLINE("","") ;
 					TString     json = TBufferJSON::ConvertToJSON(histoClone);
-					STDLINE("","") ;
 					TBufferFile tBuffer(TBuffer::kWrite);
 					histoClone->Streamer(tBuffer);
-					STDLINE("","") ;
 
 					//__SUP_COUT__ << "histo length " << tbuff.Length() << __E__;
 
@@ -850,7 +846,7 @@ void VisualSupervisor::request(const std::string&               requestType,
          xmlOut.setRootPath            (fRootPath                       ) ;
          xmlOut.makeDirectoryBinaryTree(fSystemPath, fRootPath , 0, NULL) ;
          std::ostringstream* out ; 
-	     xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+	    // xmlOut.outputXmlDocument((std::ostringstream*) out, true);
         }
 	else if(requestType == "getMeRootFile") //################################################################################################################
         {
