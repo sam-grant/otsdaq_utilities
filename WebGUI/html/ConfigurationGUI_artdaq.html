@@ -105,7 +105,7 @@
 		var _layoutHasChanged = false;
 		var _nodesHaveChanged = false;
 		
-		var _checkActiveGroupsOffset = 0;
+		var _checkActiveGroupsTimer = 0;
 		var _CHECK_ACTIVE_GROUPS_PERIOD = 5000; //ms
 		var _lastActiveGroups = [];
 		
@@ -733,6 +733,14 @@
 		function save()
 		{
 			Debug.log("save()");
+		
+			//kill configuration change checking during (possibly long) saving time
+			//	checking will return when a successful save occurs and initArtdaqNodes() is called!
+			if(_checkActiveGroupsTimer)
+			{
+				window.clearTimeout(_checkActiveGroupsTimer);
+				_checkActiveGroupsTimer = 0;
+			}
 			
 			//create node object by type for save function from _nodes array
 			//		nodeObj := {}
@@ -1031,6 +1039,31 @@
 				drawNode(i);
 			
 			drawArrows();
+			
+			//if selected nodes, offer delete
+			if(Object.keys(_selectedNodes).length)
+			{
+				Debug.log("Offering deletion of seleceted nodes...");
+				var el = document.getElementById("Status");
+				var str = "";	//el.innerHTML;
+				
+				str += htmlClearDiv();
+				
+				//add delete trash can icon
+				str += "<div id='allNodes" +  
+						"-deleteIcon' class='node-icon node-deleteIcon' " +
+						" onmouseup='handleDeleteIconMouseUp(-1 /*all nodes*/,event);'" +
+						" onmousedown='event.stopPropagation() /* mousedown do nothing */;'" +
+						"title='Delete the selected nodes.' " +
+						"style='display:block; margin-top: -2px;' " +
+						"></div>";
+				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				str += "&lt;== Delete the selected nodes";
+				el.innerHTML = str;
+				el.style.display = "block";
+			}
+			else //re-apply _nodesHaveChanged status
+				nodesHaveChanged(_nodesHaveChanged); 
 			
 		} //end paint()
 
@@ -2368,7 +2401,7 @@
 					//delete element to force new paint
 					var nodeid = "node-" + starti;
 					var el = document.getElementById(nodeid);
-					el.parentNode.removeChild(el);
+					if(el) el.parentNode.removeChild(el);
 					
 					paint();
 					return;
@@ -2438,7 +2471,7 @@
 						//delete element to force new paint
 						var nodeid = "node-" + endi;
 						var el = document.getElementById(nodeid);
-						el.parentNode.removeChild(el);
+						if(el) el.parentNode.removeChild(el);
 
 						paint();
 						return;
@@ -2512,7 +2545,7 @@
 					//delete element to force new paint
 					var nodeid = "node-" + endi;
 					var el = document.getElementById(nodeid);
-					el.parentNode.removeChild(el);
+					if(el) el.parentNode.removeChild(el);
 
 					paint();
 					return;
@@ -2548,7 +2581,7 @@
 
 		//=====================================================================================
 		//handleEditIconMouseUp ~~
-		function handleEditIconMouseUp(i,e,x,subi) 
+		function handleEditIconMouseUp(i,e,x,subi,menuDepth,menuDepthType) 
 		{	   
 			if(e) e.stopPropagation();
 		
@@ -2577,6 +2610,10 @@
 							j + " /*subi*/" +
 							")");
 				}
+				x = event.pageX - 10;
+				var y = event.pageY - 10; 
+				if(_w - x < 400) x = _w - 405; //move box away from edge
+				if(x < 5) x = 5;
 
 				SimpleContextMenu.createMenu(
 						menuItems,
@@ -2594,62 +2631,64 @@
 			
 			if(!x) x = event.pageX - 10;
 			var y = event.pageY - 10; //always follow mouse -- otherwise menu may become impossible to navigate
-		
+			if(_w - x < 400) x = _w - 405; //move box away from edge
+			if(x < 5) x = 5;
 			
 			Debug.log("mouseup-edit i = " + i + "[" + 
-					subi + "] - " +
+					subi + "] - d" + menuDepth + ":" + 
+					menuDepthType + " - " +
 					typeName + "::" +
 					_nodes[i].name);
 			
-			var editTypes = [						 
-							 "Top-level Parameters"
-							 ];			
+			var editTypes = [];
+			var depthTypes = {}; //define depth type if more menu depth
+			
+			if(!menuDepth) //at 0 depth, all types have top level params
+				editTypes.push("Top-level Parameters");
 			
 			if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
 			{
-				editTypes.push("DAQ Parameters");
-				editTypes.push("DAQ Metrics");				
-			}
-			else if(type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER)
+				if(!menuDepth)
+				{
+					editTypes.push("DAQ Parameters");
+					editTypes.push("DAQ Metrics");
+				}
+			} //end reader menu
+			else if(type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER ||
+					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER ||
+					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER )
 			{
-				editTypes.push("Preamble Parameters");
-				editTypes.push("DAQ Parameters");
-				editTypes.push("DAQ Metrics");	
-				editTypes.push("ART Physics Analyzers");
-				editTypes.push("ART Physics Producers");
-				editTypes.push("ART Physics Filters");	
-				editTypes.push("ART Physics Other Parameters");		
-				editTypes.push("Add-on Parameters");				
-			}
-			else if(type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER)
-			{
-				editTypes.push("Preamble Parameters");
-				editTypes.push("DAQ Parameters");
-				editTypes.push("DAQ Metrics");	
-				editTypes.push("ART Physics Analyzers");
-				editTypes.push("ART Physics Producers");
-				editTypes.push("ART Physics Filters");	
-				editTypes.push("ART Physics Other Parameters");		
-				editTypes.push("Add-on Parameters");				
-			}
-			else if(type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER)
-			{
-				editTypes.push("Preamble Parameters");
-				editTypes.push("DAQ Parameters");
-				editTypes.push("DAQ Metrics");	
-				editTypes.push("ART Physics Analyzers");
-				editTypes.push("ART Physics Producers");
-				editTypes.push("ART Physics Filters");	
-				editTypes.push("ART Physics Other Parameters");		
-				editTypes.push("Add-on Parameters");				
-			}
-			
+				if(!menuDepth)
+				{			
+					editTypes.push("Preamble Parameters");
+					editTypes.push("DAQ Settings");
+					depthTypes[editTypes.length-1] = 1;
+					editTypes.push("ART Settings");
+					depthTypes[editTypes.length-1] = 2;	
+					editTypes.push("Add-on Parameters");	
+				}
+				else if(menuDepth == 1 && menuDepthType == 1 /*DAQ Settings*/)
+				{
+					editTypes.push("DAQ Parameters");
+					editTypes.push("DAQ Metrics");						
+				}
+				else if(menuDepth == 1 && menuDepthType == 2 /*ART Settings*/)
+				{
+					editTypes.push("ART Physics Analyzers");
+					editTypes.push("ART Physics Producers");
+					editTypes.push("ART Physics Filters");	
+					editTypes.push("ART Physics Other Parameters");						
+				}
+			} //end builder, logger, dispatcher menu
 			
 			var menuItems = [];
 			var menuItemHandlers = [];
 			
-			menuItems.push("Edit <b><u>Node</u></b> (i.e. name, subsystem, host, instances)");
-			menuItemHandlers.push("launchEditNodeDialog(" + i + ")");
+			if(!menuDepth) //at 0 depth, all types edit the node
+			{
+				menuItems.push("Edit <b><u>Node</u></b> (i.e. name, subsystem, host, instances)");
+				menuItemHandlers.push("launchEditNodeDialog(" + i + ")");
+			}
 			
 			var nodeName = _nodes[i].name;
 			if(subi !== undefined) //dealing with a particular multi-node node
@@ -2657,14 +2696,25 @@
 			
 			for(var t=0;t<editTypes.length;++t)
 			{
-				menuItems.push( "Edit <b><u>" + editTypes[t] +
+				menuItems.push("Edit <b><u>" + editTypes[t] +
 						"</u></b> of " + typeName + "::" + 
 						nodeName);
-				menuItemHandlers.push("handleEditIconMenuSelection(" +
+				if(depthTypes[t] !== undefined) //go to next depth menu
+					menuItemHandlers.push("handleEditIconMouseUp(" +
+							i + ", undefined /*e*/, " +
+							(e.pageX - 10) + " /*x*/," +
+							j + " /*subi*/," +
+							((menuDepth|0)+1) + "," +
+							depthTypes[t] + " /*menuDepthType*/" +
+							")");
+				else //final menu depth (choose window type)
+					menuItemHandlers.push("handleEditIconMenuSelection(" +
 						i + "," + t + ", undefined /*newTab*/, " +
 						x + ", " +
 						"\"" + editTypes[t]  + "\"," +
-						subi + " /*subi*/" +
+						subi + " /*subi*/," +
+						(menuDepth|0) + "," +
+						depthTypes[t] + " /*menuDepthType*/" +
 						")");
 			} //end edit type loop
 						
@@ -2687,15 +2737,15 @@
 		//	based on editType
 		//	subi used to index multi-node
 		function handleEditIconMenuSelection(i,editType, newTab, 
-				x, editTypeString, subi) 
+				x, editTypeString, subi, menuDepth, menuDepthType) 
 		{	   
 			
 			Debug.log("handleEditIconMenuSelection " + i + 
-					"[" + subi + "] -" + 
+					"[" + subi + "] - d" + menuDepth + ":" + menuDepthType + " " + 
 					editType + "-" + newTab);
 			
 			var type = _nodes[i].type;			
-			var typeName = ArtdaqConfigurationAPI.getShortTypeNameonAPI(type);			
+			var typeName = ArtdaqConfigurationAPI.getShortTypeName(type);			
 			var typeBaseTable = ArtdaqConfigurationAPI.NODE_TYPE_BASE_TABLE[type]; //use above call for type safety
 
 			var subsetName = editTypeString;
@@ -2723,7 +2773,9 @@
 						i + "," + editType + ", false /*newTab*/,"+
 						x + ", " +
 						"\"" + editTypeString  + "\"," +
-						subi + " /*subi*/" +
+						subi + " /*subi*/," +
+						(menuDepth|0) + "," +
+						(menuDepthType|0) +
 						")");
 				menuItems.push( "Edit <b><u>" + subsetName +
 						"</u></b> of " + typeName + "::" + 
@@ -2733,7 +2785,9 @@
 						i + "," + editType + ", true /*newTab*/,"+
 						x + ", " +
 						"\"" + editTypeString  + "\"," +
-						subi + " /*subi*/" +
+						subi + " /*subi*/," +
+						(menuDepth|0) + "," +
+						(menuDepthType|0) +
 						")");
 
 
@@ -2751,7 +2805,7 @@
 			
 			var newWindowStr;
 			
-			if(editType == 0)
+			if(!menuDepth && editType == 0)
 			{	
 				//top-level parameters
 				
@@ -2767,101 +2821,186 @@
 				
 				localLaunchWindow();
 			}
-			else
+			else //use do map to decide what to do based on type, menuDepth, and editType
 			{
 				var doMap = {};
-				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER] = [];
-				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER].push({
+				var d = 0;
+				var dt = 0;
+				//------------ start fill READER do map				
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER] = {}; //depth level
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER][d] = {}; //menu depth
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER][d][dt] = []; //menu depth type
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER][d][dt].push({
 					"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
 					"groupLink"	: 	"daqParametersLink"
 				}); //Reader DAQ parameters
-				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER].push({
+				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER][d][dt].push({
 					"table" : 		ArtdaqConfigurationAPI.DAQ_METRIC_TABLE,
 					"groupLink"	: 	"daqMetricsLink"
 				}); //Reader DAQ metrics
-				
-				//--------------------
+				//------------ end fill READER do map
+
+				//------------ start fill BUILDER,LOGGER,DISPATCHER do map
 				var equivalentTypes = [ArtdaqConfigurationAPI.NODE_TYPE_BUILDER,
 									   ArtdaqConfigurationAPI.NODE_TYPE_LOGGER,
 									   ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER];
 				for(var t=0;t<equivalentTypes.length;++t)
 				{
 					doMap[equivalentTypes[t]] = [];
-					doMap[equivalentTypes[t]].push({
+					d = 0; //----------------
+					doMap[equivalentTypes[t]][d] = {}; //menu depth
+					dt = 0; //----------------
+					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
+					doMap[equivalentTypes[t]][d][dt].push({
 						"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
 						"groupLink"	: 	"preambleParametersLink"
 					}); //Preamble Parameters
-					doMap[equivalentTypes[t]].push({
-						"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
-						"groupLink"	: 	"daqLink/daqParametersLink"
-					}); //DAQ Parameters
-					doMap[equivalentTypes[t]].push({
-						"table" : 		ArtdaqConfigurationAPI.DAQ_METRIC_TABLE,
-						"groupLink"	: 	"daqLink/daqMetricsLink"
-					}); //DAQ Metrics
-					doMap[equivalentTypes[t]].push({
-						"table" : 		"ARTDAQPhysicsAnalyzerTable",
-						"groupLink"	: 	"artLink/physicsLink/analyzersLink"
-					}); //ART Physics Analyzers
-					doMap[equivalentTypes[t]].push({
-						"table" : 		"ARTDAQPhysicsProducerTable",
-						"groupLink"	: 	"artLink/physicsLink/producersLink"
-					}); //ART Physics Producers
-					doMap[equivalentTypes[t]].push({
-						"table" : 		"ARTDAQPhysicsFilterTable",
-						"groupLink"	: 	"artLink/physicsLink/filtersLink"
-					}); //ART Physics Filters
-					doMap[equivalentTypes[t]].push({
-						"table" : 		"ARTDAQPhysicsParameterTable",
-						"groupLink"	: 	"physicsOtherParametersLink"
-					}); //ART Physics Other Parameters
-					doMap[equivalentTypes[t]].push({
+					doMap[equivalentTypes[t]][d][dt].push({
 						"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
 						"groupLink"	: 	"addOnParametersLink"
 					}); //Add-on Parameters
+					d = 1; //----------------
+					doMap[equivalentTypes[t]][d] = {}; //menu depth
+					dt = 1; //DAQ type //----------------
+					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
+						"groupLink"	: 	"daqLink/daqParametersLink"
+					}); //DAQ Parameters
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		ArtdaqConfigurationAPI.DAQ_METRIC_TABLE,
+						"groupLink"	: 	"daqLink/daqMetricsLink"
+					}); //DAQ Metrics 				
+					dt = 2; //DAQ type //----------------
+					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQPhysicsAnalyzerTable",
+						"groupLink"	: 	"artLink/physicsLink/analyzersLink"
+					}); //ART Physics Analyzers
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQPhysicsProducerTable",
+						"groupLink"	: 	"artLink/physicsLink/producersLink"
+					}); //ART Physics Producers
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQPhysicsFilterTable",
+						"groupLink"	: 	"artLink/physicsLink/filtersLink"
+					}); //ART Physics Filters
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQPhysicsParameterTable",
+						"groupLink"	: 	"physicsOtherParametersLink"
+					}); //ART Physics Other Parameters
 				}
+				//------------ end fill BUILDER,LOGGER,DISPATCHER do map
 
 				try
 				{
-					--editType; //because first one is always 'Top-level Parameters'
+					if(!menuDepth)
+						--editType; //because first one is always 'Top-level Parameters'
 					console.log("type",type,"editType",editType,
-							"table",doMap[type][editType].table,
-							"groupLink",doMap[type][editType].groupLink);
+							"table",doMap[type][editType][menuDepth|0][menuDepthType|0].table,
+							"groupLink",doMap[type][editType][menuDepth|0][menuDepthType|0].groupLink);
 					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
 							DesktopContent._localUrnLid +
 							"&subsetBasePath=" + 
-							doMap[type][editType].table +
+							doMap[type][editType][menuDepth|0][menuDepthType|0].table +
 							"&groupingFieldList=AUTO" +
 							"&recordAlias=" + encodeURIComponent(typeName + " " + 
 									subsetName) +
 									"&editableFieldList=" + "!*CommentDescription";
 
-					//TODO -- GET OR MAKE LINK ID
-					localGetLinkId(doMap[type][editType].groupLink,
-							function(childLinkIndex, linkId)
-							{
-						Debug.log("daqParametersLink childLinkIndex = '" +
-								childLinkIndex + "' linkId = '" + 
-								linkId + "'");
+					//kill configuration change checking during (possibly long) saving time
+					//	checking will return when a successful save occurs and initArtdaqNodes() is called!
+					if(_checkActiveGroupsTimer)
+					{
+						window.clearTimeout(_checkActiveGroupsTimer);
+						_checkActiveGroupsTimer = 0;
+					}
+
+					//Get or make link ID
+					
+					var uniqueLinks = doMap[type][editType][menuDepth|0][menuDepthType|0].groupLink.split('/');
+					var uniqueLinkDoneCount = 0;
+					var uniqueLinkPath = "";
+					var u = 0;
+					
+					localRecursiveUniqueLinkCheck();
+					
+					return;
+					
+
+					//===============
+					function localRecursiveUniqueLinkCheck()
+					{
+						if(u == uniqueLinks.length-1)
+						{
+							Debug.log("Done checking unique links!");
+
+							//so finish last one
+							localHandleLastLinkId();
+							return;
+						}
+					
+						uniqueLinkPath += (u?"/":"") + uniqueLinks[u];
+						Debug.log("Checking unique link: " + uniqueLinkPath);
+												
+						localGetLinkId(uniqueLinkPath,
+								function(childLinkIndex, linkId)
+								{
+							Debug.log("Completed check of " + uniqueLinkPath + " childLinkIndex = '" +
+									childLinkIndex + "' linkId = '" + 
+									linkId + "'");
+							
+							++u;
+							localRecursiveUniqueLinkCheck();
+							
+								}); //end localGetLinkId handler						
+					} //end localRecursiveUniqueLinkCheck()
+					
+					//===============
+					function localHandleLastLinkId()
+					{
+						Debug.log("localHandleLastLinkId()");
 						
-						var childLinkIndexArr = childLinkIndex.split(' ');
-						if(childLinkIndexArr.length > 1) //if there are multiple indices, choose second one as destination child index
-							childLinkIndex = childLinkIndexArr[1];
+						localGetLinkId(doMap[type][editType][menuDepth|0][menuDepthType|0].groupLink,
+								function(childLinkIndex, linkId)
+								{
+							Debug.log(doMap[type][editType][menuDepth|0][menuDepthType|0].groupLink + 
+									" childLinkIndex = '" +
+									childLinkIndex + "' linkId = '" + 
+									linkId + "'");
+							
+							var childLinkIndexArr = childLinkIndex.split(' ');
+							if(childLinkIndexArr.length > 1) //if there are multiple indices, choose second one as destination child index
+								childLinkIndex = childLinkIndexArr[1];
 
-						//for group link, pre-select GroupID value							
-						newWindowStr += "&selectedGroupIDs=" +
-								encodeURIComponent(
-										childLinkIndex + "=" +
-										linkId);
+							//for group link, pre-select GroupID value							
+							newWindowStr += "&selectedGroupIDs=" +
+									encodeURIComponent(
+											childLinkIndex + "=" +
+											linkId);
 
-						localLaunchWindow();
+							localLaunchWindow();
+							
+							//return configuration change check
+							if(_checkActiveGroupsTimer)
+								window.clearTimeout(_checkActiveGroupsTimer);
+							_checkActiveGroupsTimer = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
 
-							}); //end localGetLinkId handle
+
+								}); //end localGetLinkId handler
+						
+					} //end localHandleLastLinkId()
+					
 				}
 				catch(e)
 				{
 					Debug.log("Unknown impossible error (notify admins) editType = " +
 							editType + ": " + e, Debug.HIGH_PRIORITY);
+					
+					//return configuration change check
+					if(_checkActiveGroupsTimer)
+						window.clearTimeout(_checkActiveGroupsTimer);
+					_checkActiveGroupsTimer = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
 				}
 			}
 //			else
@@ -2923,22 +3062,229 @@
 					ConfigurationAPI.getFieldValuesForRecords(
 							typeBaseTable,
 							_nodes[i].name,
-							fieldRetObj[1].fieldRelativePath + 
-							fieldRetObj[1].fieldColumnName,
+							fieldRetObj,
+							//fieldRetObj[1].fieldRelativePath + 
+							//fieldRetObj[1].fieldColumnName,
 							function(retObj)
 							{
 						console.log("localGetLinkId getFieldValuesForRecords",retObj);
 						
+						if(retObj.length != 2)
+						{
+							Debug.log("Failed to read link value for '" +
+									fieldPath + "!'", Debug.HIGH_PRIORITY);
+							return;
+						}
+						
+						//check if no link, and prompt user to make one
+						if(retObj[0].fieldValue == "NO_LINK" ||
+								retObj[1].fieldValue == "DEFAULT")
+						{
+							//remake field path with spaces so it displays better in
+							//	popup dialog
+							var fieldPathArr = fieldPath.split('/');
+							fieldPath = "";
+							for(var f=0;f<fieldPathArr.length;++f)
+								fieldPath += (f?" / ":"") + fieldPathArr[f];
+							
+							if(fieldRetObj[0].fieldColumnDataChoicesArr &&
+									fieldRetObj[0].fieldColumnDataChoicesArr.length > 2)							
+								DesktopContent.popUpVerification(
+									"The link to <b>" + fieldPath +
+									"</b> has not been defined for <b>" +
+									ArtdaqConfigurationAPI.getShortTypeName(_nodes[i].type) + "::" +
+									_nodes[i].name +
+									"</b>, do you want to <u><b>create</b></u> it now?",
+									localCreateLink /*yes-to-reload handler*/,
+									0,0,0,0,0, //val, bgColor, textColor, borderColor, getUserInput, 
+									300 /*dialogWidth*/);
+							else
+								Debug.log("The link to '" + fieldPath +
+										"' has not been defined. Please manually define and try again.",
+										Debug.HIGH_PRIORITY);
+							
+							return;
+							
+							//===============
+							function localCreateLink()
+							{
+								var valueArr = [];
+								
+								valueArr.push(fieldRetObj[0].fieldColumnDataChoicesArr[
+									fieldRetObj[0].fieldColumnDataChoicesArr.length-1]);
+								
+								var isUniqueLink = false;
+								
+								if(fieldRetObj[1].fieldColumnType.indexOf("ChildLinkUID-") >= 0)
+								{
+									//modify fieldPath into link record name
+									fieldPath = uniqueLinks[u].substr(0,
+											uniqueLinks[u].indexOf("Link"));
+									if(fieldPath.length > 1 && 
+											fieldPath[0] >= 'a' && fieldPath[0] <= 'z') //capitalize
+										fieldPath = String.fromCharCode(fieldPath.charCodeAt(0)-32) + 
+											fieldPath.substr(1);
+									valueArr.push(_nodes[i].name + fieldPath + "Record");
+
+									Debug.log("Creating unique link " +
+											typeBaseTable + "/" +
+											uniqueLinkPath +
+											" for '" +
+											_nodes[i].name + 
+											"' to " + 
+											valueArr[0] + ":" + valueArr[1]);
+									isUniqueLink = true;
+								} //end unique link value handling
+								else //else is a group link
+								{
+									//modify fieldPath into link groupID
+									fieldPath = fieldPath.substr(0,fieldPath.indexOf("Link"));
+									if(fieldPath.length > 1 && 
+											fieldPath[0] >= 'a' && fieldPath[0] <= 'z') //capitalize
+										fieldPath = String.fromCharCode(fieldPath.charCodeAt(0)-32) + fieldPath.substr(1);
+									valueArr.push(_nodes[i].name + fieldPath + "Group");
+									
+									Debug.log("localCreateLink() " + typeBaseTable + "/" + 
+											fieldPath +
+											" for '" +
+											_nodes[i].name + 
+											"' to " + 
+											valueArr[0] + ":" + valueArr[1]);
+								} //end group link value handling
+
+								//now values are defined for group or unique link
+								//	so set the values
+								ConfigurationAPI.setFieldValuesForRecords(
+										typeBaseTable,
+										_nodes[i].name, 	//recordArr
+										fieldRetObj, 	//fieldArr of size 2
+										valueArr, 	//valueArr of size 2
+										/////////////////////
+										function(modifiedTables)
+										{
+									Debug.log("modifiedTables length " + modifiedTables.length);
+
+									if(!modifiedTables.length)
+									{
+										Debug.log("There was an error while writing the values.",
+												Debug.HIGH_PRIORITY);
+										return;					
+									}
+
+									_modifiedTables = modifiedTables;
+									
+									//add link target table if not in modified tables
+									var found = false;
+									var tablesToAdd = []
+									for(var t=0;t<_modifiedTables.length;++t)
+										if(_modifiedTables[t].tableName == valueArr[0])
+										{
+											found = true;
+											break;
+										}
+									if(!found)
+									{
+										tablesToAdd.push({											
+											"tableName": 	valueArr[0],
+											"tableVersion": "-1" //mockup
+											});
+									}
+									
+									//proceed to save (quietly) tables, groups, aliases
+									ConfigurationAPI.saveModifiedTables(_modifiedTables,
+											/////////////////////
+											function(savedTables, savedGroups, savedAliases)
+											{
+										if(!savedTables.length)
+										{
+											Debug.log("There was an error while saving the values.",
+													Debug.HIGH_PRIORITY);
+											return;					
+										}
+
+										Debug.log("The link to <b>" + valueArr[0] + "/" +
+												valueArr[1] +
+												"</b> for <b>" +
+												ArtdaqConfigurationAPI.getShortTypeName(_nodes[i].type) + "::" +
+												_nodes[i].name +
+												"</b> has been successfully created!",
+												Debug.INFO_PRIORITY);
+
+										_modifiedTables = undefined; //clear after save
+
+										if(!isUniqueLink)
+											initArtdaqNodes(); //re-init and get new active configuration
+										else //is unique link, so continue to create record
+										{
+											ConfigurationAPI.addSubsetRecords(
+													valueArr[0], //table path
+													valueArr[1], //record UID
+													/////////////////////
+													function(modifiedTables) //start addSubsetRecords handler
+													{
+												Debug.log("modifiedTables length " + modifiedTables.length);
+
+												if(!modifiedTables.length)
+												{
+													Debug.log("There was an error while creating the record.",
+															Debug.HIGH_PRIORITY);
+													return;					
+												}
+
+												_modifiedTables = modifiedTables;
+												
+												//proceed to save (quietly) tables, groups, aliases
+												ConfigurationAPI.saveModifiedTables(_modifiedTables,
+														/////////////////////
+														function(savedTables, savedGroups, savedAliases)
+														{
+													if(!savedTables.length)
+													{
+														Debug.log("There was an error while saving the values.",
+																Debug.HIGH_PRIORITY);
+														return;					
+													}
+													Debug.log("The unique record <b>" + valueArr[0] + "/" +
+															valueArr[1] +
+															"</b> for <b>" +
+															ArtdaqConfigurationAPI.getShortTypeName(_nodes[i].type) + "::" +
+															_nodes[i].name +
+															"</b> has been successfully created!",
+															Debug.INFO_PRIORITY);
+
+													_modifiedTables = undefined; //clear after save
+													
+													initArtdaqNodes(); //re-init and get new active configuration
+														}, //end saveModifiedTables handler
+														_modifiedTables);
+													}, //end addSubsetRecords handler
+													_modifiedTables);
+										} //end unique link record creation
+										
+											}, 
+											0,0, //doNotIgnoreWarnings,doNotSaveAffectedGroups,
+											0,0, //doNotActivateAffectedGroups,doNotSaveAliases,
+											0, //doNotIgnoreGroupActivationWarnings,
+											0, //doNotKillPopUpEl, 
+											tablesToAdd); //end saveModifiedTables handler
+
+										}, //end setFieldValuesForRecords handler
+										_modifiedTables);	
+								
+							} //end localCreateLink()
+						} //end missing link handling
+						
 						//pass link index and link ID to handler
 						handler(
-								fieldRetObj[0].fieldColumnType.split('-')[1], 
-								retObj[0].fieldValue);
+								fieldRetObj[1].fieldColumnType.split('-')[1], 
+								retObj[1].fieldValue);
 
 							}); //end ConfigurationAPI.getFieldValuesForRecords() call
 					
 						}); //end ConfigurationAPI.getFieldsOfRecords() call
-
+				
 			} //end localGetLinkId()
+			
 			
 		} // end handleEditIconMenuSelection()
 
@@ -3448,7 +3794,7 @@
 					//delete element to force new paint
 					var nodeid = "node-" + i;
 					var el = document.getElementById(nodeid);
-					el.parentNode.removeChild(el);
+					if(el) el.parentNode.removeChild(el);
 					
 					paint();
 					
@@ -3784,9 +4130,20 @@
 		{	   
 			e.stopPropagation();
 		
-			if(i < 0 || !_nodes || i >= _nodes.length) return; //ignore illegal index
-			
+			if(!_nodes || i >= _nodes.length) return; //ignore illegal index
+						
 			Debug.log("mouseup-delete i = " + i);
+			
+			if(i < 0) //then delete all selected nodes
+			{
+				var selectedNodeIndices = Object.keys(_selectedNodes);
+				DesktopContent.popUpVerification(
+						"Are you sure want to <u><b>delete</b></u> the <b>" +
+						selectedNodeIndices.length + "</b> selected node(s)?",
+						localDeleteNode /*yes-to-reload handler*/					
+				);
+				return;
+			}
 
 			DesktopContent.popUpVerification(
 					"Are you sure want to <u><b>delete</b></u> the node <b>" +
@@ -3804,19 +4161,69 @@
 			{
 				Debug.log("localDeleteNode() " + i);
 				
-				_nodes.splice(i,1);
+				if(i < 0) //special selected nodes delete
+				{
+					console.log("Deleteing selectedNodeIndices",selectedNodeIndices);
+					
+					//first pass, delete html elements before indices change
+					for(var j=0;j<selectedNodeIndices.length;++j)
+					{
+						i = selectedNodeIndices[j]|0;
+						if(i < 0 || i >= _nodes.length)
+						{
+							Debug.log("Could not find node i=" + i +
+									" in nodes! Were the nodes changed?", Debug.HIGH_PRIORITY);
+							continue;
+						}
+						
+						//delete element to force new paint
+						var nodeid = "node-" + i;
+						var el = document.getElementById(nodeid);
+						if(el) el.parentNode.removeChild(el);
+					} //end first pass html element deletion
+					
+					//second pass, delete from global nodes array, and modify indices into global array
+					for(var j=0;j<selectedNodeIndices.length;++j)
+					{
+						i = selectedNodeIndices[j]|0;
+						if(i < 0 || i >= _nodes.length)
+						{
+							Debug.log("Could not find node i=" + i +
+									" in nodes! Were the nodes changed?", Debug.HIGH_PRIORITY);
+							continue;
+						}
+						
+						_nodes.splice(i,1);
+						
+						//fix selectedKeys after deletion
+						//	any after that are higher than node index need to be decremented
+
+						for(var k=j+1;k<selectedNodeIndices.length;++k)
+							if((selectedNodeIndices[k]|0) > i)
+								selectedNodeIndices[k] = (selectedNodeIndices[k]|0)-1;
+					} //end deletion of selected node indices loop in global array
+				}
+				else if(i >= _nodes.length)
+				{
+					Debug.log("Could not find node i=" + i +
+							" in nodes! Were the nodes changed?", Debug.HIGH_PRIORITY);
+					return;
+				}
+				else //normal single node delete	
+				{
+					_nodes.splice(i,1);
+
+					//delete element to force new paint
+					var nodeid = "node-" + i;
+					var el = document.getElementById(nodeid);
+					if(el) el.parentNode.removeChild(el);
+				}
 				
 				//subsystem change liekly affects arrows, so update
 				initArrows();
 
 				console.log("_nodes",_nodes);
-				nodesHaveChanged();
-				
-				//delete element to force new paint
-				var nodeid = "node-" + i;
-				var el = document.getElementById(nodeid);
-				if(el)
-					el.parentNode.removeChild(el);
+				nodesHaveChanged();				
 
 				paint();
 			} //end localDeleteNode()
@@ -4255,12 +4662,13 @@
 		//nodeLayoutHasChanged ~~
 		function nodesHaveChanged(haveChanged)
 		{
-			Debug.log("nodesHaveChanged");
+			//Debug.log("nodesHaveChanged");
 			
 			_nodesHaveChanged = (haveChanged==undefined)?true:haveChanged;
 						
 			var el = document.getElementById("Status");
-			el.innerHTML = _nodesHaveChanged?"( Unsaved Changes! )":"";
+			if(el)
+				el.innerHTML = _nodesHaveChanged?"( Unsaved Changes! )":"";
 						
 		} //end nodesHaveChanged()
 		
@@ -4423,11 +4831,12 @@
 						_nodes[i].subsystemId = keys[1] | 0;
 					else //create a subsystem
 					{
-						_subsystems[1] = {
+						//use 2, because 1 is 'anonymous subsystem'
+						_subsystems[2] = {
 								"label" : 			"subsystem1", 
 								"destinationId" : 	0 /*default to null destination*/ 
 						};
-						_nodes[i].subsystemId = 1;
+						_nodes[i].subsystemId = 2;
 					}
 					
 					_nodes[i].x 	= _mouseMoveStart[0];
@@ -4508,15 +4917,21 @@
 		function checkForActiveGroupChange(doInit)
 		{
 			//Debug.log("checkForActiveGroupChange() " + doInit);
+
+			if(_checkActiveGroupsTimer)
+			{
+				window.clearTimeout(_checkActiveGroupsTimer);
+				_checkActiveGroupsTimer = 0;
+			}
 			
 			//get active table groups
 			DesktopContent.XMLHttpRequest(
 					"Request?RequestType=getActiveTableGroups",
 					"", function (req) {
 								
-				if(_checkActiveGroupsOffset)
-					window.clearTimeout(_checkActiveGroupsOffset);
-				_checkActiveGroupsOffset = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+				if(_checkActiveGroupsTimer)
+					window.clearTimeout(_checkActiveGroupsTimer);
+				_checkActiveGroupsTimer = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
 				
 				if(!req) return; //ignore disconnected requests
 					
@@ -4559,13 +4974,14 @@
 			//===========
 			function localHandleChange(activeConfigGroups)
 			{
-				if(_checkActiveGroupsOffset)
+				if(_checkActiveGroupsTimer)
 				{
-					window.clearTimeout(_checkActiveGroupsOffset);
-					_checkActiveGroupsOffset = 0;
+					window.clearTimeout(_checkActiveGroupsTimer);
+					_checkActiveGroupsTimer = 0;
 				}
 				
-				console.log("activeConfigGroups",activeConfigGroups);
+				console.log("Change detected!... activeConfigGroups",activeConfigGroups,
+						"_lastActiveGroups",_lastActiveGroups);
 												
 				DesktopContent.popUpVerification(
 						"A configuration change was detected! " +
@@ -4579,9 +4995,9 @@
 						{
 							Debug.log("Canceled...");
 
-							if(_checkActiveGroupsOffset)
-								window.clearTimeout(_checkActiveGroupsOffset);
-							_checkActiveGroupsOffset = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+							if(_checkActiveGroupsTimer)
+								window.clearTimeout(_checkActiveGroupsTimer);
+							_checkActiveGroupsTimer = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
 
 						} //end cancelFunc handler
 				);

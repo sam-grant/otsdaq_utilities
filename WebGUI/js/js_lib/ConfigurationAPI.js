@@ -1594,6 +1594,8 @@ ConfigurationAPI.handlePopUpAliasEditToggle = function(i)
 //
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
+//
+// <tablesToAdd> is an array of Table objects to add to modified group. -1 would be empty mockup table.
 //	
 //	Note: when called from popup, uses info from popup.
 //
@@ -1622,7 +1624,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		doNotIgnoreWarnings,doNotSaveAffectedGroups,
 		doNotActivateAffectedGroups,doNotSaveAliases,
 		doNotIgnoreGroupActivationWarnings,
-		doNotKillPopUpEl)
+		doNotKillPopUpEl, tablesToAdd)
 {	
 	//copy from ConfigurationGUI::saveModifiedTree
 
@@ -1712,7 +1714,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 			var modTblCount = 0;
 			var modTblStr = "";
 			for(var j=0;j<modifiedTables.length;++j)
-				if((modifiedTables[j].tableVersion|0) < -1)
+				if((modifiedTables[j].tableVersion|0) < 0)
 				{
 					if(modTblCount++)
 						modTblStr += ",";
@@ -1724,7 +1726,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					modifiedTablesListStr += ",";
 					modifiedTablesListStr += modifiedTables[j].tableVersion;
 				}
-			
+						
 			//get affected groups
 			//	and save member map to hidden div for Save action			
 			///////////////////////////////////////////////////////////
@@ -1783,6 +1785,14 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							affectedGroupTableMap[i] += memberName + 
 								"," + memberVersion + ",";
 					}
+					
+					//for the last group, add tables (-1 means mockup)
+					if(i==groups.length-1 && tablesToAdd)
+					{
+						for(var j=0;j<tablesToAdd.length;++j)
+							affectedGroupTableMap[i] += tablesToAdd[j].tableName + 
+								"," + tablesToAdd[j].tableVersion + ",";
+					} //end mockup table add
 				}
 				
 				localHandleSavingAffectedGroups();
@@ -2191,7 +2201,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
 									"SaveWiz",
 									localNextAliasHandler,										
-									true); //request return parameters		
+									true); //request return parameters	
 						}
 						
 					} // end of if statement to check if done with group saving
@@ -2438,7 +2448,8 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 
 //=====================================================================================
 //saveGroupAndActivate
-ConfigurationAPI.saveGroupAndActivate = function(groupName,tableMap,doneHandler,doReturnParams,
+ConfigurationAPI.saveGroupAndActivate = function(groupName,tableMap,
+		doneHandler,doReturnParams,
 		lookForEquivalent)
 {
 	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewTableGroup&groupName=" +

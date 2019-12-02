@@ -2241,8 +2241,8 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 				fieldPaths.push_back(StringMacros::decodeURIComponent(fieldPath));
 			}
 			__SUP_COUT__ << fieldList << __E__;
-			for(auto& field : fieldPaths)
-				__SUP_COUT__ << "fieldPath " << field << __E__;
+			//for(auto& field : fieldPaths)
+			//	__SUP_COUT__ << "fieldPath " << field << __E__;
 		}
 
 		// extract record list
@@ -2618,7 +2618,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
-}
+} //end handleFillUniqueFieldValuesForRecordsXML()
 
 //========================================================================================================================
 // handleFillTreeViewXML
