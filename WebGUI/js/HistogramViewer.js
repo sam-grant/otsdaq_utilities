@@ -165,7 +165,9 @@ Ext.onReady(function()
  var canvasL            = navigatorW + 5                                                          ;
  var canvasW            = viewportW  - navigatorW - 20                                            ;
  var canvasH            = viewportH  - (topMargin_ + bottomMargin_) - decorationH - controlsH     ;
- var canvasPos          = 0                                                                       ;
+ var canvasPos_         = 0                                                                       ;
+ var gridDivision_      = "grid1x1"                                                               ;
+ var timeoutInterval_   = 0                                                                       ;
  
  generateDIVPlaceholder     ("sourceDiv"                   , 0         , 0                        ) ;
  generateDIVPlaceholder     ("navigatorDiv"                , navigatorT, navigatorL               ) ;
@@ -342,7 +344,7 @@ Ext.onReady(function()
                                  handler : function() 
                                            {
                                             JSROOT.cleanup('histogram1');
-                                            mdi_ = new JSROOT.GridDisplay('histogram1', ''); // gridi2x2
+                                            mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
                                            }
                                 }
                                ); 
@@ -363,7 +365,7 @@ Ext.onReady(function()
                                             //theCanvas_.update() ;
                                             clearInterval(periodicPlotID_) ;
                                             JSROOT.cleanup('histogram1');
-                                            mdi_ = new JSROOT.GridDisplay('histogram1', ''); // gridi2x2
+                                            mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
                                            }
                                 }
                                ); 
@@ -384,42 +386,92 @@ Ext.onReady(function()
                                            }
                                 }
                                ); 
-timeoutInterval = Ext.create  (
-                               'Ext.form.field.Number',
-                               {
-                                name         : 'timeout'         ,
-                                width        : 160               ,
-                                fieldLabel   : 'Refresh interval',
-                                step         : 1                 ,
-                                value        : 5.0               ,
-                                minValue     : 5.0               ,
-                                maxValue     : 60                ,
-                                allowDecimals: true                              
-                               }
-                              )
-theControls_ = Ext.create     (
-                               'Ext.panel.Panel', 
-                               {
-                                title    : 'Canvas controls'     ,
-                                width    : controlsW             ,
-                                height   : controlsH             ,
-                                renderTo : 'controlsDiv'         ,
-                                draggable: true                  ,
-                                items    : [
-                                            resetCanvasB         ,
-                                            clearCanvasB         ,
-                                            freezeCanvasB        ,
-                                            timeoutInterval
-                                           ]
-                               }
-                              ).setPosition(0,0); 
+timeoutInterval_ = Ext.create  (
+                                'Ext.form.field.Number',
+                                {
+                                 name         : 'timeout'         ,
+                                 width        : 160               ,
+                                 height       : 10                ,
+                                 fieldLabel   : 'Refresh interval',
+                                 step         : 1                 ,
+                                 value        : 5.0               ,
+                                 minValue     : 5.0               ,
+                                 maxValue     : 60                ,
+                                 allowDecimals: true   
+                                }                          
+                               ) ;
+zonX_ = Ext.create             (
+                                'Ext.form.field.Number',
+                                {
+                                 name         : 'zonX'            ,
+                                 width        : 40                ,
+                                 height       : 10                ,
+                                 //fieldLabel   : 'nx'              ,
+                                 step         : 1                 ,
+                                 value        : 1                 ,
+                                 minValue     : 1                 ,
+                                 maxValue     : 10                ,
+                                 allowDecimals: false             ,
+                                 listeners    : {
+                                                 spinend: function(thisSpin, eOpts)
+                                                          {
+                                                           gridDivision_ = "grid" + thisSpin.value + "x" + zonY_.value ;
+                                                           JSROOT.cleanup('histogram1');
+                                                           mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
+                                                           STDLINE("gridDivision_: " +gridDivision_) ;
+                                                          }
+                                                }               
+                                }
+                               ) ;
+zonY_ = Ext.create             (
+                                'Ext.form.field.Number',
+                                {
+                                 name         : 'zonY'            ,
+                                 width        : 40                ,
+                                 height       : 10                ,
+                                 //fieldLabel   : 'ny'              ,
+                                 step         : 1                 ,
+                                 value        : 1                 ,
+                                 minValue     : 1                 ,
+                                 maxValue     : 10                ,
+                                 allowDecimals: false             ,                
+                                 listeners    : {
+                                                 spinend: function( thisSpin, eOpt)
+                                                          {
+                                                            gridDivision_ = "grid" + zonX_.value + "x" + thisSpin.value ;
+                                                            JSROOT.cleanup('histogram1');
+                                                            mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
+                                                            STDLINE("gridDivision_: " +gridDivision_) ;
+                                                          }
+                                                }               
+                                }
+                               ) ;
+theControls_ = Ext.create      (
+                                'Ext.panel.Panel', 
+                                {
+                                 title    : 'Canvas controls'     ,
+                                 width    : controlsW             ,
+                                 height   : controlsH             ,
+                                 renderTo : 'controlsDiv'         ,
+                                 draggable: true                  ,
+                                 layout   : 'hbox'           ,
+                                 items    : [
+                                             resetCanvasB         ,
+                                             clearCanvasB         ,
+                                             freezeCanvasB        ,
+                                             zonX_                ,
+                                             zonY_                ,
+                                             timeoutInterval_     
+                                            ]
+                                }
+                               ).setPosition(0,0); 
  //-----------------------------------------------------------------------------
  function makeGrid(where,what)
  { 
   if( grid_ ) grid_.destroy()     ;
   theStore_.sort(treeDisplayField_, 'ASC');
 
-  mdi_ = new JSROOT.GridDisplay('histogram1', ''); // gridi2x2
+  mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
  
   grid_ = Ext.create(
                      'Ext.tree.Panel', 
@@ -588,7 +640,7 @@ theControls_ = Ext.create     (
                                                                   }, 
                                                                   ""
                                                                  )
-                                                   var tOut = Math.round(timeoutInterval.getValue() * 1000);
+                                                   var tOut = Math.round(timeoutInterval_.getValue() * 1000);
                                                 //    periodicPlotID_ = setInterval(
                                                 //                                  function()
                                                 //                                  {
@@ -712,7 +764,7 @@ theControls_ = Ext.create     (
                               }                                                                                                         
                               else if(!(typeof getXMLValue(response,"rootType") == 'undefined')) // Returns the plot to display                                                                     
                               { // get specific ROOT Object and display
-                               canvasPos++ ;
+                               canvasPos_++ ;
                         //        if( periodicPlotID_ != "" ) 
                         //        {
                         //         clearInterval(periodicPlotID_) ;
@@ -751,12 +803,12 @@ theControls_ = Ext.create     (
  //-----------------------------------------------------------------------------
  displayPlot_ = function(object)
                 {
-                 var index = canvasPos % mdi_.NumGridFrames() ;
-                //  if( index > mdi_.NumGridFrames()) {index = 0}
-                //  var pos = "item" + index ;
+                 var index = canvasPos_ % mdi_.NumGridFrames() ;
+                 if( index > mdi_.NumGridFrames()) {index = 0}
+                 var pos = "item" + index ;
 
-                //  if (mdi_!=null) theFrame = mdi_.FindFrame(pos, true);
-                 theFrame = 'histogram1' ;
+                 if (mdi_!=null) theFrame = mdi_.FindFrame(pos, true);
+                // theFrame = 'histogram1' ;
                  var rootTitle = object.fTitle     ; 
                  if( doReset_ )
                  {
