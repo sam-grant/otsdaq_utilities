@@ -81,12 +81,6 @@
 			var counter;
 			function newWidget(widget, parameters)
 			{
-				counter = 0;
-				for(var pv in widget.PVList)
-				{
-					counter++;
-				}
-
 				var olddiv = document.getElementById("dispaly-div");
 				if (olddiv != null)
 					document.getElementById("display").removeChild(olddiv);
@@ -106,9 +100,16 @@
 					//divtemp.style.height = "100%";
 					div.appendChild(divtemp);
 					containers[pv] = divtemp;
-					drawThermometer(pv, divtemp, 50, 0, 100);
+
+					var wdth = (parseInt(window.innerWidth) - 16) / Object.keys(widget.PVList).length | 0;
+					var hght = (parseInt(window.innerHeight) - 16) / Object.keys(widget.PVList).length | 0;
+
+					if(wdth < 100) wdth = 100;
+					if(hght < 100) hght = 100;
+
+					drawThermometer(pv, divtemp, wdth, hght, 50, 0, 100);
 				}
-				console.log(document.body);	
+				console.log(document.body);
 			}
 
 			function getParameters()
@@ -134,18 +135,12 @@
 				thermometers[pvName].setMaxValue((pvValue * 1.5));			
 			}
 
-			function drawThermometer(name, container, val, min, max)
+			function drawThermometer(name, container, wdth, hght, val, min, max)
 			{
-				var hght = (parseInt(window.innerHeight) - 16);//window.innerHeight / rows;
-				var wdth = (parseInt(window.innerWidth) - 16);//hght / 2;
-
-				if(hght < 100) hght = 100;
-				if(wdth < 100) wdth = 100;
-
 				var thermometer = new Thermometer({
 
 					// SVG width
-					width: wdth , //80,
+					width: wdth, //80,
 				    // SVG height
 				    height: hght, // 160,
 				    // Color of the mercury
@@ -167,22 +162,6 @@
 
 				thermometers[name] = thermometer;
 				thermometers[name].render(container, val, min, max);
-				var svg = container.lastChild;
-				svg.setAttribute("preserveAspectRatio", "none");
-				//svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
-
-				if (counter == 1)
-				{
-					svg.setAttribute("viewBox", "0 0 100 300");
-					svg.style.width = "200%";
-					svg.style.height = "100%";					
-				}
-				else if (counter > 1)
-				{
-					svg.setAttribute("viewBox", "0 0 270 400");
-					svg.style.width = "150%";
-					svg.style.height = "100%";
-				}
 			}
 
 			function resizeWidget()
@@ -194,6 +173,21 @@
 			{
 				thermometers[name].render(container, val, min, max);
 			}
+
+			window.onresize = function() {
+				for(var name in thermometers)
+				{
+					thermometers[name]._config.width = (parseInt(window.innerWidth) - 16) / Object.keys(thermometers).length | 0;
+					thermometers[name]._config.height = (parseInt(window.innerHeight) - 16) / Object.keys(thermometers).length | 0;
+					thermometers[name].render(
+						containers[name],
+						thermometers[name]._value.current,
+						thermometers[name]._value.min,
+						thermometers[name]._value.max
+					);
+				}
+				console.log("thermometer: window.onresize()");
+			};
 
 		</script>
 
