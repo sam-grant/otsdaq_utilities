@@ -638,7 +638,8 @@ DesktopContent.hideLoading = function()	{
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
 		reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
-		targetSupervisor, ignoreSystemBlock) {
+		targetSupervisor, ignoreSystemBlock) 
+{
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 	var sequence = DesktopContent._sequence;
@@ -926,7 +927,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	}
 	else
 	{   	
-		reqData = "sequence="+sequence+"&"+((data===undefined)?"":("&"+data));
+		reqData = "sequence="+sequence+((data===undefined)?"":("&"+data));
 	}
 	
 	

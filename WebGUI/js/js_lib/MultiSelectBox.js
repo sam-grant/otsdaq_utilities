@@ -140,6 +140,8 @@ MultiSelectBox.getSelectedIndex = function(el)
 
 MultiSelectBox.getSelectionArray = function(el)
 {    
+	if(!el) return [];
+	
 	//console.log(el.id);
 	if(el.parentElement.id.indexOf("selbox-") == 0)
 		return MultiSelectBox.mySelects_[el.parentElement.id];

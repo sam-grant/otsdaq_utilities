@@ -1583,6 +1583,76 @@
 
 				_modifiedTables = modifiedTables;
 
+				
+				//if there is just one selected group ID, apply it to record
+				{
+					var groupIDSelects = [];
+					if(_selectedGroupIDs)
+						groupIDSelects = _selectedGroupIDs.split(';');
+					
+					Debug.log("groupIDSelects length " + groupIDSelects.length);
+					
+					var fieldArr = [];
+					if(groupIDSelects.length == 1)
+						fieldArr = groupIDSelects[0].split('=');
+					
+					if(_selectedGroupIDs && 
+							groupIDSelects.length == 1 &&
+							fieldArr.length == 2)
+					{
+						 Debug.log("Have group ID to apply '" +
+								 fieldArr[1] + "'");
+						 
+						 for(var field in _mapOfGroupFieldToLinkIndex)
+							 if(_mapOfGroupFieldToLinkIndex[field] ==
+									 fieldArr[0])
+							 {
+								 Debug.log("Applying to field '" +
+										 field + "'");
+								 
+								 ConfigurationAPI.setFieldValuesForRecords(
+										 _subsetBasePath,
+										 newRowUID, 	//recordArr
+										 field, 	//fieldArr
+										 fieldArr[1], 	//valueArr
+										 function(modifiedTables)
+										 {
+									 Debug.log("modifiedTables length " + modifiedTables.length);
+
+									 if(!modifiedTables.length)
+									 {
+										 Debug.log("There was an error while writing the values.",
+												 Debug.HIGH_PRIORITY);
+										 return;					
+									 }
+
+									 _modifiedTables = modifiedTables;
+									 
+									 localFinishSave();
+
+										 }, //end setFieldValuesForRecords handler
+										 _modifiedTables);
+								 
+								 return;
+							 } //end applying group ID handling
+						 
+					}
+					
+					//if did not go groupID path, then finish save
+					localFinishSave();
+					
+				} //end record modification or not handling
+
+					}, //end addSubsetRecords handler
+					_modifiedTables);		
+			
+			return;
+			
+			//=====================
+			function localFinishSave()
+			{
+				Debug.log("localFinishSave()");
+				
 				//proceed to save (quietly) tables, groups, aliases
 				ConfigurationAPI.saveModifiedTables(_modifiedTables,
 						/////////////////////
@@ -1603,13 +1673,13 @@
 
 					_modifiedTables = undefined; //clear after save
 					
-					runFilter(); //updates records and fields, and applies filter
+					//runFilter(); //updates records and fields, and applies filter
+					initSubsetGlobalData();
 
 						}); //end saveModifiedTables handler
-
-
-					}, //end addSubsetRecords handler
-					_modifiedTables);			
+				
+			} //end localFinishSave()
+			
 		} //end addRecord()
 		
 		
