@@ -1555,11 +1555,9 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 	// reload all tables so that partially loaded tables are not allowed
 	if(usingActiveGroups || refreshAll)
 	{
-		__SUP_COUT__ << "Refreshing all table info..." << __E__;
-		cfgMgr->getAllTableInfo(true, accumulatedErrors);  // do refresh
-
-		if(accumulatedErrors && *accumulatedErrors != "")
-			__SUP_COUTV__(*accumulatedErrors);
+		__SUP_COUT__ << "Refreshing all table info, ignoring warnings..." << __E__;
+		std::string accumulatedWarnings = "";
+		cfgMgr->getAllTableInfo(true, &accumulatedWarnings);  // do refresh
 	}
 
 	const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo(false);
