@@ -1,5 +1,5 @@
-#ifndef _ots_ControlsDashboardSupervisor_h_
-#define _ots_ControlsDashboardSupervisor_h_
+#ifndef _ots_SlowControlsDashboardSupervisor_h_
+#define _ots_SlowControlsDashboardSupervisor_h_
 
 #include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
@@ -11,20 +11,20 @@ namespace ots
 class SlowControlsVInterface;
 class ConfigurationManager;
 
-// ControlsDashboardSupervisor
+// SlowControlsDashboardSupervisor
 //	This class handles the management of slow controls interface plugins, as well as the
 // user web interface
-class ControlsDashboardSupervisor : public CoreSupervisorBase
+class SlowControlsDashboardSupervisor : public CoreSupervisorBase
 {
   public:
 	XDAQ_INSTANTIATOR();
 
-	ControlsDashboardSupervisor(xdaq::ApplicationStub* s);
-	virtual ~ControlsDashboardSupervisor(void);
+	SlowControlsDashboardSupervisor(xdaq::ApplicationStub* s);
+	virtual ~SlowControlsDashboardSupervisor(void);
 
 	void init(void);
-	void checkSubscriptions(ControlsDashboardSupervisor* cs);
-	void checkAlarms(ControlsDashboardSupervisor* cs);
+	void checkSubscriptions(SlowControlsDashboardSupervisor* cs);
+	void checkAlarms(SlowControlsDashboardSupervisor* cs);
 	void destroy(void);
 
 	virtual void request(const std::string&               requestType,
@@ -42,9 +42,14 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 	                                                            // values (and ignore user
 	                                                            // settings)
 
+
+//	virtual void transitionConfiguring	(toolbox::Event::Reference event) override { if(checkAlarms().size()) {__SS__ << "error"; __SS_THROW__};}
+//	virtual void transitionStarting	(toolbox::Event::Reference event) override  { if(checkAlarms().size()) {__SS__ << "error"; __SS_THROW__};}
+//	virtual void stateRunning			(toolbox::fsm::FiniteStateMachine& fsm); override  { if(checkAlarms().size()) {__SS__ << "error"; __SS_THROW__};}
+
 	void Poll(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID);
-	void GetPVSettings(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
-	void GetPVArchiverData(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
+	void GetChannelSettings(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
+	void GetChannelArchiverData(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void GetUserPermissions(cgicc::Cgicc&                    cgiIn,
 	                        HttpXmlDocument&                 xmlOut,
 	                        const WebUsers::RequestUserInfo& userInfo);
@@ -73,7 +78,7 @@ class ControlsDashboardSupervisor : public CoreSupervisorBase
 	//    ConfigurationManager*          			theConfigurationManager_;
 	//    RemoteWebUsers							theRemoteWebUsers_;
 	//	std::string                             username;
-	std::map<int, std::set<std::string>> pvDependencyLookupMap_;
+	std::map<int, std::set<std::string>> channelDependencyLookupMap_;
 	std::map<int, long int>              uidPollTimeMap_;
 	int                                  UID_;
 
