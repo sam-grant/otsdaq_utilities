@@ -353,40 +353,60 @@
 						if(artdaqObj[type] && 
 								artdaqObj[type][name])
 						{
-							Debug.log("Found " + name);
-
-							//enter in hostnames
-							_hostnames[artdaqObj[type][name].hostname] = 1;
-									   
-							//add to nodes
-							_nodes.push({
-								"type": 		ArtdaqConfigurationAPI.getTypeIndex(type),
-								"name": 		name,
-								"originalName": name, //useful when saving
-								"hostname":		artdaqObj[type][name].hostname,
-								"subsystemId":	artdaqObj[type][name].subsystemId,
-								"x":			layoutNodesX[i].getAttribute('value')|0,
-								"y":			layoutNodesY[i].getAttribute('value')|0});
-
-							//add optional parameters
-							handleOptionalNodeParameters(
-									_nodes[_nodes.length-1],
-									_nodes[_nodes.length-1].name,
-									artdaqObj[type][name].multiNodeString,
-									artdaqObj[type][name].nodeFixedWidth,
-									_nodes[_nodes.length-1].hostname,
-									artdaqObj[type][name].hostArrayString,
-									artdaqObj[type][name].hostFixedWidth);
+							console.log("Type",type,"Name",name);
 							
-							//modify original node name to give full multi-node description
-							if(_nodes[_nodes.length-1].nodeCount > 1)
+							//handle ARTDAQ Supervisor in a special way
+							if(type == 
+									ArtdaqConfigurationAPI.NODE_TYPES[
+										ArtdaqConfigurationAPI.NODE_TYPE_SUPERVISOR])
 							{
-								_nodes[_nodes.length-1].originalName = 
-										":" + (_nodes[_nodes.length-1].nodeNameFixedWidth?
-												_nodes[_nodes.length-1].nodeNameFixedWidth:1) +
-										":" + _nodes[_nodes.length-1].nodeVectorIndexString + ":" +
-										_nodes[_nodes.length-1].name;
-							}
+								//add to nodes
+								_nodes.push({
+									"type": 			ArtdaqConfigurationAPI.getTypeIndex(type),
+									"name": 			name,
+									"originalName": 	name, //useful when saving
+									"contextAddress":	artdaqObj[type][name].contextAddress,
+									"contextPort":		artdaqObj[type][name].contextPort,
+									"x":				layoutNodesX[i].getAttribute('value')|0,
+									"y":				layoutNodesY[i].getAttribute('value')|0});
+
+							} //end supervisor node handling
+							else
+							{
+
+								//enter in hostnames
+								_hostnames[artdaqObj[type][name].hostname] = 1;
+										   
+								//add to nodes
+								_nodes.push({
+									"type": 		ArtdaqConfigurationAPI.getTypeIndex(type),
+									"name": 		name,
+									"originalName": name, //useful when saving
+									"hostname":		artdaqObj[type][name].hostname,
+									"subsystemId":	artdaqObj[type][name].subsystemId,
+									"x":			layoutNodesX[i].getAttribute('value')|0,
+									"y":			layoutNodesY[i].getAttribute('value')|0});
+	
+								//add optional parameters
+								handleOptionalNodeParameters(
+										_nodes[_nodes.length-1],
+										_nodes[_nodes.length-1].name,
+										artdaqObj[type][name].multiNodeString,
+										artdaqObj[type][name].nodeFixedWidth,
+										_nodes[_nodes.length-1].hostname,
+										artdaqObj[type][name].hostArrayString,
+										artdaqObj[type][name].hostFixedWidth);
+								
+								//modify original node name to give full multi-node description
+								if(_nodes[_nodes.length-1].nodeCount > 1)
+								{
+									_nodes[_nodes.length-1].originalName = 
+											":" + (_nodes[_nodes.length-1].nodeNameFixedWidth?
+													_nodes[_nodes.length-1].nodeNameFixedWidth:1) +
+											":" + _nodes[_nodes.length-1].nodeVectorIndexString + ":" +
+											_nodes[_nodes.length-1].name;
+								}
+							} //end non-supervisor node handling
 								
 							//remove from nodes object to keep remainder accurate 
 							delete artdaqObj[type][name];
@@ -405,53 +425,71 @@
 					
 					//now add remaining nodes to layout automatically
 					
-					for(var t in ArtdaqConfigurationAPI.NODE_TYPES)
+					for(var t=0;t<ArtdaqConfigurationAPI.NODE_TYPES.length;++t)
 					{
-						t = ArtdaqConfigurationAPI.NODE_TYPES[t];
-						console.log("Type",t);
+						var type = ArtdaqConfigurationAPI.NODE_TYPES[t];
+						console.log("Type",type);
 
-						for(var n in artdaqObj[t])
+						for(var name in artdaqObj[type])
 						{	
-							console.log("Type",t,"Name",n);
+							console.log("Type",type,"Name",name);
 
-							var typeIndex = ArtdaqConfigurationAPI.getTypeIndex(t);
-							var xy = getEmptyGridSpot(typeIndex);
+							var xy = getEmptyGridSpot(t);
 
-							//enter in hostnames
-							_hostnames[artdaqObj[t][n].hostname] = 1;
-									   							
-							//add to nodes
-							_nodes.push({
-								"type": 		typeIndex,
-								"name": 		n,	
-								"originalName": n, //useful when saving
-								"hostname":		artdaqObj[t][n].hostname,
-								"subsystemId":	artdaqObj[t][n].subsystemId,
-								"x":			xy[0],
-								"y":			xy[1]});
-							
-							//add optional parameters
-							handleOptionalNodeParameters(
-									_nodes[_nodes.length-1],
-									_nodes[_nodes.length-1].name,
-									artdaqObj[t][n].multiNodeString,
-									artdaqObj[t][n].nodeFixedWidth,
-									_nodes[_nodes.length-1].hostname,
-									artdaqObj[t][n].hostArrayString,
-									artdaqObj[t][n].hostFixedWidth);
-							
-
-							//modify original node name to give full multi-node description
-							if(_nodes[_nodes.length-1].nodeCount > 1)
+							//handle ARTDAQ Supervisor in a special way
+							if(type == 
+									ArtdaqConfigurationAPI.NODE_TYPES[
+										ArtdaqConfigurationAPI.NODE_TYPE_SUPERVISOR])
 							{
-								_nodes[_nodes.length-1].originalName = 
-										":" + (_nodes[_nodes.length-1].nodeNameFixedWidth?
-												_nodes[_nodes.length-1].nodeNameFixedWidth:1) +
-										":" + _nodes[_nodes.length-1].nodeVectorIndexString + ":" +
-										_nodes[_nodes.length-1].name;
-							}
-						}
-					}
+								//add to nodes
+								_nodes.push({
+									"type": 			t,
+									"name": 			name,
+									"originalName": 	name, //useful when saving
+									"contextAddress":	artdaqObj[type][name].contextAddress,
+									"contextPort":		artdaqObj[type][name].contextPort,
+									"x":				xy[0],
+									"y":				xy[1]});
+
+							} //end supervisor node handling
+							else
+							{
+								//enter in hostnames
+								_hostnames[artdaqObj[type][name].hostname] = 1;
+																	
+								//add to nodes
+								_nodes.push({
+									"type": 		t,
+									"name": 		name,	
+									"originalName": name, //useful when saving
+									"hostname":		artdaqObj[type][name].hostname,
+									"subsystemId":	artdaqObj[type][name].subsystemId,
+									"x":			xy[0],
+									"y":			xy[1]});
+								
+								//add optional parameters
+								handleOptionalNodeParameters(
+										_nodes[_nodes.length-1],
+										_nodes[_nodes.length-1].name,
+										artdaqObj[type][name].multiNodeString,
+										artdaqObj[type][name].nodeFixedWidth,
+										_nodes[_nodes.length-1].hostname,
+										artdaqObj[type][name].hostArrayString,
+										artdaqObj[type][name].hostFixedWidth);
+								
+	
+								//modify original node name to give full multi-node description
+								if(_nodes[_nodes.length-1].nodeCount > 1)
+								{
+									_nodes[_nodes.length-1].originalName = 
+											":" + (_nodes[_nodes.length-1].nodeNameFixedWidth?
+													_nodes[_nodes.length-1].nodeNameFixedWidth:1) +
+											":" + _nodes[_nodes.length-1].nodeVectorIndexString + ":" +
+											_nodes[_nodes.length-1].name;
+								}
+							} //end non-supervisor node handling
+						} //end artdaqObj node type loop
+					} //end type loop
 					
 					console.log("all nodes",_nodes);
 					

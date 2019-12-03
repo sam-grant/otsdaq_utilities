@@ -46,17 +46,18 @@ ArtdaqConfigurationAPI.NODE_TYPE_LOGGER 		= 2;
 ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER 	= 3;
 ArtdaqConfigurationAPI.NODE_TYPE_MONITOR 		= 4;
 ArtdaqConfigurationAPI.NODE_TYPE_ROUTER 		= 5;
+ArtdaqConfigurationAPI.NODE_TYPE_SUPERVISOR 	= 6;
 ArtdaqConfigurationAPI.NODE_TYPES 				= ["reader","builder",
-												   "logger","dispatcher","monitor","router"];
+												   "logger","dispatcher","monitor","router","supervisor"];
 ArtdaqConfigurationAPI.NODE_SHORT_TYPE_NAMES 	= ["Reader","Builder",
-												   "Logger","Dispatcher","Monitor","Router"];
+												   "Logger","Dispatcher","Monitor","Router","Supervisor"];
 ArtdaqConfigurationAPI.NODE_FULL_TYPE_NAMES 	= ["Board Reader","Event Builder",
-												   "Data Logger","Dispatcher","Monitor","Routing Master"];
+												   "Data Logger","Dispatcher","Monitor","Routing Master","ARTDAQ Supervisor"];
 ArtdaqConfigurationAPI.NODE_TYPE_ACRONYM 		= ["BR","EB",
-												   "DL","Di","Mo","RM"];
+												   "DL","Di","Mo","RM","AS"];
 ArtdaqConfigurationAPI.NODE_TYPE_BASE_TABLE		= ["ARTDAQBoardReaderTable","ARTDAQEventBuilderTable",
 												   "ARTDAQDataLoggerTable","ARTDAQDispatcherTable",
-												   "ARTDAQMonitorTable","ARTDAQRoutingMasterTable"];
+												   "ARTDAQMonitorTable","ARTDAQRoutingMasterTable","ARTDAQSupervisorTable"];
 ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE		= "ARTDAQDaqParameterTable";
 ArtdaqConfigurationAPI.DAQ_METRIC_TABLE			= "ARTDAQMetricTable";
 
@@ -72,11 +73,13 @@ ArtdaqConfigurationAPI.DAQ_METRIC_TABLE			= "ARTDAQMetricTable";
 ArtdaqConfigurationAPI.getTypeIndex = function(typeName)
 {
 	Debug.log("getTypeIndex " + typeName);
-	t = typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_READER]		?ArtdaqConfigurationAPI.NODE_TYPE_READER:
-			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_BUILDER]	?ArtdaqConfigurationAPI.NODE_TYPE_BUILDER:
-			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_LOGGER]	?ArtdaqConfigurationAPI.NODE_TYPE_LOGGER:
-			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER]?ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER:
-			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_MONITOR]	?ArtdaqConfigurationAPI.NODE_TYPE_MONITOR:-1))));
+	t = typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_READER]			? ArtdaqConfigurationAPI.NODE_TYPE_READER:
+			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_BUILDER]	? ArtdaqConfigurationAPI.NODE_TYPE_BUILDER:
+			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_LOGGER]		? ArtdaqConfigurationAPI.NODE_TYPE_LOGGER:
+			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER]	? ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER:
+			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_ROUTER]		? ArtdaqConfigurationAPI.NODE_TYPE_ROUTER:
+			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_SUPERVISOR]	? ArtdaqConfigurationAPI.NODE_TYPE_SUPERVISOR:
+			(typeName == ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_MONITOR]	? ArtdaqConfigurationAPI.NODE_TYPE_MONITOR:-1))))));
 	
 	if(t < 0)
 	{	
@@ -237,11 +240,31 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 			
 			if(artdaqSupervisor)
 			{
-				//extract all processes from the artdaq supervisor object
+				//extract all nodes from the artdaq supervisor object		
 				
 				for(i=0;i<types.length;++i)
 				{
 					Debug.log("Extracting " + types[i]);
+					
+					retObj[types[i]] = {};
+					
+					if(i == ArtdaqConfigurationAPI.NODE_TYPE_SUPERVISOR)
+					{
+						//handle artdaq Supervisor node in a special way
+						//	because field types are different
+						
+						//add artdaq supervisor object
+						var artdaqSupervisorName = artdaqSupervisor.getAttribute('value');
+
+						retObj[types[i]][artdaqSupervisorName] = {
+								"contextAddress" : DesktopContent.getXMLValue(artdaqSupervisor, 
+										artdaqSupervisorName + "-contextAddress"),
+								"contextPort" : DesktopContent.getXMLValue(artdaqSupervisor, 
+										artdaqSupervisorName + "-contextPort"),
+						};
+						continue;
+					}
+					
 					var nodes = artdaqSupervisor.getElementsByTagName(
 							types[i]);
 					var hostnames = artdaqSupervisor.getElementsByTagName(
@@ -249,7 +272,6 @@ ArtdaqConfigurationAPI.getArtdaqNodes = function(responseHandler,
 					var subsystemIds = artdaqSupervisor.getElementsByTagName(
 							types[i] + "-subsystem");
 	
-					retObj[types[i]] = {};
 	
 					for(j=0;j<nodes.length;++j)
 					{
