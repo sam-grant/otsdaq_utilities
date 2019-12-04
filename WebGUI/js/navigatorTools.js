@@ -24,25 +24,6 @@
   return decodeURIComponent(vs[1]);
  }
 
- // Printout of navigation schema
- function xmlKeysPrintout(fromWhere)
- {
-      const e = new Error();
-      const a = e.stack.split("\n")[1] ;
-      const w = a.split("/") ;
-      const s = w.length -1 ;
-      const l = w[s].split(":")[1] ;
-      STDLINE("----------- Line: " + l + "-----------")  ;
-      STDLINE("From: '"+fromWhere+"'"                 )  ;
-      STDLINE("   --> fSystemPath_  : "+fSystemPath_  )  ;
-      STDLINE("   --> fRootPath_    : "+fRootPath_    )  ;
-      STDLINE("   --> fFoldersPath_ : "+fFoldersPath_ )  ;
-      STDLINE("   --> fFileName_    : "+fFileName_    )  ;
-      STDLINE("   --> fRFoldersPath_: "+fRFoldersPath_)  ;
-      STDLINE("   --> fHistName_    : "+fHistName_    )  ;
-      STDLINE("--------------------------------------")  ;
- }
-
  //-----------------------------------------------------------------------------
  getXMLValue          = function(req, name) 
                         {

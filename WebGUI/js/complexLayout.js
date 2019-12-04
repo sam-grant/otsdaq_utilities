@@ -4,6 +4,16 @@ Ext.require(['*']);
 Ext.onReady(
 function() 
 {
+ var grid_              = ""                                                                      ;
+ var dataModel_         = ""                                                                      ;
+ var fSystemPath_       = ""                                                                      ;
+ var fRootPath_         = ""                                                                      ;
+ var fFoldersPath_      = ""                                                                      ;
+ var fFileName_         = ""                                                                      ;
+ var fHistName_         = ""                                                                      ;
+ var fRFoldersPath_     = ""                                                                      ;
+ var treeDisplayField_  = "fDisplayName"                                                          ;
+
  var _cookieCodeMailbox = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
  var _cookieCode        = _cookieCodeMailbox.innerHTML                                            ;
  var _theWindow         = self                                                                    ;
@@ -12,6 +22,25 @@ function()
                           getLocalURN(0,"urn")                                                   +
                           "/Request?"                                                             ;
  
+ // Printout of navigation schema
+ function xmlKeysPrintout(fromWhere)
+ {
+      const e = new Error();
+      const a = e.stack.split("\n")[1] ;
+      const w = a.split("/") ;
+      const s = w.length -1 ;
+      const l = w[s].split(":")[1] ;
+      STDLINE("----------- Line: " + l + "-----------")  ;
+      STDLINE("From: '"+fromWhere+"'"                 )  ;
+      STDLINE("   --> fSystemPath_  : "+fSystemPath_  )  ;
+      STDLINE("   --> fRootPath_    : "+fRootPath_    )  ;
+      STDLINE("   --> fFoldersPath_ : "+fFoldersPath_ )  ;
+      STDLINE("   --> fFileName_    : "+fFileName_    )  ;
+      STDLINE("   --> fRFoldersPath_: "+fRFoldersPath_)  ;
+      STDLINE("   --> fHistName_    : "+fHistName_    )  ;
+      STDLINE("--------------------------------------")  ;
+ }
+
  Ext.QuickTips.init();
 
  Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
@@ -116,11 +145,14 @@ function()
                                       margins     : '0 0 0 5',
                                       layout      : 'accordion',
                                       items       : [
+//                                                      {
+//                                                       contentEl: 'west'            ,
+//                                                       title    : 'Files navigation',
+//                                                       id       : 'navigatorDiv'    ,
+//                                                       iconCls  : 'nav' // see the HEAD section for style used
+//                                                      }
+                                                     grid_, 
                                                      {
-                                                      contentEl: 'west',
-                                                      title    : 'Files navigation',
-                                                      iconCls  : 'nav' // see the HEAD section for style used
-                                                     }, {
                                                       title    : 'ROOT file navigation',
                                                       html     : '<p>Here the tree of ROOT files with subfolders, plots and canvases.</p>',
                                                       iconCls  : 'settings'
@@ -207,6 +239,289 @@ function()
                             );
   theSourcesCB_.setRawValue(dirs[0].dir) ; // Set default value
  }
+ //-----------------------------------------------------------------------------
+ function makeGrid(where,what)
+ { 
+  if( grid_ ) grid_.destroy()     ;
+  theStore_.sort(treeDisplayField_, 'ASC');
+
+  //mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
+ 
+  grid_ = Ext.create(
+                     'Ext.tree.Panel', 
+                     {
+                      title      : what          ,
+                      id         : 'navigator'   ,
+                      store      : theStore_     ,
+                      draggable  : true          ,
+                      resizable  : true          ,
+                      border     : true          ,
+                      renderTo   : "navigatorDiv",
+                      rootVisible: false         ,
+                      useArrows  : true          ,
+                      selModel   : {
+                                    mode : 'MULTI' // SIMPLE or MULTI
+                                   },
+                      plugins    : [
+                                    {
+                                     ptype: 'bufferedrenderer'
+                                    }
+                                   ],
+                      buttons    : [
+                                    //backButton
+                                    {
+                                      xtype    : 'button'             ,
+                                      text     : '<<'                 ,
+                                      margin   : 2                    ,
+                                      style    : {
+                                                  borderColor: 'blue' ,
+                                                  borderStyle: 'solid'
+                                                 }                    ,
+                                      minWidth : 10                   ,
+                                      height   : 25                   ,
+                                      width    : 30                   ,
+                                      listeners: {
+                                                  click: function()
+                                                         {
+                                                          if( currentTree_ = 'fileContent' )
+                                                          {
+                                                           selectedItem_ = "getDirectories"               ;
+                                                           makeStore(fRootPath_, 'RequestType=getMeDirs') ; 
+                                                           makeGrid (fRootPath_, 'Directories and files') ;
+                                                          }
+                                                         }
+                                                 }
+                                    }
+                                   ],
+                      columns    : [
+                                    {
+                                     xtype    : 'treecolumn'    ,
+                                     id       : 'provenance'    ,
+                                     text     : where           ,
+                                     flex     : 1               ,
+                                     dataIndex: 'fDisplayName' 
+                                    }, 
+                                    { 
+                                     xtype    : 'treecolumn'    ,
+                                     hidden   : false           ,
+                                     text     : 'type'          ,
+                                     width    : 1               ,
+                                     dataIndex: 'leaf'                 
+                                    }, 
+                                    { 
+                                     xtype    : 'treecolumn'    ,
+                                     hidden   : false           ,
+                                     text     : 'fSystemPath'   ,
+                                     width    : 1               ,
+                                     dataIndex: 'fSystemPath'                 
+                                    }, 
+                                    { 
+                                     xtype    : 'treecolumn'    ,
+                                     hidden   : false           ,
+                                     text     : 'fRootPath'     ,
+                                     width    : 1               ,
+                                     dataIndex: 'fRootPath'                
+                                    }, 
+                                    { 
+                                     xtype    : 'treecolumn'    ,
+                                     hidden   : false           ,
+                                     text     : 'fFoldersPath'  ,
+                                     width    : 1               ,
+                                     dataIndex: 'fFoldersPath'                
+                                    }, 
+                                    { 
+                                      xtype    : 'treecolumn'   ,
+                                      hidden   : false          ,
+                                      text     : 'fFileName'    ,
+                                      width    : 1              ,
+                                      dataIndex: 'fFileName'                
+                                     }, 
+                                     { 
+                                      xtype    : 'treecolumn'   ,
+                                      hidden   : false          ,
+                                      text     : 'fRFoldersPath',
+                                      width    : 1              ,
+                                      dataIndex: 'fRFoldersPath'                
+                                     }, 
+                                    { 
+                                      xtype    : 'treecolumn'  ,
+                                      hidden   : false         ,
+                                      text     : 'fHistName'   ,
+                                      width    : 1             ,
+                                      dataIndex: 'fHistName'                
+                                     }
+                                   ],
+                      listeners  : {
+                                    expand    : function(expandedItem, options)  // for some reason doesn't trigegr
+                                                {
+                                                 STDLINE("expanded") ;
+                                                },                                   
+                                    itemclick : function(thisItem, record, item, index, e, eOpts)
+                                                {
+                                                 var selection = this.getSelection()                                ;
+                                                 STDLINE("Selected "+selection.length+" items")                     ;
+                                                 for(var i=0; i<selection.length; i++)  
+                                                 {  
+                                                  fSystemPath_   = selection[i].data.fSystemPath                    ;
+                                                  fRootPath_     = selection[i].data.fRootPath                      ;
+                                                  fFoldersPath_  = selection[i].data.fFoldersPath                   ;
+                                                  fFileName_     = selection[i].data.fFileName                      ;
+                                                  fRFoldersPath_ = selection[i].data.fRFoldersPath                  ;
+                                                  fHistName_     = selection[i].data.fHistName                      ;
+                                                  if( typeof fFoldersPath_  === "undefined" ) fFoldersPath_  = ""   ;
+                                                  if( typeof fRFoldersPath_ === "undefined" ) fRFoldersPath_ = ""   ;
+                                                  xmlKeysPrintout("Clicked on a tree item")
+                                                }  
+                                                 STDLINE("Selected "+selection.length+" items")                     ;
+                                                 //clearInterval(periodicPlotID_)                                   ;
+                                                 var itemSplit     = item.innerText.split("\n\t\n")                 ;
+                                                 var isLeaf        = itemSplit[1].replace("\n","").replace("\t","") ;
+                                                 if( isLeaf == "true" ) 
+                                                 {
+                                                  if( selectedItem_ == "getDirectories" )
+                                                  {
+                                                   treeDisplayField_  = 'fDisplayName'                              ;
+                                                   selectedItem_      = "getRootObject"                             ;
+                                                   currentTree_       = 'fileContent'                               ;
+                                                   currentDirectory_ = fSystemPath_                                +
+                                                                       '/'                                         +
+                                                                       fRootPath_                                  +
+                                                                       "/"                                         +
+                                                                       fFoldersPath_                               +
+                                                                       "/"                                         +
+                                                                       fFileName_                                   ;
+                                                   STDLINE('RequestType      : getMeRootFile'     )                 ;
+                                                   xmlKeysPrintout("Getting directories in particular")
+                                                   STDLINE('currentDirectory_: '+currentDirectory_)                 ;
+                                                   makeStore(currentDirectory_,'RequestType=getMeRootFile')         ;
+                                                   makeGrid (currentDirectory_,'ROOT file content'        )         ;
+                                                  }
+                                                  else if( selectedItem_ == "getRootObject" )
+                                                  { 
+                                                   xmlKeysPrintout("Getting object (getRootObject)")
+                                                   currentRootObject_  = "/"                                       +
+                                                                         fRootPath_                                +
+                                                                         "/"                                       +
+                                                                         fFoldersPath_                             +
+                                                                         fFileName_                                +
+                                                                         "/"                                       +
+                                                                         fRFoldersPath_                            +
+                                                                         "/"                                       +
+                                                                         fHistName_  ;
+                                                   STDLINE('RequestType       : getRootObject'      )               ;
+                                                   STDLINE('currentRootObject_: '+currentRootObject_)               ;
+                                                   theAjaxRequest(
+                                                                  _requestURL+"RequestType=getRoot",
+                                                                  {                                                           
+                                                                   CookieCode: _cookieCode,                                  
+                                                                   RootPath  : currentRootObject_                                     
+                                                                  }, 
+                                                                  ""
+                                                                 )
+                                                   var tOut = Math.round(timeoutInterval_.getValue() * 1000);
+                                                //    periodicPlotID_ = setInterval(
+                                                //                                  function()
+                                                //                                  {
+                                                //                                   STDLINE("Launching Ajax Request with refresh time: "+tOut) ;
+                                                //                                   theAjaxRequest(
+                                                //                                                  _requestURL+"RequestType=getRoot",
+                                                //                                                  {                                                           
+                                                //                                                   CookieCode: _cookieCode,                                  
+                                                //                                                   RootPath  : currentRootObject_                                     
+                                                //                                                  }, 
+                                                //                                                  ""
+                                                //                                                 )
+                                                //                                  },
+                                                //                                  tOut 
+                                                //                                 )                                                          
+                                                  }
+                                                 }
+                                                },
+                                    headerclick: function(ct, column, e, t, eOpts)
+                                                 {
+                                                  var a = column ;
+                                                  STDLINE("header clicked") ;
+                                                 }
+                                   }
+                     }
+                    ).setPosition(0,0);
+                   
+  var objectProvenance = Ext.create(
+                                    'Ext.tip.ToolTip', 
+                                    {
+                                     target: 'provenance',
+                                     html  : 'Object provenance: ' + where
+                                    }
+                                   );
+ }
+ //-----------------------------------------------------------------------------
+ dataModel_ = Ext.define(
+                         'DirectoriesDataModel',
+                         {
+                                extend: 'Ext.data.Model',
+                                fields: [
+                                                {name: 'nChilds'      , type: 'int'   , convert: null},
+                                                {name: 'fSystemPath'  , type: 'string', convert: null},
+                                                {name: 'fRootPath'    , type: 'string', convert: null},
+                                                {name: 'fFoldersPath' , type: 'string', convert: null},
+                                                {name: 'fFileName'    , type: 'string', convert: null},
+                                                {name: 'fHistName'    , type: 'string', convert: null},
+                                                {name: 'fRFoldersPath', type: 'string', convert: null},
+                                                {name: 'fDisplayName' , type: 'string', convert: null}
+                                        ]
+                         }
+                        );
+ //-----------------------------------------------------------------------------
+ function makeStore(path, reqType)
+ { 
+  xmlKeysPrintout("Sending parameters block to server")
+  STDLINE("path   : " + path   ) ;
+  STDLINE("reqType: " + reqType) ;
+  theStore_ = Ext.create(
+                         'Ext.data.TreeStore', 
+                         {
+                          model    : 'DirectoriesDataModel',
+                          id       : 'theStore',
+                          autoLoad : false,
+                          root     : {
+                                      expanded     : true
+                                     },
+                          proxy    : {
+                                      type         : 'ajax',
+                                      actionMethods: {
+                                                      read          : 'POST'
+                                                     }, 
+                                      extraParams  : { 
+                                                      "CookieCode"  : _cookieCode   ,
+                                                      "Path"        : path          , // used by Ryan's part
+                                                      "fRootPath"   : fRootPath_    ,
+                                                      "fFoldersPath": fFoldersPath_ ,
+                                                      "fHistName"   : fHistName_    ,
+                                                      "fFileName"   : fFileName_
+                                                     },
+                                      url          : _requestURL + reqType,
+                                      reader       : {
+                                                      type          : 'xml',
+                                                      root          : 'nodes',
+                                                      record        : '> node'
+                                                     },
+                                     },
+                          listeners: {
+                                      beforeload : function(thisStore, operation, eOpts) 
+                                                   {
+                                                    STDLINE("Request: "+_requestURL + reqType) ;
+                                                   },
+                                      load       : function( thisStore, records, successful, operation, node, eOpts )
+                                                   {
+                                                    STDLINE("Load was succesful? "+successful) ;
+                                                   }
+
+                                     }
+                         }
+                        );
+  theStore_.load() ;
+ }
+ 
  //-----------------------------------------------------------------------------
  function theAjaxRequest(theRequestURL,theParams,theRawData)                                                                   
  { 
@@ -343,4 +658,5 @@ function()
                 ""
                ) ;                                                          
 
+ makeGrid("where","what") ;
 });
