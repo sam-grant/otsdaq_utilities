@@ -1,7 +1,7 @@
 /*===============================================================================*
  * HistogramViewer.js: the javascript code to instantiate a root objects         *
  *                     navigator in the otsdaq framework                         *
- *                                                                                      *
+ *                                                                               *
  * Copyright (C) 2019                                                            *
  *                                                                               *
  * Authors: Dario Menasce                                                        *
@@ -114,61 +114,63 @@ Ext.onReady(function()
        STDLINE("--------------------------------------")  ;
   }
 
- var currentDirectory_  = ""                                                                      ;  
- var currentRootObject_ = ""                                                                      ;  
- var currentTree_       = ""                                                                      ;
- var grid_              = ""                                                                      ;
- var selectedItem_      = "getDirectories";                                                       ;
- var theStore_          = ""                                                                      ;
- var theCanvas_         = ""                                                                      ;
- var fSystemPath_       = ""                                                                      ;
- var fRootPath_         = ""                                                                      ;
- var fFoldersPath_      = ""                                                                      ;
- var fFileName_         = ""                                                                      ;
- var fHistName_         = ""                                                                      ;
- var fRFoldersPath_     = ""                                                                      ;
- var theSources_        = ""                                                                      ;
- var theControls_       = ""                                                                      ;
- var thetheSourcesCB__  = ""                                                                      ;
- var dataModel_         = ""                                                                      ;
- var displayPlot_       = ""                                                                      ;
- var periodicPlotID_    = ""                                                                      ;
- var mdi_               = ""                                                                      ;
- var treeDisplayField_  = "fDisplayName"                                                          ;
- var doReset_           = true                                                                    ;
- var _cookieCodeMailbox = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
- var _cookieCode        = _cookieCodeMailbox.innerHTML                                            ;
- var _theWindow         = self                                                                    ;
- var _requestURL        = self.parent.window.location.origin                                     +
-                          "/urn:xdaq-application:lid="                                           +
-                          getLocalURN(0,"urn")                                                   +
-                          "/Request?"                                                             ; 
- var viewportW          = window.innerWidth                                                       ;
- var viewportH          = window.innerHeight                                                      ;
+ var currentDirectory_  = ""                                                                        ;
+ var currentRootObject_ = ""                                                                        ;
+ var currentTree_       = ""                                                                        ;
+ var grid_              = ""                                                                        ;
+ var selectedItem_      = "getDirectories";                                                         ;
+ var theStore_          = ""                                                                        ;
+ var theCanvas_         = ""                                                                        ;
+ var fSystemPath_       = ""                                                                        ;
+ var fRootPath_         = ""                                                                        ;
+ var fFoldersPath_      = ""                                                                        ;
+ var fFileName_         = ""                                                                        ;
+ var fHistName_         = ""                                                                        ;
+ var fRFoldersPath_     = ""                                                                        ;
+ var theSources_        = ""                                                                        ;
+ var theControls_       = ""                                                                        ;
+ var thetheSourcesCB__  = ""                                                                        ;
+ var dataModel_         = ""                                                                        ;
+ var displayPlot_       = ""                                                                        ;
+ var periodicPlotID_    = ""                                                                        ;
+ var mdi_               = ""                                                                        ;
+ var treeDisplayField_  = "fDisplayName"                                                            ;
+ var doReset_           = true                                                                      ;
+ var _cookieCodeMailbox = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox")   ;
+ var _cookieCode        = _cookieCodeMailbox.innerHTML                                              ;
+ var _theWindow         = self                                                                      ;
+ var _requestURL        = self.parent.window.location.origin                                       +
+                          "/urn:xdaq-application:lid="                                             +
+                          getLocalURN(0,"urn")                                                     +
+                          "/Request?"                                                               ;
+ var viewportW          = window.innerWidth                                                         ;
+ var viewportH          = window.innerHeight                                                        ;
 
  var topMargin_         = 28
- var bottomMargin_      = 5                                                                       ;
- var decorationH        = 0                                                                       ;
- var sourceT            = 0                                                                       ;
- var sourceL            = 0                                                                       ;
- var sourceW            = 200                                                                     ;
- var sourceH            = 25                                                                      ;
- var navigatorT         = topMargin_                                                              ;
- var navigatorL         =   0                                                                     ;
- var navigatorW         = 200                                                                     ;
- var navigatorH         = viewportH  - (topMargin_ + bottomMargin_) - decorationH                 ;
+ var bottomMargin_      = 5                                                                         ;
+ var decorationH        = 0                                                                         ;
+ var sourceT            = 0                                                                         ;
+ var sourceL            = 0                                                                         ;
+ var sourceW            = 200                                                                       ;
+ var sourceH            = 25                                                                        ;
+ var navigatorT         = topMargin_                                                                ;
+ var navigatorL         =   0                                                                       ;
+ var navigatorW         = 200                                                                       ;
+ var navigatorH         = viewportH  - (topMargin_ + bottomMargin_) - decorationH                   ;
  var controlsT          = 460               ;
- var controlsL          = navigatorW + 5                                                          ;
- var controlsW          = viewportW  - navigatorW - 20                                            ;
- var controlsH          = 80                                                                      ;
- var canvasT            = navigatorT                                                              ;
- var canvasL            = navigatorW + 5                                                          ;
- var canvasW            = viewportW  - navigatorW - 20                                            ;
- var canvasH            = viewportH  - (topMargin_ + bottomMargin_) - decorationH - controlsH     ;
- var canvasPos_         = 0                                                                       ;
- var gridDivision_      = "grid1x1"                                                               ;
- var timeoutInterval_   = 0                                                                       ;
- 
+ var controlsL          = navigatorW + 5                                                            ;
+ var controlsW          = viewportW  - navigatorW - 20                                              ;
+ var controlsH          = 80                                                                        ;
+ var canvasT            = navigatorT                                                                ;
+ var canvasL            = navigatorW + 5                                                            ;
+ var canvasW            = viewportW  - navigatorW - 20                                              ;
+ var canvasH            = viewportH  - (topMargin_ + bottomMargin_) - decorationH - controlsH       ;
+ var canvasPos_         = 0                                                                         ;
+ var gridDivision_      = "grid1x1"                                                                 ;
+ var timeoutInterval_   = 0                                                                         ;
+ var activeObjects_     = []                                                                        ;
+ var backButton         = ""                                                                        ;
+  
  generateDIVPlaceholder     ("sourceDiv"                   , 0         , 0                        ) ;
  generateDIVPlaceholder     ("navigatorDiv"                , navigatorT, navigatorL               ) ;
  generateDIVPlaceholder     ("histogramDiv"                , topMargin_, navigatorW + 5           ) ;
@@ -345,6 +347,7 @@ Ext.onReady(function()
                                            {
                                             JSROOT.cleanup('histogram1');
                                             mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
+                                            activeObjects_ = [] ;
                                            }
                                 }
                                ); 
@@ -366,7 +369,8 @@ Ext.onReady(function()
                                             clearInterval(periodicPlotID_) ;
                                             JSROOT.cleanup('histogram1');
                                             mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
-                                           }
+                                            activeObjects_ = [] ;
+                                          }
                                 }
                                ); 
  var freezeCanvasB = Ext.create(
@@ -406,7 +410,6 @@ zonX_ = Ext.create             (
                                  name         : 'zonX'            ,
                                  width        : 40                ,
                                  height       : 10                ,
-                                 //fieldLabel   : 'nx'              ,
                                  step         : 1                 ,
                                  value        : 1                 ,
                                  minValue     : 1                 ,
@@ -429,7 +432,6 @@ zonY_ = Ext.create             (
                                  name         : 'zonY'            ,
                                  width        : 40                ,
                                  height       : 10                ,
-                                 //fieldLabel   : 'ny'              ,
                                  step         : 1                 ,
                                  value        : 1                 ,
                                  minValue     : 1                 ,
@@ -438,10 +440,10 @@ zonY_ = Ext.create             (
                                  listeners    : {
                                                  spinend: function( thisSpin, eOpt)
                                                           {
-                                                            gridDivision_ = "grid" + zonX_.value + "x" + thisSpin.value ;
-                                                            JSROOT.cleanup('histogram1');
-                                                            mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
-                                                            STDLINE("gridDivision_: " +gridDivision_) ;
+                                                           gridDivision_ = "grid" + zonX_.value + "x" + thisSpin.value ;
+                                                           JSROOT.cleanup('histogram1');
+                                                           mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
+                                                           STDLINE("gridDivision_: " +gridDivision_) ;
                                                           }
                                                 }               
                                 }
@@ -471,7 +473,7 @@ theControls_ = Ext.create      (
   if( grid_ ) grid_.destroy()     ;
   theStore_.sort(treeDisplayField_, 'ASC');
 
-  mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
+  //mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
  
   grid_ = Ext.create(
                      'Ext.tree.Panel', 
@@ -490,29 +492,35 @@ theControls_ = Ext.create      (
                       selModel   : {
                                     mode : 'MULTI' // SIMPLE or MULTI
                                    },
-                      buttons    : [
+                      plugins    : [
                                     {
-                                     xtype    : 'button'             ,
-                                     text     : '<<'                 ,
-                                     margin   : 2                    ,
-                                     style    : {
-                                                 borderColor: 'blue' ,
-                                                 borderStyle: 'solid'
-                                                }                    ,
-                                     minWidth : 10                   ,
-                                     height   : 25                   ,
-                                     width    : 30                   ,
-                                     listeners: {
-                                                 click: function()
-                                                        {
-                                                         if( currentTree_ = 'fileContent' )
+                                     ptype: 'bufferedrenderer'
+                                    }
+                                   ],
+                      buttons    : [
+                                    //backButton
+                                    {
+                                      xtype    : 'button'             ,
+                                      text     : '<<'                 ,
+                                      margin   : 2                    ,
+                                      style    : {
+                                                  borderColor: 'blue' ,
+                                                  borderStyle: 'solid'
+                                                 }                    ,
+                                      minWidth : 10                   ,
+                                      height   : 25                   ,
+                                      width    : 30                   ,
+                                      listeners: {
+                                                  click: function()
                                                          {
-                                                          selectedItem_ = "getDirectories"               ;
-                                                          makeStore(fRootPath_, 'RequestType=getMeDirs') ; 
-                                                          makeGrid (fRootPath_, 'Directories and files') ;
+                                                          if( currentTree_ = 'fileContent' )
+                                                          {
+                                                           selectedItem_ = "getDirectories"               ;
+                                                           makeStore(fRootPath_, 'RequestType=getMeDirs') ; 
+                                                           makeGrid (fRootPath_, 'Directories and files') ;
+                                                          }
                                                          }
-                                                        }
-                                                }
+                                                 }
                                     }
                                    ],
                       columns    : [
@@ -602,36 +610,36 @@ theControls_ = Ext.create      (
                                                  {
                                                   if( selectedItem_ == "getDirectories" )
                                                   {
-                                                   treeDisplayField_  = 'fDisplayName'                     ;
-                                                   selectedItem_      = "getRootObject"                    ;
-                                                   currentTree_       = 'fileContent'                      ;
-                                                   currentDirectory_ = fSystemPath_                       +
-                                                                       '/'                                +
-                                                                       fRootPath_                         +
-                                                                       "/"                                +
-                                                                       fFoldersPath_                      +
-                                                                       "/"                                +
-                                                                       fFileName_                          ;
-                                                   STDLINE('RequestType      : getMeRootFile'     )        ;
+                                                   treeDisplayField_  = 'fDisplayName'                              ;
+                                                   selectedItem_      = "getRootObject"                             ;
+                                                   currentTree_       = 'fileContent'                               ;
+                                                   currentDirectory_ = fSystemPath_                                +
+                                                                       '/'                                         +
+                                                                       fRootPath_                                  +
+                                                                       "/"                                         +
+                                                                       fFoldersPath_                               +
+                                                                       "/"                                         +
+                                                                       fFileName_                                   ;
+                                                   STDLINE('RequestType      : getMeRootFile'     )                 ;
                                                    xmlKeysPrintout("Getting directories in particular")
-                                                   STDLINE('currentDirectory_: '+currentDirectory_)        ;
-                                                   makeStore(currentDirectory_,'RequestType=getMeRootFile');
-                                                   makeGrid (currentDirectory_,'ROOT file content'        );
+                                                   STDLINE('currentDirectory_: '+currentDirectory_)                 ;
+                                                   makeStore(currentDirectory_,'RequestType=getMeRootFile')         ;
+                                                   makeGrid (currentDirectory_,'ROOT file content'        )         ;
                                                   }
                                                   else if( selectedItem_ == "getRootObject" )
                                                   { 
-                                                   xmlKeysPrintout("Getting the content of a root file in particular (getRootObject)")
-                                                   currentRootObject_  = "/"                                +
-                                                                         fRootPath_                         +
-                                                                         "/"                                +
-                                                                         fFoldersPath_                      +
-                                                                         fFileName_                         +
-                                                                         "/"                                +
-                                                                         fRFoldersPath_                     +
-                                                                         "/"                                +
+                                                   xmlKeysPrintout("Getting object (getRootObject)")
+                                                   currentRootObject_  = "/"                                       +
+                                                                         fRootPath_                                +
+                                                                         "/"                                       +
+                                                                         fFoldersPath_                             +
+                                                                         fFileName_                                +
+                                                                         "/"                                       +
+                                                                         fRFoldersPath_                            +
+                                                                         "/"                                       +
                                                                          fHistName_  ;
-                                                   STDLINE('RequestType       : getRootObject'      )      ;
-                                                   STDLINE('currentRootObject_: '+currentRootObject_)      ;
+                                                   STDLINE('RequestType       : getRootObject'      )               ;
+                                                   STDLINE('currentRootObject_: '+currentRootObject_)               ;
                                                    theAjaxRequest(
                                                                   _requestURL+"RequestType=getRoot",
                                                                   {                                                           
@@ -774,8 +782,9 @@ theControls_ = Ext.create      (
                                var rootName  = getXMLValue (response,"path"    );                                       
                                var rootJSON  = getXMLValue (response,"rootJSON");                                   
                                var object    = JSROOT.parse(rootJSON           );  
-                               STDLINE("Launchin displayPlot") ;
-                               displayPlot_(object) ; // This is to get an immediate response
+                               STDLINE("Launchin displayPlot")                  ;
+                               activeObjects_.push(object) ;
+                               displayPlot_() ; // This is to get an immediate response
                                 //                              JSROOT.RegisterForResize(theFrame);
                         //        if( object._typename != "TCanvas") 
                         //        {
@@ -801,33 +810,43 @@ theControls_ = Ext.create      (
            );                                                                                                
  } ;                                                                                                                                      
  //-----------------------------------------------------------------------------
- displayPlot_ = function(object)
+ displayPlot_ = function()
                 {
-                 var index = canvasPos_ % mdi_.NumGridFrames() ;
-                 if( index > mdi_.NumGridFrames()) {index = 0}
-                 var pos = "item" + index ;
+                 STDLINE("gridDivision_: "+gridDivision_) ;
+                 if( gridDivision_ == "grid1x1")
+                 { 
+                  JSROOT.cleanup('histogram1');
+                  mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
+                  STDLINE("cleared...") ;
+                }
 
-                 if (mdi_!=null) theFrame = mdi_.FindFrame(pos, true);
-                // theFrame = 'histogram1' ;
-                 var rootTitle = object.fTitle     ; 
-                 if( doReset_ )
+                 for(var i=0; i<activeObjects_.length; i++)
                  {
-                  STDLINE("-------> Resetting " + rootTitle);
-                  JSROOT.redraw (
-                                 theFrame          ,
-                                  object           ,
-                                 ""
-                                );
-                  doReset_ = false ;                                                                                
-                 }
-                 else
-                 {
-                  STDLINE("-------> Updating " + rootTitle) ;
-                  JSROOT.redraw (
-                               theFrame            ,
-                               object              ,
-                               ""
-                              );                                                                                
+                  var index = canvasPos_ % mdi_.NumGridFrames() ;
+                  if( index > mdi_.NumGridFrames()) {index = 0}
+                  var pos = "item" + index ; 
+
+                  if (mdi_!=null) theFrame = mdi_.FindFrame(pos, true);
+                  var rootTitle = activeObjects_[i].fTitle     ; 
+                  if( doReset_ )
+                  {
+                   STDLINE("-------> Resetting " + rootTitle);
+                   JSROOT.redraw (
+                                  theFrame         ,
+                                  activeObjects_[i],
+                                  ""
+                                 );
+                   doReset_ = false ;                                                                                
+                  }
+                  else
+                  {
+                   STDLINE("-------> Updating " + rootTitle) ;
+                   JSROOT.redraw (
+                                theFrame         ,
+                                activeObjects_[i],
+                                ""
+                               );                                                                                
+                  }
                  }
                 }
  //-----------------------------------------------------------------------------
@@ -846,16 +865,7 @@ theControls_ = Ext.create      (
                                 "" // No horizontal repositioning
                                ) ;
                   theCanvas_.update() ; 
-                  if( currentRootObject_ == "" ) return ;
-                  theAjaxRequest(
-                                 _requestURL+"RequestType=getRoot",
-                                 {                                                            
-                                  CookieCode: _cookieCode,                                   
-                                  RootPath  : "/"              + 
-                                              currentRootObject_                               
-                                 }, 
-                                 ""
-                                ) ;                                                          
+                  displayPlot_();
                  };
  //=================================== Begin operations ==================================================
  // This is where the whole action starts
