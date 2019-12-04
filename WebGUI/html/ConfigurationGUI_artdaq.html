@@ -1566,33 +1566,43 @@
 				var count = _nodes[i].nodeCount?_nodes[i].nodeCount:1;
 				
 				var nodeName = _nodes[i].name;
-				var hostname = _nodes[i].hostname;
-				if(count > 1)
-				{
-					//special multi-node name handling
-					
-					nodeName = nodeName.replace(new RegExp("\\*",'g'), 
-							"[" + 
-							getPrinterSyntaxStringWithWidth(
-							_nodes[i].nodeVectorIndexString,
-							_nodes[i].nodeNameFixedWidth)
-							+ 
-							"]"); 
-				}
-				if(hostname.indexOf('*') >= 0)
-				{
-					//special hostname array handling
-					
-					hostname = hostname.replace(new RegExp("\\*",'g'), 
-							"[" + 
-							getPrinterSyntaxStringWithWidth(
-							_nodes[i].hostnameVectorIndexString,
-							_nodes[i].hostnameFixedWidth) + 
-							"]"); 
-				}
+				var hostname;
 				
-				if(count > 4) count = 4; //cap at 4
-				//console.log("i,count",i,count);				
+				if(type == ArtdaqConfigurationAPI.NODE_TYPE_SUPERVISOR)
+				{
+					hostname = _nodes[i].contextAddress + ":" +
+							_nodes[i].contextPort;
+				} //end supervisor handling
+				else // non-supervisor node handling
+				{
+					hostname = _nodes[i].hostname;
+					if(count > 1)
+					{
+						//special multi-node name handling
+						
+						nodeName = nodeName.replace(new RegExp("\\*",'g'), 
+								"[" + 
+								getPrinterSyntaxStringWithWidth(
+								_nodes[i].nodeVectorIndexString,
+								_nodes[i].nodeNameFixedWidth)
+								+ 
+								"]"); 
+					}
+					if(hostname.indexOf('*') >= 0)
+					{
+						//special hostname array handling
+						
+						hostname = hostname.replace(new RegExp("\\*",'g'), 
+								"[" + 
+								getPrinterSyntaxStringWithWidth(
+								_nodes[i].hostnameVectorIndexString,
+								_nodes[i].hostnameFixedWidth) + 
+								"]"); 
+					}
+					
+					if(count > 4) count = 4; //cap at 4
+					//console.log("i,count",i,count);	
+				} //end non-supervisor handling
 				
 				for(var p=count-1;p>=0;--p)
 				{
@@ -1630,7 +1640,8 @@
 						"-headerText' class='node-headerText'>" +
 						typeName + "::" + nodeName +
 						htmlClearDiv() + 
-						_subsystems[_nodes[i].subsystemId].label + 
+						(_subsystems[_nodes[i].subsystemId]? //e.g. undefined for artdaq supervisor
+								_subsystems[_nodes[i].subsystemId].label:"") + 
 						" @ " + hostname +			
 					"</div>";
 				

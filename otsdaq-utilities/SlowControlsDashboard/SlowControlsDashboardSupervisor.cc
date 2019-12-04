@@ -20,7 +20,7 @@ SlowControlsDashboardSupervisor::SlowControlsDashboardSupervisor(xdaq::Applicati
 {
 	__SUP_COUT__ << "Constructor." << __E__;
 
-	INIT_MF("SlowControlsDashboardSupervisor");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
 	// make controls dashboard supervisor directories in case they don't exist
 	mkdir(((std::string)(CONTROLS_SUPERVISOR_DATA_PATH)).c_str(), 0755);

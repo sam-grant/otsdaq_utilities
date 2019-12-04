@@ -99,7 +99,7 @@ LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub* stub)
                                 "zip",
                                 "txt"})  // init allowed file upload types
 {
-	INIT_MF("LogbookSupervisor");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
 	// xgi::bind (this, &LogbookSupervisor::Default,                	"Default" );
 	// xgi::bind (this, &LogbookSupervisor::Log,                		"Log" );
