@@ -45,7 +45,7 @@ ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* st
 {
 	__SUP_COUT__ << "Constructor started." << __E__;
 
-	INIT_MF("ConfigurationGUI");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
 	// make macro directories in case they don't exist
 	mkdir(((std::string)ARTDAQ_CONFIG_LAYOUTS_PATH).c_str(), 0755);
