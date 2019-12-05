@@ -1858,7 +1858,7 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		catch(e)
 		{
 			Debug.log("An error occurred while trying to open the window. " +
-					"The window path seems to be invalid: " + e, Debug.HIGH_PRIORITY);
+					"The window path seems to be invalid:[" + e.lineNumber + "]: " + e, Debug.HIGH_PRIORITY);
 			return;
 		}
 	}

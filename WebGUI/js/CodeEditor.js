@@ -2030,7 +2030,7 @@ CodeEditor.create = function() {
 					}
 					catch(e)
 					{
-						Debug.log("Ignoring error handling file open: " + e);
+						Debug.log("Ignoring error handling file open:[" + e.lineNumber + "]: " + e);
 					}
 					console.log(DesktopContent._loadBox.style.display);
 										
@@ -2282,7 +2282,7 @@ CodeEditor.create = function() {
 						CodeEditor.editor.displayFileHeader(forPrimary);
 					}
 					catch(e)
-					{ Debug.log("Ignoring error: " + e); }
+					{ Debug.log("Ignoring error:[" + e.lineNumber + "]: " + e); }
 				});	 //end show loading
 		
 	} //end handleFileContent()
@@ -2355,14 +2355,14 @@ CodeEditor.create = function() {
 					}
 					catch(e)
 					{
-						Debug.log("Failed to scroll to inserted 2nd element: " + e);
+						Debug.log("Failed to scroll to inserted 2nd element:[" + e.lineNumber + "]: " + e);
 						try
 						{
 							secondEl.scrollIntoViewIfNeeded();
 						}
 						catch(e)
 						{
-							Debug.log("Failed to scroll 2nd element: " + e);
+							Debug.log("Failed to scroll 2nd element:[" + e.lineNumber + "]: " + e);
 						}
 					}
 					
@@ -2400,14 +2400,14 @@ CodeEditor.create = function() {
 					}
 					catch(e)
 					{
-						Debug.log("Failed to scroll to inserted 1st element: " + e);							
+						Debug.log("Failed to scroll to inserted 1st element:[" + e.lineNumber + "]: " + e);							
 						try
 						{
 							firstEl.scrollIntoViewIfNeeded();
 						}
 						catch(e)
 						{
-							Debug.log("Failed to scroll 1st element: " + e);
+							Debug.log("Failed to scroll 1st element:[" + e.lineNumber + "]: " + e);
 						}
 					}
 					
@@ -5833,7 +5833,7 @@ CodeEditor.create = function() {
 			catch(e)
 			{
 				Debug.log("Ignoring error since file forPrimary=" + 
-						forPrimary + " is probably not opened: " + 
+						forPrimary + " is probably not opened:[" + e.lineNumber + "]: " + 
 						e);
 			}
 		} // end primary and secondary loop
@@ -7120,7 +7120,7 @@ CodeEditor.create = function() {
 			}
 			catch(e)
 			{ 				
-				Debug.log("There was an error uploading the text: " + e,
+				Debug.log("There was an error uploading the text:[" + e.lineNumber + "]: " + e,
 						Debug.HIGH_PRIORITY); 
 				return;
 			}

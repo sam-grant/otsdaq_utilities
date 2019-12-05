@@ -1332,7 +1332,7 @@
     	}
     	catch(e)
     	{
-    		Debug.log("Error capturing address/data into input fields: " + e);
+    		Debug.log("Error capturing address/data into input fields:[" + e.lineNumber + "]: " + e);
     	}
     	
     	
@@ -1365,7 +1365,7 @@
     	}
     	catch(e)
     	{
-    		Debug.log("Error capturing address/data into input fields: " + e);
+    		Debug.log("Error capturing address/data into input fields:[" + e.lineNumber + "]: " + e);
     	}
 
 		if(isOnMacroMakerPage)
@@ -1576,7 +1576,7 @@
     	}
     	catch(e)
     	{
-    		Debug.log("Error occured during FE Macro export: " + e, Debug.HIGH_PRIORITY);
+    		Debug.log("Error occured during FE Macro export:[" + e.lineNumber + "]: " + e, Debug.HIGH_PRIORITY);
     		return;
     	}
     	if(targetCnt != 1)
