@@ -390,7 +390,7 @@ Ext.onReady(function()
                                            }
                                 }
                                ); 
-timeoutInterval_ = Ext.create  (
+ timeoutInterval_ = Ext.create (
                                 'Ext.form.field.Number',
                                 {
                                  name         : 'timeout'         ,
@@ -404,7 +404,7 @@ timeoutInterval_ = Ext.create  (
                                  allowDecimals: true   
                                 }                          
                                ) ;
-zonX_ = Ext.create             (
+ zonX_ = Ext.create            (
                                 'Ext.form.field.Number',
                                 {
                                  name         : 'zonX'            ,
@@ -426,7 +426,7 @@ zonX_ = Ext.create             (
                                                 }               
                                 }
                                ) ;
-zonY_ = Ext.create             (
+ zonY_ = Ext.create            (
                                 'Ext.form.field.Number',
                                 {
                                  name         : 'zonY'            ,
@@ -448,7 +448,7 @@ zonY_ = Ext.create             (
                                                 }               
                                 }
                                ) ;
-theControls_ = Ext.create      (
+ theControls_ = Ext.create     (
                                 'Ext.panel.Panel', 
                                 {
                                  title    : 'Canvas controls'     ,

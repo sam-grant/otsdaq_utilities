@@ -12,7 +12,7 @@ function STDLINE(str)
   const s = w.length -1 ;
   const l = w[s].split(":")[1] ;
   const n = w[s].split(":")[0] ;
-  const m = l+"] ["+n+"] "+str
+  const m = l+"] ["+n+"] "+str ;
   console.log(m) ;
 }
 

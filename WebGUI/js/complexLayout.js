@@ -4,6 +4,10 @@ Ext.require(['*']);
 Ext.onReady(
 function() 
 {
+ var activeObjects_     = []                                                                      ;
+ var canvasPos_         = 0                                                                       ;
+ var theViewPort_       = 0                                                                       ;
+ var theStore_          = 0                                                                       ;
  var grid_              = ""                                                                      ;
  var dataModel_         = ""                                                                      ;
  var fSystemPath_       = ""                                                                      ;
@@ -12,6 +16,9 @@ function()
  var fFileName_         = ""                                                                      ;
  var fHistName_         = ""                                                                      ;
  var fRFoldersPath_     = ""                                                                      ;
+ var doReset_           = true                                                                    ;
+ var gridDivision_      = "grid1x1"                                                               ;
+ var selectedItem_      = "getDirectories";                                                       ;
  var treeDisplayField_  = "fDisplayName"                                                          ;
 
  var _cookieCodeMailbox = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
@@ -41,159 +48,181 @@ function()
       STDLINE("--------------------------------------")  ;
  }
 
+ function functionName( func )
+ {
+    // Match:
+    // - ^          the beginning of the string
+    // - function   the word 'function'
+    // - \s+        at least some white space
+    // - ([\w\$]+)  capture one or more valid JavaScript identifier characters
+    // - \s*        optionally followed by white space (in theory there won't be any here,
+    //              so if performance is an issue this can be omitted[1]
+    // - \(         followed by an opening brace
+    //
+    var result = /^function\s+([\w\$]+)\s*\(/.exec( func.toString() )
+
+    return  result  ?  result[ 1 ]  :  '' // for an anonymous function there won't be a match
+ }
+ 
  Ext.QuickTips.init();
 
  Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
 
- var viewport = Ext.create(
-                           'Ext.Viewport', 
-                           {
-                            id    : 'border-example',
-                            layout: 'border',
-                            items : [
-                                     // create instance immediately
-                                     Ext.create(
-                                                'Ext.Component', 
-                                                {
-                                                 region: 'north',
-                                                 height: 32, // give north and south regions a height
-                                                 id    : 'sourcesDiv',
-                                                 autoEl: {
-                                                          tag : 'div',
-                                                         }
-                                                }
-                                               ), 
-                                     {
-                                      // lazily created panel (xtype:'panel' is default)
-                                      region      : 'south',
-                                      contentEl   : 'south',
-                                      split       : true,
-                                      height      : 100,
-                                      minSize     : 100,
-                                      maxSize     : 200,
-                                      collapsible : true,
-                                      collapsed   : true,
-                                      title       : 'General information',
-                                      margins     : '0 0 0 0'
-                                     }, 
-                                     {
-                                      xtype       : 'tabpanel',
-                                      region      : 'east',
-                                      title       : 'ROOT controls',
-                                      id          : 'east-panel', // see Ext.getCmp() below
-                                      dockedItems : [
-                                                     {
-                                                      dock : 'top',
-                                                      xtype: 'toolbar',
-                                                      items: [ 
-                                                              '->', 
-                                                              {
-                                                               xtype  : 'button'     ,
-                                                               text   : 'Stop'      ,
-                                                               tooltip: 'Stop periodical refreshing of histograms',
-                                                               border : true
-                                                              }
-                                                             ]
-                                                     }
-                                                    ],
-                                      animCollapse: true,
-                                      collapsible : true,
-                                      split       : true,
-                                      width       : 225, // give east and west regions a width
-                                      minSize     : 175,
-                                      maxSize     : 400,
-                                      margins     : '0 5 0 0',
-                                      activeTab   : 1,
-                                      tabPosition : 'bottom',
-                                      items       : [
-                                                     {
-                                                      html      : '<p>Here controls of periodic refresh of histograms</p>',
-                                                      title     : 'Cycling'                                               ,
-                                                      tooltip   : 'Tab to control refreshing of histograms'               ,
-                                                      autoScroll: true
-                                                     }, 
-                                                     Ext.create(
-                                                                'Ext.grid.PropertyGrid', 
-                                                                {
-                                                                 title   : 'Operations on histograms',
-                                                                 closable: true,
-                                                                 source  : {
-                                                                            "(name)"           : "Properties Grid",
-                                                                            "grouping"         : false,
-                                                                            "autoFitColumns"   : true,
-                                                                            "productionQuality": false,
-                                                                            "created"          : Ext.Date.parse('10/15/2006', 'm/d/Y'),
-                                                                            "tested"           : false,
-                                                                            "version"          : 0.01,
-                                                                            "borderWidth"      : 1
-                                                                           }
-                                                                }
-                                                               )
-                                                    ]
-                                     }, 
-                                     {
-                                      region      : 'west',
-                                      stateId     : 'navigation-panel',
-                                      id          : 'west-panel', // see Ext.getCmp() below
-                                      title       : 'Filesystem navigation',
-                                      split       : true,
-                                      width       : 200,
-                                      minWidth    : 175,
-                                      maxWidth    : 400,
-                                      collapsible : true,
-                                      animCollapse: true,
-                                      margins     : '0 0 0 5',
-                                      layout      : 'accordion',
-                                      items       : [
-//                                                      {
-//                                                       contentEl: 'west'            ,
-//                                                       title    : 'Files navigation',
-//                                                       id       : 'navigatorDiv'    ,
-//                                                       iconCls  : 'nav' // see the HEAD section for style used
-//                                                      }
-                                                     grid_, 
-                                                     {
-                                                      title    : 'ROOT file navigation',
-                                                      html     : '<p>Here the tree of ROOT files with subfolders, plots and canvases.</p>',
-                                                      iconCls  : 'settings'
-                                                     }, {
-                                                      title    : 'Navigation Controls',
-                                                      html     : '<p>Here the controls to drive the filesystem drill down.</p>',
-                                                      iconCls  : 'info'
-                                                     }
-                                                    ]
-                                     },
-                                     // in this instance the TabPanel is not wrapped by another panel
-                                     // since no title is needed, this Panel is added directly
-                                     // as a Container
-                                     Ext.create(
-                                                'Ext.tab.Panel', 
-                                                {
-                                                 region        : 'center', // a center region is ALWAYS required for border layout
-                                                 deferredRender: false,
-                                                 activeTab     : 0,        // first tab initially active
-                                                 items         : [
-                                                                  {
-                                                                   contentEl : 'center1' ,
-                                                                   title     : 'Canvas 1',
-                                                                   closable  : false     ,
-                                                                   autoScroll: true
-                                                                  }, 
-                                                                  {
-                                                                   contentEl : 'center2' ,      
-                                                                   title     : 'Canvas 2', 
-                                                                   closable  : true      ,
-                                                                   autoScroll: true
-                                                                  }
-                                                                 ]
-                                                }
-                                               )
-                                    ]
- });
+ function makeViewPort() 
+ {
+  var fName = arguments.callee.toString().match(/function ([^\(]+)/)[1];
+  STDLINE("Creating viewport for "+fName) ;
+  theViewPort_ = Ext.create(
+                            'Ext.Viewport', 
+                            {
+                             id    : 'border-example',
+                             layout: 'border',
+                             items : [
+                                      // create instance immediately
+                                      Ext.create(
+                                                 'Ext.Component', 
+                                                 {
+                                                  region: 'north',
+                                                  height: 32, // give north and south regions a height
+                                                  id    : 'sourcesDiv',
+                                                  autoEl: {
+                                                           tag : 'div',
+                                                          }
+                                                 }
+                                                ), 
+                                      {
+                                       // lazily created panel (xtype:'panel' is default)
+                                       region      : 'south'              ,
+                                       contentEl   : 'south'              ,
+                                       split       : true                 ,
+                                       height      : 100                  ,
+                                       minSize     : 100                  ,
+                                       maxSize     : 200                  ,
+                                       collapsible : true                 ,
+                                       collapsed   : true                 ,
+                                       title       : 'General information',
+                                       margins     : '0 0 0 0'
+                                      }, 
+                                      {
+                                       xtype       : 'tabpanel'           ,
+                                       region      : 'east'               ,
+                                       title       : 'ROOT controls'      ,
+                                       id          : 'east-panel'         , // see Ext.getCmp() below
+                                       collapsed   : true                 ,
+                                       dockedItems : [
+                                                      {
+                                                       dock : 'top',
+                                                       xtype: 'toolbar',
+                                                       items: [ 
+                                                               '->', 
+                                                               {
+                                                                xtype  : 'button'                                  ,
+                                                                text   : 'Stop'                                    ,
+                                                                tooltip: 'Stop periodical refreshing of histograms',
+                                                                border : true
+                                                               }
+                                                              ]
+                                                      }
+                                                     ],
+                                       animCollapse: true,
+                                       collapsible : true,
+                                       split       : true,
+                                       width       : 225, // give east and west regions a width
+                                       minSize     : 175,
+                                       maxSize     : 400,
+                                       margins     : '0 5 0 0',
+                                       activeTab   : 1,
+                                       tabPosition : 'bottom',
+                                       items       : [
+                                                      {
+                                                       html      : '<p>Here controls of periodic refresh of histograms</p>',
+                                                       title     : 'Cycling'                                               ,
+                                                       tooltip   : 'Tab to control refreshing of histograms'               ,
+                                                       autoScroll: true
+                                                      }, 
+                                                      Ext.create(
+                                                                 'Ext.grid.PropertyGrid', 
+                                                                 {
+                                                                  title   : 'Operations on histograms',
+                                                                  closable: true,
+                                                                  source  : {
+                                                                             "(name)"           : "Properties Grid",
+                                                                             "grouping"         : false,
+                                                                             "autoFitColumns"   : true,
+                                                                             "productionQuality": false,
+                                                                             "created"          : Ext.Date.parse('10/15/2006', 'm/d/Y'),
+                                                                             "tested"           : false,
+                                                                             "version"          : 0.01,
+                                                                             "borderWidth"      : 1
+                                                                            }
+                                                                 }
+                                                                )
+                                                     ]
+                                      }, 
+                                      {
+                                       region      : 'west'            ,
+                                       stateId     : 'navigation-panel',
+                                       id          : 'west-panel'      , // see Ext.getCmp() below
+                                       title       : 'The navigator'   ,
+                                       split       : true              ,
+                                       width       : 200               ,
+                                       minWidth    : 175               ,
+                                       maxWidth    : 400               ,
+                                       collapsible : true              ,
+                                       animCollapse: true              ,
+                                       margins     : '0 0 0 5'         ,
+                                       layout      : 'accordion'       ,
+                                       items       : [
+                                                      {
+                                                       title    : 'FileSystem navigation'                                                  ,
+                                                       id       : 'navigatorDiv'                                                           ,
+                                                       autoScroll: true
+                                                      }, {
+                                                       title    : 'ROOT file navigation'                                                   ,
+                                                       html     : '<p>Here the tree of ROOT files with subfolders, plots and canvases.</p>',
+                                                       iconCls  : 'settings'
+                                                      }, {
+                                                       title    : 'Navigation Controls'                                                    ,
+                                                       html     : '<p>Here the controls to drive the filesystem drill down.</p>'           ,
+                                                       iconCls  : 'info'
+                                                      }
+                                                     ]
+                                      },
+                                      // in this instance the TabPanel is not wrapped by another panel
+                                      // since no title is needed, this Panel is added directly
+                                      // as a Container
+                                      Ext.create(
+                                                 'Ext.tab.Panel', 
+                                                 {
+                                                  region        : 'center', // a center region is ALWAYS required for border layout
+                                                  deferredRender: false,
+                                                  activeTab     : 0,        // first tab initially active
+                                                  items         : [
+                                                                   {
+                                                                    contentEl : 'histogram1',
+                                                                    title     : 'Canvas 1'  ,
+                                                                    closable  : false       ,
+                                                                    autoScroll: true
+                                                                   }, 
+                                                                   {
+                                                                    contentEl : 'center2'   ,    
+                                                                    title     : 'Canvas 2'  ,
+                                                                    closable  : true        ,
+                                                                    autoScroll: true
+                                                                   }
+                                                                  ]
+                                                 }
+                                                )
+                                     ]
+                            }
+                           );
+  STDLINE("Viewport created") ;
+ } ;
  
  //-----------------------------------------------------------------------------
  function createSources(dirs)
  {
+  STDLINE("Creating sources") ;
   theSources_ = Ext.create  (
                              'Ext.data.Store', 
                              {
@@ -237,28 +266,34 @@ function()
                                             }
                              }
                             );
+  STDLINE("Sources created...") ;
   theSourcesCB_.setRawValue(dirs[0].dir) ; // Set default value
+  STDLINE("Sources populated") ;
  }
  //-----------------------------------------------------------------------------
  function makeGrid(where,what)
  { 
+  STDLINE("makeGrid("+where+","+what+")") ;
   if( grid_ ) grid_.destroy()     ;
   theStore_.sort(treeDisplayField_, 'ASC');
 
   //mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
  
+  STDLINE("Creating grid") ;
   grid_ = Ext.create(
                      'Ext.tree.Panel', 
                      {
-                      title      : what          ,
-                      id         : 'navigator'   ,
-                      store      : theStore_     ,
-                      draggable  : true          ,
-                      resizable  : true          ,
-                      border     : true          ,
-                      renderTo   : "navigatorDiv",
-                      rootVisible: false         ,
-                      useArrows  : true          ,
+                      title      : what                  ,
+                      header     : false                 ,
+                      id         : 'navigator'           ,
+                      store      : theStore_             ,
+                      draggable  : true                  ,
+                      resizable  : true                  ,
+                      border     : true                  ,
+                      renderTo   : "navigatorDiv-innerCt",
+                      rootVisible: false                 ,
+                      useArrows  : true                  ,
+                      scrollable : true                  ,
                       selModel   : {
                                     mode : 'MULTI' // SIMPLE or MULTI
                                    },
@@ -371,7 +406,7 @@ function()
                                                   if( typeof fFoldersPath_  === "undefined" ) fFoldersPath_  = ""   ;
                                                   if( typeof fRFoldersPath_ === "undefined" ) fRFoldersPath_ = ""   ;
                                                   xmlKeysPrintout("Clicked on a tree item")
-                                                }  
+                                                 }  
                                                  STDLINE("Selected "+selection.length+" items")                     ;
                                                  //clearInterval(periodicPlotID_)                                   ;
                                                  var itemSplit     = item.innerText.split("\n\t\n")                 ;
@@ -418,7 +453,7 @@ function()
                                                                   }, 
                                                                   ""
                                                                  )
-                                                   var tOut = Math.round(timeoutInterval_.getValue() * 1000);
+                                                // var tOut = Math.round(timeoutInterval_.getValue() * 1000);
                                                 //    periodicPlotID_ = setInterval(
                                                 //                                  function()
                                                 //                                  {
@@ -445,7 +480,7 @@ function()
                                    }
                      }
                     ).setPosition(0,0);
-                   
+  STDLINE("Grid created") ;                   
   var objectProvenance = Ext.create(
                                     'Ext.tip.ToolTip', 
                                     {
@@ -458,25 +493,26 @@ function()
  dataModel_ = Ext.define(
                          'DirectoriesDataModel',
                          {
-                                extend: 'Ext.data.Model',
-                                fields: [
-                                                {name: 'nChilds'      , type: 'int'   , convert: null},
-                                                {name: 'fSystemPath'  , type: 'string', convert: null},
-                                                {name: 'fRootPath'    , type: 'string', convert: null},
-                                                {name: 'fFoldersPath' , type: 'string', convert: null},
-                                                {name: 'fFileName'    , type: 'string', convert: null},
-                                                {name: 'fHistName'    , type: 'string', convert: null},
-                                                {name: 'fRFoldersPath', type: 'string', convert: null},
-                                                {name: 'fDisplayName' , type: 'string', convert: null}
-                                        ]
+                          extend: 'Ext.data.Model',
+                          fields: [
+                                   {name: 'nChilds'      , type: 'int'   , convert: null},
+                                   {name: 'fSystemPath'  , type: 'string', convert: null},
+                                   {name: 'fRootPath'    , type: 'string', convert: null},
+                                   {name: 'fFoldersPath' , type: 'string', convert: null},
+                                   {name: 'fFileName'    , type: 'string', convert: null},
+                                   {name: 'fHistName'    , type: 'string', convert: null},
+                                   {name: 'fRFoldersPath', type: 'string', convert: null},
+                                   {name: 'fDisplayName' , type: 'string', convert: null}
+                                  ]
                          }
                         );
  //-----------------------------------------------------------------------------
  function makeStore(path, reqType)
  { 
   xmlKeysPrintout("Sending parameters block to server")
-  STDLINE("path   : " + path   ) ;
-  STDLINE("reqType: " + reqType) ;
+  STDLINE("path       : " + path       ) ;
+  STDLINE("reqType    : " + reqType    ) ;
+  STDLINE("_requestURL: " + _requestURL) ;
   theStore_ = Ext.create(
                          'Ext.data.TreeStore', 
                          {
@@ -501,25 +537,26 @@ function()
                                                      },
                                       url          : _requestURL + reqType,
                                       reader       : {
-                                                      type          : 'xml',
-                                                      root          : 'nodes',
+                                                      type          : 'xml'         ,
+                                                      root          : 'nodes'       ,
                                                       record        : '> node'
                                                      },
                                      },
                           listeners: {
-                                      beforeload : function(thisStore, operation, eOpts) 
-                                                   {
-                                                    STDLINE("Request: "+_requestURL + reqType) ;
-                                                   },
-                                      load       : function( thisStore, records, successful, operation, node, eOpts )
-                                                   {
-                                                    STDLINE("Load was succesful? "+successful) ;
-                                                   }
-
+                                      beforeload   : function(thisStore, operation, eOpts) 
+                                                     {
+                                                      STDLINE("Request: "+_requestURL + reqType) ;
+                                                     },
+                                      load         : function( thisStore, records, successful, operation, node, eOpts )
+                                                     {
+                                                      STDLINE("Load was succesful? "+successful) ;
+                                                     }
                                      }
                          }
                         );
+  STDLINE("Going to load...") ;
   theStore_.load() ;
+  STDLINE("...loaded!") ;
  }
  
  //-----------------------------------------------------------------------------
@@ -543,7 +580,7 @@ function()
                               STDLINE("Successful") ;
                               if(getXMLValue(response,"headOfSearch") == 'located') // Returns the list of available fRooPaths                                                                     
                               { // Get list of head-points
-                                var dirs     = [] ;
+                               var dirs     = [] ;
                                var theNodes = getXMLNodes(response,'dir') ;
                                for(var i=0; i<theNodes.length; ++i)
                                {
@@ -552,8 +589,8 @@ function()
                                 dirs.push({"abbr":  theDir, "dir": theDir}) ;
                                }
 
+                               STDLINE("Create sources") ;
                                createSources(dirs) ;
-                               var a = 0 ;                                                    
                               }                                                                                                         
                               else if(!(typeof getXMLValue(response,"rootType") == 'undefined')) // Returns the plot to display                                                                     
                               { // get specific ROOT Object and display
@@ -592,7 +629,8 @@ function()
                                                   );                                                                                      
                              }                                                                                                            
                    }                                                                                                                      
-           );                                                                                                
+           );
+  STDLINE("Ajax request formed") ;                                                                                                
  } ;                                                                                                                                      
  //-----------------------------------------------------------------------------
  displayPlot_ = function()
@@ -658,5 +696,8 @@ function()
                 ""
                ) ;                                                          
 
- makeGrid("where","what") ;
+ makeStore("where","what") ;
+// makeGrid("where","what") ;
+ STDLINE("Calling makeViewPort") ;
+ makeViewPort() ;
 });
