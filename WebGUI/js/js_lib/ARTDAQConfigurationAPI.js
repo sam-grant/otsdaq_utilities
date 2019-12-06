@@ -257,6 +257,8 @@ ARTDAQConfigurationAPI.getArtdaqNodes = function(responseHandler,
 						var artdaqSupervisorName = artdaqSupervisor.getAttribute('value');
 
 						retObj[types[i]][artdaqSupervisorName] = {
+								"status" : DesktopContent.getXMLValue(artdaqSupervisor, 
+										artdaqSupervisorName + "-status") | 0, //integer 0 or 1
 								"contextAddress" : DesktopContent.getXMLValue(artdaqSupervisor, 
 										artdaqSupervisorName + "-contextAddress"),
 								"contextPort" : DesktopContent.getXMLValue(artdaqSupervisor, 
@@ -267,6 +269,8 @@ ARTDAQConfigurationAPI.getArtdaqNodes = function(responseHandler,
 					
 					var nodes = artdaqSupervisor.getElementsByTagName(
 							types[i]);
+					var statuses = artdaqSupervisor.getElementsByTagName(
+							types[i] + "-status");
 					var hostnames = artdaqSupervisor.getElementsByTagName(
 							types[i] + "-hostname");
 					var subsystemIds = artdaqSupervisor.getElementsByTagName(
@@ -286,6 +290,7 @@ ARTDAQConfigurationAPI.getArtdaqNodes = function(responseHandler,
 						var nodeName = nodes[j].getAttribute('value');
 						retObj[types[i]][nodeName] = 
 							{
+								"status": 		statuses[j].getAttribute('value') | 0, //integer 0 or 1
 								"hostname": 	hostnames[j].getAttribute('value'),
 								"subsystemId": 	subsystemIds[j].getAttribute('value') | 0, //integer
 							};
