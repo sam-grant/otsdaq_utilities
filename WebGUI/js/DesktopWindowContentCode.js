@@ -991,18 +991,30 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 				"(XML response may have been illegal)!";
 	else
 		return undefined;
-}
+} // end getXMLAttributeValue()
 
 //=====================================================================================
 //returns xml entry value for attribue 'value'
 //	if !name assume req is xml node already
 DesktopContent.getXMLValue = function(req, name) {
     if(!req) return undefined;
-    
-    if(!name)
-		return req.getAttribute("value");	
-	return DesktopContent.getXMLAttributeValue(req,name,"value");
-}
+
+	if(req.responseXML)
+	{
+		if(!name)
+			return req.responseXML.getAttribute("value");
+
+		return DesktopContent.getXMLAttributeValue(
+				req.responseXML,name,"value");
+	}
+	else
+	{
+		if(!name)
+			return req.getAttribute("value");
+		
+		return DesktopContent.getXMLAttributeValue(req,name,"value");
+	}
+} //end getXMLValue()
 
 //=====================================================================================
 //returns array of xml children nodes
@@ -1012,7 +1024,7 @@ DesktopContent.getXMLChildren = function(req, nodeName) {
 	if(req && req.responseXML) //to allow for arbitrary starting xml node
 		req = req.responseXML;
 	return req.getElementsByTagName(nodeName);
-}
+} //end getXMLChildren()
 
 //=====================================================================================
 //returns xml entry node (first node with name)

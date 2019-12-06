@@ -370,7 +370,7 @@ ARTDAQConfigurationAPI.getArtdaqNodes = function(responseHandler,
 //		nodeObj := {}
 //			nodeObj.<nodeType> = {}
 //			nodeObj.<nodeType>.<nodeName> = 
-//				{originalName,hostname,subsystemName,
+//				{originalName,status,hostname,subsystemName,
 //				(nodeArrString),(hostnameArrString),(nodeNameFixedWidth),(hostnameFixedWidth)}
 //
 // <nodeType> = ARTDAQConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
@@ -407,7 +407,8 @@ ARTDAQConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 			
 			//map undefined to "" so it is not confused with an actual record UID
 			nodeString += encodeURIComponent(nodesObject[i][j].originalName === undefined?"":nodesObject[i][j].originalName) + ",";
-			
+
+			nodeString += (nodesObject[i][j].status?1:0) + ",";
 			nodeString += encodeURIComponent(nodesObject[i][j].hostname) + ",";
 			nodeString += encodeURIComponent(nodesObject[i][j].subsystemName) + "";
 
@@ -454,7 +455,7 @@ ARTDAQConfigurationAPI.saveArtdaqNodes = function(nodesObject, subsystemsObject,
 		
 		if(errArr.length) return; // do not proceed on error
 		//else call response handler
-		responseHandler();
+		responseHandler(req);
 		
 			},
 			0,0,true  //reqParam, progressHandler, callHandlerOnErr
