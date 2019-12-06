@@ -283,9 +283,13 @@
 			_hostnames = {};
 			
 			//clear all nodes from display
-			var nodeEls = document.getElementsByClassName("node");
-			for(var i=0;i<nodeEls.length;++i)
-				nodeEls[i].parentNode.removeChild(nodeEls[i]);			
+			{
+				var nodeEls;
+				//Note: indices and parents get messed up if deleting with for loop
+				while((nodeEls = document.getElementsByClassName("node")) &&
+						nodeEls.length) 
+					nodeEls[0].parentNode.removeChild(nodeEls[0]);
+			}			
 			
 			//fill in CodeEditor appId
 			DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
@@ -1720,7 +1724,7 @@
 				el.innerHTML = str;
 				_postCanvas.appendChild(el);	
 				el.onmouseover = handleNodeMouseOver;	
-			}			
+			} //end create node element		
 			
 			var boxes = el.getElementsByClassName("node-box");
 			for(var p=0;p<boxes.length;++p)
@@ -3136,7 +3140,7 @@
 				//		maxDepth,responseHandler,modifiedTables)
 				ConfigurationAPI.getFieldsOfRecords(
 						typeBaseTable,
-						_nodes[i].name,
+						nodeName,
 						fieldPath,
 						5,
 						function(fieldRetObj)
@@ -3159,7 +3163,7 @@
 					//	responseHandler,modifiedTables)
 					ConfigurationAPI.getFieldValuesForRecords(
 							typeBaseTable,
-							_nodes[i].name,
+							nodeName,
 							fieldRetObj,
 							//fieldRetObj[1].fieldRelativePath + 
 							//fieldRetObj[1].fieldColumnName,
@@ -3190,8 +3194,8 @@
 								DesktopContent.popUpVerification(
 									"The link to <b>" + fieldPath +
 									"</b> has not been defined for <b>" +
-									ARTDAQConfigurationAPI.getShortTypeName(_nodes[i].type) + "::" +
-									_nodes[i].name +
+									typeName + "::" +
+									nodeName +
 									"</b>, do you want to <u><b>create</b></u> it now?",
 									localCreateLink /*yes-to-reload handler*/,
 									0,0,0,0,0, //val, bgColor, textColor, borderColor, getUserInput, 
@@ -3222,13 +3226,13 @@
 											fieldPath[0] >= 'a' && fieldPath[0] <= 'z') //capitalize
 										fieldPath = String.fromCharCode(fieldPath.charCodeAt(0)-32) + 
 											fieldPath.substr(1);
-									valueArr.push(_nodes[i].name + fieldPath + "Record");
+									valueArr.push(nodeName + fieldPath + "Record");
 
 									Debug.log("Creating unique link " +
 											typeBaseTable + "/" +
 											uniqueLinkPath +
 											" for '" +
-											_nodes[i].name + 
+											nodeName + 
 											"' to " + 
 											valueArr[0] + ":" + valueArr[1]);
 									isUniqueLink = true;
@@ -3240,12 +3244,12 @@
 									if(fieldPath.length > 1 && 
 											fieldPath[0] >= 'a' && fieldPath[0] <= 'z') //capitalize
 										fieldPath = String.fromCharCode(fieldPath.charCodeAt(0)-32) + fieldPath.substr(1);
-									valueArr.push(_nodes[i].name + fieldPath + "Group");
+									valueArr.push(nodeName + fieldPath + "Group");
 									
 									Debug.log("localCreateLink() " + typeBaseTable + "/" + 
 											fieldPath +
 											" for '" +
-											_nodes[i].name + 
+											nodeName + 
 											"' to " + 
 											valueArr[0] + ":" + valueArr[1]);
 								} //end group link value handling
@@ -3254,7 +3258,7 @@
 								//	so set the values
 								ConfigurationAPI.setFieldValuesForRecords(
 										typeBaseTable,
-										_nodes[i].name, 	//recordArr
+										nodeName, 	//recordArr
 										fieldRetObj, 	//fieldArr of size 2
 										valueArr, 	//valueArr of size 2
 										/////////////////////
@@ -3303,8 +3307,8 @@
 										Debug.log("The link to <b>" + valueArr[0] + "/" +
 												valueArr[1] +
 												"</b> for <b>" +
-												ARTDAQConfigurationAPI.getShortTypeName(_nodes[i].type) + "::" +
-												_nodes[i].name +
+												typeName + "::" +
+												nodeName +
 												"</b> has been successfully created!",
 												Debug.INFO_PRIORITY);
 
@@ -3345,8 +3349,8 @@
 													Debug.log("The unique record <b>" + valueArr[0] + "/" +
 															valueArr[1] +
 															"</b> for <b>" +
-															ARTDAQConfigurationAPI.getShortTypeName(_nodes[i].type) + "::" +
-															_nodes[i].name +
+															typeName + "::" +
+															nodeName +
 															"</b> has been successfully created!",
 															Debug.INFO_PRIORITY);
 

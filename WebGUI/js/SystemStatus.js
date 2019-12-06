@@ -27,8 +27,10 @@ var intersectionArray = new Array();
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
+//=====================================================================================
 //init called once body has loaded
-function init() {					
+function init() 
+{					
     Debug.log("Calibrations init");
 
     collapsibleList();
@@ -63,9 +65,10 @@ function init() {
     return;
 } // end of init()
 
-
+//=====================================================================================
 // The function below gets the available context names from the server
-function getContextNames(){
+function getContextNames()
+{
 
     return new Promise(function(resolve, reject){
         //get context
@@ -95,10 +98,11 @@ function getContextNames(){
 
 }// end of getContextNames()
 
-
+//=====================================================================================
 // This function makes a call to the server and returns an array of objects
 // each object contains the details of an application such as the id, name, status etc.
-function getAppsArray(){
+function getAppsArray()
+{
 
     return new Promise(function(resolve, reject){
         DesktopContent.XMLHttpRequest("Request?RequestType=getAppStatus", "", 
@@ -151,12 +155,12 @@ function getAppsArray(){
 
 }// end of getAppsArray()
 
-
-
+//=====================================================================================
 // this function updates the _allAppsArray by making repeated requests to the server 
 // at specific time intervals. The function is recursive and makes use of setTimeout()
 // because setInterval() can overload the server if a request fails.
-function updateAppsArray() {
+function updateAppsArray() 
+{
     {
         getAppsArray();
         // intersectionArray = setIntersection(_allAppsArray, _arrayOnDisplayTable); // should return updated array for display
@@ -166,10 +170,10 @@ function updateAppsArray() {
     setTimeout(updateAppsArray, 4000);
 }; // end of updateAppsArray()
 
-
-
+//=====================================================================================
 // this function displays a table with the app array passed into it
-function displayTable(appsArray){
+function displayTable(appsArray)
+{
 
     // clear the statusDiv
     var statusDivElement = document.getElementById("statusDiv");
@@ -226,17 +230,20 @@ function displayTable(appsArray){
 
 }// end of displayTable()
 
-
+//=====================================================================================
 // this function creates list elements and checkboxes to 
 // be displayed in the filterDiv
-function createFilterList() {
+function createFilterList() 
+{
     var contextUl = document.getElementById('contextUl');
     var classUl = document.getElementById('classUl');
 
     renderFilterList(_allContextNames, contextUl, "contextName");
     renderFilterList(_allClassNames, classUl, "className");
 
-    function renderFilterList(elemArray, ulelem, cbName) {
+    //========================
+    function renderFilterList(elemArray, ulelem, cbName) 
+    {
 
         for (var i = 0; i < elemArray.length; i++)
         {
@@ -269,16 +276,18 @@ function createFilterList() {
 
 }// end of createFilterList()
 
-
+//=====================================================================================
 // this function creates a collapsible menu in the filterDiv
 // from the available context names, and class names 
-function collapsibleList(){
+function collapsibleList()
+{
 
     var collapsible = document.getElementsByClassName("collapsible");
     
     for (var i = 0; i < collapsible.length; i++) 
     {
-      collapsible[i].addEventListener("click", function() {
+      collapsible[i].addEventListener("click", function() 
+    		  {
 
         this.firstElementChild.style.visibility = "hidden";  // make help tooltip hidden
 
@@ -294,20 +303,25 @@ function collapsibleList(){
     }
 }// end of collapsibleList()
 
-
-function filterByClickingOnItem() {
+//=====================================================================================
+function filterByClickingOnItem() 
+{
 
     var listElements = document.getElementsByTagName("li");
 
-    for (let i = 0; i < listElements.length; i++) {
-        listElements[i].addEventListener("click", function() {
+    for (let i = 0; i < listElements.length; i++) 
+    {
+        listElements[i].addEventListener("click", function() 
+        		{
 
             // tick the checkbox and call filter function
             var listChildren = listElements[i].childNodes;
             // console.log(listChildren);
-            for (let j = 0; j < listChildren.length; j++) {
+            for (let j = 0; j < listChildren.length; j++) 
+            {
 
-                if(listChildren[j].className == "selectAll"){
+                if(listChildren[j].className == "selectAll")
+                {
                     if(listChildren[j].checked)
                     {
                         listChildren[j].checked = false;
@@ -346,15 +360,17 @@ function filterByClickingOnItem() {
     }
 }// end of filterByClickingOnItem()
 
-
-function filter() {
+//=====================================================================================
+function filter() 
+{
 
     
     var filteredClass = getFilteredArray("className"); // filter by class
     var filteredContext = getFilteredArray("contextName"); // filter by context
 
     // if filterByClass and filterByContext return empty arrays, display the full table
-    if (filteredClass.length == 0 && filteredContext.length == 0) {
+    if (filteredClass.length == 0 && filteredContext.length == 0) 
+    {
         displayTable(_allAppsArray);
         return;
     }
@@ -365,17 +381,21 @@ function filter() {
     var notInFilteredClass = new Array();
     var common;
 
-    for (let i = 0; i < filteredContext.length; i++) {
+    for (let i = 0; i < filteredContext.length; i++) 
+    {
         common = false;
         
-        for (let j = 0; j < filteredClass.length; j++) {
-            if (isEquivalent(filteredContext[i], filteredClass[j])) {
+        for (let j = 0; j < filteredClass.length; j++) 
+        {
+            if (isEquivalent(filteredContext[i], filteredClass[j])) 
+            {
                 common = true;
                 continue;
             }
             
         }
-        if (common == false) {
+        if (common == false) 
+        {
             notInFilteredClass.push(filteredContext[i]);
         }
         
@@ -388,8 +408,9 @@ function filter() {
     displayTable(result);
 } // end of filter()
 
-
-function getFilteredArray(className){
+//=====================================================================================
+function getFilteredArray(className)
+{
 
     var filterobjects = document.getElementsByClassName(className);
     var checkedItems = new Array();
@@ -413,25 +434,29 @@ function getFilteredArray(className){
     return filtered;
 } // end of getFilteredArray()
 
-
+//=====================================================================================
 // compares two objects by value to see if they are the same
-function isEquivalent(a, b) {
+function isEquivalent(a, b) 
+{
     // Create arrays of property names
     var aProps = Object.getOwnPropertyNames(a);
     var bProps = Object.getOwnPropertyNames(b);
 
     // If number of properties is different,
     // objects are not equivalent
-    if (aProps.length != bProps.length) {
+    if (aProps.length != bProps.length) 
+    {
         return false;
     }
 
-    for (var i = 0; i < aProps.length; i++) {
+    for (var i = 0; i < aProps.length; i++) 
+    {
         var propName = aProps[i];
 
         // If values of same property are not equal,
         // objects are not equivalent
-        if (a[propName] !== b[propName]) {
+        if (a[propName] !== b[propName]) 
+        {
             return false;
         }
     }
@@ -441,14 +466,17 @@ function isEquivalent(a, b) {
     return true;
 } // end of isEquivalent()
 
-
+//=====================================================================================
 // generic function that can be used to get union/intersection of two arrays of objects
-function setIntersection(list1, list2) {
+function setIntersection(list1, list2) 
+{
 
     result = [];
-    for (let i = 0; i < list1.length; i++) {
+    for (let i = 0; i < list1.length; i++) 
+    {
 
-        for(let j = 0; j < list2.length; j++){
+        for(let j = 0; j < list2.length; j++)
+        {
             if (list1[i].id == list2[j].id)
             {
                 result.push(list1[i]);
