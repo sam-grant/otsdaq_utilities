@@ -999,21 +999,10 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 DesktopContent.getXMLValue = function(req, name) {
     if(!req) return undefined;
 
-	if(req.responseXML)
-	{
-		if(!name)
-			return req.responseXML.getAttribute("value");
+    if(!name)
+    	return req.getAttribute("value");
 
-		return DesktopContent.getXMLAttributeValue(
-				req.responseXML,name,"value");
-	}
-	else
-	{
-		if(!name)
-			return req.getAttribute("value");
-		
-		return DesktopContent.getXMLAttributeValue(req,name,"value");
-	}
+    return DesktopContent.getXMLAttributeValue(req,name,"value");
 } //end getXMLValue()
 
 //=====================================================================================

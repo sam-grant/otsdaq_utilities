@@ -5195,9 +5195,9 @@ void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(
 
 		if(isDifferent)  // set author/time of new version if different
 		{
-			configView->setValue(author, row, configView->findCol("Author"));
+			configView->setValue(author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
 			configView->setValue(
-			    time(0), row, configView->findCol("RecordInsertionTime"));
+			    time(0), row, configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
 		}
 	}
 	catch(...)
@@ -5372,9 +5372,9 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 
 		if(isDifferent)  // set author/time of new version if different
 		{
-			configView->setValue(author, row, configView->findCol("Author"));
+			configView->setValue(author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
 			configView->setValue(
-			    time(0), row, configView->findCol("RecordInsertionTime"));
+			    time(0), row, configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
 		}
 	}
 	catch(...)
@@ -5578,9 +5578,9 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 
 		if(thisMemberIsDifferent)  // change author and time if row is different
 		{
-			configView->setValue(author, row, configView->findCol("Author"));
+			configView->setValue(author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
 			configView->setValue(
-			    time(0), row, configView->findCol("RecordInsertionTime"));
+			    time(0), row, configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
 		}
 
 		if(thisMemberIsDifferent)
