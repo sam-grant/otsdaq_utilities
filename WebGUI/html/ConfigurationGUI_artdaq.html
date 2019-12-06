@@ -793,7 +793,7 @@
 			//		nodeObj := {}
 			//			nodeObj.<nodeType> = {}
 			//			nodeObj.<nodeType>.<nodeName> = 
-			//				{originalName,hostname,subsystemName,
+			//				{originalName,status,hostname,subsystemName,
 			//				(nodeArrString),(hostnameArrString),(nodeNameFixedWidth),(hostnameFixedWidth)}
 			//
 			// <nodeType> = ARTDAQConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
@@ -822,6 +822,7 @@
 				name = node.name;
 				nodesObj[type][name] = {};
 				nodesObj[type][name].originalName = node.originalName;
+				nodesObj[type][name].status = node.status;
 				nodesObj[type][name].hostname = node.hostname;
 				nodesObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
 				if(node.nodeCount > 1)
@@ -854,12 +855,18 @@
 			}
 			
 			ARTDAQConfigurationAPI.saveArtdaqNodes(nodesObj, subsystemsObj,
-					function(response)
+					function(req)
 					{
-				console.log("response",response);
+				console.log("response",req);
 				
 				Debug.log("save() complete");				
 				nodesHaveChanged(false);
+				
+				var activeConfigGroups = [
+					  DesktopContent.getXMLValue(req, "Context-ActiveGroupName"),
+					  DesktopContent.getXMLValue(req, "Context-ActiveGroupKey"),
+					  DesktopContent.getXMLValue(req, "Configuration-ActiveGroupName"),
+					  DesktopContent.getXMLValue(req, "Configuration-ActiveGroupKey")];
 				
 				//always save layout just in case
 				saveLayout(function()
@@ -867,11 +874,7 @@
 					Debug.log("Changes have been successfully saved!",
 							Debug.INFO_PRIORITY);		
 					
-					var activeConfigGroups = [
-						  DesktopContent.getXMLValue(req, "Context-ActiveGroupName"),
-						  DesktopContent.getXMLValue(req, "Context-ActiveGroupKey"),
-						  DesktopContent.getXMLValue(req, "Configuration-ActiveGroupName"),
-						  DesktopContent.getXMLValue(req, "Configuration-ActiveGroupKey")];
+					
 
 					Debug.log("Now the active Context group is '" +
 							activeConfigGroups[0] + "(" +
