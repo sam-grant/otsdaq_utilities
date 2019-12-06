@@ -318,7 +318,7 @@ SmartLaunch.create = function() {
 		catch(e)
 		{
 			Debug.log("There was error reading the status of the configuration subsystems (" +
-					"were the subsystem variables setup properly?):[" + e.lineNumber + "]: " + 
+					"were the subsystem variables setup properly?):[" + DesktopContent.getExceptionLineNumber(e) + "]: " + 
 					e, Debug.HIGH_PRIORITY);
 			return;
 		}
@@ -739,7 +739,7 @@ SmartLaunch.create = function() {
 	
 			_runStatusDiv.style.display = "block";
 		}
-		catch(e) {console.log(":[" + e.lineNumber + "]: " + e);}
+		catch(e) {console.log(":[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);}
 	}	//end displayState()
 	
 	//=====================================================================================

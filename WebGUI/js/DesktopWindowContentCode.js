@@ -1859,7 +1859,7 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		catch(e)
 		{
 			Debug.log("An error occurred while trying to open the window. " +
-					"The window path seems to be invalid:[" + e.lineNumber + "]: " + e, Debug.HIGH_PRIORITY);
+					"The window path seems to be invalid:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e, Debug.HIGH_PRIORITY);
 			return;
 		}
 	}
@@ -1990,11 +1990,25 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window
-DesktopContent.getDesktopWindowTitle = function() {
+DesktopContent.getDesktopWindowTitle = function() 
+{
 	return DesktopContent._theWindow.parent.document.getElementById(
 			"DesktopWindowHeader-" + 
 			DesktopContent._theWindow.name.split('-')[1]).innerHTML;
 } //end getDesktopWindowTitle()
+
+DesktopContent.getExceptionLineNumber = function(e) 
+{
+	try
+	{ 
+		console.log(e);
+		return e.stack.split('\n')[1].split(':')[4].split(')')[0]|0; }
+	catch(newError) { return -1; } //hide error and give invalid line number
+} //end getExceptionLineNumber()
+	
+
+
+
 
 
 
