@@ -2751,6 +2751,14 @@
 					editTypes.push("DAQ Metrics");
 				}
 			} //end reader menu
+			if(type == ARTDAQConfigurationAPI.NODE_TYPE_ROUTER)
+			{
+				if(!menuDepth)
+				{
+					editTypes.push("Routing Policy Parameters");
+					editTypes.push("DAQ Metrics");
+				}
+			} //end router menu
 			else if(type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER ||
 					type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER ||
 					type == ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER )
@@ -2922,21 +2930,38 @@
 			else //use do map to decide what to do based on type, menuDepth, and editType
 			{
 				var doMap = {};
-				var d = 0;
-				var dt = 0;
-				//------------ start fill READER do map				
+				var d;
+				var dt;
+				
+				//------------ start fill READER do map		
+				d = 0; //depth 0 //----------------
+				dt = 0; 
 				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER] = {}; //depth level
-				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER][d] = {}; //menu depth
-				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER][d][dt] = []; //menu depth type
-				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER][d][dt].push({
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER][d] = {} //menu depth
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER][d][dt++] = [{ //at 0 depth, always 0 menu depth type
 					"table" : 		ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE,
 					"groupLink"	: 	"daqParametersLink"
-				}); //Reader DAQ parameters
-				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER][d][dt].push({
+				}]; //Reader DAQ parameters
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER][d][dt++] = [{ //at 0 depth, always 0 menu depth type
 					"table" : 		ARTDAQConfigurationAPI.DAQ_METRIC_TABLE,
 					"groupLink"	: 	"daqMetricsLink"
-				}); //Reader DAQ metrics
+				}]; //Reader DAQ metrics
 				//------------ end fill READER do map
+				
+				//------------ start fill ROUTER do map		
+				d = 0; //depth 0 //----------------
+				dt = 0; 		
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_ROUTER] = {}; //depth level
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_ROUTER][d] = {} //menu depth
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_ROUTER][d][dt++] = [{ //at 0 depth, always 0 menu depth type
+					"table" : 		ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE,
+					"groupLink"	: 	"routingPolicyParametersLink"
+				}]; //Routing Policy parameters
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_ROUTER][d][dt++] = [{ //at 0 depth, always 0 menu depth type
+					"table" : 		ARTDAQConfigurationAPI.DAQ_METRIC_TABLE,
+					"groupLink"	: 	"daqMetricsLink"
+				}]; //Reader DAQ metrics
+				//------------ end fill ROUTER do map
 
 				//------------ start fill BUILDER,LOGGER,DISPATCHER do map
 				var equivalentTypes = [ARTDAQConfigurationAPI.NODE_TYPE_BUILDER,
@@ -2945,18 +2970,20 @@
 				for(var t=0;t<equivalentTypes.length;++t)
 				{
 					doMap[equivalentTypes[t]] = {};
-					d = 0; //----------------
+					
+					d = 0; //depth 0 //----------------
 					doMap[equivalentTypes[t]][d] = {}; //menu depth
-					dt = 0; //----------------
-					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
-					doMap[equivalentTypes[t]][d][dt].push({
+					dt = 0; //Preamble Parameters depth 0 ----------------
+					doMap[equivalentTypes[t]][d][dt] = [{ //at 0 depth, always 0 menu depth type					
 						"table" : 		ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE,
 						"groupLink"	: 	"preambleParametersLink"
-					}); //Preamble Parameters
-					doMap[equivalentTypes[t]][d][dt].push({
+					}]; //Preamble Parameters
+					dt = 3; //AddOn Parameters depth 0 ----------------
+					doMap[equivalentTypes[t]][d][dt] = [{ //at 0 depth, always 0 menu depth type
 						"table" : 		ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE,
 						"groupLink"	: 	"addOnParametersLink"
-					}); //Add-on Parameters
+					}]; //Add-on Parameters
+					
 					d = 1; //depth 1 //----------------
 					doMap[equivalentTypes[t]][d] = {}; //menu depth
 					dt = 0; //DAQ depth type //----------------
@@ -2992,15 +3019,20 @@
 
 				try
 				{
+					var table;
+					var groupLink;
+					
 					if(!menuDepth)
 						--editType; //because first one is always 'Top-level Parameters'
 					
-					var table = doMap[type][menuDepth|0][editType][menuDepthType|0].table;
-					var groupLink = doMap[type][menuDepth|0][editType][menuDepthType|0].groupLink;
-					
+					console.log("type",type,"editType",editType);
+					//for menuDepth=0, menuDepthType always is 0 (i.e. editType selects)
+					table = doMap[type][menuDepth|0][editType][menuDepthType|0].table;
+					groupLink = doMap[type][menuDepth|0][editType][menuDepthType|0].groupLink;						
+										
 					console.log("type",type,"editType",editType,
-							"table",table,
-							"groupLink",groupLink);
+							"table",table,"groupLink",groupLink);
+					
 					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
 							DesktopContent._localUrnLid +
 							"&subsetBasePath=" + 
@@ -3094,10 +3126,15 @@
 					} //end localHandleLastLinkId()
 					
 				}
-				catch(e)
+				catch(err)
 				{
-					Debug.log("Unknown impossible error (notify admins) editType = " +
-							editType + ":[" + e.lineNumber + "]: " + e, Debug.HIGH_PRIORITY);
+					Debug.log("Unknown impossible error (notify admins)" + 
+							" type=" + type +
+							" menuDepth=" + menuDepth +
+							" editType=" + editType +
+							" menuDepthType=" + menuDepthType +
+							" @ [Line " + 
+							DesktopContent.getExceptionLineNumber(err) + "]: " + err, Debug.HIGH_PRIORITY);
 					
 					//return configuration change check
 					if(_checkActiveGroupsTimer)
