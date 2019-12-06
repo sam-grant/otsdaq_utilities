@@ -50,6 +50,7 @@
 		var _CANVAS_COLOR 		= "rgba(255,255,255,0)";
 		var _GRID_COLOR 		= "rgb(218, 194, 194)";
 		var _ARROW_COLOR 		= "rgb(70, 67, 67)";
+		var _OFF_COLOR 			= "rgb(210, 210, 210)";
 		var _SHADOW_COLOR 		= "gray";
 		var _GRID_ROW_MIN		= 2;
 		var _GRID_COL_MIN		= 3;
@@ -68,7 +69,7 @@
 				"x0": 	0, 	"y0": 	0, 
 				"xstep":0, 	"ystep":0}; 
 		var _nodes = []; 	// array of node objects (can be multi-node vector at location, using nodeCount and nodeVectorIndexArr
-							//	node: 	{type, name, hostname, subsystemId, 
+							//	node: 	{type, name, status, hostname, subsystemId, 
 							//		originalName, x, y, nodeCount, 
 							//		nodeVectorIndexArr, nodeVectorIndexReverseMap, 
 							//		nodeVectorIndexString, nodeNameFixedWidth,
@@ -364,6 +365,7 @@
 								_nodes.push({
 									"type": 			ARTDAQConfigurationAPI.getTypeIndex(type),
 									"name": 			name,
+									"status":			(artdaqObj[type][name].status === undefined?true:((artdaqObj[type][name].status|0)?true:false)), //default status to true
 									"originalName": 	name, //useful when saving
 									"contextAddress":	artdaqObj[type][name].contextAddress,
 									"contextPort":		artdaqObj[type][name].contextPort,
@@ -381,6 +383,7 @@
 								_nodes.push({
 									"type": 		ARTDAQConfigurationAPI.getTypeIndex(type),
 									"name": 		name,
+									"status":		(artdaqObj[type][name].status === undefined?true:((artdaqObj[type][name].status|0)?true:false)), //default status to true
 									"originalName": name, //useful when saving
 									"hostname":		artdaqObj[type][name].hostname,
 									"subsystemId":	artdaqObj[type][name].subsystemId,
@@ -446,6 +449,7 @@
 									"type": 			t,
 									"name": 			name,
 									"originalName": 	name, //useful when saving
+									"status":			(artdaqObj[type][name].status === undefined?true:((artdaqObj[type][name].status|0)?true:false)), //default status to true
 									"contextAddress":	artdaqObj[type][name].contextAddress,
 									"contextPort":		artdaqObj[type][name].contextPort,
 									"x":				xy[0],
@@ -462,6 +466,7 @@
 									"type": 		t,
 									"name": 		name,	
 									"originalName": name, //useful when saving
+									"status":		(artdaqObj[type][name].status === undefined?true:((artdaqObj[type][name].status|0)?true:false)), //default status to true
 									"hostname":		artdaqObj[type][name].hostname,
 									"subsystemId":	artdaqObj[type][name].subsystemId,
 									"x":			xy[0],
@@ -862,6 +867,21 @@
 					Debug.log("Changes have been successfully saved!",
 							Debug.INFO_PRIORITY);		
 					
+					var activeConfigGroups = [
+						  DesktopContent.getXMLValue(req, "Context-ActiveGroupName"),
+						  DesktopContent.getXMLValue(req, "Context-ActiveGroupKey"),
+						  DesktopContent.getXMLValue(req, "Configuration-ActiveGroupName"),
+						  DesktopContent.getXMLValue(req, "Configuration-ActiveGroupKey")];
+
+					Debug.log("Now the active Context group is '" +
+							activeConfigGroups[0] + "(" +
+							activeConfigGroups[1] + 
+							") and the active Configuration group is " + 
+							activeConfigGroups[2] + "(" +
+							activeConfigGroups[3] + ")" + 
+							"!",
+							Debug.INFO_PRIORITY);	
+					
 					initArtdaqNodes(); //completely reload
 					
 						}); //end saveLayout completion handler
@@ -875,6 +895,8 @@
 			Debug.log("initArrows()");
 			_arrows = {}; //reset
 			
+			// NOTE: status is considered, OFF nodes are not included in arrow paths
+			//
 			//	 .. arrows should get generated at startup based on subsystem settings.
 			//	Readers -> all builders of same subsystem
 			//	Builders -> all loggers of same subsystem AND builders of destination subsystem
@@ -882,11 +904,14 @@
 
 			for(var i=0;i<_nodes.length;++i)
 			{
+				if(!_nodes[i].status) continue; //skip OFF nodes
+				
 				if(_nodes[i].type == ARTDAQConfigurationAPI.NODE_TYPE_READER)
 				{
-					//connect to all board readers at destination
+					//connect to all ON board readers at destination
 					for(var j=0;j<_nodes.length;++j)
-						if(_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER && 
+						if(_nodes[j].status &&
+								_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER && 
 								_nodes[j].subsystemId == _nodes[i].subsystemId)
 						{
 							Debug.log("Found reader-builder connection at nodes " + 
@@ -899,9 +924,10 @@
 				{
 					var destinationId = _subsystems[_nodes[i].subsystemId].destinationId|0;
 					
-					//connect to all board readers at destination
+					//connect to all ON board readers at destination
 					for(var j=0;j<_nodes.length;++j)
-						if(_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER && 
+						if(_nodes[j].status &&
+								_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER && 
 								_nodes[j].subsystemId == _nodes[i].subsystemId)
 						{
 							Debug.log("Found builder-logger connection at nodes " + 
@@ -909,7 +935,8 @@
 
 							addArrow(i,j);
 						}
-						else if(_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER && 
+						else if(_nodes[j].status &&
+								_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER && 
 								_nodes[j].subsystemId == destinationId)
 						{
 							Debug.log("Found builder-connection connection at nodes " + 
@@ -920,9 +947,10 @@
 				}
 				else if(_nodes[i].type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER)
 				{
-					//connect to all board readers at destination
+					//connect to all ON board readers at destination
 					for(var j=0;j<_nodes.length;++j)
-						if(_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER && 
+						if(_nodes[j].status &&
+								_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER && 
 								_nodes[j].subsystemId == _nodes[i].subsystemId)
 						{
 							Debug.log("Found logger-dispatcher connection at nodes " + 
@@ -1618,7 +1646,10 @@
 					str += "<div id='" + nodeid + 
 						(p == 0?"":("-multi" + p)) + "-box' class='node-box' " +
 						"style='top:" + (-p*5) + "px;" +
-						"background-color: " + getSubsystemColor(_nodes[i].subsystemId) + ";" +
+						"background-color: " + 
+						(_nodes[i].status? //if off, show as gray
+							getSubsystemColor(_nodes[i].subsystemId):
+							_OFF_COLOR)+ ";" +
 						"left:" + (-p*5) + "px;' " +
 						">";
 					if(p == 0)
@@ -1647,6 +1678,7 @@
 				//header text
 				str += "<div id='" + nodeid + 
 						"-headerText' class='node-headerText'>" +
+						(_nodes[i].status?"":"<label style='color:red; font-size:inherit;'>*OFF*</label> ") + 
 						typeName + "::" + nodeName +
 						htmlClearDiv() + 
 						(_subsystems[_nodes[i].subsystemId]? //e.g. undefined for artdaq supervisor
@@ -1781,7 +1813,7 @@
 			
             var angle = Math.atan2(y-y0,x-x0);
             
-            var shortOffset = HEAD_SZ*3;
+            var shortOffset = (getNodeFontSize()*4)|0; //avoid text above
             if(y0 == y) shortOffset = HEAD_SZ*1;
             
             x -= shortOffset*Math.cos(angle);
@@ -3433,6 +3465,27 @@
 			str += "</td></tr>";
 			//======== end Subsystem Field
 
+			//======== Other Node Names Field
+			str += "<tr><td class='editNodeDialog-fieldCol'><b>Other Node Names:</b></td><td class='editNodeDialog-valueCol'>";												
+			str += htmlOpen("select",
+					{
+							"id": "ediNode-" + "otherNodeNames",
+							"style": "float:left; margin:7px; width:187px; background-color: rgb(183, 178, 178);",
+							"title": "This is a read-only field showing all other node names in the system; it is provided for reference while editing this node.",
+					});
+
+			for(var j=0;j<_nodes.length;++j)
+			{
+				if(j == i) continue; //skip this node
+
+				str += "<option >" +
+						_nodes[j].name + 
+						"</option>";
+			}
+			str += "</select>"; //end other node names dropdown
+			str += "</td></tr>";
+			//======== end Other Node Names Field
+
 			//======== Node Name Field
 			str += "<tr><td class='editNodeDialog-fieldCol'><b>Node Name:</b></td><td class='editNodeDialog-valueCol'>";						
 			str += htmlOpen("input",
@@ -3620,7 +3673,7 @@
 						{
 								"id": "hostname-editIcon",
 								"class": "node-editIcon",
-								"style": "display:block; float:right; margin: 6px 0 0 1px",
+								"style": "display:block; float:right; margin: 6px -30px 0 1px",
 								"onclick": "handleEditNodeSelectEditIcon(1);",
 								"title": "Toggle free-form hostname editing",
 						},
@@ -4868,7 +4921,7 @@
 						conflict = false;
 						_nodes[i].name = ARTDAQConfigurationAPI.getTypeName(type) + n;
 						for(var j=0;j<i;++j)
-							if(_nodes[j].type == _nodes[i].type &&
+							if(_nodes[j].type == type &&
 									_nodes[j].name == _nodes[i].name)
 							{
 								conflict = true;

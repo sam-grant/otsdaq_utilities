@@ -9,7 +9,7 @@
 		}
 		
 		/* make buttons and links have a hand cursor */
-		input[type="button"], button, a {
+		input[type="button"], button, a, select {
 			cursor: 				pointer;
 		}
 		
@@ -325,23 +325,23 @@
 		.grid-plusMinusArrows-left-body, 
 		.grid-plusMinusArrows-arrow:hover 
 		.grid-plusMinusArrows-right-body {
-			background-color:	rgb(101, 173, 199);
+			background-color:	rgb(225, 227, 233);					
 		}
 		.grid-plusMinusArrows-arrow:hover 
 		.grid-plusMinusArrows-down-point {
-			border-top-color:	rgb(101, 173, 199);
+			border-top-color:	rgb(225, 227, 233);
 		}
 		.grid-plusMinusArrows-arrow:hover 
 		.grid-plusMinusArrows-up-point {
-			border-bottom-color:rgb(101, 173, 199);
+			border-bottom-color:rgb(225, 227, 233);
 		}
 		.grid-plusMinusArrows-arrow:hover 
 		.grid-plusMinusArrows-left-point {
-			border-right-color:	rgb(101, 173, 199);
+			border-right-color:	rgb(225, 227, 233);
 		}
 		.grid-plusMinusArrows-arrow:hover 
 		.grid-plusMinusArrows-right-point {
-			border-left-color:	rgb(101, 173, 199);
+			border-left-color:	rgb(225, 227, 233);
 		}
 
 		.grid-plusMinusArrows-upDown {

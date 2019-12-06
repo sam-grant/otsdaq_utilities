@@ -4783,8 +4783,8 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
-	__SUP_COUT__ << "Table Session: " << mapKey
-	             << " ... out of size: " << userConfigurationManagers_.size() << __E__;
+	__SUP_COUT__ << "Using Config Session " << mapKey
+	             << " ... Total Session Count: " << userConfigurationManagers_.size() << __E__;
 
 	time_t now = time(0);
 
@@ -6134,7 +6134,7 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 	const ARTDAQTableBase::ARTDAQInfo& info = ARTDAQTableBase::getARTDAQSystem(
 	    cfgMgr, nodeTypeToObjectMap, subsystemObjectMap, artdaqSupervisorInfo);
 
-	if(artdaqSupervisorInfo.size() != 3)
+	if(artdaqSupervisorInfo.size() != 4 /*expecting 4 artdaq Supervisor parameters*/)
 	{
 		__SUP_COUT__ << "No artdaq supervisor found." << __E__;
 		return;
@@ -6143,15 +6143,21 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 	__SUP_COUT__ << "========== "
 			<< "Found " << info.subsystems.size() << " subsystems." << __E__;
 
+	unsigned int paramIndex = 0; //start at first artdaq Supervisor parameter
+
 	auto parentEl =
-	    xmlOut.addTextElementToData("artdaqSupervisor", artdaqSupervisorInfo[0]);
+	    xmlOut.addTextElementToData("artdaqSupervisor", artdaqSupervisorInfo[paramIndex++]);
 
 	std::string typeString = "artdaqSupervisor";
+
 	xmlOut.addTextElementToParent(
-			typeString + "-contextAddress", artdaqSupervisorInfo[1], parentEl);
+				typeString + "-status", artdaqSupervisorInfo[paramIndex++], parentEl);
+	xmlOut.addTextElementToParent(
+			typeString + "-contextAddress", artdaqSupervisorInfo[paramIndex++], parentEl);
 	xmlOut.addTextElementToParent(typeString + "-contextPort",
-			artdaqSupervisorInfo[2],
+			artdaqSupervisorInfo[paramIndex++],
 			parentEl);
+
 	for(auto& subsystem : info.subsystems)
 	{
 		typeString = "subsystem";
@@ -6182,6 +6188,7 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 			<< "Found " << nodeTypeToObjectMap.size() << " process types."
 			<< __E__;
 
+
 	for(auto& nameTypePair : nodeTypeToObjectMap)
 	{
 		typeString = nameTypePair.first;
@@ -6206,28 +6213,32 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 
 			auto nodeEl = xmlOut.addTextElementToParent(
 					typeString, artdaqNode.first, parentEl);
-			if(artdaqNode.second.size() > 2)
+
+			paramIndex = 3; //start at 3 after subsystem parameter
+			if(artdaqNode.second.size() > paramIndex)
 				xmlOut.addTextElementToParent(
 						typeString + "-multinode",
-						artdaqNode.second[2], nodeEl);
-			if(artdaqNode.second.size() > 3)
+						artdaqNode.second[paramIndex++], nodeEl);
+			if(artdaqNode.second.size() > paramIndex)
 				xmlOut.addTextElementToParent(
 						typeString + "-nodefixedwidth",
-						artdaqNode.second[3], nodeEl);
-			if(artdaqNode.second.size() > 4)
+						artdaqNode.second[paramIndex++], nodeEl);
+			if(artdaqNode.second.size() > paramIndex)
 				xmlOut.addTextElementToParent(
 						typeString + "-hostarray",
-						artdaqNode.second[4], nodeEl);
-			if(artdaqNode.second.size() > 5)
+						artdaqNode.second[paramIndex++], nodeEl);
+			if(artdaqNode.second.size() > paramIndex)
 				xmlOut.addTextElementToParent(
 						typeString + "-hostfixedwidth",
-						artdaqNode.second[5], nodeEl);
+						artdaqNode.second[paramIndex++], nodeEl);
+
+			paramIndex = 0; //return to starting parameter
 			xmlOut.addTextElementToParent(
-					typeString + "-hostname", artdaqNode.second[0], parentEl);
+					typeString + "-status", artdaqNode.second[paramIndex++], parentEl);
 			xmlOut.addTextElementToParent(
-					typeString + "-subsystem",
-					artdaqNode.second[1],
-					parentEl);
+					typeString + "-hostname", artdaqNode.second[paramIndex++], parentEl);
+			xmlOut.addTextElementToParent(
+					typeString + "-subsystem",artdaqNode.second[paramIndex], parentEl);
 		}
 	}  // end processor type handling
 
