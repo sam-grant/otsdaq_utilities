@@ -186,7 +186,21 @@ function()
                                                        html     : '<p>Here the controls to drive the filesystem drill down.</p>'           ,
                                                        iconCls  : 'info'
                                                       }
-                                                     ]
+                                                     ],
+                                       listeners   : {
+                                                      resize    : function(thisPanel, eOpt)
+                                                                  {
+                                                                    STLINE("panel resized: resing canvas") ;
+                                                                  },
+                                                      collapse  : function(thisPanel, eOpt)
+                                                                  {
+                                                                    STLINE("panel collapsed: resing canvas") ;
+                                                                  },
+                                                      expand  : function(thisPanel, eOpt)
+                                                                  {
+                                                                    STLINE("panel expanded: resing canvas") ;
+                                                                  }
+                                                     }
                                       },
                                       // in this instance the TabPanel is not wrapped by another panel
                                       // since no title is needed, this Panel is added directly
@@ -202,6 +216,7 @@ function()
                                                                     contentEl : 'histogram1',
                                                                     title     : 'Canvas 1'  ,
                                                                     closable  : false       ,
+                                                                    border    : true        ,
                                                                     autoScroll: true
                                                                    }, 
                                                                    {

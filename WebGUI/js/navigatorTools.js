@@ -72,4 +72,38 @@
 
                          return undefined;       
                         }
+//------------------------------------------------------------------------------
+// Creates the different <div> placeholders for the main components of the page
+function generateDIVPlaceholder(id,top,left)	   
+{
+ var div = document.createElement("div");
+ div.id             = id ;
+ div.style.position = "absolute";
+ div.style.top      = top  + "px";
+ div.style.left     = left + "px";
+
+ document.getElementsByTagName("BODY")[0].appendChild(div);
+}
+//------------------------------------------------------------------------------
+function generateDIVPlaceholderUnder(id,idUnder,top,left,width,height)          
+{
+ var div = document.createElement("div");
+ div.id             = id ;
+ div.style.position = "absolute";
+ div.style.top      = top    + "px";
+ div.style.left     = left   + "px";
+ div.style.width    = width  + "px";
+ div.style.height   = height + "px";
+
+ document.getElementById(idUnder).appendChild(div);
+}
+//-----------------------------------------------------------------------------
+// Reposition the div signed by id to top/left positions
+// If either top or left is blank, it is ginred in the movement
+function repositionDiv(id,top,left)	   
+{
+ var div = document.getElementById(id);
+ if( top  != "" ) div.style.top  = top  + "px";
+ if( left != "" ) div.style.left = left + "px";
+}
               
