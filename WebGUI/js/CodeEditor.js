@@ -510,9 +510,11 @@ CodeEditor.create = function() {
 
 					}); //end get directory contents
 				},
-				0 /*reqParam*/, 
-				0 /*progressHandler*/,
-				true /*callHandlerOnErr*/			
+				0 /*reqParam*/, 0 /*progressHandler*/,
+				true /*callHandlerOnErr*/,
+				0 /*doNotShowLoadingOverlay*/, 0 /*targetSupervisor*/, 
+				0 /*ignoreSystemBlock*/,
+				true /*doNotOfferSequenceChange*/ //so read-only switch can happen
 		); //end get allowed file extensions
 		
 	} //end init()

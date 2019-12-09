@@ -714,7 +714,6 @@
 		//setupGroupViewMode ~
 		function setupGroupViewMode(anchorTarget) 
 		{
-
 			editCellCancel();
 
 			var el = document.getElementById("display");
@@ -1705,7 +1704,8 @@
 			
 
 			//if there is a target to jump to, do it
-			if (anchorTarget) {
+			if (anchorTarget) 
+			{
 				Debug.log("anchorTarget = " + anchorTarget);
 				jump(anchorTarget);
 			}
@@ -14344,18 +14344,42 @@
 					"Hide Table Details" :
 					"Show Table Details",
 				"Transpose Table View",
-				//							 _useTableLinkDropdown?
-				//									 "Disable Table Link Drop-down Assistance":
-				//									 "Enable Table Link Drop-down Assistance",
+				"Open Subset View",
 				"Download Data (CSV)",
 				"Upload Data (CSV)"
 			];
+			
+			//make record alias with spaces instead of all one word
+			// and remove table
+			var recordAlias = "";
+			for (var c = 0; c < _currentTableName.length - ("Table").length; ++c) {
+				if (c && c + 1 < _currentTableName.length &&
+						(_currentTableName[c] >= 'A' &&
+								_currentTableName[c] <= 'Z') &&
+								(_currentTableName[c + 1] >= 'a' &&
+										_currentTableName[c + 1] <= 'z'))
+					recordAlias += ' ';
+				recordAlias += _currentTableName[c];
+			}
+			if(recordAlias.length && recordAlias[recordAlias.length-1] != 's')
+				recordAlias += 's'; //make plural
+			
 			var menuItemHandlers = [
 				"setupFindAndReplace()",
 				"setupCopyAndMoveRows()",
 				"toggleTableDetails()",
 				"transposeTableView()",
-				//"_useTableLinkDropdown = !_useTableLinkDropdown;",
+				"DesktopContent.openNewBrowserTab(" +
+					"\"" + _currentTableName +
+					" Subset\",\"\",\"" +
+					//windowPath
+					"/WebPath/html/ConfigurationGUI_subset.html?urn=" +
+						DesktopContent._localUrnLid +
+						"&subsetBasePath=" + _currentTableName +
+						"&groupingFieldList=AUTO" +
+						"&recordAlias=" + recordAlias +
+						"&editableFieldList=" + "!*CommentDescription" +
+					"\",false /*unique*/);",
 				"downloadTableAsCSV()",
 				"popUpUploadCSVTableForm()"
 			];
