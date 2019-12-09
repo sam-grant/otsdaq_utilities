@@ -74,13 +74,25 @@
                         }
 //------------------------------------------------------------------------------
 // Creates the different <div> placeholders for the main components of the page
-function generateDIVPlaceholder(id,top,left)	   
+function generateDIVPlaceholderPos(id,top,left)	   
 {
  var div = document.createElement("div");
  div.id             = id ;
  div.style.position = "absolute";
  div.style.top      = top  + "px";
  div.style.left     = left + "px";
+
+ document.getElementsByTagName("BODY")[0].appendChild(div);
+}
+//------------------------------------------------------------------------------
+// Creates the different <div> placeholders for the main components of the page
+function generateDIVPlaceholderSize(id,width,height)	   
+{
+ var div = document.createElement("div");
+ div.id             = id ;
+ div.style.position = "absolute";
+ div.style.width    = width  + "px";
+ div.style.height   = height + "px";
 
  document.getElementsByTagName("BODY")[0].appendChild(div);
 }
@@ -99,11 +111,27 @@ function generateDIVPlaceholderUnder(id,idUnder,top,left,width,height)
 }
 //-----------------------------------------------------------------------------
 // Reposition the div signed by id to top/left positions
-// If either top or left is blank, it is ginred in the movement
 function repositionDiv(id,top,left)	   
 {
  var div = document.getElementById(id);
  if( top  != "" ) div.style.top  = top  + "px";
  if( left != "" ) div.style.left = left + "px";
 }
-              
+//-----------------------------------------------------------------------------
+// Resize the div signed by id to width/height sizes
+function changeDivSize(id,width,height)	   
+{
+ var div = document.getElementById(id);
+ 
+ if( top  != "" ) div.style.width    = width  + "px";
+ if( left != "" ) div.style.height   = height + "px";
+}
+//-----------------------------------------------------------------------------
+// Resize the div signed by id to width/height sizes
+function changeHistogramPanelSize(thisPanel, width, height, oldWidth, oldHeight, eOpt, from)	   
+{
+ var div = document.getElementById('canvas1');
+ div.style.width  = width  - 20              ;
+ div.style.height = height - 30              ;
+ displayPlot_()                              ;
+}              

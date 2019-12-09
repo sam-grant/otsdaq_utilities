@@ -5,7 +5,10 @@ Ext.onReady(
 function() 
 {
  var activeObjects_     = []                                                                      ;
+ var canvasTabs_        = []                                                                      ;
  var canvasPos_         = 0                                                                       ;
+ var globalCanvas_      = 0                                                                       ;
+ var ROOTControlsPanel_ = 0                                                                       ;
  var theViewPort_       = 0                                                                       ;
  var theStore_          = 0                                                                       ;
  var grid_              = ""                                                                      ;
@@ -17,6 +20,7 @@ function()
  var fHistName_         = ""                                                                      ;
  var fRFoldersPath_     = ""                                                                      ;
  var doReset_           = true                                                                    ;
+ var currentCanvas_     = 'canvas1'                                                               ;
  var gridDivision_      = "grid1x1"                                                               ;
  var selectedItem_      = "getDirectories";                                                       ;
  var treeDisplayField_  = "fDisplayName"                                                          ;
@@ -48,28 +52,174 @@ function()
       STDLINE("--------------------------------------")  ;
  }
 
- function functionName( func )
- {
-    // Match:
-    // - ^          the beginning of the string
-    // - function   the word 'function'
-    // - \s+        at least some white space
-    // - ([\w\$]+)  capture one or more valid JavaScript identifier characters
-    // - \s*        optionally followed by white space (in theory there won't be any here,
-    //              so if performance is an issue this can be omitted[1]
-    // - \(         followed by an opening brace
-    //
-    var result = /^function\s+([\w\$]+)\s*\(/.exec( func.toString() )
-
-    return  result  ?  result[ 1 ]  :  '' // for an anonymous function there won't be a match
- }
- 
  Ext.QuickTips.init();
 
  Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
 
+ generateDIVPlaceholderSize('canvas1',350,440) ;	   
+ generateDIVPlaceholderSize('canvas2',350,440) ;	   
+
+ function createCanvasTab(tabNumber)
+ {
+  STDLINE("Creating canvas tab number "+tabNumber) ;
+  var closable = false ;
+  if(tabNumber>1) closable = true ;
+  canvasTabs_.push(Ext.create(
+                              'Ext.panel.Panel',
+                              {
+                               contentEl : 'canvas' +tabNumber,
+                               title     : 'Canvas '+tabNumber,
+                               closable  : closable           ,
+                               border    : true               ,
+                               autoScroll: true
+                              }
+                             ) 
+                  );
+  STDLINE("New tab created") ;
+ }
+
+ createCanvasTab(1) ;
+ createCanvasTab(2) ;
+
+ function makeROOTControlsPanel()
+ {
+  if( ROOTControlsPanel_ ) ROOTControlsPanel_.destroy() ;
+  ROOTControlsPanel_ = Ext.create(
+                                  'Ext.tab.Panel',
+                                  {
+                                   xtype       : 'tabpanel'           ,
+                                   region      : 'east'               ,
+                                   title       : 'ROOT controls'      ,
+                                   id          : 'east-panel'         , // see Ext.getCmp() below
+                                   collapsed   : true                 ,
+                                   dockedItems : [
+                                                  {
+                                                   dock : 'top',
+                                                   xtype: 'toolbar',
+                                                   items: [ 
+                                                           '->', 
+                                                           {
+                                                            xtype  : 'button'                                  ,
+                                                            text   : 'Add canvas'                              ,
+                                                            tooltip: 'Add a new canvas'                        ,
+                                                            border : true                                      ,
+                                                            handler: function()
+                                                                     {
+                                                                      var addIndex = globalCanvas_.items.length ;
+                                                                      STDLINE("addIndex: "+addIndex) ;
+                                                                      var newIndex = addIndex  + 1 ;
+                                                                      STDLINE("newIndex: "+newIndex) ;
+                                                                      var tabId = 'canvas' + newIndex ;
+                                                                      generateDIVPlaceholderSize(tabId,350,440) ;	   
+                                                                      //createCanvasTab(tabs) ;
+                                                                      //makeGlobalCanvas() ;
+                                                                      //makeViewPort() ;
+                                                                      globalCanvas_.insert(
+                                                                                           addIndex,
+                                                                                           {
+                                                                                            contentEl : 'canvas' +newIndex,
+                                                                                            title     : 'Canvas '+newIndex,
+                                                                                            closable  : true              ,
+                                                                                            border    : true              ,
+                                                                                            autoScroll: true
+                                                                                           }
+                                                                                          );
+                                                                      globalCanvas_.setActiveTab(addIndex);
+                                                                      STDLINE("Adding new canvas tab") ;
+                                                                      //makeROOTControlsPanel() ;
+                                                                     }
+                                                           },
+                                                           {
+                                                            xtype  : 'button'                                  ,
+                                                            text   : 'Stop'                                    ,
+                                                            tooltip: 'Stop periodical refreshing of histograms',
+                                                            border : true
+                                                           }
+                                                          ]
+                                                  }
+                                                 ],
+                                   animCollapse: true,
+                                   collapsible : true,
+                                   split       : true,
+                                   width       : 225, // give east and west regions a width
+                                   minSize     : 175,
+                                   maxSize     : 400,
+                                   margins     : '0 5 0 0',
+                                   activeTab   : 1,
+                                   tabPosition : 'bottom',
+                                   items       : [
+                                                  {
+                                                   html      : '<p>Here controls of periodic refresh of histograms</p>',
+                                                   title     : 'Cycling'                                               ,
+                                                   tooltip   : 'Tab to control refreshing of histograms'               ,
+                                                   autoScroll: true
+                                                  }, 
+                                                  Ext.create(
+                                                             'Ext.grid.PropertyGrid', 
+                                                             {
+                                                              title   : 'Operations on histograms',
+                                                              closable: true,
+                                                              source  : {
+                                                                         "(name)"           : "Properties Grid",
+                                                                         "grouping"         : false,
+                                                                         "autoFitColumns"   : true,
+                                                                         "productionQuality": false,
+                                                                         "created"          : Ext.Date.parse('10/15/2006', 'm/d/Y'),
+                                                                         "tested"           : false,
+                                                                         "version"          : 0.01,
+                                                                         "borderWidth"      : 1
+                                                                        }
+                                                             }
+                                                            )
+                                                 ]
+                                  }
+                                 ) ;
+ } ; 
+ 
+ makeROOTControlsPanel() ;
+ 
+ function makeGlobalCanvas()
+ {
+  STDLINE("Creating central panel (with canvas tabs)" ) ;
+  if( globalCanvas_ ) globalCanvas_.destroy() ;
+  globalCanvas_ = Ext.create(
+                             'Ext.tab.Panel', 
+                             {
+                              id            : 'globalCanvas',
+                              region        : 'center'      , // a center region is ALWAYS required for border layout
+                              deferredRender: false         ,
+                              activeTab     : 0             , // first tab initially active
+                              items         : canvasTabs_   ,
+                              listeners     : {
+                                               tabchange : function( tabPanel, newCard, oldCard, eOpts ) 
+                                                           {
+                                                            if( newCard.title == "Canvas 1" ) currentCanvas_ = 'canvas1' ;
+                                                            if( newCard.title == "Canvas 2" ) currentCanvas_ = 'canvas2' ;
+                                                            if( newCard.title == "Canvas 3" ) currentCanvas_ = 'canvas3' ;
+                                                            STDLINE("Changed tab to "+ currentCanvas_) ;
+                                                           },
+                                               resize    : function(thisPanel, width, height, oldWidth, oldHeight, eOpt)
+                                                           {
+                                                             changeHistogramPanelSize(thisPanel, width, height, oldWidth, oldHeight, eOpt, "resized") ;
+                                                           },
+                                               collapse  : function(thisPanel, eOpt)
+                                                           {
+                                                             changeHistogramPanelSize(thisPanel, width, height, oldWidth, oldHeight, eOpt, "collapsed") ;
+                                                           },
+                                               expand    : function(thisPanel, eOpt)
+                                                           {
+                                                             changeHistogramPanelSize(thisPanel, width, height, oldWidth, oldHeight, eOpt, "expanded") ;
+                                                           }
+                                              }
+                             }
+                            )
+ }
+ 
+ makeGlobalCanvas() ;
+
  function makeViewPort() 
  {
+  if( theViewPort_ ) theViewPort_.destroy() ;
   var fName = arguments.callee.toString().match(/function ([^\(]+)/)[1];
   STDLINE("Creating viewport for "+fName) ;
   theViewPort_ = Ext.create(
@@ -82,12 +232,9 @@ function()
                                       Ext.create(
                                                  'Ext.Component', 
                                                  {
-                                                  region: 'north',
-                                                  height: 32, // give north and south regions a height
-                                                  id    : 'sourcesDiv',
-                                                  autoEl: {
-                                                           tag : 'div',
-                                                          }
+                                                  region: 'north'     ,
+                                                  height: 32          ,
+                                                  id    : 'sourcesDiv'
                                                  }
                                                 ), 
                                       {
@@ -102,63 +249,8 @@ function()
                                        collapsed   : true                 ,
                                        title       : 'General information',
                                        margins     : '0 0 0 0'
-                                      }, 
-                                      {
-                                       xtype       : 'tabpanel'           ,
-                                       region      : 'east'               ,
-                                       title       : 'ROOT controls'      ,
-                                       id          : 'east-panel'         , // see Ext.getCmp() below
-                                       collapsed   : true                 ,
-                                       dockedItems : [
-                                                      {
-                                                       dock : 'top',
-                                                       xtype: 'toolbar',
-                                                       items: [ 
-                                                               '->', 
-                                                               {
-                                                                xtype  : 'button'                                  ,
-                                                                text   : 'Stop'                                    ,
-                                                                tooltip: 'Stop periodical refreshing of histograms',
-                                                                border : true
-                                                               }
-                                                              ]
-                                                      }
-                                                     ],
-                                       animCollapse: true,
-                                       collapsible : true,
-                                       split       : true,
-                                       width       : 225, // give east and west regions a width
-                                       minSize     : 175,
-                                       maxSize     : 400,
-                                       margins     : '0 5 0 0',
-                                       activeTab   : 1,
-                                       tabPosition : 'bottom',
-                                       items       : [
-                                                      {
-                                                       html      : '<p>Here controls of periodic refresh of histograms</p>',
-                                                       title     : 'Cycling'                                               ,
-                                                       tooltip   : 'Tab to control refreshing of histograms'               ,
-                                                       autoScroll: true
-                                                      }, 
-                                                      Ext.create(
-                                                                 'Ext.grid.PropertyGrid', 
-                                                                 {
-                                                                  title   : 'Operations on histograms',
-                                                                  closable: true,
-                                                                  source  : {
-                                                                             "(name)"           : "Properties Grid",
-                                                                             "grouping"         : false,
-                                                                             "autoFitColumns"   : true,
-                                                                             "productionQuality": false,
-                                                                             "created"          : Ext.Date.parse('10/15/2006', 'm/d/Y'),
-                                                                             "tested"           : false,
-                                                                             "version"          : 0.01,
-                                                                             "borderWidth"      : 1
-                                                                            }
-                                                                 }
-                                                                )
-                                                     ]
-                                      }, 
+                                      },
+                                      ROOTControlsPanel_,
                                       {
                                        region      : 'west'            ,
                                        stateId     : 'navigation-panel',
@@ -187,47 +279,8 @@ function()
                                                        iconCls  : 'info'
                                                       }
                                                      ],
-                                       listeners   : {
-                                                      resize    : function(thisPanel, eOpt)
-                                                                  {
-                                                                    STLINE("panel resized: resing canvas") ;
-                                                                  },
-                                                      collapse  : function(thisPanel, eOpt)
-                                                                  {
-                                                                    STLINE("panel collapsed: resing canvas") ;
-                                                                  },
-                                                      expand  : function(thisPanel, eOpt)
-                                                                  {
-                                                                    STLINE("panel expanded: resing canvas") ;
-                                                                  }
-                                                     }
                                       },
-                                      // in this instance the TabPanel is not wrapped by another panel
-                                      // since no title is needed, this Panel is added directly
-                                      // as a Container
-                                      Ext.create(
-                                                 'Ext.tab.Panel', 
-                                                 {
-                                                  region        : 'center', // a center region is ALWAYS required for border layout
-                                                  deferredRender: false,
-                                                  activeTab     : 0,        // first tab initially active
-                                                  items         : [
-                                                                   {
-                                                                    contentEl : 'histogram1',
-                                                                    title     : 'Canvas 1'  ,
-                                                                    closable  : false       ,
-                                                                    border    : true        ,
-                                                                    autoScroll: true
-                                                                   }, 
-                                                                   {
-                                                                    contentEl : 'center2'   ,    
-                                                                    title     : 'Canvas 2'  ,
-                                                                    closable  : true        ,
-                                                                    autoScroll: true
-                                                                   }
-                                                                  ]
-                                                 }
-                                                )
+                                      globalCanvas_ 
                                      ]
                             }
                            );
@@ -292,7 +345,7 @@ function()
   if( grid_ ) grid_.destroy()     ;
   theStore_.sort(treeDisplayField_, 'ASC');
 
-  //mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
+  //mdi_ = new JSROOT.GridDisplay('canvas1', gridDivision_); // gridi2x2
  
   STDLINE("Creating grid") ;
   grid_ = Ext.create(
@@ -653,8 +706,8 @@ function()
                  STDLINE("gridDivision_: "+gridDivision_) ;
                  if( gridDivision_ == "grid1x1")
                  { 
-                  JSROOT.cleanup('histogram1');
-                  mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
+                  JSROOT.cleanup(currentCanvas_);
+                  mdi_ = new JSROOT.GridDisplay(currentCanvas_, gridDivision_); // gridi2x2
                   STDLINE("cleared...") ;
                 }
 
@@ -680,10 +733,10 @@ function()
                   {
                    STDLINE("-------> Updating " + rootTitle) ;
                    JSROOT.redraw (
-                                theFrame         ,
-                                activeObjects_[i],
-                                ""
-                               );                                                                                
+                                  theFrame         ,
+                                  activeObjects_[i],
+                                  ""
+                                 );                                                                              
                   }
                  }
                 }
