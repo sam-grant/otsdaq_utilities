@@ -31,7 +31,8 @@
 //	This code also handles server requests and response handlers for the content code:
 //		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, 
 //			reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, 
-//			doNotShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>)
+//			doNotShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>,
+//			doNotOfferSequenceChange <optional>)
 //
 //			... here is an example request:
 //
@@ -636,9 +637,12 @@ DesktopContent.hideLoading = function()	{
 // callHandlerOnErr can be set to true to have handler called with errStr parameter
 //	otherwise, handler will not be called on error.
 //
+//	Use ignoreSystemBlock if request is expected to meet a down server (like restarting xdaq)
+//	Use doNotOfferSequenceChange for requests that might fail based on permissions (like code editor switch to read only).
+//
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
 		reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
-		targetSupervisor, ignoreSystemBlock) 
+		targetSupervisor, ignoreSystemBlock, doNotOfferSequenceChange) 
 {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
@@ -730,7 +734,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				{
 					errStr = "Request failed due to insufficient account permissions."; 
 					
-					if(DesktopContent._sequence)
+					if(!doNotOfferSequenceChange && DesktopContent._sequence)
 					{
 						Debug.log("In wiz mode, attempting to fix access code on the fly...");
 						
@@ -1313,8 +1317,9 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,neverShow,temp
 //
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
-DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, 
-		dialogWidth, cancelFunc, yesButtonText, noAutoComplete) {		
+DesktopContent.popUpVerification = function(prompt, func, val, bgColor, 
+		textColor, borderColor, getUserInput, dialogWidth, cancelFunc, 
+		yesButtonText, noAutoComplete, defaultUserInputValue) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1389,6 +1394,8 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 				"<input type='text' id='DesktopContent_popUpUserInput' " +
 				"onclick='event.stopPropagation();'" +
 				(noAutoComplete?"autocomplete='off' ":"") + 
+				" value='" + 
+				(defaultUserInputValue!==undefined?defaultUserInputValue:"") + "' " +
 				">";
 							
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
@@ -1420,11 +1427,12 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 
 	if(getUserInput) //place cursor
 	{
-		el.getElementsByTagName('input')[0].focus();
-		el.getElementsByTagName('input')[0].setSelectionRange(0,0);	
+		var tel = el.getElementsByTagName('input')[0];
+		tel.focus();
+		tel.setSelectionRange(0,tel.value.length);	
 		
 		//accept enter to close
-		el.getElementsByTagName('input')[0].onkeydown = 
+		tel.onkeydown = 
 				function(event) 
 				{
 			if(event.keyCode == 13) // ENTER

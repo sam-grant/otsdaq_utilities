@@ -147,7 +147,7 @@
 			//htmlClearDiv()
 			//init()	
 			//	localFinishInit()
-			//initArtdaqNodes()
+			//initArtdaqNodes(doneHandler)
 			//handleOptionalNodeParameters(node,nodeNameTemplate,nodeVectorIndexString,nodeNameFixedWidth,hostname,hostnameVectorIndexString,hostnameFixedWidth)
 			//initArrows()
 			//save()
@@ -263,7 +263,7 @@
 		//=====================================================================================
 		//initArtdaqNodes ~~
 		//	init called once body has loaded
-		function initArtdaqNodes() 
+		function initArtdaqNodes(doneHandler) 
 		{				
 			Debug.log("initArtdaqNodes()");
 					
@@ -514,7 +514,9 @@
 					//build arrow connections now
 					initArrows();
 					
-					localFinishInit();					
+					localFinishInit();	
+					
+					if(doneHandler) doneHandler();
 					
 					
 						} //end loadArtdaqNodeLayout handler
@@ -1685,7 +1687,8 @@
 				//header text
 				str += "<div id='" + nodeid + 
 						"-headerText' class='node-headerText'>" +
-						(_nodes[i].status?"":"<label style='color:red; font-size:inherit;'>*OFF*</label> ") + 
+						(_nodes[i].status?"":"<label style='color:red; font-size:inherit;'>*OFF*</label> ") +
+						(count > 1?(_nodes[i].nodeCount + "x "):"") + 
 						typeName + "::" + nodeName +
 						htmlClearDiv() + 
 						(_subsystems[_nodes[i].subsystemId]? //e.g. undefined for artdaq supervisor
@@ -2815,12 +2818,13 @@
 							")");
 				else //final menu depth (choose window type)
 					menuItemHandlers.push("handleEditIconMenuSelection(" +
-						i + "," + t + ", undefined /*newTab*/, " +
+						i + "," + (menuDepth?menuDepthType:t) + 
+						", undefined /*newTab*/, " +
 						x + ", " +
 						"\"" + editTypes[t]  + "\"," +
 						subi + " /*subi*/," +
 						(menuDepth|0) + "," +
-						depthTypes[t] + " /*menuDepthType*/" +
+						(menuDepth?t:0) + " /*menuDepthType*/" +
 						")");
 			} //end edit type loop
 						
@@ -2986,7 +2990,7 @@
 					
 					d = 1; //depth 1 //----------------
 					doMap[equivalentTypes[t]][d] = {}; //menu depth
-					dt = 0; //DAQ depth type //----------------
+					dt = 1; //DAQ depth type //----------------
 					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
 					doMap[equivalentTypes[t]][d][dt].push({
 						"table" : 		ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE,
@@ -2996,7 +3000,7 @@
 						"table" : 		ARTDAQConfigurationAPI.DAQ_METRIC_TABLE,
 						"groupLink"	: 	"daqLink/daqMetricsLink"
 					}); //DAQ Metrics 				
-					dt = 1; //ART depth type //----------------
+					dt = 2; //ART depth type //----------------
 					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
 					doMap[equivalentTypes[t]][d][dt].push({
 						"table" : 		"ARTDAQPhysicsAnalyzerTable",
@@ -3025,7 +3029,9 @@
 					if(!menuDepth)
 						--editType; //because first one is always 'Top-level Parameters'
 					
-					console.log("type",type,"editType",editType);
+					console.log("type",type,"menuDepth",menuDepth);
+					console.log("editType",editType,"menuDepthType",menuDepthType);
+					
 					//for menuDepth=0, menuDepthType always is 0 (i.e. editType selects)
 					table = doMap[type][menuDepth|0][editType][menuDepthType|0].table;
 					groupLink = doMap[type][menuDepth|0][editType][menuDepthType|0].groupLink;						
@@ -3080,7 +3086,8 @@
 						localGetLinkId(uniqueLinkPath,
 								function(childLinkIndex, linkId)
 								{
-							Debug.log("Completed check of " + uniqueLinkPath + " childLinkIndex = '" +
+							Debug.log("Completed check of " + uniqueLinkPath + 
+									" childLinkIndex = '" +
 									childLinkIndex + "' linkId = '" + 
 									linkId + "'");
 							
@@ -3239,7 +3246,8 @@
 									300 /*dialogWidth*/);
 							else
 								Debug.log("The link to '" + fieldPath +
-										"' has not been defined. Please manually define and try again.",
+										"' has not been defined, and no default destination table was found. " +
+										"Please manually define the link and try again.",
 										Debug.HIGH_PRIORITY);
 							
 							return;
@@ -3352,7 +3360,28 @@
 										_modifiedTables = undefined; //clear after save
 
 										if(!isUniqueLink)
-											initArtdaqNodes(); //re-init and get new active configuration
+										{
+											// DONE! (for group links) ------------------------------------------
+											initArtdaqNodes(//pass done handler to initArtdaqNodes()
+													//////////////////
+													function()
+													{
+												Debug.log("initArtdaqNodes group link done handler");
+
+												console.log("fieldRetObj[1].fieldColumnType.split('-')[1]",
+														fieldRetObj[1].fieldColumnType.split('-')[1]);
+												console.log("retObj[1].fieldValue",
+														retObj[1].fieldValue);
+
+												//continue recursion, parameters actually do not matter
+												handler( //localGetLinkId's handler calls localRecursiveUniqueLinkCheck()
+														valueArr[0], 
+														valueArr[1]);
+
+													} //end initArtdaqNodes done handler
+											); //re-init and get new active configuration
+											// end DONE! (for group links) ------------------------------------------
+										}
 										else //is unique link, so continue to create record
 										{
 											ConfigurationAPI.addSubsetRecords(
@@ -3393,7 +3422,27 @@
 
 													_modifiedTables = undefined; //clear after save
 													
-													initArtdaqNodes(); //re-init and get new active configuration
+													// DONE! (for unique links) ------------------------------------------
+													initArtdaqNodes( //pass done handler to initArtdaqNodes()
+															//////////////////
+															function()
+															{
+														Debug.log("initArtdaqNodes unique link done handler");
+														
+														console.log("fieldRetObj[1].fieldColumnType.split('-')[1]",
+																fieldRetObj[1].fieldColumnType.split('-')[1]);
+														console.log("retObj[1].fieldValue",
+																retObj[1].fieldValue);
+														
+														//continue recursion, parameters actually do not matter
+														handler( //localGetLinkId's handler calls localRecursiveUniqueLinkCheck()
+																valueArr[0], 
+																valueArr[1]);
+
+															} //end initArtdaqNodes done handler															
+													); //re-init and get new active configuration
+													// end DONE! (for unique links) ------------------------------------------
+													
 														}, //end saveModifiedTables handler
 														_modifiedTables);
 													}, //end addSubsetRecords handler
@@ -4395,10 +4444,11 @@
 		function getMultiNodeName(i,subi) 
 		{	
 			var namePieces = _nodes[i].name.split('*');
-			if(namePieces.length > 1)
+			if(namePieces.length > 1 && 
+					subi < _nodes[i].nodeVectorIndexArr.length)
 			{
 				var nodeName = namePieces[0];
-				var nameIndex = subi + ""; //make a 'string'
+				var nameIndex = _nodes[i].nodeVectorIndexArr[subi] + ""; //make a 'string'
 				while(_nodes[i].nodeNameFixedWidth && 
 						nameIndex.length < (_nodes[i].nodeNameFixedWidth|0))
 					nameIndex = "0" + nameIndex;
@@ -4410,7 +4460,8 @@
 			}
 			else
 			{
-				Debug.log("Invalid multi-node name for subi=" + subi,
+				Debug.log("Invalid multi-node name for node i=" +
+						i + " for subi=" + subi,
 						Debug.MED_PRIORITY);
 				return _nodes[i].name; //on failure
 			}			

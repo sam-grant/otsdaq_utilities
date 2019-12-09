@@ -185,6 +185,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//	setTreeNodeFieldValues
 	//	addTreeNodeRecords
 	//	deleteTreeNodeRecords
+	//	renameTreeNodeRecords
+	//	copyTreeNodeRecords
 	//		---- end associated with JavaScript Table API
 	//
 	//		---- associated with JavaScript artdaq API
@@ -750,7 +752,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string filterList     = CgiDataUtilities::postData(cgiIn, "filterList");
 		int         depth          = CgiDataUtilities::getDataAsInt(cgiIn, "depth");
-		bool hideStatusFalse = CgiDataUtilities::getDataAsInt(cgiIn, "hideStatusFalse");
+		bool hideStatusFalse 	   = CgiDataUtilities::getDataAsInt(cgiIn, "hideStatusFalse");
 
 		//		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
 		//		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
@@ -923,6 +925,57 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                                   startPath,
 		                                   modifiedTables,
 		                                   recordList);
+	}
+	else if(requestType == "renameTreeNodeRecords")
+	{
+		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
+		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
+		std::string newRecordList  = CgiDataUtilities::postData(cgiIn, "newRecordList");
+
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
+		__SUP_COUT__ << "startPath: " << startPath << __E__;
+		__SUP_COUT__ << "recordList: " << recordList << __E__;
+		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
+		__SUP_COUTV__(newRecordList);
+
+		handleFillRenameTreeNodeRecordsXML(xmlOut,
+		                                   cfgMgr,
+		                                   tableGroup,
+		                                   TableGroupKey(tableGroupKey),
+		                                   startPath,
+		                                   modifiedTables,
+		                                   recordList,
+										   newRecordList);
+	}
+	else if(requestType == "copyTreeNodeRecords")
+	{
+		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
+		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
+		unsigned int numberOfCopies     = CgiDataUtilities::getDataAsInt(cgiIn, "numberOfCopies");
+		if(!numberOfCopies) numberOfCopies = 1; //default to 1
+
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
+		__SUP_COUT__ << "startPath: " << startPath << __E__;
+		__SUP_COUT__ << "recordList: " << recordList << __E__;
+		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
+		__SUP_COUTV__(numberOfCopies);
+
+		handleFillCopyTreeNodeRecordsXML(xmlOut,
+		                                   cfgMgr,
+		                                   tableGroup,
+		                                   TableGroupKey(tableGroupKey),
+		                                   startPath,
+		                                   modifiedTables,
+		                                   recordList,
+										   numberOfCopies);
 	}
 	else if(requestType == "getArtdaqNodes")
 	{
@@ -1994,6 +2047,247 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 	}
 }  // end handleFillDeleteTreeNodeRecordsXML()
 
+
+//========================================================================================================================
+// handleFillRenameTreeNodeRecordsXML
+//	Rename the records in the appropriate table
+//		and creates a temporary version.
+//	the modified-<modified tables> list is returned in xml
+//
+// if groupName == "" || groupKey is invalid
+//	 then do for active groups
+//
+// parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordList := CSV list of records to rename
+//	newRecordList := CSV list of new record names
+//
+void ConfigurationGUISupervisor::handleFillRenameTreeNodeRecordsXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      groupName,
+    const TableGroupKey&    groupKey,
+    const std::string&      startPath,
+    const std::string&      modifiedTables,
+    const std::string&      recordList,
+    const std::string&      newRecordList)
+{
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(xmlOut,
+	                     cfgMgr,
+	                     groupName,
+	                     groupKey,
+	                     modifiedTables,
+	                     true /* refresh all */,
+	                     false /* getGroupInfo */,
+	                     0 /* returnMemberMap */,
+	                     false /* outputActiveTables */);
+
+	try
+	{
+		ConfigurationTree targetNode = cfgMgr->getNode(startPath);
+		TableBase*        table      = cfgMgr->getTableByName(targetNode.getTableName());
+
+		__SUP_COUT__ << table->getTableName() << __E__;
+		TableVersion temporaryVersion;
+
+		// if current version is not temporary
+		//		create temporary
+		//	else re-modify temporary version
+		//	edit temporary version directly
+		//	then after all edits return active versions
+		//
+
+		// extract record list
+		std::vector<std::string> recordArray = StringMacros::getVectorFromString(recordList);
+		std::vector<std::string> newRecordArray = StringMacros::getVectorFromString(newRecordList);
+
+		__SUP_COUTV__(StringMacros::vectorToString(recordArray));
+		__SUP_COUTV__(StringMacros::vectorToString(newRecordArray));
+
+		if(recordArray.size() == 0 ||
+				recordArray.size() != newRecordArray.size())
+		{
+			__SUP_SS__ << "Invalid record size vs new record name size, they must be the same: " <<
+					recordArray.size() << " vs " << newRecordArray.size() << __E__;
+			__SUP_SS_THROW__;
+		}
+
+
+		// handle version bookkeeping
+		{
+			if(!(temporaryVersion = targetNode.getTableVersion())
+					.isTemporaryVersion())
+			{
+				__SUP_COUT__ << "Start version " << temporaryVersion << __E__;
+				// create temporary version for editing
+				temporaryVersion = table->createTemporaryView(temporaryVersion);
+				cfgMgr->saveNewTable(targetNode.getTableName(),
+									 temporaryVersion,
+									 true);  // proper bookkeeping for temporary
+											 // version with the new version
+
+				__SUP_COUT__ << "Created temporary version " << temporaryVersion
+							 << __E__;
+			}
+			else  // else table is already temporary version
+				__SUP_COUT__ << "Using temporary version " << temporaryVersion
+							 << __E__;
+		}
+
+		// at this point have valid temporary version to edit
+
+		//for every record, change name
+		unsigned int row;
+		for(unsigned int i=0;i<recordArray.size();++i)
+		{
+			row = table->getViewP()->findRow(
+					table->getViewP()->getColUID(),
+					StringMacros::decodeURIComponent(recordArray[i]));
+
+			table->getViewP()->setValueAsString(
+					newRecordArray[i], row,
+					table->getViewP()->getColUID());
+		}
+
+		table->getViewP()->init();  // verify new table (throws runtime_errors)
+
+		handleFillModifiedTablesXML(xmlOut, cfgMgr);
+	}
+	catch(std::runtime_error& e)
+	{
+		__SUP_SS__ << ("Error renaming record(s)!\n\n" + std::string(e.what())) << __E__;
+		__SUP_COUT_ERR__ << "\n" << ss.str();
+		xmlOut.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SUP_SS__ << ("Error renaming record(s)!\n\n") << __E__;
+		__SUP_COUT_ERR__ << "\n" << ss.str();
+		xmlOut.addTextElementToData("Error", ss.str());
+	}
+}  // end handleFillRenameTreeNodeRecordsXML()
+
+
+//========================================================================================================================
+// handleFillCopyTreeNodeRecordsXML
+//	Copies the records in the appropriate table
+//		and creates a temporary version.
+//	Makes incremental unique names for each copy.
+//	The modified-<modified tables> list is returned in xml
+//
+// if groupName == "" || groupKey is invalid
+//	 then do for active groups
+//
+// parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordList := CSV list of records to create
+//	numberOfCopies := integer for number of copies for each record in recordList
+//
+void ConfigurationGUISupervisor::handleFillCopyTreeNodeRecordsXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      groupName,
+    const TableGroupKey&    groupKey,
+    const std::string&      startPath,
+    const std::string&      modifiedTables,
+    const std::string&      recordList,
+	unsigned int  			numberOfCopies /* = 1 */)
+{
+	if(!numberOfCopies) numberOfCopies = 1; //force 0 to 1, assuming user meant to get one copy
+
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(xmlOut,
+	                     cfgMgr,
+	                     groupName,
+	                     groupKey,
+	                     modifiedTables,
+	                     true /* refresh all */,
+	                     false /* getGroupInfo */,
+	                     0 /* returnMemberMap */,
+	                     false /* outputActiveTables */);
+
+	try
+	{
+		ConfigurationTree targetNode = cfgMgr->getNode(startPath);
+		TableBase*        table      = cfgMgr->getTableByName(targetNode.getTableName());
+
+		__SUP_COUT__ << table->getTableName() << __E__;
+		TableVersion temporaryVersion;
+
+		// if current version is not temporary
+		//		create temporary
+		//	else re-modify temporary version
+		//	edit temporary version directly
+		//	then after all edits return active versions
+		//
+
+		// extract record list
+		std::vector<std::string> recordArray = StringMacros::getVectorFromString(recordList);
+		__SUP_COUTV__(StringMacros::vectorToString(recordArray));
+
+		// handle version bookkeeping
+		{
+			if(!(temporaryVersion = targetNode.getTableVersion())
+					.isTemporaryVersion())
+			{
+				__SUP_COUT__ << "Start version " << temporaryVersion << __E__;
+				// create temporary version for editing
+				temporaryVersion = table->createTemporaryView(temporaryVersion);
+				cfgMgr->saveNewTable(targetNode.getTableName(),
+									 temporaryVersion,
+									 true);  // proper bookkeeping for temporary
+											 // version with the new version
+
+				__SUP_COUT__ << "Created temporary version " << temporaryVersion
+							 << __E__;
+			}
+			else  // else table is already temporary version
+				__SUP_COUT__ << "Using temporary version " << temporaryVersion
+							 << __E__;
+		}
+
+		// at this point have valid temporary version to edit
+
+		//for every record, copy spec'd number of times
+		unsigned int row;
+		for(const auto& recordUID: recordArray)
+		{
+			row = table->getViewP()->findRow(table->getViewP()->getColUID(),
+							StringMacros::decodeURIComponent(recordUID));
+			for(unsigned int i=0;i<numberOfCopies;++i)
+				table->getViewP()->copyRows(
+						cfgMgr->getUsername(),
+						table->getView(),
+						row,
+						1 /*srcRowsToCopy*/,
+						-1 /*destOffsetRow*/,
+						true /*generateUniqueDataColumns*/,
+						recordUID /*baseNameAutoUID*/); //make the name similar
+		} //end record loop
+
+		table->getViewP()->init();  // verify new table (throws runtime_errors)
+
+		handleFillModifiedTablesXML(xmlOut, cfgMgr);
+	}
+	catch(std::runtime_error& e)
+	{
+		__SUP_SS__ << ("Error copying record(s)!\n\n" + std::string(e.what())) << __E__;
+		__SUP_COUT_ERR__ << "\n" << ss.str();
+		xmlOut.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SUP_SS__ << ("Error copying record(s)!\n\n") << __E__;
+		__SUP_COUT_ERR__ << "\n" << ss.str();
+		xmlOut.addTextElementToData("Error", ss.str());
+	}
+}  // end handleFillCopyTreeNodeRecordsXML()
+
 //========================================================================================================================
 // handleFillSetTreeNodeFieldValuesXML
 //	writes for each record, the field/value pairs to the appropriate table
@@ -2784,10 +3078,10 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
-}
+} //end handleFillTreeViewXML()
 
 //==============================================================================
-// recursiveToXml
+// recursiveTreeToXML
 //	output tree to XML from this node for desired depth
 //	depth of 0 means output only this node's value
 //	depth of 1 means include this node's children's values, etc..
@@ -2922,7 +3216,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 				    c.second, depth - 1, xmlOut, parentEl, hideStatusFalse);
 		}
 	}
-}
+} //end recursiveTreeToXML()
 
 //========================================================================================================================
 // handleGetLinkToChoicesXML
