@@ -49,7 +49,7 @@ ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
 {
 	__SUP_COUT__ << "Constructor started." << __E__;
 
-	INIT_MF("ConsoleSupervisor");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
 	// attempt to make directory structure (just in case)
 	mkdir(((std::string)USER_CONSOLE_PREF_PATH).c_str(), 0755);

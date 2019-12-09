@@ -47,7 +47,7 @@ ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub* s)
                                    "/LinkToApplicationTable/" +
                                    supervisorApplicationUID_ + "/LinkToSupervisorTable")
 {
-	INIT_MF("ECLSupervisor");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
 	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
 	__COUT__ << __PRETTY_FUNCTION__ << std::endl;

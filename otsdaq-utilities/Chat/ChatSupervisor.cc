@@ -20,7 +20,7 @@ ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub* stub)
 
     : CoreSupervisorBase(stub)
 {
-	INIT_MF("ChatSupervisor");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
 	ChatLastUpdateIndex = 1;  // skip 0
 }
