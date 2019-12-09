@@ -24,7 +24,6 @@ class SlowControlsDashboardSupervisor : public CoreSupervisorBase
 
 	void init(void);
 	void checkSubscriptions(SlowControlsDashboardSupervisor* cs);
-	void checkAlarms(SlowControlsDashboardSupervisor* cs);
 	void destroy(void);
 
 	virtual void request(const std::string&               requestType,
@@ -41,11 +40,6 @@ class SlowControlsDashboardSupervisor : public CoreSupervisorBase
 	                                                            // supervisor property
 	                                                            // values (and ignore user
 	                                                            // settings)
-
-
-//	virtual void transitionConfiguring	(toolbox::Event::Reference event) override { if(checkAlarms().size()) {__SS__ << "error"; __SS_THROW__};}
-//	virtual void transitionStarting	(toolbox::Event::Reference event) override  { if(checkAlarms().size()) {__SS__ << "error"; __SS_THROW__};}
-//	virtual void stateRunning			(toolbox::fsm::FiniteStateMachine& fsm); override  { if(checkAlarms().size()) {__SS__ << "error"; __SS_THROW__};}
 
 	void Poll(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID);
 	void GetChannelSettings(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);

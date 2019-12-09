@@ -93,23 +93,11 @@ void SlowControlsDashboardSupervisor::init(void)
 
 		// lockout the messages array for the remainder of the scope
 		// this guarantees the reading thread can safely access the messages
-		std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
+		//std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
 		cs->checkSubscriptions(cs);
 	},
 	this)
 	.detach(); // thread check clients subscription for all channels
-
-	//
-	// checkAlarms
-	std::thread(
-			[](SlowControlsDashboardSupervisor* cs) {
-		// lockout the messages array for the remainder of the scope
-		// this guarantees the reading thread can safely access the messages
-		std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
-		cs->checkAlarms(cs);
-	},
-	this)
-	.detach();  // thread check alarms on status and severity for all channels
 
 	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
@@ -199,18 +187,6 @@ void SlowControlsDashboardSupervisor::checkSubscriptions(SlowControlsDashboardSu
 }
 
 //========================================================================================================================
-// Check Alarms from Epics
-void SlowControlsDashboardSupervisor::checkAlarms(SlowControlsDashboardSupervisor* cs)
-{
-	__COUT__ << "checkAlarms() initializing..." << std::endl;
-	while(true) {
-		for (auto channelName : interface_->getChannelList()){
-			//interface_->getCurrentValue(channelName);
-		}
-	}
-}
-
-//========================================================================================================================
 // setSupervisorPropertyDefaults
 //		override to set defaults for supervisor property values (before user settings
 // override)
@@ -293,7 +269,7 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	}
 	else if(Command == "generateUID")
 	{
-		std::string channelList = CgiDataUtilities::getOrPostData(cgiIn, "ChannelList");
+		std::string channelList = CgiDataUtilities::getOrPostData(cgiIn, "PVList");
 		GenerateUID(cgiIn, xmlOut, channelList);
 	}
 	else if(Command == "isUserAdmin")
@@ -307,13 +283,13 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	{
 		GetUserPermissions(cgiIn, xmlOut, userInfo);
 	}
-	else if(Command == "getChannelSettings")
+	else if(Command == "getPVSettings")
 	{
 		__SUP_COUT__ << "Channel settings requested from server! " << std::endl;
 		GetChannelSettings(cgiIn, xmlOut);
 		xmlOut.addTextElementToData("id", CgiDataUtilities::getData(cgiIn, "id"));
 	}
-	else if(Command == "getChannelArchiverData")
+	else if(Command == "getPVArchiverData")
 	{
 		__SUP_COUT__ << "Archived Channel data requested from server! " << std::endl;
 		GetChannelArchiverData(cgiIn, xmlOut);
@@ -456,7 +432,7 @@ void SlowControlsDashboardSupervisor::Poll(
 void SlowControlsDashboardSupervisor::GetChannelSettings(cgicc::Cgicc & cgiIn,
 		HttpXmlDocument & xmlOut)
 {
-	std::string channelList = CgiDataUtilities::postData(cgiIn, "ChannelList");
+	std::string channelList = CgiDataUtilities::postData(cgiIn, "PVList");
 
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
 			<< "Getting settings for " << channelList << std::endl;
@@ -504,7 +480,7 @@ void SlowControlsDashboardSupervisor::GetChannelSettings(cgicc::Cgicc & cgiIn,
 				<< std::endl;
 
 		xmlOut.addTextElementToData(
-				"JSON", "{ \"message\": \"GetChannelSettings\"}");  // add to response
+				"JSON", "{ \"message\": \"GetPVSettings\"}");  // add to response
 	}
 }
 
@@ -514,7 +490,7 @@ void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc & cgiI
 {
 	__SUP_COUT__ << "Requesting archived data!" << std::endl;
 
-	std::string channelList = CgiDataUtilities::postData(cgiIn, "ChannelList");
+	std::string channelList = CgiDataUtilities::postData(cgiIn, "PVList");
 
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
 			<< "Getting History for " << channelList << std::endl;
@@ -569,7 +545,7 @@ void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc & cgiI
 				<< std::endl;
 
 		xmlOut.addTextElementToData(
-				"JSON", "{ \"message\": \"GetChannelSettings\"}");  // add to response
+				"JSON", "{ \"message\": \"GetPVSettings\"}");  // add to response
 	}
 
 	/*
