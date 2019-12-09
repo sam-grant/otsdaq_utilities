@@ -94,15 +94,15 @@
 				{
 					var divtemp = document.createElement('div');
 					divtemp.style.color = "white";
-					divtemp.style.fontSize = "2vw";
-					divtemp.innerHTML = pv;
+					//divtemp.style.fontSize = "auto"; //"3vw";
+					divtemp.innerHTML = "<center>" + pv;// + "</center>";
 					//divtemp.style.width = "100%";
 					//divtemp.style.height = "100%";
 					div.appendChild(divtemp);
 					containers[pv] = divtemp;
 
 					var wdth = (parseInt(window.innerWidth) - 16) / Object.keys(widget.PVList).length | 0;
-					var hght = (parseInt(window.innerHeight) - 16) / Object.keys(widget.PVList).length | 0;
+					var hght = (parseInt(window.innerHeight) - 56) / Object.keys(widget.PVList).length | 0;
 
 					if(wdth < 100) wdth = 100;
 					if(hght < 100) hght = 100;
@@ -130,9 +130,17 @@
 			{
 				console.log("Termometer newValue() reached", pvName, pvValue);
 				//updateThermometer(pvName, containers[pvName], pvValue, (pvValue * 0.5), (pvValue * 1.5));
-				thermometers[pvName].setCurrentValue(pvValue);
-				thermometers[pvName].setMinValue((pvValue * 0.5));
-				thermometers[pvName].setMaxValue((pvValue * 1.5));			
+				containers[pvName].innerHTML = "<center>" +pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity;// + "</center>";
+
+				//thermometers[pvName].setCurrentValue(pvValue);
+				//thermometers[pvName].setMinValue((pvValue * 0.5));
+				//thermometers[pvName].setMaxValue((pvValue * 1.5));
+				thermometers[pvName].render(
+					containers[pvName],
+					pvValue,
+					(pvValue * 0.5),
+					(pvValue * 1.5)
+				);
 			}
 
 			function drawThermometer(name, container, wdth, hght, val, min, max)
@@ -178,7 +186,7 @@
 				for(var name in thermometers)
 				{
 					thermometers[name]._config.width = (parseInt(window.innerWidth) - 16) / Object.keys(thermometers).length | 0;
-					thermometers[name]._config.height = (parseInt(window.innerHeight) - 16) / Object.keys(thermometers).length | 0;
+					thermometers[name]._config.height = (parseInt(window.innerHeight) - 56) / Object.keys(thermometers).length | 0;
 					thermometers[name].render(
 						containers[name],
 						thermometers[name]._value.current,
