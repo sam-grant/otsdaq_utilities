@@ -191,24 +191,28 @@ function()
                               activeTab     : 0             , // first tab initially active
                               items         : canvasTabs_   ,
                               listeners     : {
-                                               tabchange : function( tabPanel, newCard, oldCard, eOpts ) 
+                                               tabchange : function( thisPanel, newCard, oldCard, eOpts ) 
                                                            {
-                                                            if( newCard.title == "Canvas 1" ) currentCanvas_ = 'canvas1' ;
-                                                            if( newCard.title == "Canvas 2" ) currentCanvas_ = 'canvas2' ;
-                                                            if( newCard.title == "Canvas 3" ) currentCanvas_ = 'canvas3' ;
+                                                            var regex      = /\d+/g               ;
+                                                            var str        = newCard.title        ;
+                                                            var matches    = str.match(regex)     ;
+                                                            currentCanvas_ = 'canvas' + matches[0];
+//                                                             var width      = thisPanel.width      ;
+//                                                             var height     = thisPanel.height     ;
+//                                                             changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "tabChanged") ;
                                                             STDLINE("Changed tab to "+ currentCanvas_) ;
                                                            },
                                                resize    : function(thisPanel, width, height, oldWidth, oldHeight, eOpt)
                                                            {
-                                                             changeHistogramPanelSize(thisPanel, width, height, oldWidth, oldHeight, eOpt, "resized") ;
+                                                            changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "resized"   ) ;
                                                            },
                                                collapse  : function(thisPanel, eOpt)
                                                            {
-                                                             changeHistogramPanelSize(thisPanel, width, height, oldWidth, oldHeight, eOpt, "collapsed") ;
+                                                            changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "collapsed" ) ;
                                                            },
                                                expand    : function(thisPanel, eOpt)
                                                            {
-                                                             changeHistogramPanelSize(thisPanel, width, height, oldWidth, oldHeight, eOpt, "expanded") ;
+                                                            changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "expanded"  ) ;
                                                            }
                                               }
                              }
