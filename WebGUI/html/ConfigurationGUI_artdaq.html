@@ -23,7 +23,7 @@
 	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
-	<script type="text/JavaScript" src="/WebPath/js/js_lib/ArtdaqConfigurationAPI.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ARTDAQConfigurationAPI.js"></script>
 	
 	<script>		
 		
@@ -50,6 +50,7 @@
 		var _CANVAS_COLOR 		= "rgba(255,255,255,0)";
 		var _GRID_COLOR 		= "rgb(218, 194, 194)";
 		var _ARROW_COLOR 		= "rgb(70, 67, 67)";
+		var _OFF_COLOR 			= "rgb(210, 210, 210)";
 		var _SHADOW_COLOR 		= "gray";
 		var _GRID_ROW_MIN		= 2;
 		var _GRID_COL_MIN		= 3;
@@ -68,7 +69,7 @@
 				"x0": 	0, 	"y0": 	0, 
 				"xstep":0, 	"ystep":0}; 
 		var _nodes = []; 	// array of node objects (can be multi-node vector at location, using nodeCount and nodeVectorIndexArr
-							//	node: 	{type, name, hostname, subsystemId, 
+							//	node: 	{type, name, status, hostname, subsystemId, 
 							//		originalName, x, y, nodeCount, 
 							//		nodeVectorIndexArr, nodeVectorIndexReverseMap, 
 							//		nodeVectorIndexString, nodeNameFixedWidth,
@@ -242,13 +243,13 @@
 			{
 				var x = 0;
 				var y = 0;
-				_nodes.push({"type":ArtdaqConfigurationAPI.NODE_TYPE_READER,	"x":x++, 	"y":y});			
-				_nodes.push({"type":ArtdaqConfigurationAPI.NODE_TYPE_BUILDER,	"x":x++, 	"y":y, "nodeCount": 5});			
-				_nodes.push({"type":ArtdaqConfigurationAPI.NODE_TYPE_LOGGER,	"x":x++, 	"y":y, "nodeCount": 2});
+				_nodes.push({"type":ARTDAQConfigurationAPI.NODE_TYPE_READER,	"x":x++, 	"y":y});			
+				_nodes.push({"type":ARTDAQConfigurationAPI.NODE_TYPE_BUILDER,	"x":x++, 	"y":y, "nodeCount": 5});			
+				_nodes.push({"type":ARTDAQConfigurationAPI.NODE_TYPE_LOGGER,	"x":x++, 	"y":y, "nodeCount": 2});
 				x = 0;
 				y++;
-				_nodes.push({"type":ArtdaqConfigurationAPI.NODE_TYPE_MONITOR,	"x":x, 	"y":y});			
-				_nodes.push({"type":ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER,	"x":x++, 	"y":y});
+				_nodes.push({"type":ARTDAQConfigurationAPI.NODE_TYPE_MONITOR,	"x":x, 	"y":y});			
+				_nodes.push({"type":ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER,	"x":x++, 	"y":y});
 
 				_arrows[1] = {};
 				_arrows[1][0] = {"p0":1,"p1":0};
@@ -282,9 +283,13 @@
 			_hostnames = {};
 			
 			//clear all nodes from display
-			var nodeEls = document.getElementsByClassName("node");
-			for(var i=0;i<nodeEls.length;++i)
-				nodeEls[i].parentNode.removeChild(nodeEls[i]);			
+			{
+				var nodeEls;
+				//Note: indices and parents get messed up if deleting with for loop
+				while((nodeEls = document.getElementsByClassName("node")) &&
+						nodeEls.length) 
+					nodeEls[0].parentNode.removeChild(nodeEls[0]);
+			}			
 			
 			//fill in CodeEditor appId
 			DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
@@ -303,7 +308,7 @@
 			checkForActiveGroupChange(true /*init*/); //get initial groups
 			
 			//////////////
-			ArtdaqConfigurationAPI.getArtdaqNodes(
+			ARTDAQConfigurationAPI.getArtdaqNodes(
 					function(artdaqObj)
 					{
 				console.log("artdaqObj",artdaqObj);
@@ -357,13 +362,14 @@
 							
 							//handle ARTDAQ Supervisor in a special way
 							if(type == 
-									ArtdaqConfigurationAPI.NODE_TYPES[
-										ArtdaqConfigurationAPI.NODE_TYPE_SUPERVISOR])
+									ARTDAQConfigurationAPI.NODE_TYPES[
+										ARTDAQConfigurationAPI.NODE_TYPE_SUPERVISOR])
 							{
 								//add to nodes
 								_nodes.push({
-									"type": 			ArtdaqConfigurationAPI.getTypeIndex(type),
+									"type": 			ARTDAQConfigurationAPI.getTypeIndex(type),
 									"name": 			name,
+									"status":			(artdaqObj[type][name].status === undefined?true:((artdaqObj[type][name].status|0)?true:false)), //default status to true
 									"originalName": 	name, //useful when saving
 									"contextAddress":	artdaqObj[type][name].contextAddress,
 									"contextPort":		artdaqObj[type][name].contextPort,
@@ -379,8 +385,9 @@
 										   
 								//add to nodes
 								_nodes.push({
-									"type": 		ArtdaqConfigurationAPI.getTypeIndex(type),
+									"type": 		ARTDAQConfigurationAPI.getTypeIndex(type),
 									"name": 		name,
+									"status":		(artdaqObj[type][name].status === undefined?true:((artdaqObj[type][name].status|0)?true:false)), //default status to true
 									"originalName": name, //useful when saving
 									"hostname":		artdaqObj[type][name].hostname,
 									"subsystemId":	artdaqObj[type][name].subsystemId,
@@ -425,9 +432,9 @@
 					
 					//now add remaining nodes to layout automatically
 					
-					for(var t=0;t<ArtdaqConfigurationAPI.NODE_TYPES.length;++t)
+					for(var t=0;t<ARTDAQConfigurationAPI.NODE_TYPES.length;++t)
 					{
-						var type = ArtdaqConfigurationAPI.NODE_TYPES[t];
+						var type = ARTDAQConfigurationAPI.NODE_TYPES[t];
 						console.log("Type",type);
 
 						for(var name in artdaqObj[type])
@@ -438,14 +445,15 @@
 
 							//handle ARTDAQ Supervisor in a special way
 							if(type == 
-									ArtdaqConfigurationAPI.NODE_TYPES[
-										ArtdaqConfigurationAPI.NODE_TYPE_SUPERVISOR])
+									ARTDAQConfigurationAPI.NODE_TYPES[
+										ARTDAQConfigurationAPI.NODE_TYPE_SUPERVISOR])
 							{
 								//add to nodes
 								_nodes.push({
 									"type": 			t,
 									"name": 			name,
 									"originalName": 	name, //useful when saving
+									"status":			(artdaqObj[type][name].status === undefined?true:((artdaqObj[type][name].status|0)?true:false)), //default status to true
 									"contextAddress":	artdaqObj[type][name].contextAddress,
 									"contextPort":		artdaqObj[type][name].contextPort,
 									"x":				xy[0],
@@ -462,6 +470,7 @@
 									"type": 		t,
 									"name": 		name,	
 									"originalName": name, //useful when saving
+									"status":		(artdaqObj[type][name].status === undefined?true:((artdaqObj[type][name].status|0)?true:false)), //default status to true
 									"hostname":		artdaqObj[type][name].hostname,
 									"subsystemId":	artdaqObj[type][name].subsystemId,
 									"x":			xy[0],
@@ -494,6 +503,10 @@
 					console.log("all nodes",_nodes);
 					
 					_subsystems = artdaqObj.subsystems;
+					if(_subsystems === undefined) 
+						_subsystems = {}; //define for null case
+					if(_subsystems[0] === undefined)
+						_subsystems[0] = {"label": "nullDestination", destinationId:0}; //define for null destination
 					
 					console.log("all subsystems",_subsystems);
 					
@@ -784,30 +797,36 @@
 			//		nodeObj := {}
 			//			nodeObj.<nodeType> = {}
 			//			nodeObj.<nodeType>.<nodeName> = 
-			//				{originalName,hostname,subsystemName,
+			//				{originalName,status,hostname,subsystemName,
 			//				(nodeArrString),(hostnameArrString),(nodeNameFixedWidth),(hostnameFixedWidth)}
 			//
-			// <nodeType> = ArtdaqConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
+			// <nodeType> = ARTDAQConfigurationAPI.NODE_TYPES := reader, builder, aggregator, dispatcher, monitor
 			//
 			//		subsystemObj = {}
 			//			subsystemObj.<subsystemName> = {destinationName}
 			var nodesObj = {};
 			var subsystemsObj = {};
 
-			var types = ArtdaqConfigurationAPI.NODE_TYPES;
+			var types = ARTDAQConfigurationAPI.NODE_TYPES;
 
 			for(var i=0;i<types.length;++i)
-				nodesObj[types[i]] = {};
+				if(i != ARTDAQConfigurationAPI.NODE_TYPE_SUPERVISOR)					
+					nodesObj[types[i]] = {};
 			
 			var type,name,node;
 			for(var i=0;i<_nodes.length;++i)
-			{
-				node = _nodes[i];				
+			{	
+				node = _nodes[i];
+				
+				if(node.type == ARTDAQConfigurationAPI.NODE_TYPE_SUPERVISOR)
+					continue; //skip supervisor type.. it is handled automatically
+			
 				type = types[node.type];
 
 				name = node.name;
 				nodesObj[type][name] = {};
 				nodesObj[type][name].originalName = node.originalName;
+				nodesObj[type][name].status = node.status;
 				nodesObj[type][name].hostname = node.hostname;
 				nodesObj[type][name].subsystemName = _subsystems[node.subsystemId].label;
 				if(node.nodeCount > 1)
@@ -839,19 +858,36 @@
 						_subsystems[_subsystems[node.subsystemId].destinationId].label;
 			}
 			
-			ArtdaqConfigurationAPI.saveArtdaqNodes(nodesObj, subsystemsObj,
-					function(response)
+			ARTDAQConfigurationAPI.saveArtdaqNodes(nodesObj, subsystemsObj,
+					function(req)
 					{
-				console.log("response",response);
+				console.log("response",req);
 				
 				Debug.log("save() complete");				
 				nodesHaveChanged(false);
+				
+				var activeConfigGroups = [
+					  DesktopContent.getXMLValue(req, "Context-ActiveGroupName"),
+					  DesktopContent.getXMLValue(req, "Context-ActiveGroupKey"),
+					  DesktopContent.getXMLValue(req, "Configuration-ActiveGroupName"),
+					  DesktopContent.getXMLValue(req, "Configuration-ActiveGroupKey")];
 				
 				//always save layout just in case
 				saveLayout(function()
 						{
 					Debug.log("Changes have been successfully saved!",
 							Debug.INFO_PRIORITY);		
+					
+					
+
+					Debug.log("Now the active Context group is '" +
+							activeConfigGroups[0] + "(" +
+							activeConfigGroups[1] + 
+							") and the active Configuration group is " + 
+							activeConfigGroups[2] + "(" +
+							activeConfigGroups[3] + ")" + 
+							"!",
+							Debug.INFO_PRIORITY);	
 					
 					initArtdaqNodes(); //completely reload
 					
@@ -866,6 +902,8 @@
 			Debug.log("initArrows()");
 			_arrows = {}; //reset
 			
+			// NOTE: status is considered, OFF nodes are not included in arrow paths
+			//
 			//	 .. arrows should get generated at startup based on subsystem settings.
 			//	Readers -> all builders of same subsystem
 			//	Builders -> all loggers of same subsystem AND builders of destination subsystem
@@ -873,11 +911,14 @@
 
 			for(var i=0;i<_nodes.length;++i)
 			{
-				if(_nodes[i].type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+				if(!_nodes[i].status) continue; //skip OFF nodes
+				
+				if(_nodes[i].type == ARTDAQConfigurationAPI.NODE_TYPE_READER)
 				{
-					//connect to all board readers at destination
+					//connect to all ON board readers at destination
 					for(var j=0;j<_nodes.length;++j)
-						if(_nodes[j].type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER && 
+						if(_nodes[j].status &&
+								_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER && 
 								_nodes[j].subsystemId == _nodes[i].subsystemId)
 						{
 							Debug.log("Found reader-builder connection at nodes " + 
@@ -886,13 +927,14 @@
 							addArrow(i,j);
 						}
 				}
-				else if(_nodes[i].type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER)
+				else if(_nodes[i].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER)
 				{
 					var destinationId = _subsystems[_nodes[i].subsystemId].destinationId|0;
 					
-					//connect to all board readers at destination
+					//connect to all ON board readers at destination
 					for(var j=0;j<_nodes.length;++j)
-						if(_nodes[j].type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER && 
+						if(_nodes[j].status &&
+								_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER && 
 								_nodes[j].subsystemId == _nodes[i].subsystemId)
 						{
 							Debug.log("Found builder-logger connection at nodes " + 
@@ -900,7 +942,8 @@
 
 							addArrow(i,j);
 						}
-						else if(_nodes[j].type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER && 
+						else if(_nodes[j].status &&
+								_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER && 
 								_nodes[j].subsystemId == destinationId)
 						{
 							Debug.log("Found builder-connection connection at nodes " + 
@@ -909,11 +952,12 @@
 							addArrow(i,j);
 						}
 				}
-				else if(_nodes[i].type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER)
+				else if(_nodes[i].type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER)
 				{
-					//connect to all board readers at destination
+					//connect to all ON board readers at destination
 					for(var j=0;j<_nodes.length;++j)
-						if(_nodes[j].type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER && 
+						if(_nodes[j].status &&
+								_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER && 
 								_nodes[j].subsystemId == _nodes[i].subsystemId)
 						{
 							Debug.log("Found logger-dispatcher connection at nodes " + 
@@ -934,10 +978,10 @@
 		//	i.e. readers to left, builders in middle, dataLoggers and dispatchers to right
 		function getEmptyGridSpot(type)
 		{
-			var x = type == ArtdaqConfigurationAPI.NODE_TYPE_READER?0:
-					(type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER?((_grid.cols/2)|0):
+			var x = type == ARTDAQConfigurationAPI.NODE_TYPE_READER?0:
+					(type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER?((_grid.cols/2)|0):
 					_grid.cols-1); //else dataLoggers and dispatchers on right
-			var d = type == ArtdaqConfigurationAPI.NODE_TYPE_READER?1:-1; //direction of search in x
+			var d = type == ARTDAQConfigurationAPI.NODE_TYPE_READER?1:-1; //direction of search in x
 			var y = 0; //start at top-ish
 			
 			//search _nodes for conflict
@@ -951,8 +995,8 @@
 				{
 					plusMinusGrid(true /*isPlus*/,0 /*directionIndex*/); //add row to top
 
-					var x = type == ArtdaqConfigurationAPI.NODE_TYPE_READER?0:
-							(type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER?((_grid.cols/2)|0):
+					var x = type == ARTDAQConfigurationAPI.NODE_TYPE_READER?0:
+							(type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER?((_grid.cols/2)|0):
 							_grid.cols-1); //else dataLoggers and dispatchers on right
 					y = 0;
 				}
@@ -1545,9 +1589,9 @@
 			
 			//Debug.log("x,y,sz = " + x + "," + y + "," + sz);
 
-			var typeName = ArtdaqConfigurationAPI.getShortTypeName(type);
+			var typeName = ARTDAQConfigurationAPI.getShortTypeName(type);
 			var typeClass = "node" + typeName;
-			var typeAcronym = ArtdaqConfigurationAPI.NODE_TYPE_ACRONYM[type];
+			var typeAcronym = ARTDAQConfigurationAPI.NODE_TYPE_ACRONYM[type];
 									
 			//Debug.log("nodeid = " + nodeid + "; typeClass = " + typeClass);
 
@@ -1566,40 +1610,53 @@
 				var count = _nodes[i].nodeCount?_nodes[i].nodeCount:1;
 				
 				var nodeName = _nodes[i].name;
-				var hostname = _nodes[i].hostname;
-				if(count > 1)
-				{
-					//special multi-node name handling
-					
-					nodeName = nodeName.replace(new RegExp("\\*",'g'), 
-							"[" + 
-							getPrinterSyntaxStringWithWidth(
-							_nodes[i].nodeVectorIndexString,
-							_nodes[i].nodeNameFixedWidth)
-							+ 
-							"]"); 
-				}
-				if(hostname.indexOf('*') >= 0)
-				{
-					//special hostname array handling
-					
-					hostname = hostname.replace(new RegExp("\\*",'g'), 
-							"[" + 
-							getPrinterSyntaxStringWithWidth(
-							_nodes[i].hostnameVectorIndexString,
-							_nodes[i].hostnameFixedWidth) + 
-							"]"); 
-				}
+				var hostname;
 				
-				if(count > 4) count = 4; //cap at 4
-				//console.log("i,count",i,count);				
+				if(type == ARTDAQConfigurationAPI.NODE_TYPE_SUPERVISOR)
+				{
+					hostname = _nodes[i].contextAddress + ":" +
+							_nodes[i].contextPort;
+				} //end supervisor handling
+				else // non-supervisor node handling
+				{
+					hostname = _nodes[i].hostname;
+					if(count > 1)
+					{
+						//special multi-node name handling
+						
+						nodeName = nodeName.replace(new RegExp("\\*",'g'), 
+								"[" + 
+								getPrinterSyntaxStringWithWidth(
+								_nodes[i].nodeVectorIndexString,
+								_nodes[i].nodeNameFixedWidth)
+								+ 
+								"]"); 
+					}
+					if(hostname.indexOf('*') >= 0)
+					{
+						//special hostname array handling
+						
+						hostname = hostname.replace(new RegExp("\\*",'g'), 
+								"[" + 
+								getPrinterSyntaxStringWithWidth(
+								_nodes[i].hostnameVectorIndexString,
+								_nodes[i].hostnameFixedWidth) + 
+								"]"); 
+					}
+					
+					if(count > 4) count = 4; //cap at 4
+					//console.log("i,count",i,count);	
+				} //end non-supervisor handling
 				
 				for(var p=count-1;p>=0;--p)
 				{
 					str += "<div id='" + nodeid + 
 						(p == 0?"":("-multi" + p)) + "-box' class='node-box' " +
 						"style='top:" + (-p*5) + "px;" +
-						"background-color: " + getSubsystemColor(_nodes[i].subsystemId) + ";" +
+						"background-color: " + 
+						(_nodes[i].status? //if off, show as gray
+							getSubsystemColor(_nodes[i].subsystemId):
+							_OFF_COLOR)+ ";" +
 						"left:" + (-p*5) + "px;' " +
 						">";
 					if(p == 0)
@@ -1628,9 +1685,11 @@
 				//header text
 				str += "<div id='" + nodeid + 
 						"-headerText' class='node-headerText'>" +
+						(_nodes[i].status?"":"<label style='color:red; font-size:inherit;'>*OFF*</label> ") + 
 						typeName + "::" + nodeName +
 						htmlClearDiv() + 
-						_subsystems[_nodes[i].subsystemId].label + 
+						(_subsystems[_nodes[i].subsystemId]? //e.g. undefined for artdaq supervisor
+								_subsystems[_nodes[i].subsystemId].label:"") + 
 						" @ " + hostname +			
 					"</div>";
 				
@@ -1665,7 +1724,7 @@
 				el.innerHTML = str;
 				_postCanvas.appendChild(el);	
 				el.onmouseover = handleNodeMouseOver;	
-			}			
+			} //end create node element		
 			
 			var boxes = el.getElementsByClassName("node-box");
 			for(var p=0;p<boxes.length;++p)
@@ -1700,11 +1759,11 @@
 			var count = (_nodes[i].nodeCount && _nodes[i].nodeCount > 4)?4:(_nodes[i].nodeCount|0);		
 									
 			el = document.getElementById(nodeid + "-headerText");
-			el.style.left = (- (_grid.xstep*2-sz)/2 - (count?(count-1)*2:0) - 5) + "px"; //-5 because grid/arrow left is biased to 0 position
+			el.style.left = ((- (_grid.xstep*1.8-sz)/2 - (count?(count-1)*2:0) - 5)|0) + "px"; //-5 because grid/arrow left is biased to 0 position
 			el.style.fontSize = ((fontSz)|0) + "px";
 			el.style.top = ((-fontSz*3-fontSz/2 - (count?(count-1)*5:0))|0) + "px";
 			el.style.height = ((fontSz*3)|0) + "px";
-			el.style.width = (_grid.xstep*2) + "px";
+			el.style.width = ((_grid.xstep*1.8 )|0) + "px";
 			
 			fontSz = sz/5;
 			if(fontSz < 6) fontSz = 6;
@@ -1761,7 +1820,7 @@
 			
             var angle = Math.atan2(y-y0,x-x0);
             
-            var shortOffset = HEAD_SZ*3;
+            var shortOffset = (getNodeFontSize()*4)|0; //avoid text above
             if(y0 == y) shortOffset = HEAD_SZ*1;
             
             x -= shortOffset*Math.cos(angle);
@@ -2328,11 +2387,11 @@
 				el.style.top = ((-fontSz*3-fontSz/2 -13 - (count?(count-1)*5:0))|0) + "px";
 				el.style.zIndex = 10000;
 			}
-			el.style.left = (- (_grid.xstep*2-_NODE_SIZE)/2 - (count?(count-1)*2:0) - 5) + "px";
+			el.style.left = ((- (_grid.xstep*1.8-_NODE_SIZE)/2 - (count?(count-1)*2:0) - 5)|0) + "px"; //-5 because grid/arrow left is biased to 0 position
 			el.style.fontSize = ((fontSz)|0) + "px";
 			
 			el.style.height = ((fontSz*3)|0) + "px";
-			el.style.width = (_grid.xstep*2) + "px";
+			el.style.width = ((_grid.xstep*1.8 )|0) + "px";
 		} //end doNodeHover()
 
 		//=====================================================================================
@@ -2390,17 +2449,17 @@
 				//	Builders -> all loggers of same subsystem AND builders of destination subsystem
 				//	Loggers -> all dispatchers of same subsystem
 				
-				if(_nodes[starti].type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+				if(_nodes[starti].type == ARTDAQConfigurationAPI.NODE_TYPE_READER)
 				{
 					//for reader, check that destination is builder
-					if(_nodes[endi].type != ArtdaqConfigurationAPI.NODE_TYPE_BUILDER)
+					if(_nodes[endi].type != ARTDAQConfigurationAPI.NODE_TYPE_BUILDER)
 					{
 						Debug.log("Error! Destination node was type '" + 
-								ArtdaqConfigurationAPI.NODE_TYPES[_nodes[endi].type] + "'... " + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endi].type] + "'... " + 
 								"The destination for a '" + 
-								ArtdaqConfigurationAPI.NODE_TYPES[_nodes[starti].type] + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[starti].type] + 
 								" must be type '" + 
-								ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_BUILDER] +
+								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_BUILDER] +
 								".'",
 								Debug.HIGH_PRIORITY);
 						localHandleCleanup();
@@ -2444,12 +2503,12 @@
 					paint();
 					return;
 				} //end reader start-node handling
-				else if(_nodes[starti].type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER)
+				else if(_nodes[starti].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER)
 				{
 					//for builder, only logger of same subsytem or 
 					//	builder of different subsystem is valid
 					
-					if(_nodes[endi].type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER)
+					if(_nodes[endi].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER)
 					{
 						if(_nodes[starti].subsystemId == _nodes[endi].subsystemId)
 						{
@@ -2479,7 +2538,7 @@
 						paint();
 						return;
 					}
-					else if(_nodes[endi].type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER)
+					else if(_nodes[endi].type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER)
 					{
 						if(_nodes[starti].subsystemId == _nodes[endi].subsystemId)
 						{
@@ -2517,13 +2576,13 @@
 					else
 					{
 						Debug.log("Error! Destination node was type '" + 
-								ArtdaqConfigurationAPI.NODE_TYPES[_nodes[endi].type] + "'... " + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endi].type] + "'... " + 
 								"The destination for a '" + 
-								ArtdaqConfigurationAPI.NODE_TYPES[_nodes[starti].type] + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[starti].type] + 
 								" must be type '" + 
-								ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_BUILDER] +
+								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_BUILDER] +
 								"' or '" +
-								ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_LOGGER] +
+								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_LOGGER] +
 								".'",
 								Debug.HIGH_PRIORITY);
 						localHandleCleanup();
@@ -2532,19 +2591,19 @@
 					
 					
 				} //end builder start-node handling
-				else if(_nodes[starti].type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER)
+				else if(_nodes[starti].type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER)
 				{
 					//for logger, can only go to dispatcher in same subsystem					
 
 					//for reader, check that destination is builder
-					if(_nodes[endi].type != ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER)
+					if(_nodes[endi].type != ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER)
 					{
 						Debug.log("Error! Destination node was type '" + 
-								ArtdaqConfigurationAPI.NODE_TYPES[_nodes[endi].type] + "'... " + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endi].type] + "'... " + 
 								"The destination for a '" + 
-								ArtdaqConfigurationAPI.NODE_TYPES[_nodes[starti].type] + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[starti].type] + 
 								" must be type '" + 
-								ArtdaqConfigurationAPI.NODE_TYPES[ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER] +
+								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER] +
 								".'",
 								Debug.HIGH_PRIORITY);
 						localHandleCleanup();
@@ -2589,7 +2648,7 @@
 					return;
 				
 				} //end logger start-node handling
-				else if(_nodes[starti].type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER)
+				else if(_nodes[starti].type == ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER)
 				{
 					Debug.log("Error! Dispatcher's currently can not have destinations!",
 							Debug.HIGH_PRIORITY);
@@ -2624,7 +2683,7 @@
 			if(e) e.stopPropagation();
 		
 			var type = _nodes[i].type;								
-			var typeName = ArtdaqConfigurationAPI.getShortTypeName(type);
+			var typeName = ARTDAQConfigurationAPI.getShortTypeName(type);
 										
 			if(x == undefined && _nodes[i].nodeCount && _nodes[i].nodeCount > 1)
 			{
@@ -2680,11 +2739,11 @@
 			
 			var editTypes = [];
 			var depthTypes = {}; //define depth type if more menu depth
-			
+						
 			if(!menuDepth) //at 0 depth, all types have top level params
 				editTypes.push("Top-level Parameters");
 			
-			if(type == ArtdaqConfigurationAPI.NODE_TYPE_READER)
+			if(type == ARTDAQConfigurationAPI.NODE_TYPE_READER)
 			{
 				if(!menuDepth)
 				{
@@ -2692,9 +2751,17 @@
 					editTypes.push("DAQ Metrics");
 				}
 			} //end reader menu
-			else if(type == ArtdaqConfigurationAPI.NODE_TYPE_BUILDER ||
-					type == ArtdaqConfigurationAPI.NODE_TYPE_LOGGER ||
-					type == ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER )
+			if(type == ARTDAQConfigurationAPI.NODE_TYPE_ROUTER)
+			{
+				if(!menuDepth)
+				{
+					editTypes.push("Routing Policy Parameters");
+					editTypes.push("DAQ Metrics");
+				}
+			} //end router menu
+			else if(type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER ||
+					type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER ||
+					type == ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER )
 			{
 				if(!menuDepth)
 				{			
@@ -2732,7 +2799,8 @@
 			if(subi !== undefined) //dealing with a particular multi-node node
 				nodeName = getMultiNodeName(i,subi);
 			
-			for(var t=0;t<editTypes.length;++t)
+			//block configuration menu items if nodes have not been changed
+			for(var t=0;!_nodesHaveChanged && t<editTypes.length;++t)
 			{
 				menuItems.push("Edit <b><u>" + editTypes[t] +
 						"</u></b> of " + typeName + "::" + 
@@ -2783,8 +2851,8 @@
 					editType + "-" + newTab);
 			
 			var type = _nodes[i].type;			
-			var typeName = ArtdaqConfigurationAPI.getShortTypeName(type);			
-			var typeBaseTable = ArtdaqConfigurationAPI.NODE_TYPE_BASE_TABLE[type]; //use above call for type safety
+			var typeName = ARTDAQConfigurationAPI.getShortTypeName(type);			
+			var typeBaseTable = ARTDAQConfigurationAPI.NODE_TYPE_BASE_TABLE[type]; //use above call for type safety
 
 			var subsetName = editTypeString;
 			
@@ -2862,54 +2930,73 @@
 			else //use do map to decide what to do based on type, menuDepth, and editType
 			{
 				var doMap = {};
-				var d = 0;
-				var dt = 0;
-				//------------ start fill READER do map				
-				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER] = {}; //depth level
-				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER][d] = {}; //menu depth
-				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER][d][dt] = []; //menu depth type
-				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER][d][dt].push({
-					"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
+				var d;
+				var dt;
+				
+				//------------ start fill READER do map		
+				d = 0; //depth 0 //----------------
+				dt = 0; 
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER] = {}; //depth level
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER][d] = {} //menu depth
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER][d][dt++] = [{ //at 0 depth, always 0 menu depth type
+					"table" : 		ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE,
 					"groupLink"	: 	"daqParametersLink"
-				}); //Reader DAQ parameters
-				doMap[ArtdaqConfigurationAPI.NODE_TYPE_READER][d][dt].push({
-					"table" : 		ArtdaqConfigurationAPI.DAQ_METRIC_TABLE,
+				}]; //Reader DAQ parameters
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_READER][d][dt++] = [{ //at 0 depth, always 0 menu depth type
+					"table" : 		ARTDAQConfigurationAPI.DAQ_METRIC_TABLE,
 					"groupLink"	: 	"daqMetricsLink"
-				}); //Reader DAQ metrics
+				}]; //Reader DAQ metrics
 				//------------ end fill READER do map
+				
+				//------------ start fill ROUTER do map		
+				d = 0; //depth 0 //----------------
+				dt = 0; 		
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_ROUTER] = {}; //depth level
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_ROUTER][d] = {} //menu depth
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_ROUTER][d][dt++] = [{ //at 0 depth, always 0 menu depth type
+					"table" : 		ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE,
+					"groupLink"	: 	"routingPolicyParametersLink"
+				}]; //Routing Policy parameters
+				doMap[ARTDAQConfigurationAPI.NODE_TYPE_ROUTER][d][dt++] = [{ //at 0 depth, always 0 menu depth type
+					"table" : 		ARTDAQConfigurationAPI.DAQ_METRIC_TABLE,
+					"groupLink"	: 	"daqMetricsLink"
+				}]; //Reader DAQ metrics
+				//------------ end fill ROUTER do map
 
 				//------------ start fill BUILDER,LOGGER,DISPATCHER do map
-				var equivalentTypes = [ArtdaqConfigurationAPI.NODE_TYPE_BUILDER,
-									   ArtdaqConfigurationAPI.NODE_TYPE_LOGGER,
-									   ArtdaqConfigurationAPI.NODE_TYPE_DISPATCHER];
+				var equivalentTypes = [ARTDAQConfigurationAPI.NODE_TYPE_BUILDER,
+									   ARTDAQConfigurationAPI.NODE_TYPE_LOGGER,
+									   ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER];
 				for(var t=0;t<equivalentTypes.length;++t)
 				{
-					doMap[equivalentTypes[t]] = [];
-					d = 0; //----------------
+					doMap[equivalentTypes[t]] = {};
+					
+					d = 0; //depth 0 //----------------
 					doMap[equivalentTypes[t]][d] = {}; //menu depth
-					dt = 0; //----------------
-					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
-					doMap[equivalentTypes[t]][d][dt].push({
-						"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
+					dt = 0; //Preamble Parameters depth 0 ----------------
+					doMap[equivalentTypes[t]][d][dt] = [{ //at 0 depth, always 0 menu depth type					
+						"table" : 		ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE,
 						"groupLink"	: 	"preambleParametersLink"
-					}); //Preamble Parameters
-					doMap[equivalentTypes[t]][d][dt].push({
-						"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
+					}]; //Preamble Parameters
+					dt = 3; //AddOn Parameters depth 0 ----------------
+					doMap[equivalentTypes[t]][d][dt] = [{ //at 0 depth, always 0 menu depth type
+						"table" : 		ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE,
 						"groupLink"	: 	"addOnParametersLink"
-					}); //Add-on Parameters
-					d = 1; //----------------
+					}]; //Add-on Parameters
+					
+					d = 1; //depth 1 //----------------
 					doMap[equivalentTypes[t]][d] = {}; //menu depth
-					dt = 1; //DAQ type //----------------
+					dt = 0; //DAQ depth type //----------------
 					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
 					doMap[equivalentTypes[t]][d][dt].push({
-						"table" : 		ArtdaqConfigurationAPI.DAQ_PARAMETER_TABLE,
+						"table" : 		ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE,
 						"groupLink"	: 	"daqLink/daqParametersLink"
 					}); //DAQ Parameters
 					doMap[equivalentTypes[t]][d][dt].push({
-						"table" : 		ArtdaqConfigurationAPI.DAQ_METRIC_TABLE,
+						"table" : 		ARTDAQConfigurationAPI.DAQ_METRIC_TABLE,
 						"groupLink"	: 	"daqLink/daqMetricsLink"
 					}); //DAQ Metrics 				
-					dt = 2; //DAQ type //----------------
+					dt = 1; //ART depth type //----------------
 					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
 					doMap[equivalentTypes[t]][d][dt].push({
 						"table" : 		"ARTDAQPhysicsAnalyzerTable",
@@ -2932,15 +3019,24 @@
 
 				try
 				{
+					var table;
+					var groupLink;
+					
 					if(!menuDepth)
 						--editType; //because first one is always 'Top-level Parameters'
+					
+					console.log("type",type,"editType",editType);
+					//for menuDepth=0, menuDepthType always is 0 (i.e. editType selects)
+					table = doMap[type][menuDepth|0][editType][menuDepthType|0].table;
+					groupLink = doMap[type][menuDepth|0][editType][menuDepthType|0].groupLink;						
+										
 					console.log("type",type,"editType",editType,
-							"table",doMap[type][editType][menuDepth|0][menuDepthType|0].table,
-							"groupLink",doMap[type][editType][menuDepth|0][menuDepthType|0].groupLink);
+							"table",table,"groupLink",groupLink);
+					
 					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
 							DesktopContent._localUrnLid +
 							"&subsetBasePath=" + 
-							doMap[type][editType][menuDepth|0][menuDepthType|0].table +
+							table +
 							"&groupingFieldList=AUTO" +
 							"&recordAlias=" + encodeURIComponent(typeName + " " + 
 									subsetName) +
@@ -2956,7 +3052,7 @@
 
 					//Get or make link ID
 					
-					var uniqueLinks = doMap[type][editType][menuDepth|0][menuDepthType|0].groupLink.split('/');
+					var uniqueLinks = groupLink.split('/');
 					var uniqueLinkDoneCount = 0;
 					var uniqueLinkPath = "";
 					var u = 0;
@@ -2999,10 +3095,10 @@
 					{
 						Debug.log("localHandleLastLinkId()");
 						
-						localGetLinkId(doMap[type][editType][menuDepth|0][menuDepthType|0].groupLink,
+						localGetLinkId(groupLink,
 								function(childLinkIndex, linkId)
 								{
-							Debug.log(doMap[type][editType][menuDepth|0][menuDepthType|0].groupLink + 
+							Debug.log(groupLink + 
 									" childLinkIndex = '" +
 									childLinkIndex + "' linkId = '" + 
 									linkId + "'");
@@ -3030,10 +3126,15 @@
 					} //end localHandleLastLinkId()
 					
 				}
-				catch(e)
+				catch(err)
 				{
-					Debug.log("Unknown impossible error (notify admins) editType = " +
-							editType + ": " + e, Debug.HIGH_PRIORITY);
+					Debug.log("Unknown impossible error (notify admins)" + 
+							" type=" + type +
+							" menuDepth=" + menuDepth +
+							" editType=" + editType +
+							" menuDepthType=" + menuDepthType +
+							" @ [Line " + 
+							DesktopContent.getExceptionLineNumber(err) + "]: " + err, Debug.HIGH_PRIORITY);
 					
 					//return configuration change check
 					if(_checkActiveGroupsTimer)
@@ -3076,7 +3177,7 @@
 				//		maxDepth,responseHandler,modifiedTables)
 				ConfigurationAPI.getFieldsOfRecords(
 						typeBaseTable,
-						_nodes[i].name,
+						nodeName,
 						fieldPath,
 						5,
 						function(fieldRetObj)
@@ -3099,7 +3200,7 @@
 					//	responseHandler,modifiedTables)
 					ConfigurationAPI.getFieldValuesForRecords(
 							typeBaseTable,
-							_nodes[i].name,
+							nodeName,
 							fieldRetObj,
 							//fieldRetObj[1].fieldRelativePath + 
 							//fieldRetObj[1].fieldColumnName,
@@ -3130,8 +3231,8 @@
 								DesktopContent.popUpVerification(
 									"The link to <b>" + fieldPath +
 									"</b> has not been defined for <b>" +
-									ArtdaqConfigurationAPI.getShortTypeName(_nodes[i].type) + "::" +
-									_nodes[i].name +
+									typeName + "::" +
+									nodeName +
 									"</b>, do you want to <u><b>create</b></u> it now?",
 									localCreateLink /*yes-to-reload handler*/,
 									0,0,0,0,0, //val, bgColor, textColor, borderColor, getUserInput, 
@@ -3162,13 +3263,13 @@
 											fieldPath[0] >= 'a' && fieldPath[0] <= 'z') //capitalize
 										fieldPath = String.fromCharCode(fieldPath.charCodeAt(0)-32) + 
 											fieldPath.substr(1);
-									valueArr.push(_nodes[i].name + fieldPath + "Record");
+									valueArr.push(nodeName + fieldPath + "Record");
 
 									Debug.log("Creating unique link " +
 											typeBaseTable + "/" +
 											uniqueLinkPath +
 											" for '" +
-											_nodes[i].name + 
+											nodeName + 
 											"' to " + 
 											valueArr[0] + ":" + valueArr[1]);
 									isUniqueLink = true;
@@ -3180,12 +3281,12 @@
 									if(fieldPath.length > 1 && 
 											fieldPath[0] >= 'a' && fieldPath[0] <= 'z') //capitalize
 										fieldPath = String.fromCharCode(fieldPath.charCodeAt(0)-32) + fieldPath.substr(1);
-									valueArr.push(_nodes[i].name + fieldPath + "Group");
+									valueArr.push(nodeName + fieldPath + "Group");
 									
 									Debug.log("localCreateLink() " + typeBaseTable + "/" + 
 											fieldPath +
 											" for '" +
-											_nodes[i].name + 
+											nodeName + 
 											"' to " + 
 											valueArr[0] + ":" + valueArr[1]);
 								} //end group link value handling
@@ -3194,7 +3295,7 @@
 								//	so set the values
 								ConfigurationAPI.setFieldValuesForRecords(
 										typeBaseTable,
-										_nodes[i].name, 	//recordArr
+										nodeName, 	//recordArr
 										fieldRetObj, 	//fieldArr of size 2
 										valueArr, 	//valueArr of size 2
 										/////////////////////
@@ -3243,8 +3344,8 @@
 										Debug.log("The link to <b>" + valueArr[0] + "/" +
 												valueArr[1] +
 												"</b> for <b>" +
-												ArtdaqConfigurationAPI.getShortTypeName(_nodes[i].type) + "::" +
-												_nodes[i].name +
+												typeName + "::" +
+												nodeName +
 												"</b> has been successfully created!",
 												Debug.INFO_PRIORITY);
 
@@ -3285,8 +3386,8 @@
 													Debug.log("The unique record <b>" + valueArr[0] + "/" +
 															valueArr[1] +
 															"</b> for <b>" +
-															ArtdaqConfigurationAPI.getShortTypeName(_nodes[i].type) + "::" +
-															_nodes[i].name +
+															typeName + "::" +
+															nodeName +
 															"</b> has been successfully created!",
 															Debug.INFO_PRIORITY);
 
@@ -3333,7 +3434,7 @@
 			Debug.log("launchEditNodeDialog node size " + _nodes[i].nodeCount);
 
 			var type = _nodes[i].type;
-			var typeName = ArtdaqConfigurationAPI.NODE_SHORT_TYPE_NAMES[type];
+			var typeName = ARTDAQConfigurationAPI.NODE_SHORT_TYPE_NAMES[type];
 					
 			//undo hover node
 			doNodeHover(_mouseHoverNode,true /*undoHover*/);
@@ -3407,6 +3508,27 @@
 			} //end subsystems
 			str += "</td></tr>";
 			//======== end Subsystem Field
+
+			//======== Other Node Names Field
+			str += "<tr><td class='editNodeDialog-fieldCol'><b>Other Node Names:</b></td><td class='editNodeDialog-valueCol'>";												
+			str += htmlOpen("select",
+					{
+							"id": "ediNode-" + "otherNodeNames",
+							"style": "float:left; margin:7px; width:187px; background-color: rgb(183, 178, 178);",
+							"title": "This is a read-only field showing all other node names in the system; it is provided for reference while editing this node.",
+					});
+
+			for(var j=0;j<_nodes.length;++j)
+			{
+				if(j == i) continue; //skip this node
+
+				str += "<option >" +
+						_nodes[j].name + 
+						"</option>";
+			}
+			str += "</select>"; //end other node names dropdown
+			str += "</td></tr>";
+			//======== end Other Node Names Field
 
 			//======== Node Name Field
 			str += "<tr><td class='editNodeDialog-fieldCol'><b>Node Name:</b></td><td class='editNodeDialog-valueCol'>";						
@@ -3595,7 +3717,7 @@
 						{
 								"id": "hostname-editIcon",
 								"class": "node-editIcon",
-								"style": "display:block; float:right; margin: 6px 0 0 1px",
+								"style": "display:block; float:right; margin: 6px -30px 0 1px",
 								"onclick": "handleEditNodeSelectEditIcon(1);",
 								"title": "Toggle free-form hostname editing",
 						},
@@ -3802,7 +3924,7 @@
 							break;
 						}
 					if(subsystemId == 0 && 
-							subsystem != ArtdaqConfigurationAPI.NULL_SUBSYSTEM)
+							subsystem != ARTDAQConfigurationAPI.NULL_SUBSYSTEM)
 					{
 						//create new subsystem
 						subsystemId = j+2;
@@ -4039,7 +4161,7 @@
 			
 
 			var type = _nodes[i].type;								
-			var typeName = ArtdaqConfigurationAPI.getShortTypeName(type);
+			var typeName = ARTDAQConfigurationAPI.getShortTypeName(type);
 			
 			if(x == undefined && _nodes[i].nodeCount && _nodes[i].nodeCount > 1)
 			{
@@ -4096,7 +4218,7 @@
 			var menuItemHandlers = [];
 
 			var filename = "/$USER_DATA/ARTDAQConfigurations/" + 
-					ArtdaqConfigurationAPI.NODE_TYPES[type] + "-" +
+					ARTDAQConfigurationAPI.NODE_TYPES[type] + "-" +
 					nodeName + ".fcl";
 			console.log("filename",filename);
 			
@@ -4185,7 +4307,7 @@
 
 			DesktopContent.popUpVerification(
 					"Are you sure want to <u><b>delete</b></u> the node <b>" +
-					ArtdaqConfigurationAPI.getShortTypeName(_nodes[i].type) + 
+					ARTDAQConfigurationAPI.getShortTypeName(_nodes[i].type) + 
 					"::" + _nodes[i].name + "</b>?",
 					localDeleteNode /*yes-to-reload handler*/					
 			);
@@ -4653,7 +4775,7 @@
 			
 			for(var i=0;i<_nodes.length;++i)
 			{
-				postData += "," + ArtdaqConfigurationAPI.getTypeName(_nodes[i].type);
+				postData += "," + ARTDAQConfigurationAPI.getTypeName(_nodes[i].type);
 				postData += "," + _nodes[i].name;
 				postData += "," + _nodes[i].x;
 				postData += "," + _nodes[i].y;				
@@ -4706,7 +4828,7 @@
 						
 			var el = document.getElementById("Status");
 			if(el)
-				el.innerHTML = _nodesHaveChanged?"( Unsaved Changes! )":"";
+				el.innerHTML = _nodesHaveChanged?"( Unsaved Changes! Please save before editing node parameters)":"";
 						
 		} //end nodesHaveChanged()
 		
@@ -4750,10 +4872,10 @@
 								"style": "float:left; margin:7px; width:187px;",
 						});
 
-				for(var j=0;j<ArtdaqConfigurationAPI.NODE_FULL_TYPE_NAMES.length;++j)
+				for(var j=0;j<ARTDAQConfigurationAPI.NODE_FULL_TYPE_NAMES.length;++j)
 				{					
 					str += "<option >" +	
-							ArtdaqConfigurationAPI.NODE_FULL_TYPE_NAMES[j] + 
+							ARTDAQConfigurationAPI.NODE_FULL_TYPE_NAMES[j] + 
 							"</option>";
 				}
 				str += "</select>"; //end aliases dropdown
@@ -4841,9 +4963,9 @@
 					do
 					{
 						conflict = false;
-						_nodes[i].name = ArtdaqConfigurationAPI.getTypeName(type) + n;
+						_nodes[i].name = ARTDAQConfigurationAPI.getTypeName(type) + n;
 						for(var j=0;j<i;++j)
-							if(_nodes[j].type == _nodes[i].type &&
+							if(_nodes[j].type == type &&
 									_nodes[j].name == _nodes[i].name)
 							{
 								conflict = true;
@@ -5098,7 +5220,7 @@
 			<div 	id="saveFileMainBottom"></div>
 		</div>
 		<div 	id="Status" 					
-				style="float:left; margin: 12px 0 0 10px; color: red;"></div>		
+				style="padding: 12px 0 0 80px; color: red;"></div>		
 	</div>
 	<!-- End controls pane, Copied from Code Editor -->
 		

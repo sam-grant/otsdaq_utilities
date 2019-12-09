@@ -60,7 +60,7 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 : CoreSupervisorBase(stub), theDataManager_(0), loadedRunNumber_(-1)
 {
 	__SUP_COUT__ << "Constructor." << __E__;
-	INIT_MF("VisualSupervisor");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 			theConfigurationManager_->getNode(

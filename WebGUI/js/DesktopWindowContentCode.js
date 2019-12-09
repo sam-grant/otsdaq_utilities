@@ -991,18 +991,19 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 				"(XML response may have been illegal)!";
 	else
 		return undefined;
-}
+} // end getXMLAttributeValue()
 
 //=====================================================================================
 //returns xml entry value for attribue 'value'
 //	if !name assume req is xml node already
 DesktopContent.getXMLValue = function(req, name) {
     if(!req) return undefined;
-    
+
     if(!name)
-		return req.getAttribute("value");	
-	return DesktopContent.getXMLAttributeValue(req,name,"value");
-}
+    	return req.getAttribute("value");
+
+    return DesktopContent.getXMLAttributeValue(req,name,"value");
+} //end getXMLValue()
 
 //=====================================================================================
 //returns array of xml children nodes
@@ -1012,7 +1013,7 @@ DesktopContent.getXMLChildren = function(req, nodeName) {
 	if(req && req.responseXML) //to allow for arbitrary starting xml node
 		req = req.responseXML;
 	return req.getElementsByTagName(nodeName);
-}
+} //end getXMLChildren()
 
 //=====================================================================================
 //returns xml entry node (first node with name)
@@ -1858,7 +1859,7 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		catch(e)
 		{
 			Debug.log("An error occurred while trying to open the window. " +
-					"The window path seems to be invalid: " + e, Debug.HIGH_PRIORITY);
+					"The window path seems to be invalid:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e, Debug.HIGH_PRIORITY);
 			return;
 		}
 	}
@@ -1989,11 +1990,25 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window
-DesktopContent.getDesktopWindowTitle = function() {
+DesktopContent.getDesktopWindowTitle = function() 
+{
 	return DesktopContent._theWindow.parent.document.getElementById(
 			"DesktopWindowHeader-" + 
 			DesktopContent._theWindow.name.split('-')[1]).innerHTML;
 } //end getDesktopWindowTitle()
+
+DesktopContent.getExceptionLineNumber = function(e) 
+{
+	try
+	{ 
+		console.log(e);
+		return e.stack.split('\n')[1].split(':')[4].split(')')[0]|0; }
+	catch(newError) { return -1; } //hide error and give invalid line number
+} //end getExceptionLineNumber()
+	
+
+
+
 
 
 

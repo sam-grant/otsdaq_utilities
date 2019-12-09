@@ -2752,14 +2752,17 @@
 		}
 
 		//isTemporary
-		function isTemporary(version) {
+		function isTemporary(version) 
+		{
 			return version < -1;
 		}
 
 		//treeViewHandler ~		
-		function treeViewHandler(req, parentId) {
+		function treeViewHandler(req, parentId) 
+		{
 			var err = DesktopContent.getXMLValue(req, "Error");
-			if (err) {
+			if (err) 
+			{
 				Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the page", Debug.HIGH_PRIORITY);
 				Debug.log(err, Debug.HIGH_PRIORITY);
 				Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the page", Debug.HIGH_PRIORITY);
@@ -2770,8 +2773,10 @@
 			}
 
 			var warn = DesktopContent.getXMLValue(req, "Warning");
-			if (warn) {
-				if (warn != lastTreeWarnStr_) {
+			if (warn) 
+			{
+				if (warn != lastTreeWarnStr_) 
+				{
 					Debug.log("If you made changes to this tree, they may have been lost.", Debug.WARN_PRIORITY);
 					Debug.log(warn, Debug.WARN_PRIORITY);
 					Debug.log("If you made changes to this tree, they may have been lost.", Debug.WARN_PRIORITY);
@@ -2780,7 +2785,6 @@
 					Debug.log(warn);
 			}
 			lastTreeWarnStr_ = warn;
-
 
 
 
@@ -14367,27 +14371,93 @@
 		} //end createEditTableMenu
 
 		//createSystemViewMenu ~~
-		function createSystemViewMenu(event, groupAliasesName, groupAliasesVersion, backLinkStr) {
+		function createSystemViewMenu(e, groupAliasesName, 
+				groupAliasesVersion, backLinkStr, x,y,modeIndex)
+		{
+			if(modeIndex)
+			{
+				Debug.log("Second level context menu " + modeIndex);
+				
+				var menuItems = [
+					"Open the artdaq Configuration GUI",
+					"Open the artdaq Configuration GUI in new browser tab"
+								 ];
+				var menuItemHandlers = [];
+
+				//Call like this: DesktopContent.openNewBrowserTab(name,subname,windowPath,unique)
+
+				//url should look like this:
+				//http://correlator2.fnal.gov:2015/urn:xdaq-application:lid=290/
+				//	Verify?code=fa37&requestingWindowId=1001&
+				//	windowName=Code%20Editor&windowSubname=&
+				//	windowUnique=0&windowPath=/WebPath/html/ConfigurationGUI_artdaq.html?urn=280#0
+
+				var newwindowJS;
+				var newWindowStr;
+				
+				newWindowStr = "/WebPath/html/ConfigurationGUI_artdaq.html?" +
+						"urn=" + DesktopContent._localUrnLid;
+							
+				newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+				
+				Debug.log("newWindowStr = " + newWindowStr);
+				
+				newwindowJS = "DesktopContent.openNewWindow(" +
+						"\"ARTDAQ Config\" /*name*/," + 
+						"\"\" /*subname*/,\"" +
+						newWindowStr + "\"," +
+						"false /*unique*/);";
+				
+				Debug.log("newwindowJS = " + newwindowJS);
+
+				menuItemHandlers.push(newwindowJS);
+				
+				newwindowJS = "DesktopContent.openNewBrowserTab(" +
+						"\"ARTDAQ Config\" /*name*/," + 
+						"\"\" /*subname*/,\"" +
+						newWindowStr + "\"," +
+						"false /*unique*/);";
+
+				Debug.log("newwindowJS = " + newwindowJS);
+
+				menuItemHandlers.push(newwindowJS);
+				
+				SimpleContextMenu.createMenu(
+						menuItems,
+						menuItemHandlers,
+						"editTableMenu",					//element ID
+						x, event.pageY - 10, 				//top left position
+						_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
+						_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
+				);
+				return;
+			}
+			
+			
 			var menuItems = [
 				"Relaunch ots in Normal Mode",
 				"Relaunch ots in Wiz Mode",
+				"Edit System Aliases",
+				"Open the artdaq Configuration GUI",
 				_versionTrackingIsOn ? "Turn Version Tracking OFF" : "Turn Version Tracking ON",
 				"Flatten Configuration to System Aliases ONLY",
 				"Merge Table Groups",
-				"Edit System Aliases",
 				"Create System Alias for Latest Tables",
 				"Create System Alias for Active Group"
 			];
 			var menuItemHandlers = [
-				"verifyRelaunchNormalMode()",
-				"verifyRelaunchWizMode()",
-				"toggleVersionTracking()",
-				"flattenToSystemAliases()",
-				"mergeGroupsDialog()",
+				"verifyRelaunchNormalMode();",
+				"verifyRelaunchWizMode();",
 				"setupSpecificTable(\"" +
 				groupAliasesName + "\",\"" +
 				groupAliasesVersion + "\",\"" + backLinkStr + "\")",
-				"popUpGroupAliasForm(1)",
+				"createSystemViewMenu(0,0,0,0," +
+				(event.pageX - 1) + "," +
+				(event.pageY - 1) + ", 1 /*artdaq GUI mode*/);",
+				"toggleVersionTracking();",
+				"flattenToSystemAliases();",
+				"mergeGroupsDialog();",
+				"popUpGroupAliasForm(1);",
 				"popUpGroupAliasForm(0);"
 			];
 
