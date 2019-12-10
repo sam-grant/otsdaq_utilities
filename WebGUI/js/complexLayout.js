@@ -4,7 +4,8 @@ Ext.require(['*']);
 Ext.onReady(
 function() 
 {
- var activeObjects_       = []                                                                      ;
+ var activeObjects_       = {}                                                                      ;
+ var activeObjectsVec_    = []                                                                      ;
  var canvasTabs_          = []                                                                      ;
  var canvasPos_           = 0                                                                       ;
  var globalCanvas_        = 0                                                                       ;
@@ -13,6 +14,8 @@ function()
  var theNavigatorPanel_   = 0                                                                       ;
  var theViewPort_         = 0                                                                       ;
  var theStore_            = 0                                                                       ;
+ var nxPlots_             = 1                                                                       ;
+ var nyPlots_             = 1                                                                       ;
  var grid_                = ""                                                                      ;
  var dataModel_           = ""                                                                      ;
  var fSystemPath_         = ""                                                                      ;
@@ -34,7 +37,9 @@ function()
                             "/urn:xdaq-application:lid="                                           +
                             getLocalURN(0,"urn")                                                   +
                             "/Request?"                                                             ;
- 
+
+ activeObjects_[currentCanvas_] = activeObjectsVec_ ;
+  
  // Printout of navigation schema ----------------------------------------------------------------
  function xmlKeysPrintout(fromWhere)
  {
@@ -89,97 +94,117 @@ function()
  {
   if( ROOTControlsPanel_ ) ROOTControlsPanel_.destroy() ;
   ROOTControlsPanel_ = Ext.create(
-                                  'Ext.tab.Panel',
+                                  'Ext.panel.Panel',
                                   {
-                                   xtype       : 'tabpanel'           ,
-                                   region      : 'east'               ,
-                                   title       : 'ROOT controls'      ,
-                                   id          : 'east-panel'         , // see Ext.getCmp() below
-                                   collapsed   : true                 ,
-                                   dockedItems : [
-                                                  {
-                                                   dock : 'top',
-                                                   xtype: 'toolbar',
-                                                   items: [ 
-                                                           '->', 
-                                                           {
-                                                            xtype  : 'button'                                  ,
-                                                            text   : 'Add canvas'                              ,
-                                                            tooltip: 'Add a new canvas'                        ,
-                                                            pressed: true                                      ,
-                                                            border : true                                      ,
-                                                            handler: function()
-                                                                     {
-                                                                      var addIndex = globalCanvas_.items.length ;
-                                                                      STDLINE("addIndex: "+addIndex) ;
-                                                                      var newIndex = addIndex  + 1 ;
-                                                                      STDLINE("newIndex: "+newIndex) ;
-                                                                      var tabId = 'canvas' + newIndex ;
-                                                                      generateDIVPlaceholderSize(tabId,350,440) ;	   
-                                                                      //createCanvasTab(tabs) ;
-                                                                      //makeGlobalCanvas() ;
-                                                                      //makeViewPort() ;
-                                                                      globalCanvas_.insert(
-                                                                                           addIndex,
-                                                                                           {
-                                                                                            contentEl : 'canvas' +newIndex,
-                                                                                            title     : 'Canvas '+newIndex,
-                                                                                            closable  : true              ,
-                                                                                            border    : true              ,
-                                                                                            autoScroll: true
-                                                                                           }
-                                                                                          );
-                                                                      globalCanvas_.setActiveTab(addIndex);
-                                                                      STDLINE("Adding new canvas tab") ;
-                                                                      //makeROOTControlsPanel() ;
-                                                                     }
-                                                           },
-                                                           {
-                                                            xtype  : 'button'                                  ,
-                                                            text   : 'Stop'                                    ,
-                                                            pressed: true                                      ,
-                                                            tooltip: 'Stop periodical refreshing of histograms',
-                                                            border : true
-                                                           }
-                                                          ]
-                                                  }
-                                                 ],
-                                   animCollapse: true,
-                                   collapsible : true,
-                                   split       : true,
-                                   width       : 225, // give east and west regions a width
-                                   minSize     : 175,
-                                   maxSize     : 400,
-                                   margins     : '0 5 0 0',
-                                   activeTab   : 1,
-                                   tabPosition : 'bottom',
+                                   region      : 'east'              ,
+                                   id          : 'east-panel'        ,
+                                   title       : 'ROOT Controls'     ,
+                                   split       : true                ,
+                                   width       : 50                  ,
+                                   minWidth    : 175                 ,
+                                   maxWidth    : 400                 ,
+                                   collapsible : true                ,
+                                   collapsed   : true                ,
+                                   animCollapse: true                ,
+                                   //multi       : true                ,
+                                   margins     : '0 0 0 5'           ,
+                                   layout      : 'accordion'         ,
                                    items       : [
                                                   {
-                                                   html      : '<p>Here controls of periodic refresh of histograms</p>',
-                                                   title     : 'Cycling'                                               ,
-                                                   tooltip   : 'Tab to control refreshing of histograms'               ,
-                                                   autoScroll: true
-                                                  }, 
-                                                  Ext.create(
-                                                             'Ext.grid.PropertyGrid', 
-                                                             {
-                                                              title   : 'Operations on histograms',
-                                                              closable: true,
-                                                              source  : {
-                                                                         "(name)"           : "Properties Grid",
-                                                                         "grouping"         : false,
-                                                                         "autoFitColumns"   : true,
-                                                                         "productionQuality": false,
-                                                                         "created"          : Ext.Date.parse('10/15/2006', 'm/d/Y'),
-                                                                         "tested"           : false,
-                                                                         "version"          : 0.01,
-                                                                         "borderWidth"      : 1
-                                                                        }
-                                                             }
-                                                            )
+                                                   title     : 'Canvas commands'                                       ,
+                                                   autoScroll: true                                                    ,
+                                                   layout    : 'vbox'                                                  ,
+                                                   items     : [
+                                                                {
+                                                                 xtype     : 'button'                                  ,
+                                                                 text      : 'Add canvas'                              ,
+                                                                 tooltip   : 'Add a new canvas'                        ,
+                                                                 pressed   : true                                      ,
+                                                                 border    : true                                      ,
+                                                                 handler   : function()
+                                                                             {
+                                                                              var addIndex = globalCanvas_.items.length ;
+                                                                              STDLINE("addIndex: "+addIndex)            ;
+                                                                              var newIndex = addIndex  + 1              ;
+                                                                              STDLINE("newIndex: "+newIndex)            ;
+                                                                              var tabId = 'canvas' + newIndex           ;
+                                                                              generateDIVPlaceholderSize(tabId,350,440) ;          
+                                                                              //createCanvasTab(tabs) ;
+                                                                              //makeGlobalCanvas() ;
+                                                                              //makeViewPort() ;
+                                                                              currentCanvas_ = 'canvas' +newIndex ;
+                                                                              globalCanvas_.insert(
+                                                                                                   addIndex,
+                                                                                                   {
+                                                                                                    contentEl : 'canvas' +newIndex,
+                                                                                                    title     : 'Canvas '+newIndex,
+                                                                                                    closable  : true              ,
+                                                                                                    border    : true              ,
+                                                                                                    autoScroll: true
+                                                                                                   }
+                                                                                                  );
+                                                                              globalCanvas_.setActiveTab(addIndex);
+                                                                              activeObjects_[currentCanvas_] = [] ;
+                                                                              STDLINE("Adding new canvas tab")    ;
+                                                                              //makeROOTControlsPanel() ;
+                                                                             }
+                                                                }, {
+                                                                 xtype     : 'numberfield'       ,  
+                                                                 name      : 'hzon'              ,
+                                                                 labelWidth: 80                  ,
+                                                                 flex      : 0                   ,
+                                                                 width     : 120                 ,
+                                                                 fieldLabel: '# hor. plots'      ,  
+                                                                 value     : 1                   ,  
+                                                                 minValue  : 1                   ,  
+                                                                 maxValue  : 20                  ,
+                                                                 listeners : {
+                                                                              change: function( thisSpinner, newValue, oldValue, eOpts )
+                                                                                      {
+                                                                                       nxPlots_      = newValue ;
+                                                                                       gridDivision_ = 'grid' + nxPlots_ + 'x' + nyPlots_ ;
+                                                                                      }
+                                                                             }
+                                                                }, {
+                                                                 xtype     : 'numberfield'       ,  
+                                                                 name      : 'vzon'              ,
+                                                                 labelWidth: 80                  ,
+                                                                 flex      : 0                   ,
+                                                                 width     : 120                 ,
+                                                                 fieldLabel: '# ver. plots'      ,  
+                                                                 value     : 1                   ,  
+                                                                 minValue  : 1                   ,  
+                                                                 maxValue  : 20                  ,
+                                                                 listeners : {
+                                                                              change: function( thisSpinner, newValue, oldValue, eOpts )
+                                                                                      {
+                                                                                       nyPlots_      = newValue ;
+                                                                                       gridDivision_ = 'grid' + nxPlots_ + 'x' + nyPlots_ ;
+                                                                                      }
+                                                                             }
+                                                                }                             
+                                                               ]
+                                                  }, {
+                                                   title     : 'Timing and Refresh Controls'                           ,
+                                                   html      : '<p>Controls to drive the filesystem drill down.</p>'   ,
+                                                   autoScroll: true                                                    ,
+                                                   padding   : '5 5 5 5'                                               ,
+                                                   iconCls   : 'info'                                                  ,
+                                                   items     : [
+                                                                {
+                                                                 xtype     : 'button'                                  ,
+                                                                 text      : 'Stop'                                    ,
+                                                                 pressed   : true                                      ,
+                                                                 tooltip   : 'Stop periodical refreshing of histograms',
+                                                                 border    : true
+                                                                }
+                                                               ]
+                                                  }
                                                  ]
                                   }
-                                 ) ;
+                                 );
+//                                  );               
+
  } ; 
  
  makeROOTControlsPanel() ;
@@ -209,17 +234,17 @@ function()
                                                resize    : function(thisPanel, width, height, oldWidth, oldHeight, eOpt)
                                                            {
                                                             STDLINE("Resizing "+currentCanvas_) ;
-                                                            changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "resized"   ) ;
+                                                            changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "resized"    ) ;
                                                            },
                                                collapse  : function(thisPanel, eOpt)
                                                            {
                                                             STDLINE("Collapsed "+currentCanvas_) ;
-                                                            changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "collapsed" ) ;
+                                                            changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "collapsed"  ) ;
                                                            },
                                                expand    : function(thisPanel, eOpt)
                                                            {
                                                             STDLINE("Expanded "+currentCanvas_) ;
-                                                            changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "expanded"  ) ;
+                                                            changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "expanded"   ) ;
                                                            }
                                               }
                              }
@@ -713,13 +738,14 @@ function()
                         //         periodicPlotID_ = "" ;
                         //         doReset_ = true ;
                         //        }
-                               var rootName  = getXMLValue (response,"path"    );                                       
-                               var rootJSON  = getXMLValue (response,"rootJSON");                                   
-                               var object    = JSROOT.parse(rootJSON           );  
-                               STDLINE("Launchin displayPlot")                  ;
-                               activeObjects_.push(object) ;
-                               displayPlot_(currentCanvas_) ; // This is to get an immediate response
-                                //                              JSROOT.RegisterForResize(theFrame);
+                               var rootName  = getXMLValue (response,"path"    ) ;                                      
+                               var rootJSON  = getXMLValue (response,"rootJSON") ;                                  
+                               var object    = JSROOT.parse(rootJSON           ) ; 
+                               STDLINE("Launching displayPlot")                  ;
+                               activeObjectsVec_.push(object)                    ;
+                               activeObjects_[currentCanvas_] = activeObjectsVec_;
+                               displayPlot_(currentCanvas_)                      ;
+                                //                                JSROOT.RegisterForResize(theFrame);
                         //        if( object._typename != "TCanvas") 
                         //        {
                         //         periodicPlotID_ = setInterval(
@@ -743,12 +769,13 @@ function()
                    }                                                                                                                      
            );
   STDLINE("Ajax request formed") ;                                                                                                
- } ;                                                                                                                                      
+ } ; 
+ var pp_ = 1 ;                                                                                                                                     
  //-----------------------------------------------------------------------------
  displayPlot_ = function(currentCanvas_)
                 {
                  STDLINE("gridDivision_: "+gridDivision_) ;
-                 if( gridDivision_ == "grid1x1")
+//                 if( gridDivision_ == "grid1x1")
                  { 
                   JSROOT.cleanup(currentCanvas_);
                   try
@@ -761,21 +788,25 @@ function()
                   }
                   STDLINE("cleared...") ;
                  }
-                 STDLINE("Examining "+activeObjects_.length+" objects") ;
-                 for(var i=0; i<activeObjects_.length; i++)
+                 STDLINE("Serching objects for "+currentCanvas_) ;
+                 var activeObjectsList = activeObjects_[currentCanvas_] ;
+                 STDLINE("Examining "+activeObjectsList.length+" objects") ;
+                 for(var i=0; i<activeObjectsList.length; i++)
                  {
                   var index = canvasPos_ % mdi_.NumGridFrames() ;
+                  STDLINE("index: "+index) ;
                   if( index > mdi_.NumGridFrames()) {index = 0}
-                  var pos = "item" + index ; 
-
+//                  var pos = "item" + index ; 
+                  var pos = pp_ ; pp_++ ; if( pp_ > mdi_.NumGridFrames() ) {pp_=1;}
+                  STDLINE("pos: "+pos+" canvasPos_: "+canvasPos_+" mdi_:"+mdi_.NumGridFrames()) ;
                   if (mdi_!=null) theFrame = mdi_.FindFrame(pos, true);
-                  var rootTitle = activeObjects_[i].fTitle     ; 
+                  var rootTitle = activeObjectsList[i].fTitle     ; 
                   if( doReset_ )
                   {
                    STDLINE("-------> Resetting " + rootTitle);
                    JSROOT.redraw (
                                   theFrame         ,
-                                  activeObjects_[i],
+                                  activeObjectsList[i],
                                   ""
                                  );
                    doReset_ = false ;                                                                                
@@ -785,7 +816,7 @@ function()
                    STDLINE("-------> Updating " + rootTitle) ;
                    JSROOT.redraw (
                                   theFrame         ,
-                                  activeObjects_[i],
+                                  activeObjectsList[i],
                                   ""
                                  );                                                                              
                   }
