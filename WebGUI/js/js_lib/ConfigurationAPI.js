@@ -52,11 +52,11 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getAliasesAndGroups(responseHandler,optionForNoAliases,optionForNoGroups)
 // 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldsOfRecords(subsetBasePath,recordArr,fieldList,maxDepth,responseHandler,modifiedTables)
-//	ConfigurationAPI.getFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
+//	ConfigurationAPI.getFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables,silenceErrors)
 // 	ConfigurationAPI.getUniqueFieldValuesForRecords(subsetBasePath,recordArr,fieldList,responseHandler,modifiedTables)
 //	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTablesIn,silenceErrors)	)
 //	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
-//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases,doNotIgnoreGroupActivationWarnings,doNotKillPopUpEl)
+//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases,doNotIgnoreGroupActivationWarnings,doNotKillPopUpEl,tablesToAdd)
 //	ConfigurationAPI.bitMapDialog(bitMapParams,initBitMapValue,okHandler,cancelHandler)
 //	ConfigurationAPI.createEditableFieldElement(fieldObj,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
@@ -749,8 +749,9 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 //			obj.fieldPath   
 //			obj.fieldValue
 //
-ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fieldObjArr,
-		responseHandler,modifiedTables)
+ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,
+		recordArr,fieldObjArr,
+		responseHandler,modifiedTables,silenceErrors)
 {	
 	var modifiedTablesListStr = "";
 	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
@@ -810,8 +811,8 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
 		{
-			Debug.log(err,Debug.HIGH_PRIORITY);
-			if(responseHandler) responseHandler(recFieldValues);
+			if(!silenceErrors) Debug.log(err,Debug.HIGH_PRIORITY);
+			if(responseHandler) responseHandler(recFieldValues,err);
 			return;
 		}
 		
@@ -1059,7 +1060,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 			}, //handler
 			0, //handler param
 			0,true); //progressHandler, callHandlerOnErr
-}
+} //end setFieldValuesForRecords()
 
 //=====================================================================================
 //popUpSaveModifiedTablesForm ~~
@@ -1786,7 +1787,18 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 						else
 							affectedGroupTableMap[i] += memberName + 
 								"," + memberVersion + ",";
-					}
+						
+						//check tables to add and remove if already in the list
+						for(var t=0;tablesToAdd && t<tablesToAdd.length;++t)
+							if(memberName == tablesToAdd[t].tableName)
+							{
+								Debug.log("Removing table to add '" + 
+										memberName + "', already in group.");
+								tablesToAdd.splice(t,1); //remove 1 element at position t
+								console.log("Now tablesToAdd",tablesToAdd);
+								break;
+							}
+					} //end primary member loop
 					
 					//for the last group, add tables (-1 means mockup)
 					if(i==groups.length-1 && tablesToAdd)

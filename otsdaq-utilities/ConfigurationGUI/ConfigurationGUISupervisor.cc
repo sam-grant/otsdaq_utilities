@@ -4744,7 +4744,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 
 	std::string accumulatedErrors = "";
 
-	__COUTV__(allowIllegalColumns);
+	//__COUTV__(allowIllegalColumns);
 
 	if(allowIllegalColumns)
 		xmlOut.addTextElementToData("allowIllegalColumns", "1");
@@ -4757,7 +4757,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 
 	TableBase* table = cfgMgr->getTableByName(tableName);
 
-	__COUTV__(allowIllegalColumns);
+	//__COUTV__(allowIllegalColumns);
 
 	// send all table names along with
 	//	and check for specific version
@@ -4841,7 +4841,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	}
 	else  // use view version
 	{
-		__COUTV__(allowIllegalColumns);
+		//__COUTV__(allowIllegalColumns);
 
 		try
 		{
