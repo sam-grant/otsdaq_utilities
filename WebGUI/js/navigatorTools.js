@@ -133,5 +133,5 @@ function changeHistogramPanelSize(thisPanel, width, height, currentCanvas, from)
  var div = document.getElementById(currentCanvas);
  div.style.width  = width  - 20                  ;
  div.style.height = height - 30                  ;
- displayPlot_()                                  ;
+ displayPlot_(currentCanvas)                     ;
 }              

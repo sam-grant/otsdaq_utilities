@@ -4,36 +4,38 @@ Ext.require(['*']);
 Ext.onReady(
 function() 
 {
- var activeObjects_     = []                                                                      ;
- var canvasTabs_        = []                                                                      ;
- var canvasPos_         = 0                                                                       ;
- var globalCanvas_      = 0                                                                       ;
- var ROOTControlsPanel_ = 0                                                                       ;
- var theViewPort_       = 0                                                                       ;
- var theStore_          = 0                                                                       ;
- var grid_              = ""                                                                      ;
- var dataModel_         = ""                                                                      ;
- var fSystemPath_       = ""                                                                      ;
- var fRootPath_         = ""                                                                      ;
- var fFoldersPath_      = ""                                                                      ;
- var fFileName_         = ""                                                                      ;
- var fHistName_         = ""                                                                      ;
- var fRFoldersPath_     = ""                                                                      ;
- var doReset_           = true                                                                    ;
- var currentCanvas_     = 'canvas1'                                                               ;
- var gridDivision_      = "grid1x1"                                                               ;
- var selectedItem_      = "getDirectories";                                                       ;
- var treeDisplayField_  = "fDisplayName"                                                          ;
+ var activeObjects_       = []                                                                      ;
+ var canvasTabs_          = []                                                                      ;
+ var canvasPos_           = 0                                                                       ;
+ var globalCanvas_        = 0                                                                       ;
+ var ROOTControlsPanel_   = 0                                                                       ;
+ var theInformationPanel_ = 0                                                                       ;
+ var theNavigatorPanel_   = 0                                                                       ;
+ var theViewPort_         = 0                                                                       ;
+ var theStore_            = 0                                                                       ;
+ var grid_                = ""                                                                      ;
+ var dataModel_           = ""                                                                      ;
+ var fSystemPath_         = ""                                                                      ;
+ var fRootPath_           = ""                                                                      ;
+ var fFoldersPath_        = ""                                                                      ;
+ var fFileName_           = ""                                                                      ;
+ var fHistName_           = ""                                                                      ;
+ var fRFoldersPath_       = ""                                                                      ;
+ var doReset_             = true                                                                    ;
+ var currentCanvas_       = 'canvas1'                                                               ;
+ var gridDivision_        = "grid1x1"                                                               ;
+ var selectedItem_        = "getDirectories";                                                       ;
+ var treeDisplayField_    = "fDisplayName"                                                          ;
 
- var _cookieCodeMailbox = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
- var _cookieCode        = _cookieCodeMailbox.innerHTML                                            ;
- var _theWindow         = self                                                                    ;
- var _requestURL        = self.parent.window.location.origin                                     +
-                          "/urn:xdaq-application:lid="                                           +
-                          getLocalURN(0,"urn")                                                   +
-                          "/Request?"                                                             ;
+ var _cookieCodeMailbox   = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
+ var _cookieCode          = _cookieCodeMailbox.innerHTML                                            ;
+ var _theWindow           = self                                                                    ;
+ var _requestURL          = self.parent.window.location.origin                                     +
+                            "/urn:xdaq-application:lid="                                           +
+                            getLocalURN(0,"urn")                                                   +
+                            "/Request?"                                                             ;
  
- // Printout of navigation schema
+ // Printout of navigation schema ----------------------------------------------------------------
  function xmlKeysPrintout(fromWhere)
  {
       const e = new Error();
@@ -59,6 +61,7 @@ function()
  generateDIVPlaceholderSize('canvas1',350,440) ;	   
  generateDIVPlaceholderSize('canvas2',350,440) ;	   
 
+ //-----------------------------------------------------------------------------------------------
  function createCanvasTab(tabNumber)
  {
   STDLINE("Creating canvas tab number "+tabNumber) ;
@@ -81,6 +84,7 @@ function()
  createCanvasTab(1) ;
  createCanvasTab(2) ;
 
+ //-----------------------------------------------------------------------------------------------
  function makeROOTControlsPanel()
  {
   if( ROOTControlsPanel_ ) ROOTControlsPanel_.destroy() ;
@@ -102,6 +106,7 @@ function()
                                                             xtype  : 'button'                                  ,
                                                             text   : 'Add canvas'                              ,
                                                             tooltip: 'Add a new canvas'                        ,
+                                                            pressed: true                                      ,
                                                             border : true                                      ,
                                                             handler: function()
                                                                      {
@@ -132,6 +137,7 @@ function()
                                                            {
                                                             xtype  : 'button'                                  ,
                                                             text   : 'Stop'                                    ,
+                                                            pressed: true                                      ,
                                                             tooltip: 'Stop periodical refreshing of histograms',
                                                             border : true
                                                            }
@@ -178,6 +184,7 @@ function()
  
  makeROOTControlsPanel() ;
  
+ //-----------------------------------------------------------------------------------------------
  function makeGlobalCanvas()
  {
   STDLINE("Creating central panel (with canvas tabs)" ) ;
@@ -197,21 +204,21 @@ function()
                                                             var str        = newCard.title        ;
                                                             var matches    = str.match(regex)     ;
                                                             currentCanvas_ = 'canvas' + matches[0];
-//                                                             var width      = thisPanel.width      ;
-//                                                             var height     = thisPanel.height     ;
-//                                                             changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "tabChanged") ;
                                                             STDLINE("Changed tab to "+ currentCanvas_) ;
                                                            },
                                                resize    : function(thisPanel, width, height, oldWidth, oldHeight, eOpt)
                                                            {
+                                                            STDLINE("Resizing "+currentCanvas_) ;
                                                             changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "resized"   ) ;
                                                            },
                                                collapse  : function(thisPanel, eOpt)
                                                            {
+                                                            STDLINE("Collapsed "+currentCanvas_) ;
                                                             changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "collapsed" ) ;
                                                            },
                                                expand    : function(thisPanel, eOpt)
                                                            {
+                                                            STDLINE("Expanded "+currentCanvas_) ;
                                                             changeHistogramPanelSize(thisPanel, width, height, currentCanvas_, "expanded"  ) ;
                                                            }
                                               }
@@ -221,69 +228,128 @@ function()
  
  makeGlobalCanvas() ;
 
+ //-----------------------------------------------------------------------------------------------
+ function makeNavigatorPanel()
+ {
+  if( theNavigatorPanel_ ) theNavigatorPanel_.destroy() ;
+  theNavigatorPanel_ = Ext.create(
+                                  'Ext.panel.Panel',
+                                  {
+                                   region      : 'west'            ,
+                                   stateId     : 'navigation-panel',
+                                   id          : 'west-panel'      , // see Ext.getCmp() below
+                                   title       : 'The navigator'   ,
+                                   split       : true              ,
+                                   width       : 200               ,
+                                   minWidth    : 175               ,
+                                   maxWidth    : 400               ,
+                                   collapsible : true              ,
+                                   animCollapse: true              ,
+                                   multi       : true              ,
+                                   margins     : '0 0 0 5'         ,
+                                   layout      : 'accordion'       ,
+                                   items       : [
+                                                  {
+                                                   title     : 'FileSystem navigation'                                    ,
+                                                   id        : 'navigatorDiv'                                             ,
+                                                   autoScroll: true                                                       ,
+                                                   tools     : [
+                                                                {
+                                                                 type   : 'left'                                          ,
+                                                                 tooltip: 'Go back to list of folders and files'          ,
+                                                                 handler: function()
+                                                                          {
+                                                                           if( currentTree_ = 'fileContent' )
+                                                                           {
+                                                                            selectedItem_ = "getDirectories"               ;
+                                                                            makeStore(fRootPath_, 'RequestType=getMeDirs') ; 
+                                                                            makeGrid (fRootPath_, 'Directories and files') ;
+                                                                           }
+                                                                          }
+                                                                },
+                                                                {
+                                                                 type   : 'prev'                                          ,
+                                                                 tooltip: 'Maximize canvas size'                          ,
+                                                                 handler: function()
+                                                                          {
+                                                                           STDLINE("Collapsing") ;
+                                                                           theNavigatorPanel_  .collapse() ;
+                                                                           ROOTControlsPanel_  .collapse() ;
+                                                                           theInformationPanel_.collapse() ;
+                                                                          }
+                                                                }
+                                                               ]
+                                                  }, {
+                                                   title     : 'ROOT file navigation'                                     ,
+                                                   html      : '<p>ROOT files with subfolders, plots and canvases.</p>'   ,
+                                                   autoScroll: true                                                       ,
+                                                   iconCls   : 'settings'
+                                                  }, {
+                                                   title     : 'Navigation Controls'                                      ,
+                                                   html      : '<p>Controls to drive the filesystem drill down.</p>'      ,
+                                                   autoScroll: true                                                       ,
+                                                   iconCls   : 'info'
+                                                  }
+                                                 ],
+                                   listeners   : {
+                                                  collapse   : function() 
+                                                               {
+                                                                STDLINE("Expand!!!");
+                                                               }
+                                                 }
+                                  },
+                                  
+                                 ) ;
+ }
+ 
+ makeNavigatorPanel() ;
+ 
+ //-----------------------------------------------------------------------------------------------
+ function makeInformationPanel()
+ {
+  if( theInformationPanel_ ) theInformationPanel_.destroy() ;
+  theInformationPanel_ = Ext.create(
+                                    'Ext.panel.Panel',
+                                    {
+                                     region      : 'south'              ,
+                                     contentEl   : 'south'              ,
+                                     split       : true                 ,
+                                     height      : 100                  ,
+                                     minSize     : 100                  ,
+                                     maxSize     : 200                  ,
+                                     collapsible : true                 ,
+                                     collapsed   : true                 ,
+                                     title       : 'General information',
+                                     margins     : '0 0 0 0'
+                                    },
+                                   ) ;
+ }
+ 
+ makeInformationPanel() ;
+ 
+ //-----------------------------------------------------------------------------------------------
  function makeViewPort() 
  {
   if( theViewPort_ ) theViewPort_.destroy() ;
   var fName = arguments.callee.toString().match(/function ([^\(]+)/)[1];
   STDLINE("Creating viewport for "+fName) ;
   theViewPort_ = Ext.create(
-                            'Ext.Viewport', 
+                            'Ext.Viewport'                            , 
                             {
-                             id    : 'border-example',
-                             layout: 'border',
+                             id    : 'border-example'                 ,
+                             layout: 'border'                         ,
                              items : [
-                                      // create instance immediately
                                       Ext.create(
-                                                 'Ext.Component', 
+                                                 'Ext.Component'      , 
                                                  {
                                                   region: 'north'     ,
                                                   height: 32          ,
                                                   id    : 'sourcesDiv'
                                                  }
                                                 ), 
-                                      {
-                                       // lazily created panel (xtype:'panel' is default)
-                                       region      : 'south'              ,
-                                       contentEl   : 'south'              ,
-                                       split       : true                 ,
-                                       height      : 100                  ,
-                                       minSize     : 100                  ,
-                                       maxSize     : 200                  ,
-                                       collapsible : true                 ,
-                                       collapsed   : true                 ,
-                                       title       : 'General information',
-                                       margins     : '0 0 0 0'
-                                      },
-                                      ROOTControlsPanel_,
-                                      {
-                                       region      : 'west'            ,
-                                       stateId     : 'navigation-panel',
-                                       id          : 'west-panel'      , // see Ext.getCmp() below
-                                       title       : 'The navigator'   ,
-                                       split       : true              ,
-                                       width       : 200               ,
-                                       minWidth    : 175               ,
-                                       maxWidth    : 400               ,
-                                       collapsible : true              ,
-                                       animCollapse: true              ,
-                                       margins     : '0 0 0 5'         ,
-                                       layout      : 'accordion'       ,
-                                       items       : [
-                                                      {
-                                                       title    : 'FileSystem navigation'                                                  ,
-                                                       id       : 'navigatorDiv'                                                           ,
-                                                       autoScroll: true
-                                                      }, {
-                                                       title    : 'ROOT file navigation'                                                   ,
-                                                       html     : '<p>Here the tree of ROOT files with subfolders, plots and canvases.</p>',
-                                                       iconCls  : 'settings'
-                                                      }, {
-                                                       title    : 'Navigation Controls'                                                    ,
-                                                       html     : '<p>Here the controls to drive the filesystem drill down.</p>'           ,
-                                                       iconCls  : 'info'
-                                                      }
-                                                     ],
-                                      },
+                                      theInformationPanel_            ,
+                                      ROOTControlsPanel_              ,
+                                      theNavigatorPanel_              ,
                                       globalCanvas_ 
                                      ]
                             }
@@ -372,32 +438,6 @@ function()
                       plugins    : [
                                     {
                                      ptype: 'bufferedrenderer'
-                                    }
-                                   ],
-                      buttons    : [
-                                    //backButton
-                                    {
-                                      xtype    : 'button'             ,
-                                      text     : '<<'                 ,
-                                      margin   : 2                    ,
-                                      style    : {
-                                                  borderColor: 'blue' ,
-                                                  borderStyle: 'solid'
-                                                 }                    ,
-                                      minWidth : 10                   ,
-                                      height   : 25                   ,
-                                      width    : 30                   ,
-                                      listeners: {
-                                                  click: function()
-                                                         {
-                                                          if( currentTree_ = 'fileContent' )
-                                                          {
-                                                           selectedItem_ = "getDirectories"               ;
-                                                           makeStore(fRootPath_, 'RequestType=getMeDirs') ; 
-                                                           makeGrid (fRootPath_, 'Directories and files') ;
-                                                          }
-                                                         }
-                                                 }
                                     }
                                    ],
                       columns    : [
@@ -678,7 +718,7 @@ function()
                                var object    = JSROOT.parse(rootJSON           );  
                                STDLINE("Launchin displayPlot")                  ;
                                activeObjects_.push(object) ;
-                               displayPlot_() ; // This is to get an immediate response
+                               displayPlot_(currentCanvas_) ; // This is to get an immediate response
                                 //                              JSROOT.RegisterForResize(theFrame);
                         //        if( object._typename != "TCanvas") 
                         //        {
@@ -705,16 +745,23 @@ function()
   STDLINE("Ajax request formed") ;                                                                                                
  } ;                                                                                                                                      
  //-----------------------------------------------------------------------------
- displayPlot_ = function()
+ displayPlot_ = function(currentCanvas_)
                 {
                  STDLINE("gridDivision_: "+gridDivision_) ;
                  if( gridDivision_ == "grid1x1")
                  { 
                   JSROOT.cleanup(currentCanvas_);
-                  mdi_ = new JSROOT.GridDisplay(currentCanvas_, gridDivision_); // gridi2x2
+                  try
+                  {
+                   mdi_ = new JSROOT.GridDisplay(currentCanvas_, gridDivision_); // gridi2x2
+                  }
+                  catch(error)
+                  {
+                   STDLINE("ERROR: "+error) ;
+                  }
                   STDLINE("cleared...") ;
-                }
-
+                 }
+                 STDLINE("Examining "+activeObjects_.length+" objects") ;
                  for(var i=0; i<activeObjects_.length; i++)
                  {
                   var index = canvasPos_ % mdi_.NumGridFrames() ;
@@ -745,20 +792,6 @@ function()
                  }
                 }
  //-----------------------------------------------------------------------------
- // get a reference to the HTML element with id "hideit" and add a click listener to it
- Ext.get("hideit").on(
-                      'click', 
-                      function()
-                      {
-                       // get a reference to the Panel that was created with id = 'west-panel'
-                       var w = Ext.getCmp('west-panel');
-                       // expand or collapse that Panel based on its collapsed property state
-                       w.collapsed ? w.expand() : w.collapse();
-                       var e = Ext.getCmp('east-panel');
-                       // expand or collapse that Panel based on its collapsed property state
-                       e.collapsed ? e.expand() : e.collapse();
-                      }
-                     );
  theAjaxRequest(
                 _requestURL+"RequestType=getDirectoryContents",
                 {                                                            
