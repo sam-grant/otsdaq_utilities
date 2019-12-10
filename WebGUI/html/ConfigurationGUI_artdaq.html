@@ -3215,15 +3215,10 @@
 							{
 						console.log("localGetLinkId getFieldValuesForRecords",retObj);
 						
-						if(retObj.length != 2)
-						{
-							Debug.log("Failed to read link value for '" +
-									fieldPath + "!'", Debug.HIGH_PRIORITY);
-							return;
-						}
 						
 						//check if no link, and prompt user to make one
-						if(retObj[0].fieldValue == "NO_LINK" ||
+						if(retObj.length != 2 ||
+								retObj[0].fieldValue == "NO_LINK" ||
 								retObj[1].fieldValue == "DEFAULT")
 						{
 							//remake field path with spaces so it displays better in
@@ -3236,7 +3231,7 @@
 							if(fieldRetObj[0].fieldColumnDataChoicesArr &&
 									fieldRetObj[0].fieldColumnDataChoicesArr.length > 2)							
 								DesktopContent.popUpVerification(
-									"The link to <b>" + fieldPath +
+									"A valid link to <b>" + fieldPath +
 									"</b> has not been defined for <b>" +
 									typeName + "::" +
 									nodeName +
@@ -3368,11 +3363,6 @@
 													{
 												Debug.log("initArtdaqNodes group link done handler");
 
-												console.log("fieldRetObj[1].fieldColumnType.split('-')[1]",
-														fieldRetObj[1].fieldColumnType.split('-')[1]);
-												console.log("retObj[1].fieldValue",
-														retObj[1].fieldValue);
-
 												//continue recursion, parameters actually do not matter
 												handler( //localGetLinkId's handler calls localRecursiveUniqueLinkCheck()
 														valueArr[0], 
@@ -3394,8 +3384,24 @@
 
 												if(!modifiedTables.length)
 												{
-													Debug.log("There was an error while creating the record.",
+													Debug.log("There was an error while creating the record. Attempting to proceed anyway...",
 															Debug.HIGH_PRIORITY);
+													// DONE! (for unique links with error, hoping the record already exists) ------------------------------------------
+													initArtdaqNodes( //pass done handler to initArtdaqNodes()
+															//////////////////
+															function()
+															{
+														Debug.log("initArtdaqNodes unique link done with error handler");
+
+														//continue recursion, parameters actually do not matter
+														handler( //localGetLinkId's handler calls localRecursiveUniqueLinkCheck()
+																valueArr[0], 
+																valueArr[1]);
+
+															} //end initArtdaqNodes done handler															
+													); //re-init and get new active configuration
+													// end DONE! (for unique links) ------------------------------------------
+													
 													return;					
 												}
 
@@ -3428,12 +3434,7 @@
 															function()
 															{
 														Debug.log("initArtdaqNodes unique link done handler");
-														
-														console.log("fieldRetObj[1].fieldColumnType.split('-')[1]",
-																fieldRetObj[1].fieldColumnType.split('-')[1]);
-														console.log("retObj[1].fieldValue",
-																retObj[1].fieldValue);
-														
+																												
 														//continue recursion, parameters actually do not matter
 														handler( //localGetLinkId's handler calls localRecursiveUniqueLinkCheck()
 																valueArr[0], 
@@ -3443,18 +3444,18 @@
 													); //re-init and get new active configuration
 													// end DONE! (for unique links) ------------------------------------------
 													
-														}, //end saveModifiedTables handler
-														_modifiedTables);
+														}); //end saveModifiedTables handler
+												
 													}, //end addSubsetRecords handler
 													_modifiedTables);
 										} //end unique link record creation
 										
-											}, 
+											}, //end saveModifiedTables handler
 											0,0, //doNotIgnoreWarnings,doNotSaveAffectedGroups,
 											0,0, //doNotActivateAffectedGroups,doNotSaveAliases,
 											0, //doNotIgnoreGroupActivationWarnings,
 											0, //doNotKillPopUpEl, 
-											tablesToAdd); //end saveModifiedTables handler
+											tablesToAdd); //end saveModifiedTables() call 
 
 										}, //end setFieldValuesForRecords handler
 										_modifiedTables);	
@@ -3467,7 +3468,10 @@
 								fieldRetObj[1].fieldColumnType.split('-')[1], 
 								retObj[1].fieldValue);
 
-							}); //end ConfigurationAPI.getFieldValuesForRecords() call
+							}, //end getFieldValuesForRecords handler
+							0, //modifiedTables
+							true //silenceErrors
+							); //end ConfigurationAPI.getFieldValuesForRecords() call
 					
 						}); //end ConfigurationAPI.getFieldsOfRecords() call
 				
