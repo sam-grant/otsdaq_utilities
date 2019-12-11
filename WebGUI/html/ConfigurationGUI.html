@@ -6047,7 +6047,8 @@
 							(attemptedVersion?attemptedVersion:_version) + 
 							" with loose column matching.' " +
 							">" +
-							"Reload v" + attemptedVersion + " with loose column matching</a>";
+							"Reload v" + (attemptedVersion?attemptedVersion:_version) +
+							" with loose column matching</a>";
 				}
 				
 				str += "<br><br>";
@@ -13248,8 +13249,7 @@
 				}
 				Debug.log("CfgGUI downloadTableAsCSV dataStr=" + dataStr);
 				console.log("dataStr",decodeURIComponent(dataStr));
-				return;
-				
+								
 				var link = document.createElement("a");
 				link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
 				link.setAttribute("style", "display:none");
@@ -13260,24 +13260,12 @@
 				link.click(); // This will download the data file with filename *_download.csv
 
 				link.parentNode.removeChild(link);
-				called = 1;
-				if (called == 1) {
-					document.getElementById("popUpDialog").style.display = "none";
+				
+				document.getElementById("popUpDialog").style.display = "none";
 
-				}
-			};
+			}; //end downloadCSV handler
 
-			// function dwl() {
-			// 	called = true;
-			// }
-
-			// if (!called) {
-			// 	el.style.display = "none";
-			// }
-			// document.getElementById("downloadCSV").onclick = function () { el.style.display = "none";};
-			// document.getElementById("downloadCSV").onclick = function () { el.style.display = "none"; }
-
-		}
+		} //end downloadTableAsCSV()
 
 
 
