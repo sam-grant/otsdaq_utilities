@@ -33,6 +33,8 @@ e19:s87:prof       e19:s87:prof  e19:prof   -std=c++17
 e19:s87:debug      e19:s87:debug e19:debug  -std=c++17
 e17:s87:prof       e17:s87:prof  e17:prof   -std=c++17
 e17:s87:debug      e17:s87:debug e17:debug  -std=c++17
+e17:s85:prof       e17:s85:prof  e17:prof   -std=c++17
+e17:s85:debug      e17:s85:debug e17:debug  -std=c++17
 
 e19:s82:prof       e19:s82:prof  e19:prof   -std=c++17
 e19:s82:debug      e19:s82:debug e19:debug  -std=c++17
