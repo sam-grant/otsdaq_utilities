@@ -26,6 +26,7 @@ function()
  var fRFoldersPath_       = ""                                                                      ;
  var doReset_             = true                                                                    ;
  var currentCanvas_       = 'canvas1'                                                               ;
+ var currentDiv_          = 'canvas1'                                                               ;
  var gridDivision_        = "grid1x1"                                                               ;
  var selectedItem_        = "getDirectories";                                                       ;
  var treeDisplayField_    = "fDisplayName"                                                          ;
@@ -37,6 +38,48 @@ function()
                             "/urn:xdaq-application:lid="                                           +
                             getLocalURN(0,"urn")                                                   +
                             "/Request?"                                                             ;
+
+ var theCanvasModel_ = {
+                        canvases     : [
+                                        {
+                                         canvasName: 'canvas1',
+                                         nDivX     : 1        ,
+                                         nDivY     : 1
+                                        },
+                                        {
+                                         canvasName: 'canvas2',
+                                         nDivX     : 2        ,
+                                         nDivY     : 2
+                                        }
+                                       ],
+                        currentCanvas : 'canvas1',
+                        currentDiv    : 1        ,
+                        addCanvas     : function(newName)
+                                        {
+                                         var l = this.canvases.length ;
+                                         this.canvases[l] = {
+                                                             canvasName: newName,
+                                                             nDivX     : 3      ,
+                                                             nDivY     : 4
+                                                            }
+                                        },  
+                        removeCanvas  : function(number)
+                                        {
+                                         var index = this.canvases.indexOf(number) ;
+                                         this.canvases.splice(index,1) ;
+                                        },  
+                        changenDivX   : function(canvasNumber, newnDivX)
+                                        {
+                                         if( canvasNumber > this.canvases.length-1 ) return ;
+                                         this.canvases[canvasNumber].nDivX = newnDivX ;
+                                        },
+                        changenDivY   : function(canvasNumber, newnDivY)
+                                        {
+                                         if( canvasNumber > this.canvases.length-1 ) return ;
+                                         this.canvases[canvasNumber].nDivY = newnDivY ;
+                                        }
+                       } ;
+
 
  activeObjects_[currentCanvas_] = activeObjectsVec_ ;
   
@@ -810,18 +853,14 @@ function()
  displayPlot_ = function(currentCanvas_)
                 {
                  STDLINE("gridDivision_: "+gridDivision_) ;
-//                 if( gridDivision_ == "grid1x1")
-                 { 
-                  JSROOT.cleanup(currentCanvas_);
-                  try
-                  {
-                   mdi_ = new JSROOT.GridDisplay(currentCanvas_, gridDivision_); // gridi2x2
-                  }
-                  catch(error)
-                  {
-                   STDLINE("ERROR: "+error) ;
-                  }
-                  STDLINE("cleared...") ;
+                 JSROOT.cleanup(currentCanvas_);
+                 try
+                 {
+                  mdi_ = new JSROOT.GridDisplay(currentCanvas_, gridDivision_); // gridi2x2
+                 }
+                 catch(error)
+                 {
+                  STDLINE("ERROR: "+error) ;
                  }
                  STDLINE("Serching objects for "+currentCanvas_) ;
                  var activeObjectsList = activeObjects_[currentCanvas_] ;
@@ -871,4 +910,38 @@ function()
 // makeGrid("where","what") ;
  STDLINE("Calling makeViewPort") ;
  makeViewPort() ;
+ 
+ STDLINE("theCanvasModel_.currentCanvas: "  +
+          theCanvasModel_.currentCanvas     +
+         " has "                            +
+         theCanvasModel_.canvases.length    +
+         " canvases") ;
+ theCanvasModel_.addCanvas('canvas4') ;
+ STDLINE("-------- Before ------------") ;
+ for(var i=0; i<theCanvasModel_.canvases.length; i++)
+ {
+  STDLINE("canvas"                               +
+          i                                      +
+          "] name: "                             +
+          theCanvasModel_.canvases[i].canvasName +
+          " nDivX: "                             +
+          theCanvasModel_.canvases[i].nDivX      +
+          " nDivY: "                             +
+          theCanvasModel_.canvases[i].nDivY      ) ;
+ } 
+ STDLINE("-------- After  ------------") ;
+ theCanvasModel_.removeCanvas(1) ;
+ theCanvasModel_.changenDivX(0,16) ;
+ theCanvasModel_.changenDivY(0,4 ) ;
+ for(var i=0; i<theCanvasModel_.canvases.length; i++)
+ {
+  STDLINE("canvas"                               +
+          i                                      +
+          "] name: "                             +
+          theCanvasModel_.canvases[i].canvasName +
+          " nDivX: "                             +
+          theCanvasModel_.canvases[i].nDivX      +
+          " nDivY: "                             +
+          theCanvasModel_.canvases[i].nDivY      ) ;
+ } 
 });
