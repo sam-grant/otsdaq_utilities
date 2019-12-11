@@ -183,6 +183,8 @@ Desktop.createDesktop = function(security) {
 	//------------------------------------------------------------------
 	//create PRIVATE members functions ----------------------
 	//------------------------------------------------------------------
+	
+    //===========================================================
 	var _handleDesktopResize = function(event) {
 		_desktopElement.style.height = (window.innerHeight-_desktopElement.offsetTop) + "px";
 		_desktopElement.style.width = (window.innerWidth-_desktopElement.offsetLeft) + "px";
@@ -199,8 +201,9 @@ Desktop.createDesktop = function(security) {
         
         //_icons.style.left = Desktop.desktop.getDesktopContentX()+50+"px";
         //_icons.style.top = Desktop.desktop.getDesktopContentY()+50+"px";
-	}
-	
+	} //end _handleDesktopResize()
+
+    //===========================================================
 	//return current window layout in string with parameters separated by commas
 	//	Note: represent position in terms of 0-10000 for the entire Desktop Content area
 	//		- this should allow for translation to any size Desktop Content area when loaded
@@ -228,13 +231,16 @@ Desktop.createDesktop = function(security) {
 		}
 		//layout += "]";
 		return layout;
-	}
+	} //end _getWindowLayoutStr()
 	
-	//for login
+    //===========================================================
+    //for login
 	var _scrambleEggs = function(u) { return u; }
-	
+
+    //===========================================================
     var _getForeWindow = function() { return _windows.length?_windows[_windows.length-1]:0; } //return last window in array as forewindow
-    
+
+    //===========================================================
     var _closeWindow = function(win) {
     	Desktop.desktop.setForeWindow(win);
 		win.windiv.parentNode.removeChild(win.windiv); //remove from page!
@@ -245,7 +251,7 @@ Desktop.createDesktop = function(security) {
 		//		Debug.log("Desktop Windows left:" + _windows.length,Debug.LOW_PRIORITY);
         
         _dashboard.updateWindows();
-    }
+    } //end _closeWindow()
     
     //===========================================================
 	//_checkMailboxes ~~~
@@ -470,19 +476,19 @@ Desktop.createDesktop = function(security) {
 	    
 	    //system messages check (and submit current window layout)
 	    ++_sysMsgCounter;
-	    if(0)//_sysMsgCounter == _SYS_MSG_MAX_COUNT)
+	    if(_sysMsgCounter == _SYS_MSG_MAX_COUNT)
 	    {  		
-		//windows can request a blackout, to avoid logging out 
-		if(_blockSystemCheckMailbox.innerHTML == "1" || 
-		   Desktop.desktop.login.isBlackout())
-		{
-		    Debug.log("System blackout (likely rebooting)...");
-		    _sysMsgCounter = 0; // reset since not going to handler
-		}
-		else
-		    Desktop.XMLHttpRequest("Request?RequestType=getSystemMessages","",_handleSystemMessages);
+	    	//windows can request a blackout, to avoid logging out 
+	    	if(_blockSystemCheckMailbox.innerHTML == "1" || 
+	    			Desktop.desktop.login.isBlackout())
+	    	{
+	    		Debug.log("System blackout (likely rebooting)...");
+	    		_sysMsgCounter = 0; // reset since not going to handler
+	    	}
+	    	else
+	    		Desktop.XMLHttpRequest("Request?RequestType=getSystemMessages","",_handleSystemMessages);
 	    }
-	}
+	} //end _checkMailboxes()
 	
 	//===========================================================
 	var _lastSystemMessage = ""; //prevent repeats
@@ -556,7 +562,7 @@ Desktop.createDesktop = function(security) {
 	    //play sound alert
 	    //_sysMsgSound.src = _SYS_MSG_SOUND_PATH; // buffers automatically when created
 	    //_sysMsgSound.play(); //Muted for now
-	}
+	} //end _handleSystemMessages()
 	
 	//------------------------------------------------------------------
 	//create PUBLIC members functions ----------------------
@@ -579,19 +585,20 @@ Desktop.createDesktop = function(security) {
     this.getLastFrameMouseY = function() { return parseInt(_mouseOverYmailbox.innerHTML);} 
     this.resetFrameMouse = function() { _mouseOverXmailbox.innerHTML = -1;_mouseOverYmailbox.innerHTML = -1;} 
 	this.getWindowLayoutStr = _getWindowLayoutStr;
-	
-		//addWindow ~~~
-		//	Adds a window to desktop at default location, with default size
-		// 	Window title bar will read "name - subname" and will be organized by name
-		//	in dashboard. Window will display page at url.
-		//	If unique, the window is not made if there already exists a window
-		//	with the same "name - subname".
-		// 	
-		//	If subname = "" it is ignored. 	
-		//
-		//	If extraStep == 1, tile windows, if == 2, maximize
-		//
-		//  returns new window
+
+	//==============================================================================
+	//addWindow ~~~
+	//	Adds a window to desktop at default location, with default size
+	// 	Window title bar will read "name - subname" and will be organized by name
+	//	in dashboard. Window will display page at url.
+	//	If unique, the window is not made if there already exists a window
+	//	with the same "name - subname".
+	// 	
+	//	If subname = "" it is ignored. 	
+	//
+	//	If extraStep == 1, tile windows, if == 2, maximize
+	//
+	//  returns new window
 	this.addWindow = function(name,subname,url,unique,extraStep) {		
 		Debug.log(name + " - " + subname + " - " + url + " - " + unique,Debug.LOW_PRIORITY);
 		
@@ -681,26 +688,22 @@ Desktop.createDesktop = function(security) {
         		
         }, 200);
 
-		
-
         return newWin;
-	}
-	
-		//getWindowById ~~~
-		//	Find window by id
+	} //end addWindow()
+
+	//==============================================================================
+	//getWindowById ~~~
+	//	Find window by id
 	this.getWindowById = function(id) {
 		for(var i=0;i<_windows.length;++i) {
 			if(_windows[i].getWindowId() == id) return _windows[i];
 		}		
 		return -1;
-	}
+	} //end getWindowById()
 
-		//setWindowZIndex
-		// bringing window to foreground then back to original location for refresh
-	
-
-		//setForeWindow ~~~
-		//	handle bringing window to front
+	//==============================================================================
+	//setForeWindow ~~~
+	//	handle bringing window to front
 	this.setForeWindow = function(win) {
 		//Debug.log("setForeWindow");
 		//resort by z and renumber - windows with Z out of range of array are due to iframe onFocus solution			
@@ -741,27 +744,30 @@ Desktop.createDesktop = function(security) {
 		
 		//if(win) Debug.log("Desktop Window Set to Foreground named " + win.getWindowSubName(),Debug.LOW_PRIORITY);
 		//else  Debug.log("Desktop Foreground Window with no parameter",Debug.LOW_PRIORITY);
-	}
-	
-		//closeWindowById ~~~
-		//	Find window by id
+	} //end setForeWindow()
+
+	//==============================================================================
+	//closeWindowById ~~~
+	//	Find window by id
 	this.closeWindowById = function(id) {
 		var win = this.getWindowById(id);
 		if(win == -1) return -1;
 		_closeWindow(win);		
-	}
-    
-    	//maximizeWindowById ~~~
-		//	Find window by id
+	} //end closeWindowById()
+
+	//==============================================================================
+	//maximizeWindowById ~~~
+	//	Find window by id
 	this.maximizeWindowById = function(id) {
         var win = this.getWindowById(id);
 		if(win == -1) return -1;
 		this.setForeWindow(win);
         this.toggleFullScreen();
-    }
-    
-        //toggleFullScreen ~~~
-        //	Toggle current top window full screen (can be called as event)
+    } //end maximizeWindowById()
+
+	//==============================================================================
+	//toggleFullScreen ~~~
+	//	Toggle current top window full screen (can be called as event)
     this.toggleFullScreen = function(e) {
         if(!_getForeWindow()) return;
         
@@ -772,14 +778,16 @@ Desktop.createDesktop = function(security) {
         //_dashboard.redrawFullScreenButton();
         //_dashboard.redrawRefreshButton();
         Debug.log("Full Screen Toggled",Debug.LOW_PRIORITY);
-    }
+    } //end toggleFullScreen()
 
+	//==============================================================================
 	this.redrawDashboardWindowButtons = function() {
 	    _dashboard.redrawFullScreenButton();
 	    _dashboard.redrawRefreshButton();
 	    _dashboard.redrawShowDesktopButton();
-	}
+	} //end redrawDashboardWindowButtons()
 
+	//==============================================================================
 	this.refreshWindowById = function(id) {
 	    var win = this.getWindowById(id);
 	    if(win == -1) return -1;
@@ -787,8 +795,9 @@ Desktop.createDesktop = function(security) {
 	    this.setForeWindow(win);
 	    this.refreshWindow();
             console.log("Finished refreshWindow() " + id);
-		}
-	
+	} //end refreshWindowById()
+
+	//==============================================================================
 	this.windowHelpById = function (id) {
 		var win = this.getWindowById(id);
 		if (win == -1) return -1;
@@ -833,8 +842,9 @@ Desktop.createDesktop = function(security) {
 		{
 			DesktopContent.tooltip("ALWAYS", decodeURIComponent(tooltipEl.innerText));
 		}
-	}
+	} //end windowHelpById()
 
+	//==============================================================================
 	this.refreshWindow = function(e) {
 	    if(!_getForeWindow()) return;
 	    //Debug.log("Windows Length: " + _windows.length);
@@ -867,20 +877,22 @@ Desktop.createDesktop = function(security) {
 	    //Debug.log("Windows Length: " + _windows.length);
 	    
 	    return newWindow;
-    }
+    } //end refreshWindow()
 
-        //minimizeWindowById ~~~
-		//	Find window by id
+	//==============================================================================
+    //minimizeWindowById ~~~
+	//	Find window by id
 	this.minimizeWindowById = function(id) {
         var win = this.getWindowById(id);
 		if(win == -1) return -1;
         
 		this.setForeWindow(win);
         this.toggleMinimize();
-    }
-    
-        //toggleMinimize ~~~
-        //	Toggle current top window minimize functionality (can be called as event)
+    } //end minimizeWindowById()
+
+	//==============================================================================
+	//toggleMinimize ~~~
+	//	Toggle current top window minimize functionality (can be called as event)
     this.toggleMinimize = function(e) {
         if(!_getForeWindow()) return;
         
@@ -891,9 +903,12 @@ Desktop.createDesktop = function(security) {
         Debug.log("Minimize Toggled",Debug.LOW_PRIORITY);
         //_dashboard.updateWindows();
 
-    }
-        //clickedWindowDashboard ~~~
-		//	Handle window selection using dashboard
+    } //end toggleMinimize()
+    
+
+	//==============================================================================
+    //clickedWindowDashboard ~~~
+	//	Handle window selection using dashboard
 	this.clickedWindowDashboard = function(id) {
         var win = this.getWindowById(id);
 		if(win == -1) return -1;
@@ -905,10 +920,11 @@ Desktop.createDesktop = function(security) {
         }
         //else minimize
         this.toggleMinimize();
-    }
-    
-	 	//setDefaultWindowColor() ~~~
-		//	set background color for all windows
+    } //end clickedWindowDashboard()
+
+	//==============================================================================
+	//setDefaultWindowColor() ~~~
+	//	set background color for all windows
 	this.setDefaultWindowColor = function(color) {
 		this.defaultWindowFrameColor = color;
 	    _windowColorPostbox.innerHTML = this.defaultWindowFrameColor; //set to color string
@@ -986,16 +1002,18 @@ Desktop.createDesktop = function(security) {
 			else if((layoutArr[i*numOfFields+7]|0) == 2) //convert to integer, if 0 then maximize
 				_windows[_windows.length-1].maximize();
 		}	  	
-	}
-	
+	} //end defaultLayoutSelect()
+
+	//==============================================================================
  	//closeAllWindows() ~~~
  	// close all windows is used when default layout is changed or a new user logs in
 	this.closeAllWindows = function() { 
 		Debug.log("Desktop closeAllWindows",Debug.LOW_PRIORITY);	
 		//clear all current windows
 		while(_windows.length) _closeWindow(_windows[_windows.length-1]);
-	}
+	} //end closeAllWindows()
 
+	//==============================================================================
  	//resetDesktop() ~~~
  	// called by successful login to reset desktop based on user's permissions
 	this.resetDesktop = function(permissions) {
@@ -1007,7 +1025,7 @@ Desktop.createDesktop = function(security) {
 		if(permissions !== undefined) //update icons based on permissions		
 			Desktop.desktop.icons.resetWithPermissions(permissions);
 		
-		////if not logged in -- attempt to fix it
+		//if not logged in -- attempt to fix it
 		if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true))
 		{
 			Desktop.desktop.login.setupLogin();
@@ -1016,26 +1034,26 @@ Desktop.createDesktop = function(security) {
 			Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,
 					_MAILBOX_TIMER_PERIOD);
 		}
-		//{
-			//re-start timer for checking foreground window changes due to iFrame content code
+		
+		//re-start timer for checking foreground window changes due to iFrame content code
 		
 		//	this.login = _login = new Desktop.login(!(this.security == Desktop.SECURITY_TYPE_NONE)); //pass true to enable login
-		//				window.clearInterval(Desktop.desktop.checkMailboxTimer);
-		//				_checkMailboxes();
-		//				Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
-		//}
-	}
+		window.clearInterval(Desktop.desktop.checkMailboxTimer);
+		_checkMailboxes();
+		Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
+		
+	} //end resetDesktop()
 
+	//==============================================================================
+	//refreshDesktop() ~~~
 	this.refreshDesktop = function() {
-
-
+		
 		for(var i=0; i<Desktop.desktop.getNumberOfWindows();++i)
-       	 	{
-            		Desktop.desktop.refreshWindowById(Desktop.desktop.getWindowByIndex(i));
-        	}	
-
-
-	}
+		{
+			Desktop.desktop.refreshWindowById(Desktop.desktop.getWindowByIndex(i));
+		}	
+		
+	} //end refreshDesktop()
 		
 	//actOnParameterAction() ~~~
 	//	called during create desktop to handle any shortcuts to windows being maximized
