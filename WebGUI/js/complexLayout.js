@@ -29,7 +29,7 @@ function()
  var gridDivision_        = "grid1x1"                                                               ;
  var selectedItem_        = "getDirectories";                                                       ;
  var treeDisplayField_    = "fDisplayName"                                                          ;
-
+ var buttonStyle_         = 'margin-left:5px;padding:5px;'                                          ;
  var _cookieCodeMailbox   = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
  var _cookieCode          = _cookieCodeMailbox.innerHTML                                            ;
  var _theWindow           = self                                                                    ;
@@ -121,6 +121,7 @@ function()
                                                                  tooltip   : 'Add a new canvas'                        ,
                                                                  pressed   : true                                      ,
                                                                  border    : true                                      ,
+                                                                 style     : buttonStyle_                              ,      
                                                                  handler   : function()
                                                                              {
                                                                               var addIndex = globalCanvas_.items.length ;
@@ -144,7 +145,8 @@ function()
                                                                                                    }
                                                                                                   );
                                                                               globalCanvas_.setActiveTab(addIndex);
-                                                                              activeObjects_[currentCanvas_] = [] ;
+                                                                              activeObjectsVec_ = [] ;
+                                                                              activeObjects_[currentCanvas_] = activeObjectsVec_ ;
                                                                               STDLINE("Adding new canvas tab")    ;
                                                                               //makeROOTControlsPanel() ;
                                                                              }
@@ -153,16 +155,21 @@ function()
                                                                  name      : 'hzon'              ,
                                                                  labelWidth: 80                  ,
                                                                  flex      : 0                   ,
-                                                                 width     : 120                 ,
+                                                                 width     : 140                 ,
+                                                                 height    : 18                  ,
                                                                  fieldLabel: '# hor. plots'      ,  
                                                                  value     : 1                   ,  
                                                                  minValue  : 1                   ,  
                                                                  maxValue  : 20                  ,
+                                                                 style     : buttonStyle_        ,      
                                                                  listeners : {
                                                                               change: function( thisSpinner, newValue, oldValue, eOpts )
                                                                                       {
                                                                                        nxPlots_      = newValue ;
                                                                                        gridDivision_ = 'grid' + nxPlots_ + 'x' + nyPlots_ ;
+                                                                                       JSROOT.cleanup(currentCanvas_);
+                                                                                       activeObjectsVec_ = [] ;
+                                                                                       activeObjects_[currentCanvas_] = activeObjectsVec_ ;
                                                                                       }
                                                                              }
                                                                 }, {
@@ -170,17 +177,37 @@ function()
                                                                  name      : 'vzon'              ,
                                                                  labelWidth: 80                  ,
                                                                  flex      : 0                   ,
-                                                                 width     : 120                 ,
+                                                                 width     : 140                 ,
                                                                  fieldLabel: '# ver. plots'      ,  
                                                                  value     : 1                   ,  
                                                                  minValue  : 1                   ,  
                                                                  maxValue  : 20                  ,
+                                                                 style     : buttonStyle_        ,      
                                                                  listeners : {
                                                                               change: function( thisSpinner, newValue, oldValue, eOpts )
                                                                                       {
                                                                                        nyPlots_      = newValue ;
                                                                                        gridDivision_ = 'grid' + nxPlots_ + 'x' + nyPlots_ ;
+                                                                                       JSROOT.cleanup(currentCanvas_);
+                                                                                       activeObjectsVec_ = [] ;
+                                                                                       activeObjects_[currentCanvas_] = activeObjectsVec_;
                                                                                       }
+                                                                             }
+                                                                }, {
+                                                                 xtype     : 'button'                                  ,
+                                                                 text      : 'Clear canvas'                            ,
+                                                                 pressed   : true                                      ,
+                                                                 tooltip   : 'Clear the current canvas content'        ,
+                                                                 border    : true                                      ,
+                                                                 style     : buttonStyle_                              ,      
+                                                                 handler   : function()  
+                                                                             {
+                                                                              JSROOT.cleanup(currentCanvas_);
+                                                                              mdi_ = new JSROOT.GridDisplay(currentCanvas_, gridDivision_); 
+                                                                              activeObjectsVec_ = [] ;
+                                                                              activeObjects_[currentCanvas_] = activeObjectsVec_;
+                                                                              var len = activeObjects_[currentCanvas_].length ;
+                                                                              STDLINE("activeObjects_ cleared for "+currentCanvas_+" len: "+len) ;
                                                                              }
                                                                 }                             
                                                                ]
@@ -195,6 +222,7 @@ function()
                                                                  xtype     : 'button'                                  ,
                                                                  text      : 'Stop'                                    ,
                                                                  pressed   : true                                      ,
+                                                                 style     : buttonStyle_                              ,      
                                                                  tooltip   : 'Stop periodical refreshing of histograms',
                                                                  border    : true
                                                                 }
@@ -413,17 +441,20 @@ function()
                                                           STDLINE("fRootPath_: "+fRootPath_)             ;
                                                           makeStore(fRootPath_, 'RequestType=getMeDirs') ;
                                                           makeGrid (fRootPath_, 'Directories and files') ;
+                                                          selectedItem_ = "getDirectories" ;
                                                          },
                                              focusleave: function (thisCombo) 
                                                          {
                                                           STDLINE('remove  selection listener') ;
-                                                          thisCombo.suspendEvent('select')      ;
+                                                          //thisCombo.suspendEvent('select')      ;
+                                                          theSourcesCB_.suspendEvent('select')      ;
                                                           STDLINE('removed selection listener') ;
                                                          },
                                              focusenter: function (thisCombo) 
                                                          {
                                                           STDLINE('reinstate  selection listener') ;
                                                           thisCombo.resumeEvent('select')          ;
+                                                          theSourcesCB_.resumeEvent('select')          ;
                                                           STDLINE('reinstated selection listener') ;
                                                          }
                                             }
@@ -542,9 +573,12 @@ function()
                                                   fHistName_     = selection[i].data.fHistName                      ;
                                                   if( typeof fFoldersPath_  === "undefined" ) fFoldersPath_  = ""   ;
                                                   if( typeof fRFoldersPath_ === "undefined" ) fRFoldersPath_ = ""   ;
+                                                  if( typeof fFileName_     === "undefined" ) fFileName_     = ""   ;
+                                                  if( typeof fHistName_     === "undefined" ) fHistName_     = ""   ;
                                                   xmlKeysPrintout("Clicked on a tree item")
                                                  }  
-                                                 STDLINE("Selected "+selection.length+" items")                     ;
+                                                 STDLINE("Selected     : "+selection.length+" items")               ;
+                                                 STDLINE("selectedItem_: "+selectedItem_            )               ;
                                                  //clearInterval(periodicPlotID_)                                   ;
                                                  var itemSplit     = item.innerText.split("\n\t\n")                 ;
                                                  var isLeaf        = itemSplit[1].replace("\n","").replace("\t","") ;
@@ -717,6 +751,7 @@ function()
                               STDLINE("Successful") ;
                               if(getXMLValue(response,"headOfSearch") == 'located') // Returns the list of available fRooPaths                                                                     
                               { // Get list of head-points
+                               STDLINE("headOfSearch") ;
                                var dirs     = [] ;
                                var theNodes = getXMLNodes(response,'dir') ;
                                for(var i=0; i<theNodes.length; ++i)
