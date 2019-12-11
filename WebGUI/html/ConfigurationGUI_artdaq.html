@@ -305,7 +305,11 @@
 					true //targetSupervisor
 			); //end getAppId request
 
-			checkForActiveGroupChange(true /*init*/); //get initial groups
+			if(_checkActiveGroupsTimer)
+			{
+				window.clearTimeout(_checkActiveGroupsTimer);
+				_checkActiveGroupsTimer = 0;
+			}
 			
 			//////////////
 			ARTDAQConfigurationAPI.getArtdaqNodes(
@@ -531,6 +535,8 @@
 			//=================
 			function localFinishInit()
 			{				
+				checkForActiveGroupChange(true /*init*/); //force group update
+
 				//only continue if the first time in init()
 				if(!_firstInit) 
 				{
