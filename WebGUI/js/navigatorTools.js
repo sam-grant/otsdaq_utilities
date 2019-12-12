@@ -130,8 +130,9 @@ function changeDivSize(id,width,height)
 // Resize the div signed by id to width/height sizes
 function changeHistogramPanelSize(thisPanel, width, height, currentCanvas, from)	   
 {
- var div = document.getElementById(currentCanvas);
- div.style.width  = width  - 20                  ;
- div.style.height = height - 30                  ;
- displayPlot_(currentCanvas)                     ;
+ STDLINE("New canvas size: "+width+"x"+height) ;
+ var div = document.getElementById(getCanvasDiv_(currentCanvas));
+ div.style.width  = width  - 20                                 ;
+ div.style.height = height - 30                                 ;
+ displayPlot_(currentCanvas)                                    ;
 }              

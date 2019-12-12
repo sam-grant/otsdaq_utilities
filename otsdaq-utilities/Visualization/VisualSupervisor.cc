@@ -540,8 +540,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 					STDLINE(ss.str(),"") ;
 					ss.str("") ; ss << "histoClone->ClassName(): " << histoClone->ClassName() ;
 					STDLINE(ss.str(),"") ;
-					// ss.str("") ; ss << "json.Data(): " <<json.Data() ;
-					// //STDLINE(ss.str(),"") ;
+					ss.str("") ; ss << "json.Data(): " <<json.Data() ;
+					STDLINE(ss.str(),"") ;
 					delete histoClone;
 				}
 				else
