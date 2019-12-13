@@ -3697,24 +3697,59 @@
 					closeButtons[b].onclick = 
 							localCloseButtonHandler;
 
+				document.getElementById("ediNode-" + "saveNode").onclick =
+						localOKButtonHandler;
+				
+				var inputEls = el.getElementsByTagName("input");
+				for(var b=0;b<inputEls.length;++b)
+					inputEls[b].onkeydown = 
+							localInputKeyHandler;
+				document.body.addEventListener("keydown",localInputKeyHandler);
+				
+					
 				/////////////////////////////////
 				function localCloseButtonHandler()
 				{
 					Debug.log("localCloseButtonHandler()");
+					
+					document.body.removeEventListener("keydown",localInputKeyHandler);
 
 					//remove all existing dialogs
 					ConfigurationAPI.removeAllPopUps();
-
+					
 					_mouseMoveMode = _MMM_NONE;
 				} //end localCloseButtonHandler()
 
 				/////////////////////////////////
-				document.getElementById("ediNode-" + "saveNode").onclick = 
-						function()
-						{
+				function localInputKeyHandler(event)
+				{
+					//Debug.log("localInputKeyHandler() " +
+					//		this.id);
+
+					//enter is OK, and escape is CANCEL
+					if(event.keyCode == 13) // ENTER
+					{	
+						Debug.log("Accepting enter key");
+						event.preventDefault();
+						event.stopPropagation(); 
+						localOKButtonHandler();
+					}
+					else if(event.keyCode == 27) // ESC
+					{	
+						Debug.log("Accepting escape key");
+						event.preventDefault();
+						event.stopPropagation(); 
+						localCloseButtonHandler();				
+					}
+				} //end localInputKeyHandler()
+				
+				/////////////////////////////////
+				function localOKButtonHandler()
+				{
 					//since multiple, use id to identify
 					Debug.log("Saving multi-node settings for node " + i);
 					
+					document.body.removeEventListener("keydown",localInputKeyHandler);					
 					
 					var nodeNameTemplate = document.getElementById("ediNode-" + "nodeName").value;
 					var nodeNameFixedWidth = document.getElementById("ediNode-" + "nodeNameFixedWidth").value | 0;
@@ -3815,8 +3850,8 @@
 					ConfigurationAPI.removeAllPopUps();
 
 					_mouseMoveMode = _MMM_NONE;
-					
-						}; //end saveMultiNode click handler
+
+				} //end localOKButtonHandler()
 				
 			} //end localAddHandlers()
 			
