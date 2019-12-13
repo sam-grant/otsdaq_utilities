@@ -226,7 +226,6 @@ function()
                                contentEl : 'canvas' +tabNumber,
                                title     : 'Canvas '+tabNumber,
                                closable  : closable           ,
-                               draggable : true               ,
                                border    : true               ,
                                autoScroll: true
                               }
@@ -653,11 +652,11 @@ function()
                               listeners   : {
                                              select    : function(thisCombo, record, eOpts)
                                                          {
-                                                          fRootPath_        = record.data.dir            ;
+                                                          fRootPath_    = record.data.dir                ;
                                                           STDLINE("fRootPath_: "+fRootPath_)             ;
-                                                          makeStore(fRootPath_, 'RequestType=getMeDirs') ;
-                                                          makeGrid (fRootPath_, 'Directories and files') ;
                                                           selectedItem_ = "getDirectories"               ;
+                                                          makeStore(fRootPath_, 'RequestType=getMeDirs') ; 
+                                                          makeGrid (fRootPath_, 'Directories and files') ;
                                                          },
                                              focusleave: function (thisCombo) 
                                                          {
@@ -694,13 +693,12 @@ function()
                       header     : false                 ,
                       id         : 'navigator'           ,
                       store      : theStore_             ,
-                      draggable  : true                  ,
+                      //draggable  : true                  ,
                       resizable  : true                  ,
                       border     : true                  ,
                       renderTo   : "navigatorDiv-innerCt",
                       rootVisible: false                 ,
                       useArrows  : true                  ,
-                      loadmask   : 'Sto caricando...'    ,
                       scrollable : true                  ,
                       selModel   : {
                                     mode : 'MULTI' // SIMPLE or MULTI
@@ -1032,25 +1030,26 @@ function()
                   if (mdi_!=null) theFrame = mdi_.FindFrame(pos, true);
                   STDLINE("pos: "+pos+" mdi_:"+mdi_.NumGridFrames()+" frame: "+theFrame.id) ;
                   var rootTitle = ROOTObjects[i].fTitle ; 
-//                   if( doReset_ )
+                  STDLINE("Object: "+rootTitle+" ("+ROOTObjects[i]._typename+")") ;
+//                   if( ROOTObjects[i]._typename != "TCanvas" )
 //                   {
 //                    STDLINE("-------> Resetting " + rootTitle);
-//                    JSROOT.redraw (
-//                                   theFrame         ,
-//                                   ROOTObjects[i],
-//                                   ""
-//                                  );
+//                    JSROOT.draw (
+//                                 theFrame      ,
+//                                 ROOTObjects[i],
+//                                 ""
+//                                );
 //                    doReset_ = false ;                                                                                
 //                   }
 //                   else
-//                   {
+                  {
                    STDLINE("-------> Updating " + rootTitle) ;
                    JSROOT.redraw (
-                                  theFrame         ,
+                                  theFrame      ,
                                   ROOTObjects[i],
                                   ""
                                  );                                                                              
-//                   }
+                  }
                  }
                 }
  //-----------------------------------------------------------------------------
