@@ -24,19 +24,14 @@
 									
 		</style>
 		
-
-		
 		<script>		
-			
-			
-		
+
 			//functions:			
 				//init()					
-				
-								
+		
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
-			
+
 			//init called once body has loaded
 			function init()
 			{
@@ -44,12 +39,12 @@
 				console.log(window.frameElement.id)
 				window.parent.setupWidget(window.frameElement.id, getParameters());
 			}
-			
+
 			function setupPVs(settings)
 			{
 				console.log("setupPVs() : " , settings);
 			}
-			
+
 			function newWidget(widget, parameters) 
 			{			
 				var table = document.createElement('table');
@@ -62,10 +57,10 @@
 				{
 					counter++;
 				}
-				
+
 				var rows = Math.round(Math.sqrt(counter));
 				var columns = Math.ceil(counter / rows);
-				
+
 				for(var col = 1; col <= columns; col++)
 				{
 					var tr = document.createElement('tr');
@@ -84,22 +79,18 @@
 				document.getElementById("display").innerHTML = "";
 				document.getElementById("display").appendChild(table);
 
-
 				//console.log("newWidget() called *************************************");
 				if(counter > 1){counter = 2;}
 				console.log("counter" + counter);
 				for(var pv in widget.PVList)
 				{
-					
 					var a = document.createElement('a');
 					a.id = pv;
 					a.title = pv;
 					a.innerHTML = "N/A";
 					a.style.width = "100%";
 					a.style.height = "100%";
-//					document.getElementById("display").appendChild(a);	
-//					a = document.getElementById(pv);
-//					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
+
 					var center = document.createElement("center");
 					center.appendChild(a);
 					console.log(document.body);
@@ -108,10 +99,6 @@
 					console.log("td" + first + "-" + (counter%rows +1));
 					document.getElementById("td" + first + "-" + (counter%rows +1)).appendChild(center);
 					counter++;
-//					console.log(counter);
-//					console.log(columns);
-//					console.log(rows);
-
 				}
 			}
 			
@@ -163,7 +150,7 @@
 				{
 					document.getElementById(pvName).parentElement.style.color = "Light Grey";
 				}
-				
+
 				if(pvStatus == "NO_ALARM")
 				{
 					document.getElementById(pvName).parentElement.style.border = "thin dotted green";
@@ -187,21 +174,19 @@
 				{
 					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
 				}
-				
+
 			}
 
 		</script>
-		
+
 	</head>
-	
-	
-	<body onload='Javascript:init();'>	
-			
+
+	<body onload='Javascript:init();'>
+
 	<div id="display" width="100%" height="100%">
 
 	</div>
-				
-		
+
 	</body>
-	
+
 </html>

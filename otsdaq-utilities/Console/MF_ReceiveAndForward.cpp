@@ -228,6 +228,7 @@ int main(int argc, char** argv)
 	const unsigned int TX_DATA_OFFSET = 2;
 
 	unsigned int packetSz;
+	unsigned int pingCounter = 0;
 
 	// for timeout/select
 	struct timeval tv;
@@ -254,6 +255,8 @@ int main(int argc, char** argv)
 
 		if(FD_ISSET(sockfd, &readfds))
 		{
+			pingCounter = 0;  // reset ping counter
+
 			// packet received
 			// cout << "hw: Line " << __LINE__ << ":::" << "Packet Received!" << endl;
 
@@ -353,7 +356,21 @@ int main(int argc, char** argv)
 			// printf("hw: sent %d bytes on\n", numbytes);
 		}
 		else
-			sleep(1);  // one second
+		{
+			sleep(1);                   // one second
+			if(++pingCounter > 2 * 60)  // two minutes
+			{
+				// send 1-byte "ping" to keep socket alive
+				if((numbytes =
+				        sendto(sendSockfd, buff, 1, 0, p->ai_addr, p->ai_addrlen)) == -1)
+				{
+					__COUT__ << "error: ping sendto...\n\n" << __E__;
+					perror("hw: ping sendto");
+					exit(1);
+				}
+				pingCounter = 0;
+			}
+		}
 	}
 
 	close(sockfd);

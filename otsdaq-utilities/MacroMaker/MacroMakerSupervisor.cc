@@ -34,7 +34,7 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 {
 	__SUP_COUT__ << "Constructing..." << __E__;
 
-	INIT_MF("MacroMaker");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
 	// make macro directories in case they don't exist
 	mkdir(((std::string)MACROS_DB_PATH).c_str(), 0755);

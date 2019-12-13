@@ -31,7 +31,8 @@
 //	This code also handles server requests and response handlers for the content code:
 //		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, 
 //			reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, 
-//			doNotShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>)
+//			doNotShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>,
+//			doNotOfferSequenceChange <optional>)
 //
 //			... here is an example request:
 //
@@ -607,12 +608,13 @@ DesktopContent.hideLoading = function()	{
 			return;
 		
 		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
-		Debug.log("DesktopContent.hideLoading");
+		//Debug.log("DesktopContent.hideLoading");
 		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
 		
 	} //end localHideLoadBox
 	
 } //end hideLoading()
+
 //=====================================================================================
 //DesktopContent.XMLHttpRequest
 // forms request properly for ots server, POSTs data
@@ -635,9 +637,13 @@ DesktopContent.hideLoading = function()	{
 // callHandlerOnErr can be set to true to have handler called with errStr parameter
 //	otherwise, handler will not be called on error.
 //
+//	Use ignoreSystemBlock if request is expected to meet a down server (like restarting xdaq)
+//	Use doNotOfferSequenceChange for requests that might fail based on permissions (like code editor switch to read only).
+//
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
 		reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
-		targetSupervisor, ignoreSystemBlock) {
+		targetSupervisor, ignoreSystemBlock, doNotOfferSequenceChange) 
+{
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 	var sequence = DesktopContent._sequence;
@@ -727,6 +733,42 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				if(req.responseText == Globals.REQ_NO_PERMISSION_RESPONSE) 
 				{
 					errStr = "Request failed due to insufficient account permissions."; 
+					
+					if(!doNotOfferSequenceChange && DesktopContent._sequence)
+					{
+						Debug.log("In wiz mode, attempting to fix access code on the fly...");
+						
+						DesktopContent.popUpVerification(
+							/*prompt*/ errStr + "<br><br>Please enter a valid access code: ", 
+							/*func*/
+							function(newSequence) 
+							{
+								DesktopContent._sequence = newSequence.trim();
+								Debug.log("Resulting sequence code: " + DesktopContent._sequence);
+								
+								if(DesktopContent._sequence)
+								{							
+									Debug.log("Retrying request with new access code...");
+									DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, 
+										reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
+										targetSupervisor, ignoreSystemBlock);
+									return;
+								}
+								
+								DesktopContent._sequence = "a"; //set so retry is possible 
+								
+							}, /*val*/ undefined, 
+							/*bgColor*/ undefined,
+								/*textColor*/ undefined,
+								/*borderColor*/ undefined,
+								/*getUserInput*/ true,
+								/*dialogWidth*/ undefined,
+								/*cancelFunc*/ undefined,
+								/*yesButtonText*/ "Retry",
+								/*noAutoComplete*/ true);
+						
+						return;						
+					}
 					//return;
 				}
 				else if(req.responseText == Globals.REQ_USER_LOCKOUT_RESPONSE) 
@@ -879,16 +921,17 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		}
 	}
 
+	var reqData;
 	if(!sequence)
 	{        
 		if(!DesktopContent._cookieCodeMailbox) //attempt to fix (e.g. for Desktop)
 			DesktopContent._cookieCodeMailbox = document.getElementById("DesktopContent-cookieCodeMailbox");
 		var cc = DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
-		data = "CookieCode="+cc+((data===undefined)?"":("&"+data));
+		reqData = "CookieCode="+cc+((data===undefined)?"":("&"+data));
 	}
 	else
 	{   	
-		data = "sequence="+sequence+"&"+((data===undefined)?"":("&"+data));
+		reqData = "sequence="+sequence+((data===undefined)?"":("&"+data));
 	}
 	
 	
@@ -906,11 +949,11 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		DesktopContent.showLoading();
 	
 	
-	requestURL = origin+"/urn:xdaq-application:lid="+urn+"/"+requestURL;
-	//Debug.log("Post " + requestURL + "\n\tData: " + data);
-	req.open("POST",requestURL,true);
+	var reqURL = origin+"/urn:xdaq-application:lid="+urn+"/"+requestURL;
+	//Debug.log("Post " + reqURL + "\n\tData: " + reqData);
+	req.open("POST", reqURL,true);
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");		
-	req.send(data);	
+	req.send(reqData);	
 } // end XMLHttpRequest()
 
 //check cookie code race conditions
@@ -952,16 +995,19 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 				"(XML response may have been illegal)!";
 	else
 		return undefined;
-}
+} // end getXMLAttributeValue()
 
 //=====================================================================================
 //returns xml entry value for attribue 'value'
 //	if !name assume req is xml node already
 DesktopContent.getXMLValue = function(req, name) {
-	if(!name)
-		return req.getAttribute("value");	
-	return DesktopContent.getXMLAttributeValue(req,name,"value");
-}
+    if(!req) return undefined;
+
+    if(!name)
+    	return req.getAttribute("value");
+
+    return DesktopContent.getXMLAttributeValue(req,name,"value");
+} //end getXMLValue()
 
 //=====================================================================================
 //returns array of xml children nodes
@@ -971,7 +1017,7 @@ DesktopContent.getXMLChildren = function(req, nodeName) {
 	if(req && req.responseXML) //to allow for arbitrary starting xml node
 		req = req.responseXML;
 	return req.getElementsByTagName(nodeName);
-}
+} //end getXMLChildren()
 
 //=====================================================================================
 //returns xml entry node (first node with name)
@@ -1013,6 +1059,17 @@ DesktopContent.getXMLDataNode = function(req, name) {
 }
 
 //=====================================================================================
+//tooltipConditionString ~~
+//	use to modify tooltip string with special keywords like INDENT and TAB
+DesktopContent.tooltipConditionString = function(str) {
+	return str.replace(/<INDENT>/g,
+			"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
+					"</div>").replace(/<TAB>/g,
+							"<div style='margin-left:60px;'>").replace(/<\/TAB>/g,
+									"</div>");
+} //end tooltipConditionString()
+
+//=====================================================================================
 //tooltip ~~
 //	use uid to determine if tip should still be displayed
 //		- ask server about user/file/function/id combo
@@ -1020,13 +1077,7 @@ DesktopContent.getXMLDataNode = function(req, name) {
 //			then show 
 //			add checkbox to never show again
 // id of "ALWAYS".. disables never show handling (no checkboxes)
-
-DesktopContent.tooltipConditionString = function(str) {
-	return str.replace(/<INDENT>/g,
-			"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
-					"</div>");
-}
-
+//
 DesktopContent.tooltip = function(id,tip) {
 
 	if(typeof Desktop !== 'undefined') //This call is from Desktop page.. so can use it
@@ -1191,7 +1242,7 @@ DesktopContent.tooltip = function(id,tip) {
 		}
 	},0,0,0,true,true); //show loading, and target supervisor
 	
-}
+} //end tooltip()
 
 //=====================================================================================
 DesktopContent.setWindowTooltip = function(tip)
@@ -1266,8 +1317,9 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,neverShow,temp
 //
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
-DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, 
-		dialogWidth, cancelFunc, yesButtonText) {		
+DesktopContent.popUpVerification = function(prompt, func, val, bgColor, 
+		textColor, borderColor, getUserInput, dialogWidth, cancelFunc, 
+		yesButtonText, noAutoComplete, defaultUserInputValue) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1297,7 +1349,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	//pop up div style
 	//note: z-index of 2000 is above config gui treeview
 	css += "#" + DesktopContent._verifyPopUpId + " " +
-			"{position: absolute; z-index: 2000; border-radius: 5px; padding: 10px;" +			
+			"{position: absolute; z-index: 10000; border-radius: 5px; padding: 10px;" +			
 			"background-color: " + bgColor + "; border: 2px solid " + borderColor + ";" +
 			"color: " + textColor + ";text-align: center; overflow: auto;" +
 			"}\n\n";
@@ -1310,6 +1362,10 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	css += "#" + DesktopContent._verifyPopUpId + " *" +
 			"{" +
 			"color: " + textColor + ";" +
+			"}\n\n";
+	css += "#" + DesktopContent._verifyPopUpId + " input" +
+			"{" +
+			"cursor: pointer;" +
 			"}\n\n";
 
 	//add style element to HEAD tag
@@ -1328,13 +1384,19 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 
 	var el = document.createElement("div");
 	el.setAttribute("id", DesktopContent._verifyPopUpId);
+	el.onmouseup = function(e) {e.stopPropagation();};
+	el.onmousedown = function(e) {e.stopPropagation();};
+	el.onmouseover = function(e) {e.stopPropagation();};
 	
 	var userInputStr = "";
 	if(getUserInput)
 		userInputStr +=
-				"<input type='text' id='DesktopContent_popUpUserInput' " + 
-				"onclick='event.stopPropagation(); '" +
-				">"; 
+				"<input type='text' id='DesktopContent_popUpUserInput' " +
+				"onclick='event.stopPropagation();'" +
+				(noAutoComplete?"autocomplete='off' ":"") + 
+				" value='" + 
+				(defaultUserInputValue!==undefined?defaultUserInputValue:"") + "' " +
+				">";
 							
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
 			prompt + "<br>" + userInputStr + "</div>" +
@@ -1365,11 +1427,12 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 
 	if(getUserInput) //place cursor
 	{
-		el.getElementsByTagName('input')[0].focus();
-		el.getElementsByTagName('input')[0].setSelectionRange(0,0);	
+		var tel = el.getElementsByTagName('input')[0];
+		tel.focus();
+		tel.setSelectionRange(0,tel.value.length);	
 		
 		//accept enter to close
-		el.getElementsByTagName('input')[0].onkeydown = 
+		tel.onkeydown = 
 				function(event) 
 				{
 			if(event.keyCode == 13) // ENTER
@@ -1417,10 +1480,10 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	var x = DesktopContent.getMouseX();
 	var y = DesktopContent.getMouseY();
 	x -= w/2; //center on x, but try to avoid having mouse lineup with buttons to avoid accidental double click by user
-	Debug.log("X: " + x + 
-			" Y: " + y + 
-			" W: " + w + 
-			" H: " + h);		
+//	Debug.log("X: " + x + 
+//			" Y: " + y + 
+//			" W: " + w + 
+//			" H: " + h);		
 	
 	while(x+w > DesktopContent.getWindowWidth())
 		x -= w;
@@ -1621,8 +1684,8 @@ DesktopContent.getColorAsRGBA = function(colorStr) {
 
 //=====================================================================================
 //get window and mouse info ~~
-DesktopContent.getWindowWidth = function() { return window.innerWidth; }
-DesktopContent.getWindowHeight = function() { return window.innerHeight; }
+DesktopContent.getWindowWidth = function() { return window.innerWidth-1; } //-1 to avoid weird rounding effects by browser that cause scroll bars
+DesktopContent.getWindowHeight = function() { return window.innerHeight-1; } //-1 to avoid weird rounding effects by browser that cause scroll bars
 DesktopContent.getBodyWidth = function() { return document.body.offsetWidth; }
 DesktopContent.getBodyHeight = function() { return document.body.offsetHeight; }
 DesktopContent.getWindowScrollLeft = function() { return document.documentElement.scrollLeft || document.body.scrollLeft || 0; }
@@ -1804,7 +1867,7 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		catch(e)
 		{
 			Debug.log("An error occurred while trying to open the window. " +
-					"The window path seems to be invalid: " + e, Debug.HIGH_PRIORITY);
+					"The window path seems to be invalid:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e, Debug.HIGH_PRIORITY);
 			return;
 		}
 	}
@@ -1935,11 +1998,25 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window
-DesktopContent.getDesktopWindowTitle = function() {
+DesktopContent.getDesktopWindowTitle = function() 
+{
 	return DesktopContent._theWindow.parent.document.getElementById(
 			"DesktopWindowHeader-" + 
 			DesktopContent._theWindow.name.split('-')[1]).innerHTML;
 } //end getDesktopWindowTitle()
+
+DesktopContent.getExceptionLineNumber = function(e) 
+{
+	try
+	{ 
+		console.log(e);
+		return e.stack.split('\n')[1].split(':')[4].split(')')[0]|0; }
+	catch(newError) { return -1; } //hide error and give invalid line number
+} //end getExceptionLineNumber()
+	
+
+
+
 
 
 

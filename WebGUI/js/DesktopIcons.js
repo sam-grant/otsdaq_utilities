@@ -452,11 +452,15 @@ else {
 			++_numOfIcons; //maintain icon count
 			
 			//reset icon arrangement based on _numOfIcons
-			if(_numOfIcons > 1) {
-				var cdArr = _iconsElement.getElementsByClassName("iconsClearDiv");		
+			if(_numOfIcons > 1) 
+			{
+				{ //get rid of all clearDivs
+					var cdArr;
+					while((cdArr = _iconsElement.getElementsByClassName("iconsClearDiv")) &&
+							cdArr.length)	
+						cdArr[0].parentNode.removeChild(cdArr[0]); 							
+				}
 				
-				while(cdArr.length)	cdArr[0].parentNode.removeChild(cdArr[0]); //get rid of all clearDivs							
-
 				var newLine = Math.ceil((-1 + Math.sqrt(_numOfIcons*8+1))/2);
 				var newLineOff = newLine;
 				

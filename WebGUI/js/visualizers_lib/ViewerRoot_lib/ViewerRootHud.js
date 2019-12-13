@@ -129,7 +129,7 @@ ViewerRoot.createHud = function() {
 	
 	this.handlerRefreshPeriodChange = function(v) {
 		v = parseInt(v);
-		if(!v || v < 1) v = 1;
+		if(!v || v < 100) v = 100;
 		if(v > 9999999) v = 9999999;
 		Debug.log("ViewerRoot Hud handlerRefreshPeriodChange " + v);
 		document.getElementById("hudAutoRefreshPeriod").value = v;
@@ -232,10 +232,12 @@ ViewerRoot.createHud = function() {
 			Debug.log("setting hardRefresh=" + hardRefresh);
 			ViewerRoot.hardRefresh = hardRefresh; 	//hard refresh
 		}
-		var autoRefreshPeriod = DesktopContent.getXMLValue(req,'autoRefreshPeriod');
-		if(autoRefreshPeriod && autoRefreshPeriod !== "")
+		var autoRefreshPeriod = DesktopContent.getXMLValue(req,'autoRefreshPeriod') | 0;
+		if(autoRefreshPeriod)
 		{
-			Debug.log("setting autoRefreshPeriod=" + autoRefreshPeriod);
+			Debug.log("setting autoRefreshPeriod=" + autoRefreshPeriod);			
+			if(autoRefreshPeriod < 100) autoRefreshPeriod = 100;
+			if(autoRefreshPeriod > 9999999) autoRefreshPeriod = 9999999;
 			ViewerRoot.autoRefreshPeriod = autoRefreshPeriod; 	//autoRefreshPeriod 
 			document.getElementById("hudAutoRefreshPeriod").value = ViewerRoot.autoRefreshPeriod;			
 		}
