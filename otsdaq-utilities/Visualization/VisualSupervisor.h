@@ -3,6 +3,30 @@
 
 #include "otsdaq-utilities/Visualization/VisualDataManager.h"
 #include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
+//================ new Dario
+#include <dirent.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <xercesc/dom/DOM.hpp>
+#include <xercesc/framework/LocalFileFormatTarget.hpp>
+#include <xercesc/framework/StdOutFormatTarget.hpp>
+#include <xercesc/util/OutOfMemoryException.hpp>
+#include <xercesc/util/PlatformUtils.hpp>
+#include <xercesc/util/XMLString.hpp>
+
+#if defined(XERCES_NEW_IOSTREAMS)
+#include <iostream>
+#else
+#include <iostream.h>
+#endif
+
+#define X(str) XStr(str).unicodeForm()
+//================ new Dario
 
 namespace ots
 {

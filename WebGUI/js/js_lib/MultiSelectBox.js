@@ -54,6 +54,7 @@
 //
 //	getSelectedIndex(el)
 //	getSelectionArray(el)
+//	getSelectedCount(el)
 //	getSelectionElementByIndex(el,i)
 //	setSelectionElementByIndex(el,i,selected)
 //	myOptionSelect(option, index, isSingleSelect, event)
@@ -140,12 +141,30 @@ MultiSelectBox.getSelectedIndex = function(el)
 
 MultiSelectBox.getSelectionArray = function(el)
 {    
+	if(!el) return [];
+	
 	//console.log(el.id);
 	if(el.parentElement.id.indexOf("selbox-") == 0)
 		return MultiSelectBox.mySelects_[el.parentElement.id];
 	else
 		return MultiSelectBox.mySelects_[el.getElementsByClassName("mySelect")[0].id];		
 } //end getSelectionArray()
+
+
+MultiSelectBox.getSelectedCount = function(el)
+{
+	try //try to treat as selection box element first
+	{
+		var selects = MultiSelectBox.mySelects_[el.getElementsByClassName("mySelect")[0].id];
+		var cnt = 0;
+		for(var i=0;i<selects.length;++i)
+			if(selects[i]) ++cnt;
+		return cnt; 				
+	}
+	catch(e){} // ignore error and treat as selected element now
+	
+    return 0;    
+} //end getSelectedIndex()
 
 MultiSelectBox.getSelectionElementByIndex = function(el,i)
 {    
@@ -292,7 +311,7 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	if(title)
 	{
 		str += "<div id='" + name + "header' " +
-				"style='margin-top:20px;width:100%;white-space:nowrap'><b>"
+				"style='margin-top:20px; width:100%; white-space:nowrap; height:21px'><b>"; //had to add height for new Chrome bug
 		str += title;
 		str += "</b></div>";
 	}
@@ -383,7 +402,8 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 MultiSelectBox.initMySelectBoxes = function(clearPreviousSelections)
 {
 	var divs=document.getElementsByClassName('mySelect');
-	for (var el=0; el<divs.length; el++){
+	for (var el=0; el<divs.length; el++)
+	{
 		var select = divs[el];
 		
 		var id = select.getAttribute("id");

@@ -30,8 +30,7 @@
 				-webkit-background-clip: padding-box;
 			}
 
-			}
-			
+			//}
 			button:hover {
 			  background: #2a81d7;
 			  background: -moz-linear-gradient(0% 100% 90deg, #206bcb, #3e9ee5);
@@ -154,7 +153,7 @@
 					color: rgba(0,0,0,0.7);
 				}
 				li.file a[href *= '.page']	{ background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat; }
-				
+
 			li input
 			{
 				position: absolute;
@@ -193,57 +192,52 @@
 			}
 				li input:checked + ol > li { display: block; margin: 0 0 0.125em;  /* 2px */}
 				li input:checked + ol > li:last-child { margin: 0 0 0.063em; /* 1px */ }
-		
-									
+
 		</style>
-		
-		
+
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 
-		
-		<script>		
-			
-			
-		
-			//functions:			
-				//init()					
-				
+		<script>
 
-					
+			var _CONTEXT_MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
+			var _CONTEXT_MENU_SECONDARY_COLOR = "rgb(130, 51, 51)";
+
+			//functions:
+			//init()
+
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
-			
+
 			//init called once body has loaded
-			function initFileTree() {			
+			function initFileTree() {
 				Debug.log("initFileTree() was called");
 
-//				DesktopContent.XMLHttpRequest("Request?RequestType=getList","",handlerFunction);
+				//DesktopContent.XMLHttpRequest("Request?RequestType=getList","",handlerFunction);
 
-
-				window.onresize = redrawWindow;
+				//window.onresize = redrawWindow;
 				redrawWindow(); //redraw window for first time
-			}	
-			
+			}
+
 			function handlerFunction(req) {
 				Debug.log("handlerFunction() was called. Req: " + req.responseText);
 
 				//var child1data = DesktopContent.getXMLValue(req,"child");
 				//var child2data = DesktopContent.getXMLValue(req,"child2");
-				
+
 				//Debug.log("--child1data:",child1data," --child2data:",child2data);
 				//block1El = document.getElementById('block1');
 				//block1.innerHTML = child1data;
-				
 			}
-			
+
 			function addPV(pv)
 			{
 				console.log("edit");
 			}
-			
+
 			function isFile(path)
 			{			
 				if(path.indexOf("/") != -1)
@@ -252,10 +246,8 @@
 					return true;
 				else
 					return false;
-
 			}
-			
-			
+
 			function dir(parentElement, path, fullPathToPage)
 			{
 			    //var parentElement = document.getElementById(baseDir);
@@ -266,7 +258,7 @@
 			    	parentID = (fullPathToPage.substring(0, fullPathToPage.search(path)));
 			    else
 			    	parentID = path.substring(0, path.search("/"));
-			    
+
 				if(isFile(path))
 				{
 					var li = document.createElement("li");
@@ -274,61 +266,81 @@
 					li.className = "file";
 					var a = document.createElement("a");
 					a.innerHTML = path.substring(0, path.search(".dat"));
-					a.href = "";
-					a.onclick = function(){parent.loadPage(fullPathToPage)};//"addPV()";// + pv + ')';
+					a.href = "javascript:void(0)";
+					a.onclick = function(){
+						createFileContextMenu(event, fullPathToPage);
+					};
+					//a.onclick = function(){parent.loadPage(fullPathToPage)};//"addPV()";// + pv + ')';
+
 					li.appendChild(a);
 
 				    parentElement.appendChild(li);
-					
 				}
 				else
 				{
-			
 					var exists = false;
-					
-					
-					
+
 					if(document.getElementById(parentID) != null)
 					{
 						ol = document.getElementById(parentID+ "-ol");
 						exists = true;
 						//console.log('Found ' + ol);
-						
 					}
 
-					
 					if(!exists)
 					{
 						var li = document.createElement("li");
 						li.id = path.substring(0, path.search("/")) + "-li";
-					    	var input = document.createElement("input");
-					    	input.type = "checkbox";
-					    	input.id = path.substring(0, path.search("/"));
-					    	var label = document.createElement("label");
-					    	label.htmlFor = input.id;
-					    	label.innerHTML = input.id
-					    
-					    	ol = document.createElement("ol");
+					    var input = document.createElement("input");
+					    input.type = "checkbox";
+					    input.id = path.substring(0, path.search("/"));
+					    var label = document.createElement("label");
+					    label.htmlFor = input.id;
+					    label.innerHTML = input.id
+
+					    ol = document.createElement("ol");
 						ol.id = parentID + "-ol";
-					    
-					    	li.appendChild(label);
-					    	li.appendChild(input);
-					    	li.appendChild(ol);
-					    	parentElement.appendChild(li);
 
-					    
-					    	//console.log(path.substring(path.search("/") + 1));
+					    li.appendChild(label);
+					    li.appendChild(input);
+					    li.appendChild(ol);
+					    parentElement.appendChild(li);
+
+					    //console.log(path.substring(path.search("/") + 1));
 						dir(ol, path.substring(path.search("/") + 1), fullPathToPage);
-
 					}
 					else
 					{
 						dir(ol, path.substring(path.search("/") + 1), fullPathToPage);
 					}
 				}
-				
 			}
-			
+
+			//createFileContextMenu ~~
+			function createFileContextMenu(event, fullPathToPage) {
+				var menuItems = [
+					"Load Page",
+					"Load Page in new Desktop Window",
+					"Load Page in new Browser Tab",
+					"Create a desktop icon"
+				];
+				var menuItemHandlers = [
+					"parent.loadPage(\""+fullPathToPage+"\")",
+					"parent.loadPageNewWindow(\""+fullPathToPage+"\")",
+					"parent.loadPageNewBrowserTab(\""+fullPathToPage+"\")",
+					"parent.createDesktopIcon(\""+fullPathToPage+"\")"
+				];
+
+				SimpleContextMenu.createMenu(
+					menuItems,
+					menuItemHandlers,
+					"fileContextMenu",					//element ID
+					event.pageX - 1, event.pageY - 1, 	//top right position
+					_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
+					_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
+				);
+			} //end createFileContextMenu
+
 			function close()
 			{
 				console.log("closing");
@@ -358,8 +370,7 @@
 //				
 //				
 //				return;
-					
-			
+
 				Debug.log("Saving....");
 				Debug.log(window.parent.pvList_);
                 window.parent.document.getElementById("mailbox").innerHTML = "Save";
@@ -370,12 +381,11 @@
 	            Debug.log("Saving As....");
 				Debug.log(window.parent.pvList_);
                 window.parent.document.getElementById("mailbox").innerHTML = "SaveAs";
-
             }
 
 			function redrawWindow(clicked, hover) {
 				Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
-				
+
 				var ul = document.createElement("list");
 				var maxWidth = 0;
 				var size;
@@ -411,45 +421,43 @@
 						title.css("font-size", size + 1);
 					}
 					//console.log(window.parent.pagesList_);
-					
+
 					window.parent.pagesList_.forEach(function(page){
 						if(page != "undefined"){dir(document.getElementById("pagesFolder-ol"), page, page)} //FIXME, if pass undefined as filename -> throws error
 					});
-						
+
 					var saveButton = document.createElement("button");
 					var saveAsButton = document.createElement("button");
 					var closeButton = document.createElement("button");
-						
+
 					saveButton.type = "text";
 					saveAsButton.type = "text";
 					closeButton.type = "text";
-					
+
 					saveButton.innerHTML = "Save";
 					saveAsButton.innerHTML = "Save As";
 					closeButton.innerHTML = "Close";
-					
+
 					closeButton.onclick = function(){close();};
 					saveButton.onclick = function(){save();};
 					saveAsButton.onclick = function(){saveAs();};
-					
+
 					document.getElementById("saveli").innerHTML = "";
 					document.getElementById("saveli").appendChild(saveButton);
 					//document.getElementById("saveli").appendChild(saveAsButton);
 					document.getElementById("saveli").appendChild(closeButton);
 
-					
-					
 					var fileTreeDiv = document.getElementById("fileTreeDiv");
 					var header = document.getElementById("header");
-					
+
 					header.style.height      = window.innerHeight * 0.05 + "px";
 					fileTreeDiv.style.height = window.innerHeight * 0.75 + "px";
 					controlsDiv.style.height = window.innerHeight * 0.10 + "px";
 					controlsDiv.style.top = fileTreeDiv.style.top + fileTreeDiv.style.height;
-					
-						/*
+
+					/*
 						console.log(page);
-						
+
 						var li = document.createElement("li");
 						li.id = page;
 						li.className = "file";
@@ -461,8 +469,7 @@
 						li.appendChild(a);
 
 						document.getElementById("pagesFolderol").appendChild(li);
-						
-						
+
 						var button = document.createElement("button");
 						button.style.width = "inherit";
 						button.style.overflow =  "hidden";
@@ -475,32 +482,26 @@
 						}
 						li.appendChild(button);
 						ul.appendChild(li);*/
-							
-						
 					//});
-				
+
 //					document.getElementById("fileTree").innerHTML = "";
 //					document.getElementById("fileTree").appendChild(ul);
-
 				}
-				
-	
 			}
-			
+
 		</script>
-		
+
 	</head>
-	
-	
+
 	<body onload='Javascript:initFileTree();'>	
-			
+
 		<div class='mainBlock' id='header' ></div>
 		<div class='mainBlock' id='fileTreeDiv' width="100%">
 	    <ol class="tree">
 	      <li>
 	      	<label for="pagesFolder">Pages</label> 
 	      	<ol id="pagesFolder-ol" >
-				
+
 	      	</ol>
 	      </li>
 	    </ol>
@@ -510,8 +511,7 @@
 			<li id="saveli"></li>
 			</ul>
 		</div>
-				
-		
+
 	</body>
-	
+
 </html>

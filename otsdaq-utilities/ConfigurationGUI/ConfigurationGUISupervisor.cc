@@ -45,7 +45,7 @@ ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* st
 {
 	__SUP_COUT__ << "Constructor started." << __E__;
 
-	INIT_MF("ConfigurationGUI");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
 	// make macro directories in case they don't exist
 	mkdir(((std::string)ARTDAQ_CONFIG_LAYOUTS_PATH).c_str(), 0755);
@@ -185,13 +185,16 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//	setTreeNodeFieldValues
 	//	addTreeNodeRecords
 	//	deleteTreeNodeRecords
+	//	renameTreeNodeRecords
+	//	copyTreeNodeRecords
 	//		---- end associated with JavaScript Table API
 	//
-	//		---- associated with JavaScript artdaq Table API
+	//		---- associated with JavaScript artdaq API
 	//	getArtdaqNodes
+	//	saveArtdaqNodes
 	//  loadArtdaqNodeLayout
 	//  saveArtdaqNodeLayout
-	//		---- end associated with JavaScript artdaq Table API
+	//		---- end associated with JavaScript artdaq API
 	//
 	//	activateTableGroup
 	//	getActiveTableGroups
@@ -347,56 +350,6 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 				__SUP_COUT_ERR__ << "Unable to open command file: " << fn << __E__;
 		}
 	}
-	//	else if(requestType == "launchOTS")
-	//	{
-	//		__SUP_COUT_WARN__ << "launchOTS command received! Launching... " << __E__;
-	//
-	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//				"/StartOTS_action.cmd").c_str(),"w");
-	//		if(fp)
-	//		{
-	//			fprintf(fp,"LAUNCH_OTS");
-	//			fclose(fp);
-	//		}
-	//		else
-	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//					"/StartOTS_action.cmd") << __E__;
-	//	}
-	//	else if(requestType == "launchWiz")
-	//	{
-	//		__SUP_COUT_WARN__ << "launchWiz command received! Launching... " << __E__;
-	//
-	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//				"/StartOTS_action.cmd").c_str(),"w");
-	//		if(fp)
-	//		{
-	//			fprintf(fp,"LAUNCH_WIZ");
-	//			fclose(fp);
-	//		}
-	//		else
-	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//					"/StartOTS_action.cmd") << __E__;
-	//	}
-	//	else if(requestType == "flattenToSystemAliases")
-	//	{
-	//		__SUP_COUT_WARN__ << "flattenToSystemAliases command received! Launching... "
-	//<<
-	//__E__;
-	//
-	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//				"/StartOTS_action.cmd").c_str(),"w");
-	//		if(fp)
-	//		{
-	//			fprintf(fp,"FLATTEN_TO_SYSTEM_ALIASES");
-	//			fclose(fp);
-	//		}
-	//		else
-	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
-	//					"/StartOTS_action.cmd") << __E__;
-	//	}
 	else if(requestType == "versionTracking")
 	{
 		std::string type = CgiDataUtilities::getData(cgiIn, "Type");  // from GET
@@ -801,13 +754,13 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		int         depth          = CgiDataUtilities::getDataAsInt(cgiIn, "depth");
 		bool hideStatusFalse = CgiDataUtilities::getDataAsInt(cgiIn, "hideStatusFalse");
 
-		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
-		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
-		__SUP_COUT__ << "startPath: " << startPath << __E__;
-		__SUP_COUT__ << "depth: " << depth << __E__;
-		__SUP_COUT__ << "hideStatusFalse: " << hideStatusFalse << __E__;
-		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
-		__SUP_COUT__ << "filterList: " << filterList << __E__;
+		//		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		//		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
+		//		__SUP_COUT__ << "startPath: " << startPath << __E__;
+		//		__SUP_COUT__ << "depth: " << depth << __E__;
+		//		__SUP_COUT__ << "hideStatusFalse: " << hideStatusFalse << __E__;
+		//		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
+		//		__SUP_COUT__ << "filterList: " << filterList << __E__;
 
 		handleFillTreeViewXML(xmlOut,
 		                      cfgMgr,
@@ -973,6 +926,59 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                                   modifiedTables,
 		                                   recordList);
 	}
+	else if(requestType == "renameTreeNodeRecords")
+	{
+		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
+		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
+		std::string newRecordList  = CgiDataUtilities::postData(cgiIn, "newRecordList");
+
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
+		__SUP_COUT__ << "startPath: " << startPath << __E__;
+		__SUP_COUT__ << "recordList: " << recordList << __E__;
+		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
+		__SUP_COUTV__(newRecordList);
+
+		handleFillRenameTreeNodeRecordsXML(xmlOut,
+		                                   cfgMgr,
+		                                   tableGroup,
+		                                   TableGroupKey(tableGroupKey),
+		                                   startPath,
+		                                   modifiedTables,
+		                                   recordList,
+		                                   newRecordList);
+	}
+	else if(requestType == "copyTreeNodeRecords")
+	{
+		std::string  tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string  tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string  startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
+		std::string  modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+		std::string  recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
+		unsigned int numberOfCopies =
+		    CgiDataUtilities::getDataAsInt(cgiIn, "numberOfCopies");
+		if(!numberOfCopies)
+			numberOfCopies = 1;  // default to 1
+
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
+		__SUP_COUT__ << "startPath: " << startPath << __E__;
+		__SUP_COUT__ << "recordList: " << recordList << __E__;
+		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
+		__SUP_COUTV__(numberOfCopies);
+
+		handleFillCopyTreeNodeRecordsXML(xmlOut,
+		                                 cfgMgr,
+		                                 tableGroup,
+		                                 TableGroupKey(tableGroupKey),
+		                                 startPath,
+		                                 modifiedTables,
+		                                 recordList,
+		                                 numberOfCopies);
+	}
 	else if(requestType == "getArtdaqNodes")
 	{
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
@@ -980,6 +986,20 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUTV__(modifiedTables);
 
 		handleGetArtdaqNodeRecordsXML(xmlOut, cfgMgr, modifiedTables);
+	}
+	else if(requestType == "saveArtdaqNodes")
+	{
+		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+		std::string nodeString     = CgiDataUtilities::postData(cgiIn, "nodeString");
+		std::string subsystemString =
+		    CgiDataUtilities::postData(cgiIn, "subsystemString");
+
+		__SUP_COUTV__(modifiedTables);
+		__SUP_COUTV__(nodeString);
+		__SUP_COUTV__(subsystemString);
+
+		handleSaveArtdaqNodeRecordsXML(
+		    nodeString, subsystemString, xmlOut, cfgMgr, modifiedTables);
 	}
 	else if(requestType == "loadArtdaqNodeLayout")
 	{
@@ -1303,28 +1323,6 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 	// always add active table groups to xml response
 	ConfigurationSupervisorBase::getConfigurationStatusXML(xmlOut, cfgMgr);
-	//	std::map<std::string /*type*/, std::pair<std::string /*groupName*/,
-	//TableGroupKey>> 	    activeGroupMap = cfgMgr->getActiveTableGroups();
-	//
-	//	for(auto& type : activeGroupMap)
-	//	{
-	//		xmlOut.addTextElementToData(type.first + "-ActiveGroupName",
-	//type.second.first); 		xmlOut.addTextElementToData(type.first +
-	//"-ActiveGroupKey",
-	//		                            type.second.second.toString());
-	//		//__SUP_COUT__ << "ActiveGroup " << type.first << " " << type.second.first <<
-	//"("
-	//		//<< type.second.second << ")" << __E__;
-	//	}
-	//
-	//	// always add version tracking bool
-	//	xmlOut.addTextElementToData(
-	//	    "versionTracking",
-	//	    ConfigurationInterface::isVersionTrackingEnabled() ? "ON" : "OFF");
-	//
-	//	__SUP_COUT__ << __E__;
-	//	xmlOut.outputXmlDocument(0,true,true);
-	//	__SUP_COUT__ << __E__;
 
 }  // end ::request()
 catch(const std::runtime_error& e)
@@ -1612,11 +1610,9 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 	// reload all tables so that partially loaded tables are not allowed
 	if(usingActiveGroups || refreshAll)
 	{
-		__SUP_COUT__ << "Refreshing all table info..." << __E__;
-		cfgMgr->getAllTableInfo(true, accumulatedErrors);  // do refresh
-
-		if(accumulatedErrors && *accumulatedErrors != "")
-			__SUP_COUTV__(*accumulatedErrors);
+		__SUP_COUT__ << "Refreshing all table info, ignoring warnings..." << __E__;
+		std::string accumulatedWarnings = "";
+		cfgMgr->getAllTableInfo(true, &accumulatedWarnings);  // do refresh
 	}
 
 	const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo(false);
@@ -2054,6 +2050,241 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 }  // end handleFillDeleteTreeNodeRecordsXML()
 
 //========================================================================================================================
+// handleFillRenameTreeNodeRecordsXML
+//	Rename the records in the appropriate table
+//		and creates a temporary version.
+//	the modified-<modified tables> list is returned in xml
+//
+// if groupName == "" || groupKey is invalid
+//	 then do for active groups
+//
+// parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordList := CSV list of records to rename
+//	newRecordList := CSV list of new record names
+//
+void ConfigurationGUISupervisor::handleFillRenameTreeNodeRecordsXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      groupName,
+    const TableGroupKey&    groupKey,
+    const std::string&      startPath,
+    const std::string&      modifiedTables,
+    const std::string&      recordList,
+    const std::string&      newRecordList)
+{
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(xmlOut,
+	                     cfgMgr,
+	                     groupName,
+	                     groupKey,
+	                     modifiedTables,
+	                     true /* refresh all */,
+	                     false /* getGroupInfo */,
+	                     0 /* returnMemberMap */,
+	                     false /* outputActiveTables */);
+
+	try
+	{
+		ConfigurationTree targetNode = cfgMgr->getNode(startPath);
+		TableBase*        table      = cfgMgr->getTableByName(targetNode.getTableName());
+
+		__SUP_COUT__ << table->getTableName() << __E__;
+		TableVersion temporaryVersion;
+
+		// if current version is not temporary
+		//		create temporary
+		//	else re-modify temporary version
+		//	edit temporary version directly
+		//	then after all edits return active versions
+		//
+
+		// extract record list
+		std::vector<std::string> recordArray =
+		    StringMacros::getVectorFromString(recordList);
+		std::vector<std::string> newRecordArray =
+		    StringMacros::getVectorFromString(newRecordList);
+
+		__SUP_COUTV__(StringMacros::vectorToString(recordArray));
+		__SUP_COUTV__(StringMacros::vectorToString(newRecordArray));
+
+		if(recordArray.size() == 0 || recordArray.size() != newRecordArray.size())
+		{
+			__SUP_SS__
+			    << "Invalid record size vs new record name size, they must be the same: "
+			    << recordArray.size() << " vs " << newRecordArray.size() << __E__;
+			__SUP_SS_THROW__;
+		}
+
+		// handle version bookkeeping
+		{
+			if(!(temporaryVersion = targetNode.getTableVersion()).isTemporaryVersion())
+			{
+				__SUP_COUT__ << "Start version " << temporaryVersion << __E__;
+				// create temporary version for editing
+				temporaryVersion = table->createTemporaryView(temporaryVersion);
+				cfgMgr->saveNewTable(targetNode.getTableName(),
+				                     temporaryVersion,
+				                     true);  // proper bookkeeping for temporary
+				                             // version with the new version
+
+				__SUP_COUT__ << "Created temporary version " << temporaryVersion << __E__;
+			}
+			else  // else table is already temporary version
+				__SUP_COUT__ << "Using temporary version " << temporaryVersion << __E__;
+		}
+
+		// at this point have valid temporary version to edit
+
+		// for every record, change name
+		unsigned int row;
+		for(unsigned int i = 0; i < recordArray.size(); ++i)
+		{
+			row = table->getViewP()->findRow(
+			    table->getViewP()->getColUID(),
+			    StringMacros::decodeURIComponent(recordArray[i]));
+
+			table->getViewP()->setValueAsString(
+			    newRecordArray[i], row, table->getViewP()->getColUID());
+		}
+
+		table->getViewP()->init();  // verify new table (throws runtime_errors)
+
+		handleFillModifiedTablesXML(xmlOut, cfgMgr);
+	}
+	catch(std::runtime_error& e)
+	{
+		__SUP_SS__ << ("Error renaming record(s)!\n\n" + std::string(e.what())) << __E__;
+		__SUP_COUT_ERR__ << "\n" << ss.str();
+		xmlOut.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SUP_SS__ << ("Error renaming record(s)!\n\n") << __E__;
+		__SUP_COUT_ERR__ << "\n" << ss.str();
+		xmlOut.addTextElementToData("Error", ss.str());
+	}
+}  // end handleFillRenameTreeNodeRecordsXML()
+
+//========================================================================================================================
+// handleFillCopyTreeNodeRecordsXML
+//	Copies the records in the appropriate table
+//		and creates a temporary version.
+//	Makes incremental unique names for each copy.
+//	The modified-<modified tables> list is returned in xml
+//
+// if groupName == "" || groupKey is invalid
+//	 then do for active groups
+//
+// parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordList := CSV list of records to create
+//	numberOfCopies := integer for number of copies for each record in recordList
+//
+void ConfigurationGUISupervisor::handleFillCopyTreeNodeRecordsXML(
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      groupName,
+    const TableGroupKey&    groupKey,
+    const std::string&      startPath,
+    const std::string&      modifiedTables,
+    const std::string&      recordList,
+    unsigned int            numberOfCopies /* = 1 */)
+{
+	if(!numberOfCopies)
+		numberOfCopies = 1;  // force 0 to 1, assuming user meant to get one copy
+
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(xmlOut,
+	                     cfgMgr,
+	                     groupName,
+	                     groupKey,
+	                     modifiedTables,
+	                     true /* refresh all */,
+	                     false /* getGroupInfo */,
+	                     0 /* returnMemberMap */,
+	                     false /* outputActiveTables */);
+
+	try
+	{
+		ConfigurationTree targetNode = cfgMgr->getNode(startPath);
+		TableBase*        table      = cfgMgr->getTableByName(targetNode.getTableName());
+
+		__SUP_COUT__ << table->getTableName() << __E__;
+		TableVersion temporaryVersion;
+
+		// if current version is not temporary
+		//		create temporary
+		//	else re-modify temporary version
+		//	edit temporary version directly
+		//	then after all edits return active versions
+		//
+
+		// extract record list
+		std::vector<std::string> recordArray =
+		    StringMacros::getVectorFromString(recordList);
+		__SUP_COUTV__(StringMacros::vectorToString(recordArray));
+
+		// handle version bookkeeping
+		{
+			if(!(temporaryVersion = targetNode.getTableVersion()).isTemporaryVersion())
+			{
+				__SUP_COUT__ << "Start version " << temporaryVersion << __E__;
+				// create temporary version for editing
+				temporaryVersion = table->createTemporaryView(temporaryVersion);
+				cfgMgr->saveNewTable(targetNode.getTableName(),
+				                     temporaryVersion,
+				                     true);  // proper bookkeeping for temporary
+				                             // version with the new version
+
+				__SUP_COUT__ << "Created temporary version " << temporaryVersion << __E__;
+			}
+			else  // else table is already temporary version
+				__SUP_COUT__ << "Using temporary version " << temporaryVersion << __E__;
+		}
+
+		// at this point have valid temporary version to edit
+
+		// for every record, copy spec'd number of times
+		unsigned int row;
+		for(const auto& recordUID : recordArray)
+		{
+			row = table->getViewP()->findRow(table->getViewP()->getColUID(),
+			                                 StringMacros::decodeURIComponent(recordUID));
+			for(unsigned int i = 0; i < numberOfCopies; ++i)
+				table->getViewP()->copyRows(
+				    cfgMgr->getUsername(),
+				    table->getView(),
+				    row,
+				    1 /*srcRowsToCopy*/,
+				    -1 /*destOffsetRow*/,
+				    true /*generateUniqueDataColumns*/,
+				    recordUID /*baseNameAutoUID*/);  // make the name similar
+		}                                            // end record loop
+
+		table->getViewP()->init();  // verify new table (throws runtime_errors)
+
+		handleFillModifiedTablesXML(xmlOut, cfgMgr);
+	}
+	catch(std::runtime_error& e)
+	{
+		__SUP_SS__ << ("Error copying record(s)!\n\n" + std::string(e.what())) << __E__;
+		__SUP_COUT_ERR__ << "\n" << ss.str();
+		xmlOut.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SUP_SS__ << ("Error copying record(s)!\n\n") << __E__;
+		__SUP_COUT_ERR__ << "\n" << ss.str();
+		xmlOut.addTextElementToData("Error", ss.str());
+	}
+}  // end handleFillCopyTreeNodeRecordsXML()
+
+//========================================================================================================================
 // handleFillSetTreeNodeFieldValuesXML
 //	writes for each record, the field/value pairs to the appropriate table
 //		and creates a temporary version.
@@ -2298,8 +2529,8 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 				fieldPaths.push_back(StringMacros::decodeURIComponent(fieldPath));
 			}
 			__SUP_COUT__ << fieldList << __E__;
-			for(auto& field : fieldPaths)
-				__SUP_COUT__ << "fieldPath " << field << __E__;
+			// for(auto& field : fieldPaths)
+			//	__SUP_COUT__ << "fieldPath " << field << __E__;
 		}
 
 		// extract record list
@@ -2405,8 +2636,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 			if(startNode.isLinkNode() && startNode.isDisconnected())
 			{
 				__SUP_SS__ << "Start path was a disconnected link node!" << __E__;
-				__SUP_COUT_ERR__ << "\n" << ss.str();
-				__SS_THROW__;
+				__SUP_SS_THROW__;
 				return;  // quietly ignore disconnected links at depth
 				         // note: at the root level they will be flagged for the user
 			}
@@ -2460,8 +2690,10 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 				}
 			}
 
+			//=== get common fields call!
 			retFieldList = startNode.getCommonFields(
 			    records, fieldAcceptList, fieldRejectList, depth);
+			//=== end get common fields call!
 		}
 
 		xercesc::DOMElement* parentTypeEl;
@@ -2613,7 +2845,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 				    records, fieldAcceptList, fieldRejectList, 5, true /*auto*/);
 
 				for(const auto& retField : retFieldList)
-					fieldsToGet.push_back(retField.columnName_);
+					fieldsToGet.push_back(retField.relativePath_ + retField.columnName_);
 			}
 			else
 			{
@@ -2674,7 +2906,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
-}
+}  // end handleFillUniqueFieldValuesForRecordsXML()
 
 //========================================================================================================================
 // handleFillTreeViewXML
@@ -2842,10 +3074,10 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
-}
+}  // end handleFillTreeViewXML()
 
 //==============================================================================
-// recursiveToXml
+// recursiveTreeToXML
 //	output tree to XML from this node for desired depth
 //	depth of 0 means output only this node's value
 //	depth of 1 means include this node's children's values, etc..
@@ -2980,7 +3212,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 				    c.second, depth - 1, xmlOut, parentEl, hideStatusFalse);
 		}
 	}
-}
+}  // end recursiveTreeToXML()
 
 //========================================================================================================================
 // handleGetLinkToChoicesXML
@@ -4041,7 +4273,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 	__SUP_COUT__ << "Created temporary version " << temporaryVersion << __E__;
 
 	TableView* cfgView = table->getTemporaryView(temporaryVersion);
-	cfgView->init(); //prepare maps
+	cfgView->init();  // prepare maps
 
 	// edit/verify new table (throws runtime_errors)
 	try
@@ -4280,7 +4512,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 
 				cfgView = table->getTemporaryView(temporaryVersion);
 
-				cfgView->init(); //prepare group ID map
+				cfgView->init();  // prepare group ID map
 				col = cfgView->getColLinkGroupID(linkIndex);
 
 				__SUP_COUT__ << "target col " << col << __E__;
@@ -4508,7 +4740,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 
 	std::string accumulatedErrors = "";
 
-	__COUTV__(allowIllegalColumns);
+	//__COUTV__(allowIllegalColumns);
 
 	if(allowIllegalColumns)
 		xmlOut.addTextElementToData("allowIllegalColumns", "1");
@@ -4520,6 +4752,8 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	                            tableName);  // filter errors by tableName
 
 	TableBase* table = cfgMgr->getTableByName(tableName);
+
+	//__COUTV__(allowIllegalColumns);
 
 	// send all table names along with
 	//	and check for specific version
@@ -4603,6 +4837,8 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	}
 	else  // use view version
 	{
+		//__COUTV__(allowIllegalColumns);
+
 		try
 		{
 			// locally accumulate 'manageable' errors getting the version to avoid
@@ -4743,11 +4979,11 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	if(accumulatedErrors != "")  // add accumulated errors to xmlOut
 	{
 		__SUP_SS__ << (std::string("Column errors were allowed for this request, so "
-		                           "maybe you can ignore this, ") +
-		               "but please note the following errors:\n" + accumulatedErrors)
+		                           "perhaps you can ignore this, ") +
+		               "but please note the following warnings:\n" + accumulatedErrors)
 		           << __E__;
 		__SUP_COUT_ERR__ << ss.str();
-		xmlOut.addTextElementToData("Error", ss.str());
+		xmlOut.addTextElementToData("TableWarnings", ss.str());
 	}
 	else if(!version.isTemporaryVersion() &&  // not temporary (these are not filled from
 	                                          // interface source)
@@ -4837,8 +5073,9 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
-	__SUP_COUT__ << "Table Session: " << mapKey
-	             << " ... out of size: " << userConfigurationManagers_.size() << __E__;
+	__SUP_COUT__ << "Using Config Session " << mapKey
+	             << " ... Total Session Count: " << userConfigurationManagers_.size()
+	             << __E__;
 
 	time_t now = time(0);
 
@@ -5249,9 +5486,12 @@ void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(
 
 		if(isDifferent)  // set author/time of new version if different
 		{
-			configView->setValue(author, row, configView->findCol("Author"));
 			configView->setValue(
-			    time(0), row, configView->findCol("RecordInsertionTime"));
+			    author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
+			configView->setValue(
+			    time(0),
+			    row,
+			    configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
 		}
 	}
 	catch(...)
@@ -5426,9 +5666,12 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 
 		if(isDifferent)  // set author/time of new version if different
 		{
-			configView->setValue(author, row, configView->findCol("Author"));
 			configView->setValue(
-			    time(0), row, configView->findCol("RecordInsertionTime"));
+			    author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
+			configView->setValue(
+			    time(0),
+			    row,
+			    configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
 		}
 	}
 	catch(...)
@@ -5632,9 +5875,12 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 
 		if(thisMemberIsDifferent)  // change author and time if row is different
 		{
-			configView->setValue(author, row, configView->findCol("Author"));
 			configView->setValue(
-			    time(0), row, configView->findCol("RecordInsertionTime"));
+			    author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
+			configView->setValue(
+			    time(0),
+			    row,
+			    configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
 		}
 
 		if(thisMemberIsDifferent)
@@ -5703,7 +5949,9 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 		           << " is a required member of the Backbone table group."
 		           << "\n\nLikely you need to activate a valid Backbone table group."
 		           << __E__;
-		xmlOut.addTextElementToData("Error", ss.str());
+		__SUP_COUT__ << ss.str();  // just output findings, and return empty xml to avoid
+		                           // infinite error loops in GUI
+		// xmlOut.addTextElementToData("Error", ss.str());
 		return;
 	}
 	__SUP_COUT__ << "activeVersions[\"" << groupAliasesTableName
@@ -5754,7 +6002,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 		xmlOut.addTextElementToData("GroupComment", groupComment);
 		xmlOut.addTextElementToData("GroupType", groupType);
 	}
-}
+}  // end handleGroupAliasesXML
 
 //========================================================================================================================
 //	handleTableVersionAliasesXML
@@ -6168,151 +6416,243 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
     ConfigurationManagerRW* cfgMgr,
     const std::string&      modifiedTables)
 {
-	__COUT__ << "Getting artdaq nodes..." << __E__;
+	__COUT__ << "Retrieving artdaq nodes..." << __E__;
 
 	//	setup active tables based on active groups and modified tables
 	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
 
-	const XDAQContextTable* contextTable = cfgMgr->__GET_CONFIG__(XDAQContextTable);
+	std::map<std::string /*type*/,
+	         std::map<std::string /*record*/, std::vector<std::string /*property*/>>>
+	    nodeTypeToObjectMap;
+	std::map<std::string /*subsystemName*/, std::string /*destinationSubsystemName*/>
+	    subsystemObjectMap;
 
-	// for each artdaq context, output all artdaq apps
+	std::vector<std::string /*property*/> artdaqSupervisorInfo;
 
-	std::vector<const XDAQContextTable::XDAQContext*> artdaqContexts[] = {
-	    contextTable->getARTDAQSupervisorContexts()
-		};
+	std::string                        artdaqSupervisorName;
+	const ARTDAQTableBase::ARTDAQInfo& info = ARTDAQTableBase::getARTDAQSystem(
+	    cfgMgr, nodeTypeToObjectMap, subsystemObjectMap, artdaqSupervisorInfo);
 
-
-	const ARTDAQTableBase::ARTDAQAppType artdaqProcessTypes[] = {
-			ARTDAQTableBase::ARTDAQAppType::BoardReader,
-			ARTDAQTableBase::ARTDAQAppType::EventBuilder,
-			ARTDAQTableBase::ARTDAQAppType::DataLogger,
-			ARTDAQTableBase::ARTDAQAppType::Dispatcher
-	};
-
-	std::string typeString;
-	for(unsigned int i = 0; i < 1 /*context type count*/; ++i)
+	if(artdaqSupervisorInfo.size() != 4 /*expecting 4 artdaq Supervisor parameters*/)
 	{
-		switch(i)
-		{
-		case 0:
-			typeString = "artdaqSupervisor";
-			break;
-		//case 1: //FIXME -- artdaq daqSupervisor needs a way to be aware of 'standalone' board readers
-		//	typeString = "readerContext";
-		//	break;
-		default:
-		{
-			__SUP_SS__ << "Illegal impossible type!";
-			__SUP_SS_THROW__;
-		}
-		}
+		__SUP_COUT__ << "No artdaq supervisor found." << __E__;
+		return;
+	}
 
-		__COUT__ << typeString << " size = " << artdaqContexts[i].size() << __E__;
+	__SUP_COUT__ << "========== "
+	             << "Found " << info.subsystems.size() << " subsystems." << __E__;
 
-		for(auto& artdaqContext : artdaqContexts[i])
+	unsigned int paramIndex = 0;  // start at first artdaq Supervisor parameter
+
+	auto parentEl = xmlOut.addTextElementToData("artdaqSupervisor",
+	                                            artdaqSupervisorInfo[paramIndex++]);
+
+	std::string typeString = "artdaqSupervisor";
+
+	xmlOut.addTextElementToParent(
+	    typeString + "-status", artdaqSupervisorInfo[paramIndex++], parentEl);
+	xmlOut.addTextElementToParent(
+	    typeString + "-contextAddress", artdaqSupervisorInfo[paramIndex++], parentEl);
+	xmlOut.addTextElementToParent(
+	    typeString + "-contextPort", artdaqSupervisorInfo[paramIndex++], parentEl);
+
+	for(auto& subsystem : info.subsystems)
+	{
+		typeString = "subsystem";
+
+		__SUP_COUT__ << "\t\t"
+		             << "Found " << typeString << " " << subsystem.first << " \t := '"
+		             << subsystem.second.label << "'" << __E__;
+
+		xmlOut.addTextElementToParent(typeString, subsystem.second.label, parentEl);
+		xmlOut.addTextElementToParent(
+		    typeString + "-id", std::to_string(subsystem.first), parentEl);
+
+		xmlOut.addTextElementToParent(typeString + "-sourcesCount",
+		                              std::to_string(subsystem.second.sources.size()),
+		                              parentEl);
+
+		// destination
+		xmlOut.addTextElementToParent(typeString + "-destination",
+		                              std::to_string(subsystem.second.destination),
+		                              parentEl);
+
+	}  // end subsystem handling
+
+	__SUP_COUT__ << "========== "
+	             << "Found " << nodeTypeToObjectMap.size() << " process types." << __E__;
+
+	for(auto& nameTypePair : nodeTypeToObjectMap)
+	{
+		typeString = nameTypePair.first;
+
+		__SUP_COUT__ << "\t"
+		             << "Found " << nameTypePair.second.size() << " " << typeString
+		             << "(s)" << __E__;
+
+		for(auto& artdaqNode : nameTypePair.second)
 		{
-			__SUP_COUTV__(artdaqContext->contextUID_);
-			__SUP_COUTV__(artdaqContext->applications_.size());
+			__SUP_COUT__ << "\t\t"
+			             << "Found '" << artdaqNode.first << "' " << typeString << __E__;
+			__SUP_COUTV__(StringMacros::vectorToString(artdaqNode.second));
 
-			for(auto& artdaqApp : artdaqContext->applications_)
+			if(artdaqNode.second.size() < 2)
 			{
-				__SUP_COUTV__(artdaqApp.applicationUID_);
+				__SUP_SS__ << "Impossible parameter size for node '" << artdaqNode.first
+				           << "' " << typeString << " - please notify admins!" << __E__;
+				__SUP_SS_THROW__;
+			}
 
+			auto nodeEl =
+			    xmlOut.addTextElementToParent(typeString, artdaqNode.first, parentEl);
 
-				auto parentEl = xmlOut.addTextElementToData(typeString, artdaqApp.applicationUID_);
+			paramIndex = 3;  // start at 3 after subsystem parameter
+			if(artdaqNode.second.size() > paramIndex)
+				xmlOut.addTextElementToParent(
+				    typeString + "-multinode", artdaqNode.second[paramIndex++], nodeEl);
+			if(artdaqNode.second.size() > paramIndex)
+				xmlOut.addTextElementToParent(typeString + "-nodefixedwidth",
+				                              artdaqNode.second[paramIndex++],
+				                              nodeEl);
+			if(artdaqNode.second.size() > paramIndex)
+				xmlOut.addTextElementToParent(
+				    typeString + "-hostarray", artdaqNode.second[paramIndex++], nodeEl);
+			if(artdaqNode.second.size() > paramIndex)
+				xmlOut.addTextElementToParent(typeString + "-hostfixedwidth",
+				                              artdaqNode.second[paramIndex++],
+				                              nodeEl);
 
-				xmlOut.addTextElementToParent(typeString + "-contextAddress",
-				                            artdaqContext->address_, parentEl);
-				xmlOut.addTextElementToParent(typeString + "-contextPort",
-				                            std::to_string(artdaqContext->port_),
-											parentEl);
+			paramIndex = 0;  // return to starting parameter
+			xmlOut.addTextElementToParent(
+			    typeString + "-status", artdaqNode.second[paramIndex++], parentEl);
+			xmlOut.addTextElementToParent(
+			    typeString + "-hostname", artdaqNode.second[paramIndex++], parentEl);
+			xmlOut.addTextElementToParent(
+			    typeString + "-subsystem", artdaqNode.second[paramIndex], parentEl);
+		}
+	}  // end processor type handling
 
-				std::map<int /*subsystem ID*/,
-					ARTDAQTableBase::SubsystemInfo> subsystems;
-				std::map<ARTDAQTableBase::ARTDAQAppType,
-					std::list<ARTDAQTableBase::ProcessInfo>>	processes;
-
-				ARTDAQTableBase::extractArtdaqInfo(
-						XDAQContextTable::getSupervisorConfigNode(cfgMgr,
-								artdaqContext->contextUID_,
-								artdaqApp.applicationUID_),
-						subsystems,
-						processes
-				);
-
-				__SUP_COUT__ << "========== " <<
-						"Found " << subsystems.size() << " subsystems." << __E__;
-
-				for(auto& subsystem : subsystems)
-				{
-					const std::string subtypeString = "subsystem";
-
-					__SUP_COUT__ << "\t\t" << "Found " << subtypeString <<
-							" " << subsystem.first <<
-							" \t := '" << subsystem.second.label << "'" << __E__;
-
-					xmlOut.addTextElementToParent(subtypeString + "-name",
-							subsystem.second.label,
-							parentEl);
-					xmlOut.addTextElementToParent(subtypeString + "-id",
-							std::to_string(subsystem.first),
-							parentEl);
-
-
-					xmlOut.addTextElementToParent(subtypeString + "-sourcesCount",
-							std::to_string(subsystem.second.sources.size()),
-							parentEl);
-
-					//destination
-					xmlOut.addTextElementToParent(subtypeString + "-destination",
-							std::to_string(subsystem.second.destination),
-							parentEl);
-
-				} //end subsystem handling
-
-				__SUP_COUT__ << "========== " <<
-						"Found " << processes.size() << " process types." << __E__;
-
-				for(unsigned int i = 0; i < 4 /*process type count*/; ++i)
-				{
-					const std::string& subtypeString = ARTDAQTableBase::getTypeString(
-							artdaqProcessTypes[i]);
-
-					auto it = processes.find(artdaqProcessTypes[i]);
-					if(it == processes.end())
-					{
-						__SUP_COUT__ << "\t" << "Found 0 " << subtypeString << __E__;
-						continue;
-					}
-					__SUP_COUT__ << "\t" << "Found " << it->second.size() << " " <<
-							subtypeString << "(s)" << __E__;
-
-					for(auto& artdaqProcess : it->second)
-					{
-
-						__SUP_COUT__ << "\t\t" << "Found '" << artdaqProcess.label << "' " <<
-								subtypeString << __E__;
-
-						xmlOut.addTextElementToParent(subtypeString + "-name",
-								artdaqProcess.label,
-								parentEl);
-						xmlOut.addTextElementToParent(subtypeString + "-hostname",
-								artdaqProcess.hostname,
-								parentEl);
-						xmlOut.addTextElementToParent(subtypeString + "-subsystem",
-								std::to_string(artdaqProcess.subsystem),
-								parentEl);
-					}
-				} //end processor type handling
-
-			}  // end artdaq app loop
-		}      // end artdaq context loop
-	}          // end artdaq type loop
-
-
-	__SUP_COUT__ << "Done getting artdaq nodes." << __E__;
+	__SUP_COUT__ << "Done retrieving artdaq nodes." << __E__;
 
 }  // end handleGetArtdaqNodeRecordsXML()
+
+//========================================================================================================================
+// handleSaveArtdaqNodeRecordsXML
+//	save artdaq nodes into active groups
+//
+// parameters
+//	modifiedTables := CSV of table/version pairs
+//
+void ConfigurationGUISupervisor::handleSaveArtdaqNodeRecordsXML(
+    const std::string&      nodeString,
+    const std::string&      subsystemString,
+    HttpXmlDocument&        xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+    const std::string&      modifiedTables)
+{
+	__SUP_COUT__ << "Saving artdaq nodes..." << __E__;
+
+	//	setup active tables based on active groups and modified tables
+	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
+
+	// start node object extraction from nodeString
+	std::map<std::string /*type*/,
+	         std::map<std::string /*record*/, std::vector<std::string /*property*/>>>
+	    nodeTypeToObjectMap;
+	{
+		// nodeString format:
+		//	<type>:<nodeName>=<originalName>,<hostname>,<subsystemName>;<nodeName>=<originalName>,<hostname>,<subsystemName>;
+		//	... |<type>:...|
+		//	repeat | separated types
+		std::map<std::string /*type*/, std::string /*typeRecordSetString*/>
+		    nodeTypeToStringMap;
+		StringMacros::getMapFromString(nodeString, nodeTypeToStringMap, {'|'}, {':'});
+
+		__SUP_COUTV__(StringMacros::mapToString(nodeTypeToStringMap));
+
+		for(auto& typePair : nodeTypeToStringMap)
+		{
+			if(typePair.first == "")
+				continue;  // skip empty names
+
+			__SUP_COUTV__(StringMacros::decodeURIComponent(typePair.first));
+
+			nodeTypeToObjectMap.emplace(
+			    std::make_pair(StringMacros::decodeURIComponent(typePair.first),
+			                   std::map<std::string /*record*/,
+			                            std::vector<std::string /*property*/>>()));
+
+			std::map<std::string /*node*/, std::string /*nodeRecordSetString*/>
+			    nodeRecordToStringMap;
+
+			StringMacros::getMapFromString(
+			    typePair.second, nodeRecordToStringMap, {';'}, {'='});
+
+			__SUP_COUTV__(StringMacros::mapToString(nodeRecordToStringMap));
+
+			for(auto& nodePair : nodeRecordToStringMap)
+			{
+				if(nodePair.first == "")
+					continue;  // skip empty names
+
+				__SUP_COUTV__(StringMacros::decodeURIComponent(nodePair.first));
+
+				std::vector<std::string /*property*/> nodePropertyVector;
+
+				StringMacros::getVectorFromString(
+				    nodePair.second, nodePropertyVector, {','});
+
+				__SUP_COUTV__(StringMacros::vectorToString(nodePropertyVector));
+
+				// decode all properties
+				for(unsigned int i = 0; i < nodePropertyVector.size(); ++i)
+				{
+					__SUP_COUTV__(
+					    StringMacros::decodeURIComponent(nodePropertyVector[i]));
+
+					nodePropertyVector[i] =
+					    StringMacros::decodeURIComponent(nodePropertyVector[i]);
+				}
+
+				nodeTypeToObjectMap[typePair.first].emplace(
+				    std::make_pair(StringMacros::decodeURIComponent(nodePair.first),
+				                   nodePropertyVector));
+			}
+		}
+	}  // end node object extraction from nodeString
+
+	// start subsystem object extraction from subsystemString
+	std::map<std::string /*subsystemName*/, std::string /*destinationSubsystemName*/>
+	    subsystemObjectMap;
+	{
+		// subsystemString format:
+		//	<name>:<destination>;<name>:<destination>; ...;
+		//	repeat ; separated subsystems
+
+		std::map<std::string /*subsystemName*/, std::string /*destinationSubsystemName*/>
+		    tmpSubsystemObjectMap;
+		StringMacros::getMapFromString(
+		    subsystemString, tmpSubsystemObjectMap, {';'}, {':'});
+
+		__SUP_COUTV__(StringMacros::mapToString(tmpSubsystemObjectMap));
+
+		// decode all values (probably unnecessary, but more future proof)
+		for(auto& subsystemPair : tmpSubsystemObjectMap)
+		{
+			__SUP_COUTV__(StringMacros::decodeURIComponent(subsystemPair.first));
+			__SUP_COUTV__(StringMacros::decodeURIComponent(subsystemPair.second));
+
+			subsystemObjectMap.emplace(
+			    std::make_pair(StringMacros::decodeURIComponent(subsystemPair.first),
+			                   StringMacros::decodeURIComponent(subsystemPair.second)));
+		}
+	}  // end subsystem object extraction from subsystemString
+
+	ARTDAQTableBase::setAndActivateARTDAQSystem(
+	    cfgMgr, nodeTypeToObjectMap, subsystemObjectMap);
+
+	__SUP_COUT__ << "Done saving artdaq nodes." << __E__;
+}  // end handleSaveArtdaqNodeRecordsXML()
 
 //========================================================================================================================
 // handleLoadArtdaqNodeLayoutXML
@@ -6331,11 +6671,11 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 
 	const std::string& finalContextGroupName =
 	    usingActiveGroups
-	        ? cfgMgr->getActiveGroupName(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        ? cfgMgr->getActiveGroupName(ConfigurationManager::GroupType::CONTEXT_TYPE)
 	        : contextGroupName;
 	const TableGroupKey& finalContextGroupKey =
 	    usingActiveGroups
-	        ? cfgMgr->getActiveGroupKey(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        ? cfgMgr->getActiveGroupKey(ConfigurationManager::GroupType::CONTEXT_TYPE)
 	        : contextGroupKey;
 
 	std::stringstream layoutPath;
@@ -6412,11 +6752,11 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
 
 	const std::string& finalContextGroupName =
 	    usingActiveGroups
-	        ? cfgMgr->getActiveGroupName(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        ? cfgMgr->getActiveGroupName(ConfigurationManager::GroupType::CONTEXT_TYPE)
 	        : contextGroupName;
 	const TableGroupKey& finalContextGroupKey =
 	    usingActiveGroups
-	        ? cfgMgr->getActiveGroupKey(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT)
+	        ? cfgMgr->getActiveGroupKey(ConfigurationManager::GroupType::CONTEXT_TYPE)
 	        : contextGroupKey;
 
 	__SUP_COUTV__(layoutString);

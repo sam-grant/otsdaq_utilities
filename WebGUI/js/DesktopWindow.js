@@ -114,7 +114,9 @@ else {
 		this.getWindowHeaderHeight = function() { return _defaultHeaderHeight; }
 		this.isMaximized = function() {return _isMaximized && !_isMinimized;} //make sure the maximized window is visible
 		this.isMinimized = function() {return _isMinimized;}
-				
+
+
+		// bringing window to foreground then back to original location for refresh
 		this.setWindowZ = function(z) { 
 			//console.log("z",z,this.getWindowName());
 			_z = z; this.windiv.style.zIndex = _z; 

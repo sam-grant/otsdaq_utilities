@@ -1,652 +1,30 @@
 <!DOCTYPE HTML>
-<html lang="en"> 
+<html lang="en">
 	<head>
 		<title>Slow Controls Dashboard</title>
-		<style type="text/css">			
-			body {
-				background-color: rgb(255,204,0);
-		    	overflow-x: hidden;
-	    		overflow-y: hidden;
-				transition: background-color .25s;
-			
-			}
-			
-			iframe{
-				padding: 0
-				border: 0px 0px 0px 0px;
-				frameBorder=0;
-				hspace=0;
-				vspace=0;
-				marginheight=0;
-				marginwidth=0;
-			}
-			
-			#clearDiv {
-				clear: both;
-			}
-			
-			
-			#fileBlock {
-				  border: none;
-				  marginheight = 0;
-				  transition: margin-left .25s;
-//		    	//transition: width 0.5s;
-//				  background: red; /* For browsers that do not support gradients */
-//				  background: -webkit-linear-gradient(left, red , yellow); /* For Safari 5.1 to 6.0 */
-//				  background: -o-linear-gradient(right, red, yellow); /* For Opera 11.1 to 12.0 */
-//				  background: -moz-linear-gradient(right, red, yellow); /* For Firefox 3.6 to 15 */
-//				  background: linear-gradient(to right, red , yellow); /* Standard syntax */
-			}
-			}				
 
-			#mainBlock {
-			    //transition: margin-left 10s;
-			  	transition: left .25s;
-				background-color: rgb(250,250,250);
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/SlowControlsDashboard.css">
 
-			}
-			.editMode {
-				background-color: rgba(255, 59, 48, 0.4);
-
-			}
-			
-			#editBlock {
-				transition-timing-function: ease-out;
-				transition: margin-bottom .5s;
-				-webkit-transition-timing-function: ease-out;
-				-webkit-transition: margin-bottom .5s;
-				overflow: hidden;
-				//background-color: rgb(200,0,0);
-			}
-			
-			.widgetCover {
-				z-index: 9;
-//			  	background-color: rgba(239, 28, 190, 0.6);
-
-			}
-			
-			.resizeWidgetCover {
-				outline: dashed thin;
-
-			}
-		
-			//Sides			
-
-			.resizeWidgetCoverTop {
-				cursor: ns-resize !important;
-			}
-			
-			.resizeWidgetCoverBottom {
-				cursor: ns-resize !important;
-			}
-			
-			.resizeWidgetCoverRight {
-				cursor: ew-resize !important;
-			}
-
-			.resizeWidgetCoverLeft {
-				cursor: ew-resize !important;
-			}
-			
-
-			//Corners
-			.resizeWidgetCoverTopLeft {
-				cursor: nwse-resize !important;
-			}
-			
-			.resizeWidgetCoverTopRight {
-				cursor: nesw-resize !important;
-			}
-			
-			
-			.resizeWidgetCoverBottomLeft {
-				cursor: nesw-resize !important;
-			}
-			
-			.resizeWidgetCoverBottomRight {
-				cursor: nwse-resize !important;
-			}
-			
-			
-			.mainBlock {
-			    transition: background-color .25s;
-				position:absolute;
-
-			}
-			
-			.ghost-active {
-				display: block !important;
-			}
-
-			.ghost-select > span {
-				background-color: rgba(255, 45, 85, 0.6);
-			  	border: 1px solid #b20e8c;
-			  	width: 100%;
-			  	height: 100%;
-			  	float: left;
-			}
-
-
-			.ghost-select {
-				display: none;
-			  	z-index: 10;
-				position: absolute !important;
-			  	cursor: default !important;
-			}
-			
-			
-			.popup{
-	        	width:400px;
-	        	height:320px;
-	        	background-color: #002540;
-	        	z-index:9;
-	        	position: fixed;
-				top: 40%;
-				left: 50%;
-				margin-top: -100px;
-				margin-left: -200px;
-				opacity:0.9;
-				border-radius:5px;
-				padding:6px;
-				color:#c4e9f5;
-				border: 2px solid #c4e9f5;
-        	}
-        	
-        	#popupSaveControlsPage{
-        		display:none;
-       	 	}
-
-			.cursor-default {
-				cursor: default !important;
-			}
-
-			.cursor-grabbing {
-				cursor: grabbing !important;
-			}
-			
-
-			.cover {
-			    transition: background-color .25s;
-		        z-index: 4;
-				position:absolute;
-			}
-			
-			.action-required {
-				border: 10px solid rgb(255, 204, 0);
-			  	box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
-		  		-webkit-box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
-				-moz-box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);				
-			}
-			
-			
-			#addPVMenuDiv {
-				margin: auto;
-				position: absolute;
-				display: none;
-				height: auto;
-				width: 28%;
-				top: 30%;
-				left: 36%;
-				z-index: 32;
-
-				box-shadow: 1px 1px 2px #cfcfcf;
-				
-
-			}
-			
-			#addPVMenu {
-				position: relative;
-				top: 0px;
-				left: -1px;
-				height: 100%;
-				width: 100%;
-				background-color: rgba(178,178,178,0.9);
-				border: solid 2px rgba(0,0,0,0.5);
-				border-radius: 1px;
-				
-			}
-			
-			
-			#contextMenuDiv {
-				position: absolute;
-				z-index: 10;
-			}
-			
-			#hotkeyMenuDiv {
-				z-index: 10;	
-				margin: auto;
-				height: auto;
-				width: auto;
-				position: absolute;
-				top: 0px;
-				left: 0px;
-			    -webkit-animation-name: animatetop;
-			    -webkit-animation-duration: 0.4s;
-		    	-moz-animation-name: animatetop;
-		    	-moz-animation-duration: 0.4s;
-				animation-name: animatetop;
-			    animation-duration: 0.4s;
-			}
-			
-			.menu {
-				display: none;
-				position: absolute;
-			  	z-index: 10;
-				background-color: rgba(0, 0, 0, 0.7);
-				padding: 12px 0;
-				width: 240px;
-				border: solid 1px #dfdfdf;
-				box-shadow: 1px 1px 2px #cfcfcf;
-			}
-			.menu--active {
-			  display: block;
-			}
-			
-			.menu__items {
-				list-style: none;
-				margin: 0;
-				padding: 0;
-				background-color: transparent !important;
-
-			}
-
-			.menu__item {
-				display: block;
-				margin-bottom: 4px;
-			}
-
-			.menu__item:last-child {
-			  margin-bottom: 0;
-			}
-
-			.menu__link {
-			    display: block;
-			    padding: 4px 12px;
-			    color: #d3d3d3;
-			    text-decoration: none;
-				background-color: transparent;
-			}
-			
-			.menu__setting {
-				position:absolute;
-				right: 5px;
-				color: rgb(255, 59, 48);
-				//color: #ff0000;
-				width: 60%;
-				text-align: right;
-			}
-			
-			.menu__spacer {
-				width: 35%;
-				height: 100%;
-			}
-			
-			.menu__label {
-			    display: block;
-			    padding: 4px 12px;
-				color: rgba(0, 0, 0, 0.8) !important;
-				background-color: #d3d3d3 !important;
-			    text-decoration: none;
-				font-weight: bold;
-			}
-			.menu__link:hover {
-				color: rgba(0, 0, 0, 0.8) !important;
-				background-color: #d3d3d3 !important;
-			}
-			
-			.menu__button {
-				width: 100%;
-				background-color: rgba(0,0,0,0.6);
-				color: #fff;
-				font: bold "lucida grande", sans-serif;
-				padding: 3px 5px;
-				padding-top: 2.5%;
-				padding-bottom: 2.5%;
-				text-align: center;
-				border:none;
-			}
-			
-			.addPVMenuInput {
-				border-bottom: 1px solid rgba(0,0,0,0.5) !important;
-				color: rgba(0,0,0,0.8) !important;
-			}
-			
-			.hud {
-				z-index: 20;
-				//background-color: rgba(250, 250, 250, 0.8);
-				color: rgba(0, 0, 0, 0.8);
-				position: absolute;
-				left: 2%;
-				top: 2%;
-				height: 4%;
-				width: 20%;
-//				border-style: solid double;
-//				border-color: #d3d3d3;
-				text-align: left;
-				vertical-align: middle;
-
-			}
-
-			
-			#navigationBarDiv {
-				top: 0%;
-				left: 0%;
-			}
-			
-			#navigationMenu {
-				padding: 0px !important;
-			    margin: 0px;
-				list-style:none;
-			    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:13px;   
-			    text-shadow: 0 -1px 3px #202020;
-				top: 0%;
-				left: 0%;
-			    width:100%;
-				z-index: 15;			    
-			    -moz-border-radius:4px;
-			    -webkit-border-radius:4px;
-			    border-radius:4px;			    
-
-			}
-			 
-			#navigationMenu li {
-			    display:block; 
-				float:left; 
-				border-right:1px solid #5d5d5d; 
-				border-left:1px solid #929292; 
-				width: 30%;
-				height:5%; 
-				border-bottom:1px solid #575757; 
-				border-top:1px solid #797979;
-				padding: 0px !important;
-			    margin: 0px;			 
-			    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #787878), color-stop(0.5, #5E5E5E), color-stop(0.51, #707070), color-stop(1, #838383));
-			    background-image: -moz-linear-gradient(center bottom, #787878 0%, #5E5E5E 50%, #707070 51%, #838383 100%);
-			    background-color:#5f5f5f; 
-			}
-			 
-			#navigationMenu li:hover {
-			    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
-			    background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
-			    background-color:#383838; 
-			    
-			    -moz-box-shadow: inset 0 0 5px 5px #535353;
-			    -webkit-box-shadow: inset 0 0 5px 5px #535353;
-			    box-shadow: inset 0 0 5px 5px #535353;
-			}
-			 
-			#navigationMenu li:active {
-			    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
-			    background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
-			    background-color:#383838; 
-			    
-			    -moz-box-shadow: inset 0 1px 2px 2px #000;
-			    -webkit-box-shadow: inset 0 1px 2px 2px #000;
-			    box-shadow: inset 0 1px 2px 2px #000;
-			}
-			 
-			#navigationMenu li a {
-			    color:white; 
-				text-decoration:none;
-				text-align:center; 
-				display:block; 
-				line-height:34px;
-				outline:none; 
-			}
-			 
-			
-			 
-			#navigationMenu li:first-child {
-			    -moz-border-radius:4px 0 0 4px;
-			    -webkit-border-radius:4px 0 0 4px;
-			    border-radius:4px 0 0 4px;
-			    
-			    border-left:none;
-			}
-			 
-			 
-			#navigationMenu li:last-child {
-			    -moz-border-radius:0 4px 4px 0;
-			    -webkit-border-radius:0 4px 4px 0;
-			    border-radius:0 4px 4px 0;
-			    border-right:none;   
-			    //width:124px;
-			}
-			 
-			#navigationMenu {
-				position:absolute;
-				left: 4.5%;
-				top: 1%;
-				display: none:
-			}
-			
-			.navigationMenu--active {
-				display: block;
-				z-index: 15;
-			    -webkit-animation: showMenu 1s;
-		     	-moz-animation: showMenu 1s;
-		     	animation: showMenu 1s;
-			}
-
-			.navigationMenu--Edit {
-
-                              background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #     434343), color-stop(1, #555555));   
-                              background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
-                              background-color:#383838;
-  
-                              -moz-box-shadow: inset 0 0 5px 5px #535353;
-                              -webkit-box-shadow: inset 0 0 5px 5px #535353;
-                              box-shadow: inset 0 0 5px 5px #535353;
-			}
-
-
-
-			.HUD-coordinates-container {
-			  position: absolute;
-  			  bottom: 15px;
-                          right: 16px;
-			
-			  background-color: #757575;
-			  border-left: 15px solid #757575;
-			  border-right: 15px solid #757575;
-			  padding: 2.5px;
-			  margin: 5px;
-			  opacity: 0.3;
-			  z-index: 40;
-			  font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:13px;   
-			  color:white !important;
-              text-decoration:none;
-              text-align:center;
-              display:block;
-              line-height:34px;
-              outline:none;
-			
-                          transition-timing-function: ease-out;
-                          transition: bottom .5s;
-                          -webkit-transition-timing-function: ease-out;
-                          -webkit-transition: bottom .5s;
-			}
-		
-			.HUD-coordinates-container:hover {
-			
-			 opacity: 0.7 !important;
-
-			}
-	
-			.editWidgetAttributesPopup-container {
-				position: absolute;
-				display: none;
-				z-index: 100;
-				top: 0%;
-				left: 10%;
-				background-color: rgba(0, 0, 0, 0.8);
-				border: 1px solid #888;
-			    	width: 80%;
-				height: 80%;	
-			    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
-			    -webkit-animation-name: animatetop;
-			    -webkit-animation-duration: 0.4s;
-		    	-moz-animation-name: animatetop;
-		    	-moz-animation-duration: 0.4s;
-				animation-name: animatetop;
-			    animation-duration: 0.4s;
-			}
-			
-			.editWidgetAttributesPopup-header {
-				position: absolute;
-				top: 0%;
-				left: 0%;
-				height: 10%;
-				width: 100%;
-				background-color: rgba(48, 45, 45, 0.7);
-				
-			}
-			
-			.editWidgetAttributesPopup-body {
-				background-color: rgba(76, 76, 76, 0.7);
-				position: absolute;
-				top: 10%;
-				left: 20%;
-				height: 80%;
-				width: 80%
-				overflow-y: scroll;
-				overflow-x: hidden;
-
-			}
-
-			.editWidgetAttributesPopup-menu {
-				background-color: rgba(53, 53, 53, 0.3);
-				position: absolute;
-				top: 10%;
-				left: 0%;
-				height: 80%;
-				width: 20%;
-			}
-			
-			.editWidgetAttributesPopup-footer {
-				position: absolute;
-				top: 90%;
-				left: 0%;
-				width: 100%;
-				height:10%;
-				background-color: rgba(48, 45, 45, 0.7);
-
-			}
-			
-			.editableInput {
-				text-decoration: none;
-				background-color: transparent;
-				border: none;
-				padding: 0px;
-				margin: 0px;
-				outline: none;
-				color: rgba(211,211,211, 0.8);
-				width: 100%;
-				height: 90%;
-			}
-			
-
-			.editPopupButton {
-				color: #fff;
-				text-shadow: -1px 1px #666666;
-				background-color: #333333;
-				background-image: linear-gradient(top, #808080, #666666);
-				box-shadow: inset 0 0 0 1px #333333;
-				border: none;
-				border-radius: 5px;
-				height: 50%;
-				width: 15%;
-				position:absolute;
-				top: 25%;
-			}
-
-			.editPopupButton:hover,
-			.editPopupButton.hover {
-			  box-shadow: inset 0 0 0 1px #262626,0 5px 15px #191919;
-			}
-
-			.editPopupButton:active,
-			.editPopupButton.active {
-			  box-shadow: inset 0 0 0 1px #262626, inset 0 5px 30px #191919;
-			}
-			
-			.widgetPopupTable {
-				width: 100%;
-				border-spacing: 0px;
-				border-collapse: collapse;
-			}
-			
-			
-			tr.widgetPopupTable {
-				width: 100%;
-			}
-
-			tr.widgetPopupTable {
-			    background-color: rgba(154,154,154,0.8);
-			}					
-			
-			tr:nth-child(even).widgetPopupTable {
-			    background-color: rgba(198,198,198, 0.8);
-			}
-			td.widgetPopupTable {
-			    border: 1px solid rgba(154,154,154,0.8);
-			}
-
-	
-			
-			/* Animations */
-			@-webkit-keyframes animatetop {
-			    from {top: -300px; opacity: 0} 
-			    to {top: 1%; opacity: 1}
-			}
-			@-moz-keyframes animatetop {
-			    from {top: -300px; opacity: 0}
-			    to {top: 1%; opacity: 1}
-			}
-			@keyframes animatetop {
-			    from {top: -300px; opacity: 0}
-			    to {top: 1%; opacity: 1}
-			}
-			/* Fade in animation (Webkit only) */
-			@-webkit-keyframes showMenu {
-			    from { opacity: 0; top:-20px; }
-			    to   { opacity: 1; }
-			}
-			@-moz-keyframes animatetop {
-				from { opacity: 0; top:-20px; }
-			    to   { opacity: 1; }
-			}
-			@keyframes animatetop {
-				from { opacity: 0; top:-20px; }
-			    to   { opacity: 1; }
-			}
-			
-			
-		</style>
-		
-		
-		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
 
-		
-		<script>		
-			
-			
-		
-			//functions:			
-				//init()					
-				
+		<script>
+
+			//functions:
+			//init()
+
 			//top-level scope (global) variables:
-			var pvList_ = [];
+			var pvList_ = {};
 			var elPointer_ = {};
 			var pagesList_ = [];
-			var fileBlock_ = {name:"", isHidden:false, el:"", savePopup:""};// = ["fileBlock", false ];
-			var mainBlock_ = {name:"", isHidden:false, el:""};// = ["mainBlock", false ];
-			var editBlock_ = {name:"", isHidden:true, el:""};// = [false ];
+			var fileBlock_ = {name:"", isHidden:false, el:"", savePopup:""}; // = ["fileBlock", false ];
+			var mainBlock_ = {name:"", isHidden:false, el:""}; // = ["mainBlock", false ];
+			var editBlock_ = {name:"", isHidden:true, el:""}; // = [false ];
 			var page_ = page_ || {}; //define the namespace
-			var refreshRate_ = 15000;  //set default to refresh every 15 seconds (ms)
+			var PAGE_POSITIONS_ = 1000; //number of allowed integer locations (e.g. x,y,w,h for widgets) 
+			var refreshRate_ = 15000; //set default to refresh every 15 seconds (ms)
 			var timerVariable_;
 			var UID_ = 0;
 			var timeToPoll_ = false;
@@ -655,69 +33,76 @@
 			var mailbox_;
 			var ADMIN_PERMISSION_THRESHOLD = 255;
 			var userPermission = 10;
-			//BEGIN 
+
+			//BEGIN
 			var xPos_;
 			var yPos_;
 			//END
+
 			//BEGIN Context Menu
 			var menuState_ = 0;
 			var menu_;
 			var menuDiv_;
 			var activeMenu_ = "menu--active";
 			//END Context Menu
+
 			var nav_;
 			var gridColor_;
 			var addPVMenuDiv_;
 			var addPVMenu_;
-			var hud_;
-			var hudContainer_;
 			var isReadOnly_;
 			page_.createPage = function(){
-				
+
 				this.name = "MyPage";
 				this.widgets = {};
 				this.addPV = function(pv){
 					console.log("Reached " + pv);
-					
 				}
-				
 			}
+
 			//BEGIN Drag
+			var newWidget_ = false;
 			var x_Pos_forDrag_;
 			var y_Pos_forDrag_;
 			var id_forDrag_;
 			var target_forDrag;
-			//END Drag	
-			var setupForDrawing_;	
+			var drawingSelectionRectangle_ = false;
+			//END Drag
+
+			//BEGIN Resize
+			var resizeLockout_ = false;
+			var resizeId_ = "";
+			var resizeFrom_ = "";
+			var _saveCursorType;
+			//END Resize
+
+			var setupForDrawingID_ = undefined;
 			hotkey_ = [];
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 
+
+			//=====================================================================================
 			//init called once body has loaded
-			function init() {			
-				
+			function init() {
+
 				Debug.log("init() was called");
 
 				var parameterPageName = DesktopContent.getParameter(0,"page_name");				
 
 				Debug.log("Parameter filename: " + parameterPageName);
-				
+
 				fileBlock_.el = document.getElementById('fileBlock');//red
 				fileBlock_.savePopup = document.getElementById('popupSaveControlsPage');
 				mainBlock_.el = document.getElementById('mainBlock');//yellow
 				editBlock_.el = document.getElementById('editBlock');//green
-				hudContainer_ = document.getElementById('HUD-coordinates-container');
 				page_.createPage;
 				widgetLibrary.init;
 
 				fileBlock_.name = fileBlock_.el.id;
 				mainBlock_.name = mainBlock_.el.id;
 				editBlock_.name = editBlock_.el.id;
-				
-				mainBlock_.el.style.cursor = "grab";
-				mainBlock_.el.addEventListener("mousedown", startDrag, true);
 
-				
 				var datalist = document.getElementById("pvDatalist");//document.createElement("datalist");
 				isReadOnly_ = false;
 
@@ -725,22 +110,15 @@
 				elPointer_["addPVMenuDiv"] = document.getElementById("addPVMenuDiv");
 				elPointer_["editWidgetAttributesPopup-body-pvlist"] = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				elPointer_["editWidgetAttributesPopup-body-attributes"] = document.getElementById("editWidgetAttributesPopup-body-attributes");
-				//elPointer_["editWidgetAttributesPopup-body-macromaker"] = document.getElementById("editWidgetAttributesPopup-body-macromaker");
 				elPointer_["hotkeyMenuDiv"] = document.getElementById("hotkeyMenuDiv");
 				elPointer_["hotkeyMenuDiv"].style.display = "none";
-					
+
 				menuDiv_ = document.getElementById("contextMenuDiv");
 				menu_= document.getElementById("contextMenu");
-				//menu_.addEventListener("mouseleave", toggleContextMenuOff, true);
-				hud_ = document.getElementById("coordinatesHUD");
 				mailbox_ = document.getElementById("mailbox");
 				var myTimer = setInterval(checkMailbox, 1000);
-				setupForDrawing_ = false;
-//				addPVMenuDiv_ = document.getElementById("addPVMenuDiv");
-//				addPVMenu_ = document.getElementById("addPVMenu");
+				setupForDrawingID_ = undefined;
 
-				
-				//COMMENTED(4.8.19)DesktopContent.XMLHttpRequest("Request?RequestType=getPages", "", pagesReqHandler);//, undefined, undefined, "sequence");	
 			 	DesktopContent.XMLHttpRequest(
                                 	"Request?RequestType=getPages",
                                          "", 
@@ -749,23 +127,23 @@
                                          0 /*progressHandler*/, 
                                          0 /*callHandlerOnErr*/, 
                                          true /*doNoShowLoadingOverlay*/);
-				pagesList_ = "Loading";
-				DesktopContent.XMLHttpRequest(
+			                 pagesList_ = "Loading";
+			   	         DesktopContent.XMLHttpRequest(
 				                    "Request?RequestType=isUserAdmin",
 				                    "",
 				                    isUserAdminHandler);
 
+				//get command string if opening a new window
+				var cmdStr = DesktopContent.getParameter(2); //from  location.search
+				if (cmdStr && cmdStr != "") {
+					//do incoming commands!
+					Debug.log("cmdStr=" + cmdStr);
+					//replace %22 with "
+					cmdStr = cmdStr.replace(/%22/g, "\"");
+					//evaluateJS(cmdStr);
+				}
+
 				//get frame and set some text to loading
-
-//				DesktopContent.XMLHttpRequest(
-//					"Request?RequestType=getList",
-//					"", 
-//					pvListReqHandler,
-//					0 /*reqParam*/, 
-//					0 /*progressHandler*/, 
-//					0 /*callHandlerOnErr*/, 
-//					true /*doNoShowLoadingOverlay*/);
-
 				var fileFrame = document.createElement("iframe");
 				fileFrame.id = "fileFrame";
 				fileFrame.src = "/WebPath/html/SlowControlsDashboardFileTree.html";
@@ -775,7 +153,7 @@
 				fileBlock_.el.style.border = "0";
 				fileBlock_.el.appendChild(fileFrame);
 				fileBlock_.isHidden = true;
-				
+
 				var editFrame = document.createElement("iframe");
 				editFrame.id = "editFrame";
 				editFrame.src = "/WebPath/html/SlowControlsDashboardEdit.html";
@@ -784,67 +162,72 @@
 				editBlock_.el.innerHTML = "";
 				editBlock_.el.style.border = "0";
 				editBlock_.el.appendChild(editFrame);
-				
-				
+
 				//BEGIN JS Style
 				mainBlock_.el.style["background-color"] = "rgb(250, 250, 250)";
 				gridColor_ = "rgba(128, 128, 128, 0.3)"
 				toggleGrid(true);
-				//console.log("*************************888888888888888888888888888888");
 				console.log(("-" + fileBlock_.el.style.width));
 				fileBlock_.el.style.left = "-4000px"; //hack because the file tree page probably didnt load by now
-				editBlock_.el.style.bottom = "-4000px";//hack because the edit page probably didnt load by now
+				editBlock_.el.style.bottom = "-4000px"; //hack because the edit page probably didnt load by now
 				backgroundCover_ = "rgba(87,87,87, 0.6)";
 				nav_ = document.getElementById("navigationMenu");
 				nav_.classList.add("navigationMenu--active");
+				//END JS Style
 
-				//END JS Style 
-			
-				Debug.log(parameterPageName);
-					
-			
-				window.onresize = redrawWindow;
+				Debug.log(parameterPageName);	
+
+				//window.onresize = redrawWindow;
+
+				//mainBlock_.el.removeEventListener("mousedown", startDrag, true);
+				document.body.addEventListener("mousedown", handleMouseDown); //drawSelectionRectangle(id), false);
+				document.body.addEventListener("mouseup", handleMouseUp);
+				document.body.addEventListener("mousemove", handleMouseMove);
+
 				redrawWindow(); //redraw window for first time
 
+				if(parameterPageName == undefined)
+			    {
+                        toggleEditMode();
+                }
+                else
+                {
+                	Debug.log("Loading page from url");
+                	loadPage(parameterPageName);
+                }
+			} //end init()
 
-				 if(parameterPageName == undefined)
-                 {
-                 	toggleEditMode();
-                 }
-                 else
-                 {
-                 	Debug.log("Loading page from url");
-                 	loadPage(parameterPageName);
-                 }
-			}
 
-            function checkMailbox(){
-            	if(mailbox_.innerHTML != "")
-            	{
-            		Debug.log("There is new mail: " + mailbox_.innerHTML);
-            		var msg = mailbox_.innerHTML;
-            		mailbox_.innerHTML = "";
-            		handleMail(msg);
-           		}
-            }
-            
-            function handleMail(mail) {
-            	
-            	if(mail == "Save") {
-            		savePage();
+			//=====================================================================================
+			function checkMailbox()
+			{
+				if(mailbox_.innerHTML != "")
+				{
+					Debug.log("There is new mail: " + mailbox_.innerHTML);
+					var msg = mailbox_.innerHTML;
+					mailbox_.innerHTML = "";
+					handleMail(msg);
+				}
+			} //end checkMailbox()
 
-            	}
-            	else
-            	{
-            		
-            		Debug.log("Don't know what to do with mail: " + mail);
-            	}
-            	
-            }
-            
-	
-			function pagesReqHandler(req){
-			
+
+			//=====================================================================================
+			function handleMail(mail)
+			{
+                if(mail == "Save") {
+                   savePage();
+                }
+                else
+                {
+                   Debug.log("Don't know what to do with mail: " + mail);
+                }
+			} //end  handleMail()
+
+
+			//=====================================================================================
+			function pagesReqHandler(req)
+			{
+
 				pagesList_ = []; //overwrite the loading text
 
 				console.log(req.responseText);
@@ -857,66 +240,70 @@
 						//console.log(pagesJSON[x]);
 						pagesList_.push(pagesJSON[x]);
 					}
-				}else
-				{
-					
+				}
+				else
+				{	
 					console.log("No pages found in server!");
 				}
-			}
-			
-			function isUserAdminHandler(req)
-	        {
-		        Debug.log("getPermissionHandler() was called. " + req.responseText);//Req: " + req.responseText);
-				
-		         isAdmin = JSON.parse(decodeURIComponent(DesktopContent.getXMLValue(req, "JSON")))["message"];
-		         console.log("User Permission: " + isAdmin);
-		         console.log(isAdmin);
-		         
-		         if(isAdmin == "Yes")
-		         {
-		         	isReadOnly_ = false;
-		         }
-		         else
-		         {
-		         	isReadOnly_ = true;
-		         }
-		         
-		         console.log("Interface isReadOnly=" + isReadOnly_);
-		         redrawWindow();
-	        }
+			} //end pagesReqHandler()
 
-			function pvListReqHandler(req){
-				
+
+			//=====================================================================================
+			function isUserAdminHandler(req)
+			{
+				Debug.log("getPermissionHandler() was called. " + req.responseText);//Req: " + req.responseText);
+
+				isAdmin = JSON.parse(decodeURIComponent(DesktopContent.getXMLValue(req, "JSON")))["message"];
+				console.log("User Permission: " + isAdmin);
+				console.log(isAdmin);
+
+				if(isAdmin == "Yes")
+				{
+					isReadOnly_ = false;
+				}
+				else
+				{
+					isReadOnly_ = true;
+				}
+
+				console.log("Interface isReadOnly=" + isReadOnly_);
+				redrawWindow();
+			} //end isUserAdminHandler()
+
+
+			//=====================================================================================
+			function pvListReqHandler(req)
+			{
 				console.log("pvListReqHandler: response received!");	
 				console.log(req.responseText);
 				var datalist = document.getElementById("pvDatalist");
 				datalist.innerHTML = "";
-				
+
 				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
 				if(!jsonStr || jsonStr == "") return;				
 				var pvListJSON;
-				
+
 				//if invalid JSON return
 				try {pvListJSON = JSON.parse(jsonStr); }
 				catch(e){console.log("Invalid JSON!"); return;}
-				
+
 				console.log(pvListJSON);
 				for (var x in pvListJSON)
 				{
-					//console.log(pvListJSON[x]);
-					pvList_.push(pvListJSON[x]);
+					pvList_[pvListJSON[x].substring(0,pvListJSON[x].indexOf(":"))] = pvListJSON[x].substring(pvListJSON[x].indexOf(":")+1,pvListJSON[x].length);
 					var option = document.createElement("option");
-					option.value = pvListJSON[x];
+					option.value = pvListJSON[x].substring(0,pvListJSON[x].indexOf(":"));
 					datalist.appendChild(option);
 				}
-			}
-		
-			
-			function loadPageReqHandler(req) {
+			} //end pvListReqHandler()
+
+
+			//=====================================================================================
+			function loadPageReqHandler(req)
+			{
 				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
 				clearBlock(mainBlock_.el);
 				page_.widgets = {};
-
 
 				if(!fileBlock_.isHidden)
 					toggleFileMenu();
@@ -924,91 +311,54 @@
 				var time =  decodeURIComponent(DesktopContent.getXMLValue(req, "Time"));
 				var notes =  decodeURIComponent(DesktopContent.getXMLValue(req, "Notes"));
 				var page =  decodeURIComponent(DesktopContent.getXMLValue(req, "Page"));
-				
+
 				if(notes == "[\"Not Found\"]")
 				{
 					Debug.log("Page failed to load page(" + decodeURIComponent(page) + ") on server!",
-																	Debug.HIGH_PRIORITY);
+					Debug.HIGH_PRIORITY);
 					return;
 				}
-				
+
 				if(page.length > 0)
 					page_ = JSON.parse(page);
-					
+
 				Debug.log(time);
 				Debug.log(notes);
 				Debug.log(page);
 				console.log(page_);
-				
-				if(!editBlock_.isHidden)
-					toggleEditMode();
-				
-				//Old system to load page 
-				/*
-				page_.createPage;
-				page_.widgets = {};
-				clearBlock(mainBlock_.el);
-				
-				
-				for (var widget in page)
-				{
-					//console.log(page[widget]);
-					page_.widgets[widget] = page[widget];
-					
-					//BEGIN Determine how quickly we have to poll the server
-					for(var pv in page[widget].PVList)
-					{
-						if(page[widget].PVList[pv] > 0)
-						{
-							if(page[widget].PVList[pv] < refreshRate_)
-							{
-								refreshRate_ = page[widget].PVList[pv];
-								//updateRefreshInterval();
-							}
-							else if(refreshRate_ <= 0)
-							{
-								refreshRate_ = page[widget].PVList[pv];
-								//updateRefreshInterval();
-							}
-						} 
-					}
-					//END Determine how quickly we have to poll the server
-					drawWidget(widget, false, page[widget].x, page[widget].y, page[widget].size_x, page[widget].size_y);	
-				*/
-				
+
 				for (var widget in page_.widgets)
 				{
 					console.log(widget + " " + page_.widgets[widget].x + " " + page_.widgets[widget].y + " " + page_.widgets[widget].size_x + " " + page_.widgets[widget].size_y);
-					drawWidget(widget, false, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y);	
+					drawWidgetFromFile(widget, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y, true);
 				}
 
-				updateRefreshInterval();
-				
+				//updateRefreshInterval();
+				setupForDrawingID_ = undefined;
+				drawingSelectionRectangle_ = false;
+
 		    	pageOffSetX_ = 0;
 				pageOffSetY_ = 0;
-				redrawWindow();
-				turnOnWidgets();
 
-				
-			}
-		
-			function pollServerHandlerFunction(req) {
+				toggleEditMode();
+				//redrawWindow();
+			} //end loadPageReqHandler()
+
+
+			//=====================================================================================
+			function pollServerHandlerFunction(req)
+			{
 				Debug.log("pollServerHandlerFunction() was called. Req: " + req.responseText);
-				//var serverResponse = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
-				//Debug.log(serverResponse);
 
  				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
 				jsonStr = jsonStr.replace(/\s/g, ''); //hack for removing whitespace 
-    				if(!jsonStr || jsonStr == "") 
+    			if(!jsonStr || jsonStr == "") 
 					return;                           
 
-				Debug.log(jsonStr);                        
+				Debug.log(jsonStr);
 
-				var serverResponse;                              
-                                //if invalid JSON return
-                                //try {serverResponse = JSON.parse(jsonStr); }
-                                //catch(e){console.log("Invalid JSON!"); return;}
-				
+				var serverResponse;
+
 				serverResponse = JSON.parse(jsonStr);
 
 				Debug.log(serverResponse);
@@ -1021,7 +371,6 @@
 				}
 				else
 				{
-
 					for(var pv in serverResponse)//have to use each pv and then loop through
 					{	
 						console.log("pollServerHandlerFunction: pv" + pv);						
@@ -1040,11 +389,12 @@
 						}
 					}
 				}
-			}
-			
-			function generateUIDHandlerFunction(req) {
-				//Debug.log("generateUIDHandlerFunction() was called. Req: " + req.responseText);
-				
+			} //end pollServerHandlerFunction()
+
+
+			//=====================================================================================
+			function generateUIDHandlerFunction(req)
+			{
 				var uid = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
 
 				if(uid.message != "-1")
@@ -1054,200 +404,280 @@
 					UID_ = "";
 					Debug.log("Unable to generate UID!", Debug.HIGH_PRIORITY);
 				}
-				
+
 				if(timeToPoll_)
 				{
 					timeToPoll_ = false;
 					pollServer();
 				}
+			} //end generateUIDHandlerFunction()
 
-			}
-			
-			function settingsReqHandler(req, passParams) {
+
+			//=====================================================================================
+			function settingsReqHandler(req, passParams)
+			{
 				var settings = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));				
 				var id = passParams[0];
 				var parameters = passParams[1];
-				
+
 				console.log("id: " + id + " parameter: " + parameters);
-				
+
 				console.log(req);
 				console.log(settings);
 				console.log(id);
-				
-				page_.widgets[id].el.contentWindow.setupPVs(settings);
-				page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
 
-			}
-		
-			function savePageReqHandler(req) {
+				if(newWidget_)
+					page_.widgets[id].el.contentWindow.setupPVs(settings);
+				if(newWidget_)
+					page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
+
+				newWidget_ = false;
+			} //end settingsReqHandler()
+
+
+			//=====================================================================================
+			function historyReqHandler(req, passParams) 
+			{
+				var jsonArr = req.responseXML.getElementsByTagName("JSON");
+				console.log(jsonArr);
+
+				for (var i = jsonArr.length - 1; i >= 0; i--){
+					var history = JSON.parse(DesktopContent.getXMLValue(jsonArr[i]));				
+					var id = passParams[0];
+					var parameters = passParams[1];
+					console.log("id: " + id + " parameter: " + parameters);
+
+					console.log(req);
+					console.log(history);
+					console.log(id);
+					for (var pv in history) {
+						console.log(pv);
+						console.log(history[pv].Timestamp + " " + history[pv].Value);
+						page_.widgets[id].el.contentWindow.newValue(pv, history[pv].Value, history[pv].Timestamp, history[pv].Status, history[pv].Severity);
+					}
+				}
+			} //end historyReqHandler()
+
+
+			//=====================================================================================
+			function savePageReqHandler(req)
+			{
 				var response = req.responseText;
 				Debug.log(response);
+			} //end savePageReqHandler()
 
-			}
-			
-			function createControlsPageHandler(req)//, controlsPageName)
+
+			//=====================================================================================
+			function createControlsPageHandler(req)
 			{
 				Debug.log("createControlsPageHandler() was called for " + controlsPageName);// Req: " + req.responseText);
-						
-				Debug.log("Your page was succesfully saved!",Debug.INFO_PRIORITY);
-						
-			}
-	
-			function handlerFunction(req) {
-				//Debug.log("handlerFunction() was called. Req: " + req.responseText);
+				Debug.log("Your page was succesfully saved!",Debug.INFO_PRIORITY);		
+			} //end createControlsPageHandler()
 
+
+			//=====================================================================================
+			function handlerFunction(req) {
 				var child1data = DesktopContent.getXMLValue(req,"child");
 				var child2data = DesktopContent.getXMLValue(req,"child2");
-				
 				Debug.log("--child1data:",child1data," --child2data:",child2data);
-				
-			}
-			
+			} //end handlerFunction()
+
+
+			//=====================================================================================
 			function pollServer()
 			{
 				timeToPoll_ = false;
 				Debug.log("pollServer: polling server!");
-				console.log(page_.widgets);
-					//console.log("UID is ", UID_);
-					if(!page_.widgets === undefined)
-					{
-						DesktopContent.XMLHttpRequest(
-							"Request?RequestType=poll&uid=" + UID_,
-							"", 
-							pollServerHandlerFunction /*returnHandler*/, 
-							0 /*reqParam*/, 
-							0 /*progressHandler*/, 
-							0 /*callHandlerOnErr*/, 
-							true /*doNoShowLoadingOverlay*/);	
-					}
-			}
-			
+				console.log("pollServer(): " + page_.widgets);
+				//console.log("UID is ", UID_);
+				if(page_.widgets !== undefined)
+				{
+					DesktopContent.XMLHttpRequest(
+					  "Request?RequestType=poll&uid=" + UID_,
+					  "", 
+					  pollServerHandlerFunction /*returnHandler*/, 
+					  0 /*reqParam*/, 
+					  0 /*progressHandler*/, 
+					  0 /*callHandlerOnErr*/, 
+					  true /*doNoShowLoadingOverlay*/);	
+				}
+			} //end pollServer()
+
+
+			//=====================================================================================
 			function generateUID()
 			{
-				//Debug.log("GenerateUID");
-				
-				
 				//BEGIN Put all pvs in a JSON and send to server
 				var pvList = "";
 				//console.log("page: ", page_);
 				for (var widget in page_.widgets)
 				{
-					console.log("generateUID: " +  page_.widgets[widget]);
+					console.log("generateUID: " +  page_.widgets[widget] + " " +  page_.widgets[widget].PVList);
 
 					for(var pv in page_.widgets[widget].PVList)
 					{
-						//console.log(pv);
-						pvList += pv + ",";
+						pvList += pv + ":"  + page_.widgets[widget].PVList.valueOf()[pv] + ",";
 					}
 				}
-					
-				console.log(pvList);
-		
-				//END Put all pvs in a JSON and send to server
-				DesktopContent.XMLHttpRequest("Request?RequestType=generateUID","PVList=" + pvList, generateUIDHandlerFunction);//, undefined, undefined, "sequence");	
 
-				
-			}
-			
+				console.log(pvList);
+
+				//END Put all pvs in a JSON and send to server
+				DesktopContent.XMLHttpRequest("Request?RequestType=generateUID","PVList=" + pvList, generateUIDHandlerFunction);//, undefined, undefined, "sequence");
+			} //end generateUID()
+
+
+			//=====================================================================================
 			function updateRefreshInterval()
 			{
-				console.log(refreshRate_);
+				console.log("updateRefreshInterval.refreshRate_ (ms): " + refreshRate_);
 				window.clearInterval(timerVariable_);
 				timerVariable_ = setInterval(pollServer, refreshRate_);
-			}
-			
+			} //end updateRefreshInterval()
+
+
+			//=====================================================================================
 			function loadPage(page)
 			{
-				DesktopContent.XMLHttpRequest("Request?RequestType=loadPage&Page=" + page, "", loadPageReqHandler);//, undefined, undefined, "sequence");	
-				
-			}
-			
-			function savePage() {
-				
-			//Conditions to stop page saving e.g. blank page, using illegal pvs, etc Or overwrite?
-				if(false)
-                   Debug.log("No reason to save a blank page!");
-    	        else
-    	        {
-    	        		
-    				console.log("Showing save popup");
-			       	fileBlock_.savePopup.style.display = "block";
-			       	fileBlock_.savePopup.style["z-index"] = "9000";
-			       	if (userPermission == ADMIN_PERMISSION_THRESHOLD)
-				       	document.getElementById("makeControlsPagePublic").style.display = "block";
-				       
-    	        }
-			}
-			
-			function hidePopupSaveControlsPage() {
-				fileBlock_.savePopup.style.display = "none";
-			    fileBlock_.savePopup.style["z-index"] = "0";
-			    document.getElementById("controlsPageName").value="";
-        		document.getElementById("controlsPageNotes").value="";
-				Debug.log("Controls Page successfully saved!");
-			}
+				DesktopContent.XMLHttpRequest("Request?RequestType=loadPage&Page=" + page, "", loadPageReqHandler);//, undefined, undefined, "sequence");
+			} //end loadPage()
 
-			function savePageAs() {
-				
-		    	var controlsPageName = document.getElementById("controlsPageName").value;
-		    	console.log("Here is our name: " + controlsPageName);
-		    	var Regex = /^[a-zA-Z0-9\_]+$/g;
-		    	if (!Regex.test(controlsPageName)) 
-					Debug.log("Illegal characters in name. Please remove these characters and try again.", Debug.HIGH_PRIORITY);
-		    	else
-		    	{
-		    		var controlsPageNotes = document.getElementById("controlsPageNotes").value;
-		    		Debug.log(controlsPageNotes);
-		    		
+
+			//=====================================================================================
+			function loadPageNewWindow(fullPathToPage)
+			{
+				var newWindowStr = location.pathname + location.search
+				+ "&page_name=" + fullPathToPage;
+
+				DesktopContent.openNewWindow("Controls Dashboard", "", newWindowStr, false /*unique*/);
+			} //end loadPageNewWindow()
+
+
+			//=====================================================================================
+			function loadPageNewBrowserTab(fullPathToPage)
+			{
+				var newWindowStr = location.pathname + location.search
+				+ "&page_name=" + fullPathToPage;
+
+				DesktopContent.openNewBrowserTab("Controls Dashboard","", newWindowStr ,false /*unique*/);
+			} //end loadPageNewBrowserTab()
+
+
+			//=====================================================================================
+			//CreateDesktopIcon page loader~~
+			function createDesktopIcon(fullPathToPage)
+			{
+				DesktopContent.addDesktopIcon(
+					fullPathToPage
+					,"CTRLS","Slow Control Subsets"
+					, false /*unique*/
+					, 255 /*permissionsString*/
+					, "icon-ControlsDashboard.png" /*imageURL*/
+					, "SlowControlsDashboard.html?urn=" /*windowContentURL*/
+					, "ots::ControlsDashboardSupervisor" /*linkedApp*/
+					, /*parameters*/
+					"page_name=" + fullPathToPage
+					);
+			} //end CreateDesktopIcon
+
+
+			//=====================================================================================
+			function savePage() 
+			{
+				//Conditions to stop page saving e.g. blank page, using illegal pvs, etc Or overwrite?
+				if(false)
+					Debug.log("No reason to save a blank page!");
+    			else
+    			{
+					console.log("Showing save popup");
+		       		fileBlock_.savePopup.style.display = "block";
+		       		fileBlock_.savePopup.style["z-index"] = "9000";
+					if (userPermission == ADMIN_PERMISSION_THRESHOLD)
+			       		document.getElementById("makeControlsPagePublic").style.display = "block";
+    			}
+			} //end savePage()
+
+
+			//=====================================================================================
+			function hidePopupSaveControlsPage()
+			{
+		        fileBlock_.savePopup.style.display = "none";
+		        fileBlock_.savePopup.style["z-index"] = "0";
+		        document.getElementById("controlsPageName").value="";
+	            document.getElementById("controlsPageNotes").value="";
+		        Debug.log("Controls Page successfully saved!");
+			} //end hidePopupSaveControlsPage()
+
+
+			//=====================================================================================
+			function savePageAs()
+			{
+	            var controlsPageName = document.getElementById("controlsPageName").value;
+	            console.log("Here is our name: " + controlsPageName);
+	            var Regex = /^[a-zA-Z0-9\_]+$/g;
+	            if (!Regex.test(controlsPageName)) 
+		        	Debug.log("Illegal characters in name. Please remove these characters and try again.", Debug.HIGH_PRIORITY);
+	    		else
+	    		{
+    		        var controlsPageNotes = document.getElementById("controlsPageNotes").value;
+    		        Debug.log(controlsPageNotes);
+
 					if(controlsPageNotes.indexOf("@") >= 0 || controlsPageNotes.indexOf("#") >= 0 || controlsPageNotes.indexOf("..") >= 0)
 					{
-						Debug.log("Illegal characters in notes. Please remove these characters and try again.", Debug.HIGH_PRIORITY);
-						return;
+				         Debug.log("Illegal characters in notes. Please remove these characters and try again.", Debug.HIGH_PRIORITY);
+				         return;
 					}
-					
-		    		var controlsPageLibEl = document.getElementById('listOfPrivateControlsPages');
-		    		var isControlsPagePublic = document.getElementById("isControlsPagePublic").checked;
-		    		var pageString = JSON.stringify(page_);
 
+	    			var controlsPageLibEl = document.getElementById('listOfPrivateControlsPages');
+	    			var isControlsPagePublic = document.getElementById("isControlsPagePublic").checked;
 
-		        	if(pagesList_.indexOf(controlsPageName) !== -1) //duplicate name
-		        	{
-		        		Debug.log("ControlsPage name already exists!");
-		    			
-		    			document.getElementById('popupControlsPageAlreadyExistsOverwrite').onclick = function(){ //call edit
-		    				DesktopContent.XMLHttpRequest("Request?RequestType=editControlsPage",
-		    						//post data 
-		    						"isPublic=" + isControlsPagePublic +
-									"&oldControlsPageName=" + controlsPageName +
-									"&newControlsPageName=" + controlsPageName +
-									"&Page=" + pageString +
-									"&Time=" + Date().toString() +
-									"&Notes=" + encodeURIComponent(controlsPageNotes),
-									saveChangedControlsPageHandler /*handler*/,
-									controlsPageName /*parameter*/);
-		    				
-		    				
-		    				};
-		        	}
-		        	else
-		        	{
-						DesktopContent.XMLHttpRequest("Request?RequestType=createControlsPage", 								
-								//post data
-								"isPublic=" + isControlsPagePublic +
-								"&Name=" + controlsPageName +
+					var windowWidth = DesktopContent.getWindowWidth();
+					var windowHeight = DesktopContent.getWindowHeight();
+					var pagetosave = Object.assign({}, page_)
+	    			for (var widget in pagetosave.widgets)
+					{
+						pagetosave.widgets[widget].x = page_.widgets[widget].x * windowWidth / (PAGE_POSITIONS_) | 0;
+						pagetosave.widgets[widget].y = page_.widgets[widget].y * windowHeight / (PAGE_POSITIONS_) | 0;
+						pagetosave.widgets[widget].size_x = page_.widgets[widget].size_x * windowWidth / (PAGE_POSITIONS_) | 0;
+						pagetosave.widgets[widget].size_y = page_.widgets[widget].size_y * windowHeight / (PAGE_POSITIONS_) | 0;
+					}
+
+	    			var pageString = JSON.stringify(pagetosave);
+
+	        		if(pagesList_.indexOf(controlsPageName) !== -1) //duplicate name
+	        		{
+	    				Debug.log("ControlsPage name already exists!");
+
+	    				document.getElementById('popupControlsPageAlreadyExistsOverwrite').onclick = function(){ //call edit
+	    					DesktopContent.XMLHttpRequest("Request?RequestType=editControlsPage",
+	    						//post data
+	    						"isPublic=" + isControlsPagePublic +
+								"&oldControlsPageName=" + controlsPageName +
+								"&newControlsPageName=" + controlsPageName +
 								"&Page=" + pageString +
 								"&Time=" + Date().toString() +
 								"&Notes=" + encodeURIComponent(controlsPageNotes),
-								createControlsPageHandler /*handler*/);
-								//,
-								//controlsPageName /*parameter*/);	
-						
-						hidePopupSaveControlsPage(); 
-		        	}
-	    		}
-			}
+								saveChangedControlsPageHandler /*handler*/,
+								controlsPageName /*parameter*/);};
+	        		}
+	        		else
+	        		{
+				        DesktopContent.XMLHttpRequest("Request?RequestType=createControlsPage",
+							//post data
+							"isPublic=" + isControlsPagePublic +
+							"&Name=" + controlsPageName +
+							"&Page=" + pageString +
+							"&Time=" + Date().toString() +
+							"&Notes=" + encodeURIComponent(controlsPageNotes),
+							createControlsPageHandler /*handler*/);
 
-			
+						hidePopupSaveControlsPage();
+	        		}
+    			}
+			} //end savePageAs()
+
+
+			//=====================================================================================
 			function setupWidget(id, parameters)
 			{
 				console.log("setting up widget!");
@@ -1263,61 +693,68 @@
 				}
 				var pvList = "";
 
+				console.log(page_.widgets[id].PVList);
 				for(var pv in page_.widgets[id].PVList)
 				{
 					pvList += pv + ",";
 				}
-				
-				
-                var passParams = [id, parameters];
-				//DesktopContent.XMLHttpRequest("Request?RequestType=GetPVSettings&PVList=" + pvList + "&id=" + id, "", settingsReqHandler);//, undefined, undefined, "sequence");	
+
+				var passParams = [id, parameters];	
 				DesktopContent.XMLHttpRequest("Request?RequestType=getPVSettings",
+							//post data 
+    						"PVList=" + pvList + 
+							"&id=" + id,
+							settingsReqHandler /*handler*/,
+							 passParams /*parameter*/);
+			} //end setupWidget()
+
+
+			//=====================================================================================
+			function getHistory(id, parameters)
+			{
+				var pvList = "";
+
+				for(var pv in page_.widgets[id].PVList)
+				{
+					pvList += pv + ",";
+				}
+
+				var passParams = [id, parameters];
+				DesktopContent.XMLHttpRequest("Request?RequestType=getPVArchiverData",
 									//post data 
 		    						"PVList=" + pvList + 
 									"&id=" + id,
-									settingsReqHandler /*handler*/,
+									historyReqHandler /*handler*/,
 									 passParams /*parameter*/);
-				//page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
+				console.log("get history for widget! pvList: " + pvList);
+			} //end getHistory()
 
 
-			}
-			
+			//=====================================================================================
 			function addPVToWidget(pv, refreshRate, widgetID, fromAddPV)
 			{
 				if(fromAddPV){toggleAddPV();}
 				page_.widgets[widgetID].PVList[pv] = refreshRate;
-				
-				//Need to get lowest refresh rate to poll
-//				if(refreshRate > 0)
-//				{
-//					if(refreshRate < refreshRate_ || refreshRate_ <= 0)
-//					{
-//						refreshRate_ = refreshRate
-//					}
-//				}
-				page_.widgets[widgetID].el.contentWindow.init(); 
-				//4.15.19 document.getElementById(widgetID).contentWindow.init();
+				page_.widgets[widgetID].el.contentWindow.init();
+				newWidget_ = true;
+			} //end addPVToWidget()
 
-			}
-			
+
+			//=====================================================================================
 			function compareAttributes(id, parameters)
 			{
 				var actionRequired = false;
-				
+
 				for(var attribute = 0; attribute < Object.keys(page_.widgets[id].attributes).length; attribute++)
 				{
 					if(Object.keys(parameters).indexOf(Object.keys(page_.widgets[id].attributes)[attribute]) == -1)
 					{
 						Debug.log("Attribute [" + Object.keys(page_.widgets[id].attributes)[attribute] + "] for " + page_.widgets[id].Display_Name + " is no longer required. No action required.", Debug.HIGH_PRIORITY);
-//						page_.widgets[id].attributes.splice(attribute, 1);
 					}
-
 				}
-				
-				
-				
+
 				var attributesNew = {};
-				
+
 				for(attribute = 0; attribute < Object.keys(parameters).length; attribute++)
 				{
 					if(Object.keys(page_.widgets[id].attributes).indexOf(Object.keys(parameters)[attribute]) != -1)
@@ -1330,167 +767,179 @@
 						attributesNew[Object.keys(parameters)[attribute]] = 'undefined';
 						Debug.log("Attribute [" + Object.keys(parameters)[attribute] + "] for " + page_.widgets[id].Display_Name + " is now a required attribute. Action Required.", Debug.HIGH_PRIORITY);
 					}
-
 				}
 				page_.widgets[id].attributes = attributesNew;
 				if(actionRequired)
 					document.getElementById(id).className = "action-required";
-				
-			}
-			
+			} //end compareAttributes()
+
+
+			//=====================================================================================
 			function setupForDrawSelectionRectangle(id)
 			{
-				if(!setupForDrawing_)
+				mainBlock_.el.style.cursor = "crosshair";
+
+				Debug.log("setupForDrawSelectionRectangle " + id);
+
+				setupForDrawingID_ = id;
+			} //end setupForDrawSelectionRectangle()
+
+
+			//=====================================================================================
+			function drawSelectionRectangle(event)
+			{
+				if(setupForDrawingID_  === undefined)
 				{
-					mainBlock_.el.style.cursor = "crosshair";
-					mainBlock_.el.removeEventListener("mousedown", startDrag, true);
-					mainBlock_.el.addEventListener("mousedown", drawSelectionRectangle(id), false);
-					setupForDrawing_ = true;
+					Debug.log("Impossible undefined widget draw id! Notify admins.", Debug.HIGH_PRIORITY);
+					return;
 				}
-			}
-			
-			
-			function drawSelectionRectangle (id) {
-				return function(event){
-					xPos_ = event.clientX;
-					yPos_ = event.clientY;
-					mainBlock_.el.removeEventListener("mousedown", arguments.callee, false); //Thanks Preston!
-					var selectionRectangle = document.getElementById("selectionRectangle");
-					selectionRectangle.style.top = event.clientY + "px";
-					selectionRectangle.style.left = event.clientX + "px";	
+				var id = setupForDrawingID_;
+				drawingSelectionRectangle_  = true;
 
+				Debug.log("drawSelectionRectangle() " + id);
 
-					if(widgetLibrary.dimensions[id])
+				xPos_ = event.clientX;
+				yPos_ = event.clientY;
+
+				var selectionRectangle = document.getElementById("selectionRectangle");
+				selectionRectangle.style.top = event.clientY + "px";
+				selectionRectangle.style.left = event.clientX + "px";	
+
+				if(widgetLibrary.dimensions[id])
+				{
+					console.log("selectionRectangle id:" + id);
+					if(widgetLibrary.dimensions[id]["X"])
 					{
-					
-						console.log(id);
-						if(widgetLibrary.dimensions[id]["X"])
-						{
-							console.log("Has a specified width");
-							selectionRectangle.style.width = (widgetLibrary.dimensions[id]["X"] + "px");
-	
-						}
-						else
-						{
-							selectionRectangle.style.width = "1px";
-						}
-						
-						if(widgetLibrary.dimensions[id]["Y"])
-						{
-							console.log("Has a specified height");
-							selectionRectangle.style.height = (widgetLibrary.dimensions[id]["Y"] + "px");
-	
-						}
-						else
-						{
-							selectionRectangle.style.height = "1px";
-						}
-	
-	
-						if(widgetLibrary.dimensions[id]["Scale"] != "False")
-						{
-							console.log("Widget is scalable");
-							mainBlock_.el.addEventListener("mousemove", redrawSelectionRectangle(id), false);
-						}
-						
-					}
-					else //Default - no aspect ratio, no min size, 
-					{
-						mainBlock_.el.addEventListener("mousemove", redrawSelectionRectangle(id), false);
-						selectionRectangle.style.height = "1px";
-						selectionRectangle.style.width = "1px";
-					}
-					
-					selectionRectangle.style.display = "block";
-					mainBlock_.el.addEventListener("mouseup"  , stopdrawSelectionRectangle(id), false);
-				};
-			};
-			
-			function redrawSelectionRectangle(id) {
-				return function(event){
-					var ghost = document.getElementById("selectionRectangle");
-					
-					if(widgetLibrary.dimensions[id] && widgetLibrary.dimensions[id]["Y"] && widgetLibrary.dimensions[id]["X"])
-					{
-						var aspect_ratio = parseFloat(widgetLibrary.dimensions[id]["X"]) / parseFloat(widgetLibrary.dimensions[id]["Y"]);
-						//console.log(aspect_ratio);
-						
-						var y_displacement = (event.clientY - yPos_);
-						var x_displacement = (event.clientX - xPos_);
-						
-						if((y_displacement > widgetLibrary.dimensions[id]["Y"]) || (x_displacement > widgetLibrary.dimensions[id]["X"]))
-						{
-						
-							var adjusted_y_displacement = y_displacement * aspect_ratio;
-							var adjusted_x_displacement = x_displacement;
-							
-//							console.log("y_displacement: " + y_displacement);
-//							console.log("adjusted_y_displacement: " + adjusted_y_displacement);
-//							console.log("adjusted_x_displacement: " + adjusted_x_displacement);
-							
-							if(adjusted_y_displacement >= adjusted_x_displacement)
-							{
-								//console.log(parseFloat(y_displacement * aspect_ratio));								
-							
-								ghost.style.width = parseFloat(y_displacement * aspect_ratio) + "px";
-								ghost.style.height = (y_displacement) + "px";						
-							}
-							else
-							{
-								
-								//console.log(parseFloat(x_displacement / aspect_ratio));								
-							
-								ghost.style.width = (x_displacement) + "px";
-								ghost.style.height = parseFloat(x_displacement / aspect_ratio) + "px";							
-							}
-						}
+						console.log("Has a specified width");
+						selectionRectangle.style.width = (widgetLibrary.dimensions[id]["X"] + "px");
 					}
 					else
 					{
-						ghost.style.width = (event.clientX - xPos_) + "px";
-						ghost.style.height = (event.clientY - yPos_) + "px";						
+						selectionRectangle.style.width = "1px";
 					}
 
+					if(widgetLibrary.dimensions[id]["Y"])
+					{
+						console.log("Has a specified height");
+						selectionRectangle.style.height = (widgetLibrary.dimensions[id]["Y"] + "px");
+					}
+					else
+					{
+						selectionRectangle.style.height = "1px";
+					}
 
-				};
-			};
-			
-			function stopdrawSelectionRectangle(id) {
-				return function(event) {			
-					mainBlock_.el.removeEventListener("mousemove", arguments.callee, false);
-					mainBlock_.el.removeEventListener("mouseup"  , arguments.callee, false);
-					mainBlock_.el.style.cursor = "grab";
-					
-					var ghost = document.getElementById("selectionRectangle");
+					if(widgetLibrary.dimensions[id]["Scale"] != "False")
+					{
+						console.log("Widget is scalable");
+					}	
+				}
+				else //Default - no aspect ratio, no min size, 
+				{
+					selectionRectangle.style.height = "1px";
+					selectionRectangle.style.width = "1px";
+				}
 
-					ghost.style.display = "none";
-					console.log((event.clientX - xPos_));
-					console.log(ghost.style.width)
-					
-					if(widgetLibrary.dimensions[id] && widgetLibrary.dimensions[id]["Scale"] && widgetLibrary.dimensions[id]["Scale"] == "False")
-						drawWidget(id, true, xPos_ - pageOffSetX_, yPos_ - pageOffSetY_, parseFloat(widgetLibrary.dimensions[id]["X"]), parseFloat(widgetLibrary.dimensions[id]["Y"]));
- 					else //Scalable is true which means that the ghost will have a width/height
-						drawWidget(id, true, xPos_ - pageOffSetX_, yPos_ - pageOffSetY_, parseFloat(ghost.style.width), parseFloat(ghost.style.height));
+				selectionRectangle.style.display = "block";
+			} //end drawSelectionRectangle()
 
-					
-					turnOnWidgets();
-					setupForDrawing_ = false;
-					mainBlock_.el.addEventListener("mousedown", startDrag, true);
-				};
-			};
-		
-			function drawWidget(widget, newWidget, x, y, width, height)
+
+			//=====================================================================================
+			function redrawSelectionRectangle(event) 
 			{
+				var id = setupForDrawingID_;
+				//Debug.log("redrawSelectionRectangle() " + id);
+
+				var ghost = document.getElementById("selectionRectangle");
+
+				if(widgetLibrary.dimensions[id] && widgetLibrary.dimensions[id]["Y"] && widgetLibrary.dimensions[id]["X"])
+				{
+					var aspect_ratio = parseFloat(widgetLibrary.dimensions[id]["X"]) / parseFloat(widgetLibrary.dimensions[id]["Y"]);
+
+					var y_displacement = (event.clientY - yPos_);
+					var x_displacement = (event.clientX - xPos_);
+
+					if((y_displacement > widgetLibrary.dimensions[id]["Y"]) || (x_displacement > widgetLibrary.dimensions[id]["X"]))
+					{
+						var adjusted_y_displacement = y_displacement * aspect_ratio;
+						var adjusted_x_displacement = x_displacement;
+
+						if(adjusted_y_displacement >= adjusted_x_displacement)
+						{
+							ghost.style.width = parseFloat(y_displacement * aspect_ratio) + "px";
+							ghost.style.height = (y_displacement) + "px";						
+						}
+						else
+						{							
+							ghost.style.width = (x_displacement) + "px";
+							ghost.style.height = parseFloat(x_displacement / aspect_ratio) + "px";					
+						}
+					}
+				}
+				else
+				{
+					ghost.style.width = (event.clientX - xPos_) + "px";
+					ghost.style.height = (event.clientY - yPos_) + "px";						
+				}
+			} //end redrawSelectionRectangle()
+
+
+			//=====================================================================================
+			function stopdrawSelectionRectangle(event) 
+			{
+				var id = setupForDrawingID_;
+
+				Debug.log("stopdrawSelectionRectangle() " + id);
+
+				mainBlock_.el.style.cursor = "default";
+
+				var ghost = document.getElementById("selectionRectangle");
+
+				ghost.style.display = "none";
+
+				console.log((event.clientX - xPos_));
+				console.log(ghost.style.width);
+
+				if(widgetLibrary.dimensions[id] && widgetLibrary.dimensions[id]["Scale"] && widgetLibrary.dimensions[id]["Scale"] == "False")
 				
+					drawWidget(id, true, xPos_ - pageOffSetX_, yPos_ - pageOffSetY_, parseFloat(widgetLibrary.dimensions[id]["X"]), parseFloat(widgetLibrary.dimensions[id]["Y"]));
+ 				else //Scalable is true which means that the ghost will have a width/height
+					drawWidget(id, true, xPos_ - pageOffSetX_, yPos_ - pageOffSetY_, parseFloat(ghost.style.width), parseFloat(ghost.style.height));
+
+				setupForDrawingID_ = undefined;
+				drawingSelectionRectangle_  = false;
+			} //end stopdrawSelectionRectangle()
+
+
+			//================================================================================
+			function drawWidget(widget, newWidget, xx, yy, width, height, hideFrame)
+			{
 				var widgetFrame = document.createElement("iframe");
-					
+				widgetFrame.scrolling="No";
+
+				var containerDiv;
+				var coverDiv;
+
+				var OUTLINE_OFFSET = 15;
+				var resizeDiv;
+				var resizeDivTop;
+				var resizeDivLeft;
+				var resizeDivRight;
+				var resizeDivBottom;
+				var resizeDivTopLeft;
+				var resizeDivTopRight;
+				var resizeDivBottomRight;
+				var resizeDivBottomLeft;
+
+				var windowWidth = DesktopContent.getWindowWidth();
+				var windowHeight = DesktopContent.getWindowHeight();
+
 				if(newWidget)
 				{
 					if(typeof page_.widgets == 'undefined')
 					{
 						page_.widgets = {};
 					}
-					
+
 					widgetFrame.id = "widget" + Object.keys(page_.widgets).length;//page[widget].Display_Name;
 					if(typeof page_.widgets[widgetFrame.id] != 'undefined')
 					{
@@ -1500,183 +949,106 @@
 							widgetFrame.id = "widget" + (pos++);
 						}
 					}
-					
+
 					var widgetObject = {};
 					widgetObject.type = widget;
 
-					widgetObject.size_x = width;
-					widgetObject.size_y = height;
-					widgetObject.x = x;
-					widgetObject.y = y;
+					//all x,y,w,h represented as "per thousand" (PAGE_POSITIONS_ positions, integer representation)
+					widgetObject.size_x = (PAGE_POSITIONS_*width/windowWidth) | 0;
+					widgetObject.size_y = (PAGE_POSITIONS_*height/windowHeight) | 0;
+					widgetObject.x = (PAGE_POSITIONS_*xx/windowWidth) | 0;
+					widgetObject.y = (PAGE_POSITIONS_*yy/windowHeight) | 0;
+
 					widgetObject.PVList = {};
 					widgetObject.attributes = {};
 					widgetObject.Display_Name = widgetFrame.id;
 					widgetObject.loaded = "false";
 					widget = widgetFrame.id;
 					page_.widgets[widget] = widgetObject;
-					
-	
-				}
-				else
-				{
-					widgetFrame.id = widget;
-					page_.widgets[widget].size_x = (width === undefined) ? page_.widgets[widget].size_x : width;
-					page_.widgets[widget].size_y = (height === undefined) ? page_.widgets[widget].size_y : height;
-					page_.widgets[widget].x = (x === undefined) ? page_.widgets[widget].x : x;
-					page_.widgets[widget].y = (y === undefined) ? page_.widgets[widget].y : y;
-										
 
-					var oldContainer = document.getElementById(widgetFrame.id + "-container");
-					if(typeof(oldContainer) != 'undefined' && oldContainer != null)
-						oldContainer.parentNode.removeChild(oldContainer);
-					
-				}
-				
-				var containerDiv = document.createElement("div");
-				containerDiv.style.width = page_.widgets[widget].size_x + "px";
-				containerDiv.style.height = page_.widgets[widget].size_y + "px";
-				containerDiv.style.position = "absolute";
-				containerDiv.style.left = page_.widgets[widget].x + "px";
-				containerDiv.style.top = page_.widgets[widget].y + "px";
-				containerDiv.id = widgetFrame.id + "-container";
-				containerDiv.style["background-color"] = "rgba(0,0,0,0.7)";
-				containerDiv.style.zIndex = "5";
-				
-				var coverDiv = document.createElement("div");
-				coverDiv.className = "widgetCover";
-				coverDiv.style.width = page_.widgets[widget].size_x + "px";
-				coverDiv.style.height = page_.widgets[widget].size_y + "px";
-				coverDiv.style.position = "absolute";
-				coverDiv.style.left = "0px";
-				coverDiv.style.top = "0px";
-				coverDiv.id = widgetFrame.id + "-cover";
-				coverDiv.style.zIndex = "50";
-				
-				
-				var outline_offset = 15;
-				var resizeDiv = document.createElement("div");
-				resizeDiv.className = "resizeWidgetCover";
-				resizeDiv.style.width = parseFloat(page_.widgets[widget].size_x + (2 * outline_offset)) + "px";
-				resizeDiv.style.height = parseFloat(page_.widgets[widget].size_y + (2 * outline_offset)) + "px";
-				resizeDiv.style.position = "absolute";
-				resizeDiv.style.left = -(outline_offset) + "px";
-				resizeDiv.style.top = -(outline_offset) + "px";
-				resizeDiv.id = widgetFrame.id + "-resize-cover";
-				resizeDiv.style.zIndex = "49";
-				
-				
-				//To handle the different resize arrows
-				//Edges for resize
-				var resizeDivTop = document.createElement("div");
-				resizeDivTop.className = "resizeWidgetCoverTop";
-				resizeDivTop.style.width = parseFloat(page_.widgets[widget].size_x) + "px";
-				resizeDivTop.style.height = outline_offset + "px";
-				resizeDivTop.style.position = "absolute";
-				resizeDivTop.style.left = outline_offset + "px";
-				resizeDivTop.style.top = "0px";
-				resizeDivTop.id = widgetFrame.id + "-resize-cover-north";
-				resizeDivTop.style.zIndex = "49";
-				resizeDivTop.style.cursor = "ns-resize";
-				
-				var resizeDivLeft = document.createElement("div");
-				resizeDivLeft.className = "resizeWidgetCoverLeft";
-				resizeDivLeft.style.width = outline_offset + "px";
-				resizeDivLeft.style.height = parseFloat(page_.widgets[widget].size_y) + "px";
-				resizeDivLeft.style.position = "absolute";
-				resizeDivLeft.style.left ="0px";
-				resizeDivLeft.style.top = outline_offset + "px";
-				resizeDivLeft.id = widgetFrame.id + "-resize-cover-west";
-				resizeDivLeft.style.zIndex = "49";
-				resizeDivLeft.style.cursor = "ew-resize";
-								
-				var resizeDivRight = document.createElement("div");
-				resizeDivRight.className = "resizeWidgetCoverRight";
-				resizeDivRight.style.width = outline_offset + "px";
-				resizeDivRight.style.height = parseFloat(page_.widgets[widget].size_y) + "px";
-				resizeDivRight.style.position = "absolute";
-				resizeDivRight.style.right = "0px";
-				resizeDivRight.style.top = outline_offset + "px";
-				resizeDivRight.id = widgetFrame.id + "-resize-cover-east";
-				resizeDivRight.style.zIndex = "49";
-				resizeDivRight.style.cursor = "ew-resize";
+					containerDiv = document.createElement("div");
+					containerDiv.id = widgetFrame.id + "-container";
+					containerDiv.style["background-color"] = "rgba(0,0,0,0.7)";
+					//containerDiv.innerHTML = "containerDiv";
 
-				var resizeDivBottom = document.createElement("div");
-				resizeDivBottom.className = "resizeWidgetCoverBottom";
-				resizeDivBottom.style.width = parseFloat(page_.widgets[widget].size_x) + "px";
-				resizeDivBottom.style.height = outline_offset + "px";
-				resizeDivBottom.style.position = "absolute";
-				resizeDivBottom.style.left = outline_offset + "px";
-				resizeDivBottom.style.bottom = "0px";
-				resizeDivBottom.id = widgetFrame.id + "-resize-cover-south";
-				resizeDivBottom.style.zIndex = "49";
-				resizeDivBottom.style.cursor = "ns-resize";
-								
-				//Corners for resize
-				var resizeDivTopLeft = document.createElement("div");
-				resizeDivTopLeft.className = "resizeWidgetCoverTopLeft";
-				resizeDivTopLeft.style.width = outline_offset + "px";
-				resizeDivTopLeft.style.height = outline_offset + "px";
-				resizeDivTopLeft.style.position = "absolute";
-				resizeDivTopLeft.style.left = "0px";
-				resizeDivTopLeft.style.top = "0px";
-				resizeDivTopLeft.id = widgetFrame.id + "-resize-cover-northwest";
-				resizeDivTopLeft.style.zIndex = "49";
-				resizeDivTopLeft.style.cursor = "nwse-resize";
-								
-				var resizeDivTopRight = document.createElement("div");
-				resizeDivTopRight.className = "resizeWidgetCoverTopRight";
-				resizeDivTopRight.style.width = outline_offset + "px";
-				resizeDivTopRight.style.height = outline_offset + "px";
-				resizeDivTopRight.style.position = "absolute";
-				resizeDivTopRight.style.right = "0px";
-				resizeDivTopRight.style.top = "0px";
-				resizeDivTopRight.id = widgetFrame.id + "-resize-cover-northeast";
-				resizeDivTopRight.style.zIndex = "49";
-				resizeDivTopRight.style.cursor = "nesw-resize";
-								
-				var resizeDivBottomRight = document.createElement("div");
-				resizeDivBottomRight.className = "resizeWidgetCoverBottomRight";
-				resizeDivBottomRight.style.width = outline_offset + "px";
-				resizeDivBottomRight.style.height = outline_offset + "px";
-				resizeDivBottomRight.style.position = "absolute";
-				resizeDivBottomRight.style.right = "0px";
-				resizeDivBottomRight.style.bottom = "0px";
-				resizeDivBottomRight.id = widgetFrame.id + "-resize-cover-southeast";
-				resizeDivBottomRight.style.zIndex = "49";
-				resizeDivBottomRight.style.cursor = "nwse-resize";
-								
-				var resizeDivBottomLeft = document.createElement("div");
-				resizeDivBottomLeft.className = "resizeWidgetCoverBottomLeft";
-				resizeDivBottomLeft.style.width = outline_offset + "px";
-				resizeDivBottomLeft.style.height = outline_offset + "px";
-				resizeDivBottomLeft.style.position = "absolute";
-				resizeDivBottomLeft.style.left = "0px";
-				resizeDivBottomLeft.style.bottom = "0px";
-				resizeDivBottomLeft.id = widgetFrame.id + "-resize-cover-southwest";
-				resizeDivBottomLeft.style.zIndex = "49";
-				resizeDivBottomLeft.style.cursor = "nesw-resize";
-				
+					coverDiv = document.createElement("div");
+					coverDiv.className = "widgetCover";
+					coverDiv.id = widgetFrame.id + "-cover";
+					//coverDiv.innerHTML = "coverDiv";
 
-				if(!editBlock_.isHidden) 
-				{
-					coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id), true);
-	
-				}
-				
-				coverDiv.addEventListener("mousedown", startDrag, true);
-				if(!resizeLockout_)
-				{
-					console.log("Not resizing");
-					
-					resizeDivTop.addEventListener("mousedown", startDrag, false);
-					resizeDivLeft.addEventListener("mousedown", startDrag, false);
-					resizeDivRight.addEventListener("mousedown", startDrag, false);
-					resizeDivBottom.addEventListener("mousedown", startDrag, false);
-					resizeDivTopLeft.addEventListener("mousedown", startDrag, false);
-					resizeDivTopRight.addEventListener("mousedown", startDrag, false);
-					resizeDivBottomRight.addEventListener("mousedown", startDrag, false);
-					resizeDivBottomLeft.addEventListener("mousedown", startDrag, false);	
-					
+					resizeDiv = document.createElement("div");
+					resizeDiv.className = "resizeWidgetCover";
+					resizeDiv.id = widgetFrame.id + "-resize-cover";
+
+					//To handle the different resize arrows
+					//Edges for resize
+					resizeDivTop = document.createElement("div");
+					resizeDivTop.className = "resizeWidgetCoverTop";
+					resizeDivTop.id = widgetFrame.id + "-resize-cover-north";
+					resizeDivTop.style.cursor = "ns-resize";
+
+					resizeDivLeft = document.createElement("div");
+					resizeDivLeft.className = "resizeWidgetCoverLeft";
+					resizeDivLeft.id = widgetFrame.id + "-resize-cover-west";
+					resizeDivLeft.style.cursor = "ew-resize";
+
+					resizeDivRight = document.createElement("div");
+					resizeDivRight.className = "resizeWidgetCoverRight";
+					resizeDivRight.id = widgetFrame.id + "-resize-cover-east";
+					resizeDivRight.style.cursor = "ew-resize";
+
+					resizeDivBottom = document.createElement("div");
+					resizeDivBottom.className = "resizeWidgetCoverBottom";
+					resizeDivBottom.id = widgetFrame.id + "-resize-cover-south";
+					resizeDivBottom.style.cursor = "ns-resize";
+
+					//Corners for resize
+					resizeDivTopLeft = document.createElement("div");
+					resizeDivTopLeft.className = "resizeWidgetCoverTopLeft";
+					resizeDivTopLeft.id = widgetFrame.id + "-resize-cover-northwest";
+					resizeDivTopLeft.style.cursor = "nwse-resize";
+
+					resizeDivTopRight = document.createElement("div");
+					resizeDivTopRight.className = "resizeWidgetCoverTopRight";
+					resizeDivTopRight.id = widgetFrame.id + "-resize-cover-northeast";
+					resizeDivTopRight.style.cursor = "nesw-resize";
+
+					resizeDivBottomRight = document.createElement("div");
+					resizeDivBottomRight.className = "resizeWidgetCoverBottomRight";
+					resizeDivBottomRight.id = widgetFrame.id + "-resize-cover-southeast";
+					resizeDivBottomRight.style.cursor = "nwse-resize";
+
+					resizeDivBottomLeft = document.createElement("div");
+					resizeDivBottomLeft.className = "resizeWidgetCoverBottomLeft";
+					resizeDivBottomLeft.id = widgetFrame.id + "-resize-cover-southwest";
+					resizeDivBottomLeft.style.cursor = "nesw-resize";
+
+					if(!editBlock_.isHidden) 
+					{
+						coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
+					}
+
+					coverDiv.addEventListener("mousedown", startWidgetDrag);
+					coverDiv.addEventListener("mouseup", endWidgetDrag);	
+
+					resizeDivTop.addEventListener("mousedown", startWidgetResize);
+					resizeDivLeft.addEventListener("mousedown", startWidgetResize);
+					resizeDivRight.addEventListener("mousedown", startWidgetResize);
+					resizeDivBottom.addEventListener("mousedown", startWidgetResize);
+					resizeDivTopLeft.addEventListener("mousedown", startWidgetResize);
+					resizeDivTopRight.addEventListener("mousedown", startWidgetResize);
+					resizeDivBottomRight.addEventListener("mousedown", startWidgetResize);
+					resizeDivBottomLeft.addEventListener("mousedown", startWidgetResize);
+
+					resizeDivTop.addEventListener("mouseup", endWidgetResize);
+					resizeDivLeft.addEventListener("mouseup", endWidgetResize);
+					resizeDivRight.addEventListener("mouseup", endWidgetResize);
+					resizeDivBottom.addEventListener("mouseup", endWidgetResize);
+					resizeDivTopLeft.addEventListener("mouseup", endWidgetResize);
+					resizeDivTopRight.addEventListener("mouseup", endWidgetResize);
+					resizeDivBottomRight.addEventListener("mouseup", endWidgetResize);
+					resizeDivBottomLeft.addEventListener("mouseup", endWidgetResize);
+
 					resizeDiv.appendChild(resizeDivTop);
 					resizeDiv.appendChild(resizeDivLeft);
 					resizeDiv.appendChild(resizeDivRight);
@@ -1685,338 +1057,401 @@
 					resizeDiv.appendChild(resizeDivTopLeft);
 					resizeDiv.appendChild(resizeDivBottomRight);
 					resizeDiv.appendChild(resizeDivBottomLeft);
-					
+
 					widgetFrame.src = "widgets/" + widgetLibrary.typeToSrc[page_.widgets[widget].type];
 					widgetFrame.style.border = "0";
-					widgetFrame.style.position = "absolute";
 					widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
-					widgetFrame.width = page_.widgets[widget].size_x + "px";
-					widgetFrame.height = page_.widgets[widget].size_y + "px";
-					widgetFrame.style.left = "0px"//.style.left = page_.widgets[widget].x + "px";
-					widgetFrame.style.top = "0px";//.top = page_.widgets[widget].y + "px";
 
+					containerDiv.appendChild(resizeDiv);
+					containerDiv.appendChild(coverDiv);
+
+					page_.widgets[widget].el = widgetFrame;
+
+					containerDiv.appendChild(widgetFrame);
+					mainBlock_.el.appendChild(containerDiv);
 				}
+				else
+				{
+					widgetFrame = document.getElementById(widget);
 				
+					containerDiv = document.getElementById(widgetFrame.id + "-container");
+					coverDiv = document.getElementById(widgetFrame.id + "-cover");
+					resizeDiv = document.getElementById(widgetFrame.id + "-resize-cover");
+					resizeDivTop = document.getElementById(widgetFrame.id + "-resize-cover-north");
+					resizeDivLeft = document.getElementById(widgetFrame.id + "-resize-cover-west");
+					resizeDivRight = document.getElementById(widgetFrame.id + "-resize-cover-east");
+					resizeDivBottom = document.getElementById(widgetFrame.id + "-resize-cover-south");
+
+					//Corners for resize
+					resizeDivTopLeft = document.getElementById(widgetFrame.id + "-resize-cover-northwest");
+					resizeDivTopRight = document.getElementById(widgetFrame.id + "-resize-cover-northeast");
+					resizeDivBottomRight = document.getElementById(widgetFrame.id + "-resize-cover-southeast");
+					resizeDivBottomLeft = document.getElementById(widgetFrame.id + "-resize-cover-southwest");
+				}
+
+				//now widget object has been updated, now apply sizes in pixel units
+				var x = (page_.widgets[widget].x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
+				var y = (page_.widgets[widget].y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
+				var w = (page_.widgets[widget].size_x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
+				var h = (page_.widgets[widget].size_y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
+
+				containerDiv.style.width = w + "px";
+				containerDiv.style.height = h + "px";
+				containerDiv.style.position = "absolute";
+				containerDiv.style.left = x + "px";
+				containerDiv.style.top = y + "px";
+				containerDiv.style.zIndex = "5";
+
+				coverDiv.style.width = w + "px";
+				coverDiv.style.height = h + "px";
+				coverDiv.style.position = "absolute";
+				coverDiv.style.left = "0px";
+				coverDiv.style.top = "0px";
+				coverDiv.style.zIndex = "50";
+
+				resizeDiv.style.width = (w + (2 * OUTLINE_OFFSET)) + "px";
+				resizeDiv.style.height = (h + (2 * OUTLINE_OFFSET)) + "px";
+				resizeDiv.style.position = "absolute";
+				resizeDiv.style.left = -(OUTLINE_OFFSET) + "px";
+				resizeDiv.style.top = -(OUTLINE_OFFSET) + "px";
+				resizeDiv.style.zIndex = "49";
+
+				//To handle the different resize arrows
+				//Edges for resize
+				resizeDivTop.style.width = w + "px";
+				resizeDivTop.style.height = OUTLINE_OFFSET + "px";
+				resizeDivTop.style.position = "absolute";
+				resizeDivTop.style.left = OUTLINE_OFFSET + "px";
+				resizeDivTop.style.top = "0px";
+				resizeDivTop.style.zIndex = "49";
+
+				resizeDivLeft.style.width = OUTLINE_OFFSET + "px";
+				resizeDivLeft.style.height = h + "px";
+				resizeDivLeft.style.position = "absolute";
+				resizeDivLeft.style.left ="0px";
+				resizeDivLeft.style.top = OUTLINE_OFFSET + "px";
+				resizeDivLeft.style.zIndex = "49";
+
+				resizeDivRight.style.width = OUTLINE_OFFSET + "px";
+				resizeDivRight.style.height = h + "px";
+				resizeDivRight.style.position = "absolute";
+				resizeDivRight.style.right = "0px";
+				resizeDivRight.style.top = OUTLINE_OFFSET + "px";
+				resizeDivRight.style.zIndex = "49";
+
+				resizeDivBottom.style.width = w + "px";
+				resizeDivBottom.style.height = OUTLINE_OFFSET + "px";
+				resizeDivBottom.style.position = "absolute";
+				resizeDivBottom.style.left = OUTLINE_OFFSET + "px";
+				resizeDivBottom.style.bottom = "0px";
+				resizeDivBottom.style.zIndex = "49";
+
+				//Corners for resize
+				resizeDivTopLeft.style.width = OUTLINE_OFFSET + "px";
+				resizeDivTopLeft.style.height = OUTLINE_OFFSET + "px";
+				resizeDivTopLeft.style.position = "absolute";
+				resizeDivTopLeft.style.left = "0px";
+				resizeDivTopLeft.style.top = "0px";
+				resizeDivTopLeft.style.zIndex = "49";
+
+				resizeDivTopRight.style.width = OUTLINE_OFFSET + "px";
+				resizeDivTopRight.style.height = OUTLINE_OFFSET + "px";
+				resizeDivTopRight.style.position = "absolute";
+				resizeDivTopRight.style.right = "0px";
+				resizeDivTopRight.style.top = "0px";
+				resizeDivTopRight.style.zIndex = "49";
+
+				resizeDivBottomRight.style.width = OUTLINE_OFFSET + "px";
+				resizeDivBottomRight.style.height = OUTLINE_OFFSET + "px";
+				resizeDivBottomRight.style.position = "absolute";
+				resizeDivBottomRight.style.right = "0px";
+				resizeDivBottomRight.style.bottom = "0px";
+				resizeDivBottomRight.style.zIndex = "49";
+
+				resizeDivBottomLeft.style.width = OUTLINE_OFFSET + "px";
+				resizeDivBottomLeft.style.height = OUTLINE_OFFSET + "px";
+				resizeDivBottomLeft.style.position = "absolute";
+				resizeDivBottomLeft.style.left = "0px";
+				resizeDivBottomLeft.style.bottom = "0px";
+				resizeDivBottomLeft.style.zIndex = "49";
+
+				if(!hideFrame)
+				{
+					widgetFrame.style.position = "absolute";
+					widgetFrame.width = w + "px";
+					widgetFrame.height = h + "px";
+					widgetFrame.style.left = 0 + "px";
+					widgetFrame.style.top = 0 + "px";
+				}
+
+				toggleWidgetSelection(page_.widgets[widget].el);
+				widgetFrame.style.display = hideFrame?"none":"block";
+			} //end drawWidget()
+
+
+			//================================================================================
+			function drawWidgetFromFile(widget, xx, yy, width, height, hideFrame)
+			{
+				newWidget_ = true;
+				var widgetFrame = document.createElement("iframe");
+				widgetFrame.id = widget;
+				widgetFrame.scrolling="No";
+
+				var windowWidth = DesktopContent.getWindowWidth();
+				var windowHeight = DesktopContent.getWindowHeight();
+
+				page_.widgets[widget].size_x = (PAGE_POSITIONS_*width/windowWidth) | 0;
+				page_.widgets[widget].size_y = (PAGE_POSITIONS_*height/windowHeight) | 0;
+				page_.widgets[widget].x = (PAGE_POSITIONS_*xx/windowWidth) | 0;
+				page_.widgets[widget].y = (PAGE_POSITIONS_*yy/windowHeight) | 0;
+
+				var containerDiv;
+				var coverDiv;
+
+				var OUTLINE_OFFSET = 15;
+				var resizeDiv;
+				var resizeDivTop;
+				var resizeDivLeft;
+				var resizeDivRight;
+				var resizeDivBottom;
+				var resizeDivTopLeft;
+				var resizeDivTopRight;
+				var resizeDivBottomRight;
+				var resizeDivBottomLeft;
+
+				containerDiv = document.createElement("div");
+				containerDiv.id = widgetFrame.id + "-container";
+				containerDiv.style["background-color"] = "rgba(0,0,0,0.7)";
+				//containerDiv.innerHTML = "containerDiv";
+
+				coverDiv = document.createElement("div");
+				coverDiv.className = "widgetCover";
+				coverDiv.id = widgetFrame.id + "-cover";
+				//coverDiv.innerHTML = "coverDiv";
+
+				resizeDiv = document.createElement("div");
+				resizeDiv.className = "resizeWidgetCover";
+				resizeDiv.id = widgetFrame.id + "-resize-cover";
+
+				//To handle the different resize arrows
+				//Edges for resize
+				resizeDivTop = document.createElement("div");
+				resizeDivTop.className = "resizeWidgetCoverTop";
+				resizeDivTop.id = widgetFrame.id + "-resize-cover-north";
+				resizeDivTop.style.cursor = "ns-resize";
+
+				resizeDivLeft = document.createElement("div");
+				resizeDivLeft.className = "resizeWidgetCoverLeft";
+				resizeDivLeft.id = widgetFrame.id + "-resize-cover-west";
+				resizeDivLeft.style.cursor = "ew-resize";
+
+				resizeDivRight = document.createElement("div");
+				resizeDivRight.className = "resizeWidgetCoverRight";
+				resizeDivRight.id = widgetFrame.id + "-resize-cover-east";
+				resizeDivRight.style.cursor = "ew-resize";
+
+				resizeDivBottom = document.createElement("div");
+				resizeDivBottom.className = "resizeWidgetCoverBottom";
+				resizeDivBottom.id = widgetFrame.id + "-resize-cover-south";
+				resizeDivBottom.style.cursor = "ns-resize";
+
+				//Corners for resize
+				resizeDivTopLeft = document.createElement("div");
+				resizeDivTopLeft.className = "resizeWidgetCoverTopLeft";
+				resizeDivTopLeft.id = widgetFrame.id + "-resize-cover-northwest";
+				resizeDivTopLeft.style.cursor = "nwse-resize";
+
+				resizeDivTopRight = document.createElement("div");
+				resizeDivTopRight.className = "resizeWidgetCoverTopRight";
+				resizeDivTopRight.id = widgetFrame.id + "-resize-cover-northeast";
+				resizeDivTopRight.style.cursor = "nesw-resize";
+
+				resizeDivBottomRight = document.createElement("div");
+				resizeDivBottomRight.className = "resizeWidgetCoverBottomRight";
+				resizeDivBottomRight.id = widgetFrame.id + "-resize-cover-southeast";
+				resizeDivBottomRight.style.cursor = "nwse-resize";
+
+				resizeDivBottomLeft = document.createElement("div");
+				resizeDivBottomLeft.className = "resizeWidgetCoverBottomLeft";
+				resizeDivBottomLeft.id = widgetFrame.id + "-resize-cover-southwest";
+				resizeDivBottomLeft.style.cursor = "nesw-resize";
+
+				widgetFrame.src = "widgets/" + widgetLibrary.typeToSrc[page_.widgets[widget].type];
+				widgetFrame.style.border = "0";
+				widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
+
+				coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
+
+				coverDiv.addEventListener("mousedown", startWidgetDrag);
+				coverDiv.addEventListener("mouseup", endWidgetDrag);	
+
+				resizeDivTop.addEventListener("mousedown", startWidgetResize);
+				resizeDivLeft.addEventListener("mousedown", startWidgetResize);
+				resizeDivRight.addEventListener("mousedown", startWidgetResize);
+				resizeDivBottom.addEventListener("mousedown", startWidgetResize);
+				resizeDivTopLeft.addEventListener("mousedown", startWidgetResize);
+				resizeDivTopRight.addEventListener("mousedown", startWidgetResize);
+				resizeDivBottomRight.addEventListener("mousedown", startWidgetResize);
+				resizeDivBottomLeft.addEventListener("mousedown", startWidgetResize);
+
+				resizeDivTop.addEventListener("mouseup", endWidgetResize);
+				resizeDivLeft.addEventListener("mouseup", endWidgetResize);
+				resizeDivRight.addEventListener("mouseup", endWidgetResize);
+				resizeDivBottom.addEventListener("mouseup", endWidgetResize);
+				resizeDivTopLeft.addEventListener("mouseup", endWidgetResize);
+				resizeDivTopRight.addEventListener("mouseup", endWidgetResize);
+				resizeDivBottomRight.addEventListener("mouseup", endWidgetResize);
+				resizeDivBottomLeft.addEventListener("mouseup", endWidgetResize);
+
+				resizeDiv.appendChild(resizeDivTop);
+				resizeDiv.appendChild(resizeDivLeft);
+				resizeDiv.appendChild(resizeDivRight);
+				resizeDiv.appendChild(resizeDivBottom);
+				resizeDiv.appendChild(resizeDivTopRight);
+				resizeDiv.appendChild(resizeDivTopLeft);
+				resizeDiv.appendChild(resizeDivBottomRight);
+				resizeDiv.appendChild(resizeDivBottomLeft);
+
+				//start resizing
+				var x = (page_.widgets[widget].x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
+				var y = (page_.widgets[widget].y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
+				var w = (page_.widgets[widget].size_x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
+				var h = (page_.widgets[widget].size_y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
+
+				containerDiv.style.width = w + "px";
+				containerDiv.style.height = h + "px";
+				containerDiv.style.position = "absolute";
+				containerDiv.style.left = x + "px";
+				containerDiv.style.top = y + "px";
+				containerDiv.style.zIndex = "5";
+
+				coverDiv.style.width = w + "px";
+				coverDiv.style.height = h + "px";
+				coverDiv.style.position = "absolute";
+				coverDiv.style.left = "0px";
+				coverDiv.style.top = "0px";
+				coverDiv.style.zIndex = "50";
+
+				resizeDiv.style.width = (w + (2 * OUTLINE_OFFSET)) + "px";
+				resizeDiv.style.height = (h + (2 * OUTLINE_OFFSET)) + "px";
+				resizeDiv.style.position = "absolute";
+				resizeDiv.style.left = -(OUTLINE_OFFSET) + "px";
+				resizeDiv.style.top = -(OUTLINE_OFFSET) + "px";
+				resizeDiv.style.zIndex = "49";
+
+				//To handle the different resize arrows
+				//Edges for resize
+				resizeDivTop.style.width = w + "px";
+				resizeDivTop.style.height = OUTLINE_OFFSET + "px";
+				resizeDivTop.style.position = "absolute";
+				resizeDivTop.style.left = OUTLINE_OFFSET + "px";
+				resizeDivTop.style.top = "0px";
+				resizeDivTop.style.zIndex = "49";
+
+				resizeDivLeft.style.width = OUTLINE_OFFSET + "px";
+				resizeDivLeft.style.height = h + "px";
+				resizeDivLeft.style.position = "absolute";
+				resizeDivLeft.style.left ="0px";
+				resizeDivLeft.style.top = OUTLINE_OFFSET + "px";
+				resizeDivLeft.style.zIndex = "49";
+
+				resizeDivRight.style.width = OUTLINE_OFFSET + "px";
+				resizeDivRight.style.height = h + "px";
+				resizeDivRight.style.position = "absolute";
+				resizeDivRight.style.right = "0px";
+				resizeDivRight.style.top = OUTLINE_OFFSET + "px";
+				resizeDivRight.style.zIndex = "49";
+
+				resizeDivBottom.style.width = w + "px";
+				resizeDivBottom.style.height = OUTLINE_OFFSET + "px";
+				resizeDivBottom.style.position = "absolute";
+				resizeDivBottom.style.left = OUTLINE_OFFSET + "px";
+				resizeDivBottom.style.bottom = "0px";
+				resizeDivBottom.style.zIndex = "49";
+
+				//Corners for resize
+				resizeDivTopLeft.style.width = OUTLINE_OFFSET + "px";
+				resizeDivTopLeft.style.height = OUTLINE_OFFSET + "px";
+				resizeDivTopLeft.style.position = "absolute";
+				resizeDivTopLeft.style.left = "0px";
+				resizeDivTopLeft.style.top = "0px";
+				resizeDivTopLeft.style.zIndex = "49";
+
+				resizeDivTopRight.style.width = OUTLINE_OFFSET + "px";
+				resizeDivTopRight.style.height = OUTLINE_OFFSET + "px";
+				resizeDivTopRight.style.position = "absolute";
+				resizeDivTopRight.style.right = "0px";
+				resizeDivTopRight.style.top = "0px";
+				resizeDivTopRight.style.zIndex = "49";
+
+				resizeDivBottomRight.style.width = OUTLINE_OFFSET + "px";
+				resizeDivBottomRight.style.height = OUTLINE_OFFSET + "px";
+				resizeDivBottomRight.style.position = "absolute";
+				resizeDivBottomRight.style.right = "0px";
+				resizeDivBottomRight.style.bottom = "0px";
+				resizeDivBottomRight.style.zIndex = "49";
+
+				resizeDivBottomLeft.style.width = OUTLINE_OFFSET + "px";
+				resizeDivBottomLeft.style.height = OUTLINE_OFFSET + "px";
+				resizeDivBottomLeft.style.position = "absolute";
+				resizeDivBottomLeft.style.left = "0px";
+				resizeDivBottomLeft.style.bottom = "0px";
+				resizeDivBottomLeft.style.zIndex = "49";
+
+				if(!hideFrame)
+				{
+					widgetFrame.style.position = "absolute";
+					widgetFrame.width = w + "px";
+					widgetFrame.height = h + "px";
+					widgetFrame.style.left = 0 + "px";
+					widgetFrame.style.top = 0 + "px";
+				}
+
 				containerDiv.appendChild(resizeDiv);
 				containerDiv.appendChild(coverDiv);
 
 				page_.widgets[widget].el = widgetFrame;
-				
+
 				containerDiv.appendChild(widgetFrame);
 				mainBlock_.el.appendChild(containerDiv);
-				
-				
-				if(!resizeLockout_)
-					document.getElementById(widget).contentWindow.newWidget;
-				
+
 				toggleWidgetSelection(page_.widgets[widget].el);
+				widgetFrame.style.display = hideFrame?"none":"block";
+			} //end drawWidgetFromFile()
 
-				
-				
-			}
-			
-			var resizeLockout_ = false;
-			var resizeId_ = "";
-			var resizeFrom_ = "";
-			
-			function resizeWidgetCaller(id, resize_from)
-			{
-			
-				return function(event){
 
-					if(resizeLockout_)
-					{
-						//console.log("Now: (X)" + event.clientX + " (Y)" + event.clientY);
-						//console.log(page_.widgets[id].el.parentNode.getElementsByClassName("resizeWidgetCover")[0]);
-						var deltaX = 0;
-						var deltaY = 0;
-						
-						//Depending on where we are pulling the resize, which way means "make the widget bigger" is different
-						if(resize_from == "north")
-						{
-							deltaX = 0;
-							deltaY = -(event.clientY - yPos_);
-						}
-						else if(resize_from == "east")
-						{
-							deltaX = (event.clientX - xPos_);
-							deltaY = 0;
-						}
-						else if(resize_from == "south")
-						{
-							deltaX = 0;
-							deltaY = (event.clientY - yPos_);						
-						}
-						else if(resize_from == "west")
-						{
-							deltaX = -(event.clientX - xPos_);
-							deltaY = event.clientY - yPos_;						
-						}
-						else if(resize_from == "northeast")
-						{
-							deltaX = (event.clientX - xPos_);
-							deltaY = -(event.clientY - yPos_);
-						}
-						else if(resize_from == "northwest")
-						{
-							deltaX = -(event.clientX - xPos_);
-							deltaY = -(event.clientY - yPos_);
-						}
-						else if(resize_from == "southeast")
-						{
-							deltaX = (event.clientX - xPos_);
-							deltaY = (event.clientY - yPos_);						
-						}
-						else if(resize_from == "southwest")
-						{
-							deltaX = -(event.clientX - xPos_);
-							deltaY = (event.clientY - yPos_);						
-						}
-						
-						var newWidth = resizeBeginWidth_ + deltaX;
-						var newHeight = resizeBeginHeight_ + deltaY;
-						
-						resizeWidget(id, resize_from, newWidth, newHeight);
-					}
-				}
-				
-				return;
-			}
-			
-			
-			function resizeWidget(id, resize_from = "center", new_suggested_width, new_suggested_height)
+			//=====================================================================================
+			function mouseoverEditBlock(e)
 			{
-				
-					var newWidth;
-					var newHeight;
-					
-					if(widgetLibrary.dimensions[page_.widgets[id].type] && widgetLibrary.dimensions[page_.widgets[id].type]["Y"] && widgetLibrary.dimensions[page_.widgets[id].type]["X"])
-					{
-						var aspect_ratio = parseFloat(widgetLibrary.dimensions[page_.widgets[id].type]["X"]) / parseFloat(widgetLibrary.dimensions[page_.widgets[id].type]["Y"]);
-						//console.log("x: " + new_suggested_width);
-						//console.log("y: " + new_suggested_height);
-						
-						var y_displacement = new_suggested_height;
-						var x_displacement = new_suggested_width;
-						
-						var adjusted_y_displacement = y_displacement * aspect_ratio;
-						var adjusted_x_displacement = x_displacement;
-//							console.log("y_displacement: " + y_displacement);
-//							console.log("adjusted_y_displacement: " + adjusted_y_displacement);
-//							console.log("adjusted_x_displacement: " + adjusted_x_displacement);
-//						if((new_suggested_height > parseFloat(page_.widgets[id].size_y)) || (new_suggested_width > parseFloat(page_.widgets[id].size_x)))//Resizing up 
-//						{
-						//In the future would be nice to have a working system for edge cases
-						if(true)
-						{
-							if(Math.abs(adjusted_y_displacement) >= Math.abs(adjusted_x_displacement))
-							{
-								console.log("AbsY: " + Math.abs(adjusted_y_displacement));								
-								console.log("AbsX: " + Math.abs(adjusted_x_displacement));								
-							
-								newWidth = parseFloat(y_displacement * aspect_ratio);
-								newHeight = (y_displacement);						
-							}
-							else
-							{
-								
-								console.log(parseFloat(x_displacement / aspect_ratio));								
-							
-								newWidth = (x_displacement);
-								newHeight = parseFloat(x_displacement / aspect_ratio);							
-							}
-						
-//						if((y_displacement > widgetLibrary.dimensions[page_.widgets[id].type]["Y"]) || (x_displacement > widgetLibrary.dimensions[page_.widgets[id].type]["X"]))
-//						{
-//													
-//							var adjusted_y_displacement = y_displacement * aspect_ratio;
-//							var adjusted_x_displacement = x_displacement;
-////							console.log("y_displacement: " + y_displacement);
-////							console.log("adjusted_y_displacement: " + adjusted_y_displacement);
-////							console.log("adjusted_x_displacement: " + adjusted_x_displacement);
-//							if((new_suggested_height > parseFloat(page_.widgets[id].size_y)) || (new_suggested_width > parseFloat(page_.widgets[id].size_x)))//Resizing up 
-//							{
-//								console.log("Resizing Up");
-//								if(Math.abs(adjusted_y_displacement) >= Math.abs(adjusted_x_displacement))
-//								{
-//									console.log("AbsY: " + Math.abs(adjusted_y_displacement));								
-//									console.log("AbsX: " + Math.abs(adjusted_x_displacement));								
-//								
-//									newWidth = parseFloat(y_displacement * aspect_ratio);
-//									newHeight = (y_displacement);						
-//								}
-//								else
-//								{
-//									
-//									console.log(parseFloat(x_displacement / aspect_ratio));								
-//								
-//									newWidth = (x_displacement);
-//									newHeight = parseFloat(x_displacement / aspect_ratio);							
-//								}
-//
-//							}
-//							else
-//							{
-//								console.log("Resizing Down");	
-//							
-//								if(Math.abs(adjusted_y_displacement) <= Math.abs(adjusted_x_displacement))
-//								{
-//									console.log("AbsY: " + Math.abs(adjusted_y_displacement));								
-//									console.log("AbsX: " + Math.abs(adjusted_x_displacement));								
-//								
-//									newWidth = parseFloat(y_displacement * aspect_ratio);
-//									newHeight = (y_displacement);						
-//								}
-//								else
-//								{
-//									
-//									console.log(parseFloat(x_displacement / aspect_ratio));								
-//								
-//									newWidth = (x_displacement);
-//									newHeight = parseFloat(x_displacement / aspect_ratio);							
-//								}							
-//							}
-						} //Resizing down
-						else //Widget is trying to be resized below minimum size: force size according to widget library
-						{
-								
-							newWidth = parseFloat(widgetLibrary.dimensions[page_.widgets[id].type]["X"]);
-							newHeight = parseFloat(widgetLibrary.dimensions[page_.widgets[id].type]["Y"]);
-							//console.log("y_displacement: " + newWidth);
-							//console.log("y_displacement: " + newHeight);
-						}						
-					}
-					else
-					{
-						newWidth = new_suggested_width;
-						newHeight = new_suggested_height;
-					}
-			
-			
-			
-					//The widgets are anchored by their top left point
-					//so we need to figure out the delta in order to make it appear 
-					//that it is resizing based on the side the user is pulling from
-					
-					var anchorX = parseFloat(page_.widgets[id].x);
-					var anchorY = parseFloat(page_.widgets[id].y);
-					var deltaHeight = (newHeight  - (parseFloat(page_.widgets[id].size_y)));
-					var deltaWidth = (newWidth  - (parseFloat(page_.widgets[id].size_x)));					
-					var anchorDeltaX = 0;
-					var anchorDeltaY = 0;
-			
-					if(resize_from == "center")
-					{
-						anchorDeltaX = -(deltaWidth / 2);
-						anchorDeltaY = -(deltaHeight / 2);
-					}
-					else if(resize_from == "north")
-					{
-						anchorDeltaX = -(deltaWidth / 2);
-						anchorDeltaY = -(deltaHeight);						
-					}
-					else if(resize_from == "east")
-					{
-						anchorDeltaX = 0;
-						anchorDeltaY = -(deltaHeight / 2);						
-					}
-					else if(resize_from == "south")
-					{
-						anchorDeltaX = -(deltaWidth / 2);
-						anchorDeltaY = 0;						
-					}
-					else if(resize_from == "west")
-					{
-						anchorDeltaX = -(deltaWidth);
-						anchorDeltaY = -(deltaHeight / 2);						
-					}
-					else if(resize_from == "northeast")
-					{
-						anchorDeltaX = 0;
-						anchorDeltaY = -(deltaHeight);						
-					}
-					else if(resize_from == "northwest")
-					{
-						anchorDeltaX = -(deltaWidth);
-						anchorDeltaY = -(deltaHeight);						
-					}
-					else if(resize_from == "southeast")
-					{
-						anchorDeltaX = 0;
-						anchorDeltaY = 0;						
-					}
-					else if(resize_from == "southwest")
-					{
-						anchorDeltaX = -(deltaWidth);
-						anchorDeltaY = 0;						
-					}
-					
-					var newAnchorX = anchorX + anchorDeltaX;
-					var newAnchorY = anchorY + anchorDeltaY;
-					
-//					console.log(page_.widgets);
-//					console.log(page_.widgets[id]);
-//					console.log("anchorDeltaX" + anchorDeltaX);
-//					console.log("anchorDeltaY" + anchorDeltaY);
-//					console.log("newAnchorX" + newAnchorX);
-//					console.log("newAnchorY" + newAnchorY);
-//					console.log("deltaWidth" + deltaWidth);
-//					console.log("deltaHeight" + deltaHeight);
-					
-					
-					drawWidget(id, false, newAnchorX, newAnchorY, newWidth, newHeight);
-					redrawWindow();
-
-//					console.log(page_.widgets[id]);
-					
-				return;
-			}
-			
-			function endResizeWidget(resize_from, id)
-			{
-				
-				if(resizeLockout_)
-				{
-					console.log("Resizing Ended");	
-					resizeLockout_ = false;
-					window.removeEventListener("mousemove", resizeWidgetCaller(id, resize_from), false);					
-					window.removeEventListener("mouseup",   endResizeWidget(resize_from, id), false);	
-					page_.widgets[id].el.style.display = "block";
-				}
-			}			
-			
-			
-			function mouseoverEditBlock(e){
-				console.log(editBlock_.el.style.height);
-				hudContainer_.style.bottom = editBlock_.el.style.height;
 				editBlock_.el.style.marginBottom = editBlock_.el.style.height;
-			}
-			
-			function mouseoutEditBlock(e){
-				hudContainer_.style.bottom = hiddenWidth_ + "px";// "0px";
+			} // end mouseoverEditBlock()
+
+
+			//=====================================================================================
+			function mouseoutEditBlock(e)
+			{
 				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
 				editBlock_.el.style.marginBottom = 1.5 * hiddenWidth_ + "px";
 				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
 				editBlock_.el.style.marginBottom = parseInt(document.getElementById("editorPanelTitle")) + "px";
+			} //end mouseoutEditBlock()
 
-			}
-			
-			
 
+			//================================================================================
 			function toggleEditMode()
 			{
-				console.log(window.innerWidth);
-				console.log()
-				editBlock_.el.style.bottom = "-" + parseInt(editBlock_.el.style.height) + "px"; 
+				Debug.log("Toggle Edit Mode");
+
 				editBlock_.el.style.marginBottom = parseInt(document.getElementById("editorPanelTitle")) + "px";
 
 				var covers = document.getElementsByClassName("widgetCover");
-				var resize_covers = document.getElementsByClassName("resizewidgetCover");
-                var editButton = document.getElementById("menuli2");
+			    var resize_covers = document.getElementsByClassName("resizeWidgetCover");
+				var editButton = document.getElementById("menuli2");
 
-				
 				if(editBlock_.isHidden && !isReadOnly_)
 				{
+					Debug.log("Edit Mode On");
+
 					//Make sure pv list is up-to-date
 					DesktopContent.XMLHttpRequest(
 						"Request?RequestType=getList",
@@ -2026,87 +1461,94 @@
 						0 /*progressHandler*/, 
 						0 /*callHandlerOnErr*/, 
 						false /*doNoShowLoadingOverlay*/);
-						
-					//window.clearInterval(timerVariable_);
+
+					UID_ = 0;
+					window.clearInterval(timerVariable_);
 					editButton.classList.add("navigationMenu--Edit");
 					mainBlock_.el.classList.add("editMode");
-//					cover.style.backgroundColor = "rgba(0,0,0,0.4)";
+
 					editBlock_.el.style.zIndex = "50";
-					editBlock_.el.style.marginBottom = hiddenWidth_ + "px";//editBlock_.el.style.width;
+					editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
 					editBlock_.el.addEventListener("mouseover", mouseoverEditBlock, true);
 					editBlock_.el.addEventListener("mouseleave", mouseoutEditBlock, true);
-				//	mainBlock_.el.style.display = "none";
+
 					editBlock_.isHidden = false;
-					hudContainer_.style.bottom = hiddenWidth_ + "px";
+
 					for(widget in page_.widgets)
 					{
-						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].addEventListener("dblclick", toggleContextMenuCaller(widget), true);
-						page_.widgets[widget].el.parentNode.getElementsByClassName("resizeWidgetCover")[0].addEventListener("mousedown", resizeWidgetCaller(widget), true);
-
-						document.getElementById(widget).contentWindow.init();
+						drawWidget(widget, false, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y);
+						page_.widgets[widget].el.style.display = "block";						
 					}
 					if(covers.length > 0)
 					{
-						for(widgetCover in covers)
+						for(var i = 0;i<covers.length;++i)
 						{
-							console.log(widgetCover);
-							console.log(covers);
-							covers[widgetCover].style["z-index"] = "9";
+							covers[i].style.display = "block";
 						}
-						
-						for(resize_cover in resize_covers)
+
+						console.log(resize_covers);
+						for(var i = 0;i<resize_covers.length;++i)
 						{
-							console.log(resize_cover);
-							console.log(resize_covers);
-							resize_cover[resize_cover].style["z-index"] = "8";
-						}
-						
+							resize_covers[i].style["z-index"] = "8";
+						}	
 					}
 				}
 				else
 				{
-					timerVariable_ = setInterval(pollServer, refreshRate_);
+					Debug.log("Edit Mode Off");		
+
+					UID_ = 0;
+					function isEmpty(obj){
+					  return (Object.getOwnPropertyNames(obj).length === 0);
+					}
+					if (page_.widgets != undefined && !isEmpty(page_.widgets))
+					{
+						var pvListSize = 0;
+						for (var widget in page_.widgets)
+						{						
+							if (isEmpty(page_.widgets[widget].PVList))
+								Debug.log("You have no PV selection for " + widget + "!", Debug.HIGH_PRIORITY);
+							else
+								pvListSize ++;
+						}
+						if (pvListSize > 0)
+						{
+							generateUID();
+							timerVariable_ = setInterval(pollServer, refreshRate_);
+						}
+					}
 					mainBlock_.el.classList.remove("editMode");
 					editButton.classList.remove("navigationMenu--Edit");
 					editBlock_.el.style.marginBottom = "0px";
 					editBlock_.el.style.zIndex = "30";
 					editBlock_.isHidden = true;
-					hudContainer_.style.bottom = "15px";
-					for(widget in page_.widgets)
+
+					for(var i = 0;i<covers.length;++i)
 					{
-						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].removeEventListener("dblclick", toggleContextMenu, true);
+						covers[i].style.display = "none";	
 					}
-					if(covers.length > 0)
-					{
-						for(widgetCover in covers)
-						{
-							//COMMENTED 4.18.19 covers[widgetCover].style["z-index"] = "-9";
-						}
-					}
-					//dissable all right clicks
-					//updateRefreshInterval();
-					turnOnWidgets();
+
 					toggleWidgetSelection();
-//					editCover.style["z-index"] = "4";
 				}
-			}
-			
-			function toggleContextMenuCaller(id) {
-				//alert("toggleContextMenuCaller reached!");
+			} //end toggleEditMode()
+
+
+			//=====================================================================================
+			function toggleContextMenuCaller(id)
+			{
 				 return function(event) {
+
 					 if(!editBlock_.isHidden)
 					 {
-						// event.preventDefault();
 					 	toggleContextMenu(event, id);
 					 }
 				};
-			};
-			
-			function toggleContextMenu(e, id)
-			{	
-				//e.preventDefault();
+			} //end toggleContextMenuCaller()
 
-				//alert("It works!");	
+
+			//=====================================================================================
+			function toggleContextMenu(e, id)
+			{
 				if(menuState_ !== 1)
 				{
 					menu_.style.left = e.clientX + "px";
@@ -2115,39 +1557,10 @@
 					menuState_ = 1;
 					menu_.classList.add(activeMenu_);
 				}
-			}
-//				var cover = document.getElementById("coverDiv");
-//				editBlock_.el.style.right = window.innerWidth + parseInt(editBlock_.el.style.width) + "px";
-//				
-//				if(fileBlock_.isHidden)
-//				{
-//					editBlock_.isHidden = false;
-//					editBlock_.el.style.zIndex = "150";
-//					cover.style.backgroundColor = "rgba(0,0,0,0.1)";
-//					//cover.onmouseover=function(){openFileMenu()};
-//					//mainBlock_.el.style.left = fileBlock.el.style.width;
-////					mainBlock_.el.style.display = "none";
-//					editBlock_.el.style.marginRight = editBlock.el.style.width;
-//
-//				}
-//				else
-//				{
-//					editBlock_.isHidden = true;
-//					editBlock_.el.style.zIndex = "30";
-//					editBlock_.el.style.marginRight = "0px";
-////					fileBlock_.el.onmouseover = function(){redrawWindow(null, true);};
-//					cover.style.backgroundColor = "rgba(0,0,0,0)";
-//
-//					//fileWidth = hiddenWidth;
-//					//fileBlock_.el.innerHTML = "";
-//					//fileBlock_.el.style["background-color"] = "transparent";
-//					//mainWidth += unhiddenWidth - hiddenWidth;
-//					//mainLeft = fileLeft + ;
-//
-//				}
-//				
-//			}
-			
+			} //end toggleContextMenu()
+
+
+			//=====================================================================================
 			function toggleContextMenuOff(e)
 			{
 				if(menuState_ !== 0)
@@ -2155,12 +1568,12 @@
 					menuState_ = 0;
 					menu_.classList.remove(activeMenu_);
 				}
-			}
-			
-			
+			} //end toggleContextMenuOff()
+
+
+			//=====================================================================================
 			function toggleHotkeyMenu()
 			{
-
 				var rectangle = document.getElementById("menuli3").getBoundingClientRect();
 				if((elPointer_["hotkeyMenuDiv"].style.display).indexOf("block") != -1)
 				{
@@ -2172,8 +1585,10 @@
 					elPointer_["hotkeyMenuDiv"].style.left = rectangle.left + "px";
 					elPointer_["hotkeyMenuDiv"].style.top = rectangle.top + "px";
 				}
-			}
-			
+			} //end toggleHotkeyMenu()
+
+
+			//=====================================================================================
 			function toggleAddPV()
 			{
 				console.log(menu_.getAttribute("widgetID"));
@@ -2189,13 +1604,13 @@
 				{
 					elPointer_["addPVMenuDiv"].style.display = "none"
 					elPointer_["addPVMenu"].style.display = "none";
-
 				}
-			}
-			
+			} //end toggleAddPV()
+
+
+			//=====================================================================================
 			function toggleFileMenu()
 			{
-
 				var coverDiv = document.getElementById("coverDiv")
 				var cover = document.getElementById("mainBlockCoverDiv");
 				cover.style.width = coverDiv.style.width;
@@ -2203,7 +1618,7 @@
 				cover.style.x = coverDiv.style.x;
 				cover.style.y = coverDiv.style.y;
 				fileBlock_.el.style.left = ("-" + fileBlock_.el.style.width)
-				
+
 				if(fileBlock_.isHidden)
 				{
 					nav_.classList.remove("navigationMenu--active");
@@ -2212,23 +1627,16 @@
 					fileBlock_.isHidden = false;
 					fileBlock_.el.style.zIndex = "150";
 					console.log("Hovering!");
-					cover.style.backgroundColor = backgroundCover_;//"rgba(0,0,0,0.4)";
+					cover.style.backgroundColor = backgroundCover_;
 					cover.style.zIndex = parseInt(fileBlock_.el.style.zIndex) -1;
-					//cover.onmouseover=function(){openFileMenu()};
-					//mainBlock_.el.style.left = fileBlock.el.style.width;
-					//mainBlock_.el.style.display = "none";
-					//mainBlock_.el.zIndex = "-100";
 					editBlock_.el.style.display = "none";
 					fileBlock_.el.style.marginLeft = fileBlock_.el.style.width;
-
 				}
 				else
 				{
 					fileBlock_.isHidden = true;
 					fileBlock_.el.style.zIndex = "30";
 					fileBlock_.el.style.marginLeft = "0px";
-//					mainBlock_.el.style.left = "0px";
-//					fileBlock_.el.onmouseover = function(){redrawWindow(null, true);};
 					cover.style.backgroundColor = "rgba(0,0,0,0)";
 					mainBlock_.el.style.display = "block";
 					editBlock_.el.style.display = "block";
@@ -2236,33 +1644,24 @@
 					cover.style.zIndex = parseInt(fileBlock_.el.style.zIndex) -1;
 					nav_.classList.add("navigationMenu--active");
 					nav_.style.display = "block";
-					//fileWidth = hiddenWidth;
-					//fileBlock_.el.innerHTML = "";
-					//fileBlock_.el.style["background-color"] = "transparent";
-					//mainWidth += unhiddenWidth - hiddenWidth;
-					//mainLeft = fileLeft + ;
-
 				}
-			}
-			
+			} //end toggleFileMenu()
 
-			
+
+			//=====================================================================================
 			function editWidgetAttributesOpen()
 			{
 				document.getElementById("editWidgetAttributesPopup-container").style.display = "block";
 				toggleContextMenuOff();
-				
-				
+
 				//BEGIN HEADER
 				var header = document.getElementById("editWidgetAttributesPopup-header");
 				header.innerHTML = "";
 				var title = document.createElement("input");
 				title.setAttribute("type", "text")
 				title.value = page_.widgets[menu_.getAttribute("widgetID")].Display_Name;
-				title.onchange = function(){setWidgetDisplayName(menu_.getAttribute("widgetID") , this.value);};
+				title.onchange = function(){setWidgetDisplayName(menu_.getAttribute("widgetID"), this.value);};
 				title.className = "editableInput";
-//				title.style.width = "100%";
-//				title.style.height = "90%";
 				header.appendChild(title);
 				console.log(header.clientHeight);
 				var fontsize = 5;
@@ -2271,6 +1670,7 @@
 					title.style.fontSize = ++fontsize + "px";
 				}
 				//END HEADER
+
 				//BEGIN PVTable 
 				var popupBody = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				popupBody.innerHTML = "";
@@ -2288,7 +1688,7 @@
 				thPV.style.width = "60%";
 				var thRefresh = document.createElement("th");
 //				thRefresh.className = "widgetPopupTable";
-				thRefresh.innerHTML = "Refresh Rate";
+				thRefresh.innerHTML = "Refresh Rate (Sec)";
 				thRefresh.style.width = "40%";
 				trhead.appendChild(thPV);
 				trhead.appendChild(thRefresh);
@@ -2301,17 +1701,16 @@
 
 				for(var pv in page_.widgets[menu_.getAttribute("widgetID")].PVList)
 				{
-					editWidgetAttributesaddRowPVList(pv, page_.widgets[menu_.getAttribute("widgetID")].PVList[pv], "widgetPVTableBody", "pvDatalist");
-				}				
+					editWidgetAttributesaddRowPVList(pv, page_.widgets[menu_.getAttribute("widgetID")].PVList[pv]/1000, "widgetPVTableBody", "pvDatalist");
+				}
 
 				for(var i = 0; i < 15; i++)
 				{
 					editWidgetAttributesaddRowPVList("", "", "widgetPVTableBody", "pvDatalist");
 				}
 				//END PVTable
-				
-				//BEGIN AttributesTable 
-				
+
+				//BEGIN AttributesTable
 				var attributeBody = elPointer_["editWidgetAttributesPopup-body-attributes"];
 				attributeBody.innerHTML = "";
 				var attributeTable = document.createElement("table");
@@ -2339,13 +1738,12 @@
 				elPointer_["editWidgetAttributesPopup-body-attributes"].appendChild(attributeTable);
 
 				console.log(page_.widgets[menu_.getAttribute("widgetID")].attributes);
-				
+
 				for(var attribute in page_.widgets[menu_.getAttribute("widgetID")].attributes)
 				{
 					console.log(attribute);
 					editWidgetAttributesaddRowPVList(attribute, page_.widgets[menu_.getAttribute("widgetID")].attributes[attribute], "widgetAttributesTableBody", "");
 				}
-				
 				//END   AttributesTableTable
 
 				showeditWidgetAttributesPopupBody("EditPVlist");
@@ -2356,27 +1754,28 @@
 				var closeButton = document.createElement("button");
 				closeButton.className = "editPopupButton";
 				closeButton.style.left = "55%";
-				closeButton.innerHTML = "Close";
+				closeButton.innerHTML = "Cancel";
 				closeButton.onclick = function(){editWidgetAttributesClose();};
 				footer.appendChild(closeButton);
 				var saveButton = document.createElement("button");
 				saveButton.className = "editPopupButton";
 				saveButton.style.left = "35%";
 				saveButton.innerHTML = "Save";
-				saveButton.onclick = function(){editWidgetAttributesSave();};
+				saveButton.onclick = function(){editWidgetAttributesSave(); editWidgetAttributesClose();};
 				footer.appendChild(saveButton);				
 				//END FOOTER
-				
+			} //end editWidgetAttributesOpen()
 
-			}
-			
-			
+
+			//=====================================================================================
 			function editWidgetAttributesClose()
 			{
 				document.getElementById("editWidgetAttributesPopup-container").style.display = "none";
 
-			}
-			
+			} //end editWidgetAttributesClose()
+
+
+			//=====================================================================================
 			function editWidgetAttributesSave()
 			{
 				if(elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display == "table-row"){
@@ -2384,25 +1783,21 @@
 					var table = document.getElementById("widgetPVTable");
 					for(var tr = 0; tr < table.getElementsByTagName("tr").length; tr++)
 					{
-	//					table.getElementsByTagName("tr")[tr]
 						if(table.getElementsByTagName("tr")[tr].getElementsByTagName("td").length > 0)
 						{
 							var pv = table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0].value;
 							if(pv != "")
 							{
 								console.log(pv);
-								var refreshRate = table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value;
-								console.log(refreshRate);
+								var refreshRate = table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value*1000;
+								console.log("refreshRate (ms): " + refreshRate);
 								if(refreshRate == "")
 									refreshRate = -1;
-								
+
 								page_.widgets[menu_.getAttribute("widgetID")].PVList[pv] = refreshRate; 
-								console.log(pv);
 								addPVToWidget(pv, refreshRate, menu_.getAttribute("widgetID"));
 							}
-							//console.log(table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value);
 						}
-						//page_.widgets[menu_.getAttribute("widgetID")].PVList[] = 
 					}
 				}
 				else if(elPointer_["editWidgetAttributesPopup-body-attributes"].style.display == "table-row")
@@ -2433,8 +1828,10 @@
 					else
 						document.getElementById(menu_.getAttribute("widgetID")).className = "";
 				}
-			}
-			
+			} //end editWidgetAttributesSave()
+
+
+			//=====================================================================================
 			function editWidgetAttributesaddRowPVList(keyParam, valueParam, tablebody, list)
 			{
 				var tbody = document.getElementById(tablebody);
@@ -2457,14 +1854,16 @@
 				valueField.className = "editableInput";
 				valueField.style.color = "black";
 				valueField.value = valueParam;
+				keyField.onchange = function (){setRefreshRate(keyField,valueField)};
 				dummyts2.appendChild(valueField);
 				dummytr.appendChild(dummyts);
 				dummytr.appendChild(dummyts2);
 				dummytr.style["max-height"] = "10%";
-				tbody.appendChild(dummytr);
-				
-			}
-			
+				tbody.appendChild(dummytr);	
+			} //end editWidgetAttributesaddRowPVList()
+
+
+			//=====================================================================================
 			function checkIfMoreRowsNeeded(inputEl)
 			{
 				console.log(inputEl.parentElement.parentElement.parentElement.lastElementChild);
@@ -2472,27 +1871,28 @@
 				{
 					editWidgetAttributesaddRowPVList("", "");
 				}
-			}
-			
+			} //end checkIfMoreRowsNeeded()
+
+
+			//=====================================================================================
 			function setWidgetDisplayName(widget, displayName)
 			{
 				page_.widgets[widget].Display_Name = displayName;
-			}
-			
+			} //end setWidgetDisplayName()
+
+
+			//=====================================================================================
 			function showeditWidgetAttributesPopupBody(body)
 			{
 				editWidgetAttributesSave();
-			
+
 				elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display = "none";
 				elPointer_["editWidgetAttributesPopup-body-attributes"].style.display = "none";
-				//elPointer_["editWidgetAttributesPopup-body-macromaker"].style.display = "none";
-				
-				
+
 				if (body == "EditAttributes")
 				{
 					console.log("EditAttributes");
 					elPointer_["editWidgetAttributesPopup-body-attributes"].style.display = "table-row";
-
 				}
 				else if (body == "Macromaker")
 				{
@@ -2501,18 +1901,20 @@
 				else
 				{
 					elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display = "table-row";
-
 				}
+			} //end showeditWidgetAttributesPopupBody()
 
-			}
-			
+
+			//=====================================================================================
 			function sleep(miliseconds) 
 			{
 				   var currentTime = new Date().getTime();
 				   while (currentTime + miliseconds >= new Date().getTime()) {
 				   }
-			}
-			
+			} //end sleep()
+
+
+			//=====================================================================================
 			function clearBlock(el)
 			{
 				for(var child = 0; child < el.childNodes.length; child++)
@@ -2524,8 +1926,8 @@
 						el.removeChild(el.childNodes[child]);
 					}
 				}	
-			}
-			
+			} //end clearBlock()
+
 			function toggleGrid(on)
 			{
 				if(on)
@@ -2538,41 +1940,51 @@
 					mainBlock_.el.style["background-image"] = "";
 					mainBlock_.el.style["background-size"]  =  "";
 				}
-			}
-			
+			} //end toggleGrid()
+
+
+			//=====================================================================================
 			function setBackgroundColor(color)
 			{
 				mainBlock_.el.style["background-color"] = color;
-			}
-			
+			} //end setBackgroundColor()
+
+
+			//=====================================================================================
 			function setGridColor(color, on)
 			{
 				gridColor_ = color;
 				toggleGrid(on);
-			}
-			
+			} //end setGridColor()
+
+
+			//=====================================================================================
 			function setHotkey(key)
 			{
 				hotkey_[key] = [pageOffSetX_, pageOffSetY_];
 				document.getElementById(("hotkey" + key)).innerHTML = pageOffSetX_ + "x" + pageOffSetY_;
 				document.getElementById(("hotkey" + key)).style.color = "#00cc00";
-			}
-			
+			} //end setHotkey()
+
 			keyMap_ = [];
-			
+
+
+			//=====================================================================================
 			window.onkeyup = window.onkeydown = function(e){
 			    //e = e || event; // to deal with IE
 				keyMap_[e.keyCode]  = e.type == 'keydown';
 				handleKeys(e);
 			 }
-			 
-			function handleKeys(event) {
-			    //var code = e.keyCode ? e.keyCode : e.which;
+
+
+			//=====================================================================================
+			function handleKeys(event)
+			{
 				event.clientX = 0;
 				event.clientY = 0;
 				
 			    if (event.shiftKey && keyMap_[82])//Shift + r(eset)
-			    { 
+			    {
 			    	resetToOrigin();
 				}
 			    else if(event.shiftKey && (keyMap_[48] || keyMap_[49] || keyMap_[50] || keyMap_[51] || keyMap_[52] || keyMap_[53] || keyMap_[54] || keyMap_[55] || keyMap_[56] || keyMap_[57]))
@@ -2603,68 +2015,34 @@
 			    {
 			    	toggleEditMode();
 			    }
-			    
+
 			    if(keyMap_[38])//up arrow
 			    {
 			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 0, -1);}
-			    	else {pageOffSetY_+=3; redrawWindow(); turnOnWidgets();}	
+			    	else {pageOffSetY_+=3; redrawWindow();}
 					
 			    }
 			    if(keyMap_[40])//down arrow
 			    {
 			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 0, 1);}
-			    	else {pageOffSetY_-=3; redrawWindow(); turnOnWidgets(); } 
+			    	else {pageOffSetY_-=3; redrawWindow(); }
 						
 			    }
 			    if(keyMap_[37])//left arrow
 			    {
 			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, -1, 0);}
-			    	else { pageOffSetX_+=3; redrawWindow(); turnOnWidgets(); }
+			    	else { pageOffSetX_+=3; redrawWindow(); }
 						
 			    }
 			    if(keyMap_[39])// right arrow
 			    {
 			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 1, 0)}
-			    	else { pageOffSetX_-=3; redrawWindow(); turnOnWidgets();	}
-					
-			    }	
-			    
-			};
-			
-			var resetToOriginInterval_;
-			
-			function resetToOrigin()
-			{
-				resetToOriginInterval_ = setTimeout(moveToOrigin, 0.1);
-			}
-			
-			function moveToOrigin()
-			{
-				console.log(pageOffSetX_, pageOffSetY_);
-				if(pageOffSetX_ == 0 && pageOffSetY_ == 0)
-				{
-					return;
-					//clearInterval(resetToOriginInterval_)
-				} else 
-				{
-					if(pageOffSetX_ > 0)
-						pageOffSetX_--;
-					else if(pageOffSetX_ < 0)
-						pageOffSetX_++;
-					
-					if(pageOffSetY_ > 0)
-						pageOffSetY_--;
-					else if(pageOffSetY_ < 0)
-						pageOffSetY_++;
-					
-					redrawWindow();
-					turnOnWidgets();
-					resetToOriginInterval_ = setTimeout(moveToOrigin, 0.1);
+			    	else { pageOffSetX_-=3; redrawWindow(); }
+			    }
+			} //end handleKeys()
 
 
-				} 	
-			}
-			
+			//=====================================================================================
 			function deleteWidget()
 			{
 				var widgetCover = document.getElementById(menu_.getAttribute("widgetID") + "-cover")
@@ -2672,28 +2050,30 @@
 				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id];
 				mainBlock_.el.removeChild(widgetCover.parentNode);
 				toggleContextMenuOff();
-			}
-			
+			} //end deleteWidget()
+
 			var cutWidget_;
 			var cutWidgetName_;
-			
+
+
+			//=====================================================================================
 			function cutWidget(widgetCover)
 			{
-				
 				var id = widgetCover.id.substring(0, widgetCover.id.indexOf("-cover"));
 				console.log(id);
 				delete page_.widgets[id].el
 				cutWidget_ = page_.widgets[id];
 				console.log("here");
 				console.log(widgetCover);
-//				console.log(widgetCover.parentNode.getElementsByTagName("iframe")[0].id);
 				console.log(page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id].el);
 				console.log(widgetCover.id);
 				cutWidgetName_ = id;
 				delete page_.widgets[id];
 				mainBlock_.el.removeChild(widgetCover.parentNode);
-			}
-			
+			} //end cutWidget()
+
+
+			//=====================================================================================
 			function pasteWidget()
 			{
 				if(typeof page_.widgets[cutWidgetName_] == 'undefined')
@@ -2717,62 +2097,54 @@
 					}
 					cutWidget_.x = parseInt(cutWidget_.x) + pageOffSetX_;
 					cutWidget_.y = parseInt(cutWidget_.y) + pageOffSetY_;
-	
+
 					page_.widgets[(name + widgetNumber)] = cutWidget_;
-					
+
 					drawWidget((name + widgetNumber), false);
 				}
 				redrawWindow();
-				turnOnWidgets();
-			}
-			
+			} //end pasteWidget()
+
+
+			//=====================================================================================
 			function toggleWidgetSelection(target)
 			{
 				if(typeof targetElement_ != 'undefined'  && typeof targetElement_.parentNode != 'undefined')
 				{
 					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "block";
-					//targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.outline = "none";
-					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "none";
-//					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "0px";			
+					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "none";			
 				}
-				
+
 				targetElement_ = target;
 				if(typeof targetElement_ != 'undefined' && typeof targetElement_.parentNode != 'undefined')
 				{
 					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "none";
-					//targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.outline = " thin dashed";
 					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "block";
-//					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "15px";
-					//targetElement_.parentNode.getElementsByTagName("iframe")[0].addEventListener("mousedown", startResize, true);
-
 				}	
-			}
-			
+			} //end toggleWidgetSelection()
 
-			
+
 			var pageOffSetX_ = 0;
 			var pageOffSetY_ = 0;
 			var dragLockout_ = false;
-			var targetElement_ = 'undefined';
-			var dragTargetElement_;
-			var elementOffSetWhileDraggingandMovingWithArrowKeys_X = 0;
-			var elementOffSetWhileDraggingandMovingWithArrowKeys_Y = 0;
+			var targetElement_ = undefined;
+			var dragTargetElement_ = undefined;
 
-			function startDrag(e)
+			//=====================================================================================
+			function startWidgetDrag(e)
 			{
+				if(e) e.stopPropagation();
 
-				console.log("dragging");
-				
-				console.log("i am not reizing");
+				Debug.log("startWidgetDrag()");			
+
 				//Set Mouse Pointer to Grabbing Hand
-				mainBlock_.el.style.cursor = "grabbing";
-
+				this.style.cursor = "grabbing";
 
 				dragTargetElement_ = e.target;
-				
+
 				x_Pos_forDrag_ = e.clientX;
 				y_Pos_forDrag_ = e.clientY;
-				
+
 				if((dragTargetElement_.id).indexOf("mainBlock") != -1 )
 				{
 					toggleWidgetSelection();
@@ -2788,367 +2160,458 @@
 					toggleWidgetSelection(e.target);
 					dragTargetElement_.parentNode.style.zIndex ="105";
 					dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "none";
-					dragTargetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.outline = " thin dashed";
-					//dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "15px";
-								
+					dragTargetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.outline = " thin dashed";			
 				}
 				else if(dragTargetElement_.className.indexOf("resizeWidgetCover") != -1)
 				{
 					resizeLockout_ = true;
 					resizeId_ = dragTargetElement_.id.substring(0, dragTargetElement_.id.indexOf("-resize-cover"));
 					resizeFrom_ = dragTargetElement_.id.substring(dragTargetElement_.id.indexOf("resize-cover") + 13);
-					
-					
+
 					xPos_ = event.clientX;
 					yPos_ = event.clientY;
 					resizeBeginWidth_ = parseFloat(page_.widgets[resizeId_].size_x);
 					resizeBeginHeight_ = parseFloat(page_.widgets[resizeId_].size_y);
-	
-///
 
-
-//					var resizeDiv = document.getElementById(dragTargetElement_.id).parentNode;
-//					var resizeChildren = resizeDiv.children;
-					
-					
-//					while(resizeDiv.firstChild)
-//					{
-//						console.log(resizeDiv.firstChild);
-//						//childDiv.removeEventListener("mousedown", resizeWidgetBeginCaller(id, resize_from), true); 
-//						resizeDiv.removeChild(resizeDiv.firstChild);
-//					}	
-	
-					//Add event listeners for resize
-//					window.addEventListener('mousemove', resizeWidgetCaller(id, resize_from), false);
-//					resizeDiv.addEventListener('mouseup',   endResizeWidget(resize_from, id), false);
-//					resizeDiv.style.zIndex = "100";
-
-		
-	
 					//Blackout the selected widget with a cover
 					page_.widgets[resizeId_].el.style.display = "none";
-					
-
-					
 					console.log(resizeId_);
 				}
-				//kill all activators for eventlisteners
-				mainBlock_.el.removeEventListener("mousedown", startDrag, true);
-				for(widget in page_.widgets)
-				{
-					page_.widgets[widget].el.removeEventListener("mousedown", startDrag, true);
-				}	
+
 				dragLockout_ = true;
-				window.addEventListener("mousemove", redrawPage, true);					
-				window.addEventListener("mouseup",   endDrag, true);
-			
-			}
-			
-			function translateWidget(widgetCover, deltaX, deltaY)
-			{
-				console.log("translateWidget");
-				var frame = widgetCover.parentNode.getElementsByTagName("iframe")[0];
-				page_.widgets[frame.id].x = parseInt(page_.widgets[frame.id].x) + deltaX;// + "px";//(parseFloat((e.target.parentNode.style.left) + (e.clientX - x_Pos_forDrag_))) + "px";
-				page_.widgets[frame.id].y = parseInt(page_.widgets[frame.id].y) + deltaY;// + "px";
-				widgetCover.parentNode.style.left = page_.widgets[frame.id].x + pageOffSetX_ + "px";
-				widgetCover.parentNode.style.top  = page_.widgets[frame.id].y + pageOffSetY_ + "px";
-			}
-			
-			function redrawPage(e)
-			{
+			} //end startWidgetDrag()
 
-				if(resizeLockout_)
-				{
-					//console.log("Now: (X)" + event.clientX + " (Y)" + event.clientY);
-					//console.log(page_.widgets[id].el.parentNode.getElementsByClassName("resizeWidgetCover")[0]);
-					var deltaX = 0;
-					var deltaY = 0;
-					
-					//Depending on where we are pulling the resize, which way means "make the widget bigger" is different
-					if(resizeFrom_ == "north")
-					{
-						deltaX = 0;
-						deltaY = -(event.clientY - yPos_);
-					}
-					else if(resizeFrom_ == "east")
-					{
-						deltaX = (event.clientX - xPos_);
-						deltaY = 0;
-					}
-					else if(resizeFrom_ == "south")
-					{
-						deltaX = 0;
-						deltaY = (event.clientY - yPos_);						
-					}
-					else if(resizeFrom_ == "west")
-					{
-						deltaX = -(event.clientX - xPos_);
-						deltaY = event.clientY - yPos_;						
-					}
-					else if(resizeFrom_ == "northeast")
-					{
-						deltaX = (event.clientX - xPos_);
-						deltaY = -(event.clientY - yPos_);
-					}
-					else if(resizeFrom_ == "northwest")
-					{
-						deltaX = -(event.clientX - xPos_);
-						deltaY = -(event.clientY - yPos_);
-					}
-					else if(resizeFrom_ == "southeast")
-					{
-						deltaX = (event.clientX - xPos_);
-						deltaY = (event.clientY - yPos_);						
-					}
-					else if(resizeFrom_ == "southwest")
-					{
-						deltaX = -(event.clientX - xPos_);
-						deltaY = (event.clientY - yPos_);						
-					}
-					
-					var newWidth = resizeBeginWidth_ + deltaX;
-					var newHeight = resizeBeginHeight_ + deltaY;
-					
-					resizeWidget(resizeId_, resizeFrom_, newWidth, newHeight);					
-				}
 
-				console.log("redrawPage");
-				if(dragTargetElement_.id.indexOf("mainBlock") != -1 || editBlock_.isHidden)
-				{			
-					pageOffSetX_ += (e.clientX - x_Pos_forDrag_);
-					pageOffSetY_ += (e.clientY - y_Pos_forDrag_);
-					mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");
-					redrawWindow();
-				}
-				else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && !editBlock_.isHidden)
-				{
-					translateWidget(dragTargetElement_, (e.clientX - x_Pos_forDrag_), (e.clientY - y_Pos_forDrag_));
-				}
-				x_Pos_forDrag_ = e.clientX;
-				y_Pos_forDrag_ = e.clientY;
-			}		
-			function endDrag(e)
-			{
+			//=====================================================================================
+			function endWidgetDrag(e)
+			{			
+				Debug.log("endWidgetDrag()");		
+				this.style.cursor = "grab";
 
 				if(resizeLockout_)
 				{
 					console.log("Resizing Ended");	
 					resizeLockout_ = false;
-					drawWidget(resizeId_, false, page_.widgets[resizeId_].x, page_.widgets[resizeId_].y, page_.widgets[resizeId_].size_x, page_.widgets[resizeId_].size_y);	
-					//page_.widgets[resizeId_].el.style.display = "block";
-					
+					drawWidget(resizeId_, false, page_.widgets[resizeId_].x, page_.widgets[resizeId_].y, page_.widgets[resizeId_].size_x, page_.widgets[resizeId_].size_y);
+
 					resizeFrom_ = "";
 					resizeId_ = "";
-					
-
 				}
-				
+
 				if(dragLockout_)
 				{
 					console.log("endDrag");
+
+					//Remove cursor grabbing
+					mainBlock_.el.style.cursor = "default";	
+
 					if(dragTargetElement_.className.indexOf("widgetCover") != -1)
 					{
 						var frame = dragTargetElement_.parentNode.getElementsByTagName("iframe")[0];
 						page_.widgets[frame.id].x = parseInt(page_.widgets[frame.id].x) + e.clientX - x_Pos_forDrag_;
 						page_.widgets[frame.id].y = parseInt(page_.widgets[frame.id].y) + e.clientY - y_Pos_forDrag_;
+
 						frame.style.display = "block";
 						dragTargetElement_.parentNode.style.zIndex = "5";
 					}
-					
-					//Remove cursor grabbing
-					mainBlock_.el.style.cursor = "grab";
 
-	
-		
-					mainBlock_.el.addEventListener("mousedown", startDrag, true);
 					x_Pos_forDrag_ = 0;
 					y_Pos_forDrag_ = 0;
-					
+
 					dragLockout_ = false;
-					dragTargetElement_ = 'undefined';					
+					dragTargetElement_ = undefined;					
+				}
+			} //end endWidgetDrag()
+
+
+			//=====================================================================================
+			function startWidgetResize(e)
+			{
+				Debug.log("startWidgetResize()");			
+
+				dragTargetElement_ = e.target;
+
+				//Set Mouse Pointer to Grabbing Hand
+				_saveCursorType = dragTargetElement_.style.cursor;
+				dragTargetElement_.style.cursor = "grabbing";
+
+				x_Pos_forDrag_ = e.clientX;
+				y_Pos_forDrag_ = e.clientY;
+
+				if((dragTargetElement_.id).indexOf("mainBlock") != -1 )
+				{
+					toggleWidgetSelection();
+
+					for(widget in page_.widgets)
+					{
+						page_.widgets[widget].el.style.display = "none";
+					}
+				}
+				else if(dragTargetElement_.className.indexOf("resizeWidgetCover") != -1)
+				{
+					resizeLockout_ = true;
+					resizeId_ = dragTargetElement_.id.substring(0, dragTargetElement_.id.indexOf("-resize-cover"));
+					resizeFrom_ = dragTargetElement_.id.substring(dragTargetElement_.id.indexOf("resize-cover") + 13);
+
+					xPos_ = event.clientX;
+					yPos_ = event.clientY;
+					resizeBeginWidth_ = parseFloat(page_.widgets[resizeId_].size_x);
+					resizeBeginHeight_ = parseFloat(page_.widgets[resizeId_].size_y);
+
+					page_.widgets[resizeId_].el.style.display = "none";
+					console.log(resizeId_);
+				}
+
+				dragLockout_ = true;
+			} //end startWidgetResize()
+
+
+			//=====================================================================================
+			function endWidgetResize(e)
+			{
+				console.log("endWidgetResize()",dragTargetElement_);
+				if(dragTargetElement_ === undefined) return;
+
+				dragTargetElement_.style.cursor = _saveCursorType;
+
+				if(resizeLockout_)
+				{
+					console.log("Resizing Ended");
+					resizeLockout_ = false;
+					drawWidget(resizeId_, false, page_.widgets[resizeId_].x, page_.widgets[resizeId_].y, page_.widgets[resizeId_].size_x, page_.widgets[resizeId_].size_y);
+
+					resizeFrom_ = "";
+					resizeId_ = "";
+				}
+
+				if(dragLockout_)
+				{
+					console.log("endDrag");
+
+					//Remove cursor grabbing
+					mainBlock_.el.style.cursor = "default";	
+
+					if(dragTargetElement_.className.indexOf("WidgetCover") != -1)
+					{
+						var frame = dragTargetElement_.parentNode.parentNode.getElementsByTagName("iframe")[0];
+						page_.widgets[frame.id].x = parseInt(page_.widgets[frame.id].x) + e.clientX - x_Pos_forDrag_;
+						page_.widgets[frame.id].y = parseInt(page_.widgets[frame.id].y) + e.clientY - y_Pos_forDrag_;						
+
+						frame.style.display = "block";
+						dragTargetElement_.parentNode.style.zIndex = "5";
+					}
+
+					x_Pos_forDrag_ = 0;
+					y_Pos_forDrag_ = 0;
+
+					dragLockout_ = false;
+					dragTargetElement_ = undefined;
+				}
+				redrawWindow();
+			} //end endWidgetResize()
+
+
+			//=====================================================================================
+			function translateWidget(widgetId, deltaX, deltaY)
+			{
+				//console.log("translateWidget");
+				var windowWidth = DesktopContent.getWindowWidth();
+				var windowHeight = DesktopContent.getWindowHeight();
+
+				deltaX = (PAGE_POSITIONS_*deltaX/windowWidth)|0;
+				deltaY = (PAGE_POSITIONS_*deltaY/windowHeight)|0;
+
+				page_.widgets[widgetId].x += deltaX;
+				page_.widgets[widgetId].y += deltaY;
+
+				drawWidget(widgetId,false,0,0,0,0, //newWidget, x, y, width, height
+					true /*hideFrame*/);
+			} //end translateWidget()
+
+
+			//================================================================================
+			// resizeWidget(id, resize_from = "center", new_suggested_width, new_suggested_height)
+			function resizeWidget(widgetId, deltaX, deltaY, deltaW, deltaH)
+			{			
+				var windowWidth = DesktopContent.getWindowWidth();
+				var windowHeight = DesktopContent.getWindowHeight();
+
+				deltaX = (PAGE_POSITIONS_*deltaX/windowWidth)|0;
+				deltaY = (PAGE_POSITIONS_*deltaY/windowHeight)|0;
+				deltaW = (PAGE_POSITIONS_*deltaW/windowWidth)|0;
+				deltaH = (PAGE_POSITIONS_*deltaH/windowHeight)|0;
+
+				page_.widgets[widgetId].x += deltaX;
+				page_.widgets[widgetId].y += deltaY;
+
+				page_.widgets[widgetId].size_x += deltaW;
+				page_.widgets[widgetId].size_y += deltaH;
+
+				drawWidget(widgetId,false,0,0,0,0, //newWidget, x, y, width, height
+					true /*hideFrame*/);
+			} //end resizeWidget()
+
+
+			//=====================================================================================
+			//redrawTargetWidget ~~
+			//	This function handle mouse drag behavior for translating and resizing a widget
+			function redrawTargetWidget(e)
+			{
+				if(resizeLockout_)
+				{
+					//for resizing widget
+					var deltaX = 0;
+					var deltaY = 0;
+					var deltaW = 0;
+					var deltaH = 0;
+
+					//Depending on where we are pulling the resize, which way means "make the widget bigger" is different
+					if(resizeFrom_ == "north" || resizeFrom_ == "northeast" ||
+						resizeFrom_ == "northwest")
+					{						
+						deltaY = (event.clientY - yPos_);
+						deltaH = -deltaY;						
+					}
+
+					if(resizeFrom_ == "east" || resizeFrom_ == "northeast" ||
+						resizeFrom_ == "southeast")
+					{
+						deltaW = (event.clientX - xPos_);
+					}
+
+				 	if(resizeFrom_ == "south" || resizeFrom_ == "southeast" ||
+				 		resizeFrom_ == "southwest")
+					{
+						deltaH = (event.clientY - yPos_);						
+					}
+
+					if(resizeFrom_ == "west" || resizeFrom_ == "northwest" ||
+						resizeFrom_ == "southwest")
+					{
+						deltaX = (event.clientX - xPos_);
+						deltaW = -deltaX;					
+					}
+
+					var widgetId;
+					try
+					{
+						widgetId = dragTargetElement_.parentNode.parentNode.getElementsByTagName("iframe")[0].id;
+					}
+					catch(e)
+					{
+						Debug.log("Widget ID could not be found!");
+						return;
+					}
+
+					resizeWidget(widgetId, deltaX, deltaY, deltaW, deltaH);
+
+					xPos_ = e.clientX;
+					yPos_ = e.clientY;
+				}
+				else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && !editBlock_.isHidden)
+				{
+					var widgetId;
+					try
+					{
+						widgetId = dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].id;
+					}
+					catch(e)
+					{
+						Debug.log("Widget ID could not be found!");
+						return;
+					}
+
+					translateWidget(widgetId, (e.clientX - x_Pos_forDrag_), (e.clientY - y_Pos_forDrag_));
+				}
+
+				x_Pos_forDrag_ = e.clientX;
+				y_Pos_forDrag_ = e.clientY;
+			} //end redrawTargetWidget()
+
+
+			//=====================================================================================
+			function handleMouseDown(e)
+			{				
+				console.log("handleMouseDown",e.buttons,e.button);
+				if(setupForDrawingID_ !== undefined)
+				{
+					Debug.log("handleMouseDown " + setupForDrawingID_ );	
+					drawSelectionRectangle(e);
 				}
 				
-				window.removeEventListener("mousemove", redrawPage, true);
-				window.removeEventListener("mouseup",   endDrag, true);		
+			} //end handleMouseDown()
 
-				redrawWindow();
-				turnOnWidgets();
 
-			}
-			
-			function turnOnWidgets()
+			//=====================================================================================
+			function handleMouseUp(e)
 			{
-				//Figure out the viewport we are now looking at
-				var startPosX = -1 * pageOffSetX_;
-				var startPosY = -1 * pageOffSetY_;
-				var endPosX   = (startPosX + parseInt(mainBlock_.el.style.width));
-				var endPosY   = (startPosY + parseInt(mainBlock_.el.style.height));
-	
-				//See which widgets fall into the viewport					
-				for(widget in page_.widgets)
+				Debug.log("handleMouseUp");
+				if(setupForDrawingID_ !== undefined)
 				{
-					 leftSide   = parseInt(page_.widgets[widget].x);// + startPosX;
-					 rightSide  = parseInt(page_.widgets[widget].x) + parseInt(page_.widgets[widget].size_x);// + startPosX;
-					 topSide    = parseInt(page_.widgets[widget].y);// + startPosY;
-					 bottomSide = parseInt(page_.widgets[widget].y) + parseInt(page_.widgets[widget].size_y);// + startPosY; 
-					 //console.log(leftSide + "," + rightSide + "," + topSide + "," + bottomSide);
-					 //console.log(startPosX+ "," +endPosX  + "," + startPosY + "," + endPosY);
-					 if(((leftSide > startPosX  && leftSide < endPosX)  || (rightSide > startPosX  && rightSide < endPosX )) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY)))//) || ((rightSide > startPosX  || rightSide <endPosX ) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY))))
-					 if(true)
-					 {
-					 	
-					 		console.log(widget);
-//						 	console.log("true for " + page_.widgets[widget].Display_Name + leftSide);
-							page_.widgets[widget].el.style.display = "block";
-//							page_.widgets[widget].el.onmousedown = "startDrag()";
-							page_.widgets[widget].el.addEventListener("mousedown", startDrag, true);
-					 }
-					 else
-					 {
-							page_.widgets[widget].el.style.display = "none";
-							page_.widgets[widget].el.removeEventListener("mousedown", startDrag, true);
-					 }
+					Debug.log("handleMouseUp " + setupForDrawingID_ );
+					stopdrawSelectionRectangle(e);
 				}
-			}
-			
+				else if(dragTargetElement_ !== undefined)
+				{			
+					endWidgetResize(e);
+				}
+			} //end handleMouseUp()
+
+
+			//=====================================================================================
+			function handleMouseMove(e)
+			{
+				//Debug.log("handleMouseMove");
+				if(setupForDrawingID_ !== undefined && 
+					e.buttons != 0)
+				{
+					//console.log("handleMouseMove", setupForDrawingID_);
+					redrawSelectionRectangle(e);
+				}
+				else if(dragTargetElement_ !== undefined)
+				{
+					//console.log("handleMouseMove", dragTargetElement_);
+					if(e.buttons != 0)
+						redrawTargetWidget(e);
+					else //mouse up?!
+						endWidgetResize(e);
+				}
+			} //end handleMouseMove()
+
+
+			//=====================================================================================
 			function drawGrid()
 			{
-				mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");
-				hud_.innerHTML = "X: " + pageOffSetX_ + " Y:  " + pageOffSetY_;
-				hud_.title = "Reset the view to default (X:0 Y:0)";
-			}
-			
+				mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");				
+			} //end drawGrid()
 
-			function redrawWindow(clicked, hover) {
-				//Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
+
+			//=====================================================================================
+			function redrawWindow(event, hover) 
+			{
+				Debug.log("redrawWindow() clicked-hover w,h: " + event + "-" + hover
+				 	+ window.innerWidth + "," + window.innerHeight);
+
 				var _MARGIN = 10;
 				var _TOPMARGIN = 40;
-				var maxWidth = window.innerWidth;//   - (2 * _MARGIN);
+				var maxWidth = window.innerWidth; // - (2 * _MARGIN);
 				var maxHeight = window.innerHeight - (1 * _MARGIN);
 				var marginLeft = 0;
 				var cover = document.getElementById("coverDiv");
 				var editCover = document.getElementById("editCoverDiv");
-				
+
 				hiddenWidth_ = maxWidth * 0.05;
 				unhiddenWidth_ = maxWidth * 0.35;
-				
-				
-				
 
 				//DEFAULT VALUES //Sides Hidden
-				var fileTop = _MARGIN, fileWidth = unhiddenWidth_       , fileHeight = window.innerHeight;
-				var editWidth = maxWidth         , editHeight = unhiddenWidth_;
-				var mainLeft = 0    , mainTop = 0, mainWidth = maxWidth, mainHeight = window.innerHeight;
-				
-//				editLeft = mainLeft + mainWidth;				
+				var fileTop = _MARGIN, fileWidth = unhiddenWidth_, fileHeight = window.innerHeight;
+				var editWidth = maxWidth, editHeight = unhiddenWidth_;
+				var mainLeft = 0, mainTop = 0, mainWidth = maxWidth, mainHeight = window.innerHeight;				
 
 				mainBlock_.el.style.left = mainLeft + "px";
 				mainBlock_.el.style.top = "0px";
 				mainBlock_.el.style.width =  mainWidth + "px";
 				mainBlock_.el.style.height =  mainHeight + "px";
 				mainBlock_.el.style.marginLeft = "0px";
-				
-				
-				//fileBlock_.el.style.marginLeft = fileLeft + "px";
-				//fileBlock_.el.style.left = fileLeft + "px";
+
 				fileBlock_.el.style.top =  0 + "px";
 			    fileBlock_.el.style.width =  fileWidth + "px";
 				fileBlock_.el.style.height =  fileHeight + "px";
-//
-//				editCover.style.position = "absolute";
-//				editCover.style.left   = (mainLeft + mainWidth) + "px";
-//				editCover.style.top    =  editTop + "px";
-//				editCover.style.width  =  editWidth + "px";
-//				editCover.style.height =  editHeight + "px";
-//				
-				//editBlock_.el.style.left = (mainLeft + mainWidth) + "px";
+
 				editBlock_.el.style.width =  editWidth + "px";
 				editBlock_.el.style.height =  editHeight + "px";
 
-				cover.style.top        = mainTop + "px";
-				cover.style.width      = (window.innerWidth-mainLeft) + "px";
-				cover.style.height     =  window.innerHeight + "px";
-				cover.style.left = mainLeft + "px";
-				
-				editBlock_.el.style.bottom = "-" + parseInt(editBlock_.el.style.height) + "px"; 
+				cover.style.top			= 	mainTop + "px";
+				cover.style.width		= 	(window.innerWidth-mainLeft) + "px";
+				cover.style.height	    = 	window.innerHeight + "px";
+				cover.style.left		= 	mainLeft + "px";
+
+				editBlock_.el.style.bottom = (-5 - parseInt(editBlock_.el.style.height)) + "px";
 				editBlock_.el.style.marginBottom = parseInt(document.getElementById("editorPanelTitle")) + "px";
 
-				
 				if(!editBlock_.isHidden)
 				{
 					console.log("Edit mode");
+					UID_ = 0;
 					editCover.style.display = "none";
-//					hudContainer_.style.bottom = hiddenWidth_ + "px";
-//					editBlock_.el.style.zIndex = "50";
-//					editBlock_.el.style.bottom = hiddenWidth_ + "px";
-//					editBlock_.el.style.marginBottom = /*hiddenWidth_ +*/ "26px";
 				}
 				else
-				{			
+				{
 					console.log("Not edit mode");
 					editCover.style.display = "block";
-//					editBlock_.el.style.marginBottom = "0px";
-//					editBlock_.el.style.zIndex = "30";
-//					editBlock_.isHidden = true;
-//					hudContainer_.style.bottom = "15px";
-//					editBlock_.el.style.bottom = /*hiddenWidth_ +*/ "26px";
-
-
 				}
-				
+
 				var navBar = document.getElementById("navigationBarDiv");
 
-				
 				if(isReadOnly_)
 				{
 					navBar.style.display = "none";
 					if(!editBlock_.isHidden)
 						toggleEditMode();
-						
+
 					console.log(navBar);
-				
 				}
 				else
 				{
 					navBar.style.display = "block";
-
 				}
-				
+
+				drawGrid();
+			} //end redrawWindow()
+
+
+			//=====================================================================================
+			//evaluateJS ~~
+			function evaluateJS(str) 
+			{
+				Debug.log("evaluateJS = " + str);
+				eval(str);
+			} //end evaluateJS()
+
+
+			//=====================================================================================
+			function setRefreshRate(keyField,rateField)
+			{
+				Debug.log("setRefreshRate() reached");
+				if(keyField.value != "")
+					if(pvList_[keyField.value] != "")
+						rateField.value = pvList_[keyField.value];
+					else
+						rateField.value = 10;
+			} //end setRefreshRate()
+
+
+			//=====================================================================================
+			window.onresize = function() {
+				console.log("window.onresize!");
 				for(widget in page_.widgets)
 				{
-					page_.widgets[widget].el.parentNode.style.left = parseInt(page_.widgets[widget].x) + pageOffSetX_ + "px";
-				 	page_.widgets[widget].el.parentNode.style.top  = parseInt(page_.widgets[widget].y) + pageOffSetY_ + "px";
+					drawWidget(widget, false);//, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y);
 				}
 
-				
-				drawGrid();
-				
-
-		
-			}
+				toggleWidgetSelection();
+				redrawWindow();
+			};
 
 		</script>
-		
 	</head>
-	
-	
+
 	<body onload='Javascript:init();'>	
 		<div id="navigationBarDiv">	
-	    	<nav>
-		        <ul id="navigationMenu">
-		           <!-- <li><a href="#" title="" id="coordinatesHUD" onclick="resetToOrigin()"> 0 x 0</a></li>-->
-		            <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File</a></li>
-		            <!--<li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>-->
-		            <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">EditMode</a></li>
-		            <li><a href="#" title="" id="menuli3" onclick="toggleHotkeyMenu()">Quick Views</a></li>
-			    <!--<li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>-->
-		        </ul>
-	        </nav>
-	    </div>
+	    	  <nav>
+		    <ul id="navigationMenu">
+		      <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File</a></li>
+		      <!--<li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>-->
+		      <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">EditMode</a></li>
+		      <!--<li><a href="#" title="" id="menuli3" onclick="toggleHotkeyMenu()">Quick Views</a></li>-->
+		      <!--<li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>-->
+		    </ul>
+	          </nav>
+		</div>
 		<div class='mainBlock' 	id='fileBlock'  ></div>
 		<div class="cover" 		id="mainBlockCoverDiv"></div>
 		<div class="cover"     	id="coverDiv" height="auto" width="auto">
-		<div class='mainBlock '	id='mainBlock' onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)">
+		<div class='mainBlock '	id='mainBlock' > <!-- onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)"> -->
 		<div id="contextMenuDiv">
 		<nav id="contextMenu" class="menu ">
 		  <ul class="menu__items ">
@@ -3176,26 +2639,26 @@
 		</nav>
 		</div>
 		<div id="addPVMenuDiv">
-			<nav id="addPVMenu" class="menu ">
-			  <ul class="menu__items ">
-			    <li class="menu__item ">
-			    	<span class="menu__link">
-			      		<i class=""></i><input type="text" id="addPVPV" class="editableInput addPVMenuInput" placeholder="PV" list="pvDatalist"></input>
-			      	</span> 		
-			    </li>
-			    <li class="menu__item">
-			    	<span class="menu__link">
-			    		<i class=""></i><input type="text" id="addPVRefreshRate" class="editableInput addPVMenuInput" placeholder="Refresh Rate (ms)"></input>
-			    	</span>
-			    </li>
-			    <li class="menu__item" style="height: auto">
-			    	<span style="width: 100%; height: auto;">
-			    	<a href="#" onclick="addPVToWidget(document.getElementById('addPVPV').value, document.getElementById('addPVRefreshRate').value, document.getElementById('addPVMenuDiv').getAttribute('widgetID'), true)"><button type="button" class="menu__button" >Add PV </button></a>
-			    	<a href="#"	onclick="toggleAddPV()"><button type="button" class="menu__button">Close</button></a>
-		    		</span>
-		    </li>
-			  </ul>
-			</nav>
+		  <nav id="addPVMenu" class="menu ">
+		    <ul class="menu__items ">
+		      <li class="menu__item ">
+			<span class="menu__link">
+			  <i class=""></i><input type="text" id="addPVPV" class="editableInput addPVMenuInput" placeholder="PV" list="pvDatalist"></input>
+			</span> 		
+		      </li>
+		      <li class="menu__item">
+			<span class="menu__link">
+			  <i class=""></i><input type="text" id="addPVRefreshRate" class="editableInput addPVMenuInput" placeholder="Refresh Rate (ms)"></input>
+			</span>
+		      </li>
+		      <li class="menu__item" style="height: auto">
+			<span style="width: 100%; height: auto;">
+			  <a href="#" onclick="addPVToWidget(document.getElementById('addPVPV').value, document.getElementById('addPVRefreshRate').value, document.getElementById('addPVMenuDiv').getAttribute('widgetID'), true)"><button type="button" class="menu__button" >Add PV </button></a>
+			  <a href="#"	onclick="toggleAddPV()"><button type="button" class="menu__button">Close</button></a>
+		    	</span>
+		      </li>
+		    </ul>
+		  </nav>
 		</div>
 		<div class="ghost-select" id="selectionRectangle"><span></span></div>
 		</div>
@@ -3203,119 +2666,114 @@
 		<div class='mainBlock' id='editBlock' ></div>
 		</div>
 		<div id="hotkeyMenuDiv">
-			<nav id="hotkeyMenu" class="menu menu--active">
-			  <ul class="menu__items ">
-			    <li class="menu__item ">
-			      <span class="menu__label " >
-			        <i class=""></i> &nbsp
-			      </span>
-			    </li>
-			    <li class="menu__item ">
-			      <a href="#" class="menu__link " onclick="setHotkey(49)">
-			        <span class="">Shift + 1</span> <span id="hotkey49" class="menu__setting">Not Set</span>
-			      </a>
-			    </li>
-			    <li class="menu__item ">
-			      <a href="#" class="menu__link " onclick="setHotkey(50)">
-			        <span class="">Shift + 2</span> <span id="hotkey50" class="menu__setting">Not Set</span>
-			      </a>
-			    </li>
-			    <li class="menu__item ">
-			      <a href="#" class="menu__link " onclick="setHotkey(51)">
-			        <span class="">Shift + 3</span> <span id="hotkey51" class="menu__setting">Not Set</span>
-			      </a>
-			    </li>
-			    <li class="menu__item ">
-			      <a href="#" class="menu__link " onclick="setHotkey(52)">
-			        <span class="">Shift + 4</span> <span id="hotkey52" class="menu__setting">Not Set</span>
-			      </a>
-			    </li>
-			    <li class="menu__item ">
-			      <a href="#" class="menu__link " onclick="setHotkey(53)">
-			        <span class="">Shift + 5</span> <span id="hotkey53" class="menu__setting">Not Set</span>
-			      </a>
-			    </li>
-			    <li class="menu__item ">
-			      <a href="#" class="menu__link " onclick="setHotkey(54)">
-			        <span class="">Shift + 6</span> <span id="hotkey54" class="menu__setting">Not Set</span>
-			      </a>
-			    </li>
-			    <li class="menu__item">
-			      <a href="#" class="menu__link" onclick="setHotkey(55)" >
-			        <span class="">Shift + 7</span> <span id="hotkey55" class="menu__setting">Not Set</span>
-			      </a>
-			    </li>
-			    <li class="menu__item">
-			      <a href="#" class="menu__link" onclick="setHotkey(56)">
-			        <span class="">Shift + 8</span> <span id="hotkey56" class="menu__setting">Not Set</span>
-			      </a>
-			    </li>
-			    <li class="menu__item">
-			      <a href="#" class="menu__link" onclick="setHotkey(57)">
-			        <span class="">Shift + 9</span> <span id="hotkey57" class="menu__setting">Not Set</span>
-			      </a>
-			    </li>
-			    <li class="menu__item">
-			      <a href="#" class="menu__link" onclick="setHotkey(48)">
-			        <span class="">Shift + 0</span> <span id="hotkey48" class="menu__setting">Not Set</span>
-			      </a>
-			    </li>
-			  </ul>
-			</nav>
+		  <nav id="hotkeyMenu" class="menu menu--active">
+		    <ul class="menu__items ">
+		      <li class="menu__item ">
+			<span class="menu__label " >
+			  <i class=""></i> &nbsp
+			</span>
+		      </li>
+		      <li class="menu__item ">
+			<a href="#" class="menu__link " onclick="setHotkey(49)">
+			  <span class="">Shift + 1</span> <span id="hotkey49" class="menu__setting">Not Set</span>
+			</a>
+		      </li>
+		      <li class="menu__item ">
+			<a href="#" class="menu__link " onclick="setHotkey(50)">
+			  <span class="">Shift + 2</span> <span id="hotkey50" class="menu__setting">Not Set</span>
+			</a>
+		      </li>
+		      <li class="menu__item ">
+			<a href="#" class="menu__link " onclick="setHotkey(51)">
+			  <span class="">Shift + 3</span> <span id="hotkey51" class="menu__setting">Not Set</span>
+			</a>
+		      </li>
+		      <li class="menu__item ">
+			<a href="#" class="menu__link " onclick="setHotkey(52)">
+			  <span class="">Shift + 4</span> <span id="hotkey52" class="menu__setting">Not Set</span>
+			</a>
+		      </li>
+		      <li class="menu__item ">
+			<a href="#" class="menu__link " onclick="setHotkey(53)">
+			  <span class="">Shift + 5</span> <span id="hotkey53" class="menu__setting">Not Set</span>
+			</a>
+		      </li>
+		      <li class="menu__item ">
+			<a href="#" class="menu__link " onclick="setHotkey(54)">
+			  <span class="">Shift + 6</span> <span id="hotkey54" class="menu__setting">Not Set</span>
+			</a>
+		      </li>
+		      <li class="menu__item">
+			<a href="#" class="menu__link" onclick="setHotkey(55)" >
+			  <span class="">Shift + 7</span> <span id="hotkey55" class="menu__setting">Not Set</span>
+			</a>
+		      </li>
+		      <li class="menu__item">
+			<a href="#" class="menu__link" onclick="setHotkey(56)">
+			  <span class="">Shift + 8</span> <span id="hotkey56" class="menu__setting">Not Set</span>
+			</a>
+		      </li>
+		      <li class="menu__item">
+			<a href="#" class="menu__link" onclick="setHotkey(57)">
+			  <span class="">Shift + 9</span> <span id="hotkey57" class="menu__setting">Not Set</span>
+			</a>
+		      </li>
+		      <li class="menu__item">
+			<a href="#" class="menu__link" onclick="setHotkey(48)">
+			  <span class="">Shift + 0</span> <span id="hotkey48" class="menu__setting">Not Set</span>
+			</a>
+		      </li>
+		    </ul>
+		  </nav>
 		</div>
 		<div id="popupSaveControlsPage" class="popup">
-			<center><h2>Save your Controls Page</h2></center>
-			<div>
-				<p><b>Page Name</b></p>
-				<center><textarea id="controlsPageName" cols="43" rows="1"></textarea></center>
-				<p><b>Controls Page Notes</b></p>
-				<center><textarea id="controlsPageNotes" cols="43" rows="6"></textarea></center>
-				<div id="makeControlsPagePublic">
-				    <input type="checkbox" id="isControlsPagePublic"> Make accessible to public</input>
-				</div>
-				<div class="buttongroup">
-					<center>
-						<button onclick="hidePopupSaveControlsPage()">Cancel</button>
-						<button onclick="savePageAs()">Save as Controls Page</button>
-					</center>
-				</div>
-			</div>
+		  <center><h2>Save your Controls Page</h2></center>
+		  <div>
+		    <p><b>Page Name</b></p>
+		    <center><textarea id="controlsPageName" cols="43" rows="1"></textarea></center>
+		    <p><b>Controls Page Notes</b></p>
+		    <center><textarea id="controlsPageNotes" cols="43" rows="6"></textarea></center>
+		    <div id="makeControlsPagePublic">
+		      <input type="checkbox" id="isControlsPagePublic"> Make accessible to public</input>
+		    </div>
+		    <div class="buttongroup">
+		      <center>
+			<button onclick="hidePopupSaveControlsPage()">Cancel</button>
+			<button onclick="savePageAs()">Save as Controls Page</button>
+		      </center>
+		    </div>
+		  </div>
 		</div>
 		<div class="editWidgetAttributesPopup-container" id="editWidgetAttributesPopup-container">
-			<div class="editWidgetAttributesPopup-header" id="editWidgetAttributesPopup-header" ></div>
-			<div class="editWidgetAttributesPopup-menu"   id="editWidgetAttributesPopup-menu">
-				<nav id="editWidgetAttributesPopup-menu-nav">
-					<ul class="menu__items ">
-					    <li class="menu__item ">
-					      <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('PVList')">
-					        <i class=""></i> Edits PVs
-					      </a>
-					    </li>
-					    <li class="menu__item">
-					      <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('EditAttributes')" >
-					        <i class=""></i> Edit Attributes
-					      </a>
-					    </li>
-					    <!--<li class="menu__item">
-					      <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('Macromaker')">
-					        <i class=""></i> Macromaker
-					      </a>
-					    </li>-->
-				    </ul>
-				</nav>
-			</div>
-			<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-pvlist"></div>
-			<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-attributes"><p>body</p></div>
-			<!--<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>-->
-			<div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
-		</div>
-		<div class="HUD-coordinates-container" id="HUD-coordinates-container">
-		    <a href="#" title="" id="coordinatesHUD" onclick="resetToOrigin()">X: 0  Y: 0 </a>
+		  <div class="editWidgetAttributesPopup-header" id="editWidgetAttributesPopup-header" ></div>
+		  <div class="editWidgetAttributesPopup-menu"   id="editWidgetAttributesPopup-menu">
+		    <nav id="editWidgetAttributesPopup-menu-nav">
+		      <ul class="menu__items ">
+			<li class="menu__item ">
+			  <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('PVList')">
+			    <i class=""></i> Edits PVs
+			  </a>
+			</li>
+			<li class="menu__item">
+			  <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('EditAttributes')" >
+			    <i class=""></i> Edit Attributes
+			  </a>
+			</li>
+			<!--<li class="menu__item">
+			    <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('Macromaker')">
+			      <i class=""></i> Macromaker
+			    </a>
+			</li>-->
+		      </ul>
+		    </nav>
+		  </div>
+		  <div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-pvlist"></div>
+		  <div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-attributes"><p>body</p></div>
+		  <!--<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>-->
+		  <div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
 		</div>
 
 		<datalist id="pvDatalist"></datalist>
 		<p hidden id="mailbox"></p>
-		
 	</body>
-	
 </html>

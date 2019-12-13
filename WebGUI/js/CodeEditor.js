@@ -385,7 +385,7 @@ CodeEditor.create = function() {
 		var readOnlyMode = DesktopContent.getParameter(0, "readOnlyMode");
 		if (readOnlyMode !== undefined) //set read mode if parameter
 		{
-			console.log("Print Print");
+			Debug.log("Launching readonly mode to true!");
 			_READ_ONLY = true; //readOnlyMode | 0;
 			
 			
@@ -426,16 +426,24 @@ CodeEditor.create = function() {
 				"codeEditor" + 
 				"&option=getAllowedExtensions" 
 				, "" /* data */,
-				function(req)
+				function(req, reqParam, errStr)
 				{	
-			console.log("getAllowedExtensions",req);
+			console.log("getAllowedExtensions",req,errStr);
 
+			if(!_READ_ONLY && !req)
+			{
+				Debug.log("Assuming invalid permissions! Reverting to read-only mode.", Debug.HIGH_PRIORITY);
+				_READ_ONLY = true;
+				init();
+				return;
+			}
+			
 			_ALLOWED_FILE_EXTENSIONS = DesktopContent.getXMLValue(req,"AllowedExtensions");
 			console.log("_ALLOWED_FILE_EXTENSIONS",_ALLOWED_FILE_EXTENSIONS);
 			_ALLOWED_FILE_EXTENSIONS = _ALLOWED_FILE_EXTENSIONS.split(',');
 			console.log("_ALLOWED_FILE_EXTENSIONS",_ALLOWED_FILE_EXTENSIONS);
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=" +
+			DesktopContent.XMLHttpRequest("Request?RequestType=" + _requestPreamble +
 				 	 "codeEditor" + 
 					"&option=getDirectoryContent" +
 					"&path=/"
@@ -501,7 +509,13 @@ CodeEditor.create = function() {
 				_activePaneIsPrimary = 1; //default active pane to primary
 
 					}); //end get directory contents
-				}); //end get allowed file extensions
+				},
+				0 /*reqParam*/, 0 /*progressHandler*/,
+				true /*callHandlerOnErr*/,
+				0 /*doNotShowLoadingOverlay*/, 0 /*targetSupervisor*/, 
+				0 /*ignoreSystemBlock*/,
+				true /*doNotOfferSequenceChange*/ //so read-only switch can happen
+		); //end get allowed file extensions
 		
 	} //end init()
 	
@@ -1242,7 +1256,7 @@ CodeEditor.create = function() {
 			
 			
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" +  
 					"&option=saveFileContent" +
 					"&path=" + _filePath[forPrimary] +
 					"&ext=" + _fileExtension[forPrimary]				
@@ -1432,12 +1446,13 @@ CodeEditor.create = function() {
 				")'>" + 
 				"srcs</a>";
 
-			
+			name = "srcs"; //take last name encoutered as folder name
 			for(i=0;i<pathSplit.length;++i)
 			{
 				pathSplitName = pathSplit[i].trim();
 				if(pathSplitName == "") continue; //skip blanks
 				Debug.log("pathSplitName " + pathSplitName);
+				name = pathSplitName; //take last name encoutered as folder name
 				
 				buildPath += "/" + pathSplitName;
 				
@@ -1471,7 +1486,7 @@ CodeEditor.create = function() {
 					"title":"Open folder in a new browser tab: \n" +
 					"srcs" + buildPath,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\",\"\"," + 
+					"\"" + name  + "\",\"\"," + 
 					"\"/WebPath/html/CodeEditor.html?urn=" +
 					DesktopContent._localUrnLid + "&" +
 					"openDirectoryPrimary=" +
@@ -1497,7 +1512,7 @@ CodeEditor.create = function() {
 					"title":"Open folder in a new browser tab: \n" +
 					"srcs" + path + "/" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\",\"\"," + 
+					"\"" + name + "\",\"\"," + 
 					"\"/WebPath/html/CodeEditor.html?urn=" +
 					DesktopContent._localUrnLid + "&" +
 					"openDirectoryPrimary=" +
@@ -1542,16 +1557,17 @@ CodeEditor.create = function() {
 		for(i=0;i<specialFiles.length;++i)
 		{
 			name = specialFiles[i].getAttribute('value');
+			nameSplit = name.split('/');	
 			
 			str += "<tr><td>";
-			
+						
 			//open in new window
 			str += htmlOpen("a",
 				{
 					"title":"Open file in a new browser tab: \n" +
 					"srcs" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\",\"\"," + 
+					"\"" + nameSplit[nameSplit.length-1] + "\",\"\"," + 
 					"\"/WebPath/html/CodeEditor.html?urn=" +
 					DesktopContent._localUrnLid + "&" +
 					"startFilePrimary=" +
@@ -1582,7 +1598,7 @@ CodeEditor.create = function() {
 				name + "\",\"" +
 				name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 				")' title='Open file: \nsrcs" + name + "' >";
-			nameSplit = name.split('/');			
+					
 			str += nameSplit[nameSplit.length-1] + "</a>";			
 			
 			
@@ -1603,10 +1619,10 @@ CodeEditor.create = function() {
 			//open in new window
 			str += htmlOpen("a",
 				{
-					"title":"Open file in a new browser tab: \n" +
+					"title":"Open folder in a new browser tab: \n" +
 					"srcs" + path + "/" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\",\"\"," + 
+					"\"" + name + "\",\"\"," + 
 					"\"/WebPath/html/CodeEditor.html?urn=" +
 					DesktopContent._localUrnLid + "&" +
 					"openDirectoryPrimary=" +
@@ -1652,7 +1668,7 @@ CodeEditor.create = function() {
 					"title":"Open file in a new browser tab: \n" +
 					"srcs" + path + "/" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
-					"\"Code Editor\",\"\"," + 
+					"\"" + name + "\",\"\"," + 
 					"\"/WebPath/html/CodeEditor.html?urn=" +
 					DesktopContent._localUrnLid + "&" +
 					"startFilePrimary=" +
@@ -1705,9 +1721,9 @@ CodeEditor.create = function() {
 		if(!path || path == "") path = "/"; //defualt to root
 		Debug.log("openDirectory forPrimary=" + forPrimary +
 				" path=" + path);
-		
-		
-		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+				
+		DesktopContent.XMLHttpRequest("Request?RequestType=" + _requestPreamble +
+				"codeEditor" + 
 				"&option=getDirectoryContent" +
 				"&path=" + path
 				, "" /* data */,
@@ -1971,7 +1987,8 @@ CodeEditor.create = function() {
 		{
 			CodeEditor.editor.toggleDirectoryNav(forPrimary,false /*set val*/);
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+			DesktopContent.XMLHttpRequest("Request?RequestType=" + _requestPreamble +
+					"codeEditor" + 
 					"&option=getFileContent" +
 					"&path=" + path + 
 					"&ext=" + extension
@@ -2015,7 +2032,7 @@ CodeEditor.create = function() {
 					}
 					catch(e)
 					{
-						Debug.log("Ignoring error handling file open: " + e);
+						Debug.log("Ignoring error handling file open:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
 					}
 					console.log(DesktopContent._loadBox.style.display);
 										
@@ -2267,7 +2284,7 @@ CodeEditor.create = function() {
 						CodeEditor.editor.displayFileHeader(forPrimary);
 					}
 					catch(e)
-					{ Debug.log("Ignoring error: " + e); }
+					{ Debug.log("Ignoring error:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e); }
 				});	 //end show loading
 		
 	} //end handleFileContent()
@@ -2340,14 +2357,14 @@ CodeEditor.create = function() {
 					}
 					catch(e)
 					{
-						Debug.log("Failed to scroll to inserted 2nd element: " + e);
+						Debug.log("Failed to scroll to inserted 2nd element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
 						try
 						{
 							secondEl.scrollIntoViewIfNeeded();
 						}
 						catch(e)
 						{
-							Debug.log("Failed to scroll 2nd element: " + e);
+							Debug.log("Failed to scroll 2nd element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
 						}
 					}
 					
@@ -2385,14 +2402,14 @@ CodeEditor.create = function() {
 					}
 					catch(e)
 					{
-						Debug.log("Failed to scroll to inserted 1st element: " + e);							
+						Debug.log("Failed to scroll to inserted 1st element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);							
 						try
 						{
 							firstEl.scrollIntoViewIfNeeded();
 						}
 						catch(e)
 						{
-							Debug.log("Failed to scroll 1st element: " + e);
+							Debug.log("Failed to scroll 1st element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
 						}
 					}
 					
@@ -2926,7 +2943,7 @@ CodeEditor.create = function() {
 										"title":"Open file in a new browser tab: \n" +
 										"srcs" + name,
 										"onclick":"DesktopContent.openNewBrowserTab(" +
-										"\"Code Editor\",\"\"," + 
+										"\"" + nameArr[nameArr.length-1] + "\",\"\"," + 
 										"\"/WebPath/html/CodeEditor.html?urn=" +
 										DesktopContent._localUrnLid + "&" +
 										"startFilePrimary=" +
@@ -5818,7 +5835,7 @@ CodeEditor.create = function() {
 			catch(e)
 			{
 				Debug.log("Ignoring error since file forPrimary=" + 
-						forPrimary + " is probably not opened: " + 
+						forPrimary + " is probably not opened:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + 
 						e);
 			}
 		} // end primary and secondary loop
@@ -6590,6 +6607,8 @@ CodeEditor.create = function() {
 		
 		str += htmlClearDiv();
 		
+		var nameArr = path.split('/');
+		
 		//table for open icons and filename select
 		str += "<table><tr><td>";	
 		//open in new window
@@ -6598,7 +6617,7 @@ CodeEditor.create = function() {
 				"title":"Open file in a new browser tab: \n" +
 				"srcs" + path + "." + extension,	
 				"onclick":"DesktopContent.openNewBrowserTab(" +
-				"\"Code Editor\",\"\"," + 
+				"\"" + nameArr[nameArr.length-1] + "." + extension + "\",\"\"," + 
 				"\"/WebPath/html/CodeEditor.html?urn=" +
 				DesktopContent._localUrnLid + "&" +
 				"startFilePrimary=" +
@@ -7103,7 +7122,7 @@ CodeEditor.create = function() {
 			}
 			catch(e)
 			{ 				
-				Debug.log("There was an error uploading the text: " + e,
+				Debug.log("There was an error uploading the text:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e,
 						Debug.HIGH_PRIORITY); 
 				return;
 			}
