@@ -1876,6 +1876,7 @@
 		function handleMouseMove(e) 
 		{	
 			if(document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID) ||
+					document.getElementById(DesktopContent._verifyPopUpId) ||					
 					!_grid || !_grid.rowColMap)
 				return; //disable while popup or initializing
 				
@@ -4224,10 +4225,14 @@
 							continue;
 						}
 						
-						//delete element to force new paint
-						var nodeid = "node-" + i;
-						var el = document.getElementById(nodeid);
-						if(el) el.parentNode.removeChild(el);
+						//delete element (and all elements after because of reindexing) to
+						//	force new paint
+						for(var k=i;k<_nodes.length;++k)
+						{
+							var nodeid = "node-" + k;
+							var el = document.getElementById(nodeid);
+							if(el) el.parentNode.removeChild(el);
+						}
 					} //end first pass html element deletion
 					
 					//second pass, delete from global nodes array, and modify indices into global array
@@ -4259,12 +4264,18 @@
 				}
 				else //normal single node delete	
 				{
-					_nodes.splice(i,1);
+					//first pass, delete html elements before indices change
+					//delete element (and all elements after because of reindexing) to
+					//	force new paint
+					for(var k=i;k<_nodes.length;++k)
+					{
+						var nodeid = "node-" + k;
+						var el = document.getElementById(nodeid);
+						if(el) el.parentNode.removeChild(el);
+					}
 
-					//delete element to force new paint
-					var nodeid = "node-" + i;
-					var el = document.getElementById(nodeid);
-					if(el) el.parentNode.removeChild(el);
+					_nodes.splice(i,1);
+					
 				}
 				
 				//subsystem change liekly affects arrows, so update
