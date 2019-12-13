@@ -1859,7 +1859,7 @@
             var angle = Math.atan2(y-y0,x-x0);
             
             var shortOffset = (getNodeFontSize()*4)|0; //avoid text above
-            if(y0 == y) shortOffset = HEAD_SZ*1;
+            if(y0 >= y) shortOffset = HEAD_SZ*1;
             
             if(!isActionCanvas)
             {
@@ -5005,10 +5005,13 @@
 
     				//else valid, so change start node subsystem
 
-    				Debug.log("The reader '" + 
+    				Debug.log("The reader '<b>" + 
     						_nodes[startNodeIndex].name + 
-							"' was successfully moved from subsystem '<b>" +
-							_subsystems[_nodes[startNodeIndex].subsystemId].label + "</b>' to '<b>" +
+							"</b>' was successfully moved from subsystem '<b>" +
+							_subsystems[_nodes[startNodeIndex].subsystemId].label + 
+							"</b>' to the " + 
+							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endNodeIndex].type] + 
+							"'s subsystem '<b>" +
 							_subsystems[_nodes[endNodeIndex].subsystemId].label + 
 							"</b>!'", Debug.INFO_PRIORITY);
 
@@ -5051,9 +5054,9 @@
     					_subsystems[_nodes[startNodeIndex].subsystemId].destinationId = 
     							_nodes[endNodeIndex].subsystemId;
 
-    					Debug.log("The subsystem '<b>" + 
+    					Debug.log("The builder's subsystem '<b>" + 
     							_subsystems[_nodes[startNodeIndex].subsystemId].label + 
-								"</b>' destination was successfully changed to subsystem '<b>" +
+								"</b>' destination was successfully changed to the target builder's subsystem '<b>" +
 								_subsystems[_nodes[endNodeIndex].subsystemId].label + 
 								"</b>!'", Debug.INFO_PRIORITY);
 
@@ -5086,9 +5089,12 @@
     					Debug.log("The " +
     							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endNodeIndex].type] +
 								" '<b>" + 
-    							_nodes[endNodeIndex].name + 
+								_nodes[endNodeIndex].name + 
 								"</b>' was successfully moved from subsystem '<b>" +
-								_subsystems[_nodes[endNodeIndex].subsystemId].label + "</b>' to '<b>" +
+								_subsystems[_nodes[endNodeIndex].subsystemId].label + 
+								"</b>' to the " + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[startNodeIndex].type] + 
+								"'s subsystem '<b>" +
 								_subsystems[_nodes[startNodeIndex].subsystemId].label + 
 								"</b>!'", Debug.INFO_PRIORITY);
 
@@ -5163,7 +5169,10 @@
     				Debug.log("The dispatcher '<b>" + 
     						_nodes[endNodeIndex].name + 
 							"</b>' was successfully moved from subsystem '<b>" +
-							_subsystems[_nodes[endNodeIndex].subsystemId].label + "</b>' to '<b>" +
+							_subsystems[_nodes[endNodeIndex].subsystemId].label +
+							"</b>' to the " + 
+							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[startNodeIndex].type] + 
+							"'s subsystem '<b>" +
 							_subsystems[_nodes[startNodeIndex].subsystemId].label + 
 							"</b>!'", Debug.INFO_PRIORITY);
 
@@ -5226,7 +5235,10 @@
 							" '<b>" + 
     						_nodes[endNodeIndex].name + 
 							"</b>' was successfully moved from subsystem '<b>" +
-							_subsystems[_nodes[endNodeIndex].subsystemId].label + "</b>' to '<b>" +
+							_subsystems[_nodes[endNodeIndex].subsystemId].label + 
+							"</b>' to the " + 
+							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[startNodeIndex].type] + 
+							"'s subsystem '<b>" +
 							_subsystems[_nodes[startNodeIndex].subsystemId].label + 
 							"</b>!'", Debug.INFO_PRIORITY);
 
