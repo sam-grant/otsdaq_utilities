@@ -866,8 +866,8 @@ void VisualSupervisor::request(const std::string&               requestType,
  		 STDLINE(std::string("fFileName   : ")+fFileName   ,ACCyan);
          RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, fRootPath, fFoldersPath, fHistName, fFileName, xmlOut) ;
          xmlOut.setDocument(theExplorer->initialize()) ;
-         //std::ostringstream* out ;
-	     //xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+         std::ostringstream* out ;
+	 xmlOut.outputXmlDocument((std::ostringstream*) out, true);
         }
 
 }
