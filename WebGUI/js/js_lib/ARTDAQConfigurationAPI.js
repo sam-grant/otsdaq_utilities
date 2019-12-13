@@ -61,6 +61,8 @@ ARTDAQConfigurationAPI.NODE_TYPE_BASE_TABLE		= ["ARTDAQBoardReaderTable","ARTDAQ
 ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE		= "ARTDAQDaqParameterTable";
 ARTDAQConfigurationAPI.DAQ_METRIC_TABLE			= "ARTDAQMetricTable";
 
+ARTDAQConfigurationAPI.NULL_SUBSYSTEM			= "nullDestinationSubsystem";
+
 //"private" function list:
 
 //"private" constants:
