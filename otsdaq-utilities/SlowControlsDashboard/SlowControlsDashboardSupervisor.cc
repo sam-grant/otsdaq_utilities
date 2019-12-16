@@ -9,14 +9,15 @@
 using namespace ots;
 
 #define CONTROLS_SUPERVISOR_DATA_PATH \
-		std::string(__ENV__("SERVICE_DATA_PATH")) + "/ControlsDashboardData/"
+	std::string(__ENV__("SERVICE_DATA_PATH")) + "/ControlsDashboardData/"
 #define PAGES_DIRECTORY CONTROLS_SUPERVISOR_DATA_PATH + "pages/"
 
 XDAQ_INSTANTIATOR_IMPL(SlowControlsDashboardSupervisor)
 
 //========================================================================================================================
-SlowControlsDashboardSupervisor::SlowControlsDashboardSupervisor(xdaq::ApplicationStub* stub)
-: CoreSupervisorBase(stub)
+SlowControlsDashboardSupervisor::SlowControlsDashboardSupervisor(
+    xdaq::ApplicationStub* stub)
+    : CoreSupervisorBase(stub)
 {
 	__SUP_COUT__ << "Constructor." << __E__;
 
@@ -59,68 +60,57 @@ void SlowControlsDashboardSupervisor::init(void)
 	__SUP_COUT__ << std::endl;
 	ConfigurationTree node = CorePropertySupervisorBase::getSupervisorTableNode();
 	std::string       pluginType =
-			CorePropertySupervisorBase::getSupervisorProperty("ControlsInterfacePluginType");
+	    CorePropertySupervisorBase::getSupervisorProperty("ControlsInterfacePluginType");
 
 	std::string supervisorConfigurationPath =
-			"/" + CorePropertySupervisorBase::getContextUID() + "/LinkToApplicationTable/" +
-			CorePropertySupervisorBase::getSupervisorUID();
+	    "/" + CorePropertySupervisorBase::getContextUID() + "/LinkToApplicationTable/" +
+	    CorePropertySupervisorBase::getSupervisorUID();
 	//
 	interface_ = makeSlowControls(pluginType,
-			CorePropertySupervisorBase::getSupervisorUID(),
-			CorePropertySupervisorBase::getContextTreeNode(),
-			supervisorConfigurationPath);
+	                              CorePropertySupervisorBase::getSupervisorUID(),
+	                              CorePropertySupervisorBase::getContextTreeNode(),
+	                              supervisorConfigurationPath);
 	__COUT__ << std::endl;
 
 	//
 	// interface_->initialize();
 	std::thread(
-			[](SlowControlsDashboardSupervisor* cs) {
+	    [](SlowControlsDashboardSupervisor* cs) {
 
-		// lockout the messages array for the remainder of the scope
-		// this guarantees the reading thread can safely access the messages
-		std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
+		    // lockout the messages array for the remainder of the scope
+		    // this guarantees the reading thread can safely access the messages
+		    std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
 
-		cs->interface_->initialize();
-	},
-	this)
-	.detach(); // thread completes after creating, subscribing, and getting
+		    cs->interface_->initialize();
+	    },
+	    this)
+	    .detach();  // thread completes after creating, subscribing, and getting
 	//	                // parameters for all channels
 
 	//
 	// checkSubscription
 	std::thread(
-			[](SlowControlsDashboardSupervisor* cs) {
+	    [](SlowControlsDashboardSupervisor* cs) {
 
-		// lockout the messages array for the remainder of the scope
-		// this guarantees the reading thread can safely access the messages
-		std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
-		cs->checkSubscriptions(cs);
-	},
-	this)
-	.detach(); // thread check clients subscription for all channels
-
-	//
-	// checkAlarms
-	std::thread(
-			[](SlowControlsDashboardSupervisor* cs) {
-		// lockout the messages array for the remainder of the scope
-		// this guarantees the reading thread can safely access the messages
-		std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
-		cs->checkAlarms(cs);
-	},
-	this)
-	.detach();  // thread check alarms on status and severity for all channels
+		    // lockout the messages array for the remainder of the scope
+		    // this guarantees the reading thread can safely access the messages
+		    // std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
+		    cs->checkSubscriptions(cs);
+	    },
+	    this)
+	    .detach();  // thread check clients subscription for all channels
 
 	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
-	//add interface plugin to state machine list
+	// add interface plugin to state machine list
 	CoreSupervisorBase::theStateMachineImplementation_.push_back(interface_);
 
 }  // end init()
 
 //========================================================================================================================
-//Manage channel subscriptions to Interface
-void SlowControlsDashboardSupervisor::checkSubscriptions(SlowControlsDashboardSupervisor* cs)
+// Manage channel subscriptions to Interface
+void SlowControlsDashboardSupervisor::checkSubscriptions(
+    SlowControlsDashboardSupervisor* cs)
 {
 	__COUT__ << "checkSubscriptions() initializing..." << std::endl;
 	std::vector<std::string> channelList;
@@ -130,9 +120,10 @@ void SlowControlsDashboardSupervisor::checkSubscriptions(SlowControlsDashboardSu
 		channelList         = {"FIRST VALUE"};
 		channelRefreshRates = {};
 		std::map<int, std::set<std::string>>::iterator mapReference =
-				cs->channelDependencyLookupMap_.begin();
-		while(mapReference != cs->channelDependencyLookupMap_
-				.end())  // We have here current list of Channel Dependencies
+		    cs->channelDependencyLookupMap_.begin();
+		while(mapReference !=
+		      cs->channelDependencyLookupMap_
+		          .end())  // We have here current list of Channel Dependencies
 		{
 			for(auto channel : mapReference->second)
 			{
@@ -152,11 +143,11 @@ void SlowControlsDashboardSupervisor::checkSubscriptions(SlowControlsDashboardSu
 
 				channel = channel.substr(0, channel.find(":"));
 				__COUT__ << "THREAD actual time: " << std::time(NULL)
-				<< "; uidPollTimeMap + 10 * refreshTime: "
-				<< cs->uidPollTimeMap_.at(mapReference->first) + 10 * refreshRate
-				<< " seconds" << std::endl;
+				         << "; uidPollTimeMap + 10 * refreshTime: "
+				         << cs->uidPollTimeMap_.at(mapReference->first) + 10 * refreshRate
+				         << " seconds" << std::endl;
 				if(std::time(NULL) >
-				cs->uidPollTimeMap_.at(mapReference->first) + 10 * refreshRate)
+				   cs->uidPollTimeMap_.at(mapReference->first) + 10 * refreshRate)
 				{
 					try
 					{
@@ -170,19 +161,19 @@ void SlowControlsDashboardSupervisor::checkSubscriptions(SlowControlsDashboardSu
 				}
 
 				std::vector<std::string>::iterator it =
-						find(channelList.begin(), channelList.end(), channel);
+				    find(channelList.begin(), channelList.end(), channel);
 				if(it == channelList.end())
 				{
 					// cs->interface_->unsubscribe(channel);
 					// cs->interface_->subscribe(channel);
 					channelList.push_back(channel);
 					__COUT__ << "Channel: " << channel << " refreshRate:  " << refreshRate
-							<< " seconds" << std::endl;
+					         << " seconds" << std::endl;
 					__COUT__ << "channelDependencyLookupMap_.size(): "
-							<< cs->channelDependencyLookupMap_.size()
-							<< " UID: " << mapReference->first
-							<< " mapReference->second.size(): "
-							<< mapReference->second.size() << std::endl;
+					         << cs->channelDependencyLookupMap_.size()
+					         << " UID: " << mapReference->first
+					         << " mapReference->second.size(): "
+					         << mapReference->second.size() << std::endl;
 				}
 
 				sleep(1);
@@ -191,22 +182,11 @@ void SlowControlsDashboardSupervisor::checkSubscriptions(SlowControlsDashboardSu
 		}
 		int minTime = 30;  // seconds
 		if(channelRefreshRates.size() > 0)
-			minTime = *min_element(channelRefreshRates.begin(), channelRefreshRates.end());
+			minTime =
+			    *min_element(channelRefreshRates.begin(), channelRefreshRates.end());
 		sleep(minTime);
-		__COUT__ << "Loop over channels subscribing - waiting time: " << minTime << " seconds"
-				<< std::endl;
-	}
-}
-
-//========================================================================================================================
-// Check Alarms from Epics
-void SlowControlsDashboardSupervisor::checkAlarms(SlowControlsDashboardSupervisor* cs)
-{
-	__COUT__ << "checkAlarms() initializing..." << std::endl;
-	while(true) {
-		for (auto channelName : interface_->getChannelList()){
-			//interface_->getCurrentValue(channelName);
-		}
+		__COUT__ << "Loop over channels subscribing - waiting time: " << minTime
+		         << " seconds" << std::endl;
 	}
 }
 
@@ -217,8 +197,7 @@ void SlowControlsDashboardSupervisor::checkAlarms(SlowControlsDashboardSuperviso
 void SlowControlsDashboardSupervisor::setSupervisorPropertyDefaults()
 {
 	CorePropertySupervisorBase::setSupervisorProperty(
-			CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.CheckUserLockRequestTypes,
-			"*");
+	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.CheckUserLockRequestTypes, "*");
 }
 
 //========================================================================================================================
@@ -227,32 +206,30 @@ void SlowControlsDashboardSupervisor::setSupervisorPropertyDefaults()
 void SlowControlsDashboardSupervisor::forceSupervisorPropertyValues()
 {
 	CorePropertySupervisorBase::setSupervisorProperty(
-			CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
-			"poll");
+	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes, "poll");
 }
 
 //========================================================================================================================
 void SlowControlsDashboardSupervisor::request(const std::string& requestType,
-		cgicc::Cgicc&      cgiIn,
-		HttpXmlDocument&   xmlOut,
-		const WebUsers::RequestUserInfo& userInfo)
+                                              cgicc::Cgicc&      cgiIn,
+                                              HttpXmlDocument&   xmlOut,
+                                              const WebUsers::RequestUserInfo& userInfo)
 {
 	try
 	{
 		if(requestType != "getPages" && !pluginBusyMutex_.try_lock())
 		{
-			__SUP_SS__
-			<< "Controls plugin is still initializing. Please try again in a "
-			"few minutes!"
-			<< __E__;
+			__SUP_SS__ << "Controls plugin is still initializing. Please try again in a "
+			              "few minutes!"
+			           << __E__;
 			__SUP_SS_THROW__;
 		}
 
 		__SUP_COUT__ << "User name is " << userInfo.username_ << "." << __E__;
-		__SUP_COUT__ << "User permission level for request '" << requestType
-				<< "' is " << unsigned(userInfo.permissionLevel_)
-				<< "(isAdmin=" << (userInfo.isAdmin() ? "Yes" : "No") << ")."
-				<< __E__;
+		__SUP_COUT__ << "User permission level for request '" << requestType << "' is "
+		             << unsigned(userInfo.permissionLevel_)
+		             << "(isAdmin=" << (userInfo.isAdmin() ? "Yes" : "No") << ")."
+		             << __E__;
 
 		// handle request per requestType
 		handleRequest(requestType, xmlOut, cgiIn, userInfo);
@@ -260,14 +237,14 @@ void SlowControlsDashboardSupervisor::request(const std::string& requestType,
 	catch(const std::runtime_error& e)
 	{
 		__SUP_SS__ << "Error occurred handling request '" << requestType
-				<< "': " << e.what() << __E__;
+		           << "': " << e.what() << __E__;
 		__SUP_COUT__ << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
 	catch(...)
 	{
 		__SS__ << "Unknown error occurred handling request '" << requestType << "!'"
-				<< __E__;
+		       << __E__;
 		__SUP_COUT__ << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
@@ -278,10 +255,10 @@ void SlowControlsDashboardSupervisor::request(const std::string& requestType,
 
 //========================================================================================================================
 void SlowControlsDashboardSupervisor::handleRequest(
-		const std::string                Command,
-		HttpXmlDocument&                 xmlOut,
-		cgicc::Cgicc&                    cgiIn,
-		const WebUsers::RequestUserInfo& userInfo)
+    const std::string                Command,
+    HttpXmlDocument&                 xmlOut,
+    cgicc::Cgicc&                    cgiIn,
+    const WebUsers::RequestUserInfo& userInfo)
 {
 	// return xml doc holding server response
 	__SUP_COUT__ << std::endl;
@@ -293,7 +270,7 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	}
 	else if(Command == "generateUID")
 	{
-		std::string channelList = CgiDataUtilities::getOrPostData(cgiIn, "ChannelList");
+		std::string channelList = CgiDataUtilities::getOrPostData(cgiIn, "PVList");
 		GenerateUID(cgiIn, xmlOut, channelList);
 	}
 	else if(Command == "isUserAdmin")
@@ -307,13 +284,13 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	{
 		GetUserPermissions(cgiIn, xmlOut, userInfo);
 	}
-	else if(Command == "getChannelSettings")
+	else if(Command == "getPVSettings")
 	{
 		__SUP_COUT__ << "Channel settings requested from server! " << std::endl;
 		GetChannelSettings(cgiIn, xmlOut);
 		xmlOut.addTextElementToData("id", CgiDataUtilities::getData(cgiIn, "id"));
 	}
-	else if(Command == "getChannelArchiverData")
+	else if(Command == "getPVArchiverData")
 	{
 		__SUP_COUT__ << "Archived Channel data requested from server! " << std::endl;
 		GetChannelArchiverData(cgiIn, xmlOut);
@@ -333,7 +310,7 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	{
 		std::string page = CgiDataUtilities::getData(cgiIn, "Page");
 		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << page
-				<< std::endl;
+		             << std::endl;
 
 		loadPage(cgiIn, xmlOut, page, userInfo);
 	}
@@ -354,17 +331,18 @@ void SlowControlsDashboardSupervisor::handleRequest(
 }  // end handleRequest
 
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::Poll(
-		cgicc::Cgicc & cgiIn, HttpXmlDocument & xmlOut, std::string UID)
+void SlowControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
+                                           HttpXmlDocument& xmlOut,
+                                           std::string      UID)
 {
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
-			<< "Polling on UID:" << UID << std::endl;
+	             << "Polling on UID:" << UID << std::endl;
 
 	std::map<int, std::set<std::string>>::iterator mapReference;
 
 	if(UID != "" && (mapReference = channelDependencyLookupMap_.find(std::stoi(UID))) !=
-			channelDependencyLookupMap_
-			.end())  // We have their current list of Channel Dependencies
+	                    channelDependencyLookupMap_
+	                        .end())  // We have their current list of Channel Dependencies
 	{
 		uidPollTimeMap_.at(std::stoi(UID)) = std::time(NULL);
 		std::string JSONMessage            = "{ ";
@@ -376,10 +354,10 @@ void SlowControlsDashboardSupervisor::Poll(
 			__SUP_COUT__ << channel << std::endl;
 
 			std::array<std::string, 4> channelInformation =
-					interface_->getCurrentValue(channel);
+			    interface_->getCurrentValue(channel);
 
 			__SUP_COUT__ << channel << ": " << channelInformation[1] << " : "
-					<< channelInformation[3] << std::endl;
+			             << channelInformation[3] << std::endl;
 
 			if(channelInformation[0] != "NO_CHANGE")
 			{
@@ -387,10 +365,11 @@ void SlowControlsDashboardSupervisor::Poll(
 				JSONMessage += "\"" + channel + "\": {";
 
 				/*if(channelInfo->mostRecentBufferIndex - 1 < 0)
-					{
-					std::string value = channelInfo->dataCache[channelInfo->dataCache.size()].second
-					std::string time =
-					}*/
+				    {
+				    std::string value =
+				   channelInfo->dataCache[channelInfo->dataCache.size()].second
+				    std::string time =
+				    }*/
 
 				JSONMessage += "\"Timestamp\":\"" + channelInformation[0] + "\",";
 				JSONMessage += "\"Value\":\"" + channelInformation[1] + "\",";
@@ -400,7 +379,7 @@ void SlowControlsDashboardSupervisor::Poll(
 			else
 			{
 				__SUP_COUT__ << "No change in value since last poll: " << channel
-						<< std::endl;
+				             << std::endl;
 			}
 
 			// Handle Channels that disconnect, etc
@@ -412,7 +391,7 @@ void SlowControlsDashboardSupervisor::Poll(
 
 			//__SUP_COUT__ << channel  << ":" << (channelInfo?"Good":"Bad") << std::endl;
 			//__SUP_COUT__ << channel  << ":" << channelInfo->mostRecentBufferIndex -1 <<
-			//std::endl;
+			// std::endl;
 			//__SUP_COUT__ << channel << " : " <<
 			// channelInfo->dataCache[(channelInfo->mostRecentBufferIndex -1)].second <<
 			// std::endl;
@@ -424,42 +403,41 @@ void SlowControlsDashboardSupervisor::Poll(
 		xmlOut.addTextElementToData("JSON", JSONMessage);  // add to response
 
 		/*for (std::set<unsigned long>::iterator it = mapReference->second->begin();
-			it != mapReference->second.end(); ++it)
-			{
-			    //__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << it <<
-			std::endl;
-			}*/
+		    it != mapReference->second.end(); ++it)
+		    {
+		        //__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << it <<
+		    std::endl;
+		    }*/
 		/*std::string fakeData = 	std::string("{")
-			                        + "\"Mu2e_CompStatus_daq01/system_temperature\":
-			\"40.5\","
-			                        + "\"Mu2e_CompStatus_daq01/load_one\": \"378.2\","
-			                        + "\"Mu2e_Weather_2/timestamp\":
-			\"11.14.45.2016.4.8\","
-			                        + "\"Mu2e_CompStatus_daq01/system_temperature\":
-			\"43.4\","
-			                        + "\"Mu2e_CompStatus_daq01/load_one\":\"80\","
-			                        + "\"Mu2e_Weather_2/timestamp\":
-			\"11.14.45.2016.4.8\""
-			                        + "}";
-			xmlOut.addTextElementToData("JSON", fakeData); //add to response
+		                            + "\"Mu2e_CompStatus_daq01/system_temperature\":
+		    \"40.5\","
+		                            + "\"Mu2e_CompStatus_daq01/load_one\": \"378.2\","
+		                            + "\"Mu2e_Weather_2/timestamp\":
+		    \"11.14.45.2016.4.8\","
+		                            + "\"Mu2e_CompStatus_daq01/system_temperature\":
+		    \"43.4\","
+		                            + "\"Mu2e_CompStatus_daq01/load_one\":\"80\","
+		                            + "\"Mu2e_Weather_2/timestamp\":
+		    \"11.14.45.2016.4.8\""
+		                            + "}";
+		    xmlOut.addTextElementToData("JSON", fakeData); //add to response
 		 */
 	}
 	else  // UID is not in our map so force them to generate a new one
 	{
-		xmlOut.addTextElementToData(
-				"JSON",
-				"{ \"message\": \"NOT_FOUND\"}");  // add to response
+		xmlOut.addTextElementToData("JSON",
+		                            "{ \"message\": \"NOT_FOUND\"}");  // add to response
 	}
 }
 
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::GetChannelSettings(cgicc::Cgicc & cgiIn,
-		HttpXmlDocument & xmlOut)
+void SlowControlsDashboardSupervisor::GetChannelSettings(cgicc::Cgicc&    cgiIn,
+                                                         HttpXmlDocument& xmlOut)
 {
-	std::string channelList = CgiDataUtilities::postData(cgiIn, "ChannelList");
+	std::string channelList = CgiDataUtilities::postData(cgiIn, "PVList");
 
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
-			<< "Getting settings for " << channelList << std::endl;
+	             << "Getting settings for " << channelList << std::endl;
 
 	std::string JSONMessage = "{ ";
 
@@ -501,23 +479,23 @@ void SlowControlsDashboardSupervisor::GetChannelSettings(cgicc::Cgicc & cgiIn,
 	else
 	{
 		__SUP_COUT__ << "Did not find any settings because Channel list is length zero!"
-				<< std::endl;
+		             << std::endl;
 
 		xmlOut.addTextElementToData(
-				"JSON", "{ \"message\": \"GetChannelSettings\"}");  // add to response
+		    "JSON", "{ \"message\": \"GetPVSettings\"}");  // add to response
 	}
 }
 
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc & cgiIn,
-		HttpXmlDocument & xmlOut)
+void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc&    cgiIn,
+                                                             HttpXmlDocument& xmlOut)
 {
 	__SUP_COUT__ << "Requesting archived data!" << std::endl;
 
-	std::string channelList = CgiDataUtilities::postData(cgiIn, "ChannelList");
+	std::string channelList = CgiDataUtilities::postData(cgiIn, "PVList");
 
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
-			<< "Getting History for " << channelList << std::endl;
+	             << "Getting History for " << channelList << std::endl;
 
 	std::string JSONMessage = "{ ";
 
@@ -535,9 +513,9 @@ void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc & cgiI
 			__SUP_COUT__ << channel << std::endl;
 
 			std::vector<std::vector<std::string>> channelInformation =
-					interface_->getChannelHistory(channel);
+			    interface_->getChannelHistory(channel);
 			__SUP_COUT__ << channel << ": " << channelInformation[0][1] << " : "
-					<< channelInformation[0][3] << std::endl;
+			             << channelInformation[0][3] << std::endl;
 
 			for(auto channelData : channelInformation)
 			{
@@ -566,79 +544,80 @@ void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc & cgiI
 	else
 	{
 		__SUP_COUT__ << "Did not find any settings because Channel list is length zero!"
-				<< std::endl;
+		             << std::endl;
 
 		xmlOut.addTextElementToData(
-				"JSON", "{ \"message\": \"GetChannelSettings\"}");  // add to response
+		    "JSON", "{ \"message\": \"GetPVSettings\"}");  // add to response
 	}
 
 	/*
-		    // FAKE NEWS RESPONSE
-		    //		xmlOut.addTextElementToData(
-		    //		    "JSON",
-		    //					"{    \"ROOM:LI30:1:OUTSIDE_TEMP\": {
-		    //					        \"nanos\": 823158037,
-		    //					        \"secs\": 1540229999,
-		    //					        \"severity\": 0,
-		    //					        \"status\": 0,
-		    //					        \"val\": 60.358551025390625
-		    //					    },
-		    //					    \"VPIO:IN20:111:VRAW\": {
-		    //					        \"nanos\": 754373158,
-		    //					        \"secs\": 1540229999,
-		    //					        \"severity\": 0,
-		    //					        \"status\": 0,
-		    //					        \"val\": 5.529228687286377
-		    //					    },
-		    //					    \"YAGS:UND1:1005:Y_BM_CTR\": {
-		    //					        \"nanos\": 164648807,
-		    //					        \"secs\": 1537710595,
-		    //					        \"severity\": 0,
-		    //					        \"status\": 0,
-		    //					        \"val\": 0.008066000000000002
-		    //					    }
-		    //					}");  // add to response
+	        // FAKE NEWS RESPONSE
+	        //		xmlOut.addTextElementToData(
+	        //		    "JSON",
+	        //					"{    \"ROOM:LI30:1:OUTSIDE_TEMP\": {
+	        //					        \"nanos\": 823158037,
+	        //					        \"secs\": 1540229999,
+	        //					        \"severity\": 0,
+	        //					        \"status\": 0,
+	        //					        \"val\": 60.358551025390625
+	        //					    },
+	        //					    \"VPIO:IN20:111:VRAW\": {
+	        //					        \"nanos\": 754373158,
+	        //					        \"secs\": 1540229999,
+	        //					        \"severity\": 0,
+	        //					        \"status\": 0,
+	        //					        \"val\": 5.529228687286377
+	        //					    },
+	        //					    \"YAGS:UND1:1005:Y_BM_CTR\": {
+	        //					        \"nanos\": 164648807,
+	        //					        \"secs\": 1537710595,
+	        //					        \"severity\": 0,
+	        //					        \"status\": 0,
+	        //					        \"val\": 0.008066000000000002
+	        //					    }
+	        //					}");  // add to response
 
-		    return;
+	        return;
 
-		    // Where parameters
-		    std::string data_retrieval_url     = "";
-		    std::string data_retrieval_servlet = "";
-		    std::string mime_type              = ".json";
+	        // Where parameters
+	        std::string data_retrieval_url     = "";
+	        std::string data_retrieval_servlet = "";
+	        std::string mime_type              = ".json";
 
-		    // What/when paramaeters
-		    std::string channel, from, to;
+	        // What/when paramaeters
+	        std::string channel, from, to;
 
-		    // Optional parameters
-		    //	boolean fetchLatestMetadata, donotchunk;
-		    //	std::string timeranges;
-		    //	int ca_count, ca_how;
+	        // Optional parameters
+	        //	boolean fetchLatestMetadata, donotchunk;
+	        //	std::string timeranges;
+	        //	int ca_count, ca_how;
 
-		    std::string req = data_retrieval_url + data_retrieval_servlet + mime_type +
-		   "?" + "channel=" + channel + "&from=" + from + "&to=" + to;
+	        std::string req = data_retrieval_url + data_retrieval_servlet + mime_type +
+	       "?" + "channel=" + channel + "&from=" + from + "&to=" + to;
 
-		    std::string response = "";
+	        std::string response = "";
 
-		    return;
+	        return;
 	 */
 
 }  // end GetChannelArchiverData()
 
 //========================================================================================================================
 void SlowControlsDashboardSupervisor::GetUserPermissions(
-		cgicc::Cgicc & cgiIn,
-		HttpXmlDocument & xmlOut,
-		const WebUsers::RequestUserInfo& userInfo)
+    cgicc::Cgicc&                    cgiIn,
+    HttpXmlDocument&                 xmlOut,
+    const WebUsers::RequestUserInfo& userInfo)
 {
 	return;
 }
 
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::GenerateUID(
-		cgicc::Cgicc & cgiIn, HttpXmlDocument & xmlOut, std::string channellist)
+void SlowControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
+                                                  HttpXmlDocument& xmlOut,
+                                                  std::string      channellist)
 {
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
-			<< "Generating UID" << std::endl;
+	             << "Generating UID" << std::endl;
 
 	std::set<std::string> channelDependencies;
 	std::string           uid;
@@ -662,7 +641,7 @@ void SlowControlsDashboardSupervisor::GenerateUID(
 		}
 
 		channelDependencyLookupMap_.insert(
-				std::pair<int, std::set<std::string>>(++UID_, channelDependencies));
+		    std::pair<int, std::set<std::string>>(++UID_, channelDependencies));
 
 		uid = (std::string("{ \"message\": \"") + std::to_string(UID_) + "\"}");
 
@@ -671,29 +650,29 @@ void SlowControlsDashboardSupervisor::GenerateUID(
 	else
 	{
 		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-			            		 << " ChannelList invalid: " << channellist << std::endl;
+		             << " ChannelList invalid: " << channellist << std::endl;
 		uid = "{ \"message\": \"-1\"}";
 	}
 
-	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-		            		 << " NEW UID: " << UID_ << std::endl;
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " NEW UID: " << UID_
+	             << std::endl;
 
 	xmlOut.addTextElementToData("JSON", uid);  // add to response
-}                                              // end GenerateUID()
+}  // end GenerateUID()
 
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::GetList(cgicc::Cgicc & cgiIn,
-		HttpXmlDocument & xmlOut)
+void SlowControlsDashboardSupervisor::GetList(cgicc::Cgicc&    cgiIn,
+                                              HttpXmlDocument& xmlOut)
 {
 	if(interface_ != NULL)
 	{
 		__SUP_COUT__ << "Interface is defined! Attempting to get list!" << std::endl;
 		//	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() <<
-		//std::endl;
+		// std::endl;
 		std::cout << " " << interface_->getList("JSON") << std::endl;
 
 		xmlOut.addTextElementToData("JSON",
-				interface_->getList("JSON"));  // add to response
+		                            interface_->getList("JSON"));  // add to response
 	}
 	else
 	{
@@ -703,32 +682,32 @@ void SlowControlsDashboardSupervisor::GetList(cgicc::Cgicc & cgiIn,
 }  // end GetList()
 
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::GetPages(cgicc::Cgicc & cgiIn,
-		HttpXmlDocument & xmlOut)
+void SlowControlsDashboardSupervisor::GetPages(cgicc::Cgicc&    cgiIn,
+                                               HttpXmlDocument& xmlOut)
 {
 	/*DIR * dir;
-		struct dirent * ent;
-		std::string pathToPages = CONTROLS_SUPERVISOR_DATA_PATH;
+	    struct dirent * ent;
+	    std::string pathToPages = CONTROLS_SUPERVISOR_DATA_PATH;
 
-		std::vector<std::string> pages;
+	    std::vector<std::string> pages;
 
-		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << "Path to pages:
-		" << pathToPages << std::endl; if((dir = opendir (pathToPages.c_str())) != NULL)
-		{
-		    while((ent = readdir(dir)) != NULL)
-		    {
-		        pages.push_back(ent->d_name);
-		        __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << "
-		GetPages"
-		<< ent->d_name << std::endl;
-		    }
-		    closedir(dir);
-		}
-		else
-		{
-		    __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << "Could not
-		open directory: " << pathToPages << std::endl; return;
-		}
+	    __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << "Path to pages:
+	    " << pathToPages << std::endl; if((dir = opendir (pathToPages.c_str())) != NULL)
+	    {
+	        while((ent = readdir(dir)) != NULL)
+	        {
+	            pages.push_back(ent->d_name);
+	            __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << "
+	    GetPages"
+	    << ent->d_name << std::endl;
+	        }
+	        closedir(dir);
+	    }
+	    else
+	    {
+	        __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << "Could not
+	    open directory: " << pathToPages << std::endl; return;
+	    }
 	 */
 	std::vector<std::string> pages;
 
@@ -755,13 +734,13 @@ void SlowControlsDashboardSupervisor::GetPages(cgicc::Cgicc & cgiIn,
 	std::cout << returnJSON << std::endl;
 
 	xmlOut.addTextElementToData("JSON", returnJSON);  // add to response
-}                                                     // end GetPages()
+}  // end GetPages()
 
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc & cgiIn,
-		HttpXmlDocument & xmlOut,
-		std::string                      page,
-		const WebUsers::RequestUserInfo& userInfo)
+void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc&                    cgiIn,
+                                               HttpXmlDocument&                 xmlOut,
+                                               std::string                      page,
+                                               const WebUsers::RequestUserInfo& userInfo)
 {
 	page = StringMacros::decodeURIComponent(page);
 
@@ -770,17 +749,17 @@ void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc & cgiIn,
 	if(page.find("..") != std::string::npos)
 	{
 		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-			            		 << "Error! Request using '..': " << page << std::endl;
+		             << "Error! Request using '..': " << page << std::endl;
 	}
 	else if(page.find("~") != std::string::npos)
 	{
 		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-			            		 << "Error! Request using '~': " << page << std::endl;
+		             << "Error! Request using '~': " << page << std::endl;
 	}
 	else if(!(stat(page.c_str(), &buffer) == 0))
 	{
 		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-			            		 << "Error! File not found: " << page << std::endl;
+		             << "Error! File not found: " << page << std::endl;
 	}
 	// Remove double / in path
 
@@ -796,9 +775,9 @@ void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc & cgiIn,
 	std::string file = CONTROLS_SUPERVISOR_DATA_PATH;
 	file += page;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-		            		 << "Trying to load page: " << page << std::endl;
+	             << "Trying to load page: " << page << std::endl;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-		            		 << "Trying to load page: " << file << std::endl;
+	             << "Trying to load page: " << file << std::endl;
 	// read file
 	// for each line in file
 
@@ -810,7 +789,7 @@ void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc & cgiIn,
 		xmlOut.addTextElementToData("Time", "[\"Not Found\"]");   // add to response
 		xmlOut.addTextElementToData("Notes", "[\"Not Found\"]");  // add to response
 		xmlOut.addTextElementToData(
-				"Page", StringMacros::encodeURIComponent(page));  // add to response
+		    "Page", StringMacros::encodeURIComponent(page));  // add to response
 		return;
 	}
 	std::cout << "Reading file" << std::endl;
@@ -843,13 +822,13 @@ void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc & cgiIn,
 	xmlOut.addTextElementToData("Time", time);          // add to response
 	xmlOut.addTextElementToData("Notes", notes);        // add to response
 	xmlOut.addTextElementToData("Page", controlsPage);  // add to response
-}                                                       // end loadPage()
+}  // end loadPage()
 
 //========================================================================================================================
 void SlowControlsDashboardSupervisor::SaveControlsPage(
-		cgicc::Cgicc & cgiIn,
-		HttpXmlDocument & xmlOut,
-		const WebUsers::RequestUserInfo& userInfo)
+    cgicc::Cgicc&                    cgiIn,
+    HttpXmlDocument&                 xmlOut,
+    const WebUsers::RequestUserInfo& userInfo)
 {
 	__SUP_COUT__ << "ControlsDashboard wants to create a Controls Page!" << __E__;
 
@@ -857,7 +836,7 @@ void SlowControlsDashboardSupervisor::SaveControlsPage(
 	std::string pageString       = CgiDataUtilities::postData(cgiIn, "Page");
 	std::string Time             = CgiDataUtilities::postData(cgiIn, "Time");
 	std::string Notes =
-			StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgiIn, "Notes"));
+	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgiIn, "Notes"));
 	std::string isControlsPagePublic = CgiDataUtilities::postData(cgiIn, "isPublic");
 
 	__SUP_COUTV__(controlsPageName);
@@ -890,9 +869,9 @@ void SlowControlsDashboardSupervisor::SaveControlsPage(
 		file += std::string(".dat");
 	}
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-		            		 << "Trying to save page: " << controlsPageName << std::endl;
+	             << "Trying to save page: " << controlsPageName << std::endl;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-		            		 << "Trying to save page as: " << file << std::endl;
+	             << "Trying to save page as: " << file << std::endl;
 	// read file
 	// for each line in file
 
@@ -909,14 +888,14 @@ void SlowControlsDashboardSupervisor::SaveControlsPage(
 }
 
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::Subscribe(cgicc::Cgicc & cgiIn,
-		HttpXmlDocument & xmlOut)
+void SlowControlsDashboardSupervisor::Subscribe(cgicc::Cgicc&    cgiIn,
+                                                HttpXmlDocument& xmlOut)
 {
 }
 
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::Unsubscribe(cgicc::Cgicc & cgiIn,
-		HttpXmlDocument & xmlOut)
+void SlowControlsDashboardSupervisor::Unsubscribe(cgicc::Cgicc&    cgiIn,
+                                                  HttpXmlDocument& xmlOut)
 {
 }
 
@@ -940,8 +919,9 @@ bool SlowControlsDashboardSupervisor::isDir(std::string dir)
 }
 
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::listFiles(
-		std::string baseDir, bool recursive, std::vector<std::string>* pages)
+void SlowControlsDashboardSupervisor::listFiles(std::string               baseDir,
+                                                bool                      recursive,
+                                                std::vector<std::string>* pages)
 {
 	std::string base = CONTROLS_SUPERVISOR_DATA_PATH;
 	base += baseDir;
@@ -951,7 +931,7 @@ void SlowControlsDashboardSupervisor::listFiles(
 	if((dp = opendir(base.c_str())) == NULL)
 	{
 		std::cout << "[ERROR: " << errno << " ] Couldn't open " << base << "."
-				<< std::endl;
+		          << std::endl;
 		return;
 	}
 	else
@@ -963,8 +943,7 @@ void SlowControlsDashboardSupervisor::listFiles(
 				if(isDir(base + dirp->d_name) == true && recursive == true)
 				{
 					// pages->push_back(baseDir + dirp->d_name);
-					std::cout << "[DIR]\t" << baseDir << dirp->d_name << "/"
-							<< std::endl;
+					std::cout << "[DIR]\t" << baseDir << dirp->d_name << "/" << std::endl;
 					listFiles(baseDir + dirp->d_name + "/", true, pages);
 				}
 				else

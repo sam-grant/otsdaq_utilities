@@ -52,11 +52,11 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getAliasesAndGroups(responseHandler,optionForNoAliases,optionForNoGroups)
 // 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldsOfRecords(subsetBasePath,recordArr,fieldList,maxDepth,responseHandler,modifiedTables)
-//	ConfigurationAPI.getFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
+//	ConfigurationAPI.getFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables,silenceErrors)
 // 	ConfigurationAPI.getUniqueFieldValuesForRecords(subsetBasePath,recordArr,fieldList,responseHandler,modifiedTables)
 //	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTablesIn,silenceErrors)	)
 //	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
-//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases,doNotIgnoreGroupActivationWarnings,doNotKillPopUpEl)
+//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases,doNotIgnoreGroupActivationWarnings,doNotKillPopUpEl,tablesToAdd)
 //	ConfigurationAPI.bitMapDialog(bitMapParams,initBitMapValue,okHandler,cancelHandler)
 //	ConfigurationAPI.createEditableFieldElement(fieldObj,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
@@ -64,6 +64,8 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getSelectedEditableFieldIndex()
 // 	ConfigurationAPI.addSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTablesIn,silenceErrors)	
 // 	ConfigurationAPI.deleteSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTablesIn,silenceErrors)	
+// 	ConfigurationAPI.renameSubsetRecords(subsetBasePath,recordArr,newRecordArr,responseHandler,modifiedTablesIn,silenceErrors)	
+// 	ConfigurationAPI.copySubsetRecords(subsetBasePath,recordArr,numberOfCopies,responseHandler,modifiedTablesIn,silenceErrors)	
 
 
 //"public" helpers:
@@ -747,8 +749,9 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 //			obj.fieldPath   
 //			obj.fieldValue
 //
-ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fieldObjArr,
-		responseHandler,modifiedTables)
+ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,
+		recordArr,fieldObjArr,
+		responseHandler,modifiedTables,silenceErrors)
 {	
 	var modifiedTablesListStr = "";
 	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
@@ -808,8 +811,8 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
 		{
-			Debug.log(err,Debug.HIGH_PRIORITY);
-			if(responseHandler) responseHandler(recFieldValues);
+			if(!silenceErrors) Debug.log(err,Debug.HIGH_PRIORITY);
+			if(responseHandler) responseHandler(recFieldValues,err);
 			return;
 		}
 		
@@ -1057,7 +1060,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 			}, //handler
 			0, //handler param
 			0,true); //progressHandler, callHandlerOnErr
-}
+} //end setFieldValuesForRecords()
 
 //=====================================================================================
 //popUpSaveModifiedTablesForm ~~
@@ -1784,7 +1787,18 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 						else
 							affectedGroupTableMap[i] += memberName + 
 								"," + memberVersion + ",";
-					}
+						
+						//check tables to add and remove if already in the list
+						for(var t=0;tablesToAdd && t<tablesToAdd.length;++t)
+							if(memberName == tablesToAdd[t].tableName)
+							{
+								Debug.log("Removing table to add '" + 
+										memberName + "', already in group.");
+								tablesToAdd.splice(t,1); //remove 1 element at position t
+								console.log("Now tablesToAdd",tablesToAdd);
+								break;
+							}
+					} //end primary member loop
 					
 					//for the last group, add tables (-1 means mockup)
 					if(i==groups.length-1 && tablesToAdd)
@@ -4839,8 +4853,15 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 							Debug.WARN_PRIORITY);
 					return false;
 				}
-				
-				
+				else if(colType == "GroupID")
+					DesktopContent.tooltip("GroupID Editing",
+						"The GroupID field places this record in one or more " +
+						"parent group link collections. The value must match the parent's value " +
+						"in the parent's LinkGroupID field. \n\nTo speficify that this record is in " + 
+						"more than one group, use the '|' (vertical bar) character. For example, " +
+						"'Parent0Group | Parent1Group' would place this record in two groups (the " +
+						"Parent0Group and Parent1Group).");
+								
 				var str = "";		
 				var optionIndex = -1;
 				
@@ -5567,7 +5588,7 @@ ConfigurationAPI.removeClass = function(ele,cls)
 
 //=====================================================================================
 //addSubsetRecords ~~
-//	takes as input a base path where the desired records should be created.
+//	Takes as input a base path where the desired records should be created.
 //
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
@@ -5650,7 +5671,7 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 
 //=====================================================================================
 //deleteSubsetRecords ~~
-//	takes as input a base path where the desired records should be deleted.
+//	Takes as input a base path where the desired records should be deleted.
 //
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
@@ -5733,6 +5754,200 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 			0,true); //progressHandler, callHandlerOnErr
 	
 } // end ConfigurationAPI.deleteSubsetRecords()
+
+//=====================================================================================
+//renameSubsetRecords ~~
+//	Takes as input a base path where the desired records should be renamed.
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of Table objects	
+//		Table := {}
+//			obj.tableName   
+//			obj.tableVersion
+//			obj.tableComment
+//
+ConfigurationAPI.renameSubsetRecords = function(subsetBasePath,
+		recordArr,newRecordArr,responseHandler,modifiedTablesIn,silenceErrors)
+{
+	Debug.log("renameSubsetRecords()");
+	
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTablesIn && i<modifiedTablesIn.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTablesIn[i].tableName + "," +
+				modifiedTablesIn[i].tableVersion;
+	}
+
+	var recordListStr = "";
+	var recordCount = 1;
+	if(Array.isArray(recordArr))
+	{
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += encodeURIComponent(recordArr[i]);
+		}
+		recordCount = recordArr.length;
+	}
+	else //handle single record case
+		recordListStr = encodeURIComponent(recordArr);
+	
+	var newRecordListStr = "";
+	var newRecordCount = 1;
+	if(Array.isArray(newRecordArr))
+	{
+		for(var i=0;i<newRecordArr.length;++i)
+		{
+			if(i) newRecordListStr += ",";
+			newRecordListStr += encodeURIComponent(newRecordArr[i]);
+		}
+		newRecordCount = newRecordArr.length;
+	}
+	else //handle single record case
+		newRecordListStr = encodeURIComponent(newRecordArr);
+
+	DesktopContent.XMLHttpRequest("Request?RequestType=renameTreeNodeRecords" + 
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&recordList=" + recordListStr +
+			"&newRecordList=" + newRecordListStr +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+
+		var err = DesktopContent.getXMLValue(req,"Error");
+		var modifiedTables = [];
+		if(err) 
+		{
+			if(!silenceErrors)
+				Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(modifiedTables,err);
+			return;
+		}
+
+		//console.log(req);
+
+		//modifiedTables
+		var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
+		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
+		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
+		var tableVersion;
+
+		//add only temporary version
+		for(var i=0;i<tableNames.length;++i)
+		{
+			tableVersion = DesktopContent.getXMLValue(tableVersions[i])|0; //force integer
+			if(tableVersion >= -1) continue; //skip unless temporary
+			var obj = {};
+			obj.tableName = DesktopContent.getXMLValue(tableNames[i]);
+			obj.tableVersion = DesktopContent.getXMLValue(tableVersions[i]);
+			obj.tableComment = DesktopContent.getXMLValue(tableComments[i]);
+			modifiedTables.push(obj);
+		}
+		responseHandler(modifiedTables,undefined,subsetBasePath,recordCount);
+
+			}, //handler
+			0, //handler param
+			0,true); //progressHandler, callHandlerOnErr
+
+} //end ConfigurationAPI.renameSubsetRecords()
+
+//=====================================================================================
+//copySubsetRecords ~~
+//	Takes as input a base path where the desired records should be copied.
+//  Incremental unique names will be created by the server.
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of Table objects	
+//		Table := {}
+//			obj.tableName   
+//			obj.tableVersion
+//			obj.tableComment
+//
+ConfigurationAPI.copySubsetRecords = function(subsetBasePath,
+		recordArr,numberOfCopies,responseHandler,modifiedTablesIn,silenceErrors)
+{
+	if(!numberOfCopies) numberOfCopies = 1;
+	Debug.log("copySubsetRecords() " + numberOfCopies);
+	
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTablesIn && i<modifiedTablesIn.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTablesIn[i].tableName + "," +
+				modifiedTablesIn[i].tableVersion;
+	}
+
+	var recordListStr = "";
+	var recordCount = 1;
+	if(Array.isArray(recordArr))
+	{
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += encodeURIComponent(recordArr[i]);
+		}
+		recordCount = recordArr.length;
+	}
+	else //handle single record case
+		recordListStr = encodeURIComponent(recordArr);
+
+	DesktopContent.XMLHttpRequest("Request?RequestType=copyTreeNodeRecords" + 
+			"&tableGroup=" +
+			"&tableGroupKey=-1" +
+			"&numberOfCopies=" + numberOfCopies, //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&recordList=" + recordListStr +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+
+		var err = DesktopContent.getXMLValue(req,"Error");
+		var modifiedTables = [];
+		if(err) 
+		{
+			if(!silenceErrors)
+				Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(modifiedTables,err);
+			return;
+		}
+
+		//console.log(req);
+
+		//modifiedTables
+		var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
+		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
+		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
+		var tableVersion;
+
+		//add only temporary version
+		for(var i=0;i<tableNames.length;++i)
+		{
+			tableVersion = DesktopContent.getXMLValue(tableVersions[i])|0; //force integer
+			if(tableVersion >= -1) continue; //skip unless temporary
+			var obj = {};
+			obj.tableName = DesktopContent.getXMLValue(tableNames[i]);
+			obj.tableVersion = DesktopContent.getXMLValue(tableVersions[i]);
+			obj.tableComment = DesktopContent.getXMLValue(tableComments[i]);
+			modifiedTables.push(obj);
+		}
+		responseHandler(modifiedTables,undefined,subsetBasePath,recordCount);
+
+			}, //handler
+			0, //handler param
+			0,true); //progressHandler, callHandlerOnErr
+
+} //end ConfigurationAPI.copySubsetRecords()
 
 //=====================================================================================
 //incrementName ~~		

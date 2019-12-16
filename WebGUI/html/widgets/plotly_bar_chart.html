@@ -81,7 +81,7 @@
 			    Plotly.newPlot("display", [
 			    { y: [],  type: 'scatter', mode: 'lines' }
 			    ], {
-			        title: pvName,
+			        title: pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity,
 			        titlefont: { size: 12 },
 			        xaxis: { title: 'time', 'titlefont': { size: 10 }, showticklabels: true },
 			        yaxis: { title: 'amplitude', titlefont: { size: 10 }, zeroline: true }

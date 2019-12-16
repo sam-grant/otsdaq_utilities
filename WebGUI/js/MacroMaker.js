@@ -1332,7 +1332,7 @@
     	}
     	catch(e)
     	{
-    		Debug.log("Error capturing address/data into input fields: " + e);
+    		Debug.log("Error capturing address/data into input fields:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
     	}
     	
     	
@@ -1365,7 +1365,7 @@
     	}
     	catch(e)
     	{
-    		Debug.log("Error capturing address/data into input fields: " + e);
+    		Debug.log("Error capturing address/data into input fields:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
     	}
 
 		if(isOnMacroMakerPage)
@@ -1576,7 +1576,7 @@
     	}
     	catch(e)
     	{
-    		Debug.log("Error occured during FE Macro export: " + e, Debug.HIGH_PRIORITY);
+    		Debug.log("Error occured during FE Macro export:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e, Debug.HIGH_PRIORITY);
     		return;
     	}
     	if(targetCnt != 1)
