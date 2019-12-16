@@ -6,6 +6,7 @@
 #include "otsdaq/RootUtilities/RootFileExplorer.h"
 #include "otsdaq/Macros/BinaryStringMacros.h"
 #include "otsdaq/otsdaq/Macros/MessageTools.h"
+#include "otsdaq/DataManager/DQMHistosConsumerBase.h"
 #include <boost/regex.hpp>
 
 // ROOT documentation
@@ -34,6 +35,8 @@
 #include <xdaq/NamespaceURI.h>
 
 #include <iostream>
+#include <mutex>
+
 
 #define ROOT_BROWSER_PATH __ENV__("ROOT_BROWSER_PATH")
 #define ROOT_DISPLAY_CONFIG_PATH __ENV__("ROOT_DISPLAY_CONFIG_PATH")
@@ -470,7 +473,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
 			//ss.str("") ; ss << "rootFile " << rootFile->GetName() ;
 			STDLINE(ss.str(),"") ;
-			if(!rootFile)
+			if(rootFile == nullptr)
 				__SUP_COUT__ << "File was closed." << __E__;
 			else
 			{
@@ -493,14 +496,14 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 		__SUP_COUT__ << "FileName : " << rootFileName << " Object: " << rootDirectoryName << __E__;
 
-		if(!rootFile || !rootFile->IsOpen())
+		if(rootFile == nullptr || !rootFile->IsOpen())
 		{
 			__SUP_COUT__ << "Failed to access root file: " << rootFileName << __E__;
 		}
 		else
 		{
 			xmlOut.addTextElementToData("path", path);
-
+			try{
 			TDirectory* directory;
 			directory = rootFile->GetDirectory(rootDirectoryName.c_str()) ;
 			if(directory == 0)
@@ -510,9 +513,9 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 				// failed directory so assume it's file
 				// __SUP_COUT__ << "Getting object name: " << rootDirectoryName << __E__;
-				ss.str("") ; ss << "rootDirectoryName: |" << rootDirectoryName << "| rootFile->GetName()" << rootFile->GetName() ;
-				STDLINE(ss.str(),"") ;
-				rootFile->ls() ;
+				//ss.str("") ; ss << "rootDirectoryName: |" << rootDirectoryName << "| rootFile->GetName()" << rootFile->GetName() ;
+				//STDLINE(ss.str(),"") ;
+				//rootFile->ls() ;
 				TObject* histoClone = nullptr;
 				TObject* histo      = (TObject*)rootFile->Get(rootDirectoryName.c_str());
 				ss.str("") ; ss << "histo ptr: |" << histo ;
@@ -521,14 +524,18 @@ void VisualSupervisor::request(const std::string&               requestType,
 				if(histo != nullptr)  // turns out was a root object path
 				{
 					// Clone histo to avoid conflict when it is filled by other threads
-					STDLINE("","") ;
-					histoClone       = histo->Clone();
-					STDLINE("","") ;
+					//STDLINE("","") ;
+					if(theDataManager_->getLiveDQMHistos() != nullptr && LDQM_pos == 0)
+					{
+						std::unique_lock<std::mutex> lock(static_cast<DQMHistosConsumerBase*>(theDataManager_->getLiveDQMHistos())->getFillHistoMutex());
+						histoClone = histo = histo->Clone();
+					}
+					//STDLINE("","") ;
 					TString     json = TBufferJSON::ConvertToJSON(histoClone);
-					STDLINE("","") ;
+					//STDLINE("","") ;
 					TBufferFile tBuffer(TBuffer::kWrite);
-					histoClone->Streamer(tBuffer);
-					STDLINE("","") ;
+					histo->Streamer(tBuffer);
+					//STDLINE("","") ;
 
 					//__SUP_COUT__ << "histo length " << tbuff.Length() << __E__;
 
@@ -537,16 +544,16 @@ void VisualSupervisor::request(const std::string&               requestType,
 							tBuffer.Length()
 					);
 
-					xmlOut.addTextElementToData("rootType", histoClone->ClassName());
+					xmlOut.addTextElementToData("rootType", histo->ClassName());
 					xmlOut.addTextElementToData("rootData", destination);
 					xmlOut.addTextElementToData("rootJSON", json.Data());
-					ss.str("") ; ss << "histoClone->GetName(): " << histoClone->GetName() ;
+					ss.str("") ; ss << "histo->GetName(): " << histo->GetName() ;
 					STDLINE(ss.str(),"") ;
-					ss.str("") ; ss << "histoClone->ClassName(): " << histoClone->ClassName() ;
+					ss.str("") ; ss << "histo->ClassName(): " << histo->ClassName() ;
 					STDLINE(ss.str(),"") ;
 					// ss.str("") ; ss << "json.Data(): " <<json.Data() ;
 					// //STDLINE(ss.str(),"") ;
-					delete histoClone;
+					if(histoClone != nullptr) delete histoClone;
 				}
 				else
 					__SUP_COUT_ERR__ << "Failed to access:-" << rootDirectoryName << "-"
@@ -601,6 +608,12 @@ void VisualSupervisor::request(const std::string&               requestType,
 			}
 			if(LDQM_pos == std::string::npos)
 				rootFile->Close();
+			}
+			catch(...)
+			{
+					__SUP_COUT_ERR__ << "File was probably closed!" << __E__;
+
+			}
 		}
 		// std::ostringstream* out ;
 		// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
