@@ -24,6 +24,7 @@ function()
  var mdi_                 = ""                                                                      ;
  var doReset_             = true                                                                    ;
  var clearCanvas_         = true                                                                    ;     
+ var superimposeFlag_     = false                                                                   ;
  var currentCanvas_       = 1                                                                       ;
  var currentDiv_          = 'canvas1'                                                               ;
  var gridDivision_        = "grid1x1"                                                               ;
@@ -421,7 +422,26 @@ function()
                                                                              }
                                                                 },                             
                                                                 nDivXCB,
-                                                                nDivYCB
+                                                                nDivYCB,
+                                                                {
+                                                                 defaultType: 'checkbox'                                   ,
+                                                                 border     : false                                        ,
+                                                                 style      : buttonStyle_                                 ,   
+                                                                 items      : [
+                                                                               {
+                                                                                boxLabel  : 'Superimpose'                  ,
+                                                                                name      : 'superimpose'                  ,
+                                                                                inputValue: true                           ,
+                                                                                id        : 'superimpose'                  ,
+                                                                                checked   : true                           ,
+                                                                                handler   : function(thisCheckbox,status)
+                                                                                            {
+                                                                                             superimposeFlag_ = status      ;
+                                                                                             STDLINE("Superimpose: "+superimposeFlag_) ;
+                                                                                            } 
+                                                                               }
+                                                                              ]
+                                                                }
                                                                ]
                                                   }, {
                                                    title     : 'Timing and Refresh Controls'                              ,
@@ -1010,25 +1030,39 @@ function()
  displayPlot_ = function(currentCanvas_,object)
                 {
                  if( ! object ) return ;
-                  var pos = pp_ ; 
-                  var nx        = theCanvasModel_.getnDivX   (currentCanvas_) ;
-                  var ny        = theCanvasModel_.getnDivY   (currentCanvas_) ;
-                  gridDivision_ = "gridi" + nx + "x" + ny ;
-                  mdi_ = new JSROOT.GridDisplay(getCanvasDiv_(currentCanvas_), gridDivision_);
-                  if (mdi_!=null) theFrame = mdi_.FindFrame(pos, false);
-                  if( nx == 1 & ny == 1 ) 
-                  {
-                   theFrame = 'canvas' + currentCanvas_             ;
-                  } else {
-                   theFrame = 'canvas' + currentCanvas_ + '_' + pp_ ;
-                  }
-                  pp_++ ; if( pp_ > nx * ny - 1) {pp_=0;}
-                  STDLINE("Updating " + object.fTitle + " on canvas " + currentCanvas_ + " frame " + pp_) ;
+                 var nx        = theCanvasModel_.getnDivX   (currentCanvas_) ;
+                 var ny        = theCanvasModel_.getnDivY   (currentCanvas_) ;
+                 gridDivision_ = "gridi" + nx + "x" + ny ;
+                 mdi_ = new JSROOT.GridDisplay(getCanvasDiv_(currentCanvas_), gridDivision_);
+                 if (mdi_!=null) theFrame = mdi_.FindFrame(pp_, false);
+                 if( superimposeFlag_ )
+                 {
+                  STDLINE("Superimpose...") ;
+                 } else {
+                  pp_++ ; 
+                  if( pp_ > nx * ny - 1) {pp_=0;}
+                  STDLINE("Do NOT superimpose...") ;
+                 }
+                 if( nx == 1 & ny == 1 ) 
+                 {
+                  theFrame = 'canvas' + currentCanvas_             ;
+                 } else {
+                  theFrame = 'canvas' + currentCanvas_ + '_' + pp_ ;
+                 }
+                 if( superimposeFlag_ )
+                 {
+                  JSROOT.draw  (
+                                theFrame,
+                                object  ,
+                                ""
+                               ); 
+                 } else {
                   JSROOT.redraw(
                                 theFrame,
                                 object  ,
                                 ""
-                               );                                                                             
+                               ); 
+                 }                                                                          
                 }
  //-----------------------------------------------------------------------------
  //
