@@ -120,13 +120,13 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 																 const std::string&      recordList,
 																 const std::string&      fieldList);
 	void        			handleFillGetTreeNodeFieldValuesXML	(HttpXmlDocument&        xmldoc,
-																	ConfigurationManagerRW* cfgMgr,
-																	const std::string&      groupName,
-																	const TableGroupKey&    groupKey,
-																	const std::string&      startPath,
-																	const std::string&      modifiedTables,
-																	const std::string&      recordList,
-																	const std::string&      fieldList);
+																ConfigurationManagerRW* cfgMgr,
+																const std::string&      groupName,
+																const TableGroupKey&    groupKey,
+																const std::string&      startPath,
+																const std::string&      modifiedTables,
+																const std::string&      recordList,
+																const std::string&      fieldList);
 	void         			handleFillSetTreeNodeFieldValuesXML	(HttpXmlDocument&        xmldoc,
 																ConfigurationManagerRW* cfgMgr,
 																const std::string&      groupName,
@@ -152,6 +152,22 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 															   const std::string&      startPath,
 															   const std::string&      modifiedTables,
 															   const std::string&      recordList);
+	void         			handleFillRenameTreeNodeRecordsXML	(HttpXmlDocument&        xmldoc,
+															   ConfigurationManagerRW* cfgMgr,
+															   const std::string&      groupName,
+															   const TableGroupKey&    groupKey,
+															   const std::string&      startPath,
+															   const std::string&      modifiedTables,
+															   const std::string&      recordList,
+															   const std::string&      newRecordList);
+	void         			handleFillCopyTreeNodeRecordsXML	(HttpXmlDocument&        xmldoc,
+															   ConfigurationManagerRW* cfgMgr,
+															   const std::string&      groupName,
+															   const TableGroupKey&    groupKey,
+															   const std::string&      startPath,
+															   const std::string&      modifiedTables,
+															   const std::string&      recordList,
+															   unsigned int	   		   numberOfCopies = 1);
 	void         			handleFillModifiedTablesXML			(HttpXmlDocument&        xmldoc, ConfigurationManagerRW* cfgMgr);
 
 	void  					handleSaveTreeNodeEditXML			(HttpXmlDocument&        xmldoc,
