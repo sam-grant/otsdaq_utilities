@@ -277,6 +277,12 @@ Desktop.createDesktop = function(security) {
 		{
 			Desktop.desktop.login.blackout(true); 
 		}
+		else if(_blockSystemCheckMailbox.innerHTML == "RefreshIcons") // windows can request icon refresh (e.g. after changing icons)
+		{
+			_blockSystemCheckMailbox.innerHTML = ""; //clear
+			//reset icons, if permissions undefined, keep permissions from before
+			Desktop.desktop.icons.resetWithPermissions(/*undefined permissions*/);
+		}
 		else
 		{
 			Desktop.desktop.login.blackout(false);
@@ -1022,8 +1028,8 @@ Desktop.createDesktop = function(security) {
 		_blockSystemCheckMailbox.innerHTML = ""; //reset mailbox
 		_sysMsgCounter = 0; //reset system message counter
 		
-		if(permissions !== undefined) //update icons based on permissions		
-			Desktop.desktop.icons.resetWithPermissions(permissions);
+		//update icons based on permissions	(if undefined, keep permissions from before)	
+		Desktop.desktop.icons.resetWithPermissions(permissions);
 		
 		//if not logged in -- attempt to fix it
 		if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true))
