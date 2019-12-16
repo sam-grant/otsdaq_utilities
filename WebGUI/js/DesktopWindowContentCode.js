@@ -130,7 +130,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth, cancelFunc)
 //	DesktopContent.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	DesktopContent.tooltip(uid,tip)
-//      DesktopContent.setWindowTooltip(tip)
+//  DesktopContent.setWindowTooltip(tip)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
 //	DesktopContent.getWindowScrollLeft()
@@ -140,12 +140,13 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getMouseX()
 //	DesktopContent.getMouseY()
 //	DesktopContent.getDefaultWindowColor()
-//      DesktopContent.getDefaultDashboardColor()
+//  DesktopContent.getDefaultDashboardColor()
 //	DesktopContent.getDefaultDesktopColor()
 //	DesktopContent.getUsername()
 //	DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
 //	DesktopContent.mouseMoveSubscriber(newHandler) 
 //	DesktopContent.openNewBrowserTab(name,subname,windowPath,unique,completeHandler)
+//	DesktopContent.addDesktopIcon(iconName)
 //	DesktopContent.getParameter(index, name)
 //	DesktopContent.getDesktopParameter(index, name)
 //	DesktopContent.getDesktopWindowTitle()
@@ -1649,20 +1650,22 @@ DesktopContent.setPopUpPosition = function(el,w,h,padding,border,
 
 //=====================================================================================
 //parseColor ~~
-DesktopContent.parseColor = function(colorStr) { 
+DesktopContent.parseColor = function(colorStr) 
+{ 
 	//used to ignore the alpha in the color when returning to user
 
 	//in general need to create an element.. but since all the color strings are rgb or rgba from settings, can simplify
 	var m = colorStr.split("(")[1].split(")")[0].split(",");
 	if( m) return "rgb("+m[0]+","+m[1]+","+m[2]+")";    
 	else throw new Error("Color "+colorStr+" could not be parsed.");
-}
+} //end parseColor()
 
 //=====================================================================================
 //getColorAsRGBA ~~
 //	http://stackoverflow.com/questions/11068240/what-is-the-most-efficient-way-to-parse-a-css-color-in-javascript
 // 	except the solution is broken.. unless you add element to page
-DesktopContent.getColorAsRGBA = function(colorStr) { 
+DesktopContent.getColorAsRGBA = function(colorStr) 
+{ 
 	
 	//in general need to create an element.. 
 	var div = document.createElement('div');
@@ -1679,8 +1682,7 @@ DesktopContent.getColorAsRGBA = function(colorStr) {
 	if(m && m.length == 3) return "rgba("+m[0]+","+m[1]+","+m[2]+",255)";
 	else if(m && m.length == 4) return "rgba("+m[0]+","+m[1]+","+m[2]+","+m[3]+")";
 	else throw new Error("Color "+colorStr+" could not be parsed.");
-}
-
+} //end getColorAsRGBA()
 
 //=====================================================================================
 //get window and mouse info ~~
@@ -1706,7 +1708,7 @@ DesktopContent.getDefaultWindowColor = function() {
 	for(var i in drgb)
 		drgb[i] = (drgb[i]*(1-wrgba[3]) + wrgba[i]*wrgba[3])|0; //floor of blend
 	return "rgb("+drgb[0]+","+drgb[1]+","+drgb[2]+")"; 
-}
+} //end getDefaultWindowColor()
 
 //=====================================================================================
 //get color scheme ~~
@@ -1719,14 +1721,14 @@ DesktopContent.getDefaultDesktopColor = function() {
 		return "rgb(15,34,105)";
 	}
 	return DesktopContent._desktopColor;
-} 
+} //end getDefaultDesktopColor()
 
 //=====================================================================================
 //getUsername ~~
 DesktopContent.getUsername = function() { 
 	var dispName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
 			return dispName.substr(dispName.indexOf(",")+2);	
-}
+} //end getUsername()
 
 
 //=====================================================================================
@@ -1987,6 +1989,13 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 		if(activateSystemConfigHandler)
 		{
 			activateSystemConfigHandler(req);
+		}
+		
+		if(DesktopContent._blockSystemCheckMailbox &&
+				DesktopContent._blockSystemCheckMailbox.innerHTML == "")
+		{
+			//inform Desktop.js to refresh icons (handled by _checkMailboxes())
+			DesktopContent._blockSystemCheckMailbox.innerHTML = "RefreshIcons";
 		}
 
 			}, //end request handler
