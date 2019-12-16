@@ -6,7 +6,7 @@
 #include "otsdaq/DataManager/DataManagerSingleton.h"
 #include "otsdaq/Macros/BinaryStringMacros.h"
 #include "otsdaq/RootUtilities/RootFileExplorer.h"
-#include "otsdaq/otsdaq/Macros/MessageTools.h"
+#include "otsdaq/Macros/MessageTools.h"
 
 // ROOT documentation
 // http://root.cern.ch/root/html/index.html
