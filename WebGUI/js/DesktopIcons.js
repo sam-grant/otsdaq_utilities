@@ -52,7 +52,7 @@ else {
 		var _defaultIconWidth = 64;
 		var _defaultIconHeight = 64;   
 		var _defaultIconTextWidth = 90; 
-		var _defaultIconTextHeight = 32; 
+		var _defaultIconTextHeight = 24; 
 		var _permissions = 0;
         
         var _iconsElement;
@@ -101,34 +101,39 @@ else {
       
       	this.redrawIcons = _redrawIcons;
 
+      	//=====================================================================================
       	// this.resetWithPermissions ~~      	
-      	this.resetWithPermissions = function(permissions) {
-            Debug.log("Desktop resetWithPermissions " + permissions,Debug.LOW_PRIORITY);
-                        
-            _permissions = permissions;
-            ////////////
+      	this.resetWithPermissions = function(permissions) 
+		{
+      		Debug.log("Desktop resetWithPermissions " + permissions,Debug.LOW_PRIORITY);
+
+      		if(permissions !== undefined)
+      			_permissions = permissions;
+      		////////////
 
 
-			if(!Desktop.isWizardMode()) 
-		    { //This is satisfied for  Digest Access Authorization and No Security on OTS
-		    	Desktop.XMLHttpRequest("Request?RequestType=getDesktopIcons", "",
-		    			iconRequestHandler);
-		    	return;
-	      	}
-		    else //it is the sequence for OtsWizardConfiguration
-			{
-		    	Debug.log("OtsWizardConfiguration");
-		    	Desktop.XMLHttpRequest("requestIcons", "sequence=" +
-		    			Desktop.desktop.security, iconRequestHandler);
-	      		if(!_permissions) _permissions = 1;
-		    	return;
-			}
-	      	 
-      	}
-      	
+      		if(!Desktop.isWizardMode()) 
+      		{ //This is satisfied for  Digest Access Authorization and No Security on OTS
+      			Desktop.XMLHttpRequest("Request?RequestType=getDesktopIcons", "",
+      					iconRequestHandler);
+      			return;
+      		}
+      		else //it is the sequence for OtsWizardConfiguration
+      		{
+      			Debug.log("OtsWizardConfiguration");
+      			Desktop.XMLHttpRequest("requestIcons", "sequence=" +
+      					Desktop.desktop.security, iconRequestHandler);
+      			if(!_permissions) _permissions = 1;
+      			return;
+      		}
+
+		} //end resetWithPermissions()
+
+      	//=====================================================================================
       	//_iconRequestHandler
       	//adds the icons from the hardcoded, C++ in OtsConfigurationWizard
-      	var iconRequestHandler = function(req) {
+      	var iconRequestHandler = function(req) 
+      	{
 
       		//clear folder object
       		Desktop.desktop.icons.folders = [{},[]];

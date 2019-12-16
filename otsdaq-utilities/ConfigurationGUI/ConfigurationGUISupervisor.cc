@@ -4325,7 +4325,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 			cfgView->setURIEncodedValue(newRowUID, row, cfgView->getColUID());
 
 			// find groupId column from link index
-			col = cfgView->getColLinkGroupID(linkIndex);
+			col = cfgView->getLinkGroupIDColumn(linkIndex);
 
 			// set group id
 			cfgView->setURIEncodedValue(groupId, row, col);
@@ -4513,7 +4513,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 				cfgView = table->getTemporaryView(temporaryVersion);
 
 				cfgView->init();  // prepare group ID map
-				col = cfgView->getColLinkGroupID(linkIndex);
+				col = cfgView->getLinkGroupIDColumn(linkIndex);
 
 				__SUP_COUT__ << "target col " << col << __E__;
 
