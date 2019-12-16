@@ -21,7 +21,9 @@ function()
  var fFileName_           = ""                                                                      ;
  var fHistName_           = ""                                                                      ;
  var fRFoldersPath_       = ""                                                                      ;
+ var mdi_                 = ""                                                                      ;
  var doReset_             = true                                                                    ;
+ var clearCanvas_         = true                                                                    ;     
  var currentCanvas_       = 1                                                                       ;
  var currentDiv_          = 'canvas1'                                                               ;
  var gridDivision_        = "grid1x1"                                                               ;
@@ -255,13 +257,14 @@ function()
                            listeners : {
                                         change: function( thisSpinner, newValue, oldValue, eOpts )
                                                 {
-                                                 STDLINE("New x value: "+newValue) ;
-//                                                  gridDivision_ = 'grid'                                   + 
-//                                                                  newValue                                 +
-//                                                                  'x'                                      + 
-//                                                                  theCanvasModel_.getnDivY(currentCanvas_)  ; 
-                                                 JSROOT.cleanup(getCanvasDiv_(currentCanvas_))             ;
-                                                 theCanvasModel_.setnDivX(currentCanvas_, newValue)        ;
+                                                 theCanvasModel_.setnDivX(currentCanvas_, newValue);
+                                                 pp_ = 0 ;
+                                                },
+                                        spin  : function( thisSpinner, newValue, oldValue, eOpts )
+                                                {
+                                                 JSROOT.cleanup(getCanvasDiv_(currentCanvas_))     ;
+                                                 theCanvasModel_.setnDivX(currentCanvas_, newValue);
+                                                 pp_ = 0 ;
                                                 }
                                        }
                           }
@@ -284,13 +287,14 @@ function()
                            listeners : {
                                         change: function( thisSpinner, newValue, oldValue, eOpts )
                                                 {
-                                                 STDLINE("New y value: "+newValue) ;
-//                                                  gridDivision_ = 'grid'                                   + 
-//                                                                  theCanvasModel_.getnDivX(currentCanvas_) + 
-//                                                                  'x'                                      + 
-//                                                                  newValue                                  ;
-                                                 JSROOT.cleanup(getCanvasDiv_(currentCanvas_))             ;
-                                                 theCanvasModel_.setnDivY(currentCanvas_, newValue)        ;
+                                                 theCanvasModel_.setnDivY(currentCanvas_, newValue);
+                                                 pp_ = 0 ;
+                                                },
+                                        spin  : function( thisSpinner, newValue, oldValue, eOpts )
+                                                {
+                                                 JSROOT.cleanup(getCanvasDiv_(currentCanvas_))     ;
+                                                 theCanvasModel_.setnDivY(currentCanvas_, newValue);
+                                                 pp_ = 0 ;
                                                 }
                                        }
                           }
@@ -461,11 +465,14 @@ function()
                               listeners     : {
                                                tabchange : function( thisPanel, newCard, oldCard, eOpts ) 
                                                            {
+                                                            clearCanvas_   = false                                     ;
                                                             var regex      = /\d+/g                                    ;
                                                             var str        = newCard.title                             ;
                                                             var matches    = str.match(regex)                          ;
                                                             currentCanvas_ = matches[0]                                ;
                                                             STDLINE("Changed tab to " + getCanvasDiv_(currentCanvas_)) ;
+                                                            nDivXCB.setValue(theCanvasModel_.getnDivX(currentCanvas_)) ;
+                                                            nDivYCB.setValue(theCanvasModel_.getnDivY(currentCanvas_)) ;
                                                             width  = theCanvasModel_.currentWidth                      ;
                                                             height = theCanvasModel_.currentHeight                     ;
                                                             changeHistogramPanelSize(
@@ -983,7 +990,7 @@ function()
                                var object    = JSROOT.parse(rootJSON           )                  ;
                                STDLINE("Launching displayPlot on currentCanvas_ "+currentCanvas_ );
                                theCanvasModel_.addROOTObject(currentCanvas_,object)               ;
-                               displayPlot_(currentCanvas_)                                       ;
+                               displayPlot_(currentCanvas_,object)                                ;
                               }
                              },                                                                                                           
                     failure: function(response, options)                                                                                  
@@ -998,59 +1005,30 @@ function()
            );
   STDLINE("Ajax request formed") ;                                                                                                
  } ; 
- var pp_ = 1 ; // To be moved to a higher architectural level!!!                                                                                                                                    
+ var pp_ = 0 ; // To be moved to a higher architectural level!!!                                                                                                                                    
  //-----------------------------------------------------------------------------
- displayPlot_ = function(currentCanvas_)
+ displayPlot_ = function(currentCanvas_,object)
                 {
-                 theCanvasModel_.dumpContent() ;
-                 STDLINE("displayPlot_ for currentCanvas_ = " +   currentCanvas_) ;
-                 var ROOTObjects = theCanvasModel_.getROOTObjects(currentCanvas_) ;
-                 var nx          = theCanvasModel_.getnDivX      (currentCanvas_) ;
-                 var ny          = theCanvasModel_.getnDivY      (currentCanvas_) ;
-                 gridDivision_ = "grid" + nx + "x" + ny ;
-                 if( !ROOTObjects ) 
-                 {
-                  STDLINE("No ROOTObjects to draw yet") ;
-                  return ;
-                 }
-                 STDLINE("gridDivision_: "+gridDivision_) ;
-                 JSROOT.cleanup(getCanvasDiv_(currentCanvas_));
-                 try
-                 {
+                 if( ! object ) return ;
+                  var pos = pp_ ; 
+                  var nx        = theCanvasModel_.getnDivX   (currentCanvas_) ;
+                  var ny        = theCanvasModel_.getnDivY   (currentCanvas_) ;
+                  gridDivision_ = "gridi" + nx + "x" + ny ;
                   mdi_ = new JSROOT.GridDisplay(getCanvasDiv_(currentCanvas_), gridDivision_);
-                 }
-                 catch(error)
-                 {
-                  STDLINE("ERROR: "+error) ;
-                 }
-                 STDLINE("Serching objects for "+getCanvasDiv_(currentCanvas_)) ;
-                 for(var i=0; i<ROOTObjects.length; i++)
-                 {
-                  var pos = pp_ ; pp_++ ; if( pp_ > mdi_.NumGridFrames() ) {pp_=1;}
-                  if (mdi_!=null) theFrame = mdi_.FindFrame(pos, true);
-                  STDLINE("pos: "+pos+" mdi_:"+mdi_.NumGridFrames()+" frame: "+theFrame.id) ;
-                  var rootTitle = ROOTObjects[i].fTitle ; 
-                  STDLINE("Object: "+rootTitle+" ("+ROOTObjects[i]._typename+")") ;
-//                   if( ROOTObjects[i]._typename != "TCanvas" )
-//                   {
-//                    STDLINE("-------> Resetting " + rootTitle);
-//                    JSROOT.draw (
-//                                 theFrame      ,
-//                                 ROOTObjects[i],
-//                                 ""
-//                                );
-//                    doReset_ = false ;                                                                                
-//                   }
-//                   else
+                  if (mdi_!=null) theFrame = mdi_.FindFrame(pos, false);
+                  if( nx == 1 & ny == 1 ) 
                   {
-                   STDLINE("-------> Updating " + rootTitle) ;
-                   JSROOT.redraw (
-                                  theFrame      ,
-                                  ROOTObjects[i],
-                                  ""
-                                 );                                                                              
+                   theFrame = 'canvas' + currentCanvas_             ;
+                  } else {
+                   theFrame = 'canvas' + currentCanvas_ + '_' + pp_ ;
                   }
-                 }
+                  pp_++ ; if( pp_ > nx * ny - 1) {pp_=0;}
+                  STDLINE("Updating " + object.fTitle + " on canvas " + currentCanvas_ + " frame " + pp_) ;
+                  JSROOT.redraw(
+                                theFrame,
+                                object  ,
+                                ""
+                               );                                                                             
                 }
  //-----------------------------------------------------------------------------
  //

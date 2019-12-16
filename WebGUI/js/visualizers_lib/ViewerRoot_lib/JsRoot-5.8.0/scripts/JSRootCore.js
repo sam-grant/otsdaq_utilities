@@ -1371,6 +1371,7 @@
    // defined in JSRootPainter.js
    JSROOT.redraw = function(divid, obj, opt, callback) {
       JSROOT.AssertPrerequisites("2d", function() {
+         STDLINE("***************** redraw...") ;
          JSROOT.redraw(divid, obj, opt, callback);
       });
    }
