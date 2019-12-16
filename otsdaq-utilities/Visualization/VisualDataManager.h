@@ -48,6 +48,7 @@ class VisualDataManager : public DataManager
 	// Visual3DData           the3DData_;
 
 	RawDataVisualizerConsumer* theRawDataConsumer_;
+
 };
 }
 
