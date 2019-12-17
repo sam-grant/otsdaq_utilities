@@ -4,6 +4,7 @@ Ext.require(['*']);
 Ext.onReady(
 function() 
 {
+ var enableDebug_         = false                                                                   ;
  var canvasTabs_          = []                                                                      ;
  var currentPad_          = 0                                                                       ;
  var globalCanvas_        = 0                                                                       ;
@@ -44,6 +45,8 @@ function()
                             getLocalURN(0,"urn")                                                   +
                             "/Request?"                                                             ;
 
+
+ enableSTDLINE(enableDebug_) ;
  //--------------------------------------------------------------------------------------------------
  getCanvasDiv_ = function(number)
                  {
@@ -324,7 +327,7 @@ function()
                                    layout      : 'accordion'         ,
                                    items       : [
                                                   {
-                                                   title     : 'Canvas commands'                             ,
+                                                   title     : 'Canvas'                                      ,
                                                    autoScroll: true                                          ,
                                                    layout    : 'vbox'                                        ,
                                                    tooltip   : 'Canvas controls'                             ,
@@ -432,9 +435,9 @@ function()
                                                                                {
                                                                                 boxLabel  : 'Superimpose'                  ,
                                                                                 name      : 'superimpose'                  ,
-                                                                                inputValue: true                           ,
+                                                                                inputValue: superimposeFlag_               ,
                                                                                 id        : 'superimpose'                  ,
-                                                                                checked   : true                           ,
+                                                                                checked   : superimposeFlag_               ,
                                                                                 handler   : function(thisCheckbox,status)
                                                                                             {
                                                                                              superimposeFlag_ = status      ;
@@ -442,10 +445,26 @@ function()
                                                                                             } 
                                                                                }
                                                                               ]
+                                                                },{
+                                                                 xtype     : 'button'                                     ,
+                                                                 text      : 'Normalize'                                  ,
+                                                                 pressed   : true                                         ,
+                                                                 width     : 100                                          ,
+                                                                 height    : 20                                           ,
+                                                                 tooltip   : 'Set Y axis to highest number of entires '   +
+                                                                             '(+10%) of selected histograms'              ,
+                                                                 border    : true                                         ,
+                                                                 style     : buttonStyle_                                 ,   
+                                                                 handler   : function()  
+                                                                             {
+                                                                              STDLINE("Going to normalize")                ;
+                                                                              theCanvasModel_.dumpContent (currentCanvas_) ;
+                                                                              
+                                                                             }
                                                                 }
                                                                ]
                                                   }, {
-                                                   title     : 'Timing and Refresh Controls'                              ,
+                                                   title     : 'Timing'                                                   ,
                                                    html      : '<p>Controls to drive the filesystem drill down.</p>'      ,
                                                    autoScroll: true                                                       ,
                                                    padding   : '5 5 5 5'                                                  ,
@@ -458,6 +477,32 @@ function()
                                                                  style     : buttonStyle_                                 ,   
                                                                  tooltip   : 'Stop periodical refreshing of histograms'   ,
                                                                  border    : true
+                                                                }
+                                                               ]
+                                                  }, {
+                                                   title     : 'Navigator'                                                ,
+                                                   autoScroll: true                                                       ,
+                                                   padding   : '5 5 5 5'                                                  ,
+                                                   iconCls   : 'info'                                                     ,
+                                                   items     : [
+                                                                {
+                                                                 defaultType: 'checkbox'                                  ,
+                                                                 border     : false                                       ,
+                                                                 style      : buttonStyle_                                ,   
+                                                                 items      : [
+                                                                               {
+                                                                                boxLabel  : 'Debugger'                    ,
+                                                                                name      : 'debugger'                    ,
+                                                                                inputValue: enableDebug_                  ,
+                                                                                id        : 'debugger'                    ,
+                                                                                checked   : enableDebug_                  ,
+                                                                                handler   : function(thisCheckbox,status)
+                                                                                            {
+                                                                                             enableDebug_ = status         ;
+                                                                                             enableSTDLINE(enableDebug_)   ;
+                                                                                            } 
+                                                                               }
+                                                                              ]
                                                                 }
                                                                ]
                                                   }

@@ -4,8 +4,16 @@
    Purpose: Formatter of console.log printouts in the Firefox javascript debugger
 */
 
+var enableDebug_ = false ;
+
+function enableSTDLINE(enable)
+{
+ enableDebug_ = enable ;
+}
+
 function STDLINE(str) 
 {
+  if( !enableDebug_ ) return ;
   const e = new Error();
   const a = e.stack.split("\n")[1] ;
   const w = a.split("/") ;
