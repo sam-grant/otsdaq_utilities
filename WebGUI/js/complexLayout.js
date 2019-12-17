@@ -13,7 +13,7 @@ Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
 Ext.onReady(
 function() 
 {
- var enableDebug_         = false                                                                   ;
+ var enableDebug_         = true                                                                   ;
  var canvasTabs_          = []                                                                      ;
  var currentPad_          = 0                                                                       ;
  var globalCanvas_        = 0                                                                       ;
@@ -61,82 +61,90 @@ function()
  
  //--------------------------------------------------------------------------------------------------
  var theProvenance_ = {
-                       fSystemPath_   : "",                                                 
-                       fRootPath_     : "",                                                 
-                       fFoldersPath_  : "",                                                 
-                       fFileName_     : "",                                                 
-                       fHistName_     : "",                                                 
-                       fRFoldersPath_ : "",                                                 
+                       fSystemPath_   : [],                                                 
+                       fRootPath_     : [],                                                 
+                       fFoldersPath_  : [],                                                 
+                       fFileName_     : [],                                                 
+                       fHistName_     : [],                                                 
+                       fRFoldersPath_ : [],                                                 
                        setSystemPath  : function(SystemPath)                                
                                         { 
-                                         if( typeof SystemPath   === "undefined" ) this.fSystemsPath_  = "" 
-                                         else                                      this.fSystemPath_   = SystemPath  ;                     
+                                         if( typeof SystemPath   === "undefined" ) this.fSystemPath_  .push("")
+                                         else                                      this.fSystemPath_  .push(SystemPath)  ;                   
                                         },                                                   
                        setRootPath    : function(RootPath)                                   
                                         {                                                    
-                                         if( typeof RootPath     === "undefined" ) this.fRootPath_     = "" 
-                                         else                                      this.fRootPath_     = RootPath    ;                     
+                                         if( typeof RootPath     === "undefined" ) this.fRootPath_    .push("") 
+                                         else                                      this.fRootPath_    .push(RootPath)    ;                   
                                         },                                                   
                        setFoldersPath : function(FoldersPath)                                
                                         {                                                    
-                                         if( typeof FoldersPath  === "undefined" ) this.fFoldersPath_  = "" 
-                                         else                                      this.fFoldersPath_  = FoldersPath ;                     
+                                         if( typeof FoldersPath  === "undefined" ) this.fFoldersPath_ .push("") 
+                                         else                                      this.fFoldersPath_ .push(FoldersPath) ;                    
                                         },                                                   
                        setFileName    : function(FileName)                                   
                                         {                                                    
-                                         if( typeof FileName     === "undefined" ) this.fFileName_     = "" 
-                                         else                                      this.fFileName_     = FileName    ;                  
+                                         if( typeof FileName     === "undefined" ) this.fFileName_    .push("")           
+                                         else                                      this.fFileName_    .push(FileName)    ;              
                                         },                                                   
                        setHistName    : function(HistName)                                   
                                         {                                                    
-                                         if( typeof HistName     === "undefined" ) this.fHistName_     = "" 
-                                         else                                      this.fHistName_     = HistName    ;                  
+                                         if( typeof HistName     === "undefined" ) this.fHistName_    .push("") 
+                                         else                                      this.fHistName_    .push(HistName)    ;              
                                         },                                                   
                        setRFoldersPath: function(RFoldersPath)                              
                                         {                                                   
-                                         if( typeof RFoldersPath === "undefined" ) this.fRFoldersPath_ = "" 
-                                         else                                      this.fRFoldersPath_ = RFoldersPath;                   
+                                         if( typeof RFoldersPath === "undefined" ) this.fRFoldersPath_.push("") 
+                                         else                                      this.fRFoldersPath_.push(RFoldersPath);                   
                                         },                                                  
-                       getSystemPath  : function(SystemPath)                                
-                                        {                                                   
-                                         return this.fSystemPath_   ;                      
+                       getPathsNumber : function()
+                                        {
+                                         return this.fSystemPath_.length ;
+                                        },
+                       getSystemPath  : function(index)                              
+                                        {  
+                                         STDLINE("^^^^^^  fSystemPath_["+index+"]: "+this.fSystemPath_[index]) ;                                                
+                                         return this.fSystemPath_  [index] ;                    
                                         },                                            
-                       getRootPath    : function(RootPath)                            
+                       getRootPath    : function(index)                          
                                         {                                             
-                                         return this.fRootPath_     ;                      
+                                         return this.fRootPath_    [index] ;                    
                                         },                                            
-                       getFoldersPath : function(FoldersPath)                         
+                       getFoldersPath : function(index)                       
                                         {                                             
-                                         return this.fFoldersPath_  ;                      
+                                         return this.fFoldersPath_ [index] ;                     
+                                        },                                             
+                       getFileName    : function(index)                           
+                                        {                                             
+                                         return this.fFileName_    [index] ;                     
                                         },                                            
-                       getFileName    : function(FileName)                            
+                       getHistName    : function(index)                           
                                         {                                             
-                                         return this.fFileName_     ;                      
+                                         return this.fHistName_    [index] ;                     
                                         },                                            
-                       getHistName    : function(HistName)                            
+                       getRFoldersPath: function(index)                       
                                         {                                             
-                                         return this.fHistName_     ;                      
-                                        },                                            
-                       getRFoldersPath: function(RFoldersPath)                        
-                                        {                                             
-                                         return this.fRFoldersPath_ ;                      
+                                         return this.fRFoldersPath_[index] ;                      
                                         },                                                  
                        dump           : function(fromWhere)                                 
                                         {                                                   
-                                         const e = new Error()                                 ;
-                                         const a = e.stack.split("\n")[1]                      ;
-                                         const w = a.split("/")                                ;
-                                         const s = w.length -1                                 ;
-                                         const l = w[s].split(":")[1]                          ;
-                                         STDLINE("----------- Line: " + l + "-----------"     ); 
-                                         STDLINE("From: '"+fromWhere+"'"                      ); 
-                                         STDLINE("   --> fSystemPath_  : "+this.fSystemPath_  ); 
-                                         STDLINE("   --> fRootPath_    : "+this.fRootPath_    ); 
-                                         STDLINE("   --> fFoldersPath_ : "+this.fFoldersPath_ ); 
-                                         STDLINE("   --> fFileName_    : "+this.fFileName_    ); 
-                                         STDLINE("   --> fRFoldersPath_: "+this.fRFoldersPath_); 
-                                         STDLINE("   --> fHistName_    : "+this.fHistName_    ); 
-                                         STDLINE("--------------------------------------"     ); 
+                                         const e = new Error()                                     ;
+                                         const a = e.stack.split("\n")[1]                          ;
+                                         const w = a.split("/")                                    ;
+                                         const s = w.length -1                                     ;
+                                         const l = w[s].split(":")[1]                              ;
+                                         for(var i=0; i<this.fSystemPath_.length; i++)
+                                         {
+                                          STDLINE("----------- Line: " + l + "-----------"        );
+                                          STDLINE("From: '"+fromWhere+"' (index: "+i+")"          );
+                                          STDLINE("   --> fSystemPath_  : "+this.fSystemPath_  [i]); 
+                                          STDLINE("   --> fRootPath_    : "+this.fRootPath_    [i]); 
+                                          STDLINE("   --> fFoldersPath_ : "+this.fFoldersPath_ [i]); 
+                                          STDLINE("   --> fFileName_    : "+this.fFileName_    [i]); 
+                                          STDLINE("   --> fRFoldersPath_: "+this.fRFoldersPath_[i]); 
+                                          STDLINE("   --> fHistName_    : "+this.fHistName_    [i]); 
+                                          STDLINE("--------------------------------------"     [i]); 
+                                         }
                                         }                                                   
                       } ;                                                                   
 
@@ -148,14 +156,16 @@ function()
                                           nDivX     : 1        ,
                                           nDivY     : 1        ,
                                           divPos    : 1        ,
-                                          objects   : []       
+                                          objects   : []       ,
+                                          provenance: []
                                          },
                                          {
                                           canvasName: 'canvas2',
                                           nDivX     : 1        ,
                                           nDivY     : 1        ,
                                           divPos    : 1        ,
-                                          objects   : []       
+                                          objects   : []       ,
+                                          provenance: []
                                          }
                                         ],
                         currentCanvas : 0  ,
@@ -170,95 +180,97 @@ function()
                                                              nDivX     : 1           ,
                                                              nDivY     : 1           ,
                                                              divPos    : 1           ,
-                                                             objects   : []          
+                                                             objects   : []          ,
+                                                             provenance: []
                                                             }
                                         },  
-                        addROOTObject : function(canvasNumber, object)
+                        addROOTObject : function(canvasNumber, object, theProvenance)
                                         {
-                                         canvasNumber--                                     ; // Canvas array starts from zero!
-                                         if( canvasNumber > this.canvases.length-1 ) return ;
-                                         var n = this.canvases[canvasNumber].objects.length ;
+                                         canvasNumber--                                            ; // Canvas array starts from zero!
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         var n = this.canvases[canvasNumber].objects.length        ;
                                          for(var i=0; i<n; i++)
                                          { 
-                                          var o = this.canvases[canvasNumber].objects[i]    ;
+                                          var o = this.canvases[canvasNumber].objects[i]           ;
                                           if(o.fName == object.fName ) 
                                           {
-                                           STDLINE("Object "+object.fName+" already there") ;
+                                           STDLINE("Object "+object.fName+" already there")        ;
                                            return ;
                                           }
                                          }
-                                         this.canvases[canvasNumber].objects.push(object)   ;
+                                         this.canvases[canvasNumber].objects.push(object)          ;
+                                         this.canvases[canvasNumber].provenance.push(theProvenance);
                                         },
                         getROOTObjects: function(canvasNumber)
                                         {
-                                         canvasNumber--                                     ;
-                                         if( canvasNumber > this.canvases.length-1 ) return ;
-                                         return this.canvases[canvasNumber].objects         ;
+                                         canvasNumber--                                            ;
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         return this.canvases[canvasNumber].objects                ;
                                         },
                         clearCanvas   : function(canvasNumber)
                                         {
-                                         canvasNumber--                                     ;
-                                         if( canvasNumber > this.canvases.length-1 ) return ;
-                                         currentPad_ = 0                                    ;
-                                         this.canvases[canvasNumber].objects.length = 0     ;
-                                         this.canvases[canvasNumber].objects        = []    ;
+                                         canvasNumber--                                            ;
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         currentPad_ = 0                                           ;
+                                         this.canvases[canvasNumber].objects.length = 0            ;
+                                         this.canvases[canvasNumber].objects        = []           ;
                                         },  
                         removeCanvas  : function(canvasNumber)
                                         {
-                                         canvasNumber--                                     ;
-                                         var index = this.canvases.indexOf(canvasNumber)    ;
-                                         this.canvases.splice(index,1)                      ;
+                                         canvasNumber--                                            ;
+                                         var index = this.canvases.indexOf(canvasNumber)           ;
+                                         this.canvases.splice(index,1)                             ;
                                         },  
                         changenDivX   : function(canvasNumber, newnDivX)
                                         {
-                                         canvasNumber--                                     ; 
-                                         if( canvasNumber > this.canvases.length-1 ) return ;
-                                         this.canvases[canvasNumber].nDivX = newnDivX       ;
+                                         canvasNumber--                                            ;
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         this.canvases[canvasNumber].nDivX = newnDivX              ;
                                         },
                         changenDivY   : function(canvasNumber, newnDivY)
                                         {
-                                         canvasNumber--                                     ; 
-                                         if( canvasNumber > this.canvases.length-1 ) return ;
-                                         this.canvases[canvasNumber].nDivY = newnDivY       ;
+                                         canvasNumber--                                            ;
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         this.canvases[canvasNumber].nDivY = newnDivY              ;
                                         },
                         setnDivX      : function(canvasNumber, newValue)
                                         {
-                                         canvasNumber--                                     ; 
-                                         if( canvasNumber > this.canvases.length-1 ) return ;
-                                         STDLINE("setting divX: "+newValue)                 ;
-                                         this.canvases[canvasNumber].nDivX = newValue       ;
+                                         canvasNumber--                                            ;
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         STDLINE("setting divX: "+newValue)                        ;
+                                         this.canvases[canvasNumber].nDivX = newValue              ;
                                         },                
                         getnDivX      : function(canvasNumber)
                                         {
-                                         canvasNumber--                                     ; 
-                                         if( canvasNumber > this.canvases.length-1 ) return ;
-                                         STDLINE("divX: "+this.canvases[canvasNumber].nDivX);
-                                         return this.canvases[canvasNumber].nDivX           ;
+                                         canvasNumber--                                            ;
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         STDLINE("divX: "+this.canvases[canvasNumber].nDivX)       ;
+                                         return this.canvases[canvasNumber].nDivX                  ;
                                         },                
                         setnDivY      : function(canvasNumber, newValue)
                                         {
-                                         canvasNumber--                                     ; 
-                                         if( canvasNumber > this.canvases.length-1 ) return ;
-                                         STDLINE("setting divY: "+newValue)                 ;
-                                         this.canvases[canvasNumber].nDivY = newValue       ;
+                                         canvasNumber--                                            ;
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         STDLINE("setting divY: "+newValue)                        ;
+                                         this.canvases[canvasNumber].nDivY = newValue              ;
                                         },                
                         getnDivY      : function(canvasNumber)
                                         {
-                                         canvasNumber--                                     ; 
-                                         if( canvasNumber > this.canvases.length-1 ) return ;
-                                         STDLINE("divY: "+this.canvases[canvasNumber].nDivY);
-                                         return this.canvases[canvasNumber].nDivY           ;
+                                         canvasNumber--                                            ;
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         STDLINE("divY: "+this.canvases[canvasNumber].nDivY)       ;
+                                         return this.canvases[canvasNumber].nDivY                  ;
                                         },                
                         setDivPosition: function(canvasNumber, posX, posY)
                                         {
-                                         canvasNumber--                                     ; 
-                                         if( canvasNumber > this.canvases.length-1 ) return ;
-                                         var nx   = this.canvases[canvasNumber].nDivX       ;
-                                         var ny   = this.canvases[canvasNumber].nDivY       ;
-                                         if( posX > nx || posY > ny ) return                ;
-                                         var modY = posY%nx                                 ;
-                                         var pos  = modY * nx + posX                        ;
-                                         this.canvases[canvasNumber].divPos = pos           ;
+                                         canvasNumber--                                            ;
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         var nx   = this.canvases[canvasNumber].nDivX              ;
+                                         var ny   = this.canvases[canvasNumber].nDivY              ;
+                                         if( posX > nx || posY > ny ) return                       ;
+                                         var modY = posY%nx                                        ;
+                                         var pos  = modY * nx + posX                               ;
+                                         this.canvases[canvasNumber].divPos = pos                  ;
                                         },
                         dumpContent   : function()
                                         {
@@ -273,9 +285,10 @@ function()
                                           STDLINE(" objects: "+theC.objects.length                           ) ;
                                           for( var j=0; j<theC.objects.length; j++)
                                           {
-                                           STDLINE("   object " + j                      +
-                                                   " title: "   + theC.objects[j].fTitle +
-                                                   " name : "   + theC.objects[j].fName                      ) ;
+                                           STDLINE("   object "    + j                         +
+                                                   " title     : " + theC.objects[j].fTitle    +
+                                                   " name      : " + theC.objects[j].fName     +
+                                                   " provenance: " + theC.provenance[j].dump("theCanvasModel_.dump()")) ;
                                           }
                                          }
                                          STDLINE("==========================================================") ;
@@ -817,33 +830,34 @@ function()
                               listeners   : {
                                              select    : function(thisCombo, record, eOpts)
                                                          {
-                                                          theProvenance_.setRootPath(record.data.dir)    ;
-                                                          STDLINE("fRootPath_: "+theProvenance_.getRootPath());
-                                                          selectedItem_ = "getDirectories"               ;
-                                                          makeStore(theProvenance_.getRootPath(), 
-                                                                    'RequestType=getMeDirs'    ) ; 
-                                                          makeGrid (theProvenance_.getRootPath(), 
-                                                                    'Directories and files'    ) ;
+                                                          var thisRootPath = record.data.dir      ;
+                                                          theProvenance_.setRootPath(thisRootPath);
+                                                          STDLINE("fRootPath_: "+thisRootPath    );
+                                                          selectedItem_ = "getDirectories"        ;
+                                                          makeStore(thisRootPath, 
+                                                                    'RequestType=getMeDirs'      );
+                                                          makeGrid (thisRootPath,              
+                                                                    'Directories and files'      );
                                                          },
                                              focusleave: function (thisCombo) 
                                                          {
-                                                          STDLINE('remove  selection listener')          ;
-                                                          theSourcesCB_.suspendEvent('select')           ;
-                                                          STDLINE('removed selection listener')          ;
+                                                          STDLINE('remove  selection listener'   );
+                                                          theSourcesCB_.suspendEvent('select'    );
+                                                          STDLINE('removed selection listener'   );
                                                          },
                                              focusenter: function (thisCombo) 
                                                          {
-                                                          STDLINE('reinstate  selection listener')       ;
-                                                          thisCombo.resumeEvent('select')                ;
-                                                          theSourcesCB_.resumeEvent('select')            ;
-                                                          STDLINE('reinstated selection listener')       ;
+                                                          STDLINE('reinstate  selection listener');
+                                                          thisCombo.resumeEvent('select'         );
+                                                          theSourcesCB_.resumeEvent('select'     );
+                                                          STDLINE('reinstated selection listener');
                                                          }
                                             }
                              }
                             );
-  STDLINE("Sources created...") ;
+ 
   theSourcesCB_.setRawValue(dirs[0].dir) ; // Set default value
-  STDLINE("Sources populated" ) ;
+
  }
  //-----------------------------------------------------------------------------
  function makeGrid(where,what)
@@ -943,13 +957,13 @@ function()
                                                  STDLINE("Selected "+selection.length+" items")                  ;
                                                  for(var i=0; i<selection.length; i++)  
                                                  {  
-                                                  theProvenance_.setSystemPath  (selection[i].data.fSystemPath  );
-                                                  theProvenance_.setRootPath    (selection[i].data.fRootPath    );
-                                                  theProvenance_.setFoldersPath (selection[i].data.fFoldersPath );
-                                                  theProvenance_.setFileName    (selection[i].data.fFileName    );
-                                                  theProvenance_.setRFoldersPath(selection[i].data.fRFoldersPath);
-                                                  theProvenance_.setHistName    (selection[i].data.fHistName    );
-                                                  theProvenance_.dump()                                          ;
+                                                  theProvenance_.setSystemPath  (selection[i].data.fSystemPath  )   ;
+                                                  theProvenance_.setRootPath    (selection[i].data.fRootPath    )   ;
+                                                  theProvenance_.setFoldersPath (selection[i].data.fFoldersPath )   ;
+                                                  theProvenance_.setFileName    (selection[i].data.fFileName    )   ;
+                                                  theProvenance_.setRFoldersPath(selection[i].data.fRFoldersPath)   ;
+                                                  theProvenance_.setHistName    (selection[i].data.fHistName    )   ;
+                                                  theProvenance_.dump("Item selected")                              ;
                                                  }  
                                                  STDLINE("Selected     : "+selection.length+" items")               ;
                                                  STDLINE("selectedItem_: "+selectedItem_            )               ;
@@ -963,31 +977,33 @@ function()
                                                    treeDisplayField_  = 'fDisplayName'                              ;
                                                    selectedItem_      = "getRootObject"                             ;
                                                    currentTree_       = 'fileContent'                               ;
-                                                   currentDirectory_ = theProvenance_.getSystemPath()              +
+                                                   var last = theProvenance_.getPathsNumber() - 1                   ;
+                                                   STDLINE("Last index: "+last)                                     ;
+                                                   currentDirectory_ = theProvenance_.getSystemPath (last)         +
                                                                        '/'                                         +
-                                                                       theProvenance_.getRootPath()                +
+                                                                       theProvenance_.getRootPath   (last)         +
                                                                        "/"                                         +
-                                                                       theProvenance_.getFoldersPath()             +
+                                                                       theProvenance_.getFoldersPath(last)         +
                                                                        "/"                                         +
-                                                                       theProvenance_.getFileName()                 ;
+                                                                       theProvenance_.getFileName   (last)          ;
                                                    STDLINE('RequestType      : getMeRootFile'     )                 ;
-                                                   theProvenance_.dump()                                            ;
                                                    STDLINE('currentDirectory_: '+currentDirectory_)                 ;
                                                    makeStore(currentDirectory_,'RequestType=getMeRootFile')         ;
                                                    makeGrid (currentDirectory_,'ROOT file content'        )         ;
                                                   }
                                                   else if( selectedItem_ == "getRootObject" )
                                                   { 
-                                                   theProvenance_.dump()                                            ;
+                                                   theProvenance_.dump("getRootObject")                             ;
+                                                   var last = theProvenance_.getPathsNumber() - 1                   ;
                                                    currentRootObject_  = "/"                                       +
-                                                                         theProvenance_.getRootPath()              +
+                                                                         theProvenance_.getRootPath    (last)      +
                                                                          "/"                                       +
-                                                                         theProvenance_.getFoldersPath()           +
-                                                                         theProvenance_.getFileName()              +
+                                                                         theProvenance_.getFoldersPath (last)      +
+                                                                         theProvenance_.getFileName    (last)      +
                                                                          "/"                                       +
-                                                                         theProvenance_.getRFoldersPath()          +
+                                                                         theProvenance_.getRFoldersPath(last)      +
                                                                          "/"                                       +
-                                                                         theProvenance_.getHistName()               ;
+                                                                         theProvenance_.getHistName    (last)       ;
                                                    STDLINE('RequestType       : getRootObject'      )               ;
                                                    STDLINE('currentRootObject_: '+currentRootObject_)               ;
                                                    theAjaxRequest(
@@ -1025,7 +1041,8 @@ function()
                                    }
                      }
                     ).setPosition(0,0);
-  STDLINE("Grid created") ;                   
+
+ //-----------------------------------------------------------------------------
   var objectProvenance = Ext.create(
                                     'Ext.tip.ToolTip', 
                                     {
@@ -1054,7 +1071,7 @@ function()
  //-----------------------------------------------------------------------------
  function makeStore(path, reqType)
  { 
-  theProvenance_.dump()                  ;
+  theProvenance_.dump("makeStore"      ) ;
   STDLINE("path       : " + path       ) ;
   STDLINE("reqType    : " + reqType    ) ;
   STDLINE("_requestURL: " + _requestURL) ;
@@ -1073,17 +1090,17 @@ function()
                                                       read          : 'POST'
                                                      }, 
                                       extraParams  : { 
-                                                      "CookieCode"  : _cookieCode                    ,
-                                                      "Path"        : path                           ,
-                                                      "fRootPath"   : theProvenance_.getRootPath()   ,
-                                                      "fFoldersPath": theProvenance_.getFoldersPath(),
-                                                      "fHistName"   : theProvenance_.getHistName()   ,
-                                                      "fFileName"   : theProvenance_.getFileName()
+                                                      "CookieCode"  : _cookieCode                                                     ,
+                                                      "Path"        : path                                                            ,
+                                                      "fRootPath"   : theProvenance_.getRootPath   (theProvenance_.getPathsNumber()-1),
+                                                      "fFoldersPath": theProvenance_.getFoldersPath(theProvenance_.getPathsNumber()-1),
+                                                      "fHistName"   : theProvenance_.getHistName   (theProvenance_.getPathsNumber()-1),
+                                                      "fFileName"   : theProvenance_.getFileName   (theProvenance_.getPathsNumber()-1)
                                                      },
                                       url          : _requestURL + reqType,
                                       reader       : {
-                                                      type          : 'xml'                          ,
-                                                      root          : 'nodes'                        ,
+                                                      type          : 'xml'   ,
+                                                      root          : 'nodes' ,
                                                       record        : '> node'
                                                      },
                                      },
@@ -1140,12 +1157,15 @@ function()
                               }                                                                                                         
                               else if(!(typeof getXMLValue(response,"rootType") == 'undefined')) // Returns the plot to display                                                                     
                               { // get specific ROOT Object and display
-                               var rootName  = getXMLValue (response,"path"    )                  ;                     
-                               var rootJSON  = getXMLValue (response,"rootJSON")                  ;                 
-                               var object    = JSROOT.parse(rootJSON           )                  ;
+                               var rootName  = getXMLValue (response,"path"                      );                     
+                               var rootJSON  = getXMLValue (response,"rootJSON"                  );                 
+                               var object    = JSROOT.parse(rootJSON                             );
                                STDLINE("Launching displayPlot on currentCanvas_ "+currentCanvas_ );
-                               theCanvasModel_.addROOTObject(currentCanvas_,object)               ;
-                               displayPlot_(currentCanvas_,object)                                ;
+                               theCanvasModel_.addROOTObject(currentCanvas_                      ,
+                                                             object                              ,
+                                                             theProvenance_                      );
+                               displayPlot_                 (currentCanvas_                      ,
+                                                             object                              );
                               }
                              },                                                                                                           
                     failure: function(response, options)                                                                                  
