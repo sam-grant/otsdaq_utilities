@@ -128,11 +128,16 @@ function changeDivSize(id,width,height)
 }
 //-----------------------------------------------------------------------------
 // Resize the div signed by id to width/height sizes
-function changeHistogramPanelSize(thisPanel, width, height, currentCanvas, from)	   
+function changeHistogramPanelSize(thisPanel, width, height, theCanvasModel, currentCanvas, from)	   
 {
- STDLINE("New canvas size: "+width+"x"+height) ;
+ var ROOTObjects = theCanvasModel.getROOTObjects(currentCanvas) ;
+ STDLINE("New canvas size: "+width+"x"+height+ " for "+ROOTObjects.length+" objects") ;
  var div = document.getElementById(getCanvasDiv_(currentCanvas));
  div.style.width  = width  - 20                                 ;
  div.style.height = height - 30                                 ;
- displayPlot_(currentCanvas)                                    ;
-}              
+ for(var i=0; i<ROOTObjects.length; i++)
+ {
+  displayPlot_(currentCanvas,ROOTObjects[i])                    ;
+ }
+} 
+             

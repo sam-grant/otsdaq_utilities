@@ -5,6 +5,7 @@ Ext.onReady(
 function() 
 {
  var canvasTabs_          = []                                                                      ;
+ var currentPad_          = 0                                                                       ;
  var globalCanvas_        = 0                                                                       ;
  var ROOTControlsPanel_   = 0                                                                       ;
  var theInformationPanel_ = 0                                                                       ;
@@ -108,6 +109,7 @@ function()
                                         {
                                          canvasNumber--                                     ;
                                          if( canvasNumber > this.canvases.length-1 ) return ;
+                                         currentPad_ = 0                                    ;
                                          this.canvases[canvasNumber].objects.length = 0     ;
                                          this.canvases[canvasNumber].objects        = []    ;
                                         },  
@@ -259,13 +261,13 @@ function()
                                         change: function( thisSpinner, newValue, oldValue, eOpts )
                                                 {
                                                  theCanvasModel_.setnDivX(currentCanvas_, newValue);
-                                                 pp_ = 0 ;
+                                                 currentPad_ = 0 ;
                                                 },
                                         spin  : function( thisSpinner, newValue, oldValue, eOpts )
                                                 {
                                                  JSROOT.cleanup(getCanvasDiv_(currentCanvas_))     ;
                                                  theCanvasModel_.setnDivX(currentCanvas_, newValue);
-                                                 pp_ = 0 ;
+                                                 currentPad_ = 0 ;
                                                 }
                                        }
                           }
@@ -289,13 +291,13 @@ function()
                                         change: function( thisSpinner, newValue, oldValue, eOpts )
                                                 {
                                                  theCanvasModel_.setnDivY(currentCanvas_, newValue);
-                                                 pp_ = 0 ;
+                                                 currentPad_ = 0 ;
                                                 },
                                         spin  : function( thisSpinner, newValue, oldValue, eOpts )
                                                 {
                                                  JSROOT.cleanup(getCanvasDiv_(currentCanvas_))     ;
                                                  theCanvasModel_.setnDivY(currentCanvas_, newValue);
-                                                 pp_ = 0 ;
+                                                 currentPad_ = 0 ;
                                                 }
                                        }
                           }
@@ -359,7 +361,6 @@ function()
                                                                                                        'canvas'+currentCanvas_      , 
                                                                                                        theCanvasModel_.currentWidth , 
                                                                                                        theCanvasModel_.currentHeight, 
-                                                                                                       currentCanvas_               , 
                                                                                                        "resized"
                                                                                                       ) ;
                                                                               globalCanvas_.insert(
@@ -496,23 +497,22 @@ function()
                                                             width  = theCanvasModel_.currentWidth                      ;
                                                             height = theCanvasModel_.currentHeight                     ;
                                                             changeHistogramPanelSize(
-                                                                                     thisPanel     ,
-                                                                                     width         ,
-                                                                                     height        ,
-                                                                                     currentCanvas_, 
+                                                                                     thisPanel                        ,
+                                                                                     width                            ,
+                                                                                     height                           ,
                                                                                      "resized"
                                                                                     ) ;
                                                            },
                                                resize    : function(thisPanel, width, height, oldWidth, oldHeight, eOpt)
-                                                           {
-                                                            STDLINE("Resizing "+getCanvasDiv_(currentCanvas_)) ;
-                                                            theCanvasModel_.currentWidth  = width              ;
-                                                            theCanvasModel_.currentHeight = height             ;
+                                                           {                                                           ;
+                                                            STDLINE("Resizing "+getCanvasDiv_(currentCanvas_))         ;
+                                                            theCanvasModel_.currentWidth  = width                      ;
+                                                            theCanvasModel_.currentHeight = height                     ;
+                                                            currentPad_ = 0                                            ;             
                                                             changeHistogramPanelSize(
-                                                                                     thisPanel     ,
-                                                                                     width         ,
-                                                                                     height        ,
-                                                                                     currentCanvas_, 
+                                                                                     thisPanel                        ,
+                                                                                     width                            ,
+                                                                                     height                           ,
                                                                                      "resized"
                                                                                     ) ;
                                                            }
@@ -589,7 +589,11 @@ function()
                                    listeners   : {
                                                   collapse   : function() 
                                                                {
-                                                                STDLINE("Expand!!!");
+                                                                STDLINE("Collapse!!!");
+                                                               },
+                                                  expand     : function() 
+                                                               {
+                                                                STDLINE("Expand!!!"  );
                                                                }
                                                  }
                                   },
@@ -1025,43 +1029,62 @@ function()
            );
   STDLINE("Ajax request formed") ;                                                                                                
  } ; 
- var pp_ = 0 ; // To be moved to a higher architectural level!!!                                                                                                                                    
+ 
+ //-----------------------------------------------------------------------------
+ // Resize the div signed by id to width/height sizes
+ function changeHistogramPanelSize(thisPanel, width, height, from)      
+ {
+  var ROOTObjects = theCanvasModel_.getROOTObjects(currentCanvas_) ;
+  STDLINE("New canvas size: "       +
+          width                     +
+          "x"                       +
+          height                    +
+          " for "+ROOTObjects.length+
+          " objects"                                             );
+  var div = document.getElementById(getCanvasDiv_(currentCanvas_));
+  div.style.width  = width  - 20                                  ;
+  div.style.height = height - 30                                  ;
+  for(var i=0; i<ROOTObjects.length; i++)
+  {
+   displayPlot_(currentCanvas_,ROOTObjects[i])                    ;
+  }
+ } 
+             
  //-----------------------------------------------------------------------------
  displayPlot_ = function(currentCanvas_,object)
                 {
                  if( ! object ) return ;
-                 var nx        = theCanvasModel_.getnDivX   (currentCanvas_) ;
-                 var ny        = theCanvasModel_.getnDivY   (currentCanvas_) ;
+                 var nx        = theCanvasModel_.getnDivX   (currentCanvas_)  ;
+                 var ny        = theCanvasModel_.getnDivY   (currentCanvas_)  ;
                  gridDivision_ = "gridi" + nx + "x" + ny ;
-                 mdi_ = new JSROOT.GridDisplay(getCanvasDiv_(currentCanvas_), gridDivision_);
-                 if (mdi_!=null) theFrame = mdi_.FindFrame(pp_, false);
-                 if( superimposeFlag_ )
-                 {
-                  STDLINE("Superimpose...") ;
-                 } else {
-                  pp_++ ; 
-                  if( pp_ > nx * ny - 1) {pp_=0;}
-                  STDLINE("Do NOT superimpose...") ;
-                 }
+                 mdi_ = new JSROOT.GridDisplay(getCanvasDiv_(currentCanvas_) , 
+                                                             gridDivision_ )  ;
+                 if (mdi_!=null) theFrame = mdi_.FindFrame(  currentPad_     , 
+                                                             false           );
                  if( nx == 1 & ny == 1 ) 
                  {
-                  theFrame = 'canvas' + currentCanvas_             ;
+                  theFrame = 'canvas' + currentCanvas_                        ;
                  } else {
-                  theFrame = 'canvas' + currentCanvas_ + '_' + pp_ ;
+                  theFrame = 'canvas' + currentCanvas_ + '_' + currentPad_    ;
                  }
+                 STDLINE("Plotting "+object._typename+": "+object.fTitle)     ;
                  if( superimposeFlag_ )
                  {
+                  STDLINE("Superimpose on "+theFrame+"...") ;
                   JSROOT.draw  (
                                 theFrame,
                                 object  ,
                                 ""
                                ); 
                  } else {
+                  STDLINE("Do NOT superimpose on "+theFrame+"...") ;
                   JSROOT.redraw(
                                 theFrame,
                                 object  ,
                                 ""
                                ); 
+                  currentPad_++ ; 
+                  if( currentPad_ > nx * ny - 1) {currentPad_=0;}
                  }                                                                          
                 }
  //-----------------------------------------------------------------------------
