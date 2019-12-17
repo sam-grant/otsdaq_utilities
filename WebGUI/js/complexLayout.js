@@ -1,4 +1,13 @@
+/*---------------------------------------------------------------------------------------------------
+ Author : D. Menasce
+ Purpose: Code to instantiate and manipulate the histogram navigator component
+-------------------------------------------------------------------------------------------------- */
+
 Ext.require(['*']);
+Ext.QuickTips.init();
+
+Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
+
 
 //---------------------------- Execute noly once head has been fully loaded -------------------------
 Ext.onReady(
@@ -17,12 +26,6 @@ function()
  var nyPlots_             = 1                                                                       ;
  var grid_                = ""                                                                      ;
  var dataModel_           = ""                                                                      ;
- var fSystemPath_         = ""                                                                      ;
- var fRootPath_           = ""                                                                      ;
- var fFoldersPath_        = ""                                                                      ;
- var fFileName_           = ""                                                                      ;
- var fHistName_           = ""                                                                      ;
- var fRFoldersPath_       = ""                                                                      ;
  var mdi_                 = ""                                                                      ;
  var doReset_             = true                                                                    ;
  var clearCanvas_         = true                                                                    ;     
@@ -47,12 +50,96 @@ function()
 
 
  enableSTDLINE(enableDebug_) ;
+
+ generateDIVPlaceholderSize('canvas1',350,440) ;	   
+ generateDIVPlaceholderSize('canvas2',350,440) ;	   
  //--------------------------------------------------------------------------------------------------
  getCanvasDiv_ = function(number)
                  {
                   return 'canvas' + number ;
                  }
  
+ //--------------------------------------------------------------------------------------------------
+ var theProvenance_ = {
+                       fSystemPath_   : "",                                                 
+                       fRootPath_     : "",                                                 
+                       fFoldersPath_  : "",                                                 
+                       fFileName_     : "",                                                 
+                       fHistName_     : "",                                                 
+                       fRFoldersPath_ : "",                                                 
+                       setSystemPath  : function(SystemPath)                                
+                                        { 
+                                         if( typeof SystemPath   === "undefined" ) this.fSystemsPath_  = "" 
+                                         else                                      this.fSystemPath_   = SystemPath  ;                     
+                                        },                                                   
+                       setRootPath    : function(RootPath)                                   
+                                        {                                                    
+                                         if( typeof RootPath     === "undefined" ) this.fRootPath_     = "" 
+                                         else                                      this.fRootPath_     = RootPath    ;                     
+                                        },                                                   
+                       setFoldersPath : function(FoldersPath)                                
+                                        {                                                    
+                                         if( typeof FoldersPath  === "undefined" ) this.fFoldersPath_  = "" 
+                                         else                                      this.fFoldersPath_  = FoldersPath ;                     
+                                        },                                                   
+                       setFileName    : function(FileName)                                   
+                                        {                                                    
+                                         if( typeof FileName     === "undefined" ) this.fFileName_     = "" 
+                                         else                                      this.fFileName_     = FileName    ;                  
+                                        },                                                   
+                       setHistName    : function(HistName)                                   
+                                        {                                                    
+                                         if( typeof HistName     === "undefined" ) this.fHistName_     = "" 
+                                         else                                      this.fHistName_     = HistName    ;                  
+                                        },                                                   
+                       setRFoldersPath: function(RFoldersPath)                              
+                                        {                                                   
+                                         if( typeof RFoldersPath === "undefined" ) this.fRFoldersPath_ = "" 
+                                         else                                      this.fRFoldersPath_ = RFoldersPath;                   
+                                        },                                                  
+                       getSystemPath  : function(SystemPath)                                
+                                        {                                                   
+                                         return this.fSystemPath_   ;                      
+                                        },                                            
+                       getRootPath    : function(RootPath)                            
+                                        {                                             
+                                         return this.fRootPath_     ;                      
+                                        },                                            
+                       getFoldersPath : function(FoldersPath)                         
+                                        {                                             
+                                         return this.fFoldersPath_  ;                      
+                                        },                                            
+                       getFileName    : function(FileName)                            
+                                        {                                             
+                                         return this.fFileName_     ;                      
+                                        },                                            
+                       getHistName    : function(HistName)                            
+                                        {                                             
+                                         return this.fHistName_     ;                      
+                                        },                                            
+                       getRFoldersPath: function(RFoldersPath)                        
+                                        {                                             
+                                         return this.fRFoldersPath_ ;                      
+                                        },                                                  
+                       dump           : function(fromWhere)                                 
+                                        {                                                   
+                                         const e = new Error()                                 ;
+                                         const a = e.stack.split("\n")[1]                      ;
+                                         const w = a.split("/")                                ;
+                                         const s = w.length -1                                 ;
+                                         const l = w[s].split(":")[1]                          ;
+                                         STDLINE("----------- Line: " + l + "-----------"     ); 
+                                         STDLINE("From: '"+fromWhere+"'"                      ); 
+                                         STDLINE("   --> fSystemPath_  : "+this.fSystemPath_  ); 
+                                         STDLINE("   --> fRootPath_    : "+this.fRootPath_    ); 
+                                         STDLINE("   --> fFoldersPath_ : "+this.fFoldersPath_ ); 
+                                         STDLINE("   --> fFileName_    : "+this.fFileName_    ); 
+                                         STDLINE("   --> fRFoldersPath_: "+this.fRFoldersPath_); 
+                                         STDLINE("   --> fHistName_    : "+this.fHistName_    ); 
+                                         STDLINE("--------------------------------------"     ); 
+                                        }                                                   
+                      } ;                                                                   
+
  //--------------------------------------------------------------------------------------------------
  var theCanvasModel_ = {
                         canvases      : [
@@ -61,14 +148,14 @@ function()
                                           nDivX     : 1        ,
                                           nDivY     : 1        ,
                                           divPos    : 1        ,
-                                          objects   : []
+                                          objects   : []       
                                          },
                                          {
                                           canvasName: 'canvas2',
                                           nDivX     : 1        ,
                                           nDivY     : 1        ,
                                           divPos    : 1        ,
-                                          objects   : []        
+                                          objects   : []       
                                          }
                                         ],
                         currentCanvas : 0  ,
@@ -83,7 +170,7 @@ function()
                                                              nDivX     : 1           ,
                                                              nDivY     : 1           ,
                                                              divPos    : 1           ,
-                                                             objects   : []
+                                                             objects   : []          
                                                             }
                                         },  
                         addROOTObject : function(canvasNumber, object)
@@ -195,33 +282,26 @@ function()
                                         }
                        } ;
 
-
- // Printout of navigation schema ----------------------------------------------------------------
- function xmlKeysPrintout(fromWhere)
+ //-----------------------------------------------------------------------------
+ // Resize the div signed by id to width/height sizes
+ function changeHistogramPanelSize(thisPanel, width, height, from)      
  {
-      const e = new Error();
-      const a = e.stack.split("\n")[1] ;
-      const w = a.split("/") ;
-      const s = w.length -1 ;
-      const l = w[s].split(":")[1] ;
-      STDLINE("----------- Line: " + l + "-----------")  ;
-      STDLINE("From: '"+fromWhere+"'"                 )  ;
-      STDLINE("   --> fSystemPath_  : "+fSystemPath_  )  ;
-      STDLINE("   --> fRootPath_    : "+fRootPath_    )  ;
-      STDLINE("   --> fFoldersPath_ : "+fFoldersPath_ )  ;
-      STDLINE("   --> fFileName_    : "+fFileName_    )  ;
-      STDLINE("   --> fRFoldersPath_: "+fRFoldersPath_)  ;
-      STDLINE("   --> fHistName_    : "+fHistName_    )  ;
-      STDLINE("--------------------------------------")  ;
- }
-
- Ext.QuickTips.init();
-
- Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
-
- generateDIVPlaceholderSize('canvas1',350,440) ;	   
- generateDIVPlaceholderSize('canvas2',350,440) ;	   
-
+  var ROOTObjects = theCanvasModel_.getROOTObjects(currentCanvas_) ;
+  STDLINE("New canvas size: "       +
+          width                     +
+          "x"                       +
+          height                    +
+          " for "+ROOTObjects.length+
+          " objects"                                             );
+  var div = document.getElementById(getCanvasDiv_(currentCanvas_));
+  div.style.width  = width  - 20                                  ;
+  div.style.height = height - 30                                  ;
+  for(var i=0; i<ROOTObjects.length; i++)
+  {
+   displayPlot_(currentCanvas_,ROOTObjects[i])                    ;
+  }
+ } 
+             
  //-----------------------------------------------------------------------------------------------
  function createCanvasTab(tabNumber)
  {
@@ -459,7 +539,14 @@ function()
                                                                              {
                                                                               STDLINE("Going to normalize")                ;
                                                                               theCanvasModel_.dumpContent (currentCanvas_) ;
-                                                                              
+//                                                                               theAjaxRequest(
+//                                                                                              _requestURL+"RequestType=getNormalized",
+//                                                                                              {                                          
+//                                                                                               CookieCode: _cookieCode,                  
+//                                                                                               RootPath  : currentRootObject_            
+//                                                                                              }, 
+//                                                                                              ""
+//                                                                                             )                                                                              
                                                                              }
                                                                 }
                                                                ]
@@ -590,44 +677,46 @@ function()
                                    layout      : 'accordion'       ,
                                    items       : [
                                                   {
-                                                   title     : 'FileSystem navigation'                                    ,
-                                                   id        : 'navigatorDiv'                                             ,
-                                                   autoScroll: true                                                       ,
+                                                   title     : 'FileSystem navigation'                            ,
+                                                   id        : 'navigatorDiv'                                     ,
+                                                   autoScroll: true                                               ,
                                                    tools     : [
                                                                 {
-                                                                 type   : 'left'                                          ,
-                                                                 tooltip: 'Go back to list of folders and files'          ,
+                                                                 type   : 'left'                                  ,
+                                                                 tooltip: 'Go back to list of folders and files'  ,
                                                                  handler: function()
                                                                           {
                                                                            if( currentTree_ = 'fileContent' )
                                                                            {
-                                                                            selectedItem_ = "getDirectories"               ;
-                                                                            makeStore(fRootPath_, 'RequestType=getMeDirs') ; 
-                                                                            makeGrid (fRootPath_, 'Directories and files') ;
+                                                                            selectedItem_ = "getDirectories"       ;
+                                                                            makeStore(theProvenance_.getRootPath(), 
+                                                                                      'RequestType=getMeDirs'    ) ;
+                                                                            makeGrid (theProvenance_.getRootPath(), 
+                                                                                      'Directories and files'    ) ;
                                                                            }
                                                                           }
                                                                 },
                                                                 {
-                                                                 type   : 'prev'                                          ,
-                                                                 tooltip: 'Maximize canvas size'                          ,
+                                                                 type   : 'prev'                                  ,
+                                                                 tooltip: 'Maximize canvas size'                  ,
                                                                  handler: function()
                                                                           {
-                                                                           STDLINE("Collapsing") ;
-                                                                           theNavigatorPanel_  .collapse() ;
-                                                                           ROOTControlsPanel_  .collapse() ;
-                                                                           theInformationPanel_.collapse() ;
+                                                                           STDLINE("Collapsing")                   ;
+                                                                           theNavigatorPanel_  .collapse()         ;
+                                                                           ROOTControlsPanel_  .collapse()         ;
+                                                                           theInformationPanel_.collapse()         ;
                                                                           }
                                                                 }
                                                                ]
                                                   }, {
-                                                   title     : 'ROOT file navigation'                                     ,
-                                                   html      : '<p>ROOT files with subfolders, plots and canvases.</p>'   ,
-                                                   autoScroll: true                                                       ,
+                                                   title     : 'ROOT file navigation'                                  ,
+                                                   html      : '<p>ROOT files with subfolders, plots and canvases.</p>',
+                                                   autoScroll: true                                                    ,
                                                    iconCls   : 'settings'
                                                   }, {
-                                                   title     : 'Navigation Controls'                                      ,
-                                                   html      : '<p>Controls to drive the filesystem drill down.</p>'      ,
-                                                   autoScroll: true                                                       ,
+                                                   title     : 'Navigation Controls'                                   ,
+                                                   html      : '<p>Controls to drive the filesystem drill down.</p>'   ,
+                                                   autoScroll: true                                                    ,
                                                    iconCls   : 'info'
                                                   }
                                                  ],
@@ -728,11 +817,13 @@ function()
                               listeners   : {
                                              select    : function(thisCombo, record, eOpts)
                                                          {
-                                                          fRootPath_    = record.data.dir                ;
-                                                          STDLINE("fRootPath_: "+fRootPath_)             ;
+                                                          theProvenance_.setRootPath(record.data.dir)    ;
+                                                          STDLINE("fRootPath_: "+theProvenance_.getRootPath());
                                                           selectedItem_ = "getDirectories"               ;
-                                                          makeStore(fRootPath_, 'RequestType=getMeDirs') ; 
-                                                          makeGrid (fRootPath_, 'Directories and files') ;
+                                                          makeStore(theProvenance_.getRootPath(), 
+                                                                    'RequestType=getMeDirs'    ) ; 
+                                                          makeGrid (theProvenance_.getRootPath(), 
+                                                                    'Directories and files'    ) ;
                                                          },
                                              focusleave: function (thisCombo) 
                                                          {
@@ -769,7 +860,6 @@ function()
                       header     : false                 ,
                       id         : 'navigator'           ,
                       store      : theStore_             ,
-                      //draggable  : true                  ,
                       resizable  : true                  ,
                       border     : true                  ,
                       renderTo   : "navigatorDiv-innerCt",
@@ -849,21 +939,17 @@ function()
                                                 },                                   
                                     itemclick : function(thisItem, record, item, index, e, eOpts)
                                                 {
-                                                 var selection = this.getSelection()                                ;
-                                                 STDLINE("Selected "+selection.length+" items")                     ;
+                                                 var selection = this.getSelection()                             ;
+                                                 STDLINE("Selected "+selection.length+" items")                  ;
                                                  for(var i=0; i<selection.length; i++)  
                                                  {  
-                                                  fSystemPath_   = selection[i].data.fSystemPath                    ;
-                                                  fRootPath_     = selection[i].data.fRootPath                      ;
-                                                  fFoldersPath_  = selection[i].data.fFoldersPath                   ;
-                                                  fFileName_     = selection[i].data.fFileName                      ;
-                                                  fRFoldersPath_ = selection[i].data.fRFoldersPath                  ;
-                                                  fHistName_     = selection[i].data.fHistName                      ;
-                                                  if( typeof fFoldersPath_  === "undefined" ) fFoldersPath_  = ""   ;
-                                                  if( typeof fRFoldersPath_ === "undefined" ) fRFoldersPath_ = ""   ;
-                                                  if( typeof fFileName_     === "undefined" ) fFileName_     = ""   ;
-                                                  if( typeof fHistName_     === "undefined" ) fHistName_     = ""   ;
-                                                  xmlKeysPrintout("Clicked on a tree item")
+                                                  theProvenance_.setSystemPath  (selection[i].data.fSystemPath  );
+                                                  theProvenance_.setRootPath    (selection[i].data.fRootPath    );
+                                                  theProvenance_.setFoldersPath (selection[i].data.fFoldersPath );
+                                                  theProvenance_.setFileName    (selection[i].data.fFileName    );
+                                                  theProvenance_.setRFoldersPath(selection[i].data.fRFoldersPath);
+                                                  theProvenance_.setHistName    (selection[i].data.fHistName    );
+                                                  theProvenance_.dump()                                          ;
                                                  }  
                                                  STDLINE("Selected     : "+selection.length+" items")               ;
                                                  STDLINE("selectedItem_: "+selectedItem_            )               ;
@@ -877,31 +963,31 @@ function()
                                                    treeDisplayField_  = 'fDisplayName'                              ;
                                                    selectedItem_      = "getRootObject"                             ;
                                                    currentTree_       = 'fileContent'                               ;
-                                                   currentDirectory_ = fSystemPath_                                +
+                                                   currentDirectory_ = theProvenance_.getSystemPath()              +
                                                                        '/'                                         +
-                                                                       fRootPath_                                  +
+                                                                       theProvenance_.getRootPath()                +
                                                                        "/"                                         +
-                                                                       fFoldersPath_                               +
+                                                                       theProvenance_.getFoldersPath()             +
                                                                        "/"                                         +
-                                                                       fFileName_                                   ;
+                                                                       theProvenance_.getFileName()                 ;
                                                    STDLINE('RequestType      : getMeRootFile'     )                 ;
-                                                   xmlKeysPrintout("Getting directories in particular")
+                                                   theProvenance_.dump()                                            ;
                                                    STDLINE('currentDirectory_: '+currentDirectory_)                 ;
                                                    makeStore(currentDirectory_,'RequestType=getMeRootFile')         ;
                                                    makeGrid (currentDirectory_,'ROOT file content'        )         ;
                                                   }
                                                   else if( selectedItem_ == "getRootObject" )
                                                   { 
-                                                   xmlKeysPrintout("Getting object (getRootObject)")
+                                                   theProvenance_.dump()                                            ;
                                                    currentRootObject_  = "/"                                       +
-                                                                         fRootPath_                                +
+                                                                         theProvenance_.getRootPath()              +
                                                                          "/"                                       +
-                                                                         fFoldersPath_                             +
-                                                                         fFileName_                                +
+                                                                         theProvenance_.getFoldersPath()           +
+                                                                         theProvenance_.getFileName()              +
                                                                          "/"                                       +
-                                                                         fRFoldersPath_                            +
+                                                                         theProvenance_.getRFoldersPath()          +
                                                                          "/"                                       +
-                                                                         fHistName_  ;
+                                                                         theProvenance_.getHistName()               ;
                                                    STDLINE('RequestType       : getRootObject'      )               ;
                                                    STDLINE('currentRootObject_: '+currentRootObject_)               ;
                                                    theAjaxRequest(
@@ -968,7 +1054,7 @@ function()
  //-----------------------------------------------------------------------------
  function makeStore(path, reqType)
  { 
-  xmlKeysPrintout("Sending parameters block to server")
+  theProvenance_.dump()                  ;
   STDLINE("path       : " + path       ) ;
   STDLINE("reqType    : " + reqType    ) ;
   STDLINE("_requestURL: " + _requestURL) ;
@@ -987,17 +1073,17 @@ function()
                                                       read          : 'POST'
                                                      }, 
                                       extraParams  : { 
-                                                      "CookieCode"  : _cookieCode   ,
-                                                      "Path"        : path          ,
-                                                      "fRootPath"   : fRootPath_    ,
-                                                      "fFoldersPath": fFoldersPath_ ,
-                                                      "fHistName"   : fHistName_    ,
-                                                      "fFileName"   : fFileName_
+                                                      "CookieCode"  : _cookieCode                    ,
+                                                      "Path"        : path                           ,
+                                                      "fRootPath"   : theProvenance_.getRootPath()   ,
+                                                      "fFoldersPath": theProvenance_.getFoldersPath(),
+                                                      "fHistName"   : theProvenance_.getHistName()   ,
+                                                      "fFileName"   : theProvenance_.getFileName()
                                                      },
                                       url          : _requestURL + reqType,
                                       reader       : {
-                                                      type          : 'xml'         ,
-                                                      root          : 'nodes'       ,
+                                                      type          : 'xml'                          ,
+                                                      root          : 'nodes'                        ,
                                                       record        : '> node'
                                                      },
                                      },
@@ -1075,26 +1161,6 @@ function()
   STDLINE("Ajax request formed") ;                                                                                                
  } ; 
  
- //-----------------------------------------------------------------------------
- // Resize the div signed by id to width/height sizes
- function changeHistogramPanelSize(thisPanel, width, height, from)      
- {
-  var ROOTObjects = theCanvasModel_.getROOTObjects(currentCanvas_) ;
-  STDLINE("New canvas size: "       +
-          width                     +
-          "x"                       +
-          height                    +
-          " for "+ROOTObjects.length+
-          " objects"                                             );
-  var div = document.getElementById(getCanvasDiv_(currentCanvas_));
-  div.style.width  = width  - 20                                  ;
-  div.style.height = height - 30                                  ;
-  for(var i=0; i<ROOTObjects.length; i++)
-  {
-   displayPlot_(currentCanvas_,ROOTObjects[i])                    ;
-  }
- } 
-             
  //-----------------------------------------------------------------------------
  displayPlot_ = function(currentCanvas_,object)
                 {
