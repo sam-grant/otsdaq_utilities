@@ -341,7 +341,7 @@
 				pageOffSetY_ = 0;
 
 				toggleEditMode();
-				//redrawWindow();
+				redrawWindow();
 			} //end loadPageReqHandler()
 
 
@@ -764,7 +764,12 @@
 					else 
 					{
 						actionRequired = true;
-						attributesNew[Object.keys(parameters)[attribute]] = 'undefined';
+
+						if (parameters[Object.keys(parameters)[attribute]] == "")
+							attributesNew[Object.keys(parameters)[attribute]] = 'undefined';
+						else
+							attributesNew[Object.keys(parameters)[attribute]] = parameters[Object.keys(parameters)[attribute]];
+
 						Debug.log("Attribute [" + Object.keys(parameters)[attribute] + "] for " + page_.widgets[id].Display_Name + " is now a required attribute. Action Required.", Debug.HIGH_PRIORITY);
 					}
 				}
@@ -968,7 +973,7 @@
 
 					containerDiv = document.createElement("div");
 					containerDiv.id = widgetFrame.id + "-container";
-					containerDiv.style["background-color"] = "rgba(0,0,0,0.7)";
+					containerDiv.style["background-color"] = "rgba(0,0,0,0.)";
 					//containerDiv.innerHTML = "containerDiv";
 
 					coverDiv = document.createElement("div");
@@ -1221,7 +1226,7 @@
 
 				containerDiv = document.createElement("div");
 				containerDiv.id = widgetFrame.id + "-container";
-				containerDiv.style["background-color"] = "rgba(0,0,0,0.7)";
+				containerDiv.style["background-color"] = "rgba(0,0,0,0.0)";
 				//containerDiv.innerHTML = "containerDiv";
 
 				coverDiv = document.createElement("div");
@@ -1492,23 +1497,24 @@
 							resize_covers[i].style["z-index"] = "8";
 						}	
 					}
+					toggleGrid(true);
+					if (editBlock_.el.firstChild.contentWindow.document.getElementById("gridCheckbox") != null)
+						editBlock_.el.firstChild.contentWindow.document.getElementById("gridCheckbox").checked = true
 				}
 				else
 				{
-					Debug.log("Edit Mode Off");		
+					Debug.log("Edit Mode Off");
 
 					UID_ = 0;
-					function isEmpty(obj){
-					  return (Object.getOwnPropertyNames(obj).length === 0);
-					}
+
 					if (page_.widgets != undefined && !isEmpty(page_.widgets))
 					{
 						var pvListSize = 0;
 						for (var widget in page_.widgets)
 						{						
-							if (isEmpty(page_.widgets[widget].PVList))
-								Debug.log("You have no PV selection for " + widget + "!", Debug.HIGH_PRIORITY);
-							else
+							if (!isEmpty(page_.widgets[widget].PVList))
+								;//Debug.log("You have no PV selection for " + widget + "!", Debug.HIGH_PRIORITY);
+							//else
 								pvListSize ++;
 						}
 						if (pvListSize > 0)
@@ -1517,6 +1523,7 @@
 							timerVariable_ = setInterval(pollServer, refreshRate_);
 						}
 					}
+
 					mainBlock_.el.classList.remove("editMode");
 					editButton.classList.remove("navigationMenu--Edit");
 					editBlock_.el.style.marginBottom = "0px";
@@ -1529,6 +1536,9 @@
 					}
 
 					toggleWidgetSelection();
+					toggleGrid(false);
+					if (editBlock_.el.firstChild.contentWindow.document.getElementById("gridCheckbox") != null)
+						editBlock_.el.firstChild.contentWindow.document.getElementById("gridCheckbox").checked = false;
 				}
 			} //end toggleEditMode()
 
@@ -1771,7 +1781,8 @@
 			function editWidgetAttributesClose()
 			{
 				document.getElementById("editWidgetAttributesPopup-container").style.display = "none";
-
+				//if (isEmpty(page_.widgets[menu_.getAttribute("widgetID")].PVList))
+					//Debug.log("You have no PV selection!", Debug.WARN_PRIORITY);
 			} //end editWidgetAttributesClose()
 
 
@@ -1818,11 +1829,13 @@
 								console.log(" a: " + parameter, value);
 								if(value == 'undefined')
 									actionRequired = true;
-								
-								page_.widgets[menu_.getAttribute("widgetID")].attributes[parameter] = value; 
+
+								page_.widgets[menu_.getAttribute("widgetID")].attributes[parameter] = value;
 							}
 						}
 					}
+					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setParameters(page_.widgets[menu_.getAttribute("widgetID")].attributes);
+
 					if(actionRequired)
 						document.getElementById(menu_.getAttribute("widgetID")).className = "action-required";
 					else
@@ -1928,6 +1941,8 @@
 				}	
 			} //end clearBlock()
 
+
+			//=====================================================================================
 			function toggleGrid(on)
 			{
 				if(on)
@@ -2168,8 +2183,8 @@
 					resizeId_ = dragTargetElement_.id.substring(0, dragTargetElement_.id.indexOf("-resize-cover"));
 					resizeFrom_ = dragTargetElement_.id.substring(dragTargetElement_.id.indexOf("resize-cover") + 13);
 
-					xPos_ = event.clientX;
-					yPos_ = event.clientY;
+					xPos_ = e.clientX;
+					yPos_ = e.clientY;
 					resizeBeginWidth_ = parseFloat(page_.widgets[resizeId_].size_x);
 					resizeBeginHeight_ = parseFloat(page_.widgets[resizeId_].size_y);
 
@@ -2253,8 +2268,8 @@
 					resizeId_ = dragTargetElement_.id.substring(0, dragTargetElement_.id.indexOf("-resize-cover"));
 					resizeFrom_ = dragTargetElement_.id.substring(dragTargetElement_.id.indexOf("resize-cover") + 13);
 
-					xPos_ = event.clientX;
-					yPos_ = event.clientY;
+					xPos_ = e.clientX;
+					yPos_ = e.clientY;
 					resizeBeginWidth_ = parseFloat(page_.widgets[resizeId_].size_x);
 					resizeBeginHeight_ = parseFloat(page_.widgets[resizeId_].size_y);
 
@@ -2369,26 +2384,26 @@
 					if(resizeFrom_ == "north" || resizeFrom_ == "northeast" ||
 						resizeFrom_ == "northwest")
 					{						
-						deltaY = (event.clientY - yPos_);
+						deltaY = (e.clientY - yPos_);
 						deltaH = -deltaY;						
 					}
 
 					if(resizeFrom_ == "east" || resizeFrom_ == "northeast" ||
 						resizeFrom_ == "southeast")
 					{
-						deltaW = (event.clientX - xPos_);
+						deltaW = (e.clientX - xPos_);
 					}
 
 				 	if(resizeFrom_ == "south" || resizeFrom_ == "southeast" ||
 				 		resizeFrom_ == "southwest")
 					{
-						deltaH = (event.clientY - yPos_);						
+						deltaH = (e.clientY - yPos_);						
 					}
 
 					if(resizeFrom_ == "west" || resizeFrom_ == "northwest" ||
 						resizeFrom_ == "southwest")
 					{
-						deltaX = (event.clientX - xPos_);
+						deltaX = (e.clientX - xPos_);
 						deltaW = -deltaX;					
 					}
 
@@ -2592,6 +2607,10 @@
 				toggleWidgetSelection();
 				redrawWindow();
 			};
+
+			function isEmpty(obj){
+				return (Object.getOwnPropertyNames(obj).length === 0);
+			}
 
 		</script>
 	</head>
