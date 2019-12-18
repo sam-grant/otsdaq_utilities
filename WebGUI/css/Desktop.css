@@ -196,6 +196,10 @@
 		background-image:		linear-gradient(bottom, rgba(175,175,175,0.3) 0%, rgba(30,30,30,0.3) 100%);
 	}
 	
+	#Desktop .DesktopIcons-folderDiv .mySelect div {
+		font-size:				14px;
+	}
+	
 	#Desktop .DesktopIcons-iconSubText {
 		text-align: 			center;
 		font-size: 				16px;

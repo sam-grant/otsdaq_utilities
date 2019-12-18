@@ -76,7 +76,7 @@
 							//		hostnameVectorIndexArr, hostnameVectorIndexReverseMap, 
 							//		hostnameVectorIndexString, hostnameFixedWidth}
 		var _arrows = {}; 	//multi-dim map of arrow objects 
-							//	arrow:	[i0][i1] = {p0,p1} (start and end i,p - where i := node index, p := 1 of 4 positions starting from top going clock-wise)
+							//	arrow:	[i0][i1] = {p0,p1,color} (start and end i,p - where i := node index, p := 1 of 4 positions starting from top going clock-wise)
 		
 		var _nodesByType = {};		
 		var _selectedNodes = {}; //selected nodes get highlighted with paint()
@@ -158,12 +158,14 @@
 			//nodesHaveChanged(hasChanged)
 			//createNode()
 			//	localAddHandlers()
-			//addArrow(startNodeIndex, startNodePointIndex, endNodeIndex, endNodePointIndex)
+			//validateNewArrow(startNodeIndex, endNodeIndex)		
+			//addArrow(startNodeIndex, endNodeIndex, startNodePointIndex, endNodePointIndex)
 								
 			//paint()
 			//drawGrid() 
 			//drawNode(i,xoff,yoff) 
-			//drawArrow() 
+			//drawArrows()
+			//drawArrow(x0,y0,x,y,isActionCanvas,color) 
 		
 			//getNodePoint(i,p)
 			//doNodeHover(i)
@@ -305,7 +307,11 @@
 					true //targetSupervisor
 			); //end getAppId request
 
-			checkForActiveGroupChange(true /*init*/); //get initial groups
+			if(_checkActiveGroupsTimer)
+			{
+				window.clearTimeout(_checkActiveGroupsTimer);
+				_checkActiveGroupsTimer = 0;
+			}
 			
 			//////////////
 			ARTDAQConfigurationAPI.getArtdaqNodes(
@@ -506,7 +512,7 @@
 					if(_subsystems === undefined) 
 						_subsystems = {}; //define for null case
 					if(_subsystems[0] === undefined)
-						_subsystems[0] = {"label": "nullDestination", destinationId:0}; //define for null destination
+						_subsystems[0] = {"label": ARTDAQConfigurationAPI.NULL_SUBSYSTEM, destinationId:0}; //define for null destination
 					
 					console.log("all subsystems",_subsystems);
 					
@@ -531,6 +537,8 @@
 			//=================
 			function localFinishInit()
 			{				
+				checkForActiveGroupChange(true /*init*/); //force group update
+
 				//only continue if the first time in init()
 				if(!_firstInit) 
 				{
@@ -856,10 +864,12 @@
 					Debug.log("Illegal destination mismatch! Notify admins.", Debug.HIGH_PRIORITY);
 					return;
 				}
+								
 				subsystemsObj[_subsystems[node.subsystemId].label].destinationName =
-						_subsystems[_subsystems[node.subsystemId].destinationId].label;
-			}
+						_subsystems[_subsystems[node.subsystemId].destinationId | 0].label;
+			} //end node loop
 			
+			////////// now save nodes and subsystems objects
 			ARTDAQConfigurationAPI.saveArtdaqNodes(nodesObj, subsystemsObj,
 					function(req)
 					{
@@ -968,7 +978,31 @@
 							addArrow(i,j);
 						}
 				}
-			}
+				else if(_nodes[i].type == ARTDAQConfigurationAPI.NODE_TYPE_ROUTER)
+				{
+					//connect from all ON event builders in subsystem
+					//	and to all ON board readers in subsystem
+					for(var j=0;j<_nodes.length;++j)
+						if(_nodes[j].status &&
+								_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER && 
+								_nodes[j].subsystemId == _nodes[i].subsystemId)
+						{
+							Debug.log("Found builder-reader connection at nodes " + 
+									i + " ==> " + j);
+
+							addArrow(j,i,undefined,undefined,"rgb(220,220,220)");
+						}
+						else if(_nodes[j].status &&
+								_nodes[j].type == ARTDAQConfigurationAPI.NODE_TYPE_READER && 
+								_nodes[j].subsystemId == _nodes[i].subsystemId)
+						{
+							Debug.log("Found router-reader connection at nodes " + 
+									i + " ==> " + j);
+
+							addArrow(i,j,undefined,undefined,"rgb(220,220,220)");
+						}
+				}
+			} //end node loop
 			
 		} //end initArrows()
 				
@@ -1797,14 +1831,15 @@
 					xy0 = getNodePoint(i|0,_arrows[i][j].p0);
 					xy1 = getNodePoint(j|0,_arrows[i][j].p1);
 					//console.log("xy01",xy0,xy1);
-					drawArrow(xy0[0],xy0[1],xy1[0],xy1[1]);
+					drawArrow(xy0[0],xy0[1],xy1[0],xy1[1],
+							undefined /*isActionCanvas*/,_arrows[i][j].color);
 				}
 			
 		} //end drawArrows()
 		
 		//=====================================================================================
 		//drawArrow ~~
-		function drawArrow(x0,y0,x,y,isActionCanvas) 
+		function drawArrow(x0,y0,x,y,isActionCanvas,color) 
 		{	
 			//console.log("drawArrow x0,y0,x,y,isActionCanvas ",
 			//		x0,y0,x,y,isActionCanvas);
@@ -1824,16 +1859,19 @@
             var angle = Math.atan2(y-y0,x-x0);
             
             var shortOffset = (getNodeFontSize()*4)|0; //avoid text above
-            if(y0 == y) shortOffset = HEAD_SZ*1;
+            if(y0 >= y) shortOffset = HEAD_SZ*1;
             
-            x -= shortOffset*Math.cos(angle);
-            y -= shortOffset*Math.sin(angle);
+            if(!isActionCanvas)
+            {
+				x -= shortOffset*Math.cos(angle);
+				y -= shortOffset*Math.sin(angle);
+            }
 
             //starting path of the arrow from the start square to the end square and drawing the stroke
             context.beginPath();
             context.moveTo(x0, y0);
             context.lineTo(x, y);
-            context.strokeStyle = _ARROW_COLOR;
+            context.strokeStyle = color?color:_ARROW_COLOR;
             context.lineWidth = LINE_SZ;
             context.stroke();
 
@@ -1850,10 +1888,10 @@
             context.lineTo(x-HEAD_SZ*Math.cos(angle-Math.PI/7),y-HEAD_SZ*Math.sin(angle-Math.PI/7));
 
             //draws the paths created above
-            context.strokeStyle = _ARROW_COLOR;
+            context.strokeStyle = color?color:_ARROW_COLOR;
             context.lineWidth = LINE_SZ;
             context.stroke();
-            context.fillStyle = _ARROW_COLOR;
+            context.fillStyle = color?color:_ARROW_COLOR;
             context.fill();
             
 			context.restore();
@@ -1864,6 +1902,7 @@
 		function handleMouseMove(e) 
 		{	
 			if(document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID) ||
+					document.getElementById(DesktopContent._verifyPopUpId) ||					
 					!_grid || !_grid.rowColMap)
 				return; //disable while popup or initializing
 				
@@ -2062,15 +2101,34 @@
     			switch(_mouseMoveMode)
     			{
     			case _MMM_ARROW_DRAG:
-    				console.log("done arrow drag NO VALID END x,y",x,y);
-    				_mouseMoveMode = _MMM_NONE;
+
+    				//see if node drag ended in valid spot
+    				var xg = ((x - _grid.x0 + _grid.xstep/2)/_grid.xstep)|0;
+    				var yg = ((y - _grid.y0 + _grid.ystep/2)/_grid.ystep)|0;	
     				
-    				Debug.log("The destination end-point was invalid! Make sure you end the operation " +
-    						"by hovering over a valid anchor with your cursor.",
-    						Debug.HIGH_PRIORITY);
-    				
-    				//re-paint to clear invalid move
-    				paint();    				
+    				if(_grid.rowColMap[xg] === undefined ||
+    						_grid.rowColMap[xg][yg] === undefined)
+    				{
+													
+						console.log("done arrow drag NO VALID END x,y",x,y);
+						_mouseMoveMode = _MMM_NONE;
+						
+						Debug.log("The destination end-point was invalid! Make sure you end the operation " +
+								"by hovering over a valid anchor with your cursor.",
+								Debug.HIGH_PRIORITY);
+						
+						//re-paint to clear invalid move
+						paint();
+    				}
+    				else
+    				{
+    					console.log("done arrow drag end-point x,y",xg,yg);
+						
+						_mouseMoveMode = _MMM_NONE;   
+
+						validateNewArrow(_mouseMoveStart[2] /*starti*/,
+								_grid.rowColMap[xg][yg] /*endi*/);	
+    				}
     				break;    
     			case _MMM_NODE_DRAG:
     				
@@ -2436,246 +2494,9 @@
 				console.log("done arrow drag end-point i,p",i,p);
 				_mouseMoveMode = _MMM_NONE;    	
 				
-				
-				var starti = _mouseMoveStart[2];
-				var endi = i;
-
-				//				addArrow(
-				//						_mouseMoveStart[2] /*startNodeIndex*/,
-				//						i /*endNodeIndex*/,
-				//						_mouseMoveStart[3] /*startNodePointIndex*/, 
-				//						p /*endNodePointIndex*/);
-				
-				//validate connection
-				//	 .. arrows follow rules based on subsystem settings:
-				//	Readers -> all builders of same subsystem
-				//	Builders -> all loggers of same subsystem AND builders of destination subsystem
-				//	Loggers -> all dispatchers of same subsystem
-				
-				if(_nodes[starti].type == ARTDAQConfigurationAPI.NODE_TYPE_READER)
-				{
-					//for reader, check that destination is builder
-					if(_nodes[endi].type != ARTDAQConfigurationAPI.NODE_TYPE_BUILDER)
-					{
-						Debug.log("Error! Destination node was type '" + 
-								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endi].type] + "'... " + 
-								"The destination for a '" + 
-								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[starti].type] + 
-								" must be type '" + 
-								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_BUILDER] +
-								".'",
-								Debug.HIGH_PRIORITY);
-						localHandleCleanup();
-						return;
-					}
-					
-					//destination is correct
-					//	if destination is in current subsystem give error
-					// 	else change destination subsystem
-					
-					if(_nodes[starti].subsystemId == _nodes[endi].subsystemId)
-					{
-						Debug.log("Error! Destination node is already in the same subsystem, so connection alread exists!",
-								Debug.HIGH_PRIORITY);
-						localHandleCleanup();
-						return;
-					}
-					
-					//else valid, so change start node subsystem
-					
-					Debug.log("The reader '" + 
-							_nodes[starti].name + 
-							"' was successfully moved from subsystem '" +
-							_subsystems[_nodes[starti].subsystemId].label + "' to '" +
-							_subsystems[_nodes[endi].subsystemId].label + 
-							"!'", Debug.INFO_PRIORITY);
-					
-					_nodes[starti].subsystemId = _nodes[endi].subsystemId;
-
-					//===== propagate change correctly
-					initArrows();
-					
-					console.log("_nodes[starti]",_nodes[starti]);
-					nodesHaveChanged();
-
-					//delete element to force new paint
-					var nodeid = "node-" + starti;
-					var el = document.getElementById(nodeid);
-					if(el) el.parentNode.removeChild(el);
-					
-					paint();
-					return;
-				} //end reader start-node handling
-				else if(_nodes[starti].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER)
-				{
-					//for builder, only logger of same subsytem or 
-					//	builder of different subsystem is valid
-					
-					if(_nodes[endi].type == ARTDAQConfigurationAPI.NODE_TYPE_BUILDER)
-					{
-						if(_nodes[starti].subsystemId == _nodes[endi].subsystemId)
-						{
-							Debug.log("Error! Destination node is in the same subsystem, so connection is invalid!",
-									Debug.HIGH_PRIORITY);
-							localHandleCleanup();
-							return;
-						}
-						
-						//else valid, so change subsystem destinationId			
-						
-						_subsystems[_nodes[starti].subsystemId].destinationId = 
-								_nodes[endi].subsystemId;
-						
-						Debug.log("The subsystem '" + 
-								_subsystems[_nodes[starti].subsystemId].label + 
-								"' destination was successfully changed to subsystem '" +
-								_subsystems[_nodes[endi].subsystemId].label + 
-								"!'", Debug.INFO_PRIORITY);
-						
-						//===== propagate change correctly
-						initArrows();
-
-						console.log("_subsystems[*starti]",_subsystems[_nodes[starti].subsystemId]);
-						nodesHaveChanged();
-						
-						paint();
-						return;
-					}
-					else if(_nodes[endi].type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER)
-					{
-						if(_nodes[starti].subsystemId == _nodes[endi].subsystemId)
-						{
-							Debug.log("Error! Destination node is in the same subsystem, so connection already exists!",
-									Debug.HIGH_PRIORITY);
-							localHandleCleanup();
-							return;
-						}
-						
-						//else valid, so change end node subsystem		
-						
-						Debug.log("The logger '" + 
-								_nodes[endi].name + 
-								"' was successfully moved from subsystem '" +
-								_subsystems[_nodes[endi].subsystemId].label + "' to '" +
-								_subsystems[_nodes[starti].subsystemId].label + 
-								"!'", Debug.INFO_PRIORITY);
-
-						_nodes[endi].subsystemId = _nodes[starti].subsystemId;						
-
-						//===== propagate change correctly
-						initArrows();
-
-						console.log("_nodes[endi]",_nodes[endi]);
-						nodesHaveChanged();
-
-						//delete element to force new paint
-						var nodeid = "node-" + endi;
-						var el = document.getElementById(nodeid);
-						if(el) el.parentNode.removeChild(el);
-
-						paint();
-						return;
-					}
-					else
-					{
-						Debug.log("Error! Destination node was type '" + 
-								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endi].type] + "'... " + 
-								"The destination for a '" + 
-								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[starti].type] + 
-								" must be type '" + 
-								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_BUILDER] +
-								"' or '" +
-								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_LOGGER] +
-								".'",
-								Debug.HIGH_PRIORITY);
-						localHandleCleanup();
-						return;
-					}
-					
-					
-				} //end builder start-node handling
-				else if(_nodes[starti].type == ARTDAQConfigurationAPI.NODE_TYPE_LOGGER)
-				{
-					//for logger, can only go to dispatcher in same subsystem					
-
-					//for reader, check that destination is builder
-					if(_nodes[endi].type != ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER)
-					{
-						Debug.log("Error! Destination node was type '" + 
-								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endi].type] + "'... " + 
-								"The destination for a '" + 
-								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[starti].type] + 
-								" must be type '" + 
-								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER] +
-								".'",
-								Debug.HIGH_PRIORITY);
-						localHandleCleanup();
-						return;
-					}
-					
-					//destination is correct
-					//	if destination is in current subsystem give error
-					// 	else change destination subsystem
-					
-					if(_nodes[starti].subsystemId == _nodes[endi].subsystemId)
-					{
-						Debug.log("Error! Destination node is already in the same subsystem, so connection alread exists!",
-								Debug.HIGH_PRIORITY);
-						localHandleCleanup();
-						return;
-					}
-					
-					//else valid, so change end node subsystem		
-
-					Debug.log("The dispatcher '" + 
-							_nodes[endi].name + 
-							"' was successfully moved from subsystem '" +
-							_subsystems[_nodes[endi].subsystemId].label + "' to '" +
-							_subsystems[_nodes[starti].subsystemId].label + 
-							"!'", Debug.INFO_PRIORITY);
-
-					_nodes[endi].subsystemId = _nodes[starti].subsystemId;						
-
-					//===== propagate change correctly
-					initArrows();
-
-					console.log("_nodes[endi]",_nodes[endi]);
-					nodesHaveChanged();
-
-					//delete element to force new paint
-					var nodeid = "node-" + endi;
-					var el = document.getElementById(nodeid);
-					if(el) el.parentNode.removeChild(el);
-
-					paint();
-					return;
-				
-				} //end logger start-node handling
-				else if(_nodes[starti].type == ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER)
-				{
-					Debug.log("Error! Dispatcher's currently can not have destinations!",
-							Debug.HIGH_PRIORITY);
-					localHandleCleanup();
-					return;
-				}
-				else
-				{
-					Debug.log("Impossible! Notify admins how you got here!", Debug.HIGH_PRIORITY);
-					localHandleCleanup();
-					return;
-				}
-				
+				validateNewArrow(_mouseMoveStart[2] /*starti*/,
+						i /*endi*/);				
     		}
-    		
-    		return;
-
-    		//============
-    		function localHandleCleanup()
-    		{
-    			Debug.log("localHandleCleanup()");
-				paint();
-    			
-    		} //end localHandleCleanup()
     		
 		} //end handlePointMouseUp()
 
@@ -3215,15 +3036,10 @@
 							{
 						console.log("localGetLinkId getFieldValuesForRecords",retObj);
 						
-						if(retObj.length != 2)
-						{
-							Debug.log("Failed to read link value for '" +
-									fieldPath + "!'", Debug.HIGH_PRIORITY);
-							return;
-						}
 						
 						//check if no link, and prompt user to make one
-						if(retObj[0].fieldValue == "NO_LINK" ||
+						if(retObj.length != 2 ||
+								retObj[0].fieldValue == "NO_LINK" ||
 								retObj[1].fieldValue == "DEFAULT")
 						{
 							//remake field path with spaces so it displays better in
@@ -3236,7 +3052,7 @@
 							if(fieldRetObj[0].fieldColumnDataChoicesArr &&
 									fieldRetObj[0].fieldColumnDataChoicesArr.length > 2)							
 								DesktopContent.popUpVerification(
-									"The link to <b>" + fieldPath +
+									"A valid link to <b>" + fieldPath +
 									"</b> has not been defined for <b>" +
 									typeName + "::" +
 									nodeName +
@@ -3368,11 +3184,6 @@
 													{
 												Debug.log("initArtdaqNodes group link done handler");
 
-												console.log("fieldRetObj[1].fieldColumnType.split('-')[1]",
-														fieldRetObj[1].fieldColumnType.split('-')[1]);
-												console.log("retObj[1].fieldValue",
-														retObj[1].fieldValue);
-
 												//continue recursion, parameters actually do not matter
 												handler( //localGetLinkId's handler calls localRecursiveUniqueLinkCheck()
 														valueArr[0], 
@@ -3394,8 +3205,24 @@
 
 												if(!modifiedTables.length)
 												{
-													Debug.log("There was an error while creating the record.",
+													Debug.log("There was an error while creating the record. Attempting to proceed anyway...",
 															Debug.HIGH_PRIORITY);
+													// DONE! (for unique links with error, hoping the record already exists) ------------------------------------------
+													initArtdaqNodes( //pass done handler to initArtdaqNodes()
+															//////////////////
+															function()
+															{
+														Debug.log("initArtdaqNodes unique link done with error handler");
+
+														//continue recursion, parameters actually do not matter
+														handler( //localGetLinkId's handler calls localRecursiveUniqueLinkCheck()
+																valueArr[0], 
+																valueArr[1]);
+
+															} //end initArtdaqNodes done handler															
+													); //re-init and get new active configuration
+													// end DONE! (for unique links) ------------------------------------------
+													
 													return;					
 												}
 
@@ -3428,12 +3255,7 @@
 															function()
 															{
 														Debug.log("initArtdaqNodes unique link done handler");
-														
-														console.log("fieldRetObj[1].fieldColumnType.split('-')[1]",
-																fieldRetObj[1].fieldColumnType.split('-')[1]);
-														console.log("retObj[1].fieldValue",
-																retObj[1].fieldValue);
-														
+																												
 														//continue recursion, parameters actually do not matter
 														handler( //localGetLinkId's handler calls localRecursiveUniqueLinkCheck()
 																valueArr[0], 
@@ -3443,18 +3265,18 @@
 													); //re-init and get new active configuration
 													// end DONE! (for unique links) ------------------------------------------
 													
-														}, //end saveModifiedTables handler
-														_modifiedTables);
+														}); //end saveModifiedTables handler
+												
 													}, //end addSubsetRecords handler
 													_modifiedTables);
 										} //end unique link record creation
 										
-											}, 
+											}, //end saveModifiedTables handler
 											0,0, //doNotIgnoreWarnings,doNotSaveAffectedGroups,
 											0,0, //doNotActivateAffectedGroups,doNotSaveAliases,
 											0, //doNotIgnoreGroupActivationWarnings,
 											0, //doNotKillPopUpEl, 
-											tablesToAdd); //end saveModifiedTables handler
+											tablesToAdd); //end saveModifiedTables() call 
 
 										}, //end setFieldValuesForRecords handler
 										_modifiedTables);	
@@ -3467,7 +3289,10 @@
 								fieldRetObj[1].fieldColumnType.split('-')[1], 
 								retObj[1].fieldValue);
 
-							}); //end ConfigurationAPI.getFieldValuesForRecords() call
+							}, //end getFieldValuesForRecords handler
+							0, //modifiedTables
+							true //silenceErrors
+							); //end ConfigurationAPI.getFieldValuesForRecords() call
 					
 						}); //end ConfigurationAPI.getFieldsOfRecords() call
 				
@@ -3690,7 +3515,8 @@
 									"id": "ediNode-" + "nodeNameFixedWidth",
 									"type": "text",
 									"style": "width:50px;",
-									"value": (_nodes[i].nodeNameFixedWidth?_nodes[i].nodeNameFixedWidth:2),
+									"value": (_nodes[i].nodeNameFixedWidth !== undefined?
+											_nodes[i].nodeNameFixedWidth:2),
 									"title": "Set the number of digits for fixed-width numbering in the Node Name.",
 							},
 							0 /*html*/, true /*closeTag*/);	
@@ -3898,24 +3724,59 @@
 					closeButtons[b].onclick = 
 							localCloseButtonHandler;
 
+				document.getElementById("ediNode-" + "saveNode").onclick =
+						localOKButtonHandler;
+				
+				var inputEls = el.getElementsByTagName("input");
+				for(var b=0;b<inputEls.length;++b)
+					inputEls[b].onkeydown = 
+							localInputKeyHandler;
+				document.body.addEventListener("keydown",localInputKeyHandler);
+				
+					
 				/////////////////////////////////
 				function localCloseButtonHandler()
 				{
 					Debug.log("localCloseButtonHandler()");
+					
+					document.body.removeEventListener("keydown",localInputKeyHandler);
 
 					//remove all existing dialogs
 					ConfigurationAPI.removeAllPopUps();
-
+					
 					_mouseMoveMode = _MMM_NONE;
 				} //end localCloseButtonHandler()
 
 				/////////////////////////////////
-				document.getElementById("ediNode-" + "saveNode").onclick = 
-						function()
-						{
+				function localInputKeyHandler(event)
+				{
+					//Debug.log("localInputKeyHandler() " +
+					//		this.id);
+
+					//enter is OK, and escape is CANCEL
+					if(event.keyCode == 13) // ENTER
+					{	
+						Debug.log("Accepting enter key");
+						event.preventDefault();
+						event.stopPropagation(); 
+						localOKButtonHandler();
+					}
+					else if(event.keyCode == 27) // ESC
+					{	
+						Debug.log("Accepting escape key");
+						event.preventDefault();
+						event.stopPropagation(); 
+						localCloseButtonHandler();				
+					}
+				} //end localInputKeyHandler()
+				
+				/////////////////////////////////
+				function localOKButtonHandler()
+				{
 					//since multiple, use id to identify
 					Debug.log("Saving multi-node settings for node " + i);
 					
+					document.body.removeEventListener("keydown",localInputKeyHandler);					
 					
 					var nodeNameTemplate = document.getElementById("ediNode-" + "nodeName").value;
 					var nodeNameFixedWidth = document.getElementById("ediNode-" + "nodeNameFixedWidth").value | 0;
@@ -3966,17 +3827,21 @@
 					
 					//handle subsystem change
 					var subsystemId = 0;
+					var maxSubsystemId = 0;
 					for(var j in _subsystems)
 						if(_subsystems[j].label == subsystem)
 						{
-							subsystemId = j;
+							subsystemId = j|0;
 							break;
 						}
+						else if((j|0) > maxSubsystemId)
+							maxSubsystemId = j|0; //keep max for new subsystem id, if needed
+					
 					if(subsystemId == 0 && 
 							subsystem != ARTDAQConfigurationAPI.NULL_SUBSYSTEM)
 					{
 						//create new subsystem
-						subsystemId = j+2;
+						subsystemId = maxSubsystemId + 2;
 						Debug.log("Creating subsystem " + 
 								subsystemId + ":" + subsystem);
 						_subsystems[subsystemId] = {"label" : subsystem};
@@ -3987,7 +3852,8 @@
 					{
 						Debug.log("handling subsystem change from " + 
 								_nodes[i].subsystemId + ":" + 
-								_subsystems[j].label + " to " +
+								_subsystems[_nodes[i].subsystemId].label +
+								" to " +
 								_nodes[subsystemId].subsystemId + ":" + 
 								_subsystems[subsystemId].label)
 														
@@ -4011,8 +3877,8 @@
 					ConfigurationAPI.removeAllPopUps();
 
 					_mouseMoveMode = _MMM_NONE;
-					
-						}; //end saveMultiNode click handler
+
+				} //end localOKButtonHandler()
 				
 			} //end localAddHandlers()
 			
@@ -4385,10 +4251,14 @@
 							continue;
 						}
 						
-						//delete element to force new paint
-						var nodeid = "node-" + i;
-						var el = document.getElementById(nodeid);
-						if(el) el.parentNode.removeChild(el);
+						//delete element (and all elements after because of reindexing) to
+						//	force new paint
+						for(var k=i;k<_nodes.length;++k)
+						{
+							var nodeid = "node-" + k;
+							var el = document.getElementById(nodeid);
+							if(el) el.parentNode.removeChild(el);
+						}
 					} //end first pass html element deletion
 					
 					//second pass, delete from global nodes array, and modify indices into global array
@@ -4420,12 +4290,18 @@
 				}
 				else //normal single node delete	
 				{
-					_nodes.splice(i,1);
+					//first pass, delete html elements before indices change
+					//delete element (and all elements after because of reindexing) to
+					//	force new paint
+					for(var k=i;k<_nodes.length;++k)
+					{
+						var nodeid = "node-" + k;
+						var el = document.getElementById(nodeid);
+						if(el) el.parentNode.removeChild(el);
+					}
 
-					//delete element to force new paint
-					var nodeid = "node-" + i;
-					var el = document.getElementById(nodeid);
-					if(el) el.parentNode.removeChild(el);
+					_nodes.splice(i,1);
+					
 				}
 				
 				//subsystem change liekly affects arrows, so update
@@ -5050,9 +4926,10 @@
 						_nodes[i].subsystemId = 2;
 					}
 					
-					_nodes[i].x 	= _mouseMoveStart[0];
-					_nodes[i].y 	= _mouseMoveStart[1];
-					_nodes[i].type 	= type;
+					_nodes[i].x 		= _mouseMoveStart[0];
+					_nodes[i].y 		= _mouseMoveStart[1];
+					_nodes[i].type 		= type;
+					_nodes[i].status 	= true; //default new nodes to ON
 					
 					//subsystem change liekly affects arrows, so update
 					initArrows();
@@ -5070,20 +4947,354 @@
 		} //end createNode()
 		
 		//====================================================================================
+		//validateNewArrow ~~
+		function validateNewArrow(startNodeIndex, endNodeIndex)
+		{
+			Debug.log("validateNewArrow " + startNodeIndex + " to " + 
+					endNodeIndex);
+
+    		//============
+    		function localHandleCleanup()
+    		{
+    			Debug.log("localHandleCleanup()");
+				paint();
+    			
+    		} //end localHandleCleanup()
+    		
+
+			//validate connection
+			//	 .. arrows follow rules based on subsystem settings:
+			//	Readers -> all builders of same subsystem
+			//	Builders -> all loggers of same subsystem AND builders of destination subsystem
+			//	Loggers -> all dispatchers of same subsystem
+    		//	Router -> all builders or readers of same subsystem
+    		{
+    			if(_nodes[startNodeIndex].type == 
+    					ARTDAQConfigurationAPI.NODE_TYPE_READER)
+    			{
+    				//for reader, check that destination is builder or router
+    				if(_nodes[endNodeIndex].type !=
+    						ARTDAQConfigurationAPI.NODE_TYPE_BUILDER &&
+							_nodes[endNodeIndex].type !=
+									ARTDAQConfigurationAPI.NODE_TYPE_ROUTER)
+    				{
+    					Debug.log("Error! Destination node was type '<b>" + 
+    							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endNodeIndex].type] + "</b>'... " + 
+								"The destination for a '<b>" + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[startNodeIndex].type] + 
+								"</b>' must be type '<b>" + 
+								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_BUILDER] +
+								"</b>.'",
+								Debug.HIGH_PRIORITY);
+    					localHandleCleanup();
+    					return;
+    				}
+
+    				//destination is correct
+    				//	if destination is in current subsystem give error
+    				// 	else change destination subsystem
+
+    				if(_nodes[startNodeIndex].subsystemId == 
+    						_nodes[endNodeIndex].subsystemId)
+    				{
+    					Debug.log("Error! Destination node is already in the same subsystem, so connection already exists!",
+    							Debug.HIGH_PRIORITY);
+    					localHandleCleanup();
+    					return;
+    				}
+
+    				//else valid, so change start node subsystem
+
+    				Debug.log("The reader '<b>" + 
+    						_nodes[startNodeIndex].name + 
+							"</b>' was successfully moved from subsystem '<b>" +
+							_subsystems[_nodes[startNodeIndex].subsystemId].label + 
+							"</b>' to the " + 
+							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endNodeIndex].type] + 
+							"'s subsystem '<b>" +
+							_subsystems[_nodes[endNodeIndex].subsystemId].label + 
+							"</b>!'", Debug.INFO_PRIORITY);
+
+    				_nodes[startNodeIndex].subsystemId = _nodes[endNodeIndex].subsystemId;
+
+    				//===== propagate change correctly
+    				initArrows();
+
+    				console.log("_nodes[startNodeIndex]",_nodes[startNodeIndex]);
+    				nodesHaveChanged();
+
+    				//delete element to force new paint
+    				var nodeid = "node-" + startNodeIndex;
+    				var el = document.getElementById(nodeid);
+    				if(el) el.parentNode.removeChild(el);
+
+    				paint();
+    				return;
+    			} //end reader start-node handling
+    			else if(_nodes[startNodeIndex].type == 
+    					ARTDAQConfigurationAPI.NODE_TYPE_BUILDER)
+    			{
+    				//for builder, only logger/router of same subsytem or 
+    				//	builder of different subsystem is valid
+
+    				if(_nodes[endNodeIndex].type == 
+    						ARTDAQConfigurationAPI.NODE_TYPE_BUILDER)
+    				{
+    					if(_nodes[startNodeIndex].subsystemId == 
+    							_nodes[endNodeIndex].subsystemId)
+    					{
+    						Debug.log("Error! Destination node is in the same subsystem, so connection is invalid!",
+    								Debug.HIGH_PRIORITY);
+    						localHandleCleanup();
+    						return;
+    					}
+
+    					//else valid, so change subsystem destinationId			
+
+    					_subsystems[_nodes[startNodeIndex].subsystemId].destinationId = 
+    							_nodes[endNodeIndex].subsystemId;
+
+    					Debug.log("The builder's subsystem '<b>" + 
+    							_subsystems[_nodes[startNodeIndex].subsystemId].label + 
+								"</b>' destination was successfully changed to the target builder's subsystem '<b>" +
+								_subsystems[_nodes[endNodeIndex].subsystemId].label + 
+								"</b>!'", Debug.INFO_PRIORITY);
+
+    					//===== propagate change correctly
+    					initArrows();
+
+    					console.log("_subsystems[*startNodeIndex]",
+    							_subsystems[_nodes[startNodeIndex].subsystemId]);
+    					nodesHaveChanged();
+
+    					paint();
+    					return;
+    				}
+    				else if(_nodes[endNodeIndex].type == 
+    						ARTDAQConfigurationAPI.NODE_TYPE_LOGGER ||
+							_nodes[endNodeIndex].type == 
+									ARTDAQConfigurationAPI.NODE_TYPE_ROUTER)
+    				{
+    					if(_nodes[startNodeIndex].subsystemId == 
+    							_nodes[endNodeIndex].subsystemId)
+    					{
+    						Debug.log("Error! Destination node is in the same subsystem, so connection already exists!",
+    								Debug.HIGH_PRIORITY);
+    						localHandleCleanup();
+    						return;
+    					}
+
+    					//else valid, so change end node subsystem		
+
+    					Debug.log("The " +
+    							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endNodeIndex].type] +
+								" '<b>" + 
+								_nodes[endNodeIndex].name + 
+								"</b>' was successfully moved from subsystem '<b>" +
+								_subsystems[_nodes[endNodeIndex].subsystemId].label + 
+								"</b>' to the " + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[startNodeIndex].type] + 
+								"'s subsystem '<b>" +
+								_subsystems[_nodes[startNodeIndex].subsystemId].label + 
+								"</b>!'", Debug.INFO_PRIORITY);
+
+    					_nodes[endNodeIndex].subsystemId = _nodes[startNodeIndex].subsystemId;						
+
+    					//===== propagate change correctly
+    					initArrows();
+
+    					console.log("_nodes[endNodeIndex]",_nodes[endNodeIndex]);
+    					nodesHaveChanged();
+
+    					//delete element to force new paint
+    					var nodeid = "node-" + endNodeIndex;
+    					var el = document.getElementById(nodeid);
+    					if(el) el.parentNode.removeChild(el);
+
+    					paint();
+    					return;
+    				}
+    				else
+    				{
+    					Debug.log("Error! Destination node was type '<b>" + 
+    							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endNodeIndex].type] + "</b>'... " + 
+								"The destination for a '<b>" + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[startNodeIndex].type] + 
+								"</b>' must be type '<b>" + 
+								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_BUILDER] +
+								"</b>' or '<b>" +
+								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_LOGGER] +
+								"</b>.'",
+								Debug.HIGH_PRIORITY);
+    					localHandleCleanup();
+    					return;
+    				}
+
+
+    			} //end builder start-node handling
+    			else if(_nodes[startNodeIndex].type == 
+    					ARTDAQConfigurationAPI.NODE_TYPE_LOGGER)
+    			{
+    				//for logger, can only go to dispatcher in same subsystem					
+
+    				if(_nodes[endNodeIndex].type != ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER)
+    				{
+    					Debug.log("Error! Destination node was type '<b>" + 
+    							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endNodeIndex].type] + "</b>'... " + 
+								"The destination for a '<b>" + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[startNodeIndex].type] + 
+								"</b>' must be type '<b>" + 
+								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER] +
+								"</b>.'",
+								Debug.HIGH_PRIORITY);
+    					localHandleCleanup();
+    					return;
+    				}
+
+    				//destination is correct
+    				//	if destination is in current subsystem give error
+    				// 	else change destination subsystem
+
+    				if(_nodes[startNodeIndex].subsystemId ==
+    						_nodes[endNodeIndex].subsystemId)
+    				{
+    					Debug.log("Error! Destination node is already in the same subsystem, so connection already exists!",
+    							Debug.HIGH_PRIORITY);
+    					localHandleCleanup();
+    					return;
+    				}
+
+    				//else valid, so change end node subsystem		
+
+    				Debug.log("The dispatcher '<b>" + 
+    						_nodes[endNodeIndex].name + 
+							"</b>' was successfully moved from subsystem '<b>" +
+							_subsystems[_nodes[endNodeIndex].subsystemId].label +
+							"</b>' to the " + 
+							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[startNodeIndex].type] + 
+							"'s subsystem '<b>" +
+							_subsystems[_nodes[startNodeIndex].subsystemId].label + 
+							"</b>!'", Debug.INFO_PRIORITY);
+
+    				_nodes[endNodeIndex].subsystemId = _nodes[startNodeIndex].subsystemId;						
+
+    				//===== propagate change correctly
+    				initArrows();
+
+    				console.log("_nodes[endNodeIndex]",_nodes[endNodeIndex]);
+    				nodesHaveChanged();
+
+    				//delete element to force new paint
+    				var nodeid = "node-" + endNodeIndex;
+    				var el = document.getElementById(nodeid);
+    				if(el) el.parentNode.removeChild(el);
+
+    				paint();
+    				return;
+
+    			} //end logger start-node handling
+    			else if(_nodes[startNodeIndex].type == 
+    					ARTDAQConfigurationAPI.NODE_TYPE_ROUTER)
+    			{
+    				//for router, allow 'to' reader/builder, although really only to reader					
+
+    				if(_nodes[endNodeIndex].type != 
+    						ARTDAQConfigurationAPI.NODE_TYPE_READER &&
+							_nodes[endNodeIndex].type != 
+									ARTDAQConfigurationAPI.NODE_TYPE_BUILDER)
+    				{
+    					Debug.log("Error! Destination node was type '<b>" + 
+    							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endNodeIndex].type] + "</b>'... " + 
+								"The destination for a '<b>" + 
+								ARTDAQConfigurationAPI.NODE_TYPES[_nodes[startNodeIndex].type] + 
+								"</b>' must be type '<b>" + 
+								ARTDAQConfigurationAPI.NODE_TYPES[ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER] +
+								"</b>.'",
+								Debug.HIGH_PRIORITY);
+    					localHandleCleanup();
+    					return;
+    				}
+
+    				//destination is correct
+    				//	if destination is in current subsystem give error
+    				// 	else change destination subsystem
+
+    				if(_nodes[startNodeIndex].subsystemId ==
+    						_nodes[endNodeIndex].subsystemId)
+    				{
+    					Debug.log("Error! Destination node is already in the same subsystem, so connection already exists!",
+    							Debug.HIGH_PRIORITY);
+    					localHandleCleanup();
+    					return;
+    				}
+
+    				//else valid, so change end node subsystem		
+
+    				Debug.log("The " + 
+    						ARTDAQConfigurationAPI.NODE_TYPES[_nodes[endNodeIndex].type] +
+							" '<b>" + 
+    						_nodes[endNodeIndex].name + 
+							"</b>' was successfully moved from subsystem '<b>" +
+							_subsystems[_nodes[endNodeIndex].subsystemId].label + 
+							"</b>' to the " + 
+							ARTDAQConfigurationAPI.NODE_TYPES[_nodes[startNodeIndex].type] + 
+							"'s subsystem '<b>" +
+							_subsystems[_nodes[startNodeIndex].subsystemId].label + 
+							"</b>!'", Debug.INFO_PRIORITY);
+
+    				_nodes[endNodeIndex].subsystemId = _nodes[startNodeIndex].subsystemId;						
+
+    				//===== propagate change correctly
+    				initArrows();
+
+    				console.log("_nodes[endNodeIndex]",_nodes[endNodeIndex]);
+    				nodesHaveChanged();
+
+    				//delete element to force new paint
+    				var nodeid = "node-" + endNodeIndex;
+    				var el = document.getElementById(nodeid);
+    				if(el) el.parentNode.removeChild(el);
+
+    				paint();
+    				return;
+
+    			} //end router start-node handling
+    			else if(_nodes[startNodeIndex].type == ARTDAQConfigurationAPI.NODE_TYPE_DISPATCHER)
+    			{
+    				Debug.log("Error! Dispatcher's currently can not have destinations!",
+    						Debug.HIGH_PRIORITY);
+    				localHandleCleanup();
+    				return;
+    			} //end dispatcher start-node handling
+    			else
+    			{
+    				Debug.log("Impossible! Notify admins how you got here!", Debug.HIGH_PRIORITY);
+    				localHandleCleanup();
+    				return;
+    			}
+
+    		} //end validate connection handling
+		} //end validateNewArrow()
+
+		//====================================================================================
 		//addArrow ~~
-		function addArrow(startNodeIndex, endNodeIndex, startNodePointIndex, endNodePointIndex)
+		function addArrow(startNodeIndex, endNodeIndex, 
+				startNodePointIndex, endNodePointIndex,
+				arrowColor)
 		{
 			Debug.log("addArrow " + startNodeIndex + "-" +
 					startNodePointIndex + " to " + 
-					endNodeIndex + "-" + endNodePointIndex);
-			
+					endNodeIndex + "-" + endNodePointIndex + " " +
+					arrowColor);
+
+
 			var fromUserDraw = true;
 			if(startNodePointIndex == undefined || endNodePointIndex == undefined)
 			{
 				fromUserDraw = false;
-				
+
 				//auto select points on nodes			
-				
+
 				if(_nodes[endNodeIndex].x == //arrow directly above or below
 						_nodes[startNodeIndex].x)
 				{
@@ -5111,7 +5322,8 @@
 				_arrows[startNodeIndex][endNodeIndex] = 
 					{
 							"p0":startNodePointIndex,
-							"p1":endNodePointIndex
+							"p1":endNodePointIndex,
+							"color":arrowColor,
 					}; //arrow made
 				if(fromUserDraw && _canvas) paint();
 			}
@@ -5120,6 +5332,7 @@
 				Debug.log("Connection already exists!",
 						Debug.HIGH_PRIORITY);
 			}
+			
 		} //end addArrow()
 		
 
