@@ -6,7 +6,7 @@
 #include "otsdaq/DataManager/DataManagerSingleton.h"
 #include "otsdaq/Macros/BinaryStringMacros.h"
 //#include "otsdaq/otsdaq/Macros/MessageTools.h"
-//#include "otsdaq/DataManager/DQMHistosConsumerBase.h"
+#include "otsdaq/DataManager/DQMHistosConsumerBase.h"
 //#include <boost/regex.hpp>
 #include "otsdaq/RootUtilities/RootFileExplorer.h"
 #include "otsdaq/Macros/MessageTools.h"
