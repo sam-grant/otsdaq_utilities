@@ -1157,15 +1157,11 @@ function()
                               }                                                                                                         
                               else if(!(typeof getXMLValue(response,"rootType") == 'undefined')) // Returns the plot to display                                                                     
                               { // get specific ROOT Object and display
-                               var rootName  = getXMLValue (response,"path"                      );                     
-                               var rootJSON  = getXMLValue (response,"rootJSON"                  );                 
-                               var object    = JSROOT.parse(rootJSON                             );
-                               STDLINE("Launching displayPlot on currentCanvas_ "+currentCanvas_ );
-                               theCanvasModel_.addROOTObject(currentCanvas_                      ,
-                                                             object                              ,
-                                                             theProvenance_                      );
-                               displayPlot_                 (currentCanvas_                      ,
-                                                             object                              );
+                               var rootName  = getXMLValue (response,"path"    );                     
+                               var rootJSON  = getXMLValue (response,"rootJSON");                 
+                               var object    = JSROOT.parse(rootJSON           );
+                               displayPlot_                 (currentCanvas_    ,
+                                                             object            );
                               }
                              },                                                                                                           
                     failure: function(response, options)                                                                                  
@@ -1198,6 +1194,9 @@ function()
                  } else {
                   theFrame = 'canvas' + currentCanvas_ + '_' + currentPad_    ;
                  }
+                 theCanvasModel_.addROOTObject(currentCanvas_                ,
+                                               object                        ,
+                                               theProvenance_                );
                  STDLINE("Plotting "+object._typename+": "+object.fTitle)     ;
                  if( superimposeFlag_ )
                  {
