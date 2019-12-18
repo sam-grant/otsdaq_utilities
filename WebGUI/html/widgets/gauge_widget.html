@@ -9,6 +9,7 @@
 			body
 			{
 			  	font: 10px arial;
+			  	background-color:  rgb(250, 250, 250);
 			}
 
 			.wrapper {
@@ -66,7 +67,7 @@
 				for(var pv in widget.PVList)
 				{   
 					var divtemp = document.createElement('div');
-					divtemp.style.color = "white";
+					//divtemp.style.color = "white";
 					divtemp.style.fontSize = "auto";
 					divtemp.innerHTML = "<p id='p-" + pv + "'>" + pv + "</p>";
 					divtemp.id = "gauge-div-" + pv_number;
@@ -106,11 +107,23 @@
 				return parameters;
 			}
 
+			function setParameters(attributes)
+			{
+				
+			}
+
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("Gauge newValue() reached", pvName, pvValue);
 				var pv="p-" + pvName;
-				document.getElementById(pv).innerHTML = pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity;
+
+				if(pvSeverity == "MAJOR" )
+					document.getElementById(pv).innerHTML = "<left style = 'color: red'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</left>";
+				else if(pvSeverity == "MINOR")
+					document.getElementById(pv).innerHTML = "<left style = 'color: orange'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</left>";
+				else
+					document.getElementById(pv).innerHTML = "<left style = 'color: green'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</left>";
+
 				gauges[pvName].redraw(pvValue);
 
 //				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
@@ -213,8 +226,8 @@
 			window.onresize = function() {
 				for(var name in gauges)
 				{
-					gauges[name].config.size = Math.min(window.innerHeight - 60, window.innerWidth) / Object.keys(gauges).length | 0;
-					gauges[name].configure(gauges[name].config);
+					//gauges[name].config.size = Math.min(window.innerHeight - 60, window.innerWidth) / Object.keys(gauges).length | 0;
+					//gauges[name].configure(gauges[name].config);
 					//gauges[name].redraw(50);
 					newWidget(widget_, parameters_);
 				}
