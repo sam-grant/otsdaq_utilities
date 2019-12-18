@@ -7,6 +7,7 @@ cet_make(LIBRARY_NAME Visualization
 		 ${XDAQ_BASIC_LIB_LIST}
 		 ${ROOT_GUI_LIB_LIST}
 		 ${ROOTSYS}/lib/libRHTTP.so
+         ${Boost_REGEX_LIBRARY}
 		 CoreSupervisors
 		 RootUtilities
 		 DataManager

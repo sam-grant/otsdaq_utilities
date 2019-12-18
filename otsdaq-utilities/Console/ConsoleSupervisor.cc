@@ -110,7 +110,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 	ReceiverSocket rsock(myip, myport);  // Take Port from Configuration
 	try
 	{
-		rsock.initialize();
+		rsock.initialize(0x100000 /*socketReceiveBufferSize*/);
 	}
 	catch(...)
 	{
@@ -230,8 +230,8 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			{
 				// missed some messages!
 				__SS__ << "Missed packets from " << cs->messages_.back().getSource()
-				       << "! Sequence IDs " << sourceLastSequenceID[newSourceId] + 1 << " to "
-				       << newSequenceId - 1 << "." << __E__;
+				       << "! Sequence IDs " << sourceLastSequenceID[newSourceId] + 1
+				       << " to " << newSequenceId - 1 << "." << __E__;
 				std::cout << ss.str();
 
 				// generate special message to indicate missed packets

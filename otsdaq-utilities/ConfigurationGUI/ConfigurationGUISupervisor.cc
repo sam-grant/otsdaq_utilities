@@ -752,7 +752,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string filterList     = CgiDataUtilities::postData(cgiIn, "filterList");
 		int         depth          = CgiDataUtilities::getDataAsInt(cgiIn, "depth");
-		bool hideStatusFalse 	   = CgiDataUtilities::getDataAsInt(cgiIn, "hideStatusFalse");
+		bool hideStatusFalse = CgiDataUtilities::getDataAsInt(cgiIn, "hideStatusFalse");
 
 		//		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
 		//		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
@@ -949,17 +949,19 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                                   startPath,
 		                                   modifiedTables,
 		                                   recordList,
-										   newRecordList);
+		                                   newRecordList);
 	}
 	else if(requestType == "copyTreeNodeRecords")
 	{
-		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
-		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
-		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
-		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
-		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
-		unsigned int numberOfCopies     = CgiDataUtilities::getDataAsInt(cgiIn, "numberOfCopies");
-		if(!numberOfCopies) numberOfCopies = 1; //default to 1
+		std::string  tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string  tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string  startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
+		std::string  modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+		std::string  recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
+		unsigned int numberOfCopies =
+		    CgiDataUtilities::getDataAsInt(cgiIn, "numberOfCopies");
+		if(!numberOfCopies)
+			numberOfCopies = 1;  // default to 1
 
 		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
 		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
@@ -969,13 +971,13 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUTV__(numberOfCopies);
 
 		handleFillCopyTreeNodeRecordsXML(xmlOut,
-		                                   cfgMgr,
-		                                   tableGroup,
-		                                   TableGroupKey(tableGroupKey),
-		                                   startPath,
-		                                   modifiedTables,
-		                                   recordList,
-										   numberOfCopies);
+		                                 cfgMgr,
+		                                 tableGroup,
+		                                 TableGroupKey(tableGroupKey),
+		                                 startPath,
+		                                 modifiedTables,
+		                                 recordList,
+		                                 numberOfCopies);
 	}
 	else if(requestType == "getArtdaqNodes")
 	{
@@ -2047,7 +2049,6 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 	}
 }  // end handleFillDeleteTreeNodeRecordsXML()
 
-
 //========================================================================================================================
 // handleFillRenameTreeNodeRecordsXML
 //	Rename the records in the appropriate table
@@ -2101,55 +2102,52 @@ void ConfigurationGUISupervisor::handleFillRenameTreeNodeRecordsXML(
 		//
 
 		// extract record list
-		std::vector<std::string> recordArray = StringMacros::getVectorFromString(recordList);
-		std::vector<std::string> newRecordArray = StringMacros::getVectorFromString(newRecordList);
+		std::vector<std::string> recordArray =
+		    StringMacros::getVectorFromString(recordList);
+		std::vector<std::string> newRecordArray =
+		    StringMacros::getVectorFromString(newRecordList);
 
 		__SUP_COUTV__(StringMacros::vectorToString(recordArray));
 		__SUP_COUTV__(StringMacros::vectorToString(newRecordArray));
 
-		if(recordArray.size() == 0 ||
-				recordArray.size() != newRecordArray.size())
+		if(recordArray.size() == 0 || recordArray.size() != newRecordArray.size())
 		{
-			__SUP_SS__ << "Invalid record size vs new record name size, they must be the same: " <<
-					recordArray.size() << " vs " << newRecordArray.size() << __E__;
+			__SUP_SS__
+			    << "Invalid record size vs new record name size, they must be the same: "
+			    << recordArray.size() << " vs " << newRecordArray.size() << __E__;
 			__SUP_SS_THROW__;
 		}
 
-
 		// handle version bookkeeping
 		{
-			if(!(temporaryVersion = targetNode.getTableVersion())
-					.isTemporaryVersion())
+			if(!(temporaryVersion = targetNode.getTableVersion()).isTemporaryVersion())
 			{
 				__SUP_COUT__ << "Start version " << temporaryVersion << __E__;
 				// create temporary version for editing
 				temporaryVersion = table->createTemporaryView(temporaryVersion);
 				cfgMgr->saveNewTable(targetNode.getTableName(),
-									 temporaryVersion,
-									 true);  // proper bookkeeping for temporary
-											 // version with the new version
+				                     temporaryVersion,
+				                     true);  // proper bookkeeping for temporary
+				                             // version with the new version
 
-				__SUP_COUT__ << "Created temporary version " << temporaryVersion
-							 << __E__;
+				__SUP_COUT__ << "Created temporary version " << temporaryVersion << __E__;
 			}
 			else  // else table is already temporary version
-				__SUP_COUT__ << "Using temporary version " << temporaryVersion
-							 << __E__;
+				__SUP_COUT__ << "Using temporary version " << temporaryVersion << __E__;
 		}
 
 		// at this point have valid temporary version to edit
 
-		//for every record, change name
+		// for every record, change name
 		unsigned int row;
-		for(unsigned int i=0;i<recordArray.size();++i)
+		for(unsigned int i = 0; i < recordArray.size(); ++i)
 		{
 			row = table->getViewP()->findRow(
-					table->getViewP()->getColUID(),
-					StringMacros::decodeURIComponent(recordArray[i]));
+			    table->getViewP()->getColUID(),
+			    StringMacros::decodeURIComponent(recordArray[i]));
 
 			table->getViewP()->setValueAsString(
-					newRecordArray[i], row,
-					table->getViewP()->getColUID());
+			    newRecordArray[i], row, table->getViewP()->getColUID());
 		}
 
 		table->getViewP()->init();  // verify new table (throws runtime_errors)
@@ -2169,7 +2167,6 @@ void ConfigurationGUISupervisor::handleFillRenameTreeNodeRecordsXML(
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
 }  // end handleFillRenameTreeNodeRecordsXML()
-
 
 //========================================================================================================================
 // handleFillCopyTreeNodeRecordsXML
@@ -2196,9 +2193,10 @@ void ConfigurationGUISupervisor::handleFillCopyTreeNodeRecordsXML(
     const std::string&      startPath,
     const std::string&      modifiedTables,
     const std::string&      recordList,
-	unsigned int  			numberOfCopies /* = 1 */)
+    unsigned int            numberOfCopies /* = 1 */)
 {
-	if(!numberOfCopies) numberOfCopies = 1; //force 0 to 1, assuming user meant to get one copy
+	if(!numberOfCopies)
+		numberOfCopies = 1;  // force 0 to 1, assuming user meant to get one copy
 
 	//	setup active tables based on input group and modified tables
 	setupActiveTablesXML(xmlOut,
@@ -2227,48 +2225,46 @@ void ConfigurationGUISupervisor::handleFillCopyTreeNodeRecordsXML(
 		//
 
 		// extract record list
-		std::vector<std::string> recordArray = StringMacros::getVectorFromString(recordList);
+		std::vector<std::string> recordArray =
+		    StringMacros::getVectorFromString(recordList);
 		__SUP_COUTV__(StringMacros::vectorToString(recordArray));
 
 		// handle version bookkeeping
 		{
-			if(!(temporaryVersion = targetNode.getTableVersion())
-					.isTemporaryVersion())
+			if(!(temporaryVersion = targetNode.getTableVersion()).isTemporaryVersion())
 			{
 				__SUP_COUT__ << "Start version " << temporaryVersion << __E__;
 				// create temporary version for editing
 				temporaryVersion = table->createTemporaryView(temporaryVersion);
 				cfgMgr->saveNewTable(targetNode.getTableName(),
-									 temporaryVersion,
-									 true);  // proper bookkeeping for temporary
-											 // version with the new version
+				                     temporaryVersion,
+				                     true);  // proper bookkeeping for temporary
+				                             // version with the new version
 
-				__SUP_COUT__ << "Created temporary version " << temporaryVersion
-							 << __E__;
+				__SUP_COUT__ << "Created temporary version " << temporaryVersion << __E__;
 			}
 			else  // else table is already temporary version
-				__SUP_COUT__ << "Using temporary version " << temporaryVersion
-							 << __E__;
+				__SUP_COUT__ << "Using temporary version " << temporaryVersion << __E__;
 		}
 
 		// at this point have valid temporary version to edit
 
-		//for every record, copy spec'd number of times
+		// for every record, copy spec'd number of times
 		unsigned int row;
-		for(const auto& recordUID: recordArray)
+		for(const auto& recordUID : recordArray)
 		{
 			row = table->getViewP()->findRow(table->getViewP()->getColUID(),
-							StringMacros::decodeURIComponent(recordUID));
-			for(unsigned int i=0;i<numberOfCopies;++i)
+			                                 StringMacros::decodeURIComponent(recordUID));
+			for(unsigned int i = 0; i < numberOfCopies; ++i)
 				table->getViewP()->copyRows(
-						cfgMgr->getUsername(),
-						table->getView(),
-						row,
-						1 /*srcRowsToCopy*/,
-						-1 /*destOffsetRow*/,
-						true /*generateUniqueDataColumns*/,
-						recordUID /*baseNameAutoUID*/); //make the name similar
-		} //end record loop
+				    cfgMgr->getUsername(),
+				    table->getView(),
+				    row,
+				    1 /*srcRowsToCopy*/,
+				    -1 /*destOffsetRow*/,
+				    true /*generateUniqueDataColumns*/,
+				    recordUID /*baseNameAutoUID*/);  // make the name similar
+		}                                            // end record loop
 
 		table->getViewP()->init();  // verify new table (throws runtime_errors)
 
@@ -2533,7 +2529,7 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 				fieldPaths.push_back(StringMacros::decodeURIComponent(fieldPath));
 			}
 			__SUP_COUT__ << fieldList << __E__;
-			//for(auto& field : fieldPaths)
+			// for(auto& field : fieldPaths)
 			//	__SUP_COUT__ << "fieldPath " << field << __E__;
 		}
 
@@ -2910,7 +2906,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
-} //end handleFillUniqueFieldValuesForRecordsXML()
+}  // end handleFillUniqueFieldValuesForRecordsXML()
 
 //========================================================================================================================
 // handleFillTreeViewXML
@@ -3078,7 +3074,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
-} //end handleFillTreeViewXML()
+}  // end handleFillTreeViewXML()
 
 //==============================================================================
 // recursiveTreeToXML
@@ -3216,7 +3212,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 				    c.second, depth - 1, xmlOut, parentEl, hideStatusFalse);
 		}
 	}
-} //end recursiveTreeToXML()
+}  // end recursiveTreeToXML()
 
 //========================================================================================================================
 // handleGetLinkToChoicesXML
@@ -4329,7 +4325,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 			cfgView->setURIEncodedValue(newRowUID, row, cfgView->getColUID());
 
 			// find groupId column from link index
-			col = cfgView->getColLinkGroupID(linkIndex);
+			col = cfgView->getLinkGroupIDColumn(linkIndex);
 
 			// set group id
 			cfgView->setURIEncodedValue(groupId, row, col);
@@ -4517,7 +4513,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 				cfgView = table->getTemporaryView(temporaryVersion);
 
 				cfgView->init();  // prepare group ID map
-				col = cfgView->getColLinkGroupID(linkIndex);
+				col = cfgView->getLinkGroupIDColumn(linkIndex);
 
 				__SUP_COUT__ << "target col " << col << __E__;
 
@@ -4744,7 +4740,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 
 	std::string accumulatedErrors = "";
 
-	__COUTV__(allowIllegalColumns);
+	//__COUTV__(allowIllegalColumns);
 
 	if(allowIllegalColumns)
 		xmlOut.addTextElementToData("allowIllegalColumns", "1");
@@ -4757,7 +4753,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 
 	TableBase* table = cfgMgr->getTableByName(tableName);
 
-	__COUTV__(allowIllegalColumns);
+	//__COUTV__(allowIllegalColumns);
 
 	// send all table names along with
 	//	and check for specific version
@@ -4841,7 +4837,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	}
 	else  // use view version
 	{
-		__COUTV__(allowIllegalColumns);
+		//__COUTV__(allowIllegalColumns);
 
 		try
 		{
@@ -5078,7 +5074,8 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
 	__SUP_COUT__ << "Using Config Session " << mapKey
-	             << " ... Total Session Count: " << userConfigurationManagers_.size() << __E__;
+	             << " ... Total Session Count: " << userConfigurationManagers_.size()
+	             << __E__;
 
 	time_t now = time(0);
 
@@ -5489,9 +5486,12 @@ void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(
 
 		if(isDifferent)  // set author/time of new version if different
 		{
-			configView->setValue(author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
 			configView->setValue(
-			    time(0), row, configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
+			    author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
+			configView->setValue(
+			    time(0),
+			    row,
+			    configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
 		}
 	}
 	catch(...)
@@ -5666,9 +5666,12 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 
 		if(isDifferent)  // set author/time of new version if different
 		{
-			configView->setValue(author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
 			configView->setValue(
-			    time(0), row, configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
+			    author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
+			configView->setValue(
+			    time(0),
+			    row,
+			    configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
 		}
 	}
 	catch(...)
@@ -5872,9 +5875,12 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 
 		if(thisMemberIsDifferent)  // change author and time if row is different
 		{
-			configView->setValue(author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
 			configView->setValue(
-			    time(0), row, configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
+			    author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
+			configView->setValue(
+			    time(0),
+			    row,
+			    configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
 		}
 
 		if(thisMemberIsDifferent)
@@ -6415,16 +6421,15 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 	//	setup active tables based on active groups and modified tables
 	setupActiveTablesXML(xmlOut, cfgMgr, "", TableGroupKey(-1), modifiedTables);
 
-
 	std::map<std::string /*type*/,
-		std::map<std::string /*record*/, std::vector<std::string /*property*/>>>
-			nodeTypeToObjectMap;
+	         std::map<std::string /*record*/, std::vector<std::string /*property*/>>>
+	    nodeTypeToObjectMap;
 	std::map<std::string /*subsystemName*/, std::string /*destinationSubsystemName*/>
-		    subsystemObjectMap;
+	    subsystemObjectMap;
 
 	std::vector<std::string /*property*/> artdaqSupervisorInfo;
 
-	std::string artdaqSupervisorName;
+	std::string                        artdaqSupervisorName;
 	const ARTDAQTableBase::ARTDAQInfo& info = ARTDAQTableBase::getARTDAQSystem(
 	    cfgMgr, nodeTypeToObjectMap, subsystemObjectMap, artdaqSupervisorInfo);
 
@@ -6435,104 +6440,95 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 	}
 
 	__SUP_COUT__ << "========== "
-			<< "Found " << info.subsystems.size() << " subsystems." << __E__;
+	             << "Found " << info.subsystems.size() << " subsystems." << __E__;
 
-	unsigned int paramIndex = 0; //start at first artdaq Supervisor parameter
+	unsigned int paramIndex = 0;  // start at first artdaq Supervisor parameter
 
-	auto parentEl =
-	    xmlOut.addTextElementToData("artdaqSupervisor", artdaqSupervisorInfo[paramIndex++]);
+	auto parentEl = xmlOut.addTextElementToData("artdaqSupervisor",
+	                                            artdaqSupervisorInfo[paramIndex++]);
 
 	std::string typeString = "artdaqSupervisor";
 
 	xmlOut.addTextElementToParent(
-				typeString + "-status", artdaqSupervisorInfo[paramIndex++], parentEl);
+	    typeString + "-status", artdaqSupervisorInfo[paramIndex++], parentEl);
 	xmlOut.addTextElementToParent(
-			typeString + "-contextAddress", artdaqSupervisorInfo[paramIndex++], parentEl);
-	xmlOut.addTextElementToParent(typeString + "-contextPort",
-			artdaqSupervisorInfo[paramIndex++],
-			parentEl);
+	    typeString + "-contextAddress", artdaqSupervisorInfo[paramIndex++], parentEl);
+	xmlOut.addTextElementToParent(
+	    typeString + "-contextPort", artdaqSupervisorInfo[paramIndex++], parentEl);
 
 	for(auto& subsystem : info.subsystems)
 	{
 		typeString = "subsystem";
 
 		__SUP_COUT__ << "\t\t"
-				<< "Found " << typeString << " " << subsystem.first
-				<< " \t := '" << subsystem.second.label << "'" << __E__;
+		             << "Found " << typeString << " " << subsystem.first << " \t := '"
+		             << subsystem.second.label << "'" << __E__;
 
+		xmlOut.addTextElementToParent(typeString, subsystem.second.label, parentEl);
 		xmlOut.addTextElementToParent(
-				typeString, subsystem.second.label, parentEl);
-		xmlOut.addTextElementToParent(
-				typeString + "-id", std::to_string(subsystem.first), parentEl);
+		    typeString + "-id", std::to_string(subsystem.first), parentEl);
 
-		xmlOut.addTextElementToParent(
-				typeString + "-sourcesCount",
-				std::to_string(subsystem.second.sources.size()),
-				parentEl);
+		xmlOut.addTextElementToParent(typeString + "-sourcesCount",
+		                              std::to_string(subsystem.second.sources.size()),
+		                              parentEl);
 
 		// destination
-		xmlOut.addTextElementToParent(
-				typeString + "-destination",
-				std::to_string(subsystem.second.destination),
-				parentEl);
+		xmlOut.addTextElementToParent(typeString + "-destination",
+		                              std::to_string(subsystem.second.destination),
+		                              parentEl);
 
 	}  // end subsystem handling
 
 	__SUP_COUT__ << "========== "
-			<< "Found " << nodeTypeToObjectMap.size() << " process types."
-			<< __E__;
-
+	             << "Found " << nodeTypeToObjectMap.size() << " process types." << __E__;
 
 	for(auto& nameTypePair : nodeTypeToObjectMap)
 	{
 		typeString = nameTypePair.first;
 
 		__SUP_COUT__ << "\t"
-				<< "Found " << nameTypePair.second.size() << " " << typeString
-				<< "(s)" << __E__;
+		             << "Found " << nameTypePair.second.size() << " " << typeString
+		             << "(s)" << __E__;
 
 		for(auto& artdaqNode : nameTypePair.second)
 		{
 			__SUP_COUT__ << "\t\t"
-					<< "Found '" << artdaqNode.first << "' "
-					<< typeString << __E__;
+			             << "Found '" << artdaqNode.first << "' " << typeString << __E__;
 			__SUP_COUTV__(StringMacros::vectorToString(artdaqNode.second));
 
 			if(artdaqNode.second.size() < 2)
 			{
-				__SUP_SS__ << "Impossible parameter size for node '" << artdaqNode.first << "' "
-					<< typeString << " - please notify admins!" << __E__;
+				__SUP_SS__ << "Impossible parameter size for node '" << artdaqNode.first
+				           << "' " << typeString << " - please notify admins!" << __E__;
 				__SUP_SS_THROW__;
 			}
 
-			auto nodeEl = xmlOut.addTextElementToParent(
-					typeString, artdaqNode.first, parentEl);
+			auto nodeEl =
+			    xmlOut.addTextElementToParent(typeString, artdaqNode.first, parentEl);
 
-			paramIndex = 3; //start at 3 after subsystem parameter
+			paramIndex = 3;  // start at 3 after subsystem parameter
 			if(artdaqNode.second.size() > paramIndex)
 				xmlOut.addTextElementToParent(
-						typeString + "-multinode",
-						artdaqNode.second[paramIndex++], nodeEl);
+				    typeString + "-multinode", artdaqNode.second[paramIndex++], nodeEl);
+			if(artdaqNode.second.size() > paramIndex)
+				xmlOut.addTextElementToParent(typeString + "-nodefixedwidth",
+				                              artdaqNode.second[paramIndex++],
+				                              nodeEl);
 			if(artdaqNode.second.size() > paramIndex)
 				xmlOut.addTextElementToParent(
-						typeString + "-nodefixedwidth",
-						artdaqNode.second[paramIndex++], nodeEl);
+				    typeString + "-hostarray", artdaqNode.second[paramIndex++], nodeEl);
 			if(artdaqNode.second.size() > paramIndex)
-				xmlOut.addTextElementToParent(
-						typeString + "-hostarray",
-						artdaqNode.second[paramIndex++], nodeEl);
-			if(artdaqNode.second.size() > paramIndex)
-				xmlOut.addTextElementToParent(
-						typeString + "-hostfixedwidth",
-						artdaqNode.second[paramIndex++], nodeEl);
+				xmlOut.addTextElementToParent(typeString + "-hostfixedwidth",
+				                              artdaqNode.second[paramIndex++],
+				                              nodeEl);
 
-			paramIndex = 0; //return to starting parameter
+			paramIndex = 0;  // return to starting parameter
 			xmlOut.addTextElementToParent(
-					typeString + "-status", artdaqNode.second[paramIndex++], parentEl);
+			    typeString + "-status", artdaqNode.second[paramIndex++], parentEl);
 			xmlOut.addTextElementToParent(
-					typeString + "-hostname", artdaqNode.second[paramIndex++], parentEl);
+			    typeString + "-hostname", artdaqNode.second[paramIndex++], parentEl);
 			xmlOut.addTextElementToParent(
-					typeString + "-subsystem",artdaqNode.second[paramIndex], parentEl);
+			    typeString + "-subsystem", artdaqNode.second[paramIndex], parentEl);
 		}
 	}  // end processor type handling
 

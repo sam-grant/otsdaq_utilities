@@ -48,9 +48,9 @@ ARTDAQConfigurationAPI.NODE_TYPE_MONITOR 		= 4;
 ARTDAQConfigurationAPI.NODE_TYPE_ROUTER 		= 5;
 ARTDAQConfigurationAPI.NODE_TYPE_SUPERVISOR 	= 6;
 ARTDAQConfigurationAPI.NODE_TYPES 				= ["reader","builder",
-												   "logger","dispatcher","monitor","router","supervisor"];
+												   "logger","dispatcher","monitor","router","artdaqSupervisor"];
 ARTDAQConfigurationAPI.NODE_SHORT_TYPE_NAMES 	= ["Reader","Builder",
-												   "Logger","Dispatcher","Monitor","Router","Supervisor"];
+												   "Logger","Dispatcher","Monitor","Router","ARTDAQSupervisor"];
 ARTDAQConfigurationAPI.NODE_FULL_TYPE_NAMES 	= ["Board Reader","Event Builder",
 												   "Data Logger","Dispatcher","Monitor","Routing Master","ARTDAQ Supervisor"];
 ARTDAQConfigurationAPI.NODE_TYPE_ACRONYM 		= ["BR","EB",
@@ -60,6 +60,8 @@ ARTDAQConfigurationAPI.NODE_TYPE_BASE_TABLE		= ["ARTDAQBoardReaderTable","ARTDAQ
 												   "ARTDAQMonitorTable","ARTDAQRoutingMasterTable","ARTDAQSupervisorTable"];
 ARTDAQConfigurationAPI.DAQ_PARAMETER_TABLE		= "ARTDAQDaqParameterTable";
 ARTDAQConfigurationAPI.DAQ_METRIC_TABLE			= "ARTDAQMetricTable";
+
+ARTDAQConfigurationAPI.NULL_SUBSYSTEM			= "nullDestinationSubsystem";
 
 //"private" function list:
 
@@ -236,7 +238,7 @@ ARTDAQConfigurationAPI.getArtdaqNodes = function(responseHandler,
 			
 			var artdaqSupervisor = DesktopContent.getXMLNode(
 					req.responseXML,
-					"artdaqSupervisor");
+					types[ARTDAQConfigurationAPI.NODE_TYPE_SUPERVISOR]);
 			
 			if(artdaqSupervisor)
 			{
@@ -258,11 +260,11 @@ ARTDAQConfigurationAPI.getArtdaqNodes = function(responseHandler,
 
 						retObj[types[i]][artdaqSupervisorName] = {
 								"status" : DesktopContent.getXMLValue(artdaqSupervisor, 
-										artdaqSupervisorName + "-status") | 0, //integer 0 or 1
+										types[i] + "-status") | 0, //integer 0 or 1
 								"contextAddress" : DesktopContent.getXMLValue(artdaqSupervisor, 
-										artdaqSupervisorName + "-contextAddress"),
+										types[i] + "-contextAddress"),
 								"contextPort" : DesktopContent.getXMLValue(artdaqSupervisor, 
-										artdaqSupervisorName + "-contextPort"),
+										types[i] + "-contextPort"),
 						};
 						continue;
 					}

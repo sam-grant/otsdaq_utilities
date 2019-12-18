@@ -1,24 +1,23 @@
 #ifndef _ots_VisualSupervisor_h
 #define _ots_VisualSupervisor_h
 
-#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 #include "otsdaq-utilities/Visualization/VisualDataManager.h"
+#include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 //================ new Dario
-#include <unistd.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <iostream>
-#include <sstream>
 #include <map>
 #include <sstream>
+#include <xercesc/dom/DOM.hpp>
+#include <xercesc/framework/LocalFileFormatTarget.hpp>
+#include <xercesc/framework/StdOutFormatTarget.hpp>
+#include <xercesc/util/OutOfMemoryException.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XMLString.hpp>
-#include <xercesc/dom/DOM.hpp>
-#include <xercesc/util/OutOfMemoryException.hpp>
-#include <xercesc/framework/StdOutFormatTarget.hpp>
-#include <xercesc/framework/LocalFileFormatTarget.hpp>
 
 #if defined(XERCES_NEW_IOSTREAMS)
 #include <iostream>
@@ -49,16 +48,16 @@ class VisualSupervisor : public CoreSupervisorBase
 	// xgi::Output* out) override;  void 					safariDefaultPage (xgi::Input*
 	// in, xgi::Output* out) ;
 
-	virtual void request                      (const std::string               & requestType          ,
-	                                                 cgicc::Cgicc              & cgiIn                ,
-	                                                 HttpXmlDocument           & xmlOut               ,
-	                                           const WebUsers::RequestUserInfo & userInfo   ) override ;
+	virtual void request(const std::string&               requestType,
+	                     cgicc::Cgicc&                    cgiIn,
+	                     HttpXmlDocument&                 xmlOut,
+	                     const WebUsers::RequestUserInfo& userInfo) override;
 
-	virtual void setSupervisorPropertyDefaults(void                                         ) override ;
-	virtual void forceSupervisorPropertyValues(void                                         ) override ;  // override to force
-	                                                                                                     // supervisor property
-	                                                                                                     // values (and ignore user
-	                                                                                                     // settings)
+	virtual void setSupervisorPropertyDefaults(void) override;
+	virtual void forceSupervisorPropertyValues(void) override;  // override to force
+	                                                            // supervisor property
+	                                                            // values (and ignore user
+	                                                            // settings)
 
 	// RAR commented out below.. better/safer handling (of errors) done by
 	// CoreSupervisorBase
