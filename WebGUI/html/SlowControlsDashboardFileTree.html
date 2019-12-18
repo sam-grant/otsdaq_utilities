@@ -267,8 +267,8 @@
 					var a = document.createElement("a");
 					a.innerHTML = path.substring(0, path.search(".dat"));
 					a.href = "javascript:void(0)";
-					a.onclick = function(){
-						createFileContextMenu(event, fullPathToPage);
+					a.onclick = function(e){
+						createFileContextMenu(e, fullPathToPage);
 					};
 					//a.onclick = function(){parent.loadPage(fullPathToPage)};//"addPV()";// + pv + ')';
 
