@@ -1,11 +1,11 @@
 <!DOCTYPE HTML>
-<html lang="en"> 
+<html lang="en">
 	<head>
 		<title>Text</title>
-		<style type="text/css">			
+		<style type="text/css">		
 			body {
 				font: 10px arial;
-				//background-color: rgb(41,46,55);
+				background-color:  rgb(250, 250, 250);
 				//margin: 0px !important;
 			}
 
@@ -13,7 +13,7 @@
 			  display: grid;
 			  grid-template-columns: repeat(2, 1fr);
 			  //grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
-			  grid-gap: 10px;
+			  grid-gap: 0px;
 			  grid-auto-rows: minmax(100px, auto);
 			  //grid-auto-columns: 200px 200px;
 			}
@@ -53,7 +53,7 @@
 		<script src="https://d3js.org/d3.v5.min.js"></script>
 		<script type="text/javascript" src="libraries/thermometer.js"></script>
 
-		<script>		
+		<script>
 
 			//functions:
 			//init()
@@ -78,9 +78,10 @@
 				console.log("setupPVs() : " , settings);
 			}
 
-			var counter;
 			function newWidget(widget, parameters)
 			{
+				thermometers = [];
+				containers = [];
 				var olddiv = document.getElementById("dispaly-div");
 				if (olddiv != null)
 					document.getElementById("display").removeChild(olddiv);
@@ -93,7 +94,7 @@
 				for(var pv in widget.PVList)
 				{
 					var divtemp = document.createElement('div');
-					divtemp.style.color = "white";
+					//divtemp.style.color = "white";
 					//divtemp.style.fontSize = "auto"; //"3vw";
 					divtemp.innerHTML = "<center>" + pv;// + "</center>";
 					//divtemp.style.width = "100%";
@@ -126,16 +127,23 @@
 				return parameters;
 			}
 
+			function setParameters(attributes)
+			{
+				
+			}
+
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("Termometer newValue() reached", pvName, pvValue);
 				//updateThermometer(pvName, containers[pvName], pvValue, (pvValue * 0.5), (pvValue * 1.5));
-				containers[pvName].innerHTML = "<center>" +pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity;// + "</center>";
+				if(pvSeverity == "MAJOR" )
+					containers[pvName].innerHTML = "<center style = 'color: red'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+				else if(pvSeverity == "MINOR")
+					containers[pvName].innerHTML = "<center style = 'color: orange'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+				else
+					containers[pvName].innerHTML = "<center style = 'color: green'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
 
-				//thermometers[pvName].setCurrentValue(pvValue);
-				//thermometers[pvName].setMinValue((pvValue * 0.5));
-				//thermometers[pvName].setMaxValue((pvValue * 1.5));
-				thermometers[pvName].render(
+					thermometers[pvName].render(
 					containers[pvName],
 					pvValue,
 					(pvValue * 0.5),
