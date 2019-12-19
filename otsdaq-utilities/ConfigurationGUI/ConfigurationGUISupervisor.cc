@@ -6399,7 +6399,7 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 
 	if(accumulatedErrors != "")
 		xmlOut.addTextElementToData(
-		    "Error",
+		    "Warning",
 		    std::string("Column errors were allowed for this request, ") +
 		        "but please note the following errors:\n" + accumulatedErrors);
 }  // end handleTablesXML()
