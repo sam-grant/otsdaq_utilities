@@ -110,7 +110,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 	ReceiverSocket rsock(myip, myport);  // Take Port from Configuration
 	try
 	{
-		rsock.initialize(0x100000 /*socketReceiveBufferSize*/);
+		rsock.initialize(0xA00000 /*socketReceiveBufferSize*/);
 	}
 	catch(...)
 	{
