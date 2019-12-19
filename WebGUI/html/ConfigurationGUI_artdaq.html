@@ -177,6 +177,7 @@
 			//handleMouseMove(e)
 			//handleMouseUp(e)
 			//handleMouseDown(e)
+			//handleNodeHeaderMouseDown(e)
 		
 			//handlePointMouseUp(i,p,e)
 			//		localHandleCleanup()
@@ -1060,6 +1061,11 @@
 			Debug.log("Position found at x,y " + 
 					x + "," + y);
 			
+			if(y >= _grid.rows)
+				_grid.rows = y + 1;
+			if(x >= _grid.cols)
+				_grid.cols = x + 1;
+			
 			return [x,y];
 			
 		} //end getEmptyGridSpot()
@@ -1161,7 +1167,7 @@
 			//if selected nodes, offer delete
 			if(Object.keys(_selectedNodes).length)
 			{
-				Debug.log("Offering deletion of seleceted nodes...");
+				Debug.log("Offering deletion of selected nodes...");
 				var el = document.getElementById("Status");
 				var str = "";	//el.innerHTML;
 				
@@ -1720,7 +1726,7 @@
 				
 				//header text
 				str += "<div id='" + nodeid + 
-						"-headerText' class='node-headerText'>" +
+						"-headerText' class='node-headerText' onmousedown='handleNodeHeaderMouseDown' >" +
 						(_nodes[i].status?"":"<label style='color:red; font-size:inherit;'>*OFF*</label> ") +
 						(count > 1?(_nodes[i].nodeCount + "x "):"") + 
 						typeName + "::" + nodeName +
@@ -1999,6 +2005,16 @@
 					xg < _grid.cols && 
 					yg < _grid.rows)
 			{
+				//if directly over node-box, show grabbable hand
+				var pxy = [ _grid.x0 + xg * _grid.xstep,
+							_grid.y0 + yg * _grid.ystep];
+				var overNodeBox = false;
+				if(x > pxy[0] - _NODE_SIZE/2 && 
+						x < pxy[0] + _NODE_SIZE/2 &&
+						y > pxy[1] - _NODE_SIZE/2 &&
+						y < pxy[1] + _NODE_SIZE/2) 
+					overNodeBox = true;
+
 				if(_grid.rowColMap[xg] !== undefined &&
 					_grid.rowColMap[xg][yg] !== undefined)
 				{
@@ -2007,23 +2023,14 @@
 									
 					//Debug.log("Node over " + xg + "," + yg);
 					
-					//if over a filled spot, remove +			
-					_addNodeEl.style.left = "-1000px"; //off screen
-					
-					doNodeHover(_grid.rowColMap[xg][yg]);
-					
-					//if directly over node-box, show grabbable hand
-					var pxy = [ _grid.x0 + xg * _grid.xstep,
-								_grid.y0 + yg * _grid.ystep];
-					var overNodeBox = false;
-					if(x > pxy[0] - _NODE_SIZE/2 && 
-							x < pxy[0] + _NODE_SIZE/2 &&
-							y > pxy[1] - _NODE_SIZE/2 &&
-							y < pxy[1] + _NODE_SIZE/2) 
-						overNodeBox = true;
 					
 					if(overNodeBox)
 					{
+						//if over a filled spot, remove +			
+						_addNodeEl.style.left = "-1000px"; //off screen
+
+						doNodeHover(_grid.rowColMap[xg][yg]);
+
 						if(e.shiftKey) //indicate toggle selection
 							this.style.cursor = "pointer";
 						else
@@ -2034,7 +2041,7 @@
 
 					return;
 				}
-				else // else there is no node
+				else if(overNodeBox) // else there is no node
 				{		
 					//----------------------------
 					//if over empty grid position, show +
@@ -2054,20 +2061,27 @@
 					_addNodeEl.style.top =
 							((_grid.y0 + yg * _grid.ystep - sz/2) | 0) + "px";					
 				}
+				else if(_nodes && _mouseHoverNode >= 0 && _mouseHoverNode < _nodes.length &&
+						Math.abs(xg - _nodes[_mouseHoverNode].x) <= 1 &&
+						Math.abs(yg - _nodes[_mouseHoverNode].y) <= 1 )
+					return; //do nothing if close to hover node to avoid losing node edit/delete icons
 			}
 			else
 			{
 				//if not handled, remove +			
 				_addNodeEl.style.left = "-1000px"; //off screen
+
+				var pxy = [ _grid.x0 + xg * _grid.xstep,
+							_grid.y0 + yg * _grid.ystep];
 				
 				//add +/- row column icons
-				if(yg < 0) 
+				if(yg == -1 && y < pxy[1] - _NODE_SIZE/2) 
 					doNodeHover(-10); //show top icons
-				else if(xg >= _grid.cols)
+				else if(xg >= _grid.cols && x >= pxy[0] + _NODE_SIZE/2)
 					doNodeHover(-11); //show right icons
-				else if(yg >= _grid.rows)
+				else if(yg >= _grid.rows && y >= pxy[1] + _NODE_SIZE/2)
 					doNodeHover(-12); //show top icons
-				else if(xg < 0)
+				else if(xg == -1 && x < pxy[0] - _NODE_SIZE/2)
 					doNodeHover(-13); //show left icons
 				
 				return;
@@ -2256,9 +2270,28 @@
 		} //end handleMouseUp()
 
 		//=====================================================================================
+		//handleNodeHeaderMouseDown ~~
+		function handleNodeHeaderMouseDown(e) 
+		{	
+			Debug.log("header down");
+		} //end handleNodeHeaderMouseDown()
+				
+		//=====================================================================================
 		//handleMouseDown ~~
 		function handleMouseDown(e) 
 		{	
+			if(_nodes && _mouseHoverNode >= 0 && _mouseHoverNode < _nodes.length)
+			{
+				//check if mouse down is in node header text and ignore
+				var xg = ((e.clientX - _grid.x0 + _grid.xstep/2)/_grid.xstep) |0;
+				var yg = ((e.clientY - _grid.y0 + _grid.ystep/2)/_grid.ystep) |0;
+				yg -= _nodes[_mouseHoverNode].y;
+				xg -= _nodes[_mouseHoverNode].x;
+				if((yg == 0 || yg == -1) && 
+						(xg >= -1 && xg <= 1))
+					return;
+			}
+			
 			if(_mouseMoveMode == _MMM_POPUP_DIALOG) return; //ignore!
 				
 			e.stopPropagation();
