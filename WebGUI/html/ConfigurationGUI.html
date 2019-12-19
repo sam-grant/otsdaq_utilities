@@ -15106,7 +15106,7 @@
 						menuItems,
 						menuItemHandlers,
 						"editTableMenu",					//element ID
-						x, event.pageY - 10, 				//top left position
+						x, e.pageY - 10, 				//top left position
 						_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
 						_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
 				);
@@ -15132,8 +15132,8 @@
 				groupAliasesName + "\",\"" +
 				groupAliasesVersion + "\",\"" + backLinkStr + "\")",
 				"createSystemViewMenu(0,0,0,0," +
-				(event.pageX - 1) + "," +
-				(event.pageY - 1) + ", 1 /*artdaq GUI mode*/);",
+				(e.pageX - 1) + "," +
+				(e.pageY - 1) + ", 1 /*artdaq GUI mode*/);",
 				"toggleVersionTracking();",
 				"flattenToSystemAliases();",
 				"mergeGroupsDialog();",
@@ -15146,7 +15146,7 @@
 				menuItems,
 				menuItemHandlers,
 				"editTableMenu",					//element ID
-				event.pageX - 1, event.pageY - 1, 		//top left position
+				e.pageX - 1, e.pageY - 1, 		//top left position
 				_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
 				_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
 			);
