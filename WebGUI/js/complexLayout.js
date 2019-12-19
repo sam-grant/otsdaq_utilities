@@ -60,91 +60,99 @@ function()
                  }
  
  //--------------------------------------------------------------------------------------------------
+ // Hash elementa are addressed by an index of type canvasx_y where x is the currentCanvas_ and y is currentPad_
  var theProvenance_ = {
-                       fSystemPath_   : [],                                                 
-                       fRootPath_     : [],                                                 
-                       fFoldersPath_  : [],                                                 
-                       fFileName_     : [],                                                 
-                       fHistName_     : [],                                                 
-                       fRFoldersPath_ : [],                                                 
-                       setSystemPath  : function(SystemPath)                                
+                       fSystemPath_   : {},                                                 
+                       fRootPath_     : {},                                                 
+                       fFoldersPath_  : {},                                                 
+                       fFileName_     : {},                                                 
+                       fHistName_     : {},                                                 
+                       fRFoldersPath_ : {},                                                 
+                       setSystemPath  : function(SystemPath  , frame)                                
                                         { 
-                                         if( typeof SystemPath   === "undefined" ) this.fSystemPath_  .push("")
-                                         else                                      this.fSystemPath_  .push(SystemPath)  ;                   
+                                         if( typeof SystemPath   === "undefined" ) this.fSystemPath_  [frame]=""
+                                         else                                      this.fSystemPath_  [frame]=SystemPath  ;
+                                         STDLINE("%%%%%%%%%%%%%%%%%%%%%%%%% frame: "+frame+" "+ this.fSystemPath_  [frame]) ;               
                                         },                                                   
-                       setRootPath    : function(RootPath)                                   
+                       setRootPath    : function(RootPath    , frame)                                     
                                         {                                                    
-                                         if( typeof RootPath     === "undefined" ) this.fRootPath_    .push("") 
-                                         else                                      this.fRootPath_    .push(RootPath)    ;                   
+                                         if( typeof RootPath     === "undefined" ) this.fRootPath_    [frame]="" 
+                                         else                                      this.fRootPath_    [frame]=RootPath    ;                 
                                         },                                                   
-                       setFoldersPath : function(FoldersPath)                                
+                       setFoldersPath : function(FoldersPath , frame)                                
                                         {                                                    
-                                         if( typeof FoldersPath  === "undefined" ) this.fFoldersPath_ .push("") 
-                                         else                                      this.fFoldersPath_ .push(FoldersPath) ;                    
+                                         if( typeof FoldersPath  === "undefined" ) this.fFoldersPath_ [frame]="" 
+                                         else                                      this.fFoldersPath_ [frame]=FoldersPath ;                   
                                         },                                                   
-                       setFileName    : function(FileName)                                   
+                       setFileName    : function(FileName    , frame)                                    
                                         {                                                    
-                                         if( typeof FileName     === "undefined" ) this.fFileName_    .push("")           
-                                         else                                      this.fFileName_    .push(FileName)    ;              
+                                         if( typeof FileName     === "undefined" ) this.fFileName_    [frame]=""           
+                                         else                                      this.fFileName_    [frame]=FileName    ;             
                                         },                                                   
-                       setHistName    : function(HistName)                                   
+                       setHistName    : function(HistName    , frame)                                    
                                         {                                                    
-                                         if( typeof HistName     === "undefined" ) this.fHistName_    .push("") 
-                                         else                                      this.fHistName_    .push(HistName)    ;              
+                                         if( typeof HistName     === "undefined" ) this.fHistName_    [frame]="" 
+                                         else                                      this.fHistName_    [frame]=HistName    ;             
                                         },                                                   
-                       setRFoldersPath: function(RFoldersPath)                              
-                                        {                                                   
-                                         if( typeof RFoldersPath === "undefined" ) this.fRFoldersPath_.push("") 
-                                         else                                      this.fRFoldersPath_.push(RFoldersPath);                   
+                       setRFoldersPath: function(RFoldersPath, frame)                              
+                                        {                                                    
+                                         if( typeof RFoldersPath === "undefined" ) this.fRFoldersPath_[frame]="" 
+                                         else                                      this.fRFoldersPath_[frame]=RFoldersPath;                   
                                         },                                                  
                        getPathsNumber : function()
                                         {
-                                         return this.fSystemPath_.length ;
+                                         return Object.keys(this.fSystemPath_).length ;
                                         },
-                       getSystemPath  : function(index)                              
+                       getSystemPath  : function(frame)                              
                                         {  
-                                         STDLINE("^^^^^^  fSystemPath_["+index+"]: "+this.fSystemPath_[index]) ;                                                
-                                         return this.fSystemPath_  [index] ;                    
+                                         return this.fSystemPath_  [frame] ;                    
                                         },                                            
-                       getRootPath    : function(index)                          
+                       getRootPath    : function(frame)                          
                                         {                                             
-                                         return this.fRootPath_    [index] ;                    
+                                         return this.fRootPath_    [frame] ;                    
                                         },                                            
-                       getFoldersPath : function(index)                       
+                       getFoldersPath : function(frame)                       
                                         {                                             
-                                         return this.fFoldersPath_ [index] ;                     
+                                         return this.fFoldersPath_ [frame] ;                     
                                         },                                             
-                       getFileName    : function(index)                           
+                       getFileName    : function(frame)                           
                                         {                                             
-                                         return this.fFileName_    [index] ;                     
+                                         return this.fFileName_    [frame] ;                     
                                         },                                            
-                       getHistName    : function(index)                           
+                       getHistName    : function(frame)                           
                                         {                                             
-                                         return this.fHistName_    [index] ;                     
+                                         return this.fHistName_    [frame] ;                     
                                         },                                            
-                       getRFoldersPath: function(index)                       
+                       getRFoldersPath: function(frame)                       
                                         {                                             
-                                         return this.fRFoldersPath_[index] ;                      
+                                         return this.fRFoldersPath_[frame] ;                      
                                         },                                                  
-                       dump           : function(fromWhere)                                 
+                       dumpAll        : function(fromWhere)                                 
                                         {                                                   
-                                         const e = new Error()                                     ;
-                                         const a = e.stack.split("\n")[1]                          ;
-                                         const w = a.split("/")                                    ;
-                                         const s = w.length -1                                     ;
-                                         const l = w[s].split(":")[1]                              ;
-                                         for(var i=0; i<this.fSystemPath_.length; i++)
+                                         for(var i in this.fSystemPath_)
                                          {
-                                          STDLINE("----------- Line: " + l + "-----------"        );
-                                          STDLINE("From: '"+fromWhere+"' (index: "+i+")"          );
+                                          STDLINE("--------------------------------------"        );
+                                          STDLINE("From: '"+fromWhere+"' ("+i+ ")"                );
                                           STDLINE("   --> fSystemPath_  : "+this.fSystemPath_  [i]); 
                                           STDLINE("   --> fRootPath_    : "+this.fRootPath_    [i]); 
                                           STDLINE("   --> fFoldersPath_ : "+this.fFoldersPath_ [i]); 
                                           STDLINE("   --> fFileName_    : "+this.fFileName_    [i]); 
                                           STDLINE("   --> fRFoldersPath_: "+this.fRFoldersPath_[i]); 
                                           STDLINE("   --> fHistName_    : "+this.fHistName_    [i]); 
-                                          STDLINE("--------------------------------------"     [i]); 
+                                          STDLINE("--------------------------------------"        ); 
                                          }
+                                        },                                                   
+                       dump           : function(fromWhere, i)                                 
+                                        {                                                   
+                                         STDLINE("--------------------------------------"         );
+                                         STDLINE("From: '"+fromWhere+"' ("+i+ ")"                 );
+                                         STDLINE("   --> fSystemPath_  : "+this.fSystemPath_  [i] );
+                                         STDLINE("   --> fRootPath_    : "+this.fRootPath_    [i] );
+                                         STDLINE("   --> fFoldersPath_ : "+this.fFoldersPath_ [i] );
+                                         STDLINE("   --> fFileName_    : "+this.fFileName_    [i] );
+                                         STDLINE("   --> fRFoldersPath_: "+this.fRFoldersPath_[i] );
+                                         STDLINE("   --> fHistName_    : "+this.fHistName_    [i] );
+                                         STDLINE("--------------------------------------"         );
                                         }                                                   
                       } ;                                                                   
 
@@ -156,16 +164,16 @@ function()
                                           nDivX     : 1        ,
                                           nDivY     : 1        ,
                                           divPos    : 1        ,
-                                          objects   : []       ,
-                                          provenance: []
+                                          objects   : {}       ,
+                                          provenance: {}
                                          },
                                          {
                                           canvasName: 'canvas2',
                                           nDivX     : 1        ,
                                           nDivY     : 1        ,
                                           divPos    : 1        ,
-                                          objects   : []       ,
-                                          provenance: []
+                                          objects   : {}       ,
+                                          provenance: {}
                                          }
                                         ],
                         currentCanvas : 0  ,
@@ -180,40 +188,38 @@ function()
                                                              nDivX     : 1           ,
                                                              nDivY     : 1           ,
                                                              divPos    : 1           ,
-                                                             objects   : []          ,
-                                                             provenance: []
+                                                             objects   : {}          ,
+                                                             provenance: {}
                                                             }
                                         },  
-                        addROOTObject : function(canvasNumber, object, theProvenance)
+                        addROOTObject : function(canvasNumber, frame, object, theProvenance)
                                         {
-                                         canvasNumber--                                            ; // Canvas array starts from zero!
-                                         if( canvasNumber > this.canvases.length-1 ) return        ;
-                                         var n = this.canvases[canvasNumber].objects.length        ;
-                                         for(var i=0; i<n; i++)
-                                         { 
-                                          var o = this.canvases[canvasNumber].objects[i]           ;
-                                          if(o.fName == object.fName ) 
-                                          {
-                                           STDLINE("Object "+object.fName+" already there")        ;
-                                           return ;
-                                          }
-                                         }
-                                         this.canvases[canvasNumber].objects.push(object)          ;
-                                         this.canvases[canvasNumber].provenance.push(theProvenance);
+                                         canvasNumber-- 
+                                         if( canvasNumber > this.canvases.length-1      ) return   ;
+                                         var t = this.canvases[canvasNumber]                       ; // Canvas array starts from zero!
+                                         if( t.objects[frame] ) return                             ;
+                                         t.objects    [frame] = object                             ;
+                                         t.provenance [frame] = theProvenance                      ;
                                         },
                         getROOTObjects: function(canvasNumber)
                                         {
                                          canvasNumber--                                            ;
-                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         if( canvasNumber > this.canvases.length-1      ) return   ;
                                          return this.canvases[canvasNumber].objects                ;
+                                        },
+                        getROOTObject:  function(canvasNumber,padNumber)
+                                        {
+                                         canvasNumber--                                            ;
+                                         if( canvasNumber > this.canvases.length-1      ) return   ;
+                                         return this.canvases[canvasNumber].objects[padNumber]     ;
                                         },
                         clearCanvas   : function(canvasNumber)
                                         {
                                          canvasNumber--                                            ;
-                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         if( canvasNumber > this.canvases.length-1      ) return   ;
                                          currentPad_ = 0                                           ;
                                          this.canvases[canvasNumber].objects.length = 0            ;
-                                         this.canvases[canvasNumber].objects        = []           ;
+                                         this.canvases[canvasNumber].objects        = {}           ;
                                         },  
                         removeCanvas  : function(canvasNumber)
                                         {
@@ -224,47 +230,47 @@ function()
                         changenDivX   : function(canvasNumber, newnDivX)
                                         {
                                          canvasNumber--                                            ;
-                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         if( canvasNumber > this.canvases.length-1      ) return   ;
                                          this.canvases[canvasNumber].nDivX = newnDivX              ;
                                         },
                         changenDivY   : function(canvasNumber, newnDivY)
                                         {
                                          canvasNumber--                                            ;
-                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         if( canvasNumber > this.canvases.length-1      ) return   ;
                                          this.canvases[canvasNumber].nDivY = newnDivY              ;
                                         },
                         setnDivX      : function(canvasNumber, newValue)
                                         {
                                          canvasNumber--                                            ;
-                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         if( canvasNumber > this.canvases.length-1      ) return   ;
                                          STDLINE("setting divX: "+newValue)                        ;
                                          this.canvases[canvasNumber].nDivX = newValue              ;
                                         },                
                         getnDivX      : function(canvasNumber)
                                         {
                                          canvasNumber--                                            ;
-                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         if( canvasNumber > this.canvases.length-1      ) return   ;
                                          STDLINE("divX: "+this.canvases[canvasNumber].nDivX)       ;
                                          return this.canvases[canvasNumber].nDivX                  ;
                                         },                
                         setnDivY      : function(canvasNumber, newValue)
                                         {
                                          canvasNumber--                                            ;
-                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         if( canvasNumber > this.canvases.length-1      ) return   ;
                                          STDLINE("setting divY: "+newValue)                        ;
                                          this.canvases[canvasNumber].nDivY = newValue              ;
                                         },                
                         getnDivY      : function(canvasNumber)
                                         {
                                          canvasNumber--                                            ;
-                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         if( canvasNumber > this.canvases.length-1      ) return   ;
                                          STDLINE("divY: "+this.canvases[canvasNumber].nDivY)       ;
                                          return this.canvases[canvasNumber].nDivY                  ;
                                         },                
                         setDivPosition: function(canvasNumber, posX, posY)
                                         {
                                          canvasNumber--                                            ;
-                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         if( canvasNumber > this.canvases.length-1       ) return  ;
                                          var nx   = this.canvases[canvasNumber].nDivX              ;
                                          var ny   = this.canvases[canvasNumber].nDivY              ;
                                          if( posX > nx || posY > ny ) return                       ;
@@ -280,15 +286,16 @@ function()
                                          for(var i=0; i<this.canvases.length; i++)
                                          {
                                           var theC = this.canvases[i] ;
+                                          STDLINE(" ---"                                                     ) ;
                                           STDLINE(" name   : "+theC.canvasName                               ) ;
                                           STDLINE(" divs   : "+theC.nDivX+"x"+theC.nDivY                     ) ;
-                                          STDLINE(" objects: "+theC.objects.length                           ) ;
-                                          for( var j=0; j<theC.objects.length; j++)
+                                          STDLINE(" objects: "+Object.keys(theC.objects).length              ) ;
+                                          for( var j in theC.objects)
                                           {
-                                           STDLINE("   object "    + j                         +
-                                                   " title     : " + theC.objects[j].fTitle    +
-                                                   " name      : " + theC.objects[j].fName     +
-                                                   " provenance: " + theC.provenance[j].dump("theCanvasModel_.dump()")) ;
+                                           STDLINE("   object #: " + j                      +
+                                                   " title: "      + theC.objects[j].fTitle +
+                                                   " name: "       + theC.objects[j].fName                   ) ; 
+                                           STDLINE(" provenance: " + theC.provenance[j].dump("-",j)          ) ; 
                                           }
                                          }
                                          STDLINE("==========================================================") ;
@@ -300,18 +307,19 @@ function()
  function changeHistogramPanelSize(thisPanel, width, height, from)      
  {
   var ROOTObjects = theCanvasModel_.getROOTObjects(currentCanvas_) ;
-  STDLINE("New canvas size: "       +
-          width                     +
-          "x"                       +
-          height                    +
-          " for "+ROOTObjects.length+
+  STDLINE("New canvas size: "             +
+          width                           +
+          "x"                             +
+          height                          +
+          " for "                         +
+          Object.keys(ROOTObjects).length +
           " objects"                                             );
   var div = document.getElementById(getCanvasDiv_(currentCanvas_));
   div.style.width  = width  - 20                                  ;
   div.style.height = height - 30                                  ;
-  for(var i=0; i<ROOTObjects.length; i++)
+  for(var i in ROOTObjects)
   {
-   displayPlot_(currentCanvas_,ROOTObjects[i])                    ;
+   displayPlot_(ROOTObjects[i])                                   ;
   }
  } 
              
@@ -691,21 +699,25 @@ function()
                                    items       : [
                                                   {
                                                    title     : 'FileSystem navigation'                            ,
-                                                   id        : 'navigatorDiv'                                     ,
-                                                   autoScroll: true                                               ,
+                                                   id        : 'navigatorDiv'                                           ,
+                                                   autoScroll: true                                                     ,
                                                    tools     : [
                                                                 {
-                                                                 type   : 'left'                                  ,
-                                                                 tooltip: 'Go back to list of folders and files'  ,
+                                                                 type   : 'left'                                        ,
+                                                                 tooltip: 'Go back to list of folders and files'        ,
                                                                  handler: function()
                                                                           {
                                                                            if( currentTree_ = 'fileContent' )
                                                                            {
-                                                                            selectedItem_ = "getDirectories"       ;
-                                                                            makeStore(theProvenance_.getRootPath(), 
-                                                                                      'RequestType=getMeDirs'    ) ;
-                                                                            makeGrid (theProvenance_.getRootPath(), 
-                                                                                      'Directories and files'    ) ;
+                                                                            selectedItem_ = "getDirectories"             ;
+                                                                            var thePad    = 'canvas'                    + 
+                                                                                            currentCanvas_              + 
+                                                                                            '_'                         + 
+                                                                                            currentPad_                  ;
+                                                                            makeStore(theProvenance_.getRootPath(thePad), 
+                                                                                      'RequestType=getMeDirs'          ) ;
+                                                                            makeGrid (theProvenance_.getRootPath(thePad), 
+                                                                                      'Directories and files'          ) ;
                                                                            }
                                                                           }
                                                                 },
@@ -830,27 +842,31 @@ function()
                               listeners   : {
                                              select    : function(thisCombo, record, eOpts)
                                                          {
-                                                          var thisRootPath = record.data.dir      ;
-                                                          theProvenance_.setRootPath(thisRootPath);
-                                                          STDLINE("fRootPath_: "+thisRootPath    );
-                                                          selectedItem_ = "getDirectories"        ;
+                                                          var thisRootPath = record.data.dir             ;
+                                                          var thePad       = 'canvas'                   + 
+                                                                             currentCanvas_             + 
+                                                                             '_'                        + 
+                                                                             currentPad_                 ;
+                                                          theProvenance_.setRootPath(thisRootPath,thePad);
+                                                          STDLINE("fRootPath_: "+thisRootPath           );
+                                                          selectedItem_ = "getDirectories"               ;
                                                           makeStore(thisRootPath, 
-                                                                    'RequestType=getMeDirs'      );
+                                                                    'RequestType=getMeDirs'             );
                                                           makeGrid (thisRootPath,              
-                                                                    'Directories and files'      );
+                                                                    'Directories and files'             );
                                                          },
                                              focusleave: function (thisCombo) 
                                                          {
-                                                          STDLINE('remove  selection listener'   );
-                                                          theSourcesCB_.suspendEvent('select'    );
-                                                          STDLINE('removed selection listener'   );
+                                                          STDLINE('remove  selection listener'          );
+                                                          theSourcesCB_.suspendEvent('select'           );
+                                                          STDLINE('removed selection listener'          );
                                                          },
                                              focusenter: function (thisCombo) 
                                                          {
-                                                          STDLINE('reinstate  selection listener');
-                                                          thisCombo.resumeEvent('select'         );
-                                                          theSourcesCB_.resumeEvent('select'     );
-                                                          STDLINE('reinstated selection listener');
+                                                          STDLINE('reinstate  selection listener'       );
+                                                          thisCombo.resumeEvent('select'                );
+                                                          theSourcesCB_.resumeEvent('select'            );
+                                                          STDLINE('reinstated selection listener'       );
                                                          }
                                             }
                              }
@@ -953,59 +969,63 @@ function()
                                                 },                                   
                                     itemclick : function(thisItem, record, item, index, e, eOpts)
                                                 {
-                                                 var selection = this.getSelection()                             ;
-                                                 STDLINE("Selected "+selection.length+" items")                  ;
+                                                 var selection = this.getSelection()                                    ;
+                                                 STDLINE("Selected "+selection.length+" items")                         ;
+                                                 var thePad = 'canvas' + currentCanvas_ + '_' + currentPad_ ;
                                                  for(var i=0; i<selection.length; i++)  
                                                  {  
-                                                  theProvenance_.setSystemPath  (selection[i].data.fSystemPath  )   ;
-                                                  theProvenance_.setRootPath    (selection[i].data.fRootPath    )   ;
-                                                  theProvenance_.setFoldersPath (selection[i].data.fFoldersPath )   ;
-                                                  theProvenance_.setFileName    (selection[i].data.fFileName    )   ;
-                                                  theProvenance_.setRFoldersPath(selection[i].data.fRFoldersPath)   ;
-                                                  theProvenance_.setHistName    (selection[i].data.fHistName    )   ;
-                                                  theProvenance_.dump("Item selected")                              ;
+                                                  theProvenance_.setSystemPath  (selection[i].data.fSystemPath  ,thePad);
+                                                  theProvenance_.setRootPath    (selection[i].data.fRootPath    ,thePad);
+                                                  theProvenance_.setFoldersPath (selection[i].data.fFoldersPath ,thePad);
+                                                  theProvenance_.setFileName    (selection[i].data.fFileName    ,thePad);
+                                                  theProvenance_.setRFoldersPath(selection[i].data.fRFoldersPath,thePad);
+                                                  theProvenance_.setHistName    (selection[i].data.fHistName    ,thePad);
+                                                  theProvenance_.dump("Item selected")                                  ;      
                                                  }  
-                                                 STDLINE("Selected     : "+selection.length+" items")               ;
-                                                 STDLINE("selectedItem_: "+selectedItem_            )               ;
-                                                 //clearInterval(periodicPlotID_)                                   ;
-                                                 var itemSplit     = item.innerText.split("\n\t\n")                 ;
-                                                 var isLeaf        = itemSplit[1].replace("\n","").replace("\t","") ;
+                                                 STDLINE("Selected     : "+selection.length+" items")                   ;      
+                                                 STDLINE("selectedItem_: "+selectedItem_            )                   ;      
+                                                 //clearInterval(periodicPlotID_)                                       ;      
+                                                 var itemSplit     = item.innerText.split("\n\t\n")                     ;      
+                                                 var isLeaf        = itemSplit[1].replace("\n","").replace("\t","")     ;      
+                                                 var thePad        = 'canvas'                                          + 
+                                                                     currentCanvas_                                    + 
+                                                                     '_'                                               + 
+                                                                     currentPad_                                        ;
                                                  if( isLeaf == "true" ) 
                                                  {
                                                   if( selectedItem_ == "getDirectories" )
                                                   {
-                                                   treeDisplayField_  = 'fDisplayName'                              ;
-                                                   selectedItem_      = "getRootObject"                             ;
-                                                   currentTree_       = 'fileContent'                               ;
-                                                   var last = theProvenance_.getPathsNumber() - 1                   ;
-                                                   STDLINE("Last index: "+last)                                     ;
-                                                   currentDirectory_ = theProvenance_.getSystemPath (last)         +
-                                                                       '/'                                         +
-                                                                       theProvenance_.getRootPath   (last)         +
-                                                                       "/"                                         +
-                                                                       theProvenance_.getFoldersPath(last)         +
-                                                                       "/"                                         +
-                                                                       theProvenance_.getFileName   (last)          ;
-                                                   STDLINE('RequestType      : getMeRootFile'     )                 ;
-                                                   STDLINE('currentDirectory_: '+currentDirectory_)                 ;
-                                                   makeStore(currentDirectory_,'RequestType=getMeRootFile')         ;
-                                                   makeGrid (currentDirectory_,'ROOT file content'        )         ;
+                                                   treeDisplayField_  = 'fDisplayName'                                  ;       
+                                                   selectedItem_      = "getRootObject"                                 ;       
+                                                   currentTree_       = 'fileContent'                                   ;       
+                                                   STDLINE("currentPad_: "+currentPad_)                                 ;       
+                                                   STDLINE("Paths: "+  theProvenance_.getPathsNumber(thePad))           ;       
+                                                   currentDirectory_ = theProvenance_.getSystemPath (thePad)           +        
+                                                                       '/'                                             +        
+                                                                       theProvenance_.getRootPath   (thePad)           +        
+                                                                       "/"                                             +        
+                                                                       theProvenance_.getFoldersPath(thePad)           +        
+                                                                       "/"                                             +        
+                                                                       theProvenance_.getFileName   (thePad)            ;       
+                                                   STDLINE('RequestType      : getMeRootFile'     )                     ;       
+                                                   STDLINE('currentDirectory_: '+currentDirectory_)                     ;       
+                                                   makeStore(currentDirectory_,'RequestType=getMeRootFile')             ;       
+                                                   makeGrid (currentDirectory_,'ROOT file content'        )             ;       
                                                   }
                                                   else if( selectedItem_ == "getRootObject" )
                                                   { 
-                                                   theProvenance_.dump("getRootObject")                             ;
-                                                   var last = theProvenance_.getPathsNumber() - 1                   ;
-                                                   currentRootObject_  = "/"                                       +
-                                                                         theProvenance_.getRootPath    (last)      +
-                                                                         "/"                                       +
-                                                                         theProvenance_.getFoldersPath (last)      +
-                                                                         theProvenance_.getFileName    (last)      +
-                                                                         "/"                                       +
-                                                                         theProvenance_.getRFoldersPath(last)      +
-                                                                         "/"                                       +
-                                                                         theProvenance_.getHistName    (last)       ;
-                                                   STDLINE('RequestType       : getRootObject'      )               ;
-                                                   STDLINE('currentRootObject_: '+currentRootObject_)               ;
+                                                   //theProvenance_.dump("getRootObject")                                ;      
+                                                   currentRootObject_  = "/"                                           +        
+                                                                         theProvenance_.getRootPath    (thePad)        +    
+                                                                         "/"                                           +        
+                                                                         theProvenance_.getFoldersPath (thePad)        +    
+                                                                         theProvenance_.getFileName    (thePad)        +    
+                                                                         "/"                                           +        
+                                                                         theProvenance_.getRFoldersPath(thePad)        +    
+                                                                         "/"                                           +        
+                                                                         theProvenance_.getHistName    (thePad)         ;    
+                                                   STDLINE('RequestType       : getRootObject'      )                   ;        
+                                                   STDLINE('currentRootObject_: '+currentRootObject_)                   ;        
                                                    theAjaxRequest(
                                                                   _requestURL+"RequestType=getRoot",
                                                                   {                                                           
@@ -1075,6 +1095,10 @@ function()
   STDLINE("path       : " + path       ) ;
   STDLINE("reqType    : " + reqType    ) ;
   STDLINE("_requestURL: " + _requestURL) ;
+  var thePad    = 'canvas'              + 
+                  currentCanvas_        + 
+                  '_'                   + 
+                  currentPad_            ;
   theStore_ = Ext.create(
                          'Ext.data.TreeStore', 
                          {
@@ -1090,12 +1114,12 @@ function()
                                                       read          : 'POST'
                                                      }, 
                                       extraParams  : { 
-                                                      "CookieCode"  : _cookieCode                                                     ,
-                                                      "Path"        : path                                                            ,
-                                                      "fRootPath"   : theProvenance_.getRootPath   (theProvenance_.getPathsNumber()-1),
-                                                      "fFoldersPath": theProvenance_.getFoldersPath(theProvenance_.getPathsNumber()-1),
-                                                      "fHistName"   : theProvenance_.getHistName   (theProvenance_.getPathsNumber()-1),
-                                                      "fFileName"   : theProvenance_.getFileName   (theProvenance_.getPathsNumber()-1)
+                                                      "CookieCode"  : _cookieCode                          ,
+                                                      "Path"        : path                                 ,
+                                                      "fRootPath"   : theProvenance_.getRootPath   (thePad),
+                                                      "fFoldersPath": theProvenance_.getFoldersPath(thePad),
+                                                      "fHistName"   : theProvenance_.getHistName   (thePad),
+                                                      "fFileName"   : theProvenance_.getFileName   (thePad)
                                                      },
                                       url          : _requestURL + reqType,
                                       reader       : {
@@ -1160,8 +1184,7 @@ function()
                                var rootName  = getXMLValue (response,"path"    );                     
                                var rootJSON  = getXMLValue (response,"rootJSON");                 
                                var object    = JSROOT.parse(rootJSON           );
-                               displayPlot_                 (currentCanvas_    ,
-                                                             object            );
+                               displayPlot_                 (object            );
                               }
                              },                                                                                                           
                     failure: function(response, options)                                                                                  
@@ -1178,7 +1201,7 @@ function()
  } ; 
  
  //-----------------------------------------------------------------------------
- displayPlot_ = function(currentCanvas_,object)
+ displayPlot_ = function(object)
                 {
                  if( ! object ) return ;
                  var nx        = theCanvasModel_.getnDivX   (currentCanvas_)  ;
@@ -1187,16 +1210,17 @@ function()
                  mdi_ = new JSROOT.GridDisplay(getCanvasDiv_(currentCanvas_) , 
                                                              gridDivision_ )  ;
                  if (mdi_!=null) theFrame = mdi_.FindFrame(  currentPad_     , 
-                                                             false           );
+                                                             false         )  ;
                  if( nx == 1 & ny == 1 ) 
                  {
                   theFrame = 'canvas' + currentCanvas_                        ;
                  } else {
                   theFrame = 'canvas' + currentCanvas_ + '_' + currentPad_    ;
                  }
-                 theCanvasModel_.addROOTObject(currentCanvas_                ,
-                                               object                        ,
-                                               theProvenance_                );
+                 theCanvasModel_.addROOTObject(currentCanvas_    ,
+                                               theFrame          ,
+                                               object            ,
+                                               theProvenance_    );
                  STDLINE("Plotting "+object._typename+": "+object.fTitle)     ;
                  if( superimposeFlag_ )
                  {
@@ -1208,6 +1232,7 @@ function()
                                ); 
                  } else {
                   STDLINE("Do NOT superimpose on "+theFrame+"...") ;
+                  if( nx == 1 & ny == 1 ) JSROOT.cleanup(getCanvasDiv_(currentCanvas_))    ;
                   JSROOT.redraw(
                                 theFrame,
                                 object  ,
