@@ -1,10 +1,11 @@
 
 ///////////-----------------
 var _allAppsArray;// leave undefined to indicate first time in getAppsArray()
-var _allContextNames = new Array();
-var _allClassNames = new Array();
-var _arrayOnDisplayTable = new Array(); // has the array values currently displayed on the table
-var intersectionArray = new Array();
+var _allContextNames 		= {}; //use map for unique keys
+var _allClassNames 			= {}; //use map for unique keys
+var _allHostNames 			= {}; //use map for unique keys
+var _arrayOnDisplayTable 	= new Array(); // has the array values currently displayed on the table
+var intersectionArray 		= new Array();
 				
 //functions:			
     // init()
@@ -17,11 +18,13 @@ var intersectionArray = new Array();
     // ========= filtering functions =============
     // createFilterList()
     // collapsibleList()
+	// filterByClickingOnItem()
     // selectAll()
     // filterUsingCheckBox()
     // filter()
-    // getFilteredArray()
-    // isEquivalent()
+    // getFilteredArray(className)
+    // isEquivalent(a, b)
+	// setIntersection(list1, list2)
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -57,119 +60,142 @@ function init()
             setTimeout(function(){
                 updateAppsArray();
             }, 4000);
-
             
         });
-
     
-    return;
 } // end of init()
 
 //=====================================================================================
 // The function below gets the available context names from the server
 function getContextNames()
 {
+	return new Promise(function(resolve, reject)
+			{
+		//get context
+		DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
+				function (req) 
+				{	
+			var memberNames = req.responseXML.getElementsByTagName("ContextMember");
 
-    return new Promise(function(resolve, reject){
-        //get context
-        DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
-            function (req) 
-            {	
-                var memberNames = req.responseXML.getElementsByTagName("ContextMember");
-                _allContextNames = new Array(); //reset
+			_allContextNames = {}; //reset and treat as count
 
-                for(var i=0;i<memberNames.length;++i)
-                {
-                    _allContextNames.push(memberNames[i].getAttribute("value"));
-                }
-                // Debug.log(_allContextNames);
-                if(_allContextNames.length == 0)
-                {
-                    Debug.log("Empty context member list found!",Debug.HIGH_PRIORITY);
-                    reject("Empty context member list found!");
-                }
-                
-                
-                // return _allContextNames
-                resolve(_allContextNames);
-            }); //end request handler
+			for(var i=0;i<memberNames.length;++i)
+				if(_allContextNames[memberNames[i].getAttribute("value")])
+					++_allContextNames[memberNames[i].getAttribute("value")];
+				else
+					_allContextNames[memberNames[i].getAttribute("value")] = 1;
 
-    }); // end of Promise
+			console.log("_allContextNames",Object.keys(_allContextNames).length,_allContextNames);
 
-}// end of getContextNames()
+			if(Object.keys(_allContextNames).length == 0)
+			{
+				Debug.log("Empty context member list found!",Debug.HIGH_PRIORITY);
+				reject("Empty context member list found!");
+			}
+
+			resolve(_allContextNames);
+				}); //end request handler
+
+			}); // end of Promise
+
+} // end of getContextNames()
 
 //=====================================================================================
 // This function makes a call to the server and returns an array of objects
 // each object contains the details of an application such as the id, name, status etc.
 function getAppsArray()
 {
+	return new Promise(function(resolve, reject)
+			{
+		DesktopContent.XMLHttpRequest("Request?RequestType=getAppStatus", "", 
+				function (req) 
+				{
+			var appNames, appUrls, appIds, appStatus, appTime, appStale, appClasses, appProgress, appContexts;
 
-    return new Promise(function(resolve, reject){
-        DesktopContent.XMLHttpRequest("Request?RequestType=getAppStatus", "", 
-        function (req) 
-        {
-            var appNames, appUrls, appIds, appStatus, appTime, appClasses, appProgress, appContexts;
-    
+			appNames = req.responseXML.getElementsByTagName("name");
+			appIds = req.responseXML.getElementsByTagName("id");
+			appStatus = req.responseXML.getElementsByTagName("status");
+			appTime = req.responseXML.getElementsByTagName("time");
+			appStale = req.responseXML.getElementsByTagName("stale");
+			appProgress = req.responseXML.getElementsByTagName("progress");
+			appClasses = req.responseXML.getElementsByTagName("class");
+			appUrls = req.responseXML.getElementsByTagName("url");
+			appContexts = req.responseXML.getElementsByTagName("context");
 
+			var i;
 
-            appNames = req.responseXML.getElementsByTagName("name");
-            appIds = req.responseXML.getElementsByTagName("id");
-            appStatus = req.responseXML.getElementsByTagName("status");
-            appTime = req.responseXML.getElementsByTagName("time");
-            appProgress = req.responseXML.getElementsByTagName("progress");
-            appClasses = req.responseXML.getElementsByTagName("class");
-            appUrls = req.responseXML.getElementsByTagName("url");
-            appContexts = req.responseXML.getElementsByTagName("context");
+			if(_allAppsArray === undefined && appTime.length > 1)
+			{
+				//first time, check for app status monitoring enabled
+				//	time of 0, indicates app status not updating
 
-            var i;
-            
-            if(_allAppsArray === undefined && appTime.length > 1)
-            {
-            	//first time, check for app status monitoring enabled
-            	//	time of 0, indicates app status not updating
-            	
-            	if(appTime[appTime.length-1].getAttribute("value") == "0")
-            	{
-            		Debug.log("It appears that active application status monitoring is currently OFF! " +
-            				"\n\n\n" +
+				if(appTime[appTime.length-1].getAttribute("value") == "0")
+				{
+					Debug.log("It appears that active application status monitoring is currently OFF! " +
+							"\n\n\n" +
 							"If you want to turn it on, there is a Gateway Supervisor parameter that " +
 							"controls it. Set this field to YES in your Context Group Configuration Tree: \n\n" +
 							"<b>GatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>",
 							Debug.HIGH_PRIORITY);
-            	}            	
-            }
-            
-            _allAppsArray = new Array();
-            _allClassNames = new Array();
-            
-            for (i = 0; i< appNames.length; i++) 
-            {
-                _allAppsArray.push({ 
-                    "name"      :   appNames[i].getAttribute("value"),
-                    "id"        :   appIds[i].getAttribute("value"),
-                    "status"    :   appStatus[i].getAttribute("value"),
-                    "time"      :   appTime[i].getAttribute("value"),
-                    "progress"  :   appProgress[i].getAttribute("value"),
-                    "class"     :   appClasses[i].getAttribute("value"),
-                    "url"       :   appUrls[i].getAttribute("value"),
-                    "context"   :   appContexts[i].getAttribute("value")
-                });
-                
-                // populate the array of classes
-                _allClassNames.push(appClasses[i].getAttribute("value"));
-            }
+				}            	
+			}
 
-            if(_allAppsArray.length == 0)
-            {
-                Debug.log("Empty apps array!",Debug.HIGH_PRIORITY);
-                reject("Empty Empty apps array!");
-            }
+			_allAppsArray = new Array();
+			_allClassNames = {}; //reset and treat as count
+			_allHostNames = {}; //reset and treat as count
 
-            //return _allAppsArray;
-            resolve(_allAppsArray);
-        
-        }, 0,0,0,true);// end of request handler
-    });// end of Promise
+			for (i = 0; i< appNames.length; i++) 
+			{
+				_allAppsArray.push({ 
+					"name"      :   appNames[i].getAttribute("value"),
+							"id"        :   appIds[i].getAttribute("value"),
+							"status"    :   appStatus[i].getAttribute("value"),
+							"time"      :   appTime[i].getAttribute("value"),
+							"stale"     :   appTime[i].getAttribute("value"),
+							"progress"  :   appProgress[i].getAttribute("value"),
+							"class"     :   appClasses[i].getAttribute("value"),
+							"url"       :   appUrls[i].getAttribute("value"),
+							"context"   :   appContexts[i].getAttribute("value")
+				});
+
+				// populate the array of classes
+
+				if(_allClassNames[appClasses[i].getAttribute("value")])
+					++_allClassNames[appClasses[i].getAttribute("value")];
+				else
+					_allClassNames[appClasses[i].getAttribute("value")] = 1;
+				
+				// populate the array of hostnames
+				var hostname = appUrls[i].getAttribute("value");
+				if(hostname && hostname.length)
+				{
+					if(hostname.lastIndexOf(':') >= 0)  //remove port
+						hostname = hostname.substr(0,hostname.lastIndexOf(':'));
+					if(hostname.lastIndexOf('/') >= 0)  //remove http://
+						hostname = hostname.substr(hostname.lastIndexOf('/')+1);
+					
+					if(_allHostNames[hostname])
+						++_allHostNames[hostname];
+					else
+						_allHostNames[hostname] = 1;
+				}
+				
+			} //end app parameter extration loop
+			
+			console.log("_allClassNames",Object.keys(_allClassNames).length,_allClassNames);
+			console.log("_allHostNames",Object.keys(_allHostNames).length,_allHostNames);
+
+			if(_allAppsArray.length == 0)
+			{
+				Debug.log("Empty apps array!",Debug.HIGH_PRIORITY);
+				reject("Empty Empty apps array!");
+			}
+
+			//return _allAppsArray;
+			resolve(_allAppsArray);
+
+				}, 0,0,0,true);// end of request handler
+			});// end of Promise
 
 }// end of getAppsArray()
 
@@ -181,7 +207,6 @@ function updateAppsArray()
 {
     {
         getAppsArray();
-        // intersectionArray = setIntersection(_allAppsArray, _arrayOnDisplayTable); // should return updated array for display
         _arrayOnDisplayTable = setIntersection(_allAppsArray, _arrayOnDisplayTable); 
         displayTable(_arrayOnDisplayTable);
     }
@@ -197,31 +222,65 @@ function displayTable(appsArray)
     var statusDivElement = document.getElementById("statusDiv");
     statusDivElement.innerHTML = "";
 
+    //Create a last update time stamp
+    var lastUpdateDiv = document.createElement("DIV");
+    if(appsArray && appsArray.length)
+    	lastUpdateDiv.innerHTML = "Last update: " + appsArray[0].time;
+    
     //Create a HTML Table element.
     var table = document.createElement("TABLE");
     table.border = "1";
 
     //Get the count of columns.
-    var columnNames = ["Name", "App ID", "Status", "Time", "Progress", "Class", "Application Url", "Context"];
+    var columnNames = ["Name", "App ID", "Status", "Last Update", "Progress", "Class", "Application Url", "Context"];
+    var columnKeys = ["name", "id", "status", "stale", "progress", "class", "url", "context" ];
     var columnCount = columnNames.length;
 
     //Add the header row.
     var row = table.insertRow(-1);
-    for (var i = 0; i < columnCount; i++) {
+    for (var i = 0; i < columnCount; i++) 
+    {
         var headerCell = document.createElement("TH");
         headerCell.innerHTML = columnNames[i];
         row.appendChild(headerCell);
     }
 
     //Add the data rows.
-    for (var i = 0; i < appsArray.length; i++) {
+    for (var i = 0; i < appsArray.length; i++) 
+    {
         row = table.insertRow(-1);
-        for (var key in appsArray[i]) {
+        for (var j = 0; j < columnKeys.length; ++j) 
+        {
             var cell = row.insertCell(-1);
-            cell.innerHTML = appsArray[i][key];
-            if (key == "status")
+            
+            if(columnKeys[j] == "stale")
             {
-                switch(appsArray[i][key]) {
+            	var staleString = "";
+            	var staleSeconds = appsArray[i][columnKeys[j]] | 0;
+            	if(!appsArray[i].time)
+            		staleString = "No status";
+            	else if(staleSeconds < 10)
+            		staleString = "Seconds ago";
+            	else if(staleSeconds < 60)
+            		staleString = "One minute ago";
+            	else if(staleSeconds < 40*60)
+            		staleString = (((staleSeconds/60)|0)+1) + " minutes ago";
+            	else if(staleSeconds < 75*60)
+            		staleString = "One hour ago";
+            	else if (staleSeconds < 60*60*2)
+            		staleString = (((staleSeconds/60/60)|0)+1) + " hours ago";
+            	else if (staleSeconds < 60*60*48)
+            		staleString = (((staleSeconds/60/60)|0)+1) + " days ago";
+            		
+            	cell.innerHTML = staleString;
+            }
+            else
+            	cell.innerHTML = appsArray[i][columnKeys[j]];
+            
+            if (columnKeys[j] == "status")
+            {
+                switch(appsArray[i][columnKeys[j]]) 
+                {
                     case "Initial":
                         cell.style.backgroundColor = "#77D0FF"// rgb(119, 208, 255); -> colors obtained from state machine
                         break;
@@ -238,6 +297,10 @@ function displayTable(appsArray)
         }
     }// done with adding data rows
 
+    
+    // add last update timestamp to statusDiv	
+    statusDivElement.appendChild(lastUpdateDiv);
+    
     // add table to statusDiv	
     statusDivElement.appendChild(table);
     
@@ -258,38 +321,58 @@ function createFilterList()
 
     renderFilterList(_allContextNames, contextUl, "contextName");
     renderFilterList(_allClassNames, classUl, "className");
+    renderFilterList(_allHostNames, hostUl, "hostName");
 
     //========================
-    function renderFilterList(elemArray, ulelem, cbName) 
+    function renderFilterList(elemObject, ulelem, cbName) 
     {
+    	//create select all at top
+    	{
+    		var li = document.createElement('li'); // create a list element
+    		var cb_input = document.createElement('input'); // create a checkbox
+    		cb_input.setAttribute("type", "checkbox");
+    		cb_input.setAttribute("class", "selectAll");
+    		cb_input.checked = false; // set checkboxes to false
+            cb_input.setAttribute("value", "selectAll" + cbName);
+    		    		
+    		li.setAttribute('class','item');
+    		li.appendChild(cb_input);
+    		var textnode;
+    		textnode = document.createTextNode(" " + "Select All");
 
-        for (var i = 0; i < elemArray.length; i++)
+    		li.appendChild(textnode);
+    		ulelem.appendChild(li);
+    	} //end create select all 
+
+    	//add all keys in elements object
+        for (var key in elemObject)
         {
             var li = document.createElement('li'); // create a list element
             var cb_input = document.createElement('input'); // create a checkbox
             cb_input.setAttribute("type", "checkbox");
             cb_input.setAttribute("class", cbName);
             cb_input.checked = false; // set checkboxes to false
-            cb_input.setAttribute("value", elemArray[i]);
+            cb_input.setAttribute("value", key);
 
 
             li.setAttribute('class','item');
             li.appendChild(cb_input);
+            
             var textnode;
-
             if (cbName == "className") 
             {
-                textnode = document.createTextNode(elemArray[i].slice(5));// remove "ots::" in display text
+                textnode = document.createTextNode(" " + key.slice(5));// remove "ots::" in display text
             }
             else
             {
-                textnode = document.createTextNode(elemArray[i]);
+                textnode = document.createTextNode(" " + key);
             }
 
             li.appendChild(textnode);
             ulelem.appendChild(li);
     
-        }    
+        }  // list element loop
+        
     }// end of renderFilterList()
 
 }// end of createFilterList()
@@ -300,89 +383,97 @@ function createFilterList()
 function collapsibleList()
 {
 
-    var collapsible = document.getElementsByClassName("collapsible");
-    
-    for (var i = 0; i < collapsible.length; i++) 
-    {
-      collapsible[i].addEventListener("click", function() 
-    		  {
+	var collapsible = document.getElementsByClassName("collapsible");
 
-        this.firstElementChild.style.visibility = "hidden";  // make help tooltip hidden
+	Debug.log(collapsible.length + " collapsible lists found.");
 
-        this.classList.toggle("active");
-        var content = this.nextElementSibling;
-        if (content.style.display === "block") {
-          content.style.display = "none";
-        } else {
-          content.style.display = "block";
-        }
-      });
+	for (var i = 0; i < collapsible.length; i++) 
+	{
+		collapsible[i].addEventListener("click", 
+				function(e) 
+				{
+			Debug.log("click handler " + this.id);
 
-    }
+			this.firstElementChild.style.visibility = "hidden";  // make help tooltip hidden
+
+			this.classList.toggle("active");
+			var content = this.nextElementSibling;
+			if (content.style.display === "block")
+			{
+				content.style.display = "none";
+			}
+			else 
+			{
+				content.style.display = "block";
+			}
+				}); //end click handler
+
+	}
 }// end of collapsibleList()
 
 //=====================================================================================
 function filterByClickingOnItem() 
 {
 
-    var listElements = document.getElementsByTagName("li");
+	var listElements = document.getElementsByTagName("li");
 
-    for (let i = 0; i < listElements.length; i++) 
-    {
-        listElements[i].addEventListener("click", function() 
-        		{
+	for (let i = 0; i < listElements.length; i++) 
+	{
+		listElements[i].addEventListener("click", 
+				function() 
+				{
 
-            // tick the checkbox and call filter function
-            var listChildren = listElements[i].childNodes;
-            // console.log(listChildren);
-            for (let j = 0; j < listChildren.length; j++) 
-            {
+			// tick the checkbox and call filter function
+			var listChildren = listElements[i].childNodes;
+			// console.log(listChildren);
+			for (let j = 0; j < listChildren.length; j++) 
+			{
 
-                if(listChildren[j].className == "selectAll")
-                {
-                    if(listChildren[j].checked)
-                    {
-                        listChildren[j].checked = false;
-                    }
-                    else
-                    {
-                        listChildren[j].checked = true;
-                    }
+				if(listChildren[j].className == "selectAll")
+				{
+					if(listChildren[j].checked)
+					{
+						listChildren[j].checked = false;
+					}
+					else
+					{
+						listChildren[j].checked = true;
+					}
 
-                    checkAllBoxes(listChildren[j].checked);
+					checkAllBoxes(listChildren[j].checked);
 
-                    function checkAllBoxes(cbvalue){
-                        var parentUl = listChildren[j].parentElement.parentElement;
-                        var listSiblings = parentUl.childNodes;
+					function checkAllBoxes(cbvalue){
+						var parentUl = listChildren[j].parentElement.parentElement;
+						var listSiblings = parentUl.childNodes;
 
-                        for (let k = 0; k < listSiblings.length; k++) {
-                            if(listSiblings[k].nodeName == "LI"){
-                                listSiblings[k].firstChild.checked = cbvalue;
-                            }            
-                        }
-                        filter();
-                    }// end of checkAllBoxes()
-                    return;
-                }
+						for (let k = 0; k < listSiblings.length; k++) 
+						{
+							if(listSiblings[k].nodeName == "LI")
+							{
+								listSiblings[k].firstChild.checked = cbvalue;
+							}            
+						}
+						filter();
+					}// end of checkAllBoxes()
+					return;
+				}
 
-                if(listChildren[j].nodeName == "INPUT")
-                {
-                    listChildren[j].checked = true;
-                }
-                
-                
-            } // end of for loop
-            filter();
-        });
-        
-    }
+				if(listChildren[j].nodeName == "INPUT")
+				{
+					listChildren[j].checked = true;
+				}
+
+
+			} // end of for loop
+			filter();
+				}); //end click handler
+
+	}
 }// end of filterByClickingOnItem()
 
 //=====================================================================================
 function filter() 
-{
-
-    
+{    
     var filteredClass = getFilteredArray("className"); // filter by class
     var filteredContext = getFilteredArray("contextName"); // filter by context
 
@@ -415,8 +506,7 @@ function filter()
         if (common == false) 
         {
             notInFilteredClass.push(filteredContext[i]);
-        }
-        
+        }        
     }
 
     // 2. concatenate the two arrays
