@@ -22,37 +22,32 @@
 		<div id='filterDiv'>
 			<h2 style="margin-left:10px">Filters</h2>
 
+			<!-- Context Filter List ------------------>
 			<button class="collapsible">Context
 				<span class="helptext">Click to expand</span>
 			</button>
 			<div class="filterList" id="contextFilter">
 				<ul id="contextUl">
-					<li>
-						<input type="checkbox" id="selectAllContext" class="selectAll">
-						Select All
-					</li>
 				</ul>
 			</div>
+
+			<!-- Class Filter List ------------------>
 			<button class="collapsible" >Class
 				<span class="helptext">Click to expand</span>
 			</button>
 			<div class="filterList" id="classFilter">
 				<ul id="classUl">
-					<li>
-						<input type="checkbox" id="selectAllClass" class="selectAll">
-						Select All
-					</li>
 				</ul>
 			</div>
-			<button class="collapsible">Context Address
+
+			<!-- Hostname Filter List ------------------>
+			<button class="collapsible">Hostname
 				<span class="helptext">Click to expand</span>
 			</button>
-			<div class="filterList">
+			<div class="filterList"  id="hostnameFilter">
+				<ul id="hostUl">
+				</ul>
 			</div>
-
-			<!-- <div id="buttons">
-				<button id="filterButton" type="button" onclick="SystemStatus:filter()">Filter</button>
-			</div> -->
 			
 		</div>
 	
