@@ -1,6 +1,6 @@
 
 ///////////-----------------
-var _allAppsArray = new Array();
+var _allAppsArray;// leave undefined to indicate first time in getAppsArray()
 var _allContextNames = new Array();
 var _allClassNames = new Array();
 var _arrayOnDisplayTable = new Array(); // has the array values currently displayed on the table
@@ -111,8 +111,6 @@ function getAppsArray()
             var appNames, appUrls, appIds, appStatus, appTime, appClasses, appProgress, appContexts;
     
 
-            _allAppsArray = new Array();
-            _allClassNames = new Array();
 
             appNames = req.responseXML.getElementsByTagName("name");
             appIds = req.responseXML.getElementsByTagName("id");
@@ -124,6 +122,26 @@ function getAppsArray()
             appContexts = req.responseXML.getElementsByTagName("context");
 
             var i;
+            
+            if(_allAppsArray === undefined && appTime.length > 1)
+            {
+            	//first time, check for app status monitoring enabled
+            	//	time of 0, indicates app status not updating
+            	
+            	if(appTime[appTime.length-1].getAttribute("value") == "0")
+            	{
+            		Debug.log("It appears that active application status monitoring is currently OFF! " +
+            				"\n\n\n" +
+							"If you want to turn it on, there is a Gateway Supervisor parameter that " +
+							"controls it. Set this field to YES in your Context Group Configuration Tree: \n\n" +
+							"<b>GatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>",
+							Debug.HIGH_PRIORITY);
+            	}            	
+            }
+            
+            _allAppsArray = new Array();
+            _allClassNames = new Array();
+            
             for (i = 0; i< appNames.length; i++) 
             {
                 _allAppsArray.push({ 
