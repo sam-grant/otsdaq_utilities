@@ -302,6 +302,15 @@
 			function loadPageReqHandler(req)
 			{
 				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
+
+				for (var widget in page_.widgets)
+				{
+					delete page_.widgets[widget].el;
+					delete page_.widgets[widget];
+					var widgetCover = document.getElementById(widget + "-cover");
+					mainBlock_.el.removeChild(widgetCover.parentNode);
+				}
+
 				clearBlock(mainBlock_.el);
 				page_.widgets = {};
 
@@ -353,7 +362,7 @@
  				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
 				jsonStr = jsonStr.replace(/\s/g, ''); //hack for removing whitespace 
     			if(!jsonStr || jsonStr == "") 
-					return;                           
+					return;
 
 				Debug.log(jsonStr);
 
@@ -426,12 +435,10 @@
 				console.log(settings);
 				console.log(id);
 
-				if(newWidget_)
+				//if(newWidget_)
 					page_.widgets[id].el.contentWindow.setupPVs(settings);
-				if(newWidget_)
 					page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
 
-				newWidget_ = false;
 			} //end settingsReqHandler()
 
 
@@ -574,7 +581,7 @@
 					, 255 /*permissionsString*/
 					, "icon-ControlsDashboard.png" /*imageURL*/
 					, "SlowControlsDashboard.html?urn=" /*windowContentURL*/
-					, "ots::ControlsDashboardSupervisor" /*linkedApp*/
+					, "ots::SlowControlsDashboardSupervisor" /*linkedApp*/
 					, /*parameters*/
 					"page_name=" + fullPathToPage
 					);
@@ -706,6 +713,7 @@
 							"&id=" + id,
 							settingsReqHandler /*handler*/,
 							 passParams /*parameter*/);
+
 			} //end setupWidget()
 
 
@@ -736,7 +744,7 @@
 				if(fromAddPV){toggleAddPV();}
 				page_.widgets[widgetID].PVList[pv] = refreshRate;
 				page_.widgets[widgetID].el.contentWindow.init();
-				newWidget_ = true;
+				//newWidget_ = true;
 			} //end addPVToWidget()
 
 
@@ -1197,7 +1205,7 @@
 			//================================================================================
 			function drawWidgetFromFile(widget, xx, yy, width, height, hideFrame)
 			{
-				newWidget_ = true;
+				//newWidget_ = true;
 				var widgetFrame = document.createElement("iframe");
 				widgetFrame.id = widget;
 				widgetFrame.scrolling="No";
@@ -1805,7 +1813,7 @@
 								if(refreshRate == "")
 									refreshRate = -1;
 
-								page_.widgets[menu_.getAttribute("widgetID")].PVList[pv] = refreshRate; 
+								page_.widgets[menu_.getAttribute("widgetID")].PVList[pv] = refreshRate;
 								addPVToWidget(pv, refreshRate, menu_.getAttribute("widgetID"));
 							}
 						}
@@ -2067,9 +2075,9 @@
 				toggleContextMenuOff();
 			} //end deleteWidget()
 
+
 			var cutWidget_;
 			var cutWidgetName_;
-
 
 			//=====================================================================================
 			function cutWidget(widgetCover)

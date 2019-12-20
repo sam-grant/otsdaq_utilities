@@ -12,7 +12,7 @@
 			}
 
 			div {
-				font-size: 10vw;
+				font-size: 14px;
 			}
 		</style>
 
@@ -30,7 +30,7 @@
 			//init called once body has loaded
 			function init()
 			{
-				console.log("init()");
+				console.log("Label init()");
 				console.log(window.frameElement.id);
 				window.parent.setupWidget(window.frameElement.id, getParameters());
 				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 16) + "px";
@@ -41,7 +41,7 @@
 
 			function newWidget(widget, parameters)
 			{
-
+				setParameters(window.parent.page_.widgets[widget.el.id].attributes);
 			}
 
 			function getParameters()
