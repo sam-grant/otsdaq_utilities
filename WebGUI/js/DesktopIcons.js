@@ -156,7 +156,11 @@ else {
 		    	
 		    	iconArray = Desktop.getXMLValue(req,"iconList"); 
 				//Debug.log("icon Array unsplit: " + iconArray);
-				iconArray = iconArray.split(","); 
+		    	
+		    	if(iconArray)
+		    		iconArray = iconArray.split(",");
+		    	else
+		    		iconArray = [];
 			}
       		else //it is the wizard
       		{ 
