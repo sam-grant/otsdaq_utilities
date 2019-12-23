@@ -1,6 +1,3 @@
-html, body {
-    height: 				100%;
-}
 
 body {
     background-color: 		rgb(226, 216, 216);
@@ -8,55 +5,57 @@ body {
     overflow: 				scroll;
 }
 
+a:hover {
+	cursor:					pointer;
+}
+
 
 h1, h2, h3 {
- color: 					rgb(65, 86, 146);
+	color: 					rgb(65, 86, 146);
+	text-size:				28px;
 }
 
-#mainContent {
-    height: 				100%;
+#clearDiv {
+	clear: 					both;
 }
 
-#filterDiv {
+/*================ HEADER ===============*/
+#headerDiv {
+    margin: 				-10px 10px 0px 10px;
+    text-align:				center;
+    width: 					100%;
+}
+
+#toggleFiltersLinkDiv {
+	float:					left;
+	text-decoration:		underline;
+	color:					rgb(65, 86, 146);
+	margin: 				0px 0 2px -5px;
+}
+
+#lastUpdateTimeDiv {
+	margin-top: 			-20px;
+}
+
+/*================ FILTERS ===============*/
+#filtersDiv {
     float: 					left;
-    width: 					20%;
-    height: 				100%;
-    border: 				2px solid black;
+    margin-left:			-3px;
+    margin-right: 			10px;
+    display: 				none;
+    
+	box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
+			            	inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+							rgba(200, 200, 200,0.6) 0 .1em 3px,
+							rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
+							rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+	border-radius: 			3px;	
+
     overflow: 				auto;
 }
 
-#filterDiv h3 {
+#filtersDiv h2 {
     margin: 				5px 10px;
-}
-
-#filterForm {
-    margin: 				5px 10px;
-}
-
-.filterList {
-    padding: 				0 10px;
-    display: 				none;
-    background-color: 		#f1f1f1;
-    width:					fit-content;
-}
-
-.filterList li {
-	white-space:			nowrap;
-}
-
-#statusDiv {
-    float: 					right;
-    width: 					75%;
-    border: 				2px solid black;
-    overflow:				auto;
-}
-
-
-.filterList ul {
-    list-style-type: 		none;
-    margin:					0;
-    padding:				10px;
-    width:					fit-content;
 }
 
 .collapsible {
@@ -93,31 +92,68 @@ h1, h2, h3 {
     /* Position the tooltip text */
     position: 				absolute;
     z-index: 				1;
-}
-  
-#buttons {
-    text-align: 			center;
+    margin: 				-4px 0 0 20px;
 }
 
-#filterButton {
-    color: 					#020c07 !important;
-	text-transform: 		uppercase;
-	background: 			#ffffff;
-	padding: 				5px;
-	border: 				1px solid #010804 !important;
-	border-radius: 			6px;
-    display: 				inline-block;
-    margin-top: 			10px;
-    width: 					100px;
+.filterList {
+    padding: 				0 10px;
+    display: 				none;
+    background-color: 		#f1f1f1;
 }
 
-ul li:hover {
+.filterList li {
+	white-space:			nowrap;
+	margin-right:			10px;
+    width:					100%;
+    cursor:					pointer;
+}
+
+.filterList ul {
+    list-style-type: 		none;
+    margin:					0;
+    padding:				10px;
+    width:					100%;
+    background-color: 		#f1f1f1;
+}
+
+.filterList ul li:hover {
     background-color: 		yellow;
     cursor: 				pointer;
 }
 
 
+/*================ APP STATUS ===============*/
+#appStatusDiv {
+    float: 					left;
+    margin-left:			-3px;
+    width:					1px; /* otherwise will not display? */
+}
 
+#appStatusDiv table {
+	background-color: 		rgb(210, 193, 193);
+	border:					1px solid gray;
+}
+
+#appStatusDiv td {
+	white-space:			nowrap;
+	padding:				0 10px 0 10px;
+	height: 				17px;
+	background-color: 		rgb(226, 216, 216);
+}
+
+#appStatusDiv th {
+	background-color: 		rgb(210, 193, 193);
+	font-weight:			bold;
+	white-space:			nowrap;
+	border: 				2px solid rgb(226, 216, 216);
+}
+
+.progressBar {
+	background-color: 		rgb(0,205,30);	
+	margin: 				-17px -10px 0 -10px;
+	height:					100%;
+    text-align: 			center;
+}
 
 
 

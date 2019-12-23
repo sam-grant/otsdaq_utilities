@@ -5,7 +5,7 @@
 
 GETPACKAGEINFO(Logbook)
 
-//========================================================================================================================
+//==============================================================================
 void Logbook::checkPackageDependencies()
 {
 	CHECKDEPENDENCY(config);
@@ -13,7 +13,7 @@ void Logbook::checkPackageDependencies()
 	CHECKDEPENDENCY(xdaq);
 }
 
-//========================================================================================================================
+//==============================================================================
 std::set<std::string, std::less<std::string> > Logbook::getPackageDependencies()
 {
 	std::set<std::string, std::less<std::string> > dependencies;

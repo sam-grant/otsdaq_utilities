@@ -5,7 +5,7 @@
 
 GETPACKAGEINFO(MacroMaker)
 
-//========================================================================================================================
+//==============================================================================
 void MacroMaker::checkPackageDependencies()
 {
 	CHECKDEPENDENCY(config);
@@ -13,7 +13,7 @@ void MacroMaker::checkPackageDependencies()
 	CHECKDEPENDENCY(xdaq);
 }
 
-//========================================================================================================================
+//==============================================================================
 std::set<std::string, std::less<std::string> > MacroMaker::getPackageDependencies()
 {
 	std::set<std::string, std::less<std::string> > dependencies;
