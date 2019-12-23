@@ -5,22 +5,32 @@ var _allContextNames 		= {}; //use map for unique keys
 var _allClassNames 			= {}; //use map for unique keys
 var _allHostNames 			= {}; //use map for unique keys
 var _arrayOnDisplayTable 	= new Array(); // has the array values currently displayed on the table
-var intersectionArray 		= new Array();
-				
+
+var _updateAppsTimeout		= 0;
+
+var _displayingFilters 		= true; //set default here
+
+var _statusDivElement, _filtersDivElement, _toggleFiltersLinkElement;
+
+var _MARGIN					= 5;
+var _OFFSET_Y				= 80;
+
 //functions:			
     // init()
+	// paint()
+	// toggleFilters()
     // ========= server calls ====================
     // getContextNames()
     // getAppsArray()
     // updateAppsArray()
     // ========== Display functions ==============
-    // displayTable() -> Inside this function, you can change the color of the cells depending on the state of the app
+    // displayTable(appsArray) 
     // ========= filtering functions =============
     // createFilterList()
+	//		localRenderFilterList()
     // collapsibleList()
-	// filterByClickingOnItem()
-    // selectAll()
-    // filterUsingCheckBox()
+	// selectAll()
+	// applyFilterItemListeners()
     // filter()
     // getFilteredArray(className)
     // isEquivalent(a, b)
@@ -34,10 +44,17 @@ var intersectionArray 		= new Array();
 //init called once body has loaded
 function init() 
 {					
-    Debug.log("Calibrations init");
-
+    Debug.log("App status init");
+    
+    _statusDivElement = document.getElementById("appStatusDiv");
+    _filtersDivElement = document.getElementById("filtersDiv");
+    _toggleFiltersLinkElement = document.getElementById("toggleFiltersLink");
+    
     collapsibleList();
 
+    window.onresize = paint;
+    paint();
+    
     // Use promises to make code execute in an intutive manner
     // 1. Get context names into an array...then
     // 2. Get app names into an array ....then
@@ -50,20 +67,61 @@ function init()
             displayTable(result);
                 
             // populate filterDiv
-            createFilterList();
-
-            // if user clicks on list item instead, tick the checkbox and call filter function
-            filterByClickingOnItem();
-
-            // update the _allAppsArray variable with repeated calls to server
-            // setTimeout(updateAppsArray, 4000);
-            setTimeout(function(){
-                updateAppsArray();
-            }, 4000);
-            
+            createFilterList();            
         });
     
 } // end of init()
+
+//=====================================================================================
+//paint sets size of divs, called on window resize
+function paint() 
+{	
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    
+    Debug.log("paint to " + w + " - " + h);
+    
+    if(_displayingFilters)    
+    {
+    	_filtersDivElement.style.display = "block";
+    	_toggleFiltersLinkElement.innerHTML = "Hide Filters";
+    }
+    else
+    {
+    	_filtersDivElement.style.display = "none";
+    	_toggleFiltersLinkElement.innerHTML = "Show Filters";
+    }
+    
+    h -= _MARGIN*2 + _OFFSET_Y;
+    
+    w = (w*.2)|0;
+    if(w < 200) w = 200;
+    if(h < 200) h = 200;
+		
+    _filtersDivElement.style.width = w + "px";
+    _filtersDivElement.style.height = h + "px";
+    
+    w = _filtersDivElement.scrollWidth;
+	Debug.log("Resize filters " + _filtersDivElement.scrollWidth);
+	
+	var filterEls = document.getElementsByClassName("filterList");
+	var filterBtns = document.getElementsByClassName("collapsible");
+	for(var i=0;i<filterEls.length;++i)
+	{
+		filterEls[i].style.width = (w-30) + "px";
+		filterBtns[i].style.width = w + "px";
+	}
+	
+    
+} //end paint()
+
+//=====================================================================================
+function toggleFilters() 
+{
+	Debug.log("toggleFilters()");
+	_displayingFilters = !_displayingFilters;	
+	paint();
+} //end toggleFilters()
 
 //=====================================================================================
 // The function below gets the available context names from the server
@@ -94,6 +152,7 @@ function getContextNames()
 			}
 
 			resolve(_allContextNames);
+		    
 				}); //end request handler
 
 			}); // end of Promise
@@ -148,14 +207,14 @@ function getAppsArray()
 			{
 				_allAppsArray.push({ 
 					"name"      :   appNames[i].getAttribute("value"),
-							"id"        :   appIds[i].getAttribute("value"),
-							"status"    :   appStatus[i].getAttribute("value"),
-							"time"      :   appTime[i].getAttribute("value"),
-							"stale"     :   appTime[i].getAttribute("value"),
-							"progress"  :   appProgress[i].getAttribute("value"),
-							"class"     :   appClasses[i].getAttribute("value"),
-							"url"       :   appUrls[i].getAttribute("value"),
-							"context"   :   appContexts[i].getAttribute("value")
+					"id"        :   appIds[i].getAttribute("value"),
+					"status"    :   appStatus[i].getAttribute("value"),
+					"time"      :   appTime[i].getAttribute("value"),
+					"stale"     :   appTime[i].getAttribute("value"),
+					"progress"  :   appProgress[i].getAttribute("value"),
+					"class"     :   appClasses[i].getAttribute("value"),
+					"url"       :   appUrls[i].getAttribute("value"),
+					"context"   :   appContexts[i].getAttribute("value")
 				});
 
 				// populate the array of classes
@@ -182,9 +241,7 @@ function getAppsArray()
 				
 			} //end app parameter extration loop
 			
-			console.log("_allClassNames",Object.keys(_allClassNames).length,_allClassNames);
-			console.log("_allHostNames",Object.keys(_allHostNames).length,_allHostNames);
-
+			
 			if(_allAppsArray.length == 0)
 			{
 				Debug.log("Empty apps array!",Debug.HIGH_PRIORITY);
@@ -193,6 +250,10 @@ function getAppsArray()
 
 			//return _allAppsArray;
 			resolve(_allAppsArray);
+			
+            // update the _allAppsArray variable with repeated calls to server
+            if(_updateAppsTimeout) window.clearTimeout(_updateAppsTimeout);
+            _updateAppsTimeout = window.setTimeout(updateAppsArray, 1000 /*ms*/);
 
 				}, 0,0,0,true);// end of request handler
 			});// end of Promise
@@ -201,16 +262,13 @@ function getAppsArray()
 
 //=====================================================================================
 // this function updates the _allAppsArray by making repeated requests to the server 
-// at specific time intervals. The function is recursive and makes use of setTimeout()
-// because setInterval() can overload the server if a request fails.
+// at specific time intervals. The function is called by setTimeout()
+// because setInterval() can get unwieldy.
 function updateAppsArray() 
 {
-    {
-        getAppsArray();
-        _arrayOnDisplayTable = setIntersection(_allAppsArray, _arrayOnDisplayTable); 
-        displayTable(_arrayOnDisplayTable);
-    }
-    setTimeout(updateAppsArray, 4000);
+	getAppsArray();
+	_arrayOnDisplayTable = setIntersection(_allAppsArray, _arrayOnDisplayTable); 
+	displayTable(_arrayOnDisplayTable);	
 }; // end of updateAppsArray()
 
 //=====================================================================================
@@ -218,22 +276,25 @@ function updateAppsArray()
 function displayTable(appsArray)
 {
 
-    // clear the statusDiv
-    var statusDivElement = document.getElementById("statusDiv");
+    // clear the appStatusDiv
+    var statusDivElement = document.getElementById("appStatusDiv");
     statusDivElement.innerHTML = "";
 
-    //Create a last update time stamp
-    var lastUpdateDiv = document.createElement("DIV");
-    if(appsArray && appsArray.length)
-    	lastUpdateDiv.innerHTML = "Last update: " + appsArray[0].time;
+    //Create a last update timestamp
+    if(appsArray && appsArray.length) 
+		document.getElementById(
+    				"lastUpdateTimeDiv").innerHTML = 
+    						"Showing " + appsArray.length + 
+							"/" + _allAppsArray.length + " Apps " +
+    						"(Last update: " + appsArray[0].time + ")";
     
     //Create a HTML Table element.
     var table = document.createElement("TABLE");
-    table.border = "1";
+    table.border = "0";
 
     //Get the count of columns.
-    var columnNames = ["Name", "App ID", "Status", "Last Update", "Progress", "Class", "Application Url", "Context"];
-    var columnKeys = ["name", "id", "status", "stale", "progress", "class", "url", "context" ];
+    var columnNames = ["App Name", "Status", "Progress", "Last Update", "App Type", "App URL", "App ID", "Parent Context Name"];
+    var columnKeys = ["name", "status", "progress", "stale", "class", "url", "id", "context" ];
     var columnCount = columnNames.length;
 
     //Add the header row.
@@ -252,6 +313,10 @@ function displayTable(appsArray)
         for (var j = 0; j < columnKeys.length; ++j) 
         {
             var cell = row.insertCell(-1);
+            
+            //add mouseover tooltip
+            cell.title =  appsArray[i].name + "'s " +
+            		columnNames[j];
             
             if(columnKeys[j] == "stale")
             {
@@ -274,6 +339,24 @@ function displayTable(appsArray)
             		
             	cell.innerHTML = staleString;
             }
+            else if(columnKeys[j] == "progress")
+            {
+            	var progressNum = appsArray[i][columnKeys[j]] | 0;
+            	
+            	if(progressNum == 100)
+                	cell.innerHTML = "Done";
+            	else
+            	{
+            		//scale progress bar to width of cell (66px)
+
+                	var progressPX = ((66*progressNum/100)|0);
+                	if(progressPX < 3) progressPX = 3; //show something non-zero
+                		
+                	cell.innerHTML = "&nbsp;" + progressNum + " %<div class='progressBar' style='width:" +
+                			progressPX + "px;'></div>";
+                	
+            	}
+            }
             else
             	cell.innerHTML = appsArray[i][columnKeys[j]];
             
@@ -282,10 +365,16 @@ function displayTable(appsArray)
                 switch(appsArray[i][columnKeys[j]]) 
                 {
                     case "Initial":
-                        cell.style.backgroundColor = "#77D0FF"// rgb(119, 208, 255); -> colors obtained from state machine
+                        cell.style.backgroundColor = "#77D0FF";
                         break;
                     case "Halted":
-                        cell.style.backgroundColor = "#4AB597"; // rgb(74, 181, 151);
+                        cell.style.backgroundColor = "rgb(255, 177, 0)"; 
+                        break;"#4AB597"
+                    case "Configured":
+                        cell.style.backgroundColor = "#4AB597"; 
+                        break;"#4AB597"
+                    case "Running":
+                        cell.style.backgroundColor = "rgb(0, 255, 67)";
                         break;
                     case "Failed":
                         cell.style.backgroundColor = "red"; 
@@ -293,15 +382,14 @@ function displayTable(appsArray)
                     default:
                   } // end of switch
 
-            }// end of if statement
+            }// end of status style handling
+            else if(columnKeys[j] == "progress")
+            	cell.style.textAlign = "center";
         }
     }// done with adding data rows
 
-    
-    // add last update timestamp to statusDiv	
-    statusDivElement.appendChild(lastUpdateDiv);
-    
-    // add table to statusDiv	
+   
+    // add table to appStatusDiv	
     statusDivElement.appendChild(table);
     
     // keep record of current array on display. This variable is later used to redisplay table after user does filtering
@@ -316,29 +404,45 @@ function displayTable(appsArray)
 // be displayed in the filterDiv
 function createFilterList() 
 {
-    var contextUl = document.getElementById('contextUl');
-    var classUl = document.getElementById('classUl');
+	Debug.log("createFilterList()");
+	
+	localRenderFilterList(
+    		_allContextNames, 
+    		document.getElementById('contextUl'), 
+			"ContextName");
+    localRenderFilterList(
+    		_allClassNames, 
+    		document.getElementById('classUl'),
+			"ClassName");
+    localRenderFilterList(
+    		_allHostNames, 
+    		document.getElementById('hostUl'),
+			"HostName");
 
-    renderFilterList(_allContextNames, contextUl, "contextName");
-    renderFilterList(_allClassNames, classUl, "className");
-    renderFilterList(_allHostNames, hostUl, "hostName");
-
+    // if user clicks on list item instead, tick the checkbox and call filter function
+    applyFilterItemListeners();
+    
+    return;
+    
     //========================
-    function renderFilterList(elemObject, ulelem, cbName) 
+    function localRenderFilterList(elemObject, ulelem, cbName) 
     {
     	//create select all at top
     	{
     		var li = document.createElement('li'); // create a list element
     		var cb_input = document.createElement('input'); // create a checkbox
     		cb_input.setAttribute("type", "checkbox");
-    		cb_input.setAttribute("class", "selectAll");
-    		cb_input.checked = false; // set checkboxes to false
-            cb_input.setAttribute("value", "selectAll" + cbName);
-    		    		
+    		cb_input.setAttribute("class", cbName);
+    		cb_input.checked = true; // default checkboxes to false
+            cb_input.setAttribute("value", "selectAll");
+
+            //stop normal checkbox behavior by re-inverting it
+            cb_input.onclick = function(e) {console.log("cb"); this.checked = !this.checked;}
+                		
     		li.setAttribute('class','item');
     		li.appendChild(cb_input);
     		var textnode;
-    		textnode = document.createTextNode(" " + "Select All");
+    		textnode = document.createTextNode(" " + "Select All" + "  ");
 
     		li.appendChild(textnode);
     		ulelem.appendChild(li);
@@ -351,35 +455,34 @@ function createFilterList()
             var cb_input = document.createElement('input'); // create a checkbox
             cb_input.setAttribute("type", "checkbox");
             cb_input.setAttribute("class", cbName);
-            cb_input.checked = false; // set checkboxes to false
+            cb_input.checked = true; // default checkboxes to false
             cb_input.setAttribute("value", key);
 
+            //stop normal checkbox behavior by re-inverting it
+            cb_input.onclick = function(e) {console.log("cb"); this.checked = !this.checked;}
+                		
 
             li.setAttribute('class','item');
             li.appendChild(cb_input);
             
             var textnode;
+            //add space before and after for 'margin'
             if (cbName == "className") 
-            {
-                textnode = document.createTextNode(" " + key.slice(5));// remove "ots::" in display text
-            }
+                textnode = document.createTextNode(" " + key.slice(5) + "  ");// remove "ots::" in display text            
             else
-            {
-                textnode = document.createTextNode(" " + key);
-            }
+                textnode = document.createTextNode(" " + key + "  ");
 
             li.appendChild(textnode);
             ulelem.appendChild(li);
     
         }  // list element loop
         
-    }// end of renderFilterList()
+    }// end of localRenderFilterList()
 
 }// end of createFilterList()
 
 //=====================================================================================
-// this function creates a collapsible menu in the filterDiv
-// from the available context names, and class names 
+// this function does the setup for the collapsible menu in the filterDiv 
 function collapsibleList()
 {
 
@@ -392,187 +495,168 @@ function collapsibleList()
 		collapsible[i].addEventListener("click", 
 				function(e) 
 				{
-			Debug.log("click handler " + this.id);
+			Debug.log("click handler " + this.nextElementSibling.id);
 
 			this.firstElementChild.style.visibility = "hidden";  // make help tooltip hidden
 
 			this.classList.toggle("active");
 			var content = this.nextElementSibling;
 			if (content.style.display === "block")
-			{
 				content.style.display = "none";
-			}
 			else 
-			{
 				content.style.display = "block";
-			}
+			
+			paint(); 
 				}); //end click handler
 
 	}
 }// end of collapsibleList()
 
 //=====================================================================================
-function filterByClickingOnItem() 
+function applyFilterItemListeners() 
 {
+	Debug.log("applyFilterItemListeners()");
 
 	var listElements = document.getElementsByTagName("li");
 
 	for (let i = 0; i < listElements.length; i++) 
 	{
-		listElements[i].addEventListener("click", 
-				function() 
-				{
 
+	    //========================
+		listElements[i].onmouseup = function(e) { e.stopPropagation(); }
+		listElements[i].onmousedown = function(e) { e.stopPropagation(); }
+		listElements[i].onclick =  
+				function(e) 
+				{
+			var val = this.firstElementChild.value;
+			var type = this.firstElementChild.className;
+			
+			
+			Debug.log("Clicked list item " + val + " type" + type);
+			
+			//toggle checkbox
+			this.firstElementChild.checked = !this.firstElementChild.checked;
+						
 			// tick the checkbox and call filter function
-			var listChildren = listElements[i].childNodes;
-			// console.log(listChildren);
-			for (let j = 0; j < listChildren.length; j++) 
+			var listChildren = document.getElementsByClassName(type);
+			console.log("listChildren",listChildren);
+			
+			if(val == "selectAll")
 			{
-
-				if(listChildren[j].className == "selectAll")
-				{
-					if(listChildren[j].checked)
-					{
-						listChildren[j].checked = false;
-					}
-					else
-					{
-						listChildren[j].checked = true;
-					}
-
-					checkAllBoxes(listChildren[j].checked);
-
-					function checkAllBoxes(cbvalue){
-						var parentUl = listChildren[j].parentElement.parentElement;
-						var listSiblings = parentUl.childNodes;
-
-						for (let k = 0; k < listSiblings.length; k++) 
-						{
-							if(listSiblings[k].nodeName == "LI")
-							{
-								listSiblings[k].firstChild.checked = cbvalue;
-							}            
-						}
-						filter();
-					}// end of checkAllBoxes()
-					return;
-				}
-
-				if(listChildren[j].nodeName == "INPUT")
-				{
-					listChildren[j].checked = true;
-				}
-
-
-			} // end of for loop
+				for(var j = 0; j < listChildren.length; j++) 
+					listChildren[j].checked = this.firstElementChild.checked;
+			}
+			
 			filter();
-				}); //end click handler
+			
+				}; //end list item click handler
 
-	}
-}// end of filterByClickingOnItem()
+	} //end list item loop
+	
+}// end of applyFilterItemListeners()
 
 //=====================================================================================
 function filter() 
 {    
-    var filteredClass = getFilteredArray("className"); // filter by class
-    var filteredContext = getFilteredArray("contextName"); // filter by context
+    var filteredClass = getFilteredArray("ClassName","class"); // filter by class
+    var filteredContext = getFilteredArray("ContextName","context"); // filter by context
+    var filteredHost = getFilteredArray("HostName","host"); // filter by host
 
     // if filterByClass and filterByContext return empty arrays, display the full table
-    if (filteredClass.length == 0 && filteredContext.length == 0) 
+    if (filteredClass.length == 0 && filteredContext.length == 0 && 
+    		filteredHost.length == 0) 
     {
         displayTable(_allAppsArray);
         return;
     }
     
-    // merge the two arrays
+    var found;
+    
+    var result = [];
 
-    // 1. get apps in filteredContext that are not in filteredClass
-    var notInFilteredClass = new Array();
-    var common;
-
-    for (let i = 0; i < filteredContext.length; i++) 
+    for (var i = 0; i < _allAppsArray.length; i++) 
     {
-        common = false;
+		///// filter class names
+        found = false;
+		for (var j = 0; j < filteredClass.length; j++) 
+			if(_allAppsArray[i].name == filteredClass[j].name)
+			{
+				found = true;
+				break;
+			}
+		if(!found)
+			continue;
         
-        for (let j = 0; j < filteredClass.length; j++) 
-        {
-            if (isEquivalent(filteredContext[i], filteredClass[j])) 
-            {
-                common = true;
-                continue;
-            }
-            
-        }
-        if (common == false) 
-        {
-            notInFilteredClass.push(filteredContext[i]);
-        }        
-    }
-
-    // 2. concatenate the two arrays
-    var result = filteredClass.concat(notInFilteredClass);
-
+		///// filter context names
+        found = false;
+		for (var j = 0; j < filteredContext.length; j++) 
+			if(_allAppsArray[i].name == filteredContext[j].name)
+			{
+				found = true;
+				break;
+			}
+		if(!found)
+			continue;
+		
+		///// filter hostnames
+        found = false;
+		for (var j = 0; j < filteredHost.length; j++) 
+			if(_allAppsArray[i].name == filteredHost[j].name)
+			{
+				found = true;
+				break;
+			}
+		if(!found)
+			continue;
+		
+		result.push(_allAppsArray[i]);
+    } //end all apps loop
+    
     // display the table
     displayTable(result);
+    
 } // end of filter()
 
 //=====================================================================================
-function getFilteredArray(className)
+function getFilteredArray(filterName, type)
 {
-
-    var filterobjects = document.getElementsByClassName(className);
+    var filterObjects = document.getElementsByClassName(filterName);
     var checkedItems = new Array();
 
     // loop through elements and find those that are checked
-    for(var i = 0; i < filterobjects.length; i++)
+    for(var i = 0; i < filterObjects.length; i++)
     {
-        if (filterobjects[i].checked == true)
+        if (filterObjects[i].checked)
         {
-            var val = filterobjects[i].getAttribute("value");
+            var val = filterObjects[i].getAttribute("value");
             checkedItems.push(val);
         }
     }
 
     // loop through _allAppsArray and get apps that match checked values
-    var filtered =  _allAppsArray.filter(function(app) {
+    var filtered =  _allAppsArray.filter(
+    		function(app) 
+			{
+    	
         // returns apps that have class/context values in checkedItems array
-        return checkedItems.includes(app.class) || checkedItems.includes(app.context); // if value is in checkedItems
-    });
+    	
+    	if(type == "host")
+		{
+    		var hostname = app.url;
+    		if(hostname.lastIndexOf(':') >= 0)  //remove port
+    			hostname = hostname.substr(0,hostname.lastIndexOf(':'));
+    		if(hostname.lastIndexOf('/') >= 0)  //remove http://
+    			hostname = hostname.substr(hostname.lastIndexOf('/')+1);
+		
+    		return checkedItems.includes(hostname);
+		} //end hostname handling
+    		
+    	// return array if value is in checkedItems
+        return checkedItems.includes(app[type]); 
+    }); //end filter handler
 
     return filtered;
 } // end of getFilteredArray()
-
-//=====================================================================================
-// compares two objects by value to see if they are the same
-function isEquivalent(a, b) 
-{
-    // Create arrays of property names
-    var aProps = Object.getOwnPropertyNames(a);
-    var bProps = Object.getOwnPropertyNames(b);
-
-    // If number of properties is different,
-    // objects are not equivalent
-    if (aProps.length != bProps.length) 
-    {
-        return false;
-    }
-
-    for (var i = 0; i < aProps.length; i++) 
-    {
-        var propName = aProps[i];
-
-        // If values of same property are not equal,
-        // objects are not equivalent
-        if (a[propName] !== b[propName]) 
-        {
-            return false;
-        }
-    }
-
-    // If we made it this far, objects
-    // are considered equivalent
-    return true;
-} // end of isEquivalent()
 
 //=====================================================================================
 // generic function that can be used to get union/intersection of two arrays of objects

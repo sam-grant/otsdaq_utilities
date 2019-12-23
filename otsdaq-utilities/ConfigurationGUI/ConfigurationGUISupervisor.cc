@@ -36,7 +36,7 @@ xdaq::Application* ConfigurationGUISupervisor::instantiate(xdaq::ApplicationStub
 	return new ConfigurationGUISupervisor(stub);
 }
 
-//========================================================================================================================
+//==============================================================================
 // new user gets a table mgr assigned
 // user can fill any of the tables (fill from version or init empty), which becomes the
 // active view for that table
@@ -54,10 +54,10 @@ ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* st
 	__SUP_COUT__ << "Constructor complete." << __E__;
 }  // end constructor()
 
-//========================================================================================================================
+//==============================================================================
 ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void) { destroy(); }
 
-//========================================================================================================================
+//==============================================================================
 void ConfigurationGUISupervisor::init(void)
 {
 	__SUP_COUT__ << "Initializing..." << __E__;
@@ -77,7 +77,7 @@ void ConfigurationGUISupervisor::init(void)
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 void ConfigurationGUISupervisor::destroy(void)
 {
 	// called by destructor
@@ -97,7 +97,7 @@ void ConfigurationGUISupervisor::destroy(void)
 		delete ConfigurationInterface::getInstance(true);
 }
 
-//========================================================================================================================
+//==============================================================================
 void ConfigurationGUISupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 {
 	cgicc::Cgicc cgiIn(in);
@@ -117,7 +117,7 @@ void ConfigurationGUISupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 		     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
 }
 
-//========================================================================================================================
+//==============================================================================
 // When overriding, setup default property values here
 // called by CoreSupervisorBase constructor
 void ConfigurationGUISupervisor::setSupervisorPropertyDefaults(void)
@@ -131,7 +131,7 @@ void ConfigurationGUISupervisor::setSupervisorPropertyDefaults(void)
 	    "*");  // all
 }
 
-//========================================================================================================================
+//==============================================================================
 // forceSupervisorPropertyValues
 //		override to force supervisor property values (and ignore user settings)
 void ConfigurationGUISupervisor::forceSupervisorPropertyValues()
@@ -144,7 +144,7 @@ void ConfigurationGUISupervisor::forceSupervisorPropertyValues()
 	    "*");  // all
 }
 
-//========================================================================================================================
+//==============================================================================
 void ConfigurationGUISupervisor::request(const std::string&               requestType,
                                          cgicc::Cgicc&                    cgiIn,
                                          HttpXmlDocument&                 xmlOut,
@@ -1364,7 +1364,7 @@ catch(...)
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleGetAffectedGroupsXML
 //	checks which of the active groups are affected
 //		by the tables changing in the modified tables list.
@@ -1579,7 +1579,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error getting affected groups! ");
 }
 
-//========================================================================================================================
+//==============================================================================
 // setupActiveTables
 //	setup active tables based on input group and modified tables
 //
@@ -1742,7 +1742,7 @@ catch(...)
 	throw;  // throw to get info from special errors at a parent level
 }  // end setupActiveTablesXML() throw
 
-//========================================================================================================================
+//==============================================================================
 // handleFillCreateTreeNodeRecordsXML
 //	Creates the records in the appropriate table
 //		and creates a temporary version.
@@ -1898,7 +1898,7 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleFillModifiedTablesXML
 //	fills <modified tables> as used by ConfigurationAPI
 void ConfigurationGUISupervisor::handleFillModifiedTablesXML(
@@ -1933,7 +1933,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleFillDeleteTreeNodeRecordsXML
 //	Deletes the records in the appropriate table
 //		and creates a temporary version.
@@ -2049,7 +2049,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 	}
 }  // end handleFillDeleteTreeNodeRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleFillRenameTreeNodeRecordsXML
 //	Rename the records in the appropriate table
 //		and creates a temporary version.
@@ -2168,7 +2168,7 @@ void ConfigurationGUISupervisor::handleFillRenameTreeNodeRecordsXML(
 	}
 }  // end handleFillRenameTreeNodeRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleFillCopyTreeNodeRecordsXML
 //	Copies the records in the appropriate table
 //		and creates a temporary version.
@@ -2284,7 +2284,7 @@ void ConfigurationGUISupervisor::handleFillCopyTreeNodeRecordsXML(
 	}
 }  // end handleFillCopyTreeNodeRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleFillSetTreeNodeFieldValuesXML
 //	writes for each record, the field/value pairs to the appropriate table
 //		and creates a temporary version.
@@ -2486,7 +2486,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleFillGetTreeNodeFieldValuesXML
 //	returns for each record, xml list of field/value pairs
 //		field := relative-path
@@ -2580,7 +2580,7 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleFillTreeNodeCommonFieldsXML
 //	returns xml list of common fields among records
 //		field := relative-path
@@ -2742,7 +2742,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleFillUniqueFieldValuesForRecordsXML
 //	returns xml list of unique values for each fields among records
 //		field := relative-path
@@ -2908,7 +2908,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 	}
 }  // end handleFillUniqueFieldValuesForRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleFillTreeViewXML
 //	returns xml tree from path for given depth
 //
@@ -3214,7 +3214,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 	}
 }  // end recursiveTreeToXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleGetLinkToChoicesXML
 //	return all possible choices for link
 //		linkIdType = "UID" or "GroupID"
@@ -3330,7 +3330,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleMergeGroupsXML
 void ConfigurationGUISupervisor::handleMergeGroupsXML(
     HttpXmlDocument&        xmlOut,
@@ -3644,7 +3644,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleSavePlanCommandSequenceXML
 void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
     HttpXmlDocument&        xmlOut,
@@ -4178,7 +4178,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }  // end handleSavePlanCommandSequenceXML
 
-//========================================================================================================================
+//==============================================================================
 // handleSaveTreeNodeEditXML
 //	Changes the value specified by UID/Column
 //	 in the specified version of the table.
@@ -4688,7 +4688,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleGetTableXML
 //
 //	if INVALID or version does not exists, default to mock-up
@@ -5052,7 +5052,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error getting view! ");
 }
 
-//========================================================================================================================
+//==============================================================================
 //	refreshUserSession
 //		Finds/creates the active user session based on username&  actionSessionIndex
 //
@@ -5140,7 +5140,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	return userConfigurationManagers_[mapKey];
 }
 
-//========================================================================================================================
+//==============================================================================
 //	handleDeleteTableInfoXML
 //
 //		return nothing except Error in xmlOut
@@ -5171,7 +5171,7 @@ void ConfigurationGUISupervisor::handleDeleteTableInfoXML(HttpXmlDocument&      
 	cfgMgr->getAllTableInfo(true);
 }  // end handleDeleteTableInfoXML()
 
-//========================================================================================================================
+//==============================================================================
 //	handleSaveTableInfoXML
 //
 //		write new info file for tableName based CSV column info
@@ -5381,7 +5381,7 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 	}
 }  // end handleSaveTableInfoXML()
 
-//========================================================================================================================
+//==============================================================================
 //	handleSetGroupAliasInBackboneXML
 //		open current backbone
 //		modify GroupAliases
@@ -5553,7 +5553,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error saving new Group Alias view! ");
 }
 
-//========================================================================================================================
+//==============================================================================
 //	handleSetVersionAliasInBackboneXML
 //		open current backbone
 //		modify VersionAliases
@@ -5730,7 +5730,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error saving new Version Alias view! ");
 }  // end handleSetVersionAliasInBackboneXML() catch
 
-//========================================================================================================================
+//==============================================================================
 //	handleAliasGroupMembersInBackboneXML
 //		open current backbone
 //		modify VersionAliases
@@ -5924,7 +5924,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error saving new Version Alias view! ");
 }  // end handleAliasGroupMembersInBackboneXML() catch
 
-//========================================================================================================================
+//==============================================================================
 //	handleGroupAliasesXML
 //
 //		return aliases and backbone groupAlias table version
@@ -6004,7 +6004,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 	}
 }  // end handleGroupAliasesXML
 
-//========================================================================================================================
+//==============================================================================
 //	handleTableVersionAliasesXML
 //
 //		return version aliases and backbone versionAliases table version
@@ -6056,7 +6056,7 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument&       
 	}
 }  // end handleVersionAliasesXML()
 
-//========================================================================================================================
+//==============================================================================
 //	handleGetTableGroupTypeXML
 //
 //		return this information based on member table list
@@ -6115,7 +6115,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupTypeXML(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 //	handleTableGroupsXML
 //
 //		if returnMembers then
@@ -6318,7 +6318,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 	}      // end primary group loop
 }  // end handleTableGroupsXML()
 
-//========================================================================================================================
+//==============================================================================
 //	handleTablesXML
 //
 //		return this information
@@ -6404,7 +6404,7 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 		        "but please note the following errors:\n" + accumulatedErrors);
 }  // end handleTablesXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleGetArtdaqNodeRecordsXML
 //	get artdaq nodes for active groups
 //
@@ -6536,7 +6536,7 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 
 }  // end handleGetArtdaqNodeRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleSaveArtdaqNodeRecordsXML
 //	save artdaq nodes into active groups
 //
@@ -6654,7 +6654,7 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeRecordsXML(
 	__SUP_COUT__ << "Done saving artdaq nodes." << __E__;
 }  // end handleSaveArtdaqNodeRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleLoadArtdaqNodeLayoutXML
 //	load artdaq configuration GUI layout for group/key
 //
@@ -6734,7 +6734,7 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 
 }  // end handleLoadArtdaqNodeLayoutXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleSaveArtdaqNodeLayoutXML
 //	save artdaq configuration GUI layout for group/key
 //
@@ -6802,7 +6802,7 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
 
 }  // end handleSaveArtdaqNodeLayoutXML()
 
-//========================================================================================================================
+//==============================================================================
 //	testXDAQContext
 //		test activation of context group
 void ConfigurationGUISupervisor::testXDAQContext()

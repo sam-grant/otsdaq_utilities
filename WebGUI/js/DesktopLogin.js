@@ -85,7 +85,8 @@ else {
 	    //------------------------------------------------------------------
 		//create PRIVATE members functions ----------------------
 		//------------------------------------------------------------------
-		
+
+		//==============================================================================
 		//_closeLoginPrompt
 		//	pass isLoginSuccess=true if called upon successful login!
 			//	if true refresh user display name and desktop icons will be created 
@@ -118,13 +119,15 @@ else {
 				//reset desktop based on user's permissions
 				Desktop.desktop.resetDesktop(_permissions);			
 			}
-		}
-		
+		} // end _closeLoginPrompt()
+
+		//==============================================================================
 		//_loginPrompt --
 			// this function brings up login welcome screen
 			// and logs out. This should be called on manual
 			// "logout" also.
-		var _loginPrompt = function() {
+		var _loginPrompt = function() 
+		{
 		
 			Debug.log("loginPrompt " + _keepFeedbackText,Debug.LOW_PRIORITY);
 					
@@ -211,10 +214,14 @@ else {
 			else
 				document.getElementById('loginInput0').focus();
 			
-			for(var i=0;i<4;++i) {
-				document.getElementById('loginInput'+i).onkeydown = function(e) {
+			for(var i=0;i<4;++i)
+			{
+				document.getElementById('loginInput'+i).onkeydown = 
+						function(e)
+						{
 					if(e.keyCode == 13) Desktop.desktop.login.attemptLogin(); //if enter, login
-					else if(e.keyCode == 9) {		//if tab focus on next box						
+					else if(e.keyCode == 9) 
+					{		//if tab focus on next box						
 						var newFocusIndex = parseInt(this.id[this.id.length-1])+(e.shiftKey?-1:1);
 						if(newFocusIndex != 0 && newFocusIndex != 1 && 
 								document.getElementById('loginRetypeDiv').style.display == "none") //skip 2nd input if not displayed
@@ -235,8 +242,9 @@ else {
 				
 				document.getElementById('loginInput'+i).onkeyup = _checkLoginInputs;
 			}
-		}
-		
+		} //end _loginPrompt()
+
+		//==============================================================================
 		//_checkLoginInputs --
 		//		verify that the three inputs are valid when creating an account
 		// 		if not creating account, let LoginAttempt validate
@@ -272,7 +280,8 @@ else {
 			}		
 				
 		}
-		
+
+		//==============================================================================
 		//_setCookie --
 		// 		use this as only method for refreshing and setting login cookie!!
 		//		sets 2 cookies, cookieCode to code and userName to _user
@@ -310,7 +319,8 @@ else {
             ccdiv.innerHTML = (new Date()).getTime(); //set last time of cookieCode update
             _cookieTime = parseInt(ccdiv.innerHTML);
 		} 
-		
+
+		//==============================================================================
 		//_getCookie --
 			// get login cookie
 		var _getCookie = function(c_name) {
@@ -326,7 +336,8 @@ else {
 				}
 			}  
 		}
-		
+
+		//==============================================================================
 		//_deleteCookies --
 		// 		delete login cookies, effectively logout
 		var _deleteCookies = function() {
@@ -338,7 +349,8 @@ else {
 			c_value = "; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
 			document.cookie= _cookieUserStr + "=" + c_value;
 		}
-		
+
+		//==============================================================================
 		//_getUniqueUserId --
 			//generate a unique user ID (UUID)
 		var _getUniqueUserId = function() {
@@ -347,12 +359,14 @@ else {
 			    return v.toString(16);
 			});		
 		}
-		
+
+		//==============================================================================
 		//_checkCookieLogin --
 			// Can only be called if sessionId is already set
 			// if cookie, check with server that it is valid
 			// if no cookie open login prompt
-		var _checkCookieLogin = function() {					
+		var _checkCookieLogin = function() 
+		{					
 			if(_sessionId.length != _DEFAULT_SESSION_STRING_LEN) return; //if no session id, fail			
 	
 			var code = _getCookie(_cookieCodeStr);
@@ -381,13 +395,15 @@ else {
 				else
 					_loginPrompt();		//no cookie, so prompt user 
 			}
-		}
-		
+		} //end _checkCookieLogin()
+
+		//==============================================================================
 		//_handleLoginAttempt --
 			// handler for login request from server
 			// current cookie code and display name is returned on success
 			// on failure, go to loginPrompt
-		var _handleLoginAttempt = function(req) {
+		var _handleLoginAttempt = function(req) 
+		{
 			Debug.log("Received login attempt back",Debug.LOW_PRIORITY);
 			
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
@@ -429,7 +445,7 @@ else {
 				Desktop.desktopTooltip();
 				_attemptedCookieCheck = false;
 				return;
-			}
+			} //end handle login success
 			else 
 			{ 
 				//login failed
@@ -441,8 +457,47 @@ else {
 					
 				//set and keep feedback text
 				if(cookieCode == "1") //invalid uuid
-					_keptFeedbackText = "Sorry, your login session was invalid.<br>" +
-						"A new session has been started - please try again.";
+				{
+//					_keptFeedbackText = "Sorry, your login session was invalid.<br>" +
+//						"A new session is being started - please try again.";
+					
+					//instead of giving error, attempt to get new session and relogin
+
+					Debug.log("Attempting auto session renewal");
+					
+					//refresh session id
+					_uid = _getUniqueUserId();
+					Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
+							"uuid="+_uid,
+							//model handler after _handleGetSessionId()
+							function(req)
+							{
+
+						_sessionId = 0; //clear
+						if(!req || req.responseText.length != _DEFAULT_SESSION_STRING_LEN) 
+						{ //sessionId failed
+							Debug.log("Invalid auto session ID",Debug.HIGH_PRIORITY);
+							_keptFeedbackText = "Sorry, your login session was invalid.<br>" +
+									"A new session is being started - please try again.";
+							_loginPrompt();
+		                	_killLogoutInfiniteLoop = true;
+							return;
+						} 
+						//else good sessionId
+
+						Debug.log("Attempting auto re-login");
+						
+						_badSessionIdCount = 0; //clear
+
+						//successfully received session ID			
+						_sessionId = req.responseText;	
+
+						Desktop.desktop.login.attemptLogin();
+						
+							}); //end sessionId handler
+					
+					return;
+				} //end handle invalid user id session
 				else if(req && document.getElementById('loginInput3') && 
 						document.getElementById('loginInput3').value != "")	
 					_keptFeedbackText = "New Account Code (or Username/Password) not valid.";
@@ -458,20 +513,28 @@ else {
 					_keepFeedbackText = false;
 				}
 				
-	      		for(var i=1;i<3;++i) if(document.getElementById('loginInput'+i)) document.getElementById('loginInput'+i).value = ""; //clear input boxes
+	      		for(var i=1;i<3;++i) 
+	      			if(document.getElementById('loginInput'+i)) 
+	      				document.getElementById('loginInput'+i).value = ""; //clear input boxes
 
 	      		//refresh session id
 	    		_uid = _getUniqueUserId();
-				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId);				
-	      	}
-		}
-		
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
+						"uuid="+_uid,
+						_handleGetSessionId);
+				
+	      	} //end handle login failure
+			
+		} //end _handleLoginAttempt()
+ 
+		//==============================================================================
 		//_handleCookieCheck --
 			// handler for cookie check request from server
 			// current cookie code and display name is returned on success
 			// on failure, go to loginPrompt
 		var _attemptedCookieCheck = false;
-		var _handleCookieCheck = function(req) {			
+		var _handleCookieCheck = function(req) 
+		{			
 			
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
 			_displayName = Desktop.getXMLValue(req,"DisplayName");
@@ -501,15 +564,19 @@ else {
 				_attemptLoginWithCert();
 				//_loginPrompt();		//no cookie, so prompt user 
 			}
-		}
-		
+		} //end _handleCookieCheck()
+
+		//==============================================================================
 		//_handleGetSessionId --
 		//	handler called when session id is returned from server
 		//	set _sessionId
 		//	the chain is passed on to check cookie login from here
-		var _handleGetSessionId = function(req) {
-			_sessionId = 0;
-			if(!req || req.responseText.length != _DEFAULT_SESSION_STRING_LEN) { //sessionId failed
+		var _handleGetSessionId = function(req) 
+		{
+			_sessionId = 0; //clear
+			
+			if(!req || req.responseText.length != _DEFAULT_SESSION_STRING_LEN) 
+			{ //sessionId failed
 				Debug.log("Invalid session ID",Debug.HIGH_PRIORITY);
 
                 if(!req) 
@@ -524,18 +591,18 @@ else {
 				Debug.log("UUID: " + _uid);
 				++_badSessionIdCount;
 				if (_badSessionIdCount < 10)
-	                Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
+	                Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
+	                		"uuid="+_uid,
+							_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
 				else
 					Desktop.log("Cannot establish session ID - failed 10 times",Desktop.HIGH_PRIORITY);
 				
 				return;
 			} 
-			_badSessionIdCount = 0;
+			_badSessionIdCount = 0; //clear
 
 			//successfully received session ID			
-			_sessionId = req.responseText;		
-			
-			
+			_sessionId = req.responseText;	
 			
 			//check if system blackout exists
 			if(!_attemptedCookieCheck &&
@@ -544,10 +611,7 @@ else {
 				_loginPrompt();
 				Debug.log("There is a system wide blackout! (Attempts to login right now may fail - likely someone is rebooting the system)", Debug.WARN_PRIORITY);				
 				return;
-			}
-			
-			
-			
+			}			
 			
 			if(_attemptedCookieCheck)
 			{
@@ -560,8 +624,9 @@ else {
 			Debug.log("Attempting browser cookie login with new session ID.");
 			_checkCookieLogin();
 			_killLogoutInfiniteLoop = false;
-		}
+		} //end _handleGetSessionId()
 
+		//==============================================================================
 		//_offerActiveSessionOptions --
 			// prompt user with option to close other sessions
 		var _offerActiveSessionOptions = function(cnt) {
@@ -585,7 +650,8 @@ else {
 				"onmouseup='Desktop.desktop.login.activeSessionIgnoreOption();' /></center>";
 			ldiv.innerHTML = str; //add login forms to page
 		}
-		
+
+		//==============================================================================
 		var _jumble = function (u,s) {    
 		    if(s.length%2) return "";	
 		    var x = [];
@@ -608,6 +674,7 @@ else {
 		    return s;
 		}
 
+		//==============================================================================
 		var _saveUsernameCookie = function () {    
 			Debug.log("Desktop _saveUsernameCookie _user " + _user);  			
 			var exdate = new Date();
@@ -616,14 +683,16 @@ else {
 			c_value = escape(_user) + ((_DEFAULT_REMEMBER_ME_DURATION_DAYS==null) ? "" : "; expires="+exdate.toUTCString());
 			document.cookie= _cookieRememberMeStr + "=" + c_value;
 		}
-		
+
+		//==============================================================================
 		var _deleteUsernameCookie = function () {  
 			Debug.log("Desktop _deleteUsernameCookie _user " + _user); 	
 			var c_value;
 			c_value = "; expires=Thu, 01 Jan 1970 00:00:01 GMT;";		
 			document.cookie= _cookieRememberMeStr + "=" + c_value;
 		}
-				
+
+		//==============================================================================
 		//_updateLayoutTimeoutHandler
 		//	updates all user preference settings (since that is the only method)
 		//	just to update the current window layout for user.
@@ -672,9 +741,11 @@ else {
 		//create PUBLIC members functions ----------------------
 		//------------------------------------------------------------------
 
+		//==============================================================================
 		//logout ~
 		//	Public logout function. Logs out at server and locally.
-		this.logout = function() {
+		this.logout = function() 
+		{
        		Debug.log("Desktop Logout occured " + _killLogoutInfiniteLoop,Debug.MED_PRIORITY);  
        		
        		if(_cookieCode && !_killLogoutInfiniteLoop)
@@ -690,15 +761,17 @@ else {
 			}
 			
          	_killLogoutInfiniteLoop = false;  //prevent infinite logout requests, on server failure
-         			//document.getElementById("Desktop-loginContent")?
-         			//		false:true; //prevent infinite logout requests, on server failure
-		}
+			//document.getElementById("Desktop-loginContent")?
+			//		false:true; //prevent infinite logout requests, on server failure
+		} //end logout()
 		
 
+		//==============================================================================
 		//blackout ~
 		//	use to blackout all open sessions in the same browser
 		//	during known periods of server unavailability
-		this.blackout = function(setVal) {
+		this.blackout = function(setVal) 
+		{
 			setVal = setVal?true:false;
 			if(setVal == _system_blackout)
 				return; // do nothing if already setup with value
@@ -714,23 +787,27 @@ else {
 			
 			_system_blackout = setVal;
 			Debug.log("Login blackout " + _system_blackout);
-		}
-		
+		} //end blackout()
+
+		//==============================================================================
 		//isBlackout ~
 		//	use to check for existing system blackout from exernal sources
-		this.isBlackout = function() {
+		this.isBlackout = function() 
+		{
 			var cc = _getCookie(_cookieCodeStr);
 			if(!cc) return false; //may be undefined
 			//Debug.log("Checking for blackout signal = " + cc.substr(0,10));
 			return (cc == _BLACKOUT_COOKIE_STR);
-		}
-		
+		} //end isBlackout()
+
+		//==============================================================================
 		//getCookieCode --
 		// The public getCookieCode function does not actually check the cookie
 		// it is the server which controls if a cookieCode is still valid.
 		// This function just refreshes the cookie and returns the local cookieCode value.
 		// Note: should only refresh from user activity, not auto
-		this.getCookieCode = function(doNotRefresh) {
+		this.getCookieCode = function(doNotRefresh) 
+		{
 			if(!doNotRefresh)
 			{
 				if(this.isBlackout())
@@ -742,30 +819,37 @@ else {
 				_setCookie(_cookieCode); //refresh cookies
 			}
 			return _cookieCode;
-		}
-        
-		this.updateCookieFromContent = function(newTime) {
+		} //end getCookieCode()
+
+		//==============================================================================
+		this.updateCookieFromContent = function(newTime) 
+		{
             _cookieTime = newTime; //set immediately so timer doesn't trip same issue
             var ccdiv = document.getElementById("DesktopContent-cookieCodeMailbox");
             _setCookie(ccdiv.innerHTML);
-        }
-        
+        } //end updateCookieFromContent()
+
+		//==============================================================================
 		this.getCookieTime = function() {return _cookieTime;}		
 		this.getUserDisplayName = function() {return _displayName;}
 		this.getUsername = function() {return _user;}
-		
-		this.redrawLogin = function() {
+
+		//==============================================================================
+		this.redrawLogin = function()
+		{
 			var ldiv = document.getElementById("Desktop-loginDiv");
 			if(!ldiv) return;
 				
 			ldiv.style.width = Desktop.desktop.getDesktopWidth() + "px";
 			ldiv.style.height = Desktop.desktop.getDesktopHeight() + "px";
-		}
-		
+		} //end redrawLogin()
+
+		//==============================================================================
 		//toggle re-type password for new user
-		this.promptNewUser = function(linkObj) {
+		this.promptNewUser = function(linkObj) 
+		{
 			document.getElementById('loginFeedbackDiv').innerHTML = ""; //clear feedback text
-       		Debug.log("Desktop Login Prompt New User",Debug.LOW_PRIORITY);
+       		Debug.log("Desktop Login Prompt New User", Debug.LOW_PRIORITY);
       		document.getElementById('loginRetypeDiv').style.display = 
       			document.getElementById('loginRetypeDiv').style.display == "none"?"inline":"none";
       		document.getElementById('newAccountCodeDiv').style.display = 
@@ -774,24 +858,31 @@ else {
 	      	for(var i=1;i<4;++i) document.getElementById('loginInput'+i).value = ""; //clear input boxes
       		
       		linkObj.innerHTML = document.getElementById('loginRetypeDiv').style.display == "none"?"New User?":"Have an Account?";      		
-		}
-		
-		this.attemptLogin = function() {
-       		Debug.log("Desktop Login Prompt Attempt Login ",Debug.LOW_PRIORITY); 
+		} //end promptNewUser()
+
+		//==============================================================================
+		this.attemptLogin = function() 
+		{
+       		Debug.log("Desktop Login Prompt Attempt Login", Debug.LOW_PRIORITY); 
        		_attemptedLoginWithCert = false;
        		    			       		
 			var x = [];
-			for(var i=0;i<3;++i) x[i] = document.getElementById('loginInput'+i).value;
+			for(var i=0;i<3;++i)
+				x[i] = document.getElementById('loginInput'+i).value;
        		
-       		if(document.getElementById('loginRetypeDiv').style.display != "none" && !_areLoginInputsValid) {
-       			Debug.log("Invalid Inputs on new login attempt",Debug.LOW_PRIORITY); return;
+       		if(document.getElementById('loginRetypeDiv').style.display != "none" && !_areLoginInputsValid) 
+       		{
+       			Debug.log("Invalid Inputs on new login attempt", Debug.LOW_PRIORITY); 
+       			return;
        		}
        					
 			document.getElementById('loginFeedbackDiv').innerHTML = ""; //clear feedback text
 			document.getElementById('loginFeedbackDiv').style.color = ""; //reset color to default inherited style
 			
-       		if(x[0] == "" || x[1] == "") {
-				document.getElementById('loginFeedbackDiv').innerHTML = "Some fields were left empty."; return;
+       		if(x[0] == "" || x[1] == "") 
+       		{
+       			_keptFeedbackText = "Some login fields were left empty."; 
+				return;
 			}
 			_user = x[0]; //set local user		
 			
@@ -799,10 +890,13 @@ else {
        		if(document.getElementById('loginInputRememberMe').checked) _saveUsernameCookie(); 
        		else _deleteUsernameCookie();
        		
-       		Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid+"&nac="+document.getElementById('loginInput3').value
-       			+"&ju="+_jumble(x[0],_sessionId)+"&jp="+_jumble(x[1],_sessionId),_handleLoginAttempt);        		
-		}
+       		Desktop.XMLHttpRequest("LoginRequest?RequestType=login",
+       				"uuid="+_uid+"&nac="+document.getElementById('loginInput3').value
+					+"&ju="+_jumble(x[0],_sessionId)+"&jp="+_jumble(x[1],_sessionId),
+					_handleLoginAttempt);        		
+		} //end attemptLogin()
 
+		//==============================================================================
         function getParameterByName(name, url) {
             if (!url) url = window.location.href;
             name = name.replace(/[\[\]]/g, "\\$&");
@@ -812,7 +906,8 @@ else {
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
-        
+
+        //==============================================================================
         var _attemptedLoginWithCert = false;
         var _attemptLoginWithCert = function () {        	
             Debug.log("Desktop Login Certificate Attempt Login ", Debug.LOW_PRIORITY);
@@ -821,6 +916,7 @@ else {
             Desktop.XMLHttpRequest("LoginRequest?RequestType=cert", "uuid=" + _uid, _handleLoginAttempt);
         }
 
+        //==============================================================================
 		//_applyUserPreferences
 		//	apply user preferences based on req if provided
 		//		window color should always have alpha of 0.9
@@ -839,7 +935,8 @@ else {
        		Desktop.desktop.setDefaultWindowColor(_userPref_winColor);
        		document.body.style.backgroundColor = _userPref_bgColor;
 		}
-		
+
+		//==============================================================================
 		//resetCurrentLayoutUpdateTimer
 		//	called by DesktopWindow.js any time a window moves
 		//	the timeout allows for maintaining the current layout for the user
@@ -854,20 +951,26 @@ else {
 				clearTimeout(_updateCurrentLayoutTimeout);
 			_updateCurrentLayoutTimeout = setTimeout(_updateLayoutTimeoutHandler,_UPDATE_LAYOUT_TIMEOUT_PERIOD);
 		}
-		
+
+		//==============================================================================
 		this.getUserDefaultLayout = function(i) { return _userPref_layout.split(";")[i]; }
 		this.getSystemDefaultLayout = function(i) { return _sysPref_layout.split(";")[i]; }
-		
-		this.activeSessionLogoutOption = function() {
+
+		//==============================================================================
+		this.activeSessionLogoutOption = function()
+		{
 			Debug.log("Desktop login activeSessionLogoutOption");
        		Desktop.XMLHttpRequest("LoginRequest?RequestType=logout","LogoutOthers=1"); //server logout of other active sessions
 			_closeLoginPrompt(1); //clear login prompt - pass 1 just so it will check new username
 		
-		}
-		this.activeSessionIgnoreOption = function() {
+		} //end activeSessionLogoutOption()
+		
+		//==============================================================================
+		this.activeSessionIgnoreOption = function() 
+		{
 			Debug.log("Desktop activeSessionIgnoreOption");
 			_closeLoginPrompt(1); //clear login prompt - pass 1 just so it will check new username
-		}
+		} //end activeSessionIgnoreOption()
 		
 		//------------------------------------------------------------------
 		//handle class construction ----------------------
@@ -884,6 +987,7 @@ else {
 				//user and jumbled password sent to server for login
 			//if login successful, loginDiv is removed from desktop and cookieCode used by client
 
+		//==============================================================================
 		this.setupLogin = function()
 		{
 			_uid = _getUniqueUserId();
@@ -899,7 +1003,7 @@ else {
 			//else //no login prompt at all
 			
             Debug.log("UUID: " + _uid);
-		}
+		} //end setupLogin()
 		
 		this.setupLogin();
         Debug.log("Desktop Login created",Debug.LOW_PRIORITY);

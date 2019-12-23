@@ -14,7 +14,7 @@ using namespace ots;
 
 XDAQ_INSTANTIATOR_IMPL(SlowControlsDashboardSupervisor)
 
-//========================================================================================================================
+//==============================================================================
 SlowControlsDashboardSupervisor::SlowControlsDashboardSupervisor(
     xdaq::ApplicationStub* stub)
     : CoreSupervisorBase(stub)
@@ -36,7 +36,7 @@ SlowControlsDashboardSupervisor::SlowControlsDashboardSupervisor(
 	__SUP_COUT__ << "Constructed." << __E__;
 }  // end constructor
 
-//========================================================================================================================
+//==============================================================================
 SlowControlsDashboardSupervisor::~SlowControlsDashboardSupervisor(void)
 {
 	__SUP_COUT__ << "Destructor." << __E__;
@@ -44,14 +44,14 @@ SlowControlsDashboardSupervisor::~SlowControlsDashboardSupervisor(void)
 	__SUP_COUT__ << "Destructed." << __E__;
 }  // end destructor()
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::destroy(void)
 {
 	// called by destructor
 	delete interface_;
 }  // end destroy()
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::init(void)
 // called by constructor
 {
@@ -107,7 +107,7 @@ void SlowControlsDashboardSupervisor::init(void)
 
 }  // end init()
 
-//========================================================================================================================
+//==============================================================================
 // Manage channel subscriptions to Interface
 void SlowControlsDashboardSupervisor::checkSubscriptions(
     SlowControlsDashboardSupervisor* cs)
@@ -190,7 +190,7 @@ void SlowControlsDashboardSupervisor::checkSubscriptions(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // setSupervisorPropertyDefaults
 //		override to set defaults for supervisor property values (before user settings
 // override)
@@ -200,7 +200,7 @@ void SlowControlsDashboardSupervisor::setSupervisorPropertyDefaults()
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.CheckUserLockRequestTypes, "*");
 }
 
-//========================================================================================================================
+//==============================================================================
 // forceSupervisorPropertyValues
 //		override to force supervisor property values (and ignore user settings)
 void SlowControlsDashboardSupervisor::forceSupervisorPropertyValues()
@@ -209,7 +209,7 @@ void SlowControlsDashboardSupervisor::forceSupervisorPropertyValues()
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes, "poll");
 }
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::request(const std::string& requestType,
                                               cgicc::Cgicc&      cgiIn,
                                               HttpXmlDocument&   xmlOut,
@@ -253,7 +253,7 @@ void SlowControlsDashboardSupervisor::request(const std::string& requestType,
 
 }  // end request()
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::handleRequest(
     const std::string                Command,
     HttpXmlDocument&                 xmlOut,
@@ -330,7 +330,7 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
 }  // end handleRequest
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
                                            HttpXmlDocument& xmlOut,
                                            std::string      UID)
@@ -430,7 +430,7 @@ void SlowControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::GetChannelSettings(cgicc::Cgicc&    cgiIn,
                                                          HttpXmlDocument& xmlOut)
 {
@@ -486,7 +486,7 @@ void SlowControlsDashboardSupervisor::GetChannelSettings(cgicc::Cgicc&    cgiIn,
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc&    cgiIn,
                                                              HttpXmlDocument& xmlOut)
 {
@@ -602,7 +602,7 @@ void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc&    cg
 
 }  // end GetChannelArchiverData()
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::GetUserPermissions(
     cgicc::Cgicc&                    cgiIn,
     HttpXmlDocument&                 xmlOut,
@@ -611,7 +611,7 @@ void SlowControlsDashboardSupervisor::GetUserPermissions(
 	return;
 }
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
                                                   HttpXmlDocument& xmlOut,
                                                   std::string      channellist)
@@ -660,7 +660,7 @@ void SlowControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
 	xmlOut.addTextElementToData("JSON", uid);  // add to response
 }  // end GenerateUID()
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::GetList(cgicc::Cgicc&    cgiIn,
                                               HttpXmlDocument& xmlOut)
 {
@@ -681,7 +681,7 @@ void SlowControlsDashboardSupervisor::GetList(cgicc::Cgicc&    cgiIn,
 	}
 }  // end GetList()
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::GetPages(cgicc::Cgicc&    cgiIn,
                                                HttpXmlDocument& xmlOut)
 {
@@ -736,7 +736,7 @@ void SlowControlsDashboardSupervisor::GetPages(cgicc::Cgicc&    cgiIn,
 	xmlOut.addTextElementToData("JSON", returnJSON);  // add to response
 }  // end GetPages()
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc&                    cgiIn,
                                                HttpXmlDocument&                 xmlOut,
                                                std::string                      page,
@@ -824,7 +824,7 @@ void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc&                    
 	xmlOut.addTextElementToData("Page", controlsPage);  // add to response
 }  // end loadPage()
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::SaveControlsPage(
     cgicc::Cgicc&                    cgiIn,
     HttpXmlDocument&                 xmlOut,
@@ -887,23 +887,23 @@ void SlowControlsDashboardSupervisor::SaveControlsPage(
 	return;
 }
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::Subscribe(cgicc::Cgicc&    cgiIn,
                                                 HttpXmlDocument& xmlOut)
 {
 }
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::Unsubscribe(cgicc::Cgicc&    cgiIn,
                                                   HttpXmlDocument& xmlOut)
 {
 }
 
-//========================================================================================================================
-//========================================================================================================================
+//==============================================================================
+//==============================================================================
 //================================================== UTILITIES
 //===========================================================
-//========================================================================================================================
+//==============================================================================
 bool SlowControlsDashboardSupervisor::isDir(std::string dir)
 {
 	struct stat fileInfo;
@@ -918,7 +918,7 @@ bool SlowControlsDashboardSupervisor::isDir(std::string dir)
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 void SlowControlsDashboardSupervisor::listFiles(std::string               baseDir,
                                                 bool                      recursive,
                                                 std::vector<std::string>* pages)

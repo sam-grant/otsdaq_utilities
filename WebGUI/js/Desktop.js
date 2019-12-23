@@ -1753,6 +1753,7 @@ Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
 		var isMaxWindow = undefined;
 			
 
+		//for Debugging:
 		//		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
 		//    	{
 		//			var window =  Desktop.desktop.getWindowByIndex(i);
@@ -1764,47 +1765,67 @@ Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
 		//			
 		//    	}
 		
-		//Note: refresh window takes foreground window
-		//	and deletes it, then makes a new one that ends up being the
-		//	last window in the array... so always take index 0 to iterate through them
-		//	but save the encountered current foreWindow
-		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
-    	{
-			var window =  Desktop.desktop.getWindowByIndex(0);
-			var id = window.getWindowId();
+		//if in max window mode, only refresh the max window
+		//else cycle through all windows and refresh
+		
+		//determine max window
+		if(Desktop.desktop.getForeWindow().isMaximized())
+		{
+			Debug.log("Refreshing just maximized window...");
 			
-			Debug.log("name: " + i + " " + window.getWindowName());
-			Debug.log("ID: " + id);
-			
-			var maximized = window.isMaximized();
+			Desktop.desktop.refreshWindow();            
+	
+		} //end refresh maxed window
+		else
+		{
+			Debug.log("Refreshing all windows...");		
+			//Note: refresh window takes foreground window
+			//	and deletes it, then makes a new one that ends up being the
+			//	last window in the array... so always take index 0 to iterate through them
+			//	but save the encountered current foreWindow
+			for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+			{
+				var window =  Desktop.desktop.getWindowByIndex(0);
+				var id = window.getWindowId();
 				
+				Debug.log("name: " + i + " " + window.getWindowName());
+				Debug.log("ID: " + id);
+				
+				var maximized = window.isMaximized();
+								
+				Desktop.desktop.setForeWindow(window);
+				window = Desktop.desktop.refreshWindow();            
+				
+				if(foreWindowId == id)
+				{
+					foreWindow = window;
+	
+					if(maximized)
+						isMaxWindow = window;
+				}
+			}
 			
-			Desktop.desktop.setForeWindow(window);
-			window = Desktop.desktop.refreshWindow();            
-            
-			if(maximized)
-				isMaxWindow = window;
 
-			if(foreWindowId == id)
-				foreWindow = window;
-	    }
+			//for Debugging:
+			//		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+			//    	{
+			//			var window =  Desktop.desktop.getWindowByIndex(i);
+			//			var id = window.getWindowId();
+			//			var z = window.getWindowZ();
+			//			
+			//			Debug.log("name: " + i + " " + window.getWindowName());
+			//			Debug.log("ID: " + id + " z=" + z);
+			//			
+			//    	}
+			
+			if(foreWindow)
+				Desktop.desktop.setForeWindow(foreWindow);
+			if(isMaxWindow)
+				Desktop.desktop.setForeWindow(foreWindow);
+		} //end refresh all windows 
 
-		//		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
-		//    	{
-		//			var window =  Desktop.desktop.getWindowByIndex(i);
-		//			var id = window.getWindowId();
-		//			var z = window.getWindowZ();
-		//			
-		//			Debug.log("name: " + i + " " + window.getWindowName());
-		//			Debug.log("ID: " + id + " z=" + z);
-		//			
-		//    	}
-		
-		if(foreWindow)
-			Desktop.desktop.setForeWindow(foreWindow);
-		if(isMaxWindow)
-			Desktop.desktop.setForeWindow(foreWindow);
 
+		//for Debugging:
 		//		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
 		//    	{
 		//			var window =  Desktop.desktop.getWindowByIndex(i);
