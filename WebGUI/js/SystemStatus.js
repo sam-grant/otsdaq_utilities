@@ -8,7 +8,7 @@ var _arrayOnDisplayTable 	= new Array(); // has the array values currently displ
 
 var _updateAppsTimeout		= 0;
 
-var _displayingFilters 		= true; //set default here
+var _displayingFilters 		= false; //set default here
 
 var _statusDivElement, _filtersDivElement, _toggleFiltersLinkElement;
 
@@ -181,19 +181,25 @@ function getAppsArray()
 			appUrls = req.responseXML.getElementsByTagName("url");
 			appContexts = req.responseXML.getElementsByTagName("context");
 
-			var i;
-
 			if(_allAppsArray === undefined && appTime.length > 1)
 			{
 				//first time, check for app status monitoring enabled
 				//	time of 0, indicates app status not updating
-
-				if(appTime[appTime.length-1].getAttribute("value") == "0")
+					
+				var all0 = true;
+				for(var i=1;i<appTime.length;++i)
+					if(appTime[i].getAttribute("value") != "0")
+					{
+						all0 = false;
+						break;
+					}
+				
+				if(all0)
 				{
 					Debug.log("It appears that active application status monitoring is currently OFF! " +
 							"\n\n\n" +
-							"If you want to turn it on, there is a Gateway Supervisor parameter that " +
-							"controls it. Set this field to YES in your Context Group Configuration Tree: \n\n" +
+							"To verify it is on, check the Gateway Supervisor parameter that " +
+							"controls it. To check app status, set this field to YES in your Context Group Configuration Tree: \n\n" +
 							"<b>GatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>",
 							Debug.HIGH_PRIORITY);
 				}            	
@@ -203,14 +209,14 @@ function getAppsArray()
 			_allClassNames = {}; //reset and treat as count
 			_allHostNames = {}; //reset and treat as count
 
-			for (i = 0; i< appNames.length; i++) 
+			for(var i=0;i<appNames.length;i++) 
 			{
 				_allAppsArray.push({ 
 					"name"      :   appNames[i].getAttribute("value"),
 					"id"        :   appIds[i].getAttribute("value"),
 					"status"    :   appStatus[i].getAttribute("value"),
 					"time"      :   appTime[i].getAttribute("value"),
-					"stale"     :   appTime[i].getAttribute("value"),
+					"stale"     :   appStale[i].getAttribute("value"),
 					"progress"  :   appProgress[i].getAttribute("value"),
 					"class"     :   appClasses[i].getAttribute("value"),
 					"url"       :   appUrls[i].getAttribute("value"),
@@ -322,7 +328,7 @@ function displayTable(appsArray)
             {
             	var staleString = "";
             	var staleSeconds = appsArray[i][columnKeys[j]] | 0;
-            	if(!appsArray[i].time)
+            	if(appsArray[i].time == "0")
             		staleString = "No status";
             	else if(staleSeconds < 10)
             		staleString = "Seconds ago";
@@ -342,7 +348,9 @@ function displayTable(appsArray)
             else if(columnKeys[j] == "progress")
             {
             	var progressNum = appsArray[i][columnKeys[j]] | 0;
-            	
+            	if(progressNum > 100)
+            		progressNum = 99; //attempting to figure out max (or variable steps)
+            		
             	if(progressNum == 100)
                 	cell.innerHTML = "Done";
             	else
@@ -350,40 +358,77 @@ function displayTable(appsArray)
             		//scale progress bar to width of cell (66px)
 
                 	var progressPX = ((66*progressNum/100)|0);
-                	if(progressPX < 3) progressPX = 3; //show something non-zero
-                		
+                	if(progressPX > 0 && progressPX < 3) progressPX = 3; //show something non-zero
+                	
                 	cell.innerHTML = "&nbsp;" + progressNum + " %<div class='progressBar' style='width:" +
                 			progressPX + "px;'></div>";
                 	
             	}
+            }
+            else if (columnKeys[j] == "status")
+            {
+            	var statusString = appsArray[i][columnKeys[j]];
+            	
+            	try
+            	{
+            		statusString = statusString.split(":::")[0];
+            	}
+            	catch(e)
+            	{
+            		str = "Unknown";
+            		Debug.log("What happened? " + e);
+            	}
+            	
+
+                switch(statusString) 
+                {
+                    case "Initial":
+                    	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(119, 208, 255), rgb(119, 208, 255) 10%, rgb(7, 105, 191) 80%, rgb(6, 39, 69) 100%)";
+                        break;
+                    case "Halted":
+                    	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(255, 207, 105), rgb(245, 218, 179) 10%, rgb(234, 131, 3) 80%, rgb(121, 68, 0) 100%)";
+                        break;
+                    case "Configured":
+                    case "Paused":
+                    	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(80, 236, 199), rgb(179, 204, 197) 10%, rgb(5, 148, 122) 80%, rgb(6, 39, 69) 100%)";
+                        break;
+                    case "Running":
+                    	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(0, 255, 67), rgb(142, 255, 172) 10%, rgb(5, 148, 42) 80%, rgb(6, 39, 69) 100%)";
+                        break;                    	
+                    case "Failed":
+                    case "Error":
+                    	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(255, 124, 124), rgb(255, 159, 159) 10%, rgb(218, 0, 0) 80%, rgb(144, 1, 1) 100%)";
+                    	                    	
+                    	cell.style.cursor = "pointer";
+                    	cell.id = "cell-" + i + "-" + j;
+                    	cell.onclick = 
+                    			function()
+						{
+							Debug.log("Cell " + this.id);	
+							
+							var i = this.id.split('-');
+							var j = i[2]|0;
+							var i = i[1]|0;
+							Debug.log(
+									appsArray[i][columnKeys[j]],
+									Debug.HIGH_PRIORITY);
+						};
+                        break;
+                    default:
+                  } // end of switch
+                
+                cell.innerHTML = statusString;
             }
             else
             	cell.innerHTML = appsArray[i][columnKeys[j]];
             
             if (columnKeys[j] == "status")
             {
-                switch(appsArray[i][columnKeys[j]]) 
-                {
-                    case "Initial":
-                        cell.style.backgroundColor = "#77D0FF";
-                        break;
-                    case "Halted":
-                        cell.style.backgroundColor = "rgb(255, 177, 0)"; 
-                        break;"#4AB597"
-                    case "Configured":
-                        cell.style.backgroundColor = "#4AB597"; 
-                        break;"#4AB597"
-                    case "Running":
-                        cell.style.backgroundColor = "rgb(0, 255, 67)";
-                        break;
-                    case "Failed":
-                        cell.style.backgroundColor = "red"; 
-                        break;
-                    default:
-                  } // end of switch
-
+            	cell.style.textAlign = "center";
+            	cell.className = "statusCell";
+            	
             }// end of status style handling
-            else if(columnKeys[j] == "progress")
+            else if(columnKeys[j] == "progress" || columnKeys[j] == "id")
             	cell.style.textAlign = "center";
         }
     }// done with adding data rows
@@ -574,6 +619,7 @@ function filter()
     
     var result = [];
 
+    // loop through each app and keep if found in each filter
     for (var i = 0; i < _allAppsArray.length; i++) 
     {
 		///// filter class names
@@ -679,3 +725,23 @@ function setIntersection(list1, list2)
     }// outer for loop
     return result;
 } // end of setIntersection()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

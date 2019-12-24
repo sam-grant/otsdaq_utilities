@@ -208,10 +208,12 @@ else {
      		
      		
       	}
-      	
+
+      	//=====================================================================================
       	// this.addIcon ~~
       	//	adds an icon subtext wording underneath and image icon (if picfn defined, else alt text icon)
-      	this.addIcon = function(subtext, altText, linkurl, uniqueWin, picfn, folderPath) {
+      	this.addIcon = function(subtext, altText, linkurl, uniqueWin, picfn, folderPath) 
+      	{
       	      		
       		//Debug.log("this.addIcon");
       		      		
@@ -486,7 +488,8 @@ else {
 				}
 			}
       	} //end this.addIcon()
-      	
+
+      	//=====================================================================================
       	//this.openFolder ~~
       	//	this version is called from desktop icons
       	//		it opens up the div content at a position
@@ -519,7 +522,8 @@ else {
       		
       		this.openSubFolder(folderName);
       	}
-      	
+
+      	//=====================================================================================
       	//this.openSubFolder ~~
       	//	folderArray is a list of folder and icon objects
       	this.openSubFolder = function(folderName) {
@@ -658,7 +662,8 @@ else {
 					"Desktop.desktop.icons.mouseUpFolderContents");
       		MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
       	}
-      	
+
+      	//=====================================================================================
       	//this.closeFolder ~~
       	this.closeFolder = function() {
       		//Debug.log("Close folder");
@@ -676,6 +681,7 @@ else {
       		_openFolderPtr = undefined; //clear
       	}
 
+      	//=====================================================================================
       	//this.clickFolderContents ~~
       	this.clickFolderContents = function(el) {
       		
@@ -703,7 +709,8 @@ else {
             else
             	this.openSubFolder(val);
       	}
-      	
+
+      	//=====================================================================================
       	//this.mouseUpFolderContents ~~
       	//	this functionality should mirror addIcon()
       	this.mouseUpFolderContents = function(el,event) {
@@ -714,6 +721,7 @@ else {
       		}
       	}
 
+      	//=====================================================================================
       	//this.mouseDownFolderContents ~~
       	//	this functionality should mirror local function
       	//	deepClickHandler() in addIcon()
