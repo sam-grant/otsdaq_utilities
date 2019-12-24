@@ -56,6 +56,7 @@ h1, h2, h3 {
 
 #filtersDiv h2 {
     margin: 				5px 10px;
+    color:					rgb(95, 96, 99);    
 }
 
 .collapsible {
@@ -67,7 +68,10 @@ h1, h2, h3 {
     border: 				none;
     text-align: 			left;
     outline: 				none;
-    font-size: 				15px;
+    
+    font-size: 				18px;
+    font-family: 			'Inconsolata', monospace;
+    font-weight:			bold;
  }
 
 .collapsible:hover {
@@ -77,6 +81,7 @@ h1, h2, h3 {
 /* Show the tooltip text when you mouse over the tooltip container */
 .collapsible:hover .helptext {
     visibility: 			visible;
+    font-size: 				14px;
 }
 
 /* Tooltip text */
@@ -155,7 +160,17 @@ h1, h2, h3 {
     text-align: 			center;
 }
 
-
+.statusCell {
+	box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
+							inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+							rgba(200, 200, 200,0.6) 0 .1em 3px,
+							rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
+							rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+	color:					black;
+	text-weight:			bold;
+	text-shadow: 			0px 1px 0px rgba(255,255,255,.3), 
+							0px -1px 0px rgba(0,0,0,.7);
+}
 
 
 
