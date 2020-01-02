@@ -12,7 +12,7 @@ a:hover {
 
 h1, h2, h3 {
 	color: 					rgb(65, 86, 146);
-	text-size:				28px;
+	font-size:				28px;
 }
 
 #clearDiv {
@@ -57,6 +57,7 @@ h1, h2, h3 {
 #filtersDiv h2 {
     margin: 				5px 10px;
     color:					rgb(95, 96, 99);    
+    font-size:				18px;
 }
 
 .collapsible {

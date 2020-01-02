@@ -88,13 +88,15 @@ else {
 
 		//==============================================================================
 		//_closeLoginPrompt
-		//	pass isLoginSuccess=true if called upon successful login!
-			//	if true refresh user display name and desktop icons will be created 
-		var _closeLoginPrompt = function(isLoginSuccess) {
+		//		pass isLoginSuccess=true if called upon successful login!
+		//		if true refresh user display name and desktop icons will be created 
+		var _closeLoginPrompt = function(isLoginSuccess)
+		{
 		
 			//remove Login
 			var ldiv = document.getElementById("Desktop-loginDiv");
-			if(ldiv) { //should not be any login div so delete 
+			if(ldiv) 
+			{ //should not be any login div so delete 
 			
 				Debug.log("found login div and deleted",Debug.LOW_PRIORITY);
 				ldiv.parentNode.removeChild(ldiv);
@@ -123,12 +125,11 @@ else {
 
 		//==============================================================================
 		//_loginPrompt --
-			// this function brings up login welcome screen
-			// and logs out. This should be called on manual
-			// "logout" also.
+		// 		this function brings up login welcome screen
+		// 		and logs out. This should be called on manual
+		// 		"logout" also.
 		var _loginPrompt = function() 
-		{
-		
+		{		
 			Debug.log("loginPrompt " + _keepFeedbackText,Debug.LOW_PRIORITY);
 					
 			if(_attemptedCookieCheck)
@@ -195,7 +196,7 @@ else {
 			str += "<div id='newAccountCodeDiv' style='display:none' >New Account Code: <input id='loginInput3' type='text' /><br /></div>";
 			str += "<a target='_blank' href='" + 
 				"https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit?usp=sharing" + 
-				"' title='Click to open Help documentation' ><img src='/WebPath/images/dashboardImages/icon-Help.png'></a>";
+				"' title='Click to open Help documentation' ><img src='/WebPath/images/dashboardImages/icon-Help.png' onerror='this.style.display=\"none\";'></a>";
 			str += "<a href='#' onmouseup='Desktop.desktop.login.promptNewUser(this); return false;' style='margin:0 100px 0 50px'>New User?</a>";
 			str += "<input type='submit' class='DesktopDashboard-button' value='    Login    ' onmouseup='Desktop.desktop.login.attemptLogin();' /><br />"
 			
@@ -248,44 +249,58 @@ else {
 		//_checkLoginInputs --
 		//		verify that the three inputs are valid when creating an account
 		// 		if not creating account, let LoginAttempt validate
-		var _checkLoginInputs = function() {
+		var _checkLoginInputs = function() 
+		{
 		
 			var x = [];
 			for(var i=0;i<3;++i) x[i] = document.getElementById('loginInput'+i).value;
 			
 			document.getElementById('loginFeedbackDiv').style.color = ""; //reset color to default inherited style			
-			if(document.getElementById('loginRetypeDiv').style.display != "none") { //3 input case, so check
+			if(document.getElementById('loginRetypeDiv').style.display != "none") 
+			{ //3 input case, so check
 
 				_areLoginInputsValid = false; //assume invalid 
 				
-				if(x[1] != x[2]) {
-					document.getElementById('loginFeedbackDiv').innerHTML = "Passwords do not match"; return;
+				if(x[1] != x[2])
+				{
+					document.getElementById('loginFeedbackDiv').innerHTML = "Passwords do not match"; 
+					return;
 				}
-				if(x[1].length < _DEFAULT_PASSWORD_MIN_LEN) {
-					document.getElementById('loginFeedbackDiv').innerHTML = "Passwords must be at least " + _DEFAULT_PASSWORD_MIN_LEN + " characters"; return;
+				else if(x[1].length < _DEFAULT_PASSWORD_MIN_LEN)
+				{
+					document.getElementById('loginFeedbackDiv').innerHTML = "Passwords must be at least " + _DEFAULT_PASSWORD_MIN_LEN + " characters"; 
+					return;
 				}
-				if(x[1].length > _DEFAULT_PASSWORD_MAX_LEN) {
-					document.getElementById('loginFeedbackDiv').innerHTML = "Passwords must be at most " + _DEFAULT_PASSWORD_MAX_LEN + " characters"; return;
+				else if(x[1].length > _DEFAULT_PASSWORD_MAX_LEN) 
+				{
+					document.getElementById('loginFeedbackDiv').innerHTML = "Passwords must be at most " + _DEFAULT_PASSWORD_MAX_LEN + " characters"; 
+					return;
 				}
-				if(x[0].length < _DEFAULT_USER_MIN_LEN) {
-					document.getElementById('loginFeedbackDiv').innerHTML = "User name must be at least " + _DEFAULT_USER_MIN_LEN + " characters"; return;
+				else if(x[0].length < _DEFAULT_USER_MIN_LEN) 
+				{
+					document.getElementById('loginFeedbackDiv').innerHTML = "User name must be at least " + _DEFAULT_USER_MIN_LEN + " characters"; 
+					return;
 				}
-				if(x[0].length > _DEFAULT_USER_MAX_LEN) {
-					document.getElementById('loginFeedbackDiv').innerHTML = "User name must be at most " + _DEFAULT_USER_MAX_LEN + " characters"; return;
+				else if(x[0].length > _DEFAULT_USER_MAX_LEN) 
+				{
+					document.getElementById('loginFeedbackDiv').innerHTML = "User name must be at most " + _DEFAULT_USER_MAX_LEN + " characters"; 
+					return;
 				}					
+				//else logins valid!
 				
 				_areLoginInputsValid = true;
 				document.getElementById('loginFeedbackDiv').innerHTML = "Passwords are valid!";
 				document.getElementById('loginFeedbackDiv').style.color = "RGB(100,255,150)";
 			}		
 				
-		}
+		} //end _checkLoginInputs()
 
 		//==============================================================================
 		//_setCookie --
 		// 		use this as only method for refreshing and setting login cookie!!
 		//		sets 2 cookies, cookieCode to code and userName to _user
-		var _setCookie = function(code) {
+		var _setCookie = function(code) 
+		{
 			
 			if(code == _BLACKOUT_COOKIE_STR)
 			{
@@ -318,12 +333,13 @@ else {
 			ccdiv = document.getElementById("DesktopContent-updateTimeMailbox");
             ccdiv.innerHTML = (new Date()).getTime(); //set last time of cookieCode update
             _cookieTime = parseInt(ccdiv.innerHTML);
-		} 
+		} //end _setCookie()
 
 		//==============================================================================
 		//_getCookie --
 			// get login cookie
-		var _getCookie = function(c_name) {
+		var _getCookie = function(c_name) 
+		{
 			var i,x,y,ARRcookies=document.cookie.split(";");
 			for (i=0;i<ARRcookies.length;i++)
 			{
@@ -335,12 +351,13 @@ else {
 					return unescape(y);
 				}
 			}  
-		}
+		} //end _getCookie()
 
 		//==============================================================================
 		//_deleteCookies --
 		// 		delete login cookies, effectively logout
-		var _deleteCookies = function() {
+		var _deleteCookies = function() 
+		{
 			_cookieCode = 0;
 			Debug.log("Delete cookies",Debug.LOW_PRIORITY);
 			var c_value;
@@ -348,17 +365,19 @@ else {
 			document.cookie= _cookieCodeStr + "=" + c_value;
 			c_value = "; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
 			document.cookie= _cookieUserStr + "=" + c_value;
-		}
+		} //end _deleteCookies()
 
 		//==============================================================================
 		//_getUniqueUserId --
 			//generate a unique user ID (UUID)
-		var _getUniqueUserId = function() {
-			return '4xxx'.replace(/[x]/g, function(c) {
+		var _getUniqueUserId = function() 
+		{
+			return '4xxx'.replace(/[x]/g, function(c) 
+					{
 			    var r = Math.random()*16|0, v = r;
 			    return v.toString(16);
 			});		
-		}
+		} //end _getUniqueUserId()
 
 		//==============================================================================
 		//_checkCookieLogin --
@@ -441,9 +460,11 @@ else {
 				
 				//success!
 				
-				//Note: only two places where login successful here in _handleCookieCheck() and in _handleLoginAttempt()				
+				//Note: only two places where login successful, in 
+				//	_handleCookieCheck() and in _handleLoginAttempt()				
 				Desktop.desktopTooltip();
 				_attemptedCookieCheck = false;
+				_killLogoutInfiniteLoop = false;
 				return;
 			} //end handle login success
 			else 
@@ -486,7 +507,8 @@ else {
 						//else good sessionId
 
 						Debug.log("Attempting auto re-login");
-						
+											
+						_attemptedLoginWithCert = true; //do not attempt CERT again
 						_badSessionIdCount = 0; //clear
 
 						//successfully received session ID			
@@ -550,9 +572,11 @@ else {
 				_applyUserPreferences(req);
 				_closeLoginPrompt(1); //clear login prompt
 				
-				//Note: only two places where login successful here in _handleCookieCheck() and in _handleLoginAttempt()				
+				//Note: only two places where login successful,
+				//	in _handleCookieCheck() and in _handleLoginAttempt()				
 				Desktop.desktopTooltip();
 				_attemptedCookieCheck = false;
+				_killLogoutInfiniteLoop = false;
 				return;
 			}
 			else 
@@ -887,8 +911,10 @@ else {
 			_user = x[0]; //set local user		
 			
 			//if remember me checked, refresh cookie.. else delete whatever is there
-       		if(document.getElementById('loginInputRememberMe').checked) _saveUsernameCookie(); 
-       		else _deleteUsernameCookie();
+       		if(document.getElementById('loginInputRememberMe').checked) 
+       			_saveUsernameCookie(); 
+       		else 
+       			_deleteUsernameCookie();
        		
        		Desktop.XMLHttpRequest("LoginRequest?RequestType=login",
        				"uuid="+_uid+"&nac="+document.getElementById('loginInput3').value
@@ -897,7 +923,8 @@ else {
 		} //end attemptLogin()
 
 		//==============================================================================
-        function getParameterByName(name, url) {
+        function getParameterByName(name, url) 
+        {
             if (!url) url = window.location.href;
             name = name.replace(/[\[\]]/g, "\\$&");
             var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
@@ -991,15 +1018,21 @@ else {
 		this.setupLogin = function()
 		{
 			_uid = _getUniqueUserId();
+			
+            Debug.log("UUID: " + _uid + ", " + Desktop.desktop.security);
+            
 			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS)	
 			{
 				this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login
 				_loginDiv.setAttribute("id", "DesktopLoginDiv");
 				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
-							"uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
+							"uuid="+_uid,
+							_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
 			}
 			else if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	 //straight to login attempt for no security
-				Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid,_handleLoginAttempt); 
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=login",
+						"uuid="+_uid,
+						_handleLoginAttempt); 
 			//else //no login prompt at all
 			
             Debug.log("UUID: " + _uid);

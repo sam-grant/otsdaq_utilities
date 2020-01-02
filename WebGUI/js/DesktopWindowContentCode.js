@@ -206,7 +206,8 @@ DesktopContent._mouseMoveSubscribers = [];
 // caution when using "window" anywhere outside this function because
 //  desktop window can be at different levels depending on page depth (page may be inside frame)
 // use instead DesktopContent._theWindow
-DesktopContent.init = function() {
+DesktopContent.init = function() 
+{
 	
 	if(typeof Desktop !== 'undefined') return; //skip if Desktop exists (only using for tooltip
 	
@@ -245,10 +246,10 @@ DesktopContent.init = function() {
 	
 	DesktopContent._serverUrnLid = DesktopContent.getDesktopWindowParameter(0,"urn");//((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
-		Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
-	Debug.log("Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
+		Debug.log("ERROR -- Gateway Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
+	Debug.log("Gateway Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
 	DesktopContent._serverOrigin = DesktopContent._theWindow.parent.window.location.origin;
-	Debug.log("Supervisor Application Origin = " + DesktopContent._serverOrigin);
+	Debug.log("Gateway Supervisor Application Origin = " + DesktopContent._serverOrigin);
 		
 	DesktopContent._localUrnLid = DesktopContent.getParameter(0,"urn");
 	if(typeof DesktopContent._localUrnLid == 'undefined')
@@ -263,13 +264,15 @@ DesktopContent.init = function() {
 		DesktopContent._sequence = 0; //normal desktop mode
 	else
 		Debug.log("In Wizard Mode with Sequence=" + DesktopContent._sequence);
-}
+} //end DesktopContent.init()
 
+//=====================================================================================
 //DesktopContent.getParameter ~
 //	returns the value of the url GET parameter specified by index
 //	if using name, then (mostly) ignore index
 //	Note: in normal mode the first two params are only separated by = (no &'s) for historical reasons
-DesktopContent.getParameter = function(index,name) {	
+DesktopContent.getParameter = function(index,name) 
+{	
 	// Debug.log(window.location)
 	var params = (window.location.search.substr(1)).split('&');
 	var spliti, vs;
@@ -294,12 +297,14 @@ DesktopContent.getParameter = function(index,name) {
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return decodeURIComponent(vs[1]); //return value
-}
+} //end DesktopContent.getParameter()
 
+//=====================================================================================
 //DesktopContent.getDesktopParameter ~
 //	returns the value of the url GET parameter specified by index of the Desktop url
 //	if using name, then (mostly) ignore index
-DesktopContent.getDesktopParameter = function(index, name) {	
+DesktopContent.getDesktopParameter = function(index, name) 
+{	
 	// Debug.log(window.location)
 	
 	var win = DesktopContent._theWindow;
@@ -328,12 +333,14 @@ DesktopContent.getDesktopParameter = function(index, name) {
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return decodeURIComponent(vs[1]); //return value
-}
+} //end DesktopContent.getDesktopParameter()
 
+//=====================================================================================
 //DesktopContent.getDesktopWindowParameter ~
 //	returns the value of the url GET parameter specified by index of the Window frame url
 //	if using name, then (mostly) ignore index
-DesktopContent.getDesktopWindowParameter = function(index, name) {	
+DesktopContent.getDesktopWindowParameter = function(index, name)
+{	
 	// Debug.log(window.location)	
 	
 	var win = DesktopContent._theWindow;
@@ -368,10 +375,12 @@ DesktopContent.getDesktopWindowParameter = function(index, name) {
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return decodeURIComponent(vs[1]); //return value
-}
+} //end DesktopContent.getDesktopWindowParameter()
 
+//=====================================================================================
 //DesktopContent.handleFocus ~
-DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, increment by 1 and set parent's z-index	
+DesktopContent.handleFocus = function(e) 
+{	//access z-index mailbox on desktop, increment by 1 and set parent's z-index	
 
 	if(!DesktopContent._myDesktopFrame) return; //only happen if not part of desktop
 
@@ -384,15 +393,18 @@ DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, 
 	DesktopContent._zMailbox.innerHTML = parseInt(DesktopContent._zMailbox.innerHTML) + 1;
 	return true;
 }
-DesktopContent.handleBlur = function(e) {	
+DesktopContent.handleBlur = function(e) 
+{	
 	//Debug.log("Blur DesktopContent._isFocused " + DesktopContent._isFocused);
 	DesktopContent._isFocused = false;
 }
-DesktopContent.handleScroll = function(e) {		
+DesktopContent.handleScroll = function(e) 
+{		
 	//Debug.log("Scroll DesktopContent._isFocused" + DesktopContent._isFocused);
 	window.focus();	
 }
-DesktopContent.mouseMove = function(mouseEvent) {	
+DesktopContent.mouseMove = function(mouseEvent) 
+{	
 	//Debug.log("Move DesktopContent._isFocused" + DesktopContent._isFocused);
 	
 	//call each subscriber
@@ -409,11 +421,13 @@ DesktopContent.mouseMove = function(mouseEvent) {
 			parseInt(DesktopContent._myDesktopFrame.offsetLeft) + DesktopContent._windowMouseX;
 	DesktopContent._mouseOverYmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetTop) + 
 			parseInt(DesktopContent._myDesktopFrame.offsetTop) + DesktopContent._windowMouseY;	
-}
+} //end DesktopContent.mouseMove()
 
-DesktopContent.mouseMoveSubscriber = function(newHandler) {
+//=====================================================================================
+DesktopContent.mouseMoveSubscriber = function(newHandler) 
+{
 	DesktopContent._mouseMoveSubscribers.push(newHandler);
-}
+} //end DesktopContent.mouseMoveSubscriber()
 	
 
 DesktopContent.init(); //initialize handlers
@@ -439,7 +453,8 @@ DesktopContent._loadBoxRequestStack = 0; //load box is not removed until back to
 //DesktopContent.showLoading
 //	Pass nextFunction to launch something immediately after showing load box
 //	with hideLoading() called after the function
-DesktopContent.showLoading = function(nextFunction)	{
+DesktopContent.showLoading = function(nextFunction)
+{
 	
 	localDoIt();
 	if(nextFunction)
@@ -580,28 +595,10 @@ DesktopContent.showLoading = function(nextFunction)	{
 } //end showLoading()
 //=====================================================================================
 DesktopContent._loadBoxHideTimer = 0;
-DesktopContent.hideLoading = function()	{
-	
-//	if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
-//		return;
-	
-	//hide in a little bit, to provide more continuity to 
-	//	back to back loading box requests
-//	window.clearInterval(DesktopContent._loadBoxHideTimer);
-//	DesktopContent._loadBoxHideTimer = window.setTimeout(
-//			localHideLoadBox, 300);
-	
-	
-	
-//	/////////////////////////
-//	function localHideLoadBox()
-//	{
-//		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
-//		Debug.log("DesktopContent.hideLoading");
-//		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
-//	} //end localHideLoadBox
-
+DesktopContent.hideLoading = function()	
+{
 	window.setTimeout(localHideLoadBox, 300);
+	
 	/////////////////////////
 	function localHideLoadBox()
 	{
@@ -663,7 +660,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			
 	
 	if((!ignoreSystemBlock && DesktopContent._blockSystemCheckMailbox &&  //we expect the system to be down during system block
-			DesktopContent._blockSystemCheckMailbox.innerHTML != "") ||
+			DesktopContent._blockSystemCheckMailbox.innerHTML == "1") ||
 			(DesktopContent._needToLoginMailbox &&
 					DesktopContent._needToLoginMailbox.innerHTML == "1"))		
 	{
@@ -1938,14 +1935,17 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 		imageURL, windowContentURL, linkedApp, parameters) {
 
 	var iconParameters = "";
-	if(parameters && parameters.length && (typeof parameters === "string"))
-		iconParameters = parameters; //just take string, if not object
-	else //take parameters from object
-		for(var i in parametersObject)
-		{
-			iconParameters += encodeURIComponent(i) + "=" + 
-					encodeURIComponent(iconParameters[i]) + "&";
-		}
+	if(parameters && parameters.length)
+	{
+		if(typeof parameters === "string")
+			iconParameters = parameters; //just take string, if not object
+		else //take parameters from object
+			for(var i in parametersObject)
+			{
+				iconParameters += encodeURIComponent(i) + "=" + 
+						encodeURIComponent(iconParameters[i]) + "&";
+			}
+	}
 	
 	Debug.log("iconParameters = " + iconParameters);
 	

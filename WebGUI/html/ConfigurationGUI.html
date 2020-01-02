@@ -144,6 +144,7 @@
 		//verifyRelaunchWizMode()
 		//toggleVersionTracking()
 		//flattenToSystemAliases()
+		//createAppStatusDesktopIcon()
 		//mergeGroups(groupANameContext, groupAKeyContext, groupBNameContext, groupBKeyContext,groupANameConfig, groupAKeyConfig, groupBNameConfig, groupBKeyConfig, mergeApproach)
 		//mergeGroupsDialog()
 		//popUpGroupUploadDownloadForm(groupName,groupKey,isUpload)
@@ -15052,7 +15053,7 @@
 		//==============================================================================
 		//createSystemViewMenu ~~
 		function createSystemViewMenu(e, groupAliasesName, 
-				groupAliasesVersion, backLinkStr, x,y,modeIndex)
+				groupAliasesVersion, backLinkStr, x, y, modeIndex)
 		{
 			if(modeIndex)
 			{
@@ -15111,34 +15112,28 @@
 						_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
 				);
 				return;
-			}
+			} //end special second level menu handling
 			
 			
 			var menuItems = [
 				"Relaunch ots in Normal Mode",
 				"Relaunch ots in Wiz Mode",
-				"Edit System Aliases",
-				"Open the artdaq Configuration GUI",
 				_versionTrackingIsOn ? "Turn Version Tracking OFF" : "Turn Version Tracking ON",
 				"Flatten Configuration to System Aliases ONLY",
 				"Merge Table Groups",
-				"Create System Alias for Latest Tables",
-				"Create System Alias for Active Group"
+				"Open the artdaq Configuration GUI",
+				"Add Application Status Monitoring to Desktop"
 			];
 			var menuItemHandlers = [
 				"verifyRelaunchNormalMode();",
 				"verifyRelaunchWizMode();",
-				"setupSpecificTable(\"" +
-				groupAliasesName + "\",\"" +
-				groupAliasesVersion + "\",\"" + backLinkStr + "\")",
-				"createSystemViewMenu(0,0,0,0," +
-				(e.pageX - 1) + "," +
-				(e.pageY - 1) + ", 1 /*artdaq GUI mode*/);",
 				"toggleVersionTracking();",
 				"flattenToSystemAliases();",
 				"mergeGroupsDialog();",
-				"popUpGroupAliasForm(1);",
-				"popUpGroupAliasForm(0);"
+				"createSystemViewMenu(0,0,0,0," +
+				(e.pageX - 1) + "," +
+				(e.pageY - 1) + ", 1 /*artdaq GUI mode*/);",
+				"createAppStatusDesktopIcon()"
 			];
 
 			Debug.log("createEditTableMenu()");
@@ -15150,8 +15145,29 @@
 				_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
 				_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
 			);
-		} //end createSystemViewMenu
+		} //end createSystemViewMenu()
 
+		//==============================================================================
+		//createAppStatusDesktopIcon ~~
+		function createAppStatusDesktopIcon() 
+		{
+			Debug.log("createAppStatusDesktopIcon()");
+			
+			
+			DesktopContent.addDesktopIcon(
+					"App Status" /*caption*/,
+					"STAT" /*altText*/,
+					"" /*folderPath*/,
+					true /*unique*/,
+					1 /*permissionString*/,
+					"icon-SystemStatus.png" /*imageURL*/,
+					"/WebPath/html/SystemStatus.html" /*windowURL*/,
+					DesktopContent._serverUrnLid /*linked app*/,
+					"" /*parameters*/
+					);
+					
+		} //end createAppStatusDesktopIcon()
+		
 		//==============================================================================
 		//mergeGroupsDialog ~~
 		function mergeGroupsDialog() 
