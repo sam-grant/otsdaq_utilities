@@ -103,11 +103,14 @@ else {
 
       	//=====================================================================================
       	// this.resetWithPermissions ~~      	
-      	this.resetWithPermissions = function(permissions) 
+      	this.resetWithPermissions = function(permissions, keepSamePermissions) 
 		{
-      		Debug.log("Desktop resetWithPermissions " + permissions,Debug.LOW_PRIORITY);
+      		Debug.log("Desktop resetWithPermissions " + permissions +
+      				", " + keepSamePermissions,Debug.LOW_PRIORITY);
 
-      		if(permissions !== undefined)
+      		if(permissions === undefined && !keepSamePermissions)
+      			return;
+      		else if(!keepSamePermissions)
       			_permissions = permissions;
       		////////////
 
