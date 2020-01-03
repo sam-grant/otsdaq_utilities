@@ -527,6 +527,7 @@ else {
 					_keptFeedbackText = "Username/Password not correct.";
 				else
 					_keptFeedbackText = "ots Server failed.";
+				
 				_keepFeedbackText = true;
 				
 				if(_attemptedLoginWithCert)

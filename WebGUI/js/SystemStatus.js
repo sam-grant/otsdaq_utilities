@@ -167,9 +167,22 @@ function getAppsArray()
 	return new Promise(function(resolve, reject)
 			{
 		DesktopContent.XMLHttpRequest("Request?RequestType=getAppStatus", "", 
-				function (req) 
+				function (req,param,err) 
 				{
-			var appNames, appUrls, appIds, appStatus, appTime, appStale, appClasses, appProgress, appContexts;
+			
+			if(err)
+			{
+				Debug.log("Error received updating status: " + err);
+				
+				//try again in a few seconds
+				// update the _allAppsArray variable with repeated calls to server
+				if(_updateAppsTimeout) window.clearTimeout(_updateAppsTimeout);
+				_updateAppsTimeout = window.setTimeout(updateAppsArray, 5000 /*ms*/);
+
+				return;
+			}
+			var appNames, appUrls, appIds, appStatus, appTime, 
+				appStale, appClasses, appProgress, appDetail, appContexts;
 
 			appNames = req.responseXML.getElementsByTagName("name");
 			appIds = req.responseXML.getElementsByTagName("id");
@@ -177,6 +190,7 @@ function getAppsArray()
 			appTime = req.responseXML.getElementsByTagName("time");
 			appStale = req.responseXML.getElementsByTagName("stale");
 			appProgress = req.responseXML.getElementsByTagName("progress");
+			appDetail = req.responseXML.getElementsByTagName("detail");
 			appClasses = req.responseXML.getElementsByTagName("class");
 			appUrls = req.responseXML.getElementsByTagName("url");
 			appContexts = req.responseXML.getElementsByTagName("context");
@@ -218,6 +232,7 @@ function getAppsArray()
 					"time"      :   appTime[i].getAttribute("value"),
 					"stale"     :   appStale[i].getAttribute("value"),
 					"progress"  :   appProgress[i].getAttribute("value"),
+					"detail"  	:   appDetail[i].getAttribute("value"),
 					"class"     :   appClasses[i].getAttribute("value"),
 					"url"       :   appUrls[i].getAttribute("value"),
 					"context"   :   appContexts[i].getAttribute("value")
@@ -261,7 +276,10 @@ function getAppsArray()
             if(_updateAppsTimeout) window.clearTimeout(_updateAppsTimeout);
             _updateAppsTimeout = window.setTimeout(updateAppsArray, 1000 /*ms*/);
 
-				}, 0,0,0,true);// end of request handler
+				},				 
+				0,0, //reqParam, progressHandler
+				true /*callHandlerOnErr*/,
+				true /*doNotShowLoadingOverlay*/);// end of request handler
 			});// end of Promise
 
 }// end of getAppsArray()
@@ -299,8 +317,8 @@ function displayTable(appsArray)
     table.border = "0";
 
     //Get the count of columns.
-    var columnNames = ["App Name", "Status", "Progress", "Last Update", "App Type", "App URL", "App ID", "Parent Context Name"];
-    var columnKeys = ["name", "status", "progress", "stale", "class", "url", "id", "context" ];
+    var columnNames = ["App Name", "Status", "Progress", "Detail", "Last Update", "App Type", "App URL", "App ID", "Parent Context Name"];
+    var columnKeys = ["name", "status", "progress", "detail", "stale", "class", "url", "id", "context" ];
     var columnCount = columnNames.length;
 
     //Add the header row.
@@ -419,7 +437,11 @@ function displayTable(appsArray)
                 
                 cell.innerHTML = statusString;
             }
-            else
+//            else if (columnKeys[j] == "detail")
+//            {
+//            	decodeURIComponent
+//        	}
+        	else
             	cell.innerHTML = appsArray[i][columnKeys[j]];
             
             if (columnKeys[j] == "status")

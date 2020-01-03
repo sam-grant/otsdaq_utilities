@@ -2,7 +2,7 @@
 body {
     background-color: 		rgb(226, 216, 216);
     font-family: 			'Inconsolata', monospace;
-    overflow: 				scroll;
+    overflow: 				auto;
 }
 
 a:hover {

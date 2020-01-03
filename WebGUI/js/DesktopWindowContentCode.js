@@ -668,7 +668,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		
 		errStr = "The system appears to be down.";
 		errStr += " (Try reconnecting/reloading the page, or alert ots admins if problem persists.)";
-		Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
+		
+		if(!callHandlerOnErr)
+			Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
+		
 		req = 0; //force to 0 to indicate error
 		var found = false;
 		if(DesktopContent._arrayOfFailedHandlers.length < 2) //only give pop up behavior for first 2 failures (then go quiet)
@@ -677,7 +680,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				if(DesktopContent._arrayOfFailedHandlers[rh] == returnHandler) 
 				{
 					errStr = "Blocking multiple error responses to same handler. \nRecurring error should be handled by returnHandler: " + returnHandler;
-					Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
+					
+					if(!callHandlerOnErr)
+						Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
+					
 					found = true; break;
 				}
 		}
@@ -688,10 +694,12 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			found = true;
 		}
 
-		if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
+		if(!found && !callHandlerOnErr)
+			DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 
 		//only call return handler once
-		if(returnHandler && !found && callHandlerOnErr) returnHandler(req, reqParam, errStr); 
+		if(returnHandler && !found && callHandlerOnErr) 
+			returnHandler(req, reqParam, errStr); 
 		return;
 	}
 
