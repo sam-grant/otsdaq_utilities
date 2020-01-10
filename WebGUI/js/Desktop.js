@@ -260,13 +260,17 @@ Desktop.createDesktop = function(security) {
     //	check for settings change
 	var _checkMailboxes = function(win) 
 	{		
-		//Debug.log("_checkMailboxes sysMsgCounter=" +_sysMsgCounter);
+		window.clearTimeout(Desktop.desktop.checkMailboxTimer);
+		Desktop.desktop.checkMailboxTimer = window.setTimeout(_checkMailboxes,
+				_MAILBOX_TIMER_PERIOD);
+		
+		//console.log("_checkMailboxes sysMsgCounter=" +_sysMsgCounter);
 		
 		if(_firstCheckOfMailboxes)
 		{
-			Debug.log("First check of mailboxes!");
+			console.log("First check of mailboxes!");
 
-			Debug.log("Checking for any shortcut work from get parameters...",Debug.LOW_PRIORITY);
+			console.log("Checking for any shortcut work from get parameters...");
 			_firstCheckOfMailboxes = false;
 			Desktop.desktop.actOnParameterAction();    //this should be the second running and will always work (first time is at end of Desktop instance creation.. and may fail for opening icon by name)
 			
@@ -297,7 +301,7 @@ Desktop.createDesktop = function(security) {
 	    //		innerHTML = requestingWindowId=<window uid>&done=1
 	    if(_openWindowMailbox.innerHTML != "")
 	    {
-	    	Debug.log("_openWindowMailbox.textContent=" + _openWindowMailbox.textContent);
+	    	console.log("_openWindowMailbox.textContent=" + _openWindowMailbox.textContent);
 	    	
 	    	//get parameters
 	    	var paramsStr = _openWindowMailbox.textContent;
@@ -339,14 +343,14 @@ Desktop.createDesktop = function(security) {
 	    	{
 	    		//have work to do!
 	    		// Note: similar to L1000 in actOnParameterAction() 
-	    		Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
-		    	Debug.log("requestingWindowId=" + requestingWindowId);
-		    	Debug.log("windowPath=" + windowPath);
+	    		console.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
+	    		console.log("requestingWindowId=" + requestingWindowId);
+	    		console.log("windowPath=" + windowPath);
 		    	while(windowPath.length && windowPath[0] == '?') windowPath = windowPath.substr(1); //remove leading ?'s
-		    	Debug.log("modified windowPath=" + windowPath);
-		    	Debug.log("windowName=" + windowName);
-		    	Debug.log("windowSubname=" + windowSubname);
-		    	Debug.log("windowUnique=" + windowUnique);
+		    	console.log("modified windowPath=" + windowPath);
+		    	console.log("windowName=" + windowName);
+		    	console.log("windowSubname=" + windowSubname);
+		    	console.log("windowUnique=" + windowUnique);
 
 		    	var newWin;
 		    	
@@ -355,7 +359,7 @@ Desktop.createDesktop = function(security) {
 		    	if(windowSubname == "undefined" &&
 		    			windowUnique == "undefined") //the string undefined is what comes through
 		    	{
-		    		Debug.log("Opening desktop window... " + windowName);
+		    		console.log("Opening desktop window... " + windowName);
 
 		    		var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
 		    		console.log("Desktop.desktop.icons.iconNameToPathMap",
@@ -407,7 +411,7 @@ Desktop.createDesktop = function(security) {
 		    	}
 
 		    	//delay the setting of the fore window
-				setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
+				window.setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
 		    	
 				var str = "requestingWindowId=" + requestingWindowId;
 				str += "&done=1";	
@@ -686,7 +690,7 @@ Desktop.createDesktop = function(security) {
     	//usually the foreground happens automatically.. but sometimes
         //	it doesn't (?)
         //... so delay an extra setting of the fore window
-        setTimeout(function()
+        window.setTimeout(function()
         		{ 
         	Desktop.desktop.setForeWindow(newWin); 
         	Debug.log("extraStep=" + extraStep);
@@ -1067,10 +1071,8 @@ Desktop.createDesktop = function(security) {
 		
 		//re-start timer for checking foreground window changes due to iFrame content code
 		
-		window.clearInterval(Desktop.desktop.checkMailboxTimer);		
+		window.clearTimeout(Desktop.desktop.checkMailboxTimer);		
 		_checkMailboxes();
-		Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,
-				_MAILBOX_TIMER_PERIOD);
 					
 		//setup lock the first time
 		if(Desktop.desktop.login.getCookieCode(true))
@@ -1276,7 +1278,7 @@ Desktop.createDesktop = function(security) {
 			
 	    	//delay the setting of the fore window and fullscreen
 			//	so that the window exists before changing it
-			setTimeout(function(){
+			window.setTimeout(function(){
 				Desktop.desktop.setForeWindow(newWin);
 				Desktop.desktop.toggleFullScreen();
 			}, 200);
@@ -1378,7 +1380,8 @@ Desktop.createDesktop = function(security) {
         
 	_handleDesktopResize();
 
-	this.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD); //start timer for checking foreground window changes due to iFrame content code
+	window.clearTimeout(this.checkMailboxTimer);
+	this.checkMailboxTimer = window.setTimeout(_checkMailboxes,_MAILBOX_TIMER_PERIOD); //start timer for checking foreground window changes due to iFrame content code
 
 	//add login
 	this.login = _login = new Desktop.login(!(this.security == Desktop.SECURITY_TYPE_NONE)); //pass true to enable login
@@ -1526,8 +1529,9 @@ Desktop.handleWindowMouseUp = function(mouseEvent)
 	
 	if(Desktop.foreWinLastMouse[0] != -1) //currently action happening on foreground window
 	{			
-		if(Desktop.stretchAndMoveInterval) {
-			clearInterval(Desktop.stretchAndMoveInterval);	//kill interval iframe mouse watchdog
+		if(Desktop.stretchAndMoveInterval) 
+		{
+			window.clearInterval(Desktop.stretchAndMoveInterval);	//kill interval iframe mouse watchdog
 			Desktop.stretchAndMoveInterval = 0;
 		}
 		
@@ -1643,7 +1647,7 @@ Desktop.handleBodyMouseMove = function(mouseEvent)
   		Desktop.foreWinLastMouse = [mouseEvent.clientX,mouseEvent.clientY];				
 			
 		if(Desktop.stretchAndMoveInterval == 0)  //start timer for iframe mouse watchdog
-			Desktop.stretchAndMoveInterval = setInterval( 
+			Desktop.stretchAndMoveInterval = window.setInterval( 
 				function() { //handle dashboard resize remotely through iframe mouse event
 					if(Desktop.desktop.getLastFrameMouseX() == -1) return; //if not in iframe do nothing
 					
@@ -1670,8 +1674,9 @@ Desktop.handleBodyMouseMove = function(mouseEvent)
    		Desktop.foreWinLastMouse = [mouseEvent.clientX,mouseEvent.clientY];
         
         if(Desktop.stretchAndMoveInterval == 0)  //start timer for iframe mouse watchdog
-			Desktop.stretchAndMoveInterval = setInterval(
-                function() { //handle dashboard resize remotely through iframe mouse event
+			Desktop.stretchAndMoveInterval = window.setInterval(
+                function() 
+				{ //handle dashboard resize remotely through iframe mouse event
                     if(Desktop.desktop.getLastFrameMouseX() == -1) return; //if not in iframe do nothing
                      
                     var delta = [Desktop.desktop.getLastFrameMouseX()-Desktop.foreWinLastMouse[0],
@@ -1954,7 +1959,7 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex)
 				{
 					errStr = "Login has expired.";					
 					
-					window.clearInterval(Desktop.desktop.checkMailboxTimer); //stop checking mailbox
+					window.clearTimeout(Desktop.desktop.checkMailboxTimer); //stop checking mailbox
 					Desktop.logout(); 
 					//return;
 				}
@@ -1972,7 +1977,7 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex)
 				}
 
 				errStr = "Request Failed - Bad Address:\n" + requestURL;
-				window.clearInterval(Desktop.desktop.checkMailboxTimer);  //stop checking mailbox
+				window.clearTimeout(Desktop.desktop.checkMailboxTimer);  //stop checking mailbox
 				Desktop.logout();
 			}	        
 
