@@ -242,17 +242,17 @@ Ext.onReady(function()
  dataModel_ = Ext.define(
                          'DirectoriesDataModel',
                          {
-                                extend: 'Ext.data.Model',
-                                fields: [
-                                                {name: 'nChilds'      , type: 'int'   , convert: null},
-                                                {name: 'fSystemPath'  , type: 'string', convert: null},
-                                                {name: 'fRootPath'    , type: 'string', convert: null},
-                                                {name: 'fFoldersPath' , type: 'string', convert: null},
-                                                {name: 'fFileName'    , type: 'string', convert: null},
-                                                {name: 'fHistName'    , type: 'string', convert: null},
-                                                {name: 'fRFoldersPath', type: 'string', convert: null},
-                                                {name: 'fDisplayName' , type: 'string', convert: null}
-                                        ]
+                          extend: 'Ext.data.Model',
+                          fields: [
+                                   {name: 'nChilds'      , type: 'int'   , convert: null},
+                                   {name: 'fSystemPath'  , type: 'string', convert: null},
+                                   {name: 'fRootPath'    , type: 'string', convert: null},
+                                   {name: 'fFoldersPath' , type: 'string', convert: null},
+                                   {name: 'fFileName'    , type: 'string', convert: null},
+                                   {name: 'fHistName'    , type: 'string', convert: null},
+                                   {name: 'fRFoldersPath', type: 'string', convert: null},
+                                   {name: 'fDisplayName' , type: 'string', convert: null}
+                                  ]
                          }
                         );
  //-----------------------------------------------------------------------------
