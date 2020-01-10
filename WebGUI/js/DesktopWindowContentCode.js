@@ -171,6 +171,7 @@ DesktopContent._myDesktopFrame = 0;
 DesktopContent._zMailbox = 0;
 DesktopContent._mouseOverXmailbox = 0;
 DesktopContent._mouseOverYmailbox = 0;
+DesktopContent._updateMouseOverMailboxTimer = 0;
 DesktopContent._windowMouseX = -1;
 DesktopContent._windowMouseY = -1;
 
@@ -405,22 +406,35 @@ DesktopContent.handleScroll = function(e)
 }
 DesktopContent.mouseMove = function(mouseEvent) 
 {	
+	//console.log("desktop move",DesktopContent._mouseMoveSubscribers.length);
 	//Debug.log("Move DesktopContent._isFocused" + DesktopContent._isFocused);
 	
 	//call each subscriber
 	for(var i=0; i<DesktopContent._mouseMoveSubscribers.length; ++i)
 		DesktopContent._mouseMoveSubscribers[i](mouseEvent); 
-	
+			
 	if(!DesktopContent._myDesktopFrame) return; //only happens if not part of desktop
-
+	
 	DesktopContent._windowMouseX = parseInt(mouseEvent.clientX);
 	DesktopContent._windowMouseY = parseInt(mouseEvent.clientY);
-
-	//add window frame position(absolute) + iframe position within window + mouse position within iframe
-	DesktopContent._mouseOverXmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetLeft) +
-			parseInt(DesktopContent._myDesktopFrame.offsetLeft) + DesktopContent._windowMouseX;
-	DesktopContent._mouseOverYmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetTop) + 
-			parseInt(DesktopContent._myDesktopFrame.offsetTop) + DesktopContent._windowMouseY;	
+	
+	window.clearTimeout(DesktopContent._updateMouseOverMailboxTimer);
+	DesktopContent._updateMouseOverMailboxTimer = //avoid updating mailbox too often
+			window.setTimeout(localUpdateMouseOverMailbox,500);
+	return;
+	
+	//==================
+	function localUpdateMouseOverMailbox()
+	{
+		//console.log("Update desktop mouse");
+		//add window frame position(absolute) + iframe position within window + mouse position within iframe
+		DesktopContent._mouseOverXmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetLeft) +
+				parseInt(DesktopContent._myDesktopFrame.offsetLeft) + DesktopContent._windowMouseX;
+		DesktopContent._mouseOverYmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetTop) + 
+				parseInt(DesktopContent._myDesktopFrame.offsetTop) + DesktopContent._windowMouseY;
+	} //end localUpdateMouseOverMailbox()
+	
+		
 } //end DesktopContent.mouseMove()
 
 //=====================================================================================

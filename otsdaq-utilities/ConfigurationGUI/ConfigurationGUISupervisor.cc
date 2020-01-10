@@ -138,7 +138,7 @@ void ConfigurationGUISupervisor::forceSupervisorPropertyValues()
 {
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
-	    "");  // none
+	    "getActiveTableGroups");  // none
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.CheckUserLockRequestTypes,
 	    "*");  // all
@@ -5073,9 +5073,9 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
-	__SUP_COUT__ << "Using Config Session " << mapKey
-	             << " ... Total Session Count: " << userConfigurationManagers_.size()
-	             << __E__;
+//	__SUP_COUT__ << "Using Config Session " << mapKey
+//	             << " ... Total Session Count: " << userConfigurationManagers_.size()
+//	             << __E__;
 
 	time_t now = time(0);
 
