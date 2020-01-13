@@ -345,7 +345,7 @@ ARTDAQConfigurationAPI.getArtdaqNodes = function(responseHandler,
 				
 			} //end artdaq Supervisor extraction
 			else
-				Debug.log("No artdaq Supervisor found. You can manually add it to the Configuration Tree, " +
+				Debug.log("No artdaq Supervisor found (or there were more than one conflicting). You can manually setup one artdaq Supervisor in the Configuration Tree, " +
 						"or it will be created for you the first time you save your artdaq node configuration.", Debug.WARN_PRIORITY);
 			
 			Debug.log("Total nodes extracted " +

@@ -214,7 +214,9 @@ function getAppsArray()
 							"\n\n\n" +
 							"To verify it is on, check the Gateway Supervisor parameter that " +
 							"controls it. To check app status, set this field to YES in your Context Group Configuration Tree: \n\n" +
-							"<b>GatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>",
+							"<b>GatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>" +
+							"\n\n" +
+							"Remember, to restart ots after a Context group configuration change.",
 							Debug.HIGH_PRIORITY);
 				}            	
 			}
@@ -299,7 +301,6 @@ function updateAppsArray()
 // this function displays a table with the app array passed into it
 function displayTable(appsArray)
 {
-
     // clear the appStatusDiv
     var statusDivElement = document.getElementById("appStatusDiv");
     statusDivElement.innerHTML = "";
@@ -415,6 +416,7 @@ function displayTable(appsArray)
                         break;                    	
                     case "Failed":
                     case "Error":
+                    case "Soft-Error":
                     	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(255, 124, 124), rgb(255, 159, 159) 10%, rgb(218, 0, 0) 80%, rgb(144, 1, 1) 100%)";
                     	                    	
                     	cell.style.cursor = "pointer";
@@ -437,10 +439,10 @@ function displayTable(appsArray)
                 
                 cell.innerHTML = statusString;
             }
-//            else if (columnKeys[j] == "detail")
-//            {
-//            	decodeURIComponent
-//        	}
+            else if (columnKeys[j] == "detail")
+            {
+            	cell.innerHTML = decodeURIComponent(appsArray[i][columnKeys[j]]);
+        	}
         	else
             	cell.innerHTML = appsArray[i][columnKeys[j]];
             
