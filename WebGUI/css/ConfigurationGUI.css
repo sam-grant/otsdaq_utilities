@@ -15,11 +15,14 @@
 			clear: both;
 		}
 				
+		a, input {
+			cursor:					pointer;			
+		}
+		
 		a {
-			color: rgb(44, 44, 187);
-			text-decoration: underline;
-			cursor: pointer;
-			outline: none;  /* to stop firefox selection */	
+			color: 					rgb(44, 44, 187);
+			text-decoration: 		underline;
+			outline: 				none;  /* to stop firefox selection */	
 			-webkit-user-select: 	none; /* to stop text highlights */
 			-moz-user-select: 		none;
 			user-select: 			none;

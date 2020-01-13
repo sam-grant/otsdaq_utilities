@@ -100,8 +100,8 @@
 
 		//handleFixedChoiceEditToggle()
 
-		//setupConfigCreator(preSelectStr)
-		//setupConfigCreatorHandler(req,preSelectStr)
+		//setupGroupCreator(preSelectStr)
+		//setupGroupCreatorHandler(req,preSelectStr)
 		//handleGroupMemberGoto(name,backLinkStr)
 		//addMemberToConfigGroup(groupName,backLinkStr) 
 
@@ -135,7 +135,7 @@
 
 		//setupCopyAndMoveRows()
 		//configCopyView(sourceVersion)
-		//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
+		//tableCopyOrMoveRow(deleteSrc)					//copy/move row from source to destination row			
 		//jump(anchor)
 		//evaluateJS(str)			
 		//createEditTableMenu(event)
@@ -633,14 +633,14 @@
 			//mergeGroupsDialog();
 			//return;
 
-			//setupConfigCreator(); return
+			//setupGroupCreator(); return
 
 			//setupTableGroupTreeView("test","10"); return; //"46"); return;
 			//setupTableGroupTreeView("defaultConfig","3"); return;
 
 			//setupGroupViewMode(); return;
 
-			//setupConfigCreator(); return;
+			//setupGroupCreator(); return;
 
 
 			//============================
@@ -1291,7 +1291,7 @@
 				groupNames.length + " groups. ";
 			str += "Do not see what you need? ";
 			str += "<a href='#' onclick='" +
-				"setupConfigCreator(\"&backLinkStr=" + backLinkStr +
+				"setupGroupCreator(\"&backLinkStr=" + backLinkStr +
 				"\");' title='" +
 				"Goto the group creator interface." +
 				"'>" +
@@ -2798,9 +2798,15 @@
 
 		//==============================================================================
 		//treeViewHandler ~		
-		function treeViewHandler(req, parentId) 
+		function treeViewHandler(req, parentId, err) 
 		{
-			var err = DesktopContent.getXMLValue(req, "Error");
+			if (err) //show login access errors
+			{
+				Debug.log(err, Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			err = DesktopContent.getXMLValue(req, "Error");
 			if (err) 
 			{
 				Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the page", Debug.HIGH_PRIORITY);
@@ -5233,21 +5239,21 @@
 		} //end saveGroupAndActivate()
 
 		//==============================================================================
-		//setupConfigCreator ~
-		function setupConfigCreator(preSelectStr) 
+		//setupGroupCreator ~
+		function setupGroupCreator(preSelectStr) 
 		{
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getTables",
-				"", setupConfigCreatorHandler, preSelectStr,
+				"", setupGroupCreatorHandler, preSelectStr,
 				0, true  //progressHandler, callHandlerOnErr
 			);
-		} //end setupConfigCreator()
+		} //end setupGroupCreator()
 
 		//==============================================================================
-		//setupConfigCreatorHandler ~
+		//setupGroupCreatorHandler ~
 		// preSelectStr may contain "&backLinkStr=..." in it
-		function setupConfigCreatorHandler(req, preSelectStr) 
+		function setupGroupCreatorHandler(req, preSelectStr) 
 		{
 			var err = DesktopContent.getXMLValue(req, "Error");
 			if (err) 
@@ -5287,7 +5293,7 @@
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}
 
-			var refreshLinkStr = "setupConfigCreator(\"" +
+			var refreshLinkStr = "setupGroupCreator(\"" +
 				preSelectStr + "&backLinkStr=" + backLinkStr + "\");";
 			str += "<a href='#' onclick='" + refreshLinkStr +
 				"; return false;'>Refresh</a>";
@@ -5371,7 +5377,7 @@
 				str += "</select>";
 				str += "</td>";
 
-				backLinkStr = "setupConfigCreator(\\\"" + preSelectStr + "\\\");";
+				backLinkStr = "setupGroupCreator(\\\"" + preSelectStr + "\\\");";
 
 				str += "<td>";
 				str += "<a onclick='" +
@@ -5425,7 +5431,7 @@
 						}
 				}
 			}
-		} //end setupConfigCreatorHandler()
+		} //end setupGroupCreatorHandler()
 
 		//==============================================================================
 		//selectForCreateTableGroup ~
@@ -5701,11 +5707,11 @@
 			str += "<div id='copyAndMoveRowsHTML' style='display:none'></div>";
 
 			str += "<br><br>";
-			str += "<input type='button' onmouseup='configCopyRow(0)' value='Copy Row' title='" +
+			str += "<input type='button' onmouseup='tableCopyOrMoveRow(0)' value='Copy Row' title='" +
 				"Copy Source Row and paste at Destination Row, pushing previously existing rows down." +
 				"'/>";
 			str += " ";
-			str += "<input type='button' onmouseup='configCopyRow(1)' value='Move Row' title='" +
+			str += "<input type='button' onmouseup='tableCopyOrMoveRow(1)' value='Move Row' title='" +
 				"Cut Source Row and paste at Destination Row, pushing previously existing rows down." +
 				"'/>";
 			str += " ";
@@ -5735,15 +5741,15 @@
 		} // end configCopyView()
 
 		//==============================================================================
-		//configCopyRow
-		function configCopyRow(deleteSrc) 
+		//tableCopyOrMoveRow
+		function tableCopyOrMoveRow(deleteSrc) 
 		{
 			var src = document.getElementById("copyAndMoveRowsSrc").value | 0;
 			var dest = document.getElementById("copyAndMoveRowsDest").value | 0;
 			var srcCount = document.getElementById("copyAndMoveRowsSrcCount").value | 0;
 
 
-			Debug.log("configCopyRow src=" + src + " srcCount=" + srcCount + " dest=" + dest);
+			Debug.log("tableCopyOrMoveRow src=" + src + " srcCount=" + srcCount + " dest=" + dest);
 
 			if (srcCount < 1) {
 				Debug.log("Error: Illegal Number of Rows '" + (srcCount) +
@@ -5947,7 +5953,7 @@
 			}
 
 			////////////done 			
-		} //end configCopyRow()
+		} //end tableCopyOrMoveRow()
 
 		//==============================================================================
 		//setupFindAndReplace
@@ -14967,7 +14973,7 @@
 
 			if (backLinkStr && backLinkStr != "")
 				preSelectStr += "&backLinkStr=" + backLinkStr;
-			setupConfigCreator(preSelectStr);
+			setupGroupCreator(preSelectStr);
 		} //end addMemberToConfigGroup()
 
 		//==============================================================================

@@ -288,6 +288,7 @@
 			_selectedNodes = {};
 			_subsystems = {};
 			_hostnames = {};
+			_mouseHoverNode = -1; //clear mouse hover
 			
 			//clear all nodes from display
 			{
@@ -2633,11 +2634,16 @@
 					editTypes.push("DAQ Metrics");						
 				}
 				else if(menuDepth == 1 && menuDepthType == 2 /*ART Settings*/)
-				{
+				{					
+					editTypes.push("ART Top Level");
+					editTypes.push("ART Services Top Level");
+					editTypes.push("ART Services Parameters");
+					editTypes.push("ART Source");			
+					editTypes.push("ART Outputs");
 					editTypes.push("ART Physics Analyzers");
 					editTypes.push("ART Physics Producers");
 					editTypes.push("ART Physics Filters");	
-					editTypes.push("ART Physics Other Parameters");						
+					editTypes.push("ART Physics Other Parameters");			
 				}
 			} //end builder, logger, dispatcher menu
 			
@@ -2852,8 +2858,30 @@
 						"table" : 		ARTDAQConfigurationAPI.DAQ_METRIC_TABLE,
 						"groupLink"	: 	"daqLink/daqMetricsLink"
 					}); //DAQ Metrics 				
+					
 					dt = 2; //ART depth type //----------------
 					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQArtTable",
+						"uniqueLink" : 	"artLink"
+					}); //ART Top Level
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQServicesTable",
+						"uniqueLink" : 	"artLink/servicesLink"
+					}); //ART Services Top Level
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQDaqParameterTable",
+						"groupLink" : 	"artLink/servicesLink/ServicesParametersLink"
+					}); //ART Services Parameters
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQSourceTable",
+						"uniqueLink"	: 	"artLink/sourceLink"
+					}); //ART Source	
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQOutputTable",
+						"groupLink"	: 	"artLink/outputsLink"
+					}); //ART Outputs					
+					
 					doMap[equivalentTypes[t]][d][dt].push({
 						"table" : 		"ARTDAQPhysicsAnalyzerTable",
 						"groupLink"	: 	"artLink/physicsLink/analyzersLink"
@@ -2870,6 +2898,7 @@
 						"table" : 		"ARTDAQPhysicsParameterTable",
 						"groupLink"	: 	"physicsOtherParametersLink"
 					}); //ART Physics Other Parameters
+								
 				}
 				//------------ end fill BUILDER,LOGGER,DISPATCHER do map
 
@@ -2877,6 +2906,7 @@
 				{
 					var table;
 					var groupLink;
+					var uniqueLink;
 					
 					if(!menuDepth)
 						--editType; //because first one is always 'Top-level Parameters'
@@ -2886,10 +2916,14 @@
 					
 					//for menuDepth=0, menuDepthType always is 0 (i.e. editType selects)
 					table = doMap[type][menuDepth|0][editType][menuDepthType|0].table;
-					groupLink = doMap[type][menuDepth|0][editType][menuDepthType|0].groupLink;						
-										
+					groupLink = doMap[type][menuDepth|0][editType][menuDepthType|0].groupLink;	
+					uniqueLink = doMap[type][menuDepth|0][editType][menuDepthType|0].uniqueLink;						
+
+					var isGroupLink = groupLink?true:false;
+					var link = groupLink?groupLink:uniqueLink;
+					
 					console.log("type",type,"editType",editType,
-							"table",table,"groupLink",groupLink);
+							"table",table,"groupLink",groupLink,"uniqueLink",uniqueLink);
 					
 					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
 							DesktopContent._localUrnLid +
@@ -2910,7 +2944,7 @@
 
 					//Get or make link ID
 					
-					var uniqueLinks = groupLink.split('/');
+					var uniqueLinks = link.split('/');
 					var uniqueLinkDoneCount = 0;
 					var uniqueLinkPath = "";
 					var u = 0;
@@ -2953,11 +2987,11 @@
 					function localHandleLastLinkId()
 					{
 						Debug.log("localHandleLastLinkId()");
-						
-						localGetLinkId(groupLink,
+												
+						localGetLinkId(link,
 								function(childLinkIndex, linkId)
 								{
-							Debug.log(groupLink + 
+							Debug.log(link + 
 									" childLinkIndex = '" +
 									childLinkIndex + "' linkId = '" + 
 									linkId + "'");
@@ -2966,11 +3000,13 @@
 							if(childLinkIndexArr.length > 1) //if there are multiple indices, choose second one as destination child index
 								childLinkIndex = childLinkIndexArr[1];
 
-							//for group link, pre-select GroupID value							
-							newWindowStr += "&selectedGroupIDs=" +
+							if(isGroupLink) //for group link, pre-select GroupID value							
+								newWindowStr += "&selectedGroupIDs=" +
 									encodeURIComponent(
 											childLinkIndex + "=" +
 											linkId);
+							else //for unique link, preselect UID record
+								newWindowStr += "&selectedRecords=" + linkId;
 
 							localLaunchWindow();
 							
@@ -4832,6 +4868,10 @@
 
 				for(var j=0;j<ARTDAQConfigurationAPI.NODE_FULL_TYPE_NAMES.length;++j)
 				{					
+					//skip artdaq Supervisor (handle behind the scenes)
+					if(j == ARTDAQConfigurationAPI.NODE_TYPE_SUPERVISOR)
+						continue;
+					
 					str += "<option >" +	
 							ARTDAQConfigurationAPI.NODE_FULL_TYPE_NAMES[j] + 
 							"</option>";

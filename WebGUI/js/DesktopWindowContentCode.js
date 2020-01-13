@@ -1051,7 +1051,12 @@ DesktopContent.getXMLNode = function(req, name) {
 	{
 		//find DATA
 		var i;
-		els = req.getElementsByTagName(name);//req.responseXML.childNodes[0].childNodes;
+		try
+		{
+			els = req.getElementsByTagName(name);//req.responseXML.childNodes[0].childNodes;
+		}
+		catch(e) {return undefined;}
+		
 		if(els.length)
 			return els[0];
 		//reverted to former way
@@ -1158,7 +1163,8 @@ DesktopContent.tooltip = function(id,tip) {
 			,""
 			, function(req) {
 
-		var showTooltip = DesktopContent.getXMLValue(req,"ShowTooltip");
+		var showTooltip = DesktopContent.getXMLValue(req,"ShowTooltip");	
+		
 		//Debug.log("showTooltip: " + showTooltip);
 		
 		if(showTooltip|0)
@@ -1929,11 +1935,20 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		url += "?" + str;
 	}
 	else
-	{
+	{		
 		//remove, possibly recursive, former new windows through url
 		var i = search.indexOf("requestingWindowId");		
 		if(i >= 0)
 			search = search.substr(0,i);
+		
+		//replace sequence with updated sequence
+		if(search.substr(0,6) == "?code=") 
+		{
+			i = search.substr('&');
+			search = "?code=" + DesktopContent._sequence + 
+					(i>0?search.substr(i):"");
+		}
+		
 		//only add & if there are other parameters
 		if(search.length && search[search.length-1] != '?'
 				&& search[search.length-1] != '&')

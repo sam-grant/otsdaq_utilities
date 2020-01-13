@@ -67,8 +67,10 @@ function htmlClearDiv()
 //define scrollIntoViewIfNeeded for Firefox
 // NOTE: Chrome broke this functionality in Version 76.0.3809.100 (Official Build) (64-bit)
 //	so just always redefine this behavior.
-if (1 || !Element.prototype.scrollIntoViewIfNeeded) {
-	Element.prototype.scrollIntoViewIfNeeded = function (centerIfNeeded) {
+if (1 || !Element.prototype.scrollIntoViewIfNeeded) 
+{
+	Element.prototype.scrollIntoViewIfNeeded = function (centerIfNeeded) 
+	{
 		centerIfNeeded = arguments.length === 0 ? true : !!centerIfNeeded;
 
 		var parent = this.parentNode,
@@ -83,17 +85,20 @@ if (1 || !Element.prototype.scrollIntoViewIfNeeded) {
 				overRight = (this.offsetLeft + tdParent.offsetLeft + this.clientWidth - parentBorderLeftWidth) > (editorParent.scrollLeft + editorParent.clientWidth), // (parent.scrollLeft + parent.clientWidth),// (this.offsetLeft - parent.offsetLeft + this.clientWidth - parentBorderLeftWidth) > (parent.scrollLeft + editorParent.clientWidth - tdParent.offsetLeft), // (parent.scrollLeft + parent.clientWidth),
 				alignWithTop = overTop && !overBottom;
 
-		if ((overTop || overBottom) && centerIfNeeded) {
+		if ((overTop || overBottom) && centerIfNeeded) 
+		{
 			editorParent.scrollTop = this.offsetTop - tdParent.offsetTop - editorParent.clientHeight / 2 - parentBorderTopWidth + this.clientHeight / 2;
 			//parent.scrollTop = this.offsetTop - parent.offsetTop - parent.clientHeight / 2 - parentBorderTopWidth + this.clientHeight / 2;
 		}
 
-		if ((overLeft || overRight) && centerIfNeeded) {
+		if ((overLeft || overRight) && centerIfNeeded) 
+		{
 			editorParent.scrollLeft = this.offsetLeft + tdParent.offsetLeft - editorParent.clientWidth / 2 - parentBorderLeftWidth + this.clientWidth / 2; 
 			//parent.scrollLeft = this.offsetLeft - parent.offsetLeft  - parent.clientWidth / 2 - parentBorderLeftWidth + this.clientWidth / 2;
 		}
 
-		if ((overTop || overBottom || overLeft || overRight) && !centerIfNeeded) {
+		if ((overTop || overBottom || overLeft || overRight) && !centerIfNeeded) 
+		{
 			this.scrollIntoView(alignWithTop);
 		}
 	};
