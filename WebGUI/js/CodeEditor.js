@@ -337,7 +337,7 @@ CodeEditor.create = function() {
 	Debug.log("CodeEditor.editor constructed");
 	
 	// start "public" members
-	this.lastFileNameHistorySelectIndex = -1;
+	//this.lastFileNameHistorySelectIndex = -1; //now unused (?)
 	this.findAndReplaceFind = ["",""];	 //save find & replace state
 	this.findAndReplaceReplace = ["",""]; //save find & replace state
 	this.findAndReplaceScope = [0,0]; //save find & replace state
@@ -5784,10 +5784,10 @@ CodeEditor.create = function() {
 					"onchange":
 					"CodeEditor.editor.handleFileNameHistorySelect(" + 
 					forPrimary + ");",
-						"onclick":"CodeEditor.editor.stopUpdateHandling(event);",
-						"onfocus":"CodeEditor.editor.lastFileNameHistorySelectIndex = this.value;" +
-						"this.value = -1;", //force action even if same selected
-						"onblur":"this.value = CodeEditor.editor.lastFileNameHistorySelectIndex;",
+					"onclick":"CodeEditor.editor.stopUpdateHandling(event);",
+					//"onfocus":"CodeEditor.editor.lastFileNameHistorySelectIndex = this.value;" +
+					//"this.value = -1;", //force action even if same selected
+					//"onblur":"this.value = CodeEditor.editor.lastFileNameHistorySelectIndex;",
 						
 				},0 /*innerHTML*/, false /*doCloseTag*/);
 			
@@ -6469,7 +6469,7 @@ CodeEditor.create = function() {
 			str += htmlOpen("div", //this is place holder, that keeps height spacing
 				{
 					
-					"style": "width: 148px;",
+					"style": "width: 172px;",
 					"class": "fileButtonContainer",
 					"id": "fileButtonContainer" + forPrimary,
 
@@ -6573,12 +6573,30 @@ CodeEditor.create = function() {
 					"font-size: 17px;" +
 					"font-weight: bold;",
 				"onclick":
-				"event.stopPropagation(); " + 
-				"CodeEditor.editor.openRelatedFile(" + forPrimary + 
-					", true /*inOtherPane*/);",
+					"event.stopPropagation(); " + 
+					"CodeEditor.editor.openRelatedFile(" + forPrimary + 
+						", true /*inOtherPane*/);",
 			},
 			//make redo arrow
 			":"
+			/*innerHTML*/, true /*doCloseTag*/);
+		
+		str += htmlOpen("div",
+			{
+				"class":"fileButton refreshFileButton",
+				"id":"refreshFileButton" + forPrimary,
+				"title": "Refresh file \n" + path + "." + extension,
+				"style": "color: rgb(202, 204, 210);" +
+					"padding: 0 5px 0;" +
+					"font-size: 17px;",
+				"onclick":
+					"event.stopPropagation(); " + 
+					"CodeEditor.editor.openFile(" + forPrimary + 
+						",\"" + path + "\",\"" +
+						extension + "\", true /*doConfirm*/);",
+			},
+			//make refresh circle arrow
+			"&#8635;"
 			/*innerHTML*/, true /*doCloseTag*/);
 		
 		
