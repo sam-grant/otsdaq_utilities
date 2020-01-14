@@ -782,7 +782,7 @@ Ext.onReady(function()
                                var rootName  = getXMLValue (response,"path"    );                                       
                                var rootJSON  = getXMLValue (response,"rootJSON");                                   
                                var object    = JSROOT.parse(rootJSON           );  
-                               STDLINE("Launchin displayPlot")                  ;
+                               STDLINE("Launchin displayPlot: "+object         );
                                activeObjects_.push(object) ;
                                displayPlot_() ; // This is to get an immediate response
                                 //                              JSROOT.RegisterForResize(theFrame);
@@ -818,7 +818,7 @@ Ext.onReady(function()
                   JSROOT.cleanup('histogram1');
                   mdi_ = new JSROOT.GridDisplay('histogram1', gridDivision_); // gridi2x2
                   STDLINE("cleared...") ;
-                }
+                 }
 
                  for(var i=0; i<activeObjects_.length; i++)
                  {
@@ -827,6 +827,7 @@ Ext.onReady(function()
                   var pos = "item" + index ; 
 
                   if (mdi_!=null) theFrame = mdi_.FindFrame(pos, true);
+                  STDLINE("Item: " + i ) ;
                   var rootTitle = activeObjects_[i].fTitle     ; 
                   if( doReset_ )
                   {

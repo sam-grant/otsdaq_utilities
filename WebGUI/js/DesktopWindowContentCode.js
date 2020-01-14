@@ -31,7 +31,8 @@
 //	This code also handles server requests and response handlers for the content code:
 //		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, 
 //			reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, 
-//			doNotShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>)
+//			doNotShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>,
+//			doNotOfferSequenceChange <optional>)
 //
 //			... here is an example request:
 //
@@ -129,7 +130,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth, cancelFunc)
 //	DesktopContent.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	DesktopContent.tooltip(uid,tip)
-//      DesktopContent.setWindowTooltip(tip)
+//  DesktopContent.setWindowTooltip(tip)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
 //	DesktopContent.getWindowScrollLeft()
@@ -139,12 +140,13 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getMouseX()
 //	DesktopContent.getMouseY()
 //	DesktopContent.getDefaultWindowColor()
-//      DesktopContent.getDefaultDashboardColor()
+//  DesktopContent.getDefaultDashboardColor()
 //	DesktopContent.getDefaultDesktopColor()
 //	DesktopContent.getUsername()
 //	DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
 //	DesktopContent.mouseMoveSubscriber(newHandler) 
 //	DesktopContent.openNewBrowserTab(name,subname,windowPath,unique,completeHandler)
+//	DesktopContent.addDesktopIcon(iconName)
 //	DesktopContent.getParameter(index, name)
 //	DesktopContent.getDesktopParameter(index, name)
 //	DesktopContent.getDesktopWindowTitle()
@@ -204,7 +206,8 @@ DesktopContent._mouseMoveSubscribers = [];
 // caution when using "window" anywhere outside this function because
 //  desktop window can be at different levels depending on page depth (page may be inside frame)
 // use instead DesktopContent._theWindow
-DesktopContent.init = function() {
+DesktopContent.init = function() 
+{
 	
 	if(typeof Desktop !== 'undefined') return; //skip if Desktop exists (only using for tooltip
 	
@@ -243,10 +246,10 @@ DesktopContent.init = function() {
 	
 	DesktopContent._serverUrnLid = DesktopContent.getDesktopWindowParameter(0,"urn");//((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
-		Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
-	Debug.log("Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
+		Debug.log("ERROR -- Gateway Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
+	Debug.log("Gateway Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
 	DesktopContent._serverOrigin = DesktopContent._theWindow.parent.window.location.origin;
-	Debug.log("Supervisor Application Origin = " + DesktopContent._serverOrigin);
+	Debug.log("Gateway Supervisor Application Origin = " + DesktopContent._serverOrigin);
 		
 	DesktopContent._localUrnLid = DesktopContent.getParameter(0,"urn");
 	if(typeof DesktopContent._localUrnLid == 'undefined')
@@ -261,13 +264,15 @@ DesktopContent.init = function() {
 		DesktopContent._sequence = 0; //normal desktop mode
 	else
 		Debug.log("In Wizard Mode with Sequence=" + DesktopContent._sequence);
-}
+} //end DesktopContent.init()
 
+//=====================================================================================
 //DesktopContent.getParameter ~
 //	returns the value of the url GET parameter specified by index
 //	if using name, then (mostly) ignore index
 //	Note: in normal mode the first two params are only separated by = (no &'s) for historical reasons
-DesktopContent.getParameter = function(index,name) {	
+DesktopContent.getParameter = function(index,name) 
+{	
 	// Debug.log(window.location)
 	var params = (window.location.search.substr(1)).split('&');
 	var spliti, vs;
@@ -292,12 +297,14 @@ DesktopContent.getParameter = function(index,name) {
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return decodeURIComponent(vs[1]); //return value
-}
+} //end DesktopContent.getParameter()
 
+//=====================================================================================
 //DesktopContent.getDesktopParameter ~
 //	returns the value of the url GET parameter specified by index of the Desktop url
 //	if using name, then (mostly) ignore index
-DesktopContent.getDesktopParameter = function(index, name) {	
+DesktopContent.getDesktopParameter = function(index, name) 
+{	
 	// Debug.log(window.location)
 	
 	var win = DesktopContent._theWindow;
@@ -326,12 +333,14 @@ DesktopContent.getDesktopParameter = function(index, name) {
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return decodeURIComponent(vs[1]); //return value
-}
+} //end DesktopContent.getDesktopParameter()
 
+//=====================================================================================
 //DesktopContent.getDesktopWindowParameter ~
 //	returns the value of the url GET parameter specified by index of the Window frame url
 //	if using name, then (mostly) ignore index
-DesktopContent.getDesktopWindowParameter = function(index, name) {	
+DesktopContent.getDesktopWindowParameter = function(index, name)
+{	
 	// Debug.log(window.location)	
 	
 	var win = DesktopContent._theWindow;
@@ -366,10 +375,12 @@ DesktopContent.getDesktopWindowParameter = function(index, name) {
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return decodeURIComponent(vs[1]); //return value
-}
+} //end DesktopContent.getDesktopWindowParameter()
 
+//=====================================================================================
 //DesktopContent.handleFocus ~
-DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, increment by 1 and set parent's z-index	
+DesktopContent.handleFocus = function(e) 
+{	//access z-index mailbox on desktop, increment by 1 and set parent's z-index	
 
 	if(!DesktopContent._myDesktopFrame) return; //only happen if not part of desktop
 
@@ -382,15 +393,18 @@ DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, 
 	DesktopContent._zMailbox.innerHTML = parseInt(DesktopContent._zMailbox.innerHTML) + 1;
 	return true;
 }
-DesktopContent.handleBlur = function(e) {	
+DesktopContent.handleBlur = function(e) 
+{	
 	//Debug.log("Blur DesktopContent._isFocused " + DesktopContent._isFocused);
 	DesktopContent._isFocused = false;
 }
-DesktopContent.handleScroll = function(e) {		
+DesktopContent.handleScroll = function(e) 
+{		
 	//Debug.log("Scroll DesktopContent._isFocused" + DesktopContent._isFocused);
 	window.focus();	
 }
-DesktopContent.mouseMove = function(mouseEvent) {	
+DesktopContent.mouseMove = function(mouseEvent) 
+{	
 	//Debug.log("Move DesktopContent._isFocused" + DesktopContent._isFocused);
 	
 	//call each subscriber
@@ -407,11 +421,13 @@ DesktopContent.mouseMove = function(mouseEvent) {
 			parseInt(DesktopContent._myDesktopFrame.offsetLeft) + DesktopContent._windowMouseX;
 	DesktopContent._mouseOverYmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetTop) + 
 			parseInt(DesktopContent._myDesktopFrame.offsetTop) + DesktopContent._windowMouseY;	
-}
+} //end DesktopContent.mouseMove()
 
-DesktopContent.mouseMoveSubscriber = function(newHandler) {
+//=====================================================================================
+DesktopContent.mouseMoveSubscriber = function(newHandler) 
+{
 	DesktopContent._mouseMoveSubscribers.push(newHandler);
-}
+} //end DesktopContent.mouseMoveSubscriber()
 	
 
 DesktopContent.init(); //initialize handlers
@@ -437,7 +453,8 @@ DesktopContent._loadBoxRequestStack = 0; //load box is not removed until back to
 //DesktopContent.showLoading
 //	Pass nextFunction to launch something immediately after showing load box
 //	with hideLoading() called after the function
-DesktopContent.showLoading = function(nextFunction)	{
+DesktopContent.showLoading = function(nextFunction)
+{
 	
 	localDoIt();
 	if(nextFunction)
@@ -578,28 +595,10 @@ DesktopContent.showLoading = function(nextFunction)	{
 } //end showLoading()
 //=====================================================================================
 DesktopContent._loadBoxHideTimer = 0;
-DesktopContent.hideLoading = function()	{
-	
-//	if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
-//		return;
-	
-	//hide in a little bit, to provide more continuity to 
-	//	back to back loading box requests
-//	window.clearInterval(DesktopContent._loadBoxHideTimer);
-//	DesktopContent._loadBoxHideTimer = window.setTimeout(
-//			localHideLoadBox, 300);
-	
-	
-	
-//	/////////////////////////
-//	function localHideLoadBox()
-//	{
-//		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
-//		Debug.log("DesktopContent.hideLoading");
-//		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
-//	} //end localHideLoadBox
-
+DesktopContent.hideLoading = function()	
+{
 	window.setTimeout(localHideLoadBox, 300);
+	
 	/////////////////////////
 	function localHideLoadBox()
 	{
@@ -636,9 +635,13 @@ DesktopContent.hideLoading = function()	{
 // callHandlerOnErr can be set to true to have handler called with errStr parameter
 //	otherwise, handler will not be called on error.
 //
+//	Use ignoreSystemBlock if request is expected to meet a down server (like restarting xdaq)
+//	Use doNotOfferSequenceChange for requests that might fail based on permissions (like code editor switch to read only).
+//
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
 		reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
-		targetSupervisor, ignoreSystemBlock) {
+		targetSupervisor, ignoreSystemBlock, doNotOfferSequenceChange) 
+{
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 	var sequence = DesktopContent._sequence;
@@ -657,7 +660,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			
 	
 	if((!ignoreSystemBlock && DesktopContent._blockSystemCheckMailbox &&  //we expect the system to be down during system block
-			DesktopContent._blockSystemCheckMailbox.innerHTML != "") ||
+			DesktopContent._blockSystemCheckMailbox.innerHTML == "1") ||
 			(DesktopContent._needToLoginMailbox &&
 					DesktopContent._needToLoginMailbox.innerHTML == "1"))		
 	{
@@ -665,7 +668,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		
 		errStr = "The system appears to be down.";
 		errStr += " (Try reconnecting/reloading the page, or alert ots admins if problem persists.)";
-		Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
+		
+		if(!callHandlerOnErr)
+			Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
+		
 		req = 0; //force to 0 to indicate error
 		var found = false;
 		if(DesktopContent._arrayOfFailedHandlers.length < 2) //only give pop up behavior for first 2 failures (then go quiet)
@@ -674,7 +680,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				if(DesktopContent._arrayOfFailedHandlers[rh] == returnHandler) 
 				{
 					errStr = "Blocking multiple error responses to same handler. \nRecurring error should be handled by returnHandler: " + returnHandler;
-					Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
+					
+					if(!callHandlerOnErr)
+						Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
+					
 					found = true; break;
 				}
 		}
@@ -685,10 +694,12 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			found = true;
 		}
 
-		if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
+		if(!found && !callHandlerOnErr)
+			DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 
 		//only call return handler once
-		if(returnHandler && !found && callHandlerOnErr) returnHandler(req, reqParam, errStr); 
+		if(returnHandler && !found && callHandlerOnErr) 
+			returnHandler(req, reqParam, errStr); 
 		return;
 	}
 
@@ -729,7 +740,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				{
 					errStr = "Request failed due to insufficient account permissions."; 
 					
-					if(DesktopContent._sequence)
+					if(!doNotOfferSequenceChange && DesktopContent._sequence)
 					{
 						Debug.log("In wiz mode, attempting to fix access code on the fly...");
 						
@@ -926,7 +937,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	}
 	else
 	{   	
-		reqData = "sequence="+sequence+"&"+((data===undefined)?"":("&"+data));
+		reqData = "sequence="+sequence+((data===undefined)?"":("&"+data));
 	}
 	
 	
@@ -990,18 +1001,19 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 				"(XML response may have been illegal)!";
 	else
 		return undefined;
-}
+} // end getXMLAttributeValue()
 
 //=====================================================================================
 //returns xml entry value for attribue 'value'
 //	if !name assume req is xml node already
 DesktopContent.getXMLValue = function(req, name) {
     if(!req) return undefined;
-    
+
     if(!name)
-		return req.getAttribute("value");	
-	return DesktopContent.getXMLAttributeValue(req,name,"value");
-}
+    	return req.getAttribute("value");
+
+    return DesktopContent.getXMLAttributeValue(req,name,"value");
+} //end getXMLValue()
 
 //=====================================================================================
 //returns array of xml children nodes
@@ -1011,7 +1023,7 @@ DesktopContent.getXMLChildren = function(req, nodeName) {
 	if(req && req.responseXML) //to allow for arbitrary starting xml node
 		req = req.responseXML;
 	return req.getElementsByTagName(nodeName);
-}
+} //end getXMLChildren()
 
 //=====================================================================================
 //returns xml entry node (first node with name)
@@ -1311,8 +1323,9 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,neverShow,temp
 //
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
-DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, 
-		dialogWidth, cancelFunc, yesButtonText, noAutoComplete) {		
+DesktopContent.popUpVerification = function(prompt, func, val, bgColor, 
+		textColor, borderColor, getUserInput, dialogWidth, cancelFunc, 
+		yesButtonText, noAutoComplete, defaultUserInputValue) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1387,6 +1400,8 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 				"<input type='text' id='DesktopContent_popUpUserInput' " +
 				"onclick='event.stopPropagation();'" +
 				(noAutoComplete?"autocomplete='off' ":"") + 
+				" value='" + 
+				(defaultUserInputValue!==undefined?defaultUserInputValue:"") + "' " +
 				">";
 							
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
@@ -1418,11 +1433,12 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 
 	if(getUserInput) //place cursor
 	{
-		el.getElementsByTagName('input')[0].focus();
-		el.getElementsByTagName('input')[0].setSelectionRange(0,0);	
+		var tel = el.getElementsByTagName('input')[0];
+		tel.focus();
+		tel.setSelectionRange(0,tel.value.length);	
 		
 		//accept enter to close
-		el.getElementsByTagName('input')[0].onkeydown = 
+		tel.onkeydown = 
 				function(event) 
 				{
 			if(event.keyCode == 13) // ENTER
@@ -1639,20 +1655,22 @@ DesktopContent.setPopUpPosition = function(el,w,h,padding,border,
 
 //=====================================================================================
 //parseColor ~~
-DesktopContent.parseColor = function(colorStr) { 
+DesktopContent.parseColor = function(colorStr) 
+{ 
 	//used to ignore the alpha in the color when returning to user
 
 	//in general need to create an element.. but since all the color strings are rgb or rgba from settings, can simplify
 	var m = colorStr.split("(")[1].split(")")[0].split(",");
 	if( m) return "rgb("+m[0]+","+m[1]+","+m[2]+")";    
 	else throw new Error("Color "+colorStr+" could not be parsed.");
-}
+} //end parseColor()
 
 //=====================================================================================
 //getColorAsRGBA ~~
 //	http://stackoverflow.com/questions/11068240/what-is-the-most-efficient-way-to-parse-a-css-color-in-javascript
 // 	except the solution is broken.. unless you add element to page
-DesktopContent.getColorAsRGBA = function(colorStr) { 
+DesktopContent.getColorAsRGBA = function(colorStr) 
+{ 
 	
 	//in general need to create an element.. 
 	var div = document.createElement('div');
@@ -1669,8 +1687,7 @@ DesktopContent.getColorAsRGBA = function(colorStr) {
 	if(m && m.length == 3) return "rgba("+m[0]+","+m[1]+","+m[2]+",255)";
 	else if(m && m.length == 4) return "rgba("+m[0]+","+m[1]+","+m[2]+","+m[3]+")";
 	else throw new Error("Color "+colorStr+" could not be parsed.");
-}
-
+} //end getColorAsRGBA()
 
 //=====================================================================================
 //get window and mouse info ~~
@@ -1696,7 +1713,7 @@ DesktopContent.getDefaultWindowColor = function() {
 	for(var i in drgb)
 		drgb[i] = (drgb[i]*(1-wrgba[3]) + wrgba[i]*wrgba[3])|0; //floor of blend
 	return "rgb("+drgb[0]+","+drgb[1]+","+drgb[2]+")"; 
-}
+} //end getDefaultWindowColor()
 
 //=====================================================================================
 //get color scheme ~~
@@ -1709,14 +1726,14 @@ DesktopContent.getDefaultDesktopColor = function() {
 		return "rgb(15,34,105)";
 	}
 	return DesktopContent._desktopColor;
-} 
+} //end getDefaultDesktopColor()
 
 //=====================================================================================
 //getUsername ~~
 DesktopContent.getUsername = function() { 
 	var dispName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
 			return dispName.substr(dispName.indexOf(",")+2);	
-}
+} //end getUsername()
 
 
 //=====================================================================================
@@ -1857,7 +1874,7 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		catch(e)
 		{
 			Debug.log("An error occurred while trying to open the window. " +
-					"The window path seems to be invalid: " + e, Debug.HIGH_PRIORITY);
+					"The window path seems to be invalid:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e, Debug.HIGH_PRIORITY);
 			return;
 		}
 	}
@@ -1926,14 +1943,17 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 		imageURL, windowContentURL, linkedApp, parameters) {
 
 	var iconParameters = "";
-	if(parameters && parameters.length && (typeof parameters === "string"))
-		iconParameters = parameters; //just take string, if not object
-	else //take parameters from object
-		for(var i in parametersObject)
-		{
-			iconParameters += encodeURIComponent(i) + "=" + 
-					encodeURIComponent(iconParameters[i]) + "&";
-		}
+	if(parameters && parameters.length)
+	{
+		if(typeof parameters === "string")
+			iconParameters = parameters; //just take string, if not object
+		else //take parameters from object
+			for(var i in parametersObject)
+			{
+				iconParameters += encodeURIComponent(i) + "=" + 
+						encodeURIComponent(iconParameters[i]) + "&";
+			}
+	}
 	
 	Debug.log("iconParameters = " + iconParameters);
 	
@@ -1978,6 +1998,13 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 		{
 			activateSystemConfigHandler(req);
 		}
+		
+		if(DesktopContent._blockSystemCheckMailbox &&
+				DesktopContent._blockSystemCheckMailbox.innerHTML == "")
+		{
+			//inform Desktop.js to refresh icons (handled by _checkMailboxes())
+			DesktopContent._blockSystemCheckMailbox.innerHTML = "RefreshIcons";
+		}
 
 			}, //end request handler
 			0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
@@ -1988,11 +2015,25 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window
-DesktopContent.getDesktopWindowTitle = function() {
+DesktopContent.getDesktopWindowTitle = function() 
+{
 	return DesktopContent._theWindow.parent.document.getElementById(
 			"DesktopWindowHeader-" + 
 			DesktopContent._theWindow.name.split('-')[1]).innerHTML;
 } //end getDesktopWindowTitle()
+
+DesktopContent.getExceptionLineNumber = function(e) 
+{
+	try
+	{ 
+		console.log(e);
+		return e.stack.split('\n')[1].split(':')[4].split(')')[0]|0; }
+	catch(newError) { return -1; } //hide error and give invalid line number
+} //end getExceptionLineNumber()
+	
+
+
+
 
 
 

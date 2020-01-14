@@ -27,7 +27,7 @@ using namespace ots;
 
 XDAQ_INSTANTIATOR_IMPL(ECLSupervisor)
 
-//========================================================================================================================
+//==============================================================================
 ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub* s)
     : CoreSupervisorBase(s)
     , theConfigurationManager_(
@@ -47,7 +47,7 @@ ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub* s)
                                    "/LinkToApplicationTable/" +
                                    supervisorApplicationUID_ + "/LinkToSupervisorTable")
 {
-	INIT_MF("ECLSupervisor");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
 	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
 	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
@@ -64,23 +64,23 @@ ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub* s)
 	init();
 }
 
-//========================================================================================================================
+//==============================================================================
 ECLSupervisor::~ECLSupervisor(void) { destroy(); }
-//========================================================================================================================
+//==============================================================================
 void ECLSupervisor::init(void)
 {
 	// called by constructor
 	// allSupervisorInfo_.init(getApplicationContext());
 }
 
-//========================================================================================================================
+//==============================================================================
 void ECLSupervisor::destroy(void)
 {
 	// called by destructor
 	delete theConfigurationManager_;
 }
 
-//========================================================================================================================
+//==============================================================================
 void ECLSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 
 {
@@ -91,7 +91,7 @@ void ECLSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 	     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
 }
 
-//========================================================================================================================
+//==============================================================================
 void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 
 {
@@ -131,7 +131,7 @@ void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 	//}
 }
 
-//========================================================================================================================
+//==============================================================================
 void ECLSupervisor::transitionStarting(toolbox::Event::Reference e)
 
 {
@@ -152,7 +152,7 @@ void ECLSupervisor::transitionStarting(toolbox::Event::Reference e)
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 void ECLSupervisor::transitionStopping(toolbox::Event::Reference e)
 
 {
@@ -167,7 +167,7 @@ void ECLSupervisor::transitionStopping(toolbox::Event::Reference e)
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 void ECLSupervisor::transitionPausing(toolbox::Event::Reference e)
 
 {
@@ -186,7 +186,7 @@ void ECLSupervisor::transitionPausing(toolbox::Event::Reference e)
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 void ECLSupervisor::transitionResuming(toolbox::Event::Reference e)
 
 {
@@ -216,7 +216,7 @@ void ECLSupervisor::enteringError(toolbox::Event::Reference e)
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // xoap::MakeSystemLogbookEntry
 //	make a system logbook entry into active experiment's logbook from Supervisor only
 //	TODO: (how to enforce?)

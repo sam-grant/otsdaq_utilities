@@ -57,7 +57,7 @@ XDAQ_INSTANTIATOR_IMPL(LogbookSupervisor)
 #undef __MF_SUBJECT__
 #define __MF_SUBJECT__ "Logbook"
 
-//========================================================================================================================
+//==============================================================================
 // sendmail ~~
 //	Helper function to send emails to the subscriber list of the active experiment
 int sendmail(const char* to, const char* from, const char* subject, const char* message)
@@ -81,7 +81,7 @@ int sendmail(const char* to, const char* from, const char* subject, const char* 
 	return retval;
 }
 
-//========================================================================================================================
+//==============================================================================
 LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub* stub)
     : CoreSupervisorBase(stub)
     , allowedFileUploadTypes_({"image/png",
@@ -99,7 +99,7 @@ LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub* stub)
                                 "zip",
                                 "txt"})  // init allowed file upload types
 {
-	INIT_MF("LogbookSupervisor");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
 	// xgi::bind (this, &LogbookSupervisor::Default,                	"Default" );
 	// xgi::bind (this, &LogbookSupervisor::Log,                		"Log" );
@@ -118,9 +118,9 @@ LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub* stub)
 	// Subject","Message\nHello!\n\nwhats up.");
 }
 
-//========================================================================================================================
+//==============================================================================
 LogbookSupervisor::~LogbookSupervisor(void) { destroy(); }
-//========================================================================================================================
+//==============================================================================
 void LogbookSupervisor::init(void)
 {
 	// called by constructor
@@ -169,13 +169,13 @@ void LogbookSupervisor::init(void)
 	mostRecentDayIndex_ = 0;
 }
 
-//========================================================================================================================
+//==============================================================================
 void LogbookSupervisor::destroy(void)
 {
 	// called by destructor
 }
 
-//========================================================================================================================
+//==============================================================================
 void LogbookSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 {
 	__COUT__ << " active experiment " << activeExperiment_ << std::endl;
@@ -185,7 +185,7 @@ void LogbookSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 	     << "&active_experiment=" << activeExperiment_ << "'></frameset></html>";
 }
 
-//========================================================================================================================
+//==============================================================================
 // setSupervisorPropertyDefaults
 //		override to set defaults for supervisor property values (before user settings
 // override)
@@ -199,7 +199,7 @@ void LogbookSupervisor::setSupervisorPropertyDefaults()
 	        " | AdminRemoveRestoreEntry=-1");
 }
 
-//========================================================================================================================
+//==============================================================================
 // forceSupervisorPropertyValues
 //		override to force supervisor property values (and ignore user settings)
 void LogbookSupervisor::forceSupervisorPropertyValues()
@@ -215,7 +215,7 @@ void LogbookSupervisor::forceSupervisorPropertyValues()
 	// AdminRemoveRestoreEntry");
 }
 
-//========================================================================================================================
+//==============================================================================
 //	request
 //		Handles Web Interface requests to Logbook supervisor.
 //		Does not refresh cookie for automatic update checks.
@@ -431,7 +431,7 @@ void LogbookSupervisor::request(const std::string&               requestType,
 		__COUT__ << "requestType request not recognized." << std::endl;
 }
 
-//========================================================================================================================
+//==============================================================================
 //	request
 //		Handles Web Interface requests to Logbook supervisor.
 //		Does not refresh cookie for automatic update checks.
@@ -470,7 +470,7 @@ void LogbookSupervisor::nonXmlRequest(const std::string&               requestTy
 		__COUT__ << "requestType request not recognized." << std::endl;
 }
 
-//========================================================================================================================
+//==============================================================================
 // xoap::MakeSystemLogbookEntry
 //	make a system logbook entry into active experiment's logbook from Supervisor only
 //	TODO: (how to enforce?)
@@ -558,7 +558,7 @@ XOAP_CLEANUP:
 }
 
 //
-////========================================================================================================================
+////==============================================================================
 ////LogImage
 ////	Since xdaq's headers are wrong for images, browsers get confused if not wrapped in
 /// an  html page. /	This function wraps an uploaded logbook entry image at src for
@@ -576,7 +576,7 @@ XOAP_CLEANUP:
 //"'></frameset></html>";
 //}
 //
-////========================================================================================================================
+////==============================================================================
 ////LogReport
 ////	Gives controls for generating a logbook report
 ////	NOTE: to create pdf with command line:
@@ -595,7 +595,7 @@ XOAP_CLEANUP:
 // activeExperiment << "'></frameset></html>";
 //}
 
-//========================================================================================================================
+//==============================================================================
 // getActiveExperiment
 // 		load active experiment from txt file, must be first line in file
 std::string LogbookSupervisor::getActiveExperiment()
@@ -623,7 +623,7 @@ std::string LogbookSupervisor::getActiveExperiment()
 	return activeExperiment_;
 }
 
-//========================================================================================================================
+//==============================================================================
 // setActiveExperiment
 //		"" means no experiment is active
 void LogbookSupervisor::setActiveExperiment(std::string experiment)
@@ -658,7 +658,7 @@ void LogbookSupervisor::setActiveExperiment(std::string experiment)
 		    "Experiment was made active.");  // make system logbook entry
 }
 
-//========================================================================================================================
+//==============================================================================
 // validateExperimentName
 //		remove all chars that are not alphanumeric, dashes, or underscores
 bool LogbookSupervisor::validateExperimentName(std::string& exp)
@@ -677,7 +677,7 @@ bool LogbookSupervisor::validateExperimentName(std::string& exp)
 	return true;
 }
 
-//========================================================================================================================
+//==============================================================================
 // getExperiments
 //		if xmlOut, then output experiments to xml
 //		if out, then output to stream
@@ -710,7 +710,7 @@ void LogbookSupervisor::getExperiments(HttpXmlDocument* xmlOut, std::ostringstre
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // createExperiment
 void LogbookSupervisor::createExperiment(std::string      experiment,
                                          std::string      creator,
@@ -824,7 +824,7 @@ void LogbookSupervisor::createExperiment(std::string      experiment,
 		    XML_ADMIN_STATUS, "Experiment, " + experiment + ", successfully created.");
 }
 
-//========================================================================================================================
+//==============================================================================
 // webUserSetActiveExperiment
 //		if experiment exists, set as active
 //		to clear active experiment set to ""
@@ -872,7 +872,7 @@ void LogbookSupervisor::webUserSetActiveExperiment(std::string      experiment,
 		    "Active experiment set to " + experiment + " successfully.");
 }
 
-//========================================================================================================================
+//==============================================================================
 // removeExperiment
 //		remove experiment from listing only (do NOT remove logbook data directory)
 //		record remover in log file REMOVE_EXPERIMENT_LOG_PATH
@@ -943,7 +943,7 @@ void LogbookSupervisor::removeExperiment(std::string      experiment,
 		    XML_ADMIN_STATUS, "Experiment, " + experiment + ", successfully removed.");
 }
 
-//========================================================================================================================
+//==============================================================================
 //	refreshLogbook
 //		returns all the logbook data for active experiment from starting date and back in
 // time for 			duration total number of days.
@@ -1087,7 +1087,7 @@ void LogbookSupervisor::refreshLogbook(time_t              date,
 		                             dayIndexStr);  // send most recent day index
 }
 
-//========================================================================================================================
+//==============================================================================
 //	cleanUpPreviews
 //      cleanup logbook preview directory
 //      all names have time_t creation time + "_" + incremented index
@@ -1142,7 +1142,7 @@ void LogbookSupervisor::cleanUpPreviews()
 	closedir(dir);
 }
 
-//========================================================================================================================
+//==============================================================================
 //	savePostPreview
 //      save post to preview directory named with time and incremented index
 void LogbookSupervisor::savePostPreview(std::string&                        subject,
@@ -1260,7 +1260,7 @@ void LogbookSupervisor::savePostPreview(std::string&                        subj
 		                             "1");  // 1 indicates is a preview post
 }
 
-//========================================================================================================================
+//==============================================================================
 //	movePreviewEntry
 //      if approve
 //          move entry to current active logbook
@@ -1354,7 +1354,7 @@ void LogbookSupervisor::movePreviewEntry(std::string      previewNumber,
 	system(sysCmd.c_str());
 }
 
-//========================================================================================================================
+//==============================================================================
 //	validateUploadFileType
 //      returns "" if file type is invalide, else returns file extension to use
 std::string LogbookSupervisor::validateUploadFileType(const std::string fileType)
@@ -1366,7 +1366,7 @@ std::string LogbookSupervisor::validateUploadFileType(const std::string fileType
 	return "";  // not valid, return ""
 }
 
-//========================================================================================================================
+//==============================================================================
 //	escapeLogbookEntry
 //      replace html/xhtml reserved characters with equivalent.
 //      reserved: ", ', &, <, >, \n, double-space
@@ -1375,7 +1375,7 @@ void LogbookSupervisor::escapeLogbookEntry(std::string& entry)
 	// NOTE: should already be taken care of by web gui javascript! do we care to check?
 }
 
-//========================================================================================================================
+//==============================================================================
 //	hideLogbookEntry
 //		NOTE: does not actually delete entry, just marks as hidden
 //      removes/restores logbook entry. Requires admin priveleges

@@ -15,26 +15,26 @@ using namespace ots;
 
 XDAQ_INSTANTIATOR_IMPL(ChatSupervisor)
 
-//========================================================================================================================
+//==============================================================================
 ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub* stub)
 
     : CoreSupervisorBase(stub)
 {
-	INIT_MF("ChatSupervisor");
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
 	ChatLastUpdateIndex = 1;  // skip 0
 }
 
-//========================================================================================================================
+//==============================================================================
 ChatSupervisor::~ChatSupervisor(void) { destroy(); }
 
-//========================================================================================================================
+//==============================================================================
 void ChatSupervisor::destroy(void)
 {
 	// called by destructor
 }
 
-//========================================================================================================================
+//==============================================================================
 void ChatSupervisor::defaultPage(xgi::Input* cgiIn, xgi::Output* out)
 {
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
@@ -42,7 +42,7 @@ void ChatSupervisor::defaultPage(xgi::Input* cgiIn, xgi::Output* out)
 	     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
 }
 
-//========================================================================================================================
+//==============================================================================
 // forceSupervisorPropertyValues
 //		override to force supervisor property values (and ignore user settings)
 void ChatSupervisor::forceSupervisorPropertyValues()
@@ -52,7 +52,7 @@ void ChatSupervisor::forceSupervisorPropertyValues()
 	    "RefreshChat");
 }
 
-//========================================================================================================================
+//==============================================================================
 //	request
 //		Handles Web Interface requests to chat supervisor.
 //		Does not refresh cookie for automatic update checks.
@@ -110,7 +110,7 @@ void ChatSupervisor::request(const std::string&               requestType,
 
 }  // end request()
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::escapeChat()
 //	replace html/xhtml reserved characters with equivalent.
 //	reserved: ", ', &, <, >
@@ -123,7 +123,7 @@ void ChatSupervisor::escapeChat(std::string& chat)
 	//		if(chat[i] ==
 }
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::insertActiveUsers()
 void ChatSupervisor::insertActiveUsers(HttpXmlDocument* xmlOut)
 {
@@ -132,7 +132,7 @@ void ChatSupervisor::insertActiveUsers(HttpXmlDocument* xmlOut)
 	    theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor()));
 }
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::insertChatRefresh()
 //	check if user is new to list (may cause update)
 //		each new user causes update to last index
@@ -180,7 +180,7 @@ void ChatSupervisor::insertChatRefresh(HttpXmlDocument* xmlOut,
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::newUser()
 //	create new user if needed, and increment update
 void ChatSupervisor::newUser(std::string user)
@@ -200,7 +200,7 @@ void ChatSupervisor::newUser(std::string user)
 	        "ots");  // add status message to chat, increment update
 }
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::newChat()
 //	create new chat, and increment update
 void ChatSupervisor::newChat(std::string chat, std::string user)
@@ -211,7 +211,7 @@ void ChatSupervisor::newChat(std::string chat, std::string user)
 	ChatHistoryIndex_.push_back(incrementAndGetLastUpdate());
 }
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::isChatNew()
 //	return true if chatIndex is older than lastUpdateIndex
 bool ChatSupervisor::isChatOld(uint64_t chatIndex, uint64_t last)
@@ -219,14 +219,14 @@ bool ChatSupervisor::isChatOld(uint64_t chatIndex, uint64_t last)
 	return (last - chatIndex < (uint64_t(1) << 62));
 }
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::isLastUpdateIndexStale()
 bool ChatSupervisor::isLastUpdateIndexStale(uint64_t last)
 {
 	return ChatLastUpdateIndex != last;
 }
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::incrementAndGetLastUpdate()
 uint64_t ChatSupervisor::incrementAndGetLastUpdate()
 {
@@ -235,7 +235,7 @@ uint64_t ChatSupervisor::incrementAndGetLastUpdate()
 	return ChatLastUpdateIndex;
 }
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::cleanupExpiredChats()
 //	remove expired entries from Chat history and user list
 void ChatSupervisor::cleanupExpiredChats()
@@ -262,7 +262,7 @@ void ChatSupervisor::cleanupExpiredChats()
 			        // loop
 }
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::removeChatHistoryEntry()
 void ChatSupervisor::removeChatHistoryEntry(uint64_t i)
 {
@@ -272,7 +272,7 @@ void ChatSupervisor::removeChatHistoryEntry(uint64_t i)
 	ChatHistoryIndex_.erase(ChatHistoryIndex_.begin() + i);
 }
 
-//========================================================================================================================
+//==============================================================================
 // ChatSupervisor::removeChatHistoryEntry()
 void ChatSupervisor::removeChatUserEntry(uint64_t i)
 {

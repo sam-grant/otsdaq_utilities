@@ -3,13 +3,13 @@
   	<head>
     	<meta http-equiv="content-type" content="text/html;charset=utf-8">
     	<title>d3.js gauges</title>
-		
-		<style>
-		
-			
-body {
+
+	<style>
+	
+	body {
 	    font: 16px 'Open Sans';
 	    color: #2C3E50;
+	    background-color: rgb(250,250,250);
 	}
 	a {
 	    text-decoration: none;
@@ -75,7 +75,6 @@ body {
 	    padding: 5px;
 	}
 	/** Styles for TIMESERIES */
-	
 
 	.timeseries {
 	    width: 100%;
@@ -119,22 +118,21 @@ body {
 	    display: inline-block;
 	    font-size: 14px;
 	}
+	
+	</style>
 
-			
-		</style>
-		
 		<script type="text/javascript" src="libraries/d3.js"></script>
 		<script type="text/javascript" src="libraries/timeseries.js"></script>
 
 		<script>
-			//functions:			
-				//init()					
-				
+			//functions:
+				//init()
+
 			var gauges = [];
-			
+
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
-			
+
 			//init called once body has loaded
 			function init()
 			{
@@ -142,14 +140,13 @@ body {
 				console.log(window.frameElement.id)
 				console.log("Dimensions: " + window.innerWidth + " : " + window.innerHeight);
 				window.parent.setupWidget(window.frameElement.id, getParameters());
-
 			}
-			
+
 			function setupPVs(settings)
 			{
 				console.log("setupPVs() : " , settings);
 			}
-			
+
 			function newWidget(widget, parameters) 
 			{			
 				var table = document.createElement('table');
@@ -162,10 +159,10 @@ body {
 				{
 					counter++;
 				}
-				
+
 				var rows = Math.round(Math.sqrt(counter));
 				var columns = Math.ceil(counter / rows);
-				
+
 				for(var col = 1; col <= columns; col++)
 				{
 					var tr = document.createElement('tr');
@@ -184,35 +181,22 @@ body {
 				document.getElementById("display").innerHTML = "";
 				document.getElementById("display").appendChild(table);
 
-
 				//console.log("newWidget() called *************************************");
 				if(counter > 1){counter = 2;}
 				var pv_number = 0;
 				console.log("counter" + counter);
 				for(var pv in widget.PVList)
 				{
-					
-//					var a = document.createElement('a');
-//					a.id = pv;
-//					a.title = pv;
-//					a.innerHTML = "N/A";
-//					a.style.width = "100%";
-//					a.style.height = "100%";
-					
-//					document.getElementById("display").appendChild(a);	
-//					a = document.getElementById(pv);
-//					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
-
 					var first = Math.floor(counter/columns);
 					if(first < 1) {first = 1;}	
-					
+
 					//Create div for timeseries
 					var div = document.createElement("div");
 					div.classList.add('timeseries');
 					div.classList.add(pv + "-timeseries");
 
 					//Create span for div container
-					var div = document.createElement('span');
+					var span = document.createElement("span");
 					span.id = pv + "-Container";
 					span.title = pv;
 
@@ -221,28 +205,23 @@ body {
 					span.appendChild(div);
 					center.appendChild(span);
 					console.log(document.body);
-			
+
 					console.log("td" + first + "-" + (counter%rows +1));
 					document.getElementById("td" + first + "-" + (counter%rows +1)).appendChild(center);
-					
+
 					var max_width_ = (window.innerWidth / columns);
 					var max_height = (window.innerHeight / rows);
 
-										
-					
 					counter++;
 					pv_number++;
-//					console.log(counter);
-//					console.log(columns);
-//					console.log(rows);
-
 				}
+				window.parent.newWidget_ = false;
 			}
-			
+
 			function getParameters()
 			{
 				parameters = [];
-				
+
 				for(var i = 0; i < 15; i++)
 				{
 //					parameters["label_" + i] = "";
@@ -253,25 +232,18 @@ body {
 				return parameters;
 			}
 
+			function setParameters(attributes)
+			{
+				
+			}
+
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
-
-				/*if(document.getElementById(pvName) == null)
-				{
-					var div = document.createElement('div');
-					var a = document.createElement('a');
-					a.id = pvName;
-					div.appendChild(a);
-					document.getElementById("display").appendChild(div);
-				}*/
 				console.log("newValue() reached", pvName, pvValue);
-				
-				
+
 				var data = [{'value': pvTime}];
-				timeseries(pv + "-timeseries", data, brushEnabled = true);
-				
-				
-				
+				timeseries(pvName + "-timeseries", data, brushEnabled = true);
+
 //				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
 //				document.getElementById(pvName).title = pvName + ":" + pvTime;
 //				document.getElementById(pvName).parentElement.style.border = pvName + ":" + pvTime;
@@ -318,20 +290,17 @@ body {
 //				{
 //					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
 //				}
-				
 			}
-			
 			//End Template						
-			
+
 		</script>
-		
-		
+
 	</head>
-	
+
 	<body onload="Javascript:init()">
 		<div id="display" width="100%" height="100%">
 
 	</body>
-	
+
 </html>
 

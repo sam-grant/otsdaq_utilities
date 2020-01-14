@@ -6,15 +6,17 @@
 
 		<style>
 
-		    body {  
+		    body {
 			  font: 10px sans-serif;
-			  background: rgba(255, 255, 255, 1);
+			  background: rgba(250, 255, 255, 1);
 			  margin: 0px !important;
 			}
 
 		</style>
-			<script type="text/javascript" src="libraries/plotly-1.27.1.min.js"></script>
-			//<script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+		<script type="text/javascript" src="libraries/plotly-1.27.1.min.js"></script>
+		<!-- <script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
+
 		<script>
 			//functions:			
 			//init()					
@@ -54,12 +56,17 @@
 				return parameters;
 			}
 
+			function setParameters(attributes)
+			{
+				
+			}
+
 			var timeData = [];
 			var valueData = [];
 			var plotData = {};
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
-			{				
+			{
 				var date = new Date(pvTime*1000);
 				if (timeData.length)
 					if (date <= timeData[timeData.length-1]) { console.log("return"); return;}
@@ -78,14 +85,22 @@
 			function drawGraph(pvName, pvStatus, pvSeverity)
 			{
 				var plot = document.getElementById("display");
+				var plotColor = "black";
+				if(pvSeverity == "MAJOR" )
+					plotColor = "red";
+				else if(pvSeverity == "MINOR")
+					plotColor = "orange";
+				else
+					plotColor = "green";
+				
 			    Plotly.newPlot("display", [
 			    { y: [],  type: 'scatter', mode: 'lines' }
 			    ], {
-			        title: pvName,
-			        titlefont: { size: 20 },
-			        xaxis: { title: 'time', 'titlefont': { size: 20 }, showticklabels: true },
-			        yaxis: { title: 'amplitude', titlefont: { size: 20 }, zeroline: true }
-					,margin: { l: 50, r: 50, b: 120, t: 30 }
+			        title: pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity,
+			        titlefont: { size: 12, color: plotColor},
+			        xaxis: { title: 'time', 'titlefont': { size: 10 }, showticklabels: true },
+			        yaxis: { title: 'amplitude', titlefont: { size: 10 }, zeroline: true }
+					,margin: { l:45, r: 10, b: 60, t: 20 }
 					,legend: {x: 0, y: 1}
 	    		}, {responsive: true});
 

@@ -5,7 +5,7 @@
 
 GETPACKAGEINFO(Visualization)
 
-//========================================================================================================================
+//==============================================================================
 void Visualization::checkPackageDependencies()
 {
 	CHECKDEPENDENCY(config);
@@ -13,7 +13,7 @@ void Visualization::checkPackageDependencies()
 	CHECKDEPENDENCY(xdaq);
 }
 
-//========================================================================================================================
+//==============================================================================
 std::set<std::string, std::less<std::string> > Visualization::getPackageDependencies()
 {
 	std::set<std::string, std::less<std::string> > dependencies;
