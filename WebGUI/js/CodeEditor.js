@@ -2343,22 +2343,32 @@ CodeEditor.create = function() {
 					{
 						//add an element to scroll into view and then remove it
 						var val = secondEl.textContent;					
-						var newNode1 = document.createTextNode(
-								val.substr(0,cursor.endPos)); //pre-special text
-						
-						el.insertBefore(newNode1,secondEl);
-						
-						var newNode = document.createElement("label");
-						newNode.textContent = val[cursor.endPos]; //special text
-						el.insertBefore(newNode,secondEl);
-						
-						secondEl.textContent = val.substr(cursor.endPos+1); //post-special text
-						
-						newNode.scrollIntoViewIfNeeded();							
-						
-						el.removeChild(newNode);
-						el.removeChild(newNode1);
-						secondEl.textContent = val;						
+						if(cursor.endPos < val.length)
+						{	
+							var newNode1 = document.createTextNode(
+									val.substr(0,cursor.endPos)); //pre-special text							
+							el.insertBefore(newNode1,secondEl);
+							
+							var newNode = document.createElement("label");							
+							newNode.textContent = val[cursor.endPos]; //special text
+							el.insertBefore(newNode,secondEl);
+							
+							if(cursor.endPos+1 < val.length)
+								secondEl.textContent = val.substr(cursor.endPos+1); //post-special text
+							else
+								secondEl.textContent = "";
+							
+							newNode.scrollIntoViewIfNeeded(); //target the middle special text
+							
+							el.removeChild(newNode);
+							el.removeChild(newNode1);
+							secondEl.textContent = val;		
+						}
+						else //if is the end of the first element, focus on next element
+						{							
+							el.childNodes[cursor.endNodeIndex+1].scrollIntoViewIfNeeded();
+						}
+																
 					}
 					catch(e)
 					{
