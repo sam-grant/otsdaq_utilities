@@ -4309,6 +4309,7 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//keyDownHandler ~~
 	var TABKEY = 9;	
+	var SPACEKEY = 32;	
 	this.keyDownHandler = function(e,forPrimary,shortcutsOnly)
 	{
 		forPrimary = forPrimary?1:0;
@@ -5040,7 +5041,9 @@ CodeEditor.create = function() {
 		
 		
 		
-		if(keyCode == TABKEY || rectangularTAB ||
+		if(keyCode == TABKEY ||
+				(cursorSelection && keyCode == SPACEKEY) ||
+				rectangularTAB ||
 				blockCOMMENT)
 		{					
 			_fileWasModified[forPrimary] = true;
@@ -5158,7 +5161,11 @@ CodeEditor.create = function() {
 						val = node.textContent; //.nodeValue; //.wholeText
 						
 						for(i=(n==cursor.startNodeIndex?cursor.startPos:
-									0);i<val.length;++i)
+									0);
+								i<
+								(n==cursor.endNodeIndex?cursor.endPos:
+										val.length);
+								++i)
 						{
 							//console.log(xcnt," vs ",x,val[i]);
 							if(val[i] == '\n')
@@ -5177,12 +5184,14 @@ CodeEditor.create = function() {
 									{
 										val = val.substr(0,i-1) + val.substr(i);
 										node.textContent = val;
+										if(n == cursor.endNodeIndex) --cursor.endPos;
 									}
 								}
 								else //add leading tab
 								{
 									val = val.substr(0,i) + "\t" + val.substr(i);
 									node.textContent = val;
+									if(n == cursor.endNodeIndex) ++cursor.endPos;
 								}
 								
 							}
@@ -5203,34 +5212,7 @@ CodeEditor.create = function() {
 					
 					//need to set cursor
 					CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
-					//					try
-					//					{
-					//						var range = document.createRange();
-					////						range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-					////						range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
-					//						var firstEl = el.childNodes[cursor.startNodeIndex];
-					//						if(firstEl.firstChild)
-					//							firstEl = firstEl.firstChild;
-					//
-					//						var secondEl = el.childNodes[cursor.endNodeIndex];
-					//						if(secondEl.firstChild)
-					//							secondEl = secondEl.firstChild;
-					//
-					//						range.setStart(firstEl,
-					//								cursor.startPos);
-					//						range.setEnd(secondEl,
-					//								cursor.endPos);
-					//
-					//						var selection = window.getSelection();
-					//						selection.removeAllRanges();
-					//						selection.addRange(range);
-					//					}
-					//					catch(err)
-					//					{
-					//						console.log(err);
-					//						return;
-					//					}
-					
+										
 					return;
 				} //end rectangular TAB handling
 				
@@ -5247,7 +5229,7 @@ CodeEditor.create = function() {
 				//reverse-find new line
 				var node,val;
 				var found = false;	
-				var specialStr = '\t';
+				var specialStr = keyCode == SPACEKEY?' ':'\t';
 				if(blockCOMMENT)
 				{
 					if(_fileExtension[forPrimary][0] == 'c' || 
@@ -5415,7 +5397,19 @@ CodeEditor.create = function() {
 							} //end delete leading tab
 							else //add leading tab
 							{
-								val = val.substr(0,i+1) + specialStr + val.substr(i+1);
+								if(specialStr == ' ') //handle white-space appending special string
+								{
+									//add safter white space
+									var ii = i+1;
+									while(ii < val.length && 
+											(val[ii] == ' ' || val[ii] == '\t' || val[ii] == '\n'))
+										++ii;									
+									val = val.substr(0,ii) + specialStr + val.substr(ii);
+									prevCharIsNewLine = (val[ii] == '\n');
+									i = ii+1;
+								}
+								else //handle line-leading special string 
+									val = val.substr(0,i+1) + specialStr + val.substr(i+1);
 								node.textContent = val;
 							}
 							
@@ -5448,35 +5442,7 @@ CodeEditor.create = function() {
 				} //end node loop
 				
 				//need to set cursor
-				CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
-				//				try
-				//				{
-				//					var range = document.createRange();
-				////					range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-				////					range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
-				//
-				//					var firstEl = el.childNodes[cursor.startNodeIndex];
-				//					if(firstEl.firstChild)
-				//						firstEl = firstEl.firstChild;
-				//
-				//					var secondEl = el.childNodes[cursor.endNodeIndex];
-				//					if(secondEl.firstChild)
-				//						secondEl = secondEl.firstChild;
-				//
-				//					range.setStart(firstEl,
-				//							cursor.startPos);
-				//					range.setEnd(secondEl,
-				//							cursor.endPos);
-				//
-				//					var selection = window.getSelection();
-				//					selection.removeAllRanges();
-				//					selection.addRange(range);
-				//				}
-				//				catch(err)
-				//				{
-				//					console.log(err);
-				//					return false;
-				//				}
+				CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);				
 			}
 			else if(!blockCOMMENT) //not tabbing a selection, just add or delete single tab in place
 			{	
