@@ -317,9 +317,9 @@
 				if(!fileBlock_.isHidden)
 					toggleFileMenu();
 
-				var time =  decodeURIComponent(DesktopContent.getXMLValue(req, "Time"));
-				var notes =  decodeURIComponent(DesktopContent.getXMLValue(req, "Notes"));
-				var page =  decodeURIComponent(DesktopContent.getXMLValue(req, "Page"));
+				var time = decodeURIComponent(DesktopContent.getXMLValue(req, "Time"));
+				var notes = decodeURIComponent(DesktopContent.getXMLValue(req, "Notes"));
+				var page = decodeURIComponent(DesktopContent.getXMLValue(req, "Page"));
 
 				if(notes == "[\"Not Found\"]")
 				{
@@ -352,6 +352,86 @@
 				toggleEditMode();
 				redrawWindow();
 			} //end loadPageReqHandler()
+
+
+			//=====================================================================================
+			var PHOEBUS_MAP = {"thermometer": 4, "meter": 2, "label": 6};
+			function loadPhoebusPageReqHandler(req)
+			{
+				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
+
+				for (var widget in page_.widgets)
+				{
+					delete page_.widgets[widget].el;
+					delete page_.widgets[widget];
+					var widgetCover = document.getElementById(widget + "-cover");
+					mainBlock_.el.removeChild(widgetCover.parentNode);
+				}
+
+				clearBlock(mainBlock_.el);
+				page_.widgets = {};
+
+				if(!fileBlock_.isHidden)
+					toggleFileMenu();
+
+				var phoebus = decodeURIComponent(DesktopContent.getXMLValue(req, "PHOEBUS"));
+				var xml = ( new window.DOMParser() ).parseFromString(phoebus, "text/xml");
+				console.log(xml);
+
+				var widgets = xml.getElementsByTagName("widget");
+				
+				for(i=0; i<widgets.length; ++i)
+				{
+					var widgetObject = {};
+					widgetObject.PVList = {};
+					var type = PHOEBUS_MAP[ widgets[i].attributes["type"].nodeValue ];
+					var size_x = widgets[i].getElementsByTagName("width")[0];
+					var size_y = widgets[i].getElementsByTagName("height")[0];
+					var x = widgets[i].getElementsByTagName("x")[0];
+					var y = widgets[i].getElementsByTagName("y")[0];
+					var pv = widgets[i].getElementsByTagName("pv_name")[0];
+					var Display_name = widgets[i].getElementsByTagName("name")[0];
+
+					if (type !== undefined) widgetObject.type = type; else widgetObject.type = 0;
+					if (size_x !== undefined) widgetObject.size_x = size_x.firstChild.nodeValue; else widgetObject.size_x = 50;
+					if (size_y !== undefined) widgetObject.size_y = size_y.firstChild.nodeValue; else widgetObject.size_y = 50;
+					if (x !== undefined) widgetObject.x = x.firstChild.nodeValue; else widgetObject.x = 10;
+					if (y !== undefined) widgetObject.y = y.firstChild.nodeValue; else widgetObject.y = 10;
+					if (pv !== undefined) widgetObject.PVList[pv.firstChild.nodeValue] = 30000;
+					if (Display_name !== undefined) widgetObject.Display_name = Display_name.firstChild.nodeValue; else widgetObject.Display_name = "Undefined";
+
+					widgetObject.attributes = {};
+					widgetObject.loaded = true;
+					widgetObject.el = "";
+					page_.widgets["widget" + i] = widgetObject;
+				}
+
+				var time = decodeURIComponent(DesktopContent.getXMLValue(req, "Time"));
+				var notes = decodeURIComponent(DesktopContent.getXMLValue(req, "Notes"));
+
+				if(notes == "[\"Not Found\"]")
+				{
+					Debug.log("Page failed to load page(" + decodeURIComponent(page) + ") on server!",
+					Debug.HIGH_PRIORITY);
+					return;
+				}
+
+				for (var widget in page_.widgets)
+				{
+					console.log(widget + " " + page_.widgets[widget].x + " " + page_.widgets[widget].y + " " + page_.widgets[widget].size_x + " " + page_.widgets[widget].size_y);
+					drawWidgetFromFile(widget, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y, true);
+				}
+
+				//updateRefreshInterval();
+				setupForDrawingID_ = undefined;
+				drawingSelectionRectangle_ = false;
+
+		    	pageOffSetX_ = 0;
+				pageOffSetY_ = 0;
+
+				toggleEditMode();
+				redrawWindow();
+			} //end loadPhoebusPageReqHandler()
 
 
 			//=====================================================================================
@@ -436,8 +516,8 @@
 				console.log(id);
 
 				//if(newWidget_)
-					page_.widgets[id].el.contentWindow.setupPVs(settings);
-					page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
+				page_.widgets[id].el.contentWindow.setupPVs(settings);
+				page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
 
 			} //end settingsReqHandler()
 
@@ -547,6 +627,13 @@
 			function loadPage(page)
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=loadPage&Page=" + page, "", loadPageReqHandler);//, undefined, undefined, "sequence");
+			} //end loadPage()
+
+
+			//=====================================================================================
+			function loadPhoebusPage(page)
+			{
+				DesktopContent.XMLHttpRequest("Request?RequestType=loadPhoebusPage&Page=" + page, "", loadPageReqHandler);//, undefined, undefined, "sequence");
 			} //end loadPage()
 
 

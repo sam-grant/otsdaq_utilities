@@ -250,7 +250,6 @@ void SlowControlsDashboardSupervisor::request(const std::string& requestType,
 	}
 
 	pluginBusyMutex_.unlock();
-
 }  // end request()
 
 //==============================================================================
@@ -313,6 +312,14 @@ void SlowControlsDashboardSupervisor::handleRequest(
 		             << std::endl;
 
 		loadPage(cgiIn, xmlOut, page, userInfo);
+	}
+	else if(Command == "loadPhoebusPage")
+	{
+		std::string page = CgiDataUtilities::getData(cgiIn, "Page");
+		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << page
+		             << std::endl;
+
+		loadPhoebusPage(cgiIn, xmlOut, page, userInfo);
 	}
 	else if(Command == "createControlsPage")
 	{
@@ -823,6 +830,69 @@ void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc&                    
 	xmlOut.addTextElementToData("Notes", notes);        // add to response
 	xmlOut.addTextElementToData("Page", controlsPage);  // add to response
 }  // end loadPage()
+
+void SlowControlsDashboardSupervisor::loadPhoebusPage(cgicc::Cgicc&                    cgiIn,
+                                                      HttpXmlDocument&                 xmlOut,
+                                                      std::string                      page,
+                                                      const WebUsers::RequestUserInfo& userInfo)
+{
+	page = StringMacros::decodeURIComponent(page);
+
+	// FIXME Filter out malicious attacks i.e. ../../../../../ stuff
+	struct stat buffer;
+	if(page.find("..") != std::string::npos)
+	{
+		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+		             << "Error! Request using '..': " << page << std::endl;
+	}
+	else if(page.find("~") != std::string::npos)
+	{
+		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+		             << "Error! Request using '~': " << page << std::endl;
+	}
+	else if(!(stat(page.c_str(), &buffer) == 0))
+	{
+		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+		             << "Error! File not found: " << page << std::endl;
+	}
+	// Remove double / in path
+
+	__SUP_COUT__ << page << std::endl;
+
+	if(page.at(0) == '/')
+	{
+		__SUP_COUT__ << "First character is '/'" << std::endl;
+		page.erase(page.begin(), page.begin() + 1);
+		__SUP_COUT__ << page << std::endl;
+	}
+
+	std::string file = CONTROLS_SUPERVISOR_DATA_PATH;
+	file += page;
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+	             << "Trying to load page: " << page << std::endl;
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+	             << "Trying to load page: " << file << std::endl;
+
+	// read file
+	std::cout << "Reading file" << std::endl;
+	std::ifstream infile(file);
+	if(infile.fail())
+	{
+		std::cout << "Failed reading file: " << file << std::endl;
+		xmlOut.addTextElementToData(
+		    "Page", StringMacros::encodeURIComponent(page));  // add to response
+		return;
+	}
+
+	std::string xml;
+	for(std::string line; getline(infile, line);)
+	{
+		xml += line + "\n";
+	}
+	__SUP_COUT__ << xml << std::endl; 
+	xmlOut.addTextElementToData("PHOEBUS", xml);
+	
+}  // end loadPhoebusPage()
 
 //==============================================================================
 void SlowControlsDashboardSupervisor::SaveControlsPage(
