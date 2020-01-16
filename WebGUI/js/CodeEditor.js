@@ -2895,7 +2895,7 @@ CodeEditor.create = function() {
 						{
 							//look-up first entry
 							var i = nameArr[0].indexOf('-');
-							if(i > 0)
+							if(i > 0) //change -'s to _
 							{
 								var repo = "";
 								if(nameArr[0] != "otsdaq-core")
@@ -2906,13 +2906,10 @@ CodeEditor.create = function() {
 								else
 									nameArr[0] = "otsdaq";
 								
-								name = "/" + nameArr[0] + "/" + name;									
+																	
 							}
-							else
-							{
-								Debug.log("Confused by name array, error! name = " + name);
-								return;
-							}
+							//add repo name first
+							name = "/" + nameArr[0] + "/" + name;								
 						}
 						
 						
