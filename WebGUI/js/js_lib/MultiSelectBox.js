@@ -180,6 +180,16 @@ MultiSelectBox.getSelectionElementByIndex = function(el,i)
 MultiSelectBox.setSelectionElementByIndex = function(el,i,selected)
 {    
 	var name = el.getElementsByClassName("mySelect")[0].id;
+	
+	if(!MultiSelectBox.isSingleSelect_[name] && 
+			i == -1) //apply to all
+	{
+		var size = MultiSelectBox.mySelects_[name].length;
+		for (var opt=0; opt<size; opt++)
+			MultiSelectBox.mySelects_[name][opt] = selected?1:0;
+		return;
+	}
+	
 	if(MultiSelectBox.isSingleSelect_[name] && 
 			selected) //if true, only allow one select at a time, so deselect others
 	{
