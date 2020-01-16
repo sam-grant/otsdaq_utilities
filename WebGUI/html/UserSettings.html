@@ -574,6 +574,12 @@
 				if(_AccountsPageIndex < 0) _AccountsPageIndex = 0; //don't allow page to be negative, or bad array access happens
 				Debug.log("Settings showing page " + (_AccountsPageIndex+1) + " of " + numOfPages);
 				
+				if(!_accountsArray || !_accountsArray[0])
+				{
+					Debug.log("No user accounts found!", Debug.WARN_PRIORITY);
+					return;
+				}
+				
 				htmlStr += "<center>"+ _AccountsOrderArray.length + " of " +
 						_accountsArray[0].length + " accounts match search.<br>(" + _AccountsPageSize + " per page)</center><br>";
 				htmlStr += "<div id='accountsPageNav'>Navigate: ";

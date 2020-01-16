@@ -56,7 +56,7 @@ else {
 		
 		//all units in pixels unless otherwise specified
 		
-		var _defaultDashboardHeight = 41;
+		var _defaultDashboardHeight = 38;
 		var _defaultWindowDashboardWidth = 200;
 		var _defaultWindowDashboardMinWidth = 50;
         
