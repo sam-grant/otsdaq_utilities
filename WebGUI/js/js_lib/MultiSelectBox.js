@@ -605,6 +605,12 @@ MultiSelectBox.performSearchSelect = function(id,el,altstr)
 
 MultiSelectBox.makeSearchBar = function(id)
 {
+	//remove old existing search bars
+	
+	var el;
+	while(el = document.getElementById(id + "search"))
+		el.parentNode.removeChild(el);					
+	
 	var searchBox=document.createElement("input");
 	var onchange='MultiSelectBox.searchSelect("' + id + '",this)';
 	
