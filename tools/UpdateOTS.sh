@@ -386,7 +386,7 @@ for p in ${REPO_DIR[@]}; do
 		
 		echo -e "UpdateOTS.sh [${LINENO}]  \t Checking in $p"
 	    git commit -m "$GIT_COMMENT " .  &>> $CHECKIN_LOG_PATH  #add space in comment for user
-	    git push   
+	    git push || git push origin-ssh  
 	fi
 
 	cd $CURRENT_AWESOME_BASE
