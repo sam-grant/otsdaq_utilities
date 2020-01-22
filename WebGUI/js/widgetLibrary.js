@@ -16,8 +16,9 @@ widgetLibrary.typeToSrc =		{
 									"0" :"widget_text.html",
 									//"1" :"widget_basicDisplay.html",
 									//"1" :"timeseries_widget.html",
-									"1" :"widget_text_with_title.html",
-							   		"2" :"gauge_widget.html",
+									//"1" :"widget_text_with_title.html",
+									"1" :"table.html",
+									"2" :"gauge_widget.html",
 							   		//"3" :"simple_bar_chart.html",
 							   		"3" :"plotly_bar_chart.html",
 									"4" :"thermometer.html",
@@ -28,7 +29,7 @@ widgetLibrary.typeToSrc =		{
 widgetLibrary.typeToImgSrc =	{
 									"0" :"txt-icon.png",
 							 		//"1" :"digital-clock-icon.png",
-		   							"1" :"txt-icon.png",
+		   							"1" :"table-icon.png",
 									"2" :"gauge-icon.png",
 		   							"3" :"basic-chart-icon.png",
 		   					 		"4" :"thermometer-icon.png" ,
@@ -40,7 +41,7 @@ widgetLibrary.typeToName =		{
 									"0" : "Plain Text",
 									//"1" : "Basic Display as a digital clock",
 									//"1" : "Basic Timeseries Display",
-									"1" : "Basic Display with name & value displays",
+									"1" : "Basic PVs Table",
 									"2" : "Basic Gauge Style Display",
 									"3" : "Basic Line Chart",
 									"4" : "Basic Thermometer",
@@ -51,7 +52,7 @@ widgetLibrary.typeToName =		{
 widgetLibrary.typeToPurpose =	{
 									"0" : "Plain Text",
 									//"1" : "Timeseries",
-									"1" : "Plain Text",
+									"1" : "PVs Table",
 									"2" : "Gauge",
 									"3" : "Chart",
 									"4" : "Thermometer",
@@ -62,7 +63,7 @@ widgetLibrary.typeToPurpose =	{
 widgetLibrary.dimensions =		{
 									"0": {
 										"X": "100",
-										"Y": "300",
+										"Y": "100",
 										"Scale": "False"
 									},
 									"3": {
