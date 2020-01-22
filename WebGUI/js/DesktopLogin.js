@@ -524,7 +524,10 @@ else {
 						document.getElementById('loginInput3').value != "")	
 					_keptFeedbackText = "New Account Code (or Username/Password) not valid.";
 				else if(req)
-					_keptFeedbackText = "Username/Password not correct.";
+				{
+					var err = Desktop.getXMLValue(req,"Error");
+					_keptFeedbackText = "Username/Password not correct." + (err?("<br>" + err):"");
+				}
 				else
 					_keptFeedbackText = "ots Server failed.";
 				

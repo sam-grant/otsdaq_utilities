@@ -1646,6 +1646,11 @@
 			else //prompt was cancelled
 				return;
 
+			//unselect current record selections, so new record will be selected in aftermath
+			var el = document.getElementById("recordMultiSelect");
+			MultiSelectBox.setSelectionElementByIndex(el,-1 /*all*/,false /*selected*/);
+													
+			
 			ConfigurationAPI.addSubsetRecords(_subsetBasePath,newRowUID,
 					/////////////////////
 					function(modifiedTables) //start addSubsetRecords handler
@@ -1750,6 +1755,7 @@
 							Debug.INFO_PRIORITY);
 
 					_modifiedTables = undefined; //clear after save
+					_selectedRecords = newRowUID; //select new record after init
 					
 					//runFilter(); //updates records and fields, and applies filter
 					initSubsetGlobalData();

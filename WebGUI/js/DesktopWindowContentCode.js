@@ -861,11 +861,13 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			{
 
 				errStr = "Request Failed (code: " + req.status + ") - Bad Address:\n" + requestURL;
-
-				if((ignoreSystemBlock || (DesktopContent._blockSystemCheckMailbox && 
-						DesktopContent._blockSystemCheckMailbox.innerHTML == "")) && //make sure system is alive
-						DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
-					DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
+				Debug.log(errStr,Debug.HIGH_PRIORITY);
+				
+				//login should not help for bad address (and it is confusing to user)
+//				if((ignoreSystemBlock || (DesktopContent._blockSystemCheckMailbox && 
+//						DesktopContent._blockSystemCheckMailbox.innerHTML == "")) && //make sure system is alive
+//						DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
+//					DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
 
 				//handle multiple failed handlers
 				var found = false;
@@ -885,7 +887,6 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 					Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
 					found = true;
 				}
-
 				if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 				if(found) return; //do not call handler for failed server for user code multiple times..
 			}

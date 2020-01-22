@@ -596,6 +596,7 @@ else {
       			vals.push(subfolders[i]);
       			types.push("folder");
       			keys.push(i);  
+      			
       			imgURLs.push("/WebPath/images/iconImages/" + 
       					"icon-Folder.png");
       		}
@@ -610,9 +611,13 @@ else {
       			if(_openFolderPtr[1][i][4] != "0" && 
       					_openFolderPtr[1][i][4] != "DEFAULT" && 
 						_openFolderPtr[1][i][4] != "") //if icon image	
-      			{      						
-      				imgURLs.push("/WebPath/images/iconImages/" + 
-      					_openFolderPtr[1][i][4]);
+      			{      	
+
+          			if(_openFolderPtr[1][i][4][0] != '/')
+          				imgURLs.push("/WebPath/images/iconImages/" + 
+          						_openFolderPtr[1][i][4]);
+          			else
+          				imgURLs.push(_openFolderPtr[1][i][4]);          			
       			}
       			else
       				imgURLs.push("=" + _openFolderPtr[1][i][1]);
