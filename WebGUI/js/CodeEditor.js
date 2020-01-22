@@ -435,12 +435,35 @@ CodeEditor.create = function() {
 				{	
 			console.log("getAllowedExtensions",req,errStr);
 
+			if(errStr && errStr != "")
+				Debug.log(errStr,Debug.HIGH_PRIORITY);
+			
 			if(!_READ_ONLY && !req)
 			{
-				Debug.log("Assuming invalid permissions! Reverting to read-only mode.", Debug.HIGH_PRIORITY);
+				if(DesktopContent._sequence)
+					Debug.log("Assuming invalid permissions (remember the wiz mode sequence access code must be at least 8 characters to allow write access)! Reverting to read-only mode.", Debug.HIGH_PRIORITY);
+				else
+					Debug.log("Assuming invalid permissions (remember only named users can have write access, not the anonymous admin user)! Reverting to read-only mode.", Debug.HIGH_PRIORITY);
 				_READ_ONLY = true;
 				init();
 				return;
+			}
+			if(!req) //request failed
+			{
+				Debug.log("Does the Code Editor Supervisor exist? You must connect the web editor to a valid Code Editor Supervisor application (please check your Configuration Tree and then restart ots).",Debug.HIGH_PRIORITY);				
+				return;
+			}
+			else //check for error
+			{
+				if(!errStr || errStr == "")
+					errStr = DesktopContent.getXMLValue(req,"Error");
+				
+				if(errStr && errStr != "")
+				{
+					Debug.log(errStr,Debug.HIGH_PRIORITY);
+					Debug.log("Does the Code Editor Supervisor exist? You must connect the web editor to a valid Code Editor Supervisor application (please check your Configuration Tree and then restart ots).",Debug.HIGH_PRIORITY);
+					return;
+				}
 			}
 			
 			_ALLOWED_FILE_EXTENSIONS = DesktopContent.getXMLValue(req,"AllowedExtensions");
@@ -2895,7 +2918,7 @@ CodeEditor.create = function() {
 						{
 							//look-up first entry
 							var i = nameArr[0].indexOf('-');
-							if(i > 0)
+							if(i > 0) //change -'s to _
 							{
 								var repo = "";
 								if(nameArr[0] != "otsdaq-core")
@@ -2906,13 +2929,10 @@ CodeEditor.create = function() {
 								else
 									nameArr[0] = "otsdaq";
 								
-								name = "/" + nameArr[0] + "/" + name;									
+																	
 							}
-							else
-							{
-								Debug.log("Confused by name array, error! name = " + name);
-								return;
-							}
+							//add repo name first
+							name = "/" + nameArr[0] + "/" + name;								
 						}
 						
 						

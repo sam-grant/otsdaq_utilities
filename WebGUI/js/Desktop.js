@@ -1824,7 +1824,8 @@ Desktop.handleFullScreenWindowRefresh = function(mouseEvent)
 		//else cycle through all windows and refresh
 		
 		//determine max window
-		if(Desktop.desktop.getForeWindow().isMaximized())
+		if(Desktop.desktop.getForeWindow() && 
+				Desktop.desktop.getForeWindow().isMaximized())
 		{
 			Debug.log("Refreshing just maximized window...");
 			

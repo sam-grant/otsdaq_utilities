@@ -211,7 +211,7 @@ function displayVersionsAndQualifiers
 	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
 	echo
-	echo -e "UpdateOTS.sh [${LINENO}]  \t To switch qualifiers, do the following: \n\n\t\t\t\t mrb newDev -v $LATEST_RELEASE -q $LATEST_QUAL:prof"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t To switch qualifiers, do the following: \n\n\t\t\t\t mrb newDev -f -v $LATEST_RELEASE -q $LATEST_QUAL:prof"
 	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t ...and replace '$LATEST_RELEASE' with your target version. and '$LATEST_QUAL:prof' with your qualifiers"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t ...a new localProducts directory will be created, which you should use when you setup ots."
@@ -386,7 +386,7 @@ for p in ${REPO_DIR[@]}; do
 		
 		echo -e "UpdateOTS.sh [${LINENO}]  \t Checking in $p"
 	    git commit -m "$GIT_COMMENT " .  &>> $CHECKIN_LOG_PATH  #add space in comment for user
-	    git push   
+	    git push || git push origin-ssh  
 	fi
 
 	cd $CURRENT_AWESOME_BASE

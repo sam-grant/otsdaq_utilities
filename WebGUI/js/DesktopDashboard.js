@@ -56,7 +56,7 @@ else {
 		
 		//all units in pixels unless otherwise specified
 		
-		var _defaultDashboardHeight = 41;
+		var _defaultDashboardHeight = 38;
 		var _defaultWindowDashboardWidth = 200;
 		var _defaultWindowDashboardMinWidth = 50;
         
@@ -476,9 +476,24 @@ else {
             
         	_topBar.style.backgroundColor = _defaultDashboardColor;
         	_windowDashboard.style.backgroundColor = _defaultDashboardColor;
-        }
+        } //end setDefaultDashboardColor()
 
         var _oldUserNameWithLock = "";
+        //=====================================================================================
+        this.doSetUserWithLock = function() 
+		{ 
+        	Debug.log("doSetUserWithLock()");
+        	var user = Desktop.desktop.login.getUsername();
+        	var data = "";
+        	data += "lock=" + ((!_oldUserNameWithLock || _oldUserNameWithLock == "")?"1":"0") + "&";
+        	data += "username=" + user;
+        	
+        	Desktop.XMLHttpRequest(
+        			"Request?RequestType=setUserWithLock&accounts=1",        			
+        			data,
+					Desktop.desktop.dashboard.handleSetUserWithLock);
+
+		} //end doSetUserWithLock()
       	//=====================================================================================
         this.displayUserLock = function(usernameWithLock, el) 
         {      
@@ -490,10 +505,10 @@ else {
         	data += "lock=" + ((!usernameWithLock || usernameWithLock == "")?"1":"0") + "&";
         	data += "username=" + user;
 
-        	var jsReq =   			
-        			"Desktop.XMLHttpRequest(\"" +
-					"Request?RequestType=setUserWithLock&accounts=1\"," +
-					"\"" + data + "\",Desktop.desktop.dashboard.handleSetUserWithLock)";
+        	var jsReq = "Desktop.desktop.dashboard.doSetUserWithLock();";  			
+//        			"Desktop.XMLHttpRequest(\"" +
+//					"Request?RequestType=setUserWithLock&accounts=1\"," +
+//					"\"" + data + "\",Desktop.desktop.dashboard.handleSetUserWithLock)";
 
        		
        		if(_oldUserNameWithLock == usernameWithLock && 
