@@ -1,0 +1,3 @@
+INPUT                  = WebGUI
+FILE_PATTERNS          = *.html
+EXTENSION_MAPPING      = ext=javascript

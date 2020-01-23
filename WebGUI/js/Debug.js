@@ -126,8 +126,11 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 								Debug.lastLogger.length);
 					}
 					
+					var source = window.location.href;
+					source = source.substr(source.lastIndexOf('/'));
+					source = source.substr(0,source.indexOf('?'));
 					console.log("%c" + type + "-Priority" +  
-							 ":\t " + Debug.lastLog + ":\n" +
+							 ":\t " + Debug.lastLog + " from " + source + ":\n" +
 							 Debug.lastLogger + "::\t" + str,							 
 							 num == 0?"color:#F30;"	//chrome/firefox allow css styling
 									 :(num == 1?"color:#F70" //warn
@@ -163,9 +166,10 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 							if(!returnStr) //check if need to define for the first time
 								returnStr = "";
 							
-							//look for .cc and .h 
+							//look for icc, .cc and .h 
 							if((str[j-3] == '.' && str[j-2] == 'h') || 
-									(str[j-4] == '.' && str[j-3] == 'c' && str[j-2] == 'c'))
+									((str[j-4] == '.' || str[j-4] == 'i') &&
+											str[j-3] == 'c' && str[j-2] == 'c'))
 							{
 								//find beginning of blob (first non-file/c++ character)
 								for(l = j-3; l >= i; --l)
@@ -249,16 +253,34 @@ Debug._errBoxOffY = 0;
 Debug._errBoxOffW = 0;
 Debug._errBoxOffH = 0;
 
+
+Debug._ERR_TRUNCATION_LENGTH = 10000;
+
 //=====================================================================================
+//Note: effectively doing this: str.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+//	...but str.replace() was really slowing down everything on big strings
 Debug.errorPopConditionString = function(str) {
-	return str.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
-}
+	var rstr = "";
+	
+	for(var i=0;i<str.length && i<Debug._ERR_TRUNCATION_LENGTH; ++i)
+		if(str[i] == '\n')
+			rstr += "<br>";
+		else if(str[i] == '\t')
+			rstr += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+		else
+			rstr += str[i];
+	if(str.length > Debug._ERR_TRUNCATION_LENGTH)
+		rstr += "...&lt;&lt;&lt; MESSAGE TRUNCATED &gt;&gt;&gt;";
+	
+	return rstr; 
+} //end errorPopConditionString()
 
 //=====================================================================================
 //Show the error string err in the error popup on the window
 // create error div if not yet created
-Debug.errorPop = function(err,severity) {
-				
+Debug.errorPop = function(err,severity) 
+{
+			
 	var errBoxAlpha = "1.0";
 	
 	//check if Debug._errBox has been set
@@ -282,7 +304,7 @@ Debug.errorPop = function(err,severity) {
 			el.style.display = "none";
 			var str = "<a class='" + 
 				Debug._errBoxId + 
-				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmouseup='event.stopPropagation();'>Close Errors</a>";
+				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmousemove='event.stopPropagation();'  onmouseup='event.stopPropagation();' onmousedown='event.stopPropagation();'>Close Errors</a>";
 			str = 
 					"<div class='" + 
 					Debug._errBoxId + 
@@ -298,7 +320,7 @@ Debug.errorPop = function(err,severity) {
 				"<div style='color:white;font-size:16px;padding-bottom:5px;'>" +
 				"Note: Newest messages are at the top." +
 				"<label style='color:white;font-size:11px;'><br>(Press [ESC] to close and [SHIFT + ESC] to re-open)</font>" +
-				"<div id='downloadIconDiv' onmouseup='Debug.downloadMessages()' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
+				"<div id='downloadIconDiv' onclick='Debug.downloadMessages()' onmouseup='event.stopPropagation();' onmousedown='event.stopPropagation();' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
 				//make download arrow
 					"<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: white;'></div>" +
 					"<div style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid white;'></div>" +
@@ -339,13 +361,13 @@ Debug.errorPop = function(err,severity) {
 			el.innerHTML = str;
 			body.appendChild(el); //add element to body of page
 			el.focus();
+			el.onmousemove = function(){event.stopPropagation();}
+			el.onmousedown = function(){console.log("debug down"); event.stopPropagation();}
+			el.onmouseup = function(){console.log("debug up"); event.stopPropagation();}
 			
 			/////////////
 			function localDebugKeyDownListener(e)
 			{
-				
-				
-				
 				//Debug.log("Debug keydown c=" + keyCode + " " + c + " shift=" + e.shiftKey + 
 				//		" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
 				
@@ -375,7 +397,10 @@ Debug.errorPop = function(err,severity) {
 					"{font-family: 'Comfortaa', arial;" +//"{font-family: 'Inconsolata', monospace;" +
 					"font-weight: 200;" +
 					"font-size: 18px;" +
-					"color: rgb(255,200,100);" +
+					"color: rgb(255,200,100);" +	
+					"-webkit-user-select: 	text;" +
+					"-moz-user-select: 		text;" +
+					"user-select:			text;" +
 					"}\n\n";
 
 			
@@ -425,6 +450,9 @@ Debug.errorPop = function(err,severity) {
 					"overflow-y: scroll;" +
 					"overflow-x: auto;" +
 					"width: 100%;" +
+					"-webkit-user-select: 	text;" +
+					"-moz-user-select: 		text;" +
+					"user-select:			text;" +
 					"}\n\n";
 			
 			css += "#" + Debug._errBoxId + "-err i" +
@@ -435,6 +463,9 @@ Debug.errorPop = function(err,severity) {
 					"color: rgb(255,200,100); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +				
 					"text-align: left;" +
+					"-webkit-user-select: 	text;" +
+					"-moz-user-select: 		text;" +
+					"user-select:			text;" +
 					"}\n\n";
 
 			css += //"#" + Debug._errBoxId + "-err i" +
@@ -446,6 +477,9 @@ Debug.errorPop = function(err,severity) {
 					"font-family: 'Comfortaa', arial;" +
 					"left: 8px, top: 8px; margin-right: 8px;" +
 					"text-align: left;" +
+					"-webkit-user-select: 	text;" +
+					"-moz-user-select: 		text;" +
+					"user-select:			text;" +
 					"}\n\n";
 			
 			css += "#" + Debug._errBoxId + "-err b" +
@@ -453,6 +487,9 @@ Debug.errorPop = function(err,severity) {
 					"color: rgb(255,225,200); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +
 					"text-align: left;" +
+					"-webkit-user-select: 	text;" +
+					"-moz-user-select: 		text;" +
+					"user-select:			text;" +
 					"}\n\n";
 
 			css += "#" + Debug._errBoxId + " ." + Debug._errBoxId + "-localCallOut" + 
@@ -468,7 +505,11 @@ Debug.errorPop = function(err,severity) {
 			}
 
 			document.getElementsByTagName('head')[0].appendChild(style);
-			
+
+			window.removeEventListener("resize",localResize);
+			window.removeEventListener("scroll",localScroll);
+			window.removeEventListener("mouseup",Debug.handleErrorMoveStop);
+			window.removeEventListener("mousemove",Debug.handleErrorMove);
 			window.addEventListener("resize",localResize);
 			window.addEventListener("scroll",localScroll);
 			window.addEventListener("mouseup",Debug.handleErrorMoveStop);
@@ -568,7 +609,7 @@ Debug.errorPop = function(err,severity) {
 		Debug._errBox.style.backgroundColor = "rgba(153,0,51, " + errBoxAlpha + ")";
 	}
 	els[1].innerHTML = el.innerHTML;	
-}
+} //end errorPop()
 
 Debug._errBoxLastContent = "";
 //=====================================================================================
@@ -645,7 +686,7 @@ Debug.handleErrorMoveStop = function(e) {
 	}
 		
 		
-}
+} //end handleErrorMoveStop()
 
 //=====================================================================================
 Debug.handleErrorMove = function(e) {
@@ -684,10 +725,11 @@ Debug.handleErrorMove = function(e) {
 		Debug.handleErrorResize();
 	}
 		
-}
+} //end handleErrorMove()
 
 //=====================================================================================
-Debug.handleErrorResize = function() {
+Debug.handleErrorResize = function() 
+{
 
 	
 	var offX = document.documentElement.scrollLeft || document.body.scrollLeft || 0;
@@ -758,7 +800,7 @@ Debug.handleErrorResize = function() {
 
 	el = document.getElementsByClassName(Debug._errBoxId + "-err")[0];
 	el.style.height = (h-115) + "px";
-}
+} //end handleErrorResize()
 
 
 //=====================================================================================
@@ -781,7 +823,7 @@ Debug.downloadMessages = function() {
 	link.setAttribute("download", "otsdaq_Messages_download.txt");
 	document.body.appendChild(link); // Required for FF
 
-	link.click(); // This will download the data file named "my_data.csv"
+	link.click(); // This will download the data file named "otsdaq_Messages_download.txt"
 
 	link.parentNode.removeChild(link);
 	

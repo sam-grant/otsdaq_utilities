@@ -39,6 +39,31 @@
 //////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
+
+//function list:
+//	createSelectBox(el,name,title,vals,keys,types,
+//		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,
+//		mouseUpHandler,
+//		requireCtrlMultiClick,titles)
+//	initMySelectBoxes(clearPreviousSelections)
+//		  
+//	hasClass(ele,cls)
+//	addClass(ele,cls)
+//	removeClass(ele,cls)
+//	toggleClass(ele,cls)
+//
+//	getSelectedIndex(el)
+//	getSelectionArray(el)
+//	getSelectedCount(el)
+//	getSelectionElementByIndex(el,i)
+//	setSelectionElementByIndex(el,i,selected)
+//	myOptionSelect(option, index, isSingleSelect, event)
+//
+// 	showSearch(boxid)
+//	searchSelect(id,el,altstr)
+//	performSearchSelect(id,el,altstr)
+//	makeSearchBar(id)
+
 var selected = [];
 var MultiSelectBox = MultiSelectBox || {}; //define MultiSelectBox namespace
 
@@ -67,12 +92,12 @@ MultiSelectBox.requireCtrlMultiClick_ = {};
 MultiSelectBox.hasClass = function(ele,cls) 
 {
     return !!ele.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'));
-}
+} //end hasClass()
 
 MultiSelectBox.addClass = function(ele,cls) 
 {
     if (!MultiSelectBox.hasClass(ele,cls)) ele.className += " "+cls;
-}
+} //end addClass()
 
 MultiSelectBox.removeClass = function(ele,cls) 
 {
@@ -81,7 +106,7 @@ MultiSelectBox.removeClass = function(ele,cls)
     	var reg = new RegExp('(\\s|^)'+cls+'(\\s|$)');
     	ele.className=ele.className.replace(reg,'');
     }
-}
+} //end removeClass()
 
 MultiSelectBox.toggleClass = function(ele,cls) 
 {
@@ -94,25 +119,52 @@ MultiSelectBox.toggleClass = function(ele,cls)
     }
     else 
     {
-    	 ele.className += " "+cls;
+    	 ele.className += " " + cls;
 		return false;
 	}
-}
+} //end toggleClass()
 
 MultiSelectBox.getSelectedIndex = function(el)
 {
+	try //try to treat as selection box element first
+	{
+		var selects = MultiSelectBox.mySelects_[el.getElementsByClassName("mySelect")[0].id];
+		for(var i=0;i<selects.length;++i)
+			if(selects[i]) return i;
+		return -1; //no index selected				
+	}
+	catch(e){} // ignore error and treat as selected element now
+	
     var splits = el.id.split('_');
     return splits[splits.length-1] | 0;    
-}
+} //end getSelectedIndex()
 
 MultiSelectBox.getSelectionArray = function(el)
 {    
+	if(!el) return [];
+	
 	//console.log(el.id);
 	if(el.parentElement.id.indexOf("selbox-") == 0)
 		return MultiSelectBox.mySelects_[el.parentElement.id];
 	else
 		return MultiSelectBox.mySelects_[el.getElementsByClassName("mySelect")[0].id];		
-}
+} //end getSelectionArray()
+
+
+MultiSelectBox.getSelectedCount = function(el)
+{
+	try //try to treat as selection box element first
+	{
+		var selects = MultiSelectBox.mySelects_[el.getElementsByClassName("mySelect")[0].id];
+		var cnt = 0;
+		for(var i=0;i<selects.length;++i)
+			if(selects[i]) ++cnt;
+		return cnt; 				
+	}
+	catch(e){} // ignore error and treat as selected element now
+	
+    return 0;    
+} //end getSelectedIndex()
 
 MultiSelectBox.getSelectionElementByIndex = function(el,i)
 {    
@@ -123,11 +175,21 @@ MultiSelectBox.getSelectionElementByIndex = function(el,i)
 	else
 		return document.getElementById(el.getElementsByClassName("mySelect")[0].id + 
 			"-option_" + i);
-}
+} //end getSelectionElementByIndex()
 
 MultiSelectBox.setSelectionElementByIndex = function(el,i,selected)
 {    
 	var name = el.getElementsByClassName("mySelect")[0].id;
+	
+	if(!MultiSelectBox.isSingleSelect_[name] && 
+			i == -1) //apply to all
+	{
+		var size = MultiSelectBox.mySelects_[name].length;
+		for (var opt=0; opt<size; opt++)
+			MultiSelectBox.mySelects_[name][opt] = selected?1:0;
+		return;
+	}
+	
 	if(MultiSelectBox.isSingleSelect_[name] && 
 			selected) //if true, only allow one select at a time, so deselect others
 	{
@@ -136,7 +198,7 @@ MultiSelectBox.setSelectionElementByIndex = function(el,i,selected)
 			MultiSelectBox.mySelects_[name][opt] = 0;
 	}
 	MultiSelectBox.mySelects_[name][i] = selected?1:0;
-}
+} //end setSelectionElementByIndex()
 
 //for multiple selects to behave like checkboxes
 MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
@@ -219,7 +281,7 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 	MultiSelectBox.dbg(selectList);
 	selected = selectList;
 	MultiSelectBox.lastOptSelect_[id] = index; //save selection
-}
+} //end myOptionSelect()
 
 //This function is called by user to actually create the multi select box
 // These parameters are optional and can be omitted or set to 0: 
@@ -259,7 +321,7 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	if(title)
 	{
 		str += "<div id='" + name + "header' " +
-				"style='margin-top:20px;width:100%'><b>"
+				"style='margin-top:20px; width:100%; white-space:nowrap; height:21px'><b>"; //had to add height for new Chrome bug
 		str += title;
 		str += "</b></div>";
 	}
@@ -344,13 +406,14 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
     		el.style.width = 200 + "px"; 
     }
     	
-}
+} //end createSelectBox()
 
 //for initializing the highlights if selects are made "manually" (without clicking)
 MultiSelectBox.initMySelectBoxes = function(clearPreviousSelections)
 {
 	var divs=document.getElementsByClassName('mySelect');
-	for (var el=0; el<divs.length; el++){
+	for (var el=0; el<divs.length; el++)
+	{
 		var select = divs[el];
 		
 		var id = select.getAttribute("id");
@@ -387,13 +450,14 @@ MultiSelectBox.initMySelectBoxes = function(clearPreviousSelections)
 				{
 					//MultiSelectBox.dbg(opt);
 					MultiSelectBox.addClass(options[opt],"optionhighlighted");
+					options[opt].scrollIntoView(); //so highlighted are visible to user
 				}
 				else
 					MultiSelectBox.removeClass(options[opt],"optionhighlighted");
 			}
 		}		
 	}
-}
+} //end initMySelectBoxes()
 
 //for searching selectboxes (works for standard "selects" and "mySelects")
 MultiSelectBox.showSearch = function(boxid)
@@ -465,7 +529,7 @@ MultiSelectBox.showSearch = function(boxid)
 		$(boxid).style.height = (MultiSelectBox.selInitBoxHeight_[boxid]-10) + "px";
 		//$(boxid).childNodes[0].style.marginTop="initial";
 	}
-}
+} //end showSearch()
 
 MultiSelectBox.searchTimeout_ = null;
 
@@ -476,7 +540,7 @@ MultiSelectBox.searchSelect = function(id,el,altstr)
 		clearTimeout(MultiSelectBox.searchTimeout_);
 	}
 	MultiSelectBox.searchTimeout_ = setTimeout(function(){ MultiSelectBox.performSearchSelect(id,el,altstr); }, 100);
-}
+} //end searchSelect()
 
 MultiSelectBox.performSearchSelect = function(id,el,altstr)
 {	
@@ -537,7 +601,7 @@ MultiSelectBox.performSearchSelect = function(id,el,altstr)
 				html.slice(index,index+len) + 
 				"</u></b>" + html.slice(index+len);
 	}
-}
+} //end performSearchSelect()
 
 MultiSelectBox.makeSearchBar = function(id)
 {
@@ -593,7 +657,7 @@ MultiSelectBox.makeSearchBar = function(id)
 				" style='float:left' height='28' width='28' alt='&#128269;' ";
 	imgstr += "onclick = 'MultiSelectBox.showSearch(\"" + id + "\");' title='Search' class='searchimg'>";
 	return imgstr;  
-}
+} //end makeSearchBar()
 
 
 

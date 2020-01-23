@@ -104,7 +104,7 @@ SmartLaunch.create = function() {
 
 	var _needEventListeners = true;
 
-	var _subsetBasePath = "XDAQContextConfiguration";
+	var _subsetBasePath = "XDAQContextTable";
 
 	var _systemStatusArray = [];
 	var _contextRecords = [];
@@ -140,14 +140,14 @@ SmartLaunch.create = function() {
 	//=====================================================================================
 	//init ~~
 	function init() 
-	{						
+	{				
+		var windowTooltip = "Welcome to the Smart Launch user interface. " +
+			"Select which pieces of the configuration you want to enable, and then press the launch button!" +
+			"\n\n" +
+			"Once the pieces you want are enabled, press the run button!";	
 		Debug.log("Smart Launch init ");
-		DesktopContent.tooltip("Smart Launch",
-				"Welcome to the Smart Launch user interface. "+
-				"Select which pieces of the configuration you want to enable, and then press the launch button!" +
-				"\n\n" +
-				"Once the pieces you want are enabled, press the run button!"
-		);
+		DesktopContent.tooltip("Smart Launch", windowTooltip);
+		DesktopContent.setWindowTooltip(windowTooltip);
 
 		//get all existing contexts
 		ConfigurationAPI.getSubsetRecords(
@@ -318,7 +318,7 @@ SmartLaunch.create = function() {
 		catch(e)
 		{
 			Debug.log("There was error reading the status of the configuration subsystems (" +
-					"were the subsystem variables setup properly?): " + 
+					"were the subsystem variables setup properly?):[" + DesktopContent.getExceptionLineNumber(e) + "]: " + 
 					e, Debug.HIGH_PRIORITY);
 			return;
 		}
@@ -590,10 +590,13 @@ SmartLaunch.create = function() {
 		DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
 				"&fsmName=" + _fsmName, 
 				"", 
-				localGetStateHandler,
-				0, //handler param				
-				0,0,false, //progressHandler, callHandlerOnErr, showLoadingOverlay
-				true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
+				localGetStateHandler,/*returnHandler*/
+				0 /*reqParam*/, 				
+				0 /*progressHandler*/,
+				0 /*callHandlerOnErr*/,
+				true /*doNotShowLoadingOverlay*/, 
+				true /*targetSupervisor*/, 
+				true /*ignoreSystemBlock*/);
 
 		//===========
 		function localGetStateHandler(req,id,err)
@@ -736,7 +739,7 @@ SmartLaunch.create = function() {
 	
 			_runStatusDiv.style.display = "block";
 		}
-		catch(e) {console.log(e);}
+		catch(e) {console.log(":[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);}
 	}	//end displayState()
 	
 	//=====================================================================================
@@ -906,7 +909,7 @@ SmartLaunch.create = function() {
 
 					}, //end gatewayLaunchOTS req handler
 					0, //handler param
-					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
 		} // end localDelayedLaunch()
 		
@@ -1071,7 +1074,7 @@ SmartLaunch.create = function() {
 				_runFSMTimer = window.setTimeout(localRun,3000); //wait 3 seconds before doing anything
 					},	 // end handler				
 					0, //handler param				
-					0,0,false, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,true, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
 
 		}

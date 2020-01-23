@@ -74,7 +74,13 @@ ViewerRoot.createHud = function() {
 			ViewerRoot.hardRefresh = chk.checked; 	//hard refresh
 			console.log("checkboxUpdate: hardRefresh: " + chk.checked);
 			DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&hardRefresh="+
-					(chk.checked?1:0));	
+					(chk.checked?1:0),
+                                                "",
+                                                "" /*reqHandler*/,
+                                                0 /*reqParam*/,
+                                                0 /*progressHandler*/,
+                                                0 /*callHandlerOnErr*/,
+                                                true /*doNoShowLoadingOverlay*/);	
 		}	
 		else
 		{
@@ -86,7 +92,13 @@ ViewerRoot.createHud = function() {
 				ViewerRoot.autoRefreshDefault = chk.checked; 	//auto refresh
 				
 				DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&autoRefresh="+
-						(chk.checked?1:0));	
+						(chk.checked?1:0),
+						"",
+						""/*reqHandler*/,
+                                         	0 /*reqParam*/, 
+                                         	0 /*progressHandler*/, 
+                                         	0 /*callHandlerOnErr*/, 
+                                         	true /*doNoShowLoadingOverlay*/);	
 			}
 			else if(i==1) 
 			{
@@ -94,7 +106,13 @@ ViewerRoot.createHud = function() {
 				ViewerRoot.handleWindowResize();
 	
 				DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&autoHide="+
-						(chk.checked?1:0));	
+						(chk.checked?1:0),
+                                                "",
+                                                ""/*reqHandler*/,
+                                                0 /*reqParam*/,
+                                                0 /*progressHandler*/,
+                                                0 /*callHandlerOnErr*/,
+                                                true /*doNoShowLoadingOverlay*/);	
 			}
 			else if(i==2) 
 			{
@@ -111,13 +129,19 @@ ViewerRoot.createHud = function() {
 	
 	this.handlerRefreshPeriodChange = function(v) {
 		v = parseInt(v);
-		if(!v || v < 1) v = 1;
+		if(!v || v < 100) v = 100;
 		if(v > 9999999) v = 9999999;
 		Debug.log("ViewerRoot Hud handlerRefreshPeriodChange " + v);
 		document.getElementById("hudAutoRefreshPeriod").value = v;
 		ViewerRoot.autoRefreshPeriod = v;
 		DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&autoRefreshPeriod="+
-				ViewerRoot.autoRefreshPeriod);
+				ViewerRoot.autoRefreshPeriod,
+                                                "",
+                                                ""/*reqHandler*/,
+                                                0 /*reqParam*/,
+                                                0 /*progressHandler*/,
+                                                0 /*callHandlerOnErr*/,
+                                                true /*doNoShowLoadingOverlay*/);
 		if(ViewerRoot.autoRefreshTimer) window.clearInterval(ViewerRoot.autoRefreshTimer);
 		ViewerRoot.autoRefreshTimer = window.setInterval(ViewerRoot.autoRefreshTick,
 			ViewerRoot.autoRefreshPeriod);
@@ -208,10 +232,12 @@ ViewerRoot.createHud = function() {
 			Debug.log("setting hardRefresh=" + hardRefresh);
 			ViewerRoot.hardRefresh = hardRefresh; 	//hard refresh
 		}
-		var autoRefreshPeriod = DesktopContent.getXMLValue(req,'autoRefreshPeriod');
-		if(autoRefreshPeriod && autoRefreshPeriod !== "")
+		var autoRefreshPeriod = DesktopContent.getXMLValue(req,'autoRefreshPeriod') | 0;
+		if(autoRefreshPeriod)
 		{
-			Debug.log("setting autoRefreshPeriod=" + autoRefreshPeriod);
+			Debug.log("setting autoRefreshPeriod=" + autoRefreshPeriod);			
+			if(autoRefreshPeriod < 100) autoRefreshPeriod = 100;
+			if(autoRefreshPeriod > 9999999) autoRefreshPeriod = 9999999;
 			ViewerRoot.autoRefreshPeriod = autoRefreshPeriod; 	//autoRefreshPeriod 
 			document.getElementById("hudAutoRefreshPeriod").value = ViewerRoot.autoRefreshPeriod;			
 		}
@@ -525,7 +551,12 @@ ViewerRoot.createHud = function() {
 		var dir = document.getElementById('hudAdminControlField').value;
 		Debug.log("ViewerRoot Hud makeConfigDir  " + dir);
 
-		DesktopContent.XMLHttpRequest("Request?RequestType=rootAdminControls&cmd=mkdir", "path="+adminControlsPath+"&name="+dir, ViewerRoot.hud.adminControlsReqHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=rootAdminControls&cmd=mkdir", "path="+adminControlsPath+"&name="+dir, ViewerRoot.hud.adminControlsReqHandler,
+                                                ""/*reqHandler*/,
+                                                0 /*reqParam*/,
+                                                0 /*progressHandler*/,
+                                                0 /*callHandlerOnErr*/,
+                                                true /*doNoShowLoadingOverlay*/);
 			
 	} //end makeConfigDir()
 

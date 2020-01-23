@@ -33,8 +33,10 @@
 		//////////////////////////
 		
 		
-		
-		function init(){
+
+		//=====================================================================================
+		function init()
+		{
 			console.log("init()");
 		
 		
@@ -78,64 +80,87 @@
 			
 		
 			//var setSelection=setTimeout(makeServerRequest, 1000);
-		}
+		} //end init()
 		
-		
-		function colorFade(secondColor, which){
-		
-		
+
+		//=====================================================================================
+		function colorFade(secondColor, which)
+		{
 			//Added all of the IDs into the selection_ array and position the selection at the end
 		
-			if(which == "selected" || which == "all"){
-		
-				if(secondColor == 'orange'){
+			if(which == "selected" || which == "all")
+			{		
+				if(secondColor == 'orange')
+				{
 					selectedTargetRed = 255;
 					selectedTargetGreen = 188;
 					selectedTargetBlue = 18;				
-				}else if(secondColor == 'blue'){
+				}
+				else if(secondColor == 'blue')
+				{
 					nonSelectedTargetRed = 0;
 					nonSelectedTargetGreen = 210;
 					nonSelectedTargetBlue = 255;					
-				}else if(secondColor == 'grey'){
+				}
+				else if(secondColor == 'grey')
+				{
 					nonSelectedTargetRed = 232;
 					nonSelectedTargetGreen = 232;
 					nonSelectedTargetBlue = 232;					
-				}else if(secondColor == 'red'){
+				}
+				else if(secondColor == 'red')
+				{
 					selectedTargetRed = 242;
 					selectedTargetGreen = 5;
 					selectedTargetBlue = 5;					
-				}else if(secondColor == 'green'){
+				}
+				else if(secondColor == 'green')
+				{
 					selectedTargetRed = 56;
 					selectedTargetGreen = 224;
 					selectedTargetBlue = 56;					
-				}else if(secondColor == 'current'){
+				}
+				else if(secondColor == 'current')
+				{
 		
 				}
 		
 			}
-			if(which == "notSelected" || which == "all"){
-		
-				if(secondColor == 'orange'){
+			
+			if(which == "notSelected" || which == "all")
+			{		
+				if(secondColor == 'orange')
+				{
 					nonSelectedTargetRed = 255;
 					nonSelectedTargetGreen = 188;
 					nonSelectedTargetBlue = 18;				
-				}else if(secondColor == 'blue'){
+				}
+				else if(secondColor == 'blue')
+				{
 					nonSelectedTargetRed = 0;
 					nonSelectedTargetGreen = 210;
 					nonSelectedTargetBlue = 255;					
-				}else if(secondColor == 'grey'){
+				}
+				else if(secondColor == 'grey')
+				{
 					nonSelectedTargetRed = 232;
 					nonSelectedTargetGreen = 232;
 					nonSelectedTargetBlue = 232;					
-				}else if(secondColor == 'red'){
+				}
+				else if(secondColor == 'red')
+				{
 					nonSelectedTargetRed = 242;
 					nonSelectedTargetGreen = 5;
 					nonSelectedTargetBlue = 5;					
-				}else if(secondColor == 'green'){
+				}
+				else if(secondColor == 'green')
+				{
 					nonSelectedTargetRed = 56;
 					nonSelectedTargetGreen = 224;
 					nonSelectedTargetBlue = 56;					
-				}else if(secondColor == 'current'){
+				}
+				else if(secondColor == 'current')
+				{
 		
 				}
 			}    
@@ -145,9 +170,12 @@
 			var colorChanger=setTimeout(decreaseColor, INTERVAL_);
 		
 		
-		}
+		} //end colorFade()
 		
-		function decreaseColor(){
+
+		//=====================================================================================
+		function decreaseColor()
+		{
 			if(selectedRed > 0)
 				--selectedRed;
 			if(selectedGreen > 0)
@@ -163,16 +191,19 @@
 			//console.log("Called");
 			setDivGlow();
 		
-			if((selectedRed + selectedGreen + selectedBlue + nonSelectedRed + nonSelectedGreen + nonSelectedBlue) > 0)
+			if((selectedRed + selectedGreen + selectedBlue + nonSelectedRed 
+					+ nonSelectedGreen + nonSelectedBlue) > 0)
 				colorChanger = setTimeout(decreaseColor, INTERVAL_);
-			else{
+			else
+			{
 				restructure();
-				colorChanger = setTimeout(increaseColor, INTERVAL_);
-		
+				colorChanger = setTimeout(increaseColor, INTERVAL_);		
 			}
-		}
-		
-		function increaseColor(){
+		} //end decreaseColor()
+
+		//=====================================================================================
+		function increaseColor()
+		{
 			if(selectedRed < selectedTargetRed)
 				++selectedRed;
 			if(selectedGreen < selectedTargetGreen)
@@ -187,13 +218,18 @@
 				++nonSelectedBlue;	
 			setDivGlow();
 		
-			if((selectedRed + selectedGreen + selectedBlue + nonSelectedRed + nonSelectedGreen + nonSelectedBlue) < (selectedTargetRed + selectedTargetGreen + selectedTargetBlue + nonSelectedTargetRed + nonSelectedTargetGreen + nonSelectedTargetBlue))
+			if((selectedRed + selectedGreen + selectedBlue + nonSelectedRed + 
+					nonSelectedGreen + nonSelectedBlue) < (selectedTargetRed + 
+							selectedTargetGreen + selectedTargetBlue + nonSelectedTargetRed +
+							nonSelectedTargetGreen + nonSelectedTargetBlue))
 				colorChanger = setTimeout(increaseColor, INTERVAL_);
 		
-		}
+		} //end increaseColor()
 		
-		function setDivGlow(){
-		
+
+		//=====================================================================================
+		function setDivGlow()
+		{		
 		
 			for(var index = 0; index < (selection_.length); index++)
 			{
@@ -219,9 +255,10 @@
 				}
 			}
 		
-		}
+		} //end setDivGlow()
 		
-		
+
+		//=====================================================================================
 		function showVisualSelection(){
 		
 		
@@ -232,12 +269,17 @@
 			//set selected to green
 			colorFade('red', 'notSelected');
 		
-		}
+		} //end showVisualSelection()
 		
-		function confirm(){
-	                var randomNumber = Math.floor(Math.random() * 99999999)
-			if(prompt("Are you sure? This will delete ALL user data. Type " + randomNumber + " to continue:") == randomNumber)
-				if(prompt("I know exactly what I'm doing. Type 'I Do':") == "I Do"){
+
+		//=====================================================================================
+		function confirm()
+		{
+			var randomNumber = Math.floor(Math.random() * 99999999)
+			if(prompt("Are you sure? This will delete ALL user data. Type " + 
+					randomNumber + " to continue:") == randomNumber)
+				if(prompt("I know exactly what I'm doing. Type 'I Do':") == "I Do")
+				{
 					select('ResetAllUserData');
 				}
 				else
@@ -245,18 +287,23 @@
 		
 			else
 				alert("You did not type the correct number. Mission aborted!");
-		}
-		
-		function confirmTooltip(){
+		} //end confirm()
+
+		//=====================================================================================
+		function confirmTooltip()
+		{
 			if(prompt("Are you sure? This will reset Tooltips for ALL users. " +
 					"Type 'YES' to continue:")=="YES")				
 				select('ResetAllUserTooltips');
 		
 			else
 				alert("You did not type 'YES'. Tooltip reset canceled.");
-		}
+		} //end confirmTooltip()
 		
-		function select(id){
+
+		//=====================================================================================
+		function select(id)
+		{
 
 			if(id == 'ResetAllUserTooltips')
 			{
@@ -282,10 +329,12 @@
 			var serverRequest = "selection=" + selectedChoice_;
 			console.log(serverRequest);
 			makeServerRequest("editSecurity", serverRequest, editSecurityHandler);
-		}
+		} //end select()
 		
-		
-		function restructure(){
+
+		//=====================================================================================
+		function restructure() 
+		{
 		
 			for(var index = 0; index < IDs_.length; index++)
 			{
@@ -298,14 +347,23 @@
 			if(selectedChoice_ != "")
 				selection_[selection_.length] = selectedChoice_;
 		
-		}
+		} //end restructure()
 
-		function makeServerRequest(req, data, handler){
+
+		//=====================================================================================
+		function makeServerRequest(req, data, handler)
+		{		
+			DesktopContent.XMLHttpRequest(req, data, handler, 
+					undefined /*reqParam*/, 
+					undefined /*progressHandler*/,
+					true /*callHandlerOnErr*/);
+		} //end makeServerRequest()		
 		
-			DesktopContent.XMLHttpRequest(req, data, handler, undefined, undefined);
-		}		
+
+		//=====================================================================================
 		//handleFiles
-		function handleFiles() { 
+		function handleFiles() 
+		{ 
 		
 			var fileHolder = document.getElementById("fileToUpload");
 			var submitBtn  = document.getElementById("submitBtn");
@@ -324,13 +382,15 @@
 				exportBtn.style.display = "block !important";
 			}
 		
-		}
+		} //end handleFiles()
 
 
+		//=====================================================================================
 		//uploadToServer ~~
 		//	upload logbook entry to server.
 		//	Used to upload as temporary previewable post
-		function uploadToServer(reqCmd, handler) {
+		function uploadToServer(reqCmd, handler) 
+		{
 			
 			console.log();
 			
@@ -353,11 +413,15 @@
 			console.log(fd);
 			//makeServerRequest(reqCmd, fd, handler); 
 		
-		}
-				//convertForServer ~
+		} //end uploadToServer()
+		
+
+		//=====================================================================================
+		//convertForServer ~
 		//	replace server reserved characters with %<hex> equivalents
 		//	reserved: ", ', &, <, >, newline, double-space
-		function convertForServer(entry) {
+		function convertForServer(entry) 
+		{
 		    return entry
 	         .replace(/&/g, "%26")
 	         .replace(/</g, "%3C")
@@ -366,9 +430,10 @@
 	         .replace(/'/g, "%27")
 			 .replace(/\n/g,"%0A%0D")
 			 .replace(/  /g, "%20%20");				
-		}
+		} //end convertForServer()
 
-	
+
+		//=====================================================================================
 		//convertForClient ~
 		//	replace server reserved characters with html equivalents
 		//	reserved: ", ', &, <, >, newline, double-space
@@ -382,39 +447,51 @@
 		         .replace(/%27/g, "&#039;")				//'
 		         .replace(/%0A%0D/g, "<br>")			//newline
 		         .replace(/%20%20/g, "&nbsp;&nbsp;");	//space        
-		}
+		} //end convertForClient()
 
+		//=====================================================================================
 		//uploadProgress ~~
-		function uploadProgress(evt) {
-			if (evt.lengthComputable) {
+		function uploadProgress(evt) 
+		{
+			if (evt.lengthComputable)
+			{
 				var percentComplete = Math.round(evt.loaded * 100 / evt.total);
 				document.getElementById('PreviewStatus').innerHTML = percentComplete.toString() + '%';
 				Debug.log("Edit User Data uploadProgress " +  percentComplete.toString() + '%');
 			}
-			else {
+			else 
+			{
 				document.getElementById('PreviewStatus').innerHTML = 'unable to compute';
 				Debug.log("Edit User Data uploadProgress 'unable to compute'");
 			}
-		}
+		} //end uploadProgress()
 
+		//=====================================================================================
 		//uploadComplete ~
 		// This event is raised when the server send back a response
-		function uploadComplete(evt) {
+		function uploadComplete(evt)
+		{
 			Debug.log("Edit User Data uploadComplete " +  evt.target.responseText);
 		}
 
+		//=====================================================================================
 		//uploadFailed ~
-		function uploadFailed(evt) {
+		function uploadFailed(evt) 
+		{
 			Debug.log("There was an error attempting to upload the file.");
 		}
 
+		//=====================================================================================
 		//uploadCanceled ~
-		function uploadCanceled(evt) {
+		function uploadCanceled(evt) 
+		{
 			Debug.log("The upload has been canceled by the user or the browser dropped the connection.");
 		}  
-		
-				//fileSelected ~
-		function fileSelected() {
+
+		//=====================================================================================
+		//fileSelected ~
+		function fileSelected()
+		{
 			var el = document.getElementById('fileToUpload');
 			var totFileSize = 0;
 			var fileNameConcat = "";
@@ -449,29 +526,35 @@
 			document.getElementById('fileSize').innerHTML = '<b>Size:</b>&nbsp;&nbsp;&nbsp; ' + fileSize;
 			document.getElementById('fileType').innerHTML = '<b>Type:</b>&nbsp;&nbsp; ' + 
 				fileTypeConcat.substr(0,20) + (fileTypeConcat.length > 20?"...":"");*/
-		}
+		} //end fileSelected()
   	
-  
-		
-		function exportUserSettingsBtn() {
+
+		//=====================================================================================
+		function exportUserSettingsBtn() 
+		{
 			Debug.log("Making request to export settings!");
 			//makeServerRequest("");
 			var data = "RequestType=Export";
 			DesktopContent.XMLHttpRequest("UserSettings", data, userSettingsHandler, undefined, undefined);
 
-		}
-		
-		var userSettingsHandler = function(req){
-		
-			if(!req || !req.responseText.length || req.responseText.indexOf("Error") >= 0)
+		} //end exportUserSettingsBtn()
+
+		//=====================================================================================
+		//Note: not an xml response, just text
+		function userSettingsHandler(req)
+		{		
+			if(!req || !req.responseText.length || 
+					req.responseText.indexOf("Error") >= 0)
 			{
 				Debug.log("Action Failed. Invalid Verify Code!", Debug.HIGH_PRIORITY);
 
 				return;
 			}
-		
+
+			console.log("req.responseText",req.responseText);
+			
 			if(selectedChoice_ == "ResetAllUserData")
-		        {
+			{
 				Debug.log("User Data was RESET successfully!", Debug.INFO_PRIORITY);
 				Debug.log("Your wiz mode URL may have changed. Please refer to the console for the new link!", Debug.INFO_PRIORITY);
 
@@ -479,17 +562,18 @@
 			
 			if(req.responseText.indexOf("Upload Success") >= 0)
 			{
-				Debug.log("User Settings successfully uploaded!");
+				Debug.log("User Settings successfully uploaded!", Debug.INFO_PRIORITY);
 			}		   
 	
 			Debug.log("Successfully handled User Settings.");
 			Debug.log(req);
 
-			return;
-		}
-		
-		var editSecurityHandler = function(req){
-		
+		} //end userSettingsHandler()
+
+		//=====================================================================================
+		//Note: not an xml response, just text
+		function editSecurityHandler(req)
+		{		
 			if(!req || !req.responseText.length || req.responseText.indexOf("Error") >= 0)
 			{
 				Debug.log("Action Failed. Invalid Verify Code!", Debug.HIGH_PRIORITY);
@@ -497,33 +581,40 @@
 				showVisualSelection();
 				return;
 			}
+			
+			console.log("req.responseText",req.responseText);
 		
 			if(selectedChoice_ == "ResetAllUserData")
-		        {
+		    {
 				Debug.log("User Data was RESET successfully!", Debug.INFO_PRIORITY);
 				Debug.log("Your wiz mode URL may have changed. Please refer to the console for the new link!", Debug.INFO_PRIORITY);
-
 			}			   
+			else if(selectedChoice_ == "ResetAllUserTooltips")
+		    {
+				Debug.log("All User tooltips were RESET successfully!", Debug.INFO_PRIORITY);			
+			}		
 		
 			selectedSecurityChoice_ = req.responseText; 
 			console.log(selectedSecurityChoice_);
 			showVisualSelection();
 			return;
-		}
+		} //end editSecurityHandler
 		
-			
-			var handleImportSettings = function(req){
-		
+
+		//=====================================================================================
+		//Note: not an xml response, just text
+		function handleImportSettings(req)
+		{					
 			if(!req || !req.responseText.length || req.responseText.indexOf("Error") >= 0)
 			{
 				Debug.log("Action Failed. Invalid Verify Code!", Debug.HIGH_PRIORITY);
 
 				return;
 			}
-		
-			console.log(req.responseText);
+			console.log("req.responseText",req.responseText);
+			
 			return;
-		}
+		} //end handleImportSettings
 		
 	</script>
 	

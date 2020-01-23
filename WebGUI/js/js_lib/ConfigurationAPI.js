@@ -52,11 +52,11 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getAliasesAndGroups(responseHandler,optionForNoAliases,optionForNoGroups)
 // 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldsOfRecords(subsetBasePath,recordArr,fieldList,maxDepth,responseHandler,modifiedTables)
-//	ConfigurationAPI.getFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
+//	ConfigurationAPI.getFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables,silenceErrors)
 // 	ConfigurationAPI.getUniqueFieldValuesForRecords(subsetBasePath,recordArr,fieldList,responseHandler,modifiedTables)
 //	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTablesIn,silenceErrors)	)
 //	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
-//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases,doNotIgnoreGroupActivationWarnings,doNotKillPopUpEl)
+//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases,doNotIgnoreGroupActivationWarnings,doNotKillPopUpEl,tablesToAdd)
 //	ConfigurationAPI.bitMapDialog(bitMapParams,initBitMapValue,okHandler,cancelHandler)
 //	ConfigurationAPI.createEditableFieldElement(fieldObj,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
@@ -64,10 +64,13 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getSelectedEditableFieldIndex()
 // 	ConfigurationAPI.addSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTablesIn,silenceErrors)	
 // 	ConfigurationAPI.deleteSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTablesIn,silenceErrors)	
+// 	ConfigurationAPI.renameSubsetRecords(subsetBasePath,recordArr,newRecordArr,responseHandler,modifiedTablesIn,silenceErrors)	
+// 	ConfigurationAPI.copySubsetRecords(subsetBasePath,recordArr,numberOfCopies,responseHandler,modifiedTablesIn,silenceErrors)	
 
 
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
+//	ConfigurationAPI.removeAllPopUps()
 //	ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	ConfigurationAPI.addClass(elem,class)
 //	ConfigurationAPI.removeClass(elem,class)
@@ -91,7 +94,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.activateGroup(groupName, groupKey, ignoreWarnings, doneHandler)
 //	ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
-//	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
+//	ConfigurationAPI.saveGroupAndActivate(groupName,tableMap,doneHandler,doReturnParams)
 //	ConfigurationAPI.getOnePixelPngData(rgba)
 //	ConfigurationAPI.getGroupTypeMemberNames(groupType,responseHandler)
 //	ConfigurationAPI.getTree(treeBasePath,depth,modifiedTables,responseHandler,responseHandlerParam)
@@ -109,7 +112,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.handleEditableFieldEditOK()
 //	ConfigurationAPI.handleEditableFieldEditCancel()
 //	ConfigurationAPI.handleEditableFieldKeyDown(event,keyEl)
-//	ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,depth,nodeName,value,valueType,choices,path)
+//	ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,depth,nodeName,value,valueType,choices,path,isGroupLink,childLinkIndex,linkId)
 
 //"private" constants:
 ConfigurationAPI._VERSION_ALIAS_PREPEND = "ALIAS:";
@@ -142,13 +145,13 @@ ConfigurationAPI._OK_CANCEL_DIALOG_STR += "</div>";
 ConfigurationAPI.getActiveGroups = function(responseHandler)
 {	
 	//get active configuration group
-	DesktopContent.XMLHttpRequest("Request?RequestType=getActiveConfigGroups",
+	DesktopContent.XMLHttpRequest("Request?RequestType=getActiveTableGroups",
 			"", function(req) 
 			{
 		responseHandler(ConfigurationAPI.extractActiveGroups(req));
 			},
 			0,0,true  //reqParam, progressHandler, callHandlerOnErr
-	); //end of getActiveConfigGroups handler
+	); //end of getActiveTableGroups handler
 }
 ConfigurationAPI.extractActiveGroups = function(req)
 {
@@ -284,20 +287,20 @@ ConfigurationAPI.getAliasesAndGroups = function(responseHandler,optionForNoAlias
 
 	//get aliases
 	if(!optionForNoGroups)
-		DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups"
+		DesktopContent.XMLHttpRequest("Request?RequestType=getTableGroups"
 				+"&doNotReturnMembers=1", //end get data 
 				"", //end post data
 				function(req)
 				{
-		Debug.log("getConfigurationGroups handler");
+		Debug.log("getTableGroups handler");
 
 		retObj.activeGroups = {}; //clear
 		retObj.activeGroups = ConfigurationAPI.extractActiveGroups(req);
 		
-		var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
-		var groupKeys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
-		var groupTypes = req.responseXML.getElementsByTagName("ConfigurationGroupType");
-		var groupComments = req.responseXML.getElementsByTagName("ConfigurationGroupComment");
+		var groupNames = req.responseXML.getElementsByTagName("TableGroupName");
+		var groupKeys = req.responseXML.getElementsByTagName("TableGroupKey");
+		var groupTypes = req.responseXML.getElementsByTagName("TableGroupType");
+		var groupComments = req.responseXML.getElementsByTagName("TableGroupComment");
 
 		retObj.groups = {}; //clear
 		
@@ -379,8 +382,8 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 	if(filterList === undefined) filterList = "";
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
-			"&configGroup=" +
-			"&configGroupKey=-1" +
+			"&tableGroup=" +
+			"&tableGroupKey=-1" +
 			"&hideStatusFalse=0" + 
 			"&depth=1", //end get data 
 			"startPath=/" + subsetBasePath +  
@@ -436,8 +439,8 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,
 	if(treeBasePath == "/") treeBasePath = ""; //server does not like // for root
 
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
-			"&configGroup=" +
-			"&configGroupKey=-1" +
+			"&tableGroup=" +
+			"&tableGroupKey=-1" +
 			"&hideStatusFalse=0" + 
 			"&depth=" + depth, //end get data 
 			"startPath=/" + treeBasePath +
@@ -540,7 +543,7 @@ ConfigurationAPI.getTreeRecordLinks = function(node)
 		
 		for(var j=0;j<subchildren.length;++j)
 		{
-			if(subchildren[j].nodeName == "LinkConfigurationName")
+			if(subchildren[j].nodeName == "LinkTableName")
 			{
 				retArr.push(children[i]);
 				break;
@@ -608,7 +611,7 @@ ConfigurationAPI.getTreeLinkTable = function(link)
 {
 	var children = link.children;	
 	for(var i=0;i<children.length;++i)
-		if(children[i].nodeName == "LinkConfigurationName")
+		if(children[i].nodeName == "LinkTableName")
 			return children[i].getAttribute("value");
 	throw("Table name not found!");	
 } //end getTreeLinkTable
@@ -670,8 +673,8 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 	if(subsetBasePath == "/") subsetBasePath = "";
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeCommonFields" + 
-			"&configGroup=" +
-			"&configGroupKey=-1" + 
+			"&tableGroup=" +
+			"&tableGroupKey=-1" + 
 			"&depth=" + (maxDepth|0), //end get data 
 			"startPath=/" + subsetBasePath + 
 			"&recordList=" + recordListStr +  
@@ -722,7 +725,7 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			}, //handler
 			0, //handler param
 			0,true); //progressHandler, callHandlerOnErr
-}
+} //end getFieldsOfRecords()
 
 //=====================================================================================
 //getFieldValuesForRecords ~~
@@ -746,8 +749,9 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 //			obj.fieldPath   
 //			obj.fieldValue
 //
-ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fieldObjArr,
-		responseHandler,modifiedTables)
+ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,
+		recordArr,fieldObjArr,
+		responseHandler,modifiedTables,silenceErrors)
 {	
 	var modifiedTablesListStr = "";
 	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
@@ -795,8 +799,8 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	}	
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeFieldValues" + 
-			"&configGroup=" +
-			"&configGroupKey=-1", //end get data 
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data 
 			"startPath=/" + subsetBasePath + 
 			"&recordList=" + recordListStr +
 			"&fieldList=" + fieldListStr + 
@@ -807,8 +811,8 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
 		{
-			Debug.log(err,Debug.HIGH_PRIORITY);
-			if(responseHandler) responseHandler(recFieldValues);
+			if(!silenceErrors) Debug.log(err,Debug.HIGH_PRIORITY);
+			if(responseHandler) responseHandler(recFieldValues,err);
 			return;
 		}
 		
@@ -825,6 +829,9 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 				obj.fieldPath = DesktopContent.getXMLValue(FieldPaths[i]);
 				obj.fieldValue = DesktopContent.getXMLValue(FieldValues[i]);
 				recFieldValues.push(obj);
+				
+				//track last stable value, inject in object (e.g. used by child link fill field)
+				fieldObjArr[i].fieldColumnValue = obj.fieldValue;
 			}
 		}
 		
@@ -833,7 +840,7 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 			}, //handler
 			0, //handler param
 			0,true); //progressHandler, callHandlerOnErr
-}
+} //end getFieldValuesForRecords()
 
 
 //=====================================================================================
@@ -880,8 +887,8 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getUniqueFieldValuesForRecords" + 
-			"&configGroup=" +
-			"&configGroupKey=-1", //end get data
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data
 			"startPath=/" + subsetBasePath + 
 			"&recordList=" + recordListStr +  
 			"&fieldList=" + fieldList +
@@ -903,9 +910,15 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 		{
 			
 			var uniqueValues = fields[i].getElementsByTagName("uniqueValue");
+			var groupIdChildLinkIndex = DesktopContent.getXMLNode(
+					fields[i],"childLinkIndex");			
 			
 			var obj = {};
 			obj.fieldName = DesktopContent.getXMLValue(fields[i]);
+						
+			if(groupIdChildLinkIndex)
+				obj.childLinkIndex = DesktopContent.getXMLValue(groupIdChildLinkIndex);
+			
 			obj.fieldUniqueValueArray = [];
 			for(var j=0;j<uniqueValues.length;++j)					
 				obj.fieldUniqueValueArray.push(DesktopContent.getXMLValue(uniqueValues[j]));
@@ -1005,8 +1018,8 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=setTreeNodeFieldValues" + 
-			"&configGroup=" +
-			"&configGroupKey=-1", //end get data 
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data 
 			"startPath=/" + subsetBasePath +  
 			"&recordList=" + recordListStr +
 			"&valueList=" + valueListStr +
@@ -1047,7 +1060,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 			}, //handler
 			0, //handler param
 			0,true); //progressHandler, callHandlerOnErr
-}
+} //end setFieldValuesForRecords()
 
 //=====================================================================================
 //popUpSaveModifiedTablesForm ~~
@@ -1452,7 +1465,7 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseH
 		); //end of getGroupAliases handler
 
 			},0,0,true //reqParam, progressHandler, callHandlerOnErr
-	); //end of getActiveConfigGroups handler			
+	); //end of getActiveTableGroups handler			
 
 
 	document.body.appendChild(el); //add element to display div
@@ -1584,6 +1597,8 @@ ConfigurationAPI.handlePopUpAliasEditToggle = function(i)
 //
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
+//
+// <tablesToAdd> is an array of Table objects to add to modified group. -1 would be empty mockup table.
 //	
 //	Note: when called from popup, uses info from popup.
 //
@@ -1612,7 +1627,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		doNotIgnoreWarnings,doNotSaveAffectedGroups,
 		doNotActivateAffectedGroups,doNotSaveAliases,
 		doNotIgnoreGroupActivationWarnings,
-		doNotKillPopUpEl)
+		doNotKillPopUpEl, tablesToAdd)
 {	
 	//copy from ConfigurationGUI::saveModifiedTree
 
@@ -1691,7 +1706,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 		var affectedGroupNames = []; //to be populated for use by alias setting
 		var affectedGroupComments = []; //to be populated for use by alias setting
-		var affectedGroupConfigMap = []; //to be populated for use by alias setting
+		var affectedGroupTableMap = []; //to be populated for use by alias setting
 		
 		var affectedGroupKeys = []; //to be populated after group save for use by alias setting
 		
@@ -1702,7 +1717,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 			var modTblCount = 0;
 			var modTblStr = "";
 			for(var j=0;j<modifiedTables.length;++j)
-				if((modifiedTables[j].tableVersion|0) < -1)
+				if((modifiedTables[j].tableVersion|0) < 0)
 				{
 					if(modTblCount++)
 						modTblStr += ",";
@@ -1714,7 +1729,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					modifiedTablesListStr += ",";
 					modifiedTablesListStr += modifiedTables[j].tableVersion;
 				}
-			
+						
 			//get affected groups
 			//	and save member map to hidden div for Save action			
 			///////////////////////////////////////////////////////////
@@ -1748,8 +1763,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 					Debug.log("memberNames.length " + memberNames.length);
 
-					//build member config map
-					affectedGroupConfigMap[i] = "configList=";
+					//build member table map
+					affectedGroupTableMap[i] = "tableList=";
 					var memberVersion, memberName;
 					for(var j=0;j<memberNames.length;++j)		
 					{
@@ -1764,15 +1779,34 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 								{
 									Debug.log("found " + savedTables[k].tableName + "-v" +
 											savedTables[k].tableVersion);
-									affectedGroupConfigMap[i] += memberName + "," + 
+									affectedGroupTableMap[i] += memberName + "," + 
 											savedTables[k].tableVersion + ",";
 									break;
 								}
 						}
 						else
-							affectedGroupConfigMap[i] += memberName + 
+							affectedGroupTableMap[i] += memberName + 
 								"," + memberVersion + ",";
-					}
+						
+						//check tables to add and remove if already in the list
+						for(var t=0;tablesToAdd && t<tablesToAdd.length;++t)
+							if(memberName == tablesToAdd[t].tableName)
+							{
+								Debug.log("Removing table to add '" + 
+										memberName + "', already in group.");
+								tablesToAdd.splice(t,1); //remove 1 element at position t
+								console.log("Now tablesToAdd",tablesToAdd);
+								break;
+							}
+					} //end primary member loop
+					
+					//for the last group, add tables (-1 means mockup)
+					if(i==groups.length-1 && tablesToAdd)
+					{
+						for(var j=0;j<tablesToAdd.length;++j)
+							affectedGroupTableMap[i] += tablesToAdd[j].tableName + 
+								"," + tablesToAdd[j].tableVersion + ",";
+					} //end mockup table add
 				}
 				
 				localHandleSavingAffectedGroups();
@@ -1799,8 +1833,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 				affectedGroupComments.push(affectedGroupCommentEls[i].textContent);
 				affectedGroupNames.push(affectedArr[0]);	
 				
-				//build member config map
-				affectedGroupConfigMap[i] = "configList=";
+				//build member table map
+				affectedGroupTableMap[i] = "tableList=";
 				//member map starts after group name/key (i.e. [2])
 				for(var a=2;a<affectedArr.length;a+=2)								
 					if((affectedArr[a+1]|0) < -1) //there should be a new modified version
@@ -1812,13 +1846,13 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							{
 								Debug.log("found " + savedTables[k].tableName + "-v" +
 										savedTables[k].tableVersion);
-								affectedGroupConfigMap[i] += affectedArr[a] + "," + 
+								affectedGroupTableMap[i] += affectedArr[a] + "," + 
 										savedTables[k].tableVersion + ",";
 								break;
 							}
 					}
 					else //use existing version
-						affectedGroupConfigMap[i] += affectedArr[a] + "," + affectedArr[a+1] + ",";
+						affectedGroupTableMap[i] += affectedArr[a] + "," + affectedArr[a+1] + ",";
 			}
 			
 			localHandleSavingAffectedGroups();			
@@ -1832,18 +1866,18 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 			for(var i=0;i<affectedGroupNames.length;++i)
 			{	
 				reqStr = ""; //reuse
-				reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+				reqStr = "Request?RequestType=saveNewTableGroup" +
 						"&groupName=" + affectedGroupNames[i] +
 						"&allowDuplicates=0" +
 						"&lookForEquivalent=1" + 
 						"&ignoreWarnings=" + (doNotIgnoreWarnings?0:1) + 
 						"&groupComment=" + encodeURIComponent(affectedGroupComments[i]);
 				Debug.log(reqStr);
-				Debug.log(affectedGroupConfigMap[i]);
+				Debug.log(affectedGroupTableMap[i]);
 
 				++numberOfRequests;
 				///////////////////////////////////////////////////////////
-				DesktopContent.XMLHttpRequest(reqStr, affectedGroupConfigMap[i], 
+				DesktopContent.XMLHttpRequest(reqStr, affectedGroupTableMap[i], 
 						function(req,affectedGroupIndex) 
 						{
 
@@ -1908,7 +1942,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 					++numberOfReturns;
 
-					var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+					var newGroupKey = DesktopContent.getXMLValue(req,"TableGroupKey");									
 					affectedGroupKeys.push(newGroupKey);
 
 					{
@@ -2181,7 +2215,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
 									"SaveWiz",
 									localNextAliasHandler,										
-									true); //request return parameters		
+									true); //request return parameters	
 						}
 						
 					} // end of if statement to check if done with group saving
@@ -2211,9 +2245,9 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 	for(var j=0;j<modifiedTables.length;++j)
 		if((modifiedTables[j].tableVersion|0) < -1) //for each modified table
 		{
-			var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
+			var reqStr = "Request?RequestType=saveSpecificTable" + 
 					"&dataOffset=0&chunkSize=0" +  
-					"&configName=" + modifiedTables[j].tableName + 
+					"&tableName=" + modifiedTables[j].tableName + 
 					"&version="+modifiedTables[j].tableVersion +	
 					"&temporary=0" +
 					"&tableComment=" + 
@@ -2241,21 +2275,21 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					return;
 				}						
 
-				var configName = DesktopContent.getXMLValue(req,"savedName");
+				var tableName = DesktopContent.getXMLValue(req,"savedName");
 				var version = DesktopContent.getXMLValue(req,"savedVersion");
 				var foundEquivalentVersion = DesktopContent.getXMLValue(req,"foundEquivalentVersion") | 0;
 
 				if(foundEquivalentVersion)
-					Debug.log("Using existing table '" + configName + "-v" + 
+					Debug.log("Using existing table '" + tableName + "-v" + 
 							version + "'",Debug.INFO_PRIORITY);
 				else
-					Debug.log("Successfully created new table '" + configName + "-v" + 
+					Debug.log("Successfully created new table '" + tableName + "-v" + 
 						version + "'",Debug.INFO_PRIORITY);
 				
 				//update saved table version based on result
 				{
 					var obj = {};
-					obj.tableName = configName;
+					obj.tableName = tableName;
 					obj.tableVersion = version;
 					obj.tableComment = modifiedTables[modifiedTableIndex].tableComment;
 					savedTables.push(obj);
@@ -2287,7 +2321,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 ConfigurationAPI.activateGroup = function(groupName, groupKey, 
 		ignoreWarnings, doneHandler)
 {
-	DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+	DesktopContent.XMLHttpRequest("Request?RequestType=activateTableGroup" +
 			"&groupName=" +	groupName + 
 			"&groupKey=" + groupKey +
 			"&ignoreWarnings=" + (ignoreWarnings?"1":"0") +
@@ -2322,7 +2356,7 @@ ConfigurationAPI.activateGroup = function(groupName, groupKey,
 		if(doneHandler) doneHandler();
 			},
 			true, 0 , true); //reqIndex, progressHandler, callHandlerOnErr
-}
+} //end activateGroup()
 
 //=====================================================================================
 //setGroupAliasInActiveBackbone ~~
@@ -2400,10 +2434,10 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 	Debug.log("groupAliasVersion=" + groupAliasVersion);
 
 	var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
-	var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+	var tableVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
 
 	//make a new backbone with old versions of everything except Group Alias 
-	var configMap = "configList=";
+	var tableMap = "tableList=";
 	var name;
 	for(var i=0;i<configNames.length;++i)
 	{		
@@ -2411,35 +2445,38 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 
 		if(name == groupAliasName)
 		{
-			configMap += name + "," + 
+			tableMap += name + "," + 
 					groupAliasVersion + ",";
 			continue;
 		}
 		//else use old member
-		configMap += name + "," + 
-				configVersions[i].getAttribute("value") + ",";							
+		tableMap += name + "," + 
+				tableVersions[i].getAttribute("value") + ",";							
 	}
+	
+	console.log("backbone tableMap",tableMap);
 
-	ConfigurationAPI.saveGroupAndActivate(params[0],configMap,params[1],params[2],
+	ConfigurationAPI.saveGroupAndActivate(params[0],tableMap,params[1],params[2],
 			true /*lookForEquivalent*/);			
 } // end ConfigurationAPI.newWizBackboneMemberHandler()
 
 //=====================================================================================
 //saveGroupAndActivate
-ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler,doReturnParams,
+ConfigurationAPI.saveGroupAndActivate = function(groupName,tableMap,
+		doneHandler,doReturnParams,
 		lookForEquivalent)
 {
-	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewTableGroup&groupName=" +
 			groupName + 
 			"&allowDuplicates=" + (lookForEquivalent?"0":"1") +
 			"&lookForEquivalent=" + (lookForEquivalent?"1":"0") +
 			"", //end get data
-			configMap, //end post data
+			tableMap, //end post data
 			function(req)
 			{
 		var err = DesktopContent.getXMLValue(req,"Error");
-		var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-		var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+		var name = DesktopContent.getXMLValue(req,"TableGroupName");
+		var key = DesktopContent.getXMLValue(req,"TableGroupKey");
 		var newGroupCreated = true;
 		if(err) 
 		{
@@ -2466,7 +2503,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 
 		//now activate the new group
 
-		DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+		DesktopContent.XMLHttpRequest("Request?RequestType=activateTableGroup" +
 				"&groupName=" + name +
 				"&groupKey=" + key, "", 
 				function(req)
@@ -2495,7 +2532,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 				});	//end of activate new backbone handler
 
 			},0,0,true  //reqParam, progressHandler, callHandlerOnErr
-	); //end of backbone saveNewConfigurationGroup handler
+	); //end of backbone saveNewTableGroup handler
 } //end ConfigurationAPI.saveGroupAndActivate
 
 //=====================================================================================
@@ -4138,6 +4175,18 @@ ConfigurationAPI.setCaretPosition = function(elem, caretPos, endPos)
 	elem.setSelectionRange(caretPos, endPos);
 }
 
+//=====================================================================================
+//ConfigurationAPI.removeAllPopUps()
+ConfigurationAPI.removeAllPopUps = function()
+{
+	//remove all existing dialogs
+	var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+	while(el) 
+	{
+		el.parentNode.removeChild(el); //close popup
+		el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+	}
+} //end ConfigurationAPI.removeAllPopUps()
 
 //=====================================================================================
 //setPopUpPosition ~~
@@ -4199,10 +4248,11 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		//else w,h are inputs and margin is ignored
 
 		x = (DesktopContent.getWindowScrollLeft() + ((ww-w)/2));
-		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2)) - (offsetUp|0) - 100; //bias up (looks nicer)
+		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2)) - (offsetUp|0);		
+		if(y > 110) y -= 100; //bias up (looks nicer)
 		
-		if(y<DesktopContent.getWindowScrollTop()+margin+padding) 
-			y = DesktopContent.getWindowScrollTop()+margin+padding; //don't let it bottom out though
+		if(y<DesktopContent.getWindowScrollTop()+margin)//+padding) 
+			y = DesktopContent.getWindowScrollTop()+margin;//+padding; //don't let it bottom out though
 
 		//if dialog is smaller than window, allow scrolling to see the whole thing 
 		if(w > ww-margin-padding)			
@@ -4210,14 +4260,14 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		if(ah > wh-margin-padding)
 			y = -DesktopContent.getWindowScrollTop();
 			
-		el.style.left = x + "px";
-		el.style.top = y + "px"; 
+		el.style.left = (x|0) + "px";
+		el.style.top = (y|0) + "px"; 
 	}; 
 	ConfigurationAPI.setPopUpPosition.popupResize();
 	
 	//window width and height are not manipulated on resize, only setup once
-	el.style.width = w + "px";
-	el.style.height = h + "px";
+	el.style.width = (w|0) + "px";
+	el.style.height = (h|0) + "px";
 	
 	if(!doNotResize)
 	{
@@ -4321,10 +4371,49 @@ ConfigurationAPI.createEditableFieldElement = function(fieldObj,fieldIndex,
 	var value = fieldObj.fieldColumnDefaultValue;
 	var path = fieldObj.fieldRelativePath;
 	var nodeName = fieldObj.fieldColumnName;
-
+	fieldObj.depthIndex = depth;
+	fieldObj.fieldIndex = uid;
+	fieldObj.fieldColumnValue = value; //track last stable value
+	
+	//if childLink, look up isGroupLink,childLinkIndex,linkId
+	//	in matching field
+	var isGroupLink,childLinkIndex,linkId;
+	if(valueType.indexOf("ChildLink") == 0)
+	{
+		Debug.log("Looking up matching link pair for " + nodeName);
+		
+		childLinkIndex = valueType.split('-')[1];
+		console.log("childLinkIndex",childLinkIndex);
+		
+		//should only be one other field with this childLinkIndex
+		for(var i=0;i<_fields.length;++i)
+			if(_fields[i].fieldColumnType.indexOf("ChildLink") == 0 &&
+					(_fields[i].fieldColumnType[("ChildLink").length] == 'U' ||
+					_fields[i].fieldColumnType[("ChildLink").length] == 'G') &&
+					childLinkIndex == _fields[i].fieldColumnType.split('-')[1])
+			{
+				Debug.log("Found matching pair field " + 
+						_fields[i].fieldColumnName);
+				if(_fields[i].fieldColumnType[("ChildLink").length] == 'U')
+					isGroupLink = false; //UID link
+				else 
+					isGroupLink = true; //GroupID link
+				linkId = _fields[i].fieldColumnDefaultValue;
+				break;
+			}
+		
+		if(isGroupLink === undefined)
+		{
+			Debug.log("Invalid table! Could not find matching child link columns for " +
+					nodeName, Debug.HIGH_PRIORITY);
+			return;
+		}
+	} //end special child link handling
+	
 	return ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,
-			depth,nodeName,value,valueType,choices,path);
-}
+			depth,nodeName,value,valueType,choices,path,
+			isGroupLink,childLinkIndex,linkId);
+} //end createEditableFieldElement()
 
 //=====================================================================================
 //getEditableFieldValue ~~
@@ -4337,8 +4426,12 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 
 	ConfigurationAPI.handleEditableFieldEditOK(); //make sure OK|Cancel closed
 	
-	var depth = depthIndex|0;
-	var uid = fieldIndex|0;
+	//make depthIndex and fieldIndex optional
+	var depth = fieldObj.depthIndex === undefined?
+			(depthIndex|0):fieldObj.depthIndex;
+	var uid = fieldObj.fieldIndex === undefined?
+			(fieldIndex|0):fieldObj.fieldIndex;
+	
 	var fieldEl = document.getElementById("editableFieldNode-Value-leafNode-" + 
 			( depth + "-" + uid ));
 	if(!fieldEl)
@@ -4353,7 +4446,7 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 	
 	//Debug.log("get Value " + value);
 	return value;
-}
+} //end getEditableFieldValue()
 
 //=====================================================================================
 //setEditableFieldValue ~~
@@ -4366,9 +4459,13 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 ConfigurationAPI.setEditableFieldValue = function(fieldObj,value,fieldIndex,depthIndex /*optional*/)
 {
 	//Debug.log("setEditableFieldValue " + fieldObj.fieldColumnName + " = " + value);
-
-	var depth = depthIndex|0;
-	var uid = fieldIndex|0;
+	
+	//make depthIndex and fieldIndex optional
+	var depth = fieldObj.depthIndex === undefined?
+			(depthIndex|0):fieldObj.depthIndex;
+	var uid = fieldObj.fieldIndex === undefined?
+			(fieldIndex|0):fieldObj.fieldIndex;
+	
 	var fieldEl = document.getElementById("ConfigurationAPI-EditableField-" + 
 			( depth + "-" + uid ));
 	if(!fieldEl)
@@ -4380,17 +4477,58 @@ ConfigurationAPI.setEditableFieldValue = function(fieldObj,value,fieldIndex,dept
 	var valueType = fieldObj.fieldColumnType;
 	var choices = fieldObj.fieldColumnDataChoicesArr;	
 	var path = fieldObj.fieldRelativePath;
-	var nodeName = fieldObj.fieldColumnName;
+	var nodeName = fieldObj.fieldColumnName;	
+	fieldObj.fieldColumnValue = value; //track last stable value
 	
+	//if childLink, look up isGroupLink,childLinkIndex,linkId
+	//	in matching field
+	var isGroupLink,childLinkIndex,linkId;
+	if(valueType.indexOf("ChildLink") == 0)
+	{
+		Debug.log("Looking up matching link pair for " + nodeName);
+
+		childLinkIndex = valueType.split('-')[1];
+		console.log("childLinkIndex",childLinkIndex);
+
+		//should only be one other field with this childLinkIndex
+		for(var i=0;i<_fields.length;++i)
+			if(_fields[i].fieldColumnType.indexOf("ChildLink") == 0 &&
+					(_fields[i].fieldColumnType[("ChildLink").length] == 'U' ||
+							_fields[i].fieldColumnType[("ChildLink").length] == 'G') &&
+							childLinkIndex == _fields[i].fieldColumnType.split('-')[1])
+			{
+				Debug.log("Found matching pair field " + 
+						_fields[i].fieldColumnName);
+				if(_fields[i].fieldColumnType[("ChildLink").length] == 'U')
+					isGroupLink = false; //UID link
+				else 
+					isGroupLink = true; //GroupID link
+				linkId = _fields[i].fieldColumnValue;
+				break;
+			}
+
+		if(isGroupLink === undefined)
+		{
+			Debug.log("Invalid table! Could not find matching child link columns for " +
+					nodeName, Debug.HIGH_PRIORITY);
+			return;
+		}
+	} //end special child link handling
+
 	return ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,
-			depth,nodeName,value,valueType,choices,path);
+			depth,nodeName,value,valueType,choices,path,
+			isGroupLink,childLinkIndex,linkId);
 }
 
 //=====================================================================================
 //fillEditableFieldElement ~~
 //	helper to fill element used by setEditableFieldValue and createEditableFieldElement
+//
+//	Caller should append extra parameters (isGroupLink,childLinkIndex,linkId) to ChildLink valueType
+//	to guide subset links.
 ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
-		depth,nodeName,value,valueType,choices,path)
+		depth,nodeName,value,valueType,choices,path,
+		isGroupLink,childLinkIndex,linkId)
 {
 	var str = "";
 	
@@ -4404,8 +4542,16 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 			pathHTML + //save path for future use.. and a central place to edit when changes occur
 			"</div>";
 
-	if(valueType == "FixedChoiceData")
+	//track if this is a child link with fixed choice
+	var childLinkFixedChoice = false; //init, but if it is, then change type handling to fixed choice style
+	var isChildLink = valueType.indexOf("ChildLink") == 0;
+	
+	if(valueType == "FixedChoiceData" ||
+			(isChildLink && choices.length > 1))
 	{
+		//track if this is a child link with fixed choice
+		childLinkFixedChoice = valueType.indexOf("ChildLink") == 0;
+		
 		//add CSV choices div
 		str += 
 				"<div class='editableFieldNode-FixedChoice-CSV' style='display:none' " + 
@@ -4418,6 +4564,8 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 			str += choices[j];
 		}
 		str += "</div>";
+		
+		
 	}
 	else if(valueType == "BitMap")
 	{
@@ -4439,7 +4587,9 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	{
 		//start value node
 		str += 
-				"<div class='editableFieldNode-Value editableFieldNode-ValueType-" + valueType +
+				"<div class='editableFieldNode-Value editableFieldNode-ValueType-" + 
+				//if it is a fixed choice child link, then change type handling to fixed choice style
+				(childLinkFixedChoice?"ChildLinkFixedChoice":valueType) +
 				"' " +
 				"id='editableFieldNode-Value-" +
 				(depth + "-" + uid) + "' " +
@@ -4481,7 +4631,8 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 			"editableFieldNode-Value-leafNode-ColumnName-" + nodeName +
 			"' " +
 			">";
-
+	
+	
 	if(valueType == "OnOff" || 
 			valueType == "YesNo" || 
 			valueType == "TrueFalse")
@@ -4506,6 +4657,86 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	else					
 		str += value;
 
+	str += "</div>";
+	
+	//make links to child subset configuration editor
+	if(isChildLink && 
+			value.indexOf("Table") == value.length - ("Table").length)
+	{
+		//make record alias with spaces instead of all one word
+		// and remove table
+		var recordAlias = "";
+		for(var c=0;c<value.length - ("Table").length;++c)
+		{
+			if(c && c+1 < value.length &&
+					(value[c] >= 'A' && 
+							value[c] <= 'Z') && 
+							(value[c+1] >= 'a' && 
+									value[c+1] <= 'z'))
+				recordAlias += ' ';
+			recordAlias += value[c];
+		}	
+		if(recordAlias.length && recordAlias[recordAlias.length-1] != 's')
+			recordAlias += 's'; //make plural
+		
+		var newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" + 
+				DesktopContent._localUrnLid + 
+				"&subsetBasePath=" + value +
+				"&groupingFieldList=AUTO" + 
+				"&recordAlias=" + recordAlias +
+				"&editableFieldList=" + "!*CommentDescription";
+		
+		//include special parameters to focus on link targets
+		if(isGroupLink)
+		{
+			//for group link, pre-select GroupID value							
+			newWindowStr += "&selectedGroupIDs=" +
+					encodeURIComponent(
+							childLinkIndex + "=" +
+							linkId);
+		}
+		else
+		{
+			//for unique link, presect UID record							
+			newWindowStr += "&selectedRecords=" + linkId;							
+		}
+		
+		str += "<div style='float:left; margin-left:9px;' " +
+				" id='editableFieldNode-ChildLink-SubConfigLinkWindow-" +
+				(depth + "-" + uid) + "' " +
+				" class='" +
+				"editableFieldNode-ChildLink-SubConfigLink" +
+				"' " +
+				"onclick='" + 
+				"event.stopPropagation(); " +
+				"DesktopContent.openNewWindow(" +
+				"\"" + value +  
+				" Subset-Configuration\",\"\",\"" + 
+				//windowPath
+				newWindowStr +
+				"\",false /*unique*/);" +
+				"'" +
+				" title='Open " + value + " subset configuration in a new desktop window.' " +  
+				">Open Window</div>";
+		
+		str += "<div style='float:left; margin-left:9px;' " +
+				" id='editableFieldNode-ChildLink-SubConfigLinkTab-" +
+				(depth + "-" + uid) + "' " +
+				" class='" +
+				"editableFieldNode-ChildLink-SubConfigLink" +
+				"' " +
+				"onclick='" + 
+				"event.stopPropagation(); " +
+				"DesktopContent.openNewBrowserTab(" +
+				"\"" + value +  
+				" Subset-Configuration\",\"\",\"" + 
+				//windowPath
+				newWindowStr +
+				"\",false /*unique*/);" +
+				"'" +
+				" title='Open " + value + " subset configuration in a new browser tab.' " +  
+				">Open Tab</div>";
+	}
 
 	//Debug.log(str);
 
@@ -4518,7 +4749,7 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 							ConfigurationAPI.editableField_SELECTED_COLOR_;
 	
 	return fieldEl;
-}
+} //end fillEditableFieldElement()
 
 //=====================================================================================
 //handleEditableFieldClick ~~
@@ -4597,6 +4828,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 			Debug.log("edit value mode");
 
 			selectThisTreeNode(idString,type);
+			//==================
 			function selectThisTreeNode(idString,type)
 			{				
 				//edit column entry in record
@@ -4621,8 +4853,15 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 							Debug.WARN_PRIORITY);
 					return false;
 				}
-				
-				
+				else if(colType == "GroupID")
+					DesktopContent.tooltip("GroupID Editing",
+						"The GroupID field places this record in one or more " +
+						"parent group link collections. The value must match the parent's value " +
+						"in the parent's LinkGroupID field. \n\nTo speficify that this record is in " + 
+						"more than one group, use the '|' (vertical bar) character. For example, " +
+						"'Parent0Group | Parent1Group' would place this record in two groups (the " +
+						"Parent0Group and Parent1Group).");
+								
 				var str = "";		
 				var optionIndex = -1;
 				
@@ -4662,7 +4901,8 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 					str += "</select>";
 					if(optionIndex == -1) optionIndex = 0; //use False option by default					
 				}
-				else if(colType == "FixedChoiceData")
+				else if(colType == "FixedChoiceData" || 
+						colType == "ChildLinkFixedChoice")
 				{
 					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
 					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
@@ -4694,17 +4934,42 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 							idString);
 					var choices = vel.textContent.split(',');					
 					
+					var isChildLinkFixedChoice = colType == "ChildLinkFixedChoice";
+					
+					if(isChildLinkFixedChoice)
+					{
+						try
+						{
+							document.getElementById("editableFieldNode-ChildLink-SubConfigLinkTab-" +
+									(depth + "-" + uid) ).style.display = "none";
+							document.getElementById("editableFieldNode-ChildLink-SubConfigLinkWindow-" +
+									(depth + "-" + uid) ).style.display = "none";
+						}
+						catch(e) {} //ignore errors
+					}
+					
+					if(choices.length > 1 && 
+							choices[1].indexOf("arbitraryBool=") == 0)
+					{
+						//found arbitraryBool flag								
+						allowFixedChoiceArbitraryEdit = 
+								choices[1][("arbitraryBool=").length] == "1"?
+										true:false;
+						Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);						
+					}
+						
 					for(var i=0;i<choices.length;++i)
-					{			
-						if(i==1)//check for arbitraryBool flag
+					{	
+						if(i == 0 && isChildLinkFixedChoice && !allowFixedChoiceArbitraryEdit)  
+						{
+							//skip default if child link fixed choice does not allow arbitrary edit
+							continue;							
+						}
+						else if(i==1)//check for arbitraryBool flag
 						{
 							if(choices[i].indexOf("arbitraryBool=") == 0)
 							{
-								//found arbitraryBool flag								
-								allowFixedChoiceArbitraryEdit = 
-										choices[i][("arbitraryBool=").length] == "1"?
-												true:false;
-								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
+								//found arbitraryBool flag, skip it								
 								continue;
 							}
 							else
@@ -4715,7 +4980,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 						}		
 						else
 							++optionCount; //count as an option in dropdown
-						
+												
 						
 						str += "<option>";
 						str += decodeURIComponent(choices[i]);	//can display however
@@ -4737,9 +5002,8 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 								"margin:-2px 0 -" + (el.offsetHeight+6) + "px 0;" +							
 								"width:" + 
 								ww + "px; height:" + (el.offsetHeight+6) + "px" + 
-								"'>";					
-						str += "";
-						str += "</input>";	
+								"' " + //end style
+								"></input>";	
 
 						str += "<div style='display:block;" +
 								"margin: -2px 0 -7px 14px;" +
@@ -4833,10 +5097,12 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
 					el.getElementsByTagName("select")[0].focus();
 				}
-				else if(colType == "FixedChoiceData")
+				else if(colType == "FixedChoiceData" || 
+						colType == "ChildLinkFixedChoice")
 				{
 					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-					el.getElementsByTagName("select")[0].focus();				
+					el.getElementsByTagName("select")[0].focus();	
+					
 				}
 				else if(colType == "MultilineData")
 					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
@@ -4953,9 +5219,14 @@ ConfigurationAPI.handleEditableFieldFixedChoiceEditToggle = function()
 		tel.style.display = "none";
 	}
 	else
-	{
-		tel.style.width = (sel.offsetWidth-2) + "px";
+	{		
+		tel.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)-2) + "px";
+		tel.parentNode.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)+50) + "px"; //div may need to expand to accommodate pencil in display				
 		sel.style.display = "none";
+
+		if(tel.value == "") //fill with oldvalue for user convenience, if blank
+			tel.value = ConfigurationAPI.editableFieldEditingOldValue_;
+
 		tel.style.display = "block";
 		ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
 	}
@@ -5118,6 +5389,19 @@ ConfigurationAPI.handleEditableFieldEditCancel = function()
 	if(!ConfigurationAPI.editableFieldEditingCell_) return;
 	Debug.log("handleEditableFieldEditCancel type " + ConfigurationAPI.editableFieldEditingNodeType_);
 
+	try //try to return link visibility
+	{
+		var idSplit = ConfigurationAPI.editableFieldEditingCell_.id.split('-');
+		var depth = idSplit[idSplit.length-2];
+		var uid = idSplit[idSplit.length-1];
+		document.getElementById("editableFieldNode-ChildLink-SubConfigLinkTab-" +
+				(depth + "-" + uid) ).style.display = "block";
+		document.getElementById("editableFieldNode-ChildLink-SubConfigLinkWindow-" +
+				(depth + "-" + uid) ).style.display = "block";
+	}
+	catch(e) {} //ignore error
+
+
 	if(ConfigurationAPI.editableFieldEditingNodeType_ == "value-bool") 
 	{
 		//take old value as HTML for bool values
@@ -5141,6 +5425,17 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 	if(!ConfigurationAPI.editableFieldEditingCell_) return;
 	Debug.log("handleEditableFieldEditOK type " + ConfigurationAPI.editableFieldEditingNodeType_);
 		
+	try //try to return link visibility
+	{
+		var idSplit = ConfigurationAPI.editableFieldEditingCell_.id.split('-');
+		var depth = idSplit[idSplit.length-2];
+		var uid = idSplit[idSplit.length-1];
+		document.getElementById("editableFieldNode-ChildLink-SubConfigLinkTab-" +
+				(depth + "-" + uid) ).style.display = "block";
+		document.getElementById("editableFieldNode-ChildLink-SubConfigLinkWindow-" +
+				(depth + "-" + uid) ).style.display = "block";
+	}
+	catch(e) {} //ignore error
 
 	var el = ConfigurationAPI.editableFieldEditingCell_;
 	var type = ConfigurationAPI.editableFieldEditingNodeType_;
@@ -5185,7 +5480,7 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 		}			
 		else if(type == "value-groupid")
 		{					
-			el.appendChild(document.createTextNode(newValue));
+			el.appendChild(document.createTextNode(decodeURIComponent(newValue)));
 		}
 		else	//unrecognized type!?
 		{
@@ -5262,7 +5557,7 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 		Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
 		editCellCancel(); return;
 	}
-}
+} //end handleEditableFieldEditOK()
 
 
 //=====================================================================================
@@ -5293,7 +5588,7 @@ ConfigurationAPI.removeClass = function(ele,cls)
 
 //=====================================================================================
 //addSubsetRecords ~~
-//	takes as input a base path where the desired records should be created.
+//	Takes as input a base path where the desired records should be created.
 //
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
@@ -5328,8 +5623,8 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=addTreeNodeRecords" + 
-			"&configGroup=" +
-			"&configGroupKey=-1", //end get data 
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data 
 			"startPath=/" + subsetBasePath +  
 			"&recordList=" + recordListStr +
 			"&modifiedTables=" + modifiedTablesListStr, //end post data
@@ -5376,7 +5671,7 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 
 //=====================================================================================
 //deleteSubsetRecords ~~
-//	takes as input a base path where the desired records should be deleted.
+//	Takes as input a base path where the desired records should be deleted.
 //
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
@@ -5415,8 +5710,8 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=deleteTreeNodeRecords" + 
-			"&configGroup=" +
-			"&configGroupKey=-1", //end get data 
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data 
 			"startPath=/" + subsetBasePath +  
 			"&recordList=" + recordListStr +
 			"&modifiedTables=" + modifiedTablesListStr, //end post data
@@ -5459,6 +5754,200 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 			0,true); //progressHandler, callHandlerOnErr
 	
 } // end ConfigurationAPI.deleteSubsetRecords()
+
+//=====================================================================================
+//renameSubsetRecords ~~
+//	Takes as input a base path where the desired records should be renamed.
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of Table objects	
+//		Table := {}
+//			obj.tableName   
+//			obj.tableVersion
+//			obj.tableComment
+//
+ConfigurationAPI.renameSubsetRecords = function(subsetBasePath,
+		recordArr,newRecordArr,responseHandler,modifiedTablesIn,silenceErrors)
+{
+	Debug.log("renameSubsetRecords()");
+	
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTablesIn && i<modifiedTablesIn.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTablesIn[i].tableName + "," +
+				modifiedTablesIn[i].tableVersion;
+	}
+
+	var recordListStr = "";
+	var recordCount = 1;
+	if(Array.isArray(recordArr))
+	{
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += encodeURIComponent(recordArr[i]);
+		}
+		recordCount = recordArr.length;
+	}
+	else //handle single record case
+		recordListStr = encodeURIComponent(recordArr);
+	
+	var newRecordListStr = "";
+	var newRecordCount = 1;
+	if(Array.isArray(newRecordArr))
+	{
+		for(var i=0;i<newRecordArr.length;++i)
+		{
+			if(i) newRecordListStr += ",";
+			newRecordListStr += encodeURIComponent(newRecordArr[i]);
+		}
+		newRecordCount = newRecordArr.length;
+	}
+	else //handle single record case
+		newRecordListStr = encodeURIComponent(newRecordArr);
+
+	DesktopContent.XMLHttpRequest("Request?RequestType=renameTreeNodeRecords" + 
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&recordList=" + recordListStr +
+			"&newRecordList=" + newRecordListStr +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+
+		var err = DesktopContent.getXMLValue(req,"Error");
+		var modifiedTables = [];
+		if(err) 
+		{
+			if(!silenceErrors)
+				Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(modifiedTables,err);
+			return;
+		}
+
+		//console.log(req);
+
+		//modifiedTables
+		var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
+		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
+		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
+		var tableVersion;
+
+		//add only temporary version
+		for(var i=0;i<tableNames.length;++i)
+		{
+			tableVersion = DesktopContent.getXMLValue(tableVersions[i])|0; //force integer
+			if(tableVersion >= -1) continue; //skip unless temporary
+			var obj = {};
+			obj.tableName = DesktopContent.getXMLValue(tableNames[i]);
+			obj.tableVersion = DesktopContent.getXMLValue(tableVersions[i]);
+			obj.tableComment = DesktopContent.getXMLValue(tableComments[i]);
+			modifiedTables.push(obj);
+		}
+		responseHandler(modifiedTables,undefined,subsetBasePath,recordCount);
+
+			}, //handler
+			0, //handler param
+			0,true); //progressHandler, callHandlerOnErr
+
+} //end ConfigurationAPI.renameSubsetRecords()
+
+//=====================================================================================
+//copySubsetRecords ~~
+//	Takes as input a base path where the desired records should be copied.
+//  Incremental unique names will be created by the server.
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of Table objects	
+//		Table := {}
+//			obj.tableName   
+//			obj.tableVersion
+//			obj.tableComment
+//
+ConfigurationAPI.copySubsetRecords = function(subsetBasePath,
+		recordArr,numberOfCopies,responseHandler,modifiedTablesIn,silenceErrors)
+{
+	if(!numberOfCopies) numberOfCopies = 1;
+	Debug.log("copySubsetRecords() " + numberOfCopies);
+	
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTablesIn && i<modifiedTablesIn.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTablesIn[i].tableName + "," +
+				modifiedTablesIn[i].tableVersion;
+	}
+
+	var recordListStr = "";
+	var recordCount = 1;
+	if(Array.isArray(recordArr))
+	{
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += encodeURIComponent(recordArr[i]);
+		}
+		recordCount = recordArr.length;
+	}
+	else //handle single record case
+		recordListStr = encodeURIComponent(recordArr);
+
+	DesktopContent.XMLHttpRequest("Request?RequestType=copyTreeNodeRecords" + 
+			"&tableGroup=" +
+			"&tableGroupKey=-1" +
+			"&numberOfCopies=" + numberOfCopies, //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&recordList=" + recordListStr +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+
+		var err = DesktopContent.getXMLValue(req,"Error");
+		var modifiedTables = [];
+		if(err) 
+		{
+			if(!silenceErrors)
+				Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(modifiedTables,err);
+			return;
+		}
+
+		//console.log(req);
+
+		//modifiedTables
+		var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
+		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
+		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
+		var tableVersion;
+
+		//add only temporary version
+		for(var i=0;i<tableNames.length;++i)
+		{
+			tableVersion = DesktopContent.getXMLValue(tableVersions[i])|0; //force integer
+			if(tableVersion >= -1) continue; //skip unless temporary
+			var obj = {};
+			obj.tableName = DesktopContent.getXMLValue(tableNames[i]);
+			obj.tableVersion = DesktopContent.getXMLValue(tableVersions[i]);
+			obj.tableComment = DesktopContent.getXMLValue(tableComments[i]);
+			modifiedTables.push(obj);
+		}
+		responseHandler(modifiedTables,undefined,subsetBasePath,recordCount);
+
+			}, //handler
+			0, //handler param
+			0,true); //progressHandler, callHandlerOnErr
+
+} //end ConfigurationAPI.copySubsetRecords()
 
 //=====================================================================================
 //incrementName ~~		

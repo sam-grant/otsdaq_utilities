@@ -57,13 +57,14 @@
     			                        "\nWe see that you are using the default security sequence for accessing your otsdaq Wiz mode." +
 										"\n\nIn Wiz-mode, many sensitive paramters for your DAQ system can be changed, so you may want it to be more secure. " +
 			                        "This page is secured by an authentication sequence to help avoid unauthorized access. " + 
-			                        "The sequence is only displayed at the Linux console and is never transmitted by your otsdaq server for security." +
-			                        "\n\n If you would like to make your Wiz mode more secure, you can click " +
+			                        "The sequence is only displayed at the Linux console and is never transmitted by your otsdaq server for security." + 
+			                        '\n\n <p style="color:red;">Warning: This will change the current URL for the wiz mode immediately.</p>' + 
+			                        "\n If you would like to make your Wiz mode more secure, you can click " +
                                                 "<a href='#' onclick='DesktopContent.setSecurityOn(true)'>here</a>" +
 			                        " to enable a longer, randomly generated sequence generated at each runtime or you can set up this feature any time by " +
 			                        "visiting the 'Edit Security' app on the Wiz-mode desktop."; 
 			             //Debug.log(msg, Debug.INFO_PRIORITY);
-                   	             DesktopContent.tooltip("Security Alert",msg);
+                   	             DesktopContent.tooltip("Security Alert",msg); 
 			        }
 								
 				DesktopContent.tooltip("Wiz-mode Introduction",
@@ -134,7 +135,7 @@
         <link rel="icon" type="image/png" sizes="16x16" href="/WebPath/images/otsdaqIcons/favicon-16x16.png">
         <link rel="manifest" href="/WebPath/images/otsdaqIcons/manifest.json">
         <meta name="msapplication-TileColor" content="#ffffff">
-        <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+        <meta name="msapplication-TileImage" content="/WebPath/images/otsdaqIcons/ms-icon-144x144.png">
         <meta name="theme-color" content="#ffffff">
         <!-- end ots icon handling -->
 	</head>	

@@ -1,53 +1,74 @@
 <!DOCTYPE HTML>
 <html lang="en">
-	<head>
-		<title>Supervisor</title>
-		<style type="text/css">			
-			body {
-				background-color: rgb(200,200,200);
-			}
+<head>
+	<title>Supervisor</title>
+	<!-- css style files -->
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/SystemStatus.css">
+
+	<!-- Javascript files -->
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/SystemStatus.js"></script>
+
+</head>
+
+
+<body onload='SystemStatus:init();'>
+
+
+		<!-- Header ------------------>
+		<div id='headerDiv' style="">
+			<h1 style="text-align:center">Application Status</h1>
+
+			<div id='lastUpdateTimeDiv'></div>
+
+			<div id='toggleFiltersLinkDiv'>
+				<a onclick='toggleFilters();' title='Toggle App Filters Side Pane' id='toggleFiltersLink'>Hide Filters</a>		 
+			</div>
 			
-			#clearDiv {
-				clear: both;
-			}
-			
-			a {
-				color: blue;
-			}
-						
-		</style>
+		</div>
+
+		<div id='clearDiv'></div>
+
+		<!-- Filters ------------------>
+		<div id='filtersDiv'>
+			<h2 style="margin-left:10px">Filters</h2>
+
+			<!-- Context Filter List ------------------>
+			<button class="collapsible">Parent Context Name
+				<span class="helptext">Click to expand</span>
+			</button>
+			<div class="filterList" id="contextFilter">
+				<ul id="contextUl">
+				</ul>
+			</div>
+
+			<!-- Class Filter List ------------------>
+			<button class="collapsible" >App Type
+				<span class="helptext">Click to expand</span>
+			</button>
+			<div class="filterList" id="classFilter">
+				<ul id="classUl">
+				</ul>
+			</div>
 		
-		
-		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-		
-		
-		<script>		
-			
-			
-			//functions:			
-				//init()					
-				
-				
-			/////////////////////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////////////////////
-			
-			//init called once body has loaded
-			function init() {			
-			
-			}	
-			
-		</script>
-		
-	</head>
+			<!-- Hostname Filter List ------------------>		
+			<button class="collapsible">App Hostname
+				<span class="helptext">Click to expand</span>
+			</button>
+			<div class="filterList"  id="hostnameFilter">
+				<ul id="hostUl">
+				</ul>
+			</div>
 	
-	
-	<body onload='Javascript:init();'>	
 			
-		<h1>TEMPLATE Title</h1>
-				
+		</div>
+
+		<!-- App Status ------------------>
+		<div id='appStatusDiv'></div>
 		
-	</body>
-	
+
+</body>
+
 </html>

@@ -56,7 +56,7 @@ else {
 		
 		//all units in pixels unless otherwise specified
 		
-		var _defaultDashboardHeight = 41;
+		var _defaultDashboardHeight = 38;
 		var _defaultWindowDashboardWidth = 200;
 		var _defaultWindowDashboardMinWidth = 50;
         
@@ -377,8 +377,10 @@ else {
         this.redrawDashboard = _redrawDashboard;        
         this.windowDashboardLayoutsDropDown = _windowDashboardLayoutsDropDown;
         this.windowDashboardOrganize = _windowDashboardOrganize;
-                
-        this.updateWindows = function() {
+
+      	//=====================================================================================
+        this.updateWindows = function() 
+        {
             
             _windowDashboard.innerHTML = "";
             
@@ -435,8 +437,10 @@ else {
             
 		   	_refreshTitle();
         }        
-        
-        this.redrawFullScreenButton = function() {
+
+      	//=====================================================================================
+        this.redrawFullScreenButton = function() 
+        {
         	_fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle full screen mode for current window'>" +
         			((Desktop.desktop.getForeWindow() &&
         					Desktop.desktop.getForeWindow().isMaximized())? 
@@ -444,22 +448,28 @@ else {
 
         }
 
-        this.redrawRefreshButton = function() {
+      	//=====================================================================================
+        this.redrawRefreshButton = function() 
+        {
         	_fullScreenRefreshBtn.innerHTML = "<a href='#' style='font-size:16px' title='Click to reload the desktop and all windows'> ↻ </a>";        	
         	_fullScreenRefreshBtn.style.height = "16px";
         	_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
         }
 
-        this.redrawShowDesktopButton = function() {
+      	//=====================================================================================
+        this.redrawShowDesktopButton = function()
+        {
         	_showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
         			((Desktop.desktop.getForeWindow() &&
         					Desktop.desktop.getForeWindow().isMinimized())?
         							"Restore Windows":"Show Desktop") + "</a>"; 
         	//Debug.log("Desktop.desktop.getForeWindow().isMinimized() " + Desktop.desktop.getForeWindow().isMinimized());	
         }
-        
+
+      	//=====================================================================================
         this.getDefaultDashboardColor = function() { return _defaultDashboardColor; }
-        
+
+      	//=====================================================================================
         this.setDefaultDashboardColor = function(color) {
         	_defaultDashboardColor = color;
             _dashboardColorPostbox.innerHTML = _defaultDashboardColor; //set to color string
@@ -469,7 +479,9 @@ else {
         }
 
         var _oldUserNameWithLock = "";
-        this.displayUserLock = function(usernameWithLock, el) {      
+      	//=====================================================================================
+        this.displayUserLock = function(usernameWithLock, el) 
+        {      
         	if(!el)
         		el = document.getElementById("DesktopDashboard-userWithLock");
         	
@@ -483,10 +495,17 @@ else {
 					"Request?RequestType=setUserWithLock&accounts=1\"," +
 					"\"" + data + "\",Desktop.desktop.dashboard.handleSetUserWithLock)";
 
+       		
+       		if(_oldUserNameWithLock == usernameWithLock && 
+       				el.style.display == "block")
+       			return; //no need to re-write element
+
+       		
+       		var str = "";       
+       		
        		if(!usernameWithLock || usernameWithLock == "") 
        		{		
-       			//nobody has lock
-       			var str = "";       			
+       			//nobody has lock      			
        			str += "<a href='javascript:" + jsReq + "'" +
        					"title='Click to lockout the system and take the ots Lock'>";
        			str += "<img " +
@@ -498,11 +517,6 @@ else {
        			return; 
        		}  	
        		
-       		if(_oldUserNameWithLock == usernameWithLock && 
-       				el.style.display == "block")
-       			return; //no need to re-write element
-
-       		var str = "";       			
        		if(usernameWithLock != user) //not user so cant unlock
        			str = "<img src='/WebPath/images/dashboardImages/icon-Settings-LockDisabled.png' " +
        					"title='User " + 
@@ -521,8 +535,10 @@ else {
    			
        		_oldUserNameWithLock = usernameWithLock; 
         }        
-        
-        this.handleSetUserWithLock = function(req) {
+
+      	//=====================================================================================
+        this.handleSetUserWithLock = function(req) 
+        {
         	Debug.log(req);
 			//extract alert from server
 			var serverAlert = Desktop.getXMLValue(req,"server_alert");
