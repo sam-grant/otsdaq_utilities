@@ -125,6 +125,7 @@ echo -e "quick_ots_install.sh [${LINENO}]  \t\t source setup_ots.sh     ########
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t mb                      #########################################   #for incremental build"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t mz                      #########################################   #for clean build"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t UpdateOTS.sh            #########################################   #to see update options"
+echo -e "quick_ots_install.sh [${LINENO}]  \t\t ./change_ots_qualifiers.sh           ############################   #to see qualifier options"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t chmod 755 reset_ots_tutorial.sh; ./reset_ots_tutorial.sh --list     #to see tutorial options"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t ots -w                  #########################################   #to run ots in wiz(safe) mode"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t ots                     #########################################   #to run ots in normal mode"
