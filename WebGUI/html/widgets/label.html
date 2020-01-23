@@ -12,7 +12,7 @@
 			}
 
 			div {
-				font-size: 10vw;
+				font-size: 14px;
 			}
 		</style>
 
@@ -30,7 +30,7 @@
 			//init called once body has loaded
 			function init()
 			{
-				console.log("init()");
+				console.log("Label init()");
 				console.log(window.frameElement.id);
 				window.parent.setupWidget(window.frameElement.id, getParameters());
 				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 16) + "px";
@@ -41,14 +41,17 @@
 
 			function newWidget(widget, parameters)
 			{
-
+				setParameters(window.parent.page_.widgets[widget.el.id].attributes);
 			}
 
 			function getParameters()
 			{
-				parameters_["label"] = "";
-				parameters_["label_position"] = "left";
+				parameters_["class"] = "";
 				parameters_["border"] = "true";
+				parameters_["text"] = "";
+				parameters_["text_position"] = "left";
+				parameters_["font"] = "";
+				parameters_["foreground_color"] = "";
 				return parameters_;
 			}
 
@@ -56,14 +59,13 @@
 			{
 				parameters_ = attributes;
 				console.log(parameters_);
-				document.getElementById("display").innerHTML = parameters_["label"];
-
 				if (parameters_["border"]=="true")
 					document.getElementById("display").style.border = "1px solid #000";
 				else
 					document.getElementById("display").style.border = "";
 
-				document.getElementById("display").style.textAlign = parameters_["label_position"];
+				document.getElementById("display").innerHTML = parameters_["text"];
+			        document.getElementById("display").style.textAlign = parameters_["text_position"];
 			}
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}

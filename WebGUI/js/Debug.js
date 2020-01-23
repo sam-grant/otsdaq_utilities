@@ -253,16 +253,34 @@ Debug._errBoxOffY = 0;
 Debug._errBoxOffW = 0;
 Debug._errBoxOffH = 0;
 
+
+Debug._ERR_TRUNCATION_LENGTH = 10000;
+
 //=====================================================================================
+//Note: effectively doing this: str.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+//	...but str.replace() was really slowing down everything on big strings
 Debug.errorPopConditionString = function(str) {
-	return str.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
-}
+	var rstr = "";
+	
+	for(var i=0;i<str.length && i<Debug._ERR_TRUNCATION_LENGTH; ++i)
+		if(str[i] == '\n')
+			rstr += "<br>";
+		else if(str[i] == '\t')
+			rstr += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+		else
+			rstr += str[i];
+	if(str.length > Debug._ERR_TRUNCATION_LENGTH)
+		rstr += "...&lt;&lt;&lt; MESSAGE TRUNCATED &gt;&gt;&gt;";
+	
+	return rstr; 
+} //end errorPopConditionString()
 
 //=====================================================================================
 //Show the error string err in the error popup on the window
 // create error div if not yet created
-Debug.errorPop = function(err,severity) {
-				
+Debug.errorPop = function(err,severity) 
+{
+			
 	var errBoxAlpha = "1.0";
 	
 	//check if Debug._errBox has been set
@@ -286,7 +304,7 @@ Debug.errorPop = function(err,severity) {
 			el.style.display = "none";
 			var str = "<a class='" + 
 				Debug._errBoxId + 
-				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmouseup='event.stopPropagation();' onmousedown='event.stopPropagation();'>Close Errors</a>";
+				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmousemove='event.stopPropagation();'  onmouseup='event.stopPropagation();' onmousedown='event.stopPropagation();'>Close Errors</a>";
 			str = 
 					"<div class='" + 
 					Debug._errBoxId + 
@@ -343,13 +361,13 @@ Debug.errorPop = function(err,severity) {
 			el.innerHTML = str;
 			body.appendChild(el); //add element to body of page
 			el.focus();
+			el.onmousemove = function(){event.stopPropagation();}
+			el.onmousedown = function(){console.log("debug down"); event.stopPropagation();}
+			el.onmouseup = function(){console.log("debug up"); event.stopPropagation();}
 			
 			/////////////
 			function localDebugKeyDownListener(e)
 			{
-				
-				
-				
 				//Debug.log("Debug keydown c=" + keyCode + " " + c + " shift=" + e.shiftKey + 
 				//		" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
 				
@@ -487,7 +505,11 @@ Debug.errorPop = function(err,severity) {
 			}
 
 			document.getElementsByTagName('head')[0].appendChild(style);
-			
+
+			window.removeEventListener("resize",localResize);
+			window.removeEventListener("scroll",localScroll);
+			window.removeEventListener("mouseup",Debug.handleErrorMoveStop);
+			window.removeEventListener("mousemove",Debug.handleErrorMove);
 			window.addEventListener("resize",localResize);
 			window.addEventListener("scroll",localScroll);
 			window.addEventListener("mouseup",Debug.handleErrorMoveStop);
@@ -587,7 +609,7 @@ Debug.errorPop = function(err,severity) {
 		Debug._errBox.style.backgroundColor = "rgba(153,0,51, " + errBoxAlpha + ")";
 	}
 	els[1].innerHTML = el.innerHTML;	
-}
+} //end errorPop()
 
 Debug._errBoxLastContent = "";
 //=====================================================================================
@@ -664,7 +686,7 @@ Debug.handleErrorMoveStop = function(e) {
 	}
 		
 		
-}
+} //end handleErrorMoveStop()
 
 //=====================================================================================
 Debug.handleErrorMove = function(e) {
@@ -703,10 +725,11 @@ Debug.handleErrorMove = function(e) {
 		Debug.handleErrorResize();
 	}
 		
-}
+} //end handleErrorMove()
 
 //=====================================================================================
-Debug.handleErrorResize = function() {
+Debug.handleErrorResize = function() 
+{
 
 	
 	var offX = document.documentElement.scrollLeft || document.body.scrollLeft || 0;
@@ -777,7 +800,7 @@ Debug.handleErrorResize = function() {
 
 	el = document.getElementsByClassName(Debug._errBoxId + "-err")[0];
 	el.style.height = (h-115) + "px";
-}
+} //end handleErrorResize()
 
 
 //=====================================================================================

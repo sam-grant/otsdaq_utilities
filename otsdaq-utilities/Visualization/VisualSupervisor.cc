@@ -60,7 +60,7 @@ using namespace ots;
 
 XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
 
-//========================================================================================================================
+//==============================================================================
 VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
     : CoreSupervisorBase(stub), theDataManager_(0), loadedRunNumber_(-1)
 {
@@ -82,7 +82,7 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	__SUP_COUT__ << "Constructed." << __E__;
 }
 
-//========================================================================================================================
+//==============================================================================
 VisualSupervisor::~VisualSupervisor(void)
 {
 	__SUP_COUT__ << "Destructor." << __E__;
@@ -90,7 +90,7 @@ VisualSupervisor::~VisualSupervisor(void)
 	__SUP_COUT__ << "Destructed." << __E__;
 }
 
-//========================================================================================================================
+//==============================================================================
 void VisualSupervisor::destroy(void)
 {
 	__SUP_COUT__ << "Destroying..." << __E__;
@@ -98,7 +98,7 @@ void VisualSupervisor::destroy(void)
 	DataManagerSingleton::deleteInstance(CorePropertySupervisorBase::getSupervisorUID());
 	theStateMachineImplementation_.pop_back();
 }
-//========================================================================================================================
+//==============================================================================
 // setSupervisorPropertyDefaults
 //		override to set defaults for supervisor property values (before user settings
 // override)
@@ -114,7 +114,7 @@ void VisualSupervisor::setSupervisorPropertyDefaults()
 	    "*=1 | rootAdminControls=100");
 }
 
-//========================================================================================================================
+//==============================================================================
 // forceSupervisorPropertyValues
 //		override to force supervisor property values (and ignore user settings)
 void VisualSupervisor::forceSupervisorPropertyValues()
@@ -131,7 +131,7 @@ void VisualSupervisor::forceSupervisorPropertyValues()
 	//                 "setUserPreferences | getUserPreferences");
 }
 
-//========================================================================================================================
+//==============================================================================
 void VisualSupervisor::request(const std::string&               requestType,
                                cgicc::Cgicc&                    cgiIn,
                                HttpXmlDocument&                 xmlOut,

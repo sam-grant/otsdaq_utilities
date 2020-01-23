@@ -167,6 +167,68 @@ function updateUserData
 } # end updateUserData function
 export -f updateUserData
 
+
+
+#############################
+#############################
+# function to display otsdaq versions and qualifiers
+function displayVersionsAndQualifiers 
+{	
+	echo
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
+	echo
+	ls ${MRB_SOURCE}/../ | grep localProducts
+	echo
+	echo
+
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
+	#-s for silent, sed to remove closing </a>
+	curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//'
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
+	echo
+
+	ALL_RELEASES=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//') )
+	LATEST_RELEASE=${ALL_RELEASES[${#ALL_RELEASES[@]}-1]}
+	echo -e "UpdateOTS.sh [${LINENO}]  \t The latest otsdaq release is $LATEST_RELEASE"	
+
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available qualifiers for $LATEST_RELEASE.."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
+	#-s for silent, sed to remove closing </a>
+	curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/$LATEST_RELEASE/manifest/ | grep \<\/a\> | grep MANIFEST | sed -e 's/-d.*//' |  sed -e 's/-p.*//' |  sed -e 's/.*-s/                                                        s/' | sed -e 's/-/:/'
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available qualifiers for $LATEST_RELEASE.."
+	echo
+	ALL_QUALS=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/$LATEST_RELEASE/manifest/ | grep \<\/a\> | grep MANIFEST | sed -e 's/-d.*//' |  sed -e 's/-p.*//' |  sed -e 's/.*-s/ s/' | sed -e 's/-/:/') )
+	LATEST_QUAL=${ALL_QUALS[${#ALL_QUALS[@]}-1]}
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t To explore the available qualifiers go here in your browser:"
+	echo
+	echo -e "\t\t\t\t https://scisoft.fnal.gov/scisoft/bundles/otsdaq"
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t To switch qualifiers, do the following: \n\n\t\t\t\t mrb newDev -f -v $LATEST_RELEASE -q $LATEST_QUAL:prof"
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ...and replace '$LATEST_RELEASE' with your target version. and '$LATEST_QUAL:prof' with your qualifiers"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ...a new localProducts directory will be created, which you should use when you setup ots."
+	echo
+	echo
+
+	echo
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
+	echo
+	ls ${MRB_SOURCE}/../ | grep localProducts
+	echo
+	echo
+	
+} #end displayVersionsAndQualifiers
+
+
 #clear git comment to avoid push
 GIT_COMMENT=
 
@@ -181,6 +243,9 @@ if [ "$1"  == "--tables" ]; then
 	TABLES_ONLY=1
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating tables only!"
 	updateUserData
+	
+	displayVersionsAndQualifiers
+	
 	exit
 fi
 if [ "$1"  == "--pullall" ]; then
@@ -321,7 +386,7 @@ for p in ${REPO_DIR[@]}; do
 		
 		echo -e "UpdateOTS.sh [${LINENO}]  \t Checking in $p"
 	    git commit -m "$GIT_COMMENT " .  &>> $CHECKIN_LOG_PATH  #add space in comment for user
-	    git push   
+	    git push || git push origin-ssh  
 	fi
 
 	cd $CURRENT_AWESOME_BASE
@@ -532,41 +597,7 @@ for p in ${REPO_DIR[@]}; do
     fi	   
 done
 
-echo
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
-echo
-ls ${MRB_SOURCE}/../ | grep localProducts
-echo
-echo
-
-echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
-echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
-#-s for silent, sed to remove closing </a>
-curl -s http://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//'
-echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
-echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
-echo
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t To determine the available qualifiers go here in your browser:"
-echo
-echo -e "\t\t\t\t http://scisoft.fnal.gov/scisoft/bundles/otsdaq/"
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t To switch qualifiers, do the following: mrb newDev -v v2_04_01 -q s82:e19:prof"
-echo -e "UpdateOTS.sh [${LINENO}]  \t ...and replace 'v2_04_01' with your target version. and 's82:e19:prof' with your qualifiers"
-echo -e "UpdateOTS.sh [${LINENO}]  \t ...a new localProducts directory will be created, which you should use when you setup ots."
-echo
-echo
-
-echo
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
-echo
-ls ${MRB_SOURCE}/../ | grep localProducts
-echo
-echo
+displayVersionsAndQualifiers
 
 
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="

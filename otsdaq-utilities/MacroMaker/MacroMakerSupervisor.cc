@@ -14,7 +14,7 @@
 
 #define MACROS_DB_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroData/"
 #define MACROS_HIST_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroHistory/"
-#define MACROS_EXPORT_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroExport/"
+#define MACROS_EXPORT_PATH std::string("/MacroExport/")
 
 #define SEQUENCE_FILE_NAME \
 	std::string(__ENV__("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.dat"
@@ -28,7 +28,7 @@ using namespace ots;
 
 XDAQ_INSTANTIATOR_IMPL(MacroMakerSupervisor)
 
-//========================================================================================================================
+//==============================================================================
 MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
     : CoreSupervisorBase(stub)
 {
@@ -39,7 +39,7 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 	// make macro directories in case they don't exist
 	mkdir(((std::string)MACROS_DB_PATH).c_str(), 0755);
 	mkdir(((std::string)MACROS_HIST_PATH).c_str(), 0755);
-	mkdir(((std::string)MACROS_EXPORT_PATH).c_str(), 0755);
+	mkdir((__ENV__("SERVICE_DATA_PATH") + MACROS_EXPORT_PATH).c_str(), 0755);
 
 	xoap::bind(this,
 	           &MacroMakerSupervisor::frontEndCommunicationRequest,
@@ -67,10 +67,10 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 	__SUP_COUT__ << "Constructed." << __E__;
 }  // end constructor
 
-//========================================================================================================================
+//==============================================================================
 MacroMakerSupervisor::~MacroMakerSupervisor(void) { destroy(); }
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::init(void)
 {
 	// called by constructor
@@ -80,13 +80,13 @@ void MacroMakerSupervisor::init(void)
 
 }  // end init()
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::destroy(void)
 {
 	// called by destructor
 }
 
-//========================================================================================================================
+//==============================================================================
 // forceSupervisorPropertyValues
 //		override to force supervisor property values (and ignore user settings)
 void MacroMakerSupervisor::forceSupervisorPropertyValues()
@@ -95,7 +95,7 @@ void MacroMakerSupervisor::forceSupervisorPropertyValues()
 	//			"getPermission");
 }  // end forceSupervisorPropertyValues()
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::tooltipRequest(xgi::Input* in, xgi::Output* out)
 {
 	cgicc::Cgicc cgi(in);
@@ -145,7 +145,7 @@ void MacroMakerSupervisor::tooltipRequest(xgi::Input* in, xgi::Output* out)
 	xmldoc.outputXmlDocument((std::ostringstream*)out, false, true);
 }  // end tooltipRequest()
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::verification(xgi::Input* in, xgi::Output* out)
 {
 	cgicc::Cgicc cgi(in);
@@ -203,7 +203,7 @@ void MacroMakerSupervisor::verification(xgi::Input* in, xgi::Output* out)
 	     << "'></frameset></html>";
 }  // end verification()
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::generateURL()
 {
 	defaultSequence_ = true;
@@ -267,7 +267,7 @@ void MacroMakerSupervisor::generateURL()
 
 	return;
 }  // end generateURL()
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 {
 	cgicc::Cgicc cgi(in);
@@ -330,7 +330,7 @@ void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 	return;
 }  // end requestIcons()
 
-//========================================================================================================================
+//==============================================================================
 // requestWrapper ~
 //	wrapper for handling very-specialized MacroMaker mode Supervisor request call
 void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
@@ -451,7 +451,7 @@ void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
 	                         !userInfo.NoXmlWhiteSpace_ /*allow whitespace*/);
 }  // end requestWrapper()
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::request(const std::string&               requestType,
                                    cgicc::Cgicc&                    cgiIn,
                                    HttpXmlDocument&                 xmlOut,
@@ -492,12 +492,12 @@ void MacroMakerSupervisor::request(const std::string&               requestType,
 		std::string publicPath = (std::string)MACROS_DB_PATH + "publicMacros/";
 		mkdir(publicPath.c_str(), 0755);
 		std::string exportPath =
-		    (std::string)MACROS_EXPORT_PATH + userInfo.username_ + "/";
+				__ENV__("SERVICE_DATA_PATH") + MACROS_EXPORT_PATH + userInfo.username_ + "/";
 		mkdir(exportPath.c_str(), 0755);
 	}
 	else
 		handleRequest(requestType, xmlOut, cgiIn, userInfo.username_);
-}
+} //end request()
 catch(const std::runtime_error& e)
 {
 	__SS__ << "Error occurred handling request '" << requestType << "': " << e.what()
@@ -510,9 +510,9 @@ catch(...)
 	__SS__ << "Unknown error occurred handling request '" << requestType << "!'" << __E__;
 	__SUP_COUT__ << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
-}
+} //end request() error handling
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::handleRequest(const std::string  Command,
                                          HttpXmlDocument&   xmldoc,
                                          cgicc::Cgicc&      cgi,
@@ -550,7 +550,7 @@ void MacroMakerSupervisor::handleRequest(const std::string  Command,
 		xmldoc.addTextElementToData("Error", "Unrecognized command '" + Command + "'");
 }  // end handleRequest()
 
-//========================================================================================================================
+//==============================================================================
 xoap::MessageReference MacroMakerSupervisor::frontEndCommunicationRequest(
     xoap::MessageReference message) try
 {
@@ -738,7 +738,7 @@ catch(...)
 	return returnMessage;
 }  // end frontEndCommunicationRequest() catch
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 {
 	__SUP_COUT__ << "Getting FE list!!!!!!!!!" << __E__;
@@ -823,7 +823,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 
 }  // end getFEList()
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::writeData(HttpXmlDocument&   xmldoc,
                                      cgicc::Cgicc&      cgi,
                                      const std::string& username)
@@ -929,7 +929,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument&   xmldoc,
 	}  // end FE Supervisor loop
 }  // end writeData()
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::readData(HttpXmlDocument&   xmldoc,
                                     cgicc::Cgicc&      cgi,
                                     const std::string& username)
@@ -1036,7 +1036,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument&   xmldoc,
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::createMacro(HttpXmlDocument&   xmldoc,
                                        cgicc::Cgicc&      cgi,
                                        const std::string& username)
@@ -1084,7 +1084,7 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument&   xmldoc,
 		__SUP_COUT__ << "Unable to open file" << __E__;
 }  // end createMacro()
 
-//========================================================================================================================
+//==============================================================================
 // loadMacro
 //	Load macro string from file.
 //	look in public macros and username (if given)
@@ -1146,7 +1146,7 @@ void MacroMakerSupervisor::loadMacro(const std::string& macroName,
 	__SUP_COUTV__(macroString);
 }  // end loadMacro()
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::loadMacroNames(
     const std::string&                                      username,
     std::pair<std::vector<std::string> /*public macros*/,
@@ -1216,7 +1216,7 @@ void MacroMakerSupervisor::loadMacroNames(
 
 }  // end loadMacroNames
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::loadMacros(HttpXmlDocument&   xmldoc,
                                       const std::string& username)
 {
@@ -1306,7 +1306,7 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument&   xmldoc,
 	}
 }  // end loadMacros()
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::appendCommandToHistory(std::string        Command,
                                                   std::string        Format,
                                                   std::string        Time,
@@ -1331,7 +1331,7 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string        Command,
 		__SUP_COUT__ << "Unable to open history.hist" << __E__;
 }
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::loadHistory(HttpXmlDocument&   xmldoc,
                                        const std::string& username)
 {
@@ -1397,7 +1397,7 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument&   xmldoc,
 		__SUP_COUT__ << "Unable to open history.hist" << __E__;
 }
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::deleteMacro(HttpXmlDocument&   xmldoc,
                                        cgicc::Cgicc&      cgi,
                                        const std::string& username)
@@ -1419,7 +1419,7 @@ void MacroMakerSupervisor::deleteMacro(HttpXmlDocument&   xmldoc,
 	xmldoc.addTextElementToData("deletedMacroName", MacroName);
 }
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::editMacro(HttpXmlDocument&   xmldoc,
                                      cgicc::Cgicc&      cgi,
                                      const std::string& username)
@@ -1481,7 +1481,7 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument&   xmldoc,
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::clearHistory(const std::string& username)
 {
 	std::string fileName = "history.hist";
@@ -1491,7 +1491,7 @@ void MacroMakerSupervisor::clearHistory(const std::string& username)
 	__SUP_COUT__ << "Successfully deleted " << fullPath;
 }
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument&   xmldoc,
                                          cgicc::Cgicc&      cgi,
                                          const std::string& username)
@@ -1768,7 +1768,7 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument&   xmldoc,
 
 }  // end exportFEMacro ()
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
                                        cgicc::Cgicc&      cgi,
                                        const std::string& username)
@@ -1796,7 +1796,8 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
 
 	std::string fileName = macroName + ".cc";
 
-	std::string fullPath = (std::string)MACROS_EXPORT_PATH + username + "/" + fileName;
+	std::string fullPath = __ENV__("SERVICE_DATA_PATH") +
+			MACROS_EXPORT_PATH + username + "/" + fileName;
 	__SUP_COUT__ << fullPath << __E__;
 	std::ofstream exportFile(fullPath.c_str(), std::ios::trunc);
 	if(exportFile.is_open())
@@ -1823,13 +1824,14 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
 
 		exportFile.close();
 
-		xmldoc.addTextElementToData("ExportFile", fullPath);
+		xmldoc.addTextElementToData("ExportFile", "$USER_DATA/ServiceData/" +
+				MACROS_EXPORT_PATH + username + "/" + fileName);
 	}
 	else
 		__SUP_COUT__ << "Unable to open file" << __E__;
 }
 
-//========================================================================================================================
+//==============================================================================
 // createCode
 void MacroMakerSupervisor::createCode(std::ostream&                   out,
                                       const std::vector<std::string>& commands,
@@ -2093,7 +2095,7 @@ void MacroMakerSupervisor::createCode(std::ostream&                   out,
 	__SUP_COUT__ << "Done with code generation." << __E__;
 }  // end createCode()
 
-//========================================================================================================================
+//==============================================================================
 // isArgumentVariable
 //	returns true if string should be interpreted as a variable for MacroMaker
 bool MacroMakerSupervisor::isArgumentVariable(const std::string& argumentString)
@@ -2108,7 +2110,7 @@ bool MacroMakerSupervisor::isArgumentVariable(const std::string& argumentString)
 	}
 	return false;
 }  // end isArgumentVariable()
-//========================================================================================================================
+//==============================================================================
 // generateHexArray
 //	returns a char array initializer
 //	something like this
@@ -2159,7 +2161,7 @@ std::string MacroMakerSupervisor::generateHexArray(const std::string& sourceHexS
 	return retSs.str();
 }
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
                                       cgicc::Cgicc&      cgi,
                                       const std::string& username) try
@@ -2416,7 +2418,7 @@ catch(...)
 	xmldoc.addTextElementToData("Error", ss.str());
 }  // end runFEMacro() catch
 
-//========================================================================================================================
+//==============================================================================
 void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument&   xmldoc,
                                           const std::string& username)
 {

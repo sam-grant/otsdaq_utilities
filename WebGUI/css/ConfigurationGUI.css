@@ -15,11 +15,14 @@
 			clear: both;
 		}
 				
+		a, input {
+			cursor:					pointer;			
+		}
+		
 		a {
-			color: rgb(44, 44, 187);
-			text-decoration: underline;
-			cursor: pointer;
-			outline: none;  /* to stop firefox selection */	
+			color: 					rgb(44, 44, 187);
+			text-decoration: 		underline;
+			outline: 				none;  /* to stop firefox selection */	
 			-webkit-user-select: 	none; /* to stop text highlights */
 			-moz-user-select: 		none;
 			user-select: 			none;
@@ -64,18 +67,18 @@
 		
 
 		#SubSystemTable {
-			background-color : 	rgb(210, 193, 193);
+			background-color: 	rgb(210, 193, 193);
 			border:				1px solid grey /*rgb(156,94,94)*/;
 		}
 		#SubSystemTable td, #SubSystemTable th {
-			background-color : 	rgb(226, 216, 216);	
+			background-color: 	rgb(226, 216, 216);	
 			white-space: 		pre; /* was pre-wrap; but not sure why.. pre seems to maintain text better*/
 		}
 		#SubSystemTable {
-			background-color : 	rgb(210, 193, 193); /*chrome does not color table unless after the td/th*/
+			background-color: 	rgb(210, 193, 193); /*chrome does not color table unless after the td/th*/
 		}
 		#SubSystemTable th {
-			background-color : 	rgb(210, 193, 193);
+			background-color: 	rgb(210, 193, 193);
 		}
 		
 		.tableAddRowButton, .tableDeleteRowButton {

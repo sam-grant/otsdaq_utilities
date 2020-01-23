@@ -123,7 +123,7 @@ int makeSocket(const char* ip, int port, struct addrinfo*& p)
 	freeaddrinfo(servinfo);
 
 	//increase socket buffer size
-	unsigned int socketReceiveBufferSize = 0x100000;
+	unsigned int socketReceiveBufferSize = 0xA00000;
 	if(setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (char*)&socketReceiveBufferSize, sizeof(socketReceiveBufferSize)) < 0)
 		__COUT_ERR__ << "Failed to set socket receive size to 0x" << std::hex <<
 			socketReceiveBufferSize << std::dec << ". Attempting to revert to default." << std::endl;
