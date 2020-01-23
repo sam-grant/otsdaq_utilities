@@ -15,26 +15,296 @@
 
 
 CURRENT_AWESOME_BASE=$PWD
-CHECKIN_LOG_PATH=$CURRENT_AWESOME_BASE/.checkinAll.log
-UPDATE_LOG_PATH=$CURRENT_AWESOME_BASE/.updateAll.log
+CHECKIN_LOG_PATH=$CURRENT_AWESOME_BASE/.UpdateOTS_pull.log
+UPDATE_LOG_PATH=$CURRENT_AWESOME_BASE/.UpdateOTS_push.log
 
-echo 
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Your shell must be bash. If you received 'Expression Syntax' errors, please type 'bash' to switch."
-echo -e "UpdateOTS.sh [${LINENO}]  \t You are using $0"
-echo
-echo
+echo -e "UpdateOTS.sh [${LINENO}]  "
+echo -e "UpdateOTS.sh [${LINENO}]  \t ~~ UpdateOTS ~~ "
+echo -e "UpdateOTS.sh [${LINENO}]  "
+echo -e "UpdateOTS.sh [${LINENO}]  "
 
 #replace StartOTS.sh in any setup file!
-sed -i s/StartOTS\.sh/ots/g ${MRB_SOURCE}/../setup_*
+for ff in ${MRB_SOURCE}/../setup_*;do
+	cp $ff{,.tmp}
+	sed s/StartOTS\.sh/ots/g $ff.tmp >$ff && rm $ff.tmp
+done
 
-if [ "x$1" == "x" ]; then
-    echo -e "UpdateOTS.sh [${LINENO}]  \t Usage Error: parameter 1 is the comment for git commit"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: to use ! at the end of your message put a space between the ! and the closing \""
+if [ "x$1" == "x" ] || [[ "$1" != "--fetch" && "$1" != "--fetchcore" && "$1" != "--fetchall" && "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullcore" && "$1" != "--pushcore" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
+    echo -e "UpdateOTS.sh [${LINENO}]  \t Usage: Parameter 1 is the operation and, for pushes, Parameter 2 is the comment for git commit"
+	echo -e "UpdateOTS.sh [${LINENO}]  "
     echo -e "UpdateOTS.sh [${LINENO}]  \t Note: git status will be logged here: $CHECKIN_LOG_PATH"
-    echo -e "UpdateOTS.sh [${LINENO}]  \t WARNING: without comment, script will only do git pull and git status"
+	echo -e "UpdateOTS.sh [${LINENO}]  "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Parameter 1 operations:"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetch               \t #will fetch otsdaq repositories in srcs/"	
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pull                \t #will pull  otsdaq user repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --push \"comment\"    \t #will push  otsdaq user repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetchcore           \t #will fetch otsdaq core repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pullcore            \t #will pull  otsdaq core repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pushcore \"comment\"\t #will push  otsdaq core repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetchall            \t #will fetch all    repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pullall             \t #will pull  all    repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pushall \"comment\" \t #will push  all    repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --tables              \t #will not pull or push; it will just update tables."
+		
+	echo -e "UpdateOTS.sh [${LINENO}]  "
+	exit
 fi
 
+# at this point, there must have been a valid option
+
+
+#############################
+#############################
+# function to update USER DATA configuration files and table definitions
+function updateUserData 
+{	
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating tables..."
+			
+	
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################" 
+	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating USER_DATA path ${USER_DATA}..."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Table info is updated based on the list in..."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t \t ${USER_DATA}/ServiceData/CoreTableInfoNames.dat"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ... each line will be copied into user data relative to path ${OTSDAQ_DIR}/data-core/TableInfo/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t If CoreTableInfoNames.dat doesn't exist the whole directory ${OTSDAQ_DIR}/data-core/TableInfo/ will be copied!"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	echo
+	
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/TableInfo.xsd $USER_DATA/TableInfo/"
+	cp $OTSDAQ_DIR/data-core/TableInfo/TableInfo.xsd $USER_DATA/TableInfo/
+			
+	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t $USER_DATA/ServiceData/CoreTableInfoNames.dat exists!"
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Loading updated info for core tables (relative paths and wildcards are allowed) from $OTSDAQ_DIR/data-core/TableInfo/ ..."
+		echo
+		
+
+		#replace TheSupervisorConfiguration with GatewaySupervisorConfiguration for updating
+		sed -i s/TheSupervisorConfiguration/GatewaySupervisorConfiguration/g $USER_DATA/ServiceData/CoreTableInfoNames.dat
+
+		#remove empty whitespace lines
+		 sed -i '/^$/d' $USER_DATA/ServiceData/CoreTableInfoNames.dat
+		
+		cat $USER_DATA/ServiceData/CoreTableInfoNames.dat
+		echo
+		
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp -r $USER_DATA/TableInfo $USER_DATA/TableInfo.updateots.bk"
+		rm -rf $USER_DATA/TableInfo.updateots.bk
+		cp -r $USER_DATA/TableInfo $USER_DATA/TableInfo.updateots.bk		
+		
+		#NOTE: relative paths are allowed from otsdaq/data-core/TableInfo
+		LAST_LINE=
+		while read line; do
+			if [[ "x${line}" != "x" && "${LAST_LINE}" != "${line}" ]]; then
+				#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
+				cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore --- &>/dev/null #hide output		
+				LAST_LINE=${line}
+			fi
+		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
+		
+		#do one more time after loop to make sure last line is read 
+		# (even if user did not put new line) 
+		if [[ "x${line}" != "x" && "${LAST_LINE}" != "${line}" ]]; then
+			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
+			cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore ---&>/dev/null #hide output
+		fi
+	else
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp -r $USER_DATA/TableInfo $USER_DATA/TableInfo_update_bk"
+		rm -rf $USER_DATA/TableInfo_update_bk
+		cp -r $USER_DATA/TableInfo/ $USER_DATA/TableInfo_update_bk
+		
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/ARTDAQ/*Info.xml $USER_DATA/TableInfo/"
+		cp $OTSDAQ_DIR/data-core/TableInfo/ARTDAQ/*Info.xml $USER_DATA/TableInfo/ 		# undo c++ style comment for Eclipse viewing*/
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/BackboneGroup/*Info.xml $USER_DATA/TableInfo/"
+		cp $OTSDAQ_DIR/data-core/TableInfo/BackboneGroup/*Info.xml $USER_DATA/TableInfo/			# undo c++ style comment for Eclipse viewing*/
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/ConfigCore/*Info.xml $USER_DATA/TableInfo/"
+		cp $OTSDAQ_DIR/data-core/TableInfo/ConfigCore/*Info.xml $USER_DATA/TableInfo/ 		# undo c++ style comment for Eclipse viewing*/
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/ContextGroup/*Info.xml $USER_DATA/TableInfo/"
+		cp $OTSDAQ_DIR/data-core/TableInfo/ContextGroup/*Info.xml $USER_DATA/TableInfo/			# undo c++ style comment for Eclipse viewing*/
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/IterateGroup/*Info.xml $USER_DATA/TableInfo/"
+		cp $OTSDAQ_DIR/data-core/TableInfo/IterateGroup/*Info.xml $USER_DATA/TableInfo/ 		# undo c++ style comment for Eclipse viewing*/
+		
+	fi
+	
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_CMake.xml $USER_DATA/XDAQConfigurations/"
+	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_CMake.xml $USER_DATA/XDAQConfigurations/
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
+	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_MacroMaker_CMake.xml $USER_DATA/XDAQConfigurations/"
+	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfiguration_MacroMaker_CMake.xml $USER_DATA/XDAQConfigurations/
+
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/"
+	cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/ # undo c++ style comment for Eclipse viewing*/
+		
+	#make sure permissions are usable
+	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/TableInfo/*.xml"
+	chmod 755 $USER_DATA/TableInfo/*.xml #*/ just resetting comment coloring
+	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/TableInfo/*Info.xsd"
+	chmod 755 $USER_DATA/TableInfo/*Info.xsd #*/ just resetting comment coloring
+
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Reminder, table info is updated based on the list in..."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t \t ${USER_DATA}/ServiceData/CoreTableInfoNames.dat"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Done updating USER DATA."
+			
+	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	echo
+	
+} # end updateUserData function
+export -f updateUserData
+
+
+
+#############################
+#############################
+# function to display otsdaq versions and qualifiers
+function displayVersionsAndQualifiers 
+{	
+	echo
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
+	echo
+	ls ${MRB_SOURCE}/../ | grep localProducts
+	echo
+	echo
+
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
+	#-s for silent, sed to remove closing </a>
+	curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//'
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
+	echo
+
+	ALL_RELEASES=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//') )
+	LATEST_RELEASE=${ALL_RELEASES[${#ALL_RELEASES[@]}-1]}
+	echo -e "UpdateOTS.sh [${LINENO}]  \t The latest otsdaq release is $LATEST_RELEASE"	
+
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available qualifiers for $LATEST_RELEASE.."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
+	#-s for silent, sed to remove closing </a>
+	curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/$LATEST_RELEASE/manifest/ | grep \<\/a\> | grep MANIFEST | sed -e 's/-d.*//' |  sed -e 's/-p.*//' |  sed -e 's/.*-s/                                                        s/' | sed -e 's/-/:/'
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available qualifiers for $LATEST_RELEASE.."
+	echo
+	ALL_QUALS=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/$LATEST_RELEASE/manifest/ | grep \<\/a\> | grep MANIFEST | sed -e 's/-d.*//' |  sed -e 's/-p.*//' |  sed -e 's/.*-s/ s/' | sed -e 's/-/:/') )
+	LATEST_QUAL=${ALL_QUALS[${#ALL_QUALS[@]}-1]}
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t To explore the available qualifiers go here in your browser:"
+	echo
+	echo -e "\t\t\t\t https://scisoft.fnal.gov/scisoft/bundles/otsdaq"
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t To switch qualifiers, do the following: \n\n\t\t\t\t mrb newDev -v $LATEST_RELEASE -q $LATEST_QUAL:prof"
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ...and replace '$LATEST_RELEASE' with your target version. and '$LATEST_QUAL:prof' with your qualifiers"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ...a new localProducts directory will be created, which you should use when you setup ots."
+	echo
+	echo
+
+	echo
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
+	echo
+	ls ${MRB_SOURCE}/../ | grep localProducts
+	echo
+	echo
+	
+} #end displayVersionsAndQualifiers
+
+
+#clear git comment to avoid push
+GIT_COMMENT=
+
+ALL_REPOS=0
+TABLES_ONLY=0
+SKIP_CORE=0
+ONLY_CORE=0
+
+FETCH_ONLY=0
+
+if [ "$1"  == "--tables" ]; then
+	TABLES_ONLY=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating tables only!"
+	updateUserData
+	
+	displayVersionsAndQualifiers
+	
+	exit
+fi
+if [ "$1"  == "--pullall" ]; then
+	ALL_REPOS=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating all repositories (i.e. not only otsdaq)!"
+fi
+if [ "$1"  == "--pushall" ]; then
+	ALL_REPOS=1
+	GIT_COMMENT=$2
+	if [ "x$2" == "x" ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t For git push, a comment must be placed in Parameter 2!"
+		exit
+	fi
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pushing all repositories (i.e. not only otsdaq)!"
+fi
+if [ "$1"  == "--push" ]; then
+	SKIP_CORE=1
+	GIT_COMMENT=$2
+	if [ "x$2" == "x" ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t For git push, a comment must be placed in Parameter 2!"
+		exit
+	fi
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pushing otsdaq user repositories!"
+fi
+if [ "$1"  == "--pull" ]; then		
+	SKIP_CORE=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling otsdaq user repositories!"
+fi
+if [ "$1"  == "--pushcore" ]; then
+	ONLY_CORE=1
+	GIT_COMMENT=$2	
+	if [ "x$2" == "x" ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t For git push, a comment must be placed in Parameter 2!"
+		exit
+	fi
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pushing otsdaq core repositories!"
+fi
+if [ "$1"  == "--pullcore" ]; then	
+	ONLY_CORE=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling otsdaq core repositories!"
+fi
+
+if [ "$1"  == "--fetchall" ]; then
+	ALL_REPOS=1
+	FETCH_ONLY=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Fetching all repositories (i.e. not only otsdaq)!"
+fi
+if [ "$1"  == "--fetchcore" ]; then
+	ONLY_CORE=1
+	FETCH_ONLY=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Fetching otsdaq core repositories!"
+fi
+if [ "$1"  == "--fetch" ]; then		
+	FETCH_ONLY=1
+	SKIP_CORE=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Fetching otsdaq repositories!"
+fi
+
+echo -e "UpdateOTS.sh [${LINENO}]  \t REPO_FILTER = ${REPO_FILTER}"
 echo
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t Finding paths..."
@@ -45,20 +315,31 @@ SCRIPT_DIR="$(
 )"
 		
 echo -e "UpdateOTS.sh [${LINENO}]  \t Script directory found as: $SCRIPT_DIR"
-
+echo -e "UpdateOTS.sh [${LINENO}]  \t Finding target repositories..."
  
 #REPO_DIR="$(find $SCRIPT_DIR/../../../srcs -maxdepth 1 -iname 'otsdaq*')" #old way before using MRB path
-REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname 'otsdaq*')"
-						
-
+if [ $ALL_REPOS = 1 ]; then
+	REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname '*')"
+else
+	REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname 'otsdaq*')"
+fi
+					
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
     if [ -d $p/.git ]; then
-		echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory found as: $(basename $p)"
+    
+    	bp=$(basename $p)
+    	if [ $SKIP_CORE = 1 ] && [[ $bp = "otsdaq" || $bp = "otsdaq_utilities" || $bp = "otsdaq_components" ]]; then
+    		continue #skip core repos
+		fi
+		if [ $ONLY_CORE = 1 ] && [[ $bp != "otsdaq" && $bp != "otsdaq_utilities" && $bp != "otsdaq_components" ]]; then
+			continue #skip non-core repos
+		fi
+    	
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory found as: $bp"
 	fi
     fi	   
 done
-
 
 
  
@@ -67,7 +348,7 @@ done
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 
-echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$1'"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$GIT_COMMENT'"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Status will be logged here: $CHECKIN_LOG_PATH"
 
 
@@ -78,17 +359,33 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t log start:" > $CHECKIN_LOG_PATH
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
     if [ -d $p/.git ]; then
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling updates from $p"
+
+	bp=$(basename $p)
+	if [ $SKIP_CORE = 1 ] && [[ $bp = "otsdaq" || $bp = "otsdaq_utilities" || $bp = "otsdaq_components" ]]; then
+		continue #skip core repos
+	fi
+	if [ $ONLY_CORE = 1 ] && [[ $bp != "otsdaq" && $bp != "otsdaq_utilities" && $bp != "otsdaq_components" ]]; then
+		continue #skip non-core repos
+	fi
+	
 	cd $p
-	git pull
+	
+	if [ $FETCH_ONLY = 1 ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Fetching updates from $p"
+		git fetch
+	else
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling updates from $p"
+		git pull
+	fi
+	
 	echo -e "UpdateOTS.sh [${LINENO}]  \t ==================" >> $CHECKIN_LOG_PATH
 	pwd >> $CHECKIN_LOG_PATH
 	git status &>> $CHECKIN_LOG_PATH
 	
-	if [ "x$1" != "x" ]; then
+	if [ "x$GIT_COMMENT" != "x" ]; then
 		
 		echo -e "UpdateOTS.sh [${LINENO}]  \t Checking in $p"
-	    git commit -m "$1 " .  &>> $CHECKIN_LOG_PATH  #add space in comment for user
+	    git commit -m "$GIT_COMMENT " .  &>> $CHECKIN_LOG_PATH  #add space in comment for user
 	    git push   
 	fi
 
@@ -108,101 +405,32 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 
 #######################################################################################################################
 #handle manual updates that should take place ONLY if it is UPDATING not committing
-if [ "x$1" == "x" ]; then
+if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Update status will be logged here: $UPDATE_LOG_PATH"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Update log start:" > $UPDATE_LOG_PATH
-	
-	echo
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################" 
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################" 
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating USER_DATA path $USER_DATA,"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t based on the list in $USER_DATA/ServiceData/CoreTableInfoNames.dat."
-	echo -e "UpdateOTS.sh [${LINENO}]  \t If CoreTableInfoNames.dat doesn't exist the whole directory $OTSDAQ_DIR/data-core/ConfigurationInfo/ will be copied!"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
-	echo
-	
-	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
-	cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
-			
-	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
-		echo -e "UpdateOTS.sh [${LINENO}]  \t $USER_DATA/ServiceData/CoreTableInfoNames.dat exists!"
-		echo -e "UpdateOTS.sh [${LINENO}]  \t Loading updated info for core tables (relative paths and wildcards are allowed) from $OTSDAQ_DIR/data-core/ConfigurationInfo/ ..."
-		echo
-		
 
-		#replace TheSupervisorConfiguration with GatewaySupervisorConfiguration for updating
-		sed -i s/TheSupervisorConfiguration/GatewaySupervisorConfiguration/g $USER_DATA/ServiceData/CoreTableInfoNames.dat
-		
-		cat $USER_DATA/ServiceData/CoreTableInfoNames.dat
-		echo
-		
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo.updateots.bk"
-		rm -rf $USER_DATA/ConfigurationInfo.updateots.bk
-		cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo.updateots.bk		
-		
-		#NOTE: relative paths are allowed from otsdaq/data-core/ConfigurationInfo
-		while read line; do
-			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/	&>/dev/null #hide output	
-			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
-			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
-		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
-		
-		#do one more time after loop to make sure last line is read (even if user did not put new line) 
-		#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
-		#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
-		#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output
-	else
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo_update_bk"
-		rm -rf $USER_DATA/ConfigurationInfo_update_bk
-		cp -r $USER_DATA/ConfigurationInfo/ $USER_DATA/ConfigurationInfo_update_bk
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/*Info.xml $USER_DATA/ConfigurationInfo/"
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/*Info.xml $USER_DATA/ConfigurationInfo/
-		# undo c++ style comment for Eclipse viewing*/
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/*Info.xml $USER_DATA/ConfigurationInfo/"
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/*Info.xml $USER_DATA/ConfigurationInfo/
-		# undo c++ style comment for Eclipse viewing*/
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/*Info.xml $USER_DATA/ConfigurationInfo/"
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/*Info.xml $USER_DATA/ConfigurationInfo/
-		# undo c++ style comment for Eclipse viewing*/
-	fi
-	
-	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
-	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
-	
-	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/"
-	cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/
-		
-	#make sure permissions are usable
-	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 777 $USER_DATA/XDAQConfigurations/*.xml"
-	chmod 777 $USER_DATA/XDAQConfigurations/*.xml #*/ just resetting comment coloring
-	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/ConfigurationInfo/*Info.xml"
-	chmod 755 $USER_DATA/ConfigurationInfo/*Info.xml #*/ just resetting comment coloring
-	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/ConfigurationInfo/*Info.xsd"
-	chmod 755 $USER_DATA/ConfigurationInfo/*Info.xsd #*/ just resetting comment coloring
+	updateUserData #call function
 	
 	#copy tutorial launching scripts
 	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t updating tutorial launch scripts..."
+	chmod 755 $MRB_SOURCE/../get_tutorial_data.sh #make sure permissions allow deleting
+	chmod 755 $MRB_SOURCE/../get_tutorial_database.sh #make sure permissions allow deleting
+	chmod 755 $MRB_SOURCE/../reset_ots_tutorial.sh #make sure permissions allow deleting
 	rm $MRB_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #hide output
 	rm $MRB_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #hide output
 	rm $MRB_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output
 	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
-	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $MRB_SOURCE/../	
-	chmod 755 $MRB_SOURCE/../reset_ots_tutorial.sh
+	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $MRB_SOURCE/../ --no-check-certificate	
+	chmod 644 $MRB_SOURCE/../reset_ots_tutorial.sh
 	
-	rm $MRB_SOURCE/../reset_ots_artdaq_tutorial.sh
+	rm $MRB_SOURCE/../reset_ots_artdaq_tutorial.sh &>/dev/null 2>&1 #hide output
+	#now there is only one reset_tutorial script (that includes the artdaq tutorial), so do not get script
 	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
-	#wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../	
+	#wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../ --no-check-certificate	
 	#chmod 755 $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	
 	echo
@@ -335,7 +563,7 @@ if [ "x$1" == "x" ]; then
 fi
 
 
-echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$1'"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$GIT_COMMENT'"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Check-in status was logged here: $CHECKIN_LOG_PATH"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Update status was logged here: $UPDATE_LOG_PATH"
 echo
@@ -350,11 +578,35 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t Update status (not shown above) was logged
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 echo
+
+for p in ${REPO_DIR[@]}; do
+    if [ -d $p ]; then
+    if [ -d $p/.git ]; then
+    
+
+		bp=$(basename $p)
+		if [ $SKIP_CORE = 1 ] && [[ $bp = "otsdaq" || $bp = "otsdaq_utilities" || $bp = "otsdaq_components" ]]; then
+			continue #skip core repos
+		fi
+		if [ $ONLY_CORE = 1 ] && [[ $bp != "otsdaq" && $bp != "otsdaq_utilities" && $bp != "otsdaq_components" ]]; then
+			continue #skip non-core repos
+		fi
+    
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory handled: $bp"
+	fi
+    fi	   
+done
+
+displayVersionsAndQualifiers
+
+
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 echo -e "UpdateOTS.sh [${LINENO}]  \t ots update script done"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
 
+		
+		
 
 
 

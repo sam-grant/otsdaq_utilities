@@ -7,6 +7,7 @@ cet_make(LIBRARY_NAME Visualization
 		 ${XDAQ_BASIC_LIB_LIST}
 		 ${ROOT_GUI_LIB_LIST}
 		 ${ROOTSYS}/lib/libRHTTP.so
+         ${Boost_REGEX_LIBRARY}
 		 CoreSupervisors
 		 RootUtilities
 		 DataManager
@@ -17,14 +18,14 @@ cet_make(LIBRARY_NAME Visualization
 		 SupervisorInfo
 		 ConfigurationInterface
 		 Macros
-		 ConfigurationDataFormats
-		 #otsdaq-core_ConfigurationPluginDataFormats_DataManagerConfiguration_configuration
-		 #otsdaq-core_ConfigurationPluginDataFormats_DataBufferConfiguration_configuration
-		 otsdaq-core_ConfigurationPluginDataFormats_XDAQContextConfiguration_configuration
-		 otsdaq-core_DataProcessorPlugins_RawDataVisualizerConsumer_processor
+		 TableCore
+		 #otsdaq_TablePlugins_DataManagerConfiguration_table
+		 #otsdaq_TablePlugins_DataBufferConfiguration_table
+		 otsdaq_TablePlugins_XDAQContextTable_table
+		 otsdaq_DataProcessorPlugins_RawDataVisualizerConsumer_processor
 		 XmlUtilities
 		 SOAPUtilities
-		 #MessageFacility
+		 MF_MessageLogger
 
 )
 

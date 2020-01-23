@@ -4,7 +4,8 @@
 		<title>Text</title>
 		<style type="text/css">			
 			body {
-				background-color: rgb(41,46,55);
+				//background-color: rgb(41,46,55);
+				background-color: rgb(250,250,250);
 			}
 			a{
 				color: green;
@@ -21,22 +22,17 @@
 				margin: auto;
 				padding: auto;
 			}
-									
-		</style>
-		
 
-		
+		</style>
+
 		<script>		
-			
-			
-		
-			//functions:			
-				//init()					
-				
-								
+
+			//functions:
+				//init()
+
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
-			
+
 			//init called once body has loaded
 			function init()
 			{
@@ -44,12 +40,12 @@
 				console.log(window.frameElement.id)
 				window.parent.setupWidget(window.frameElement.id, getParameters());
 			}
-			
+
 			function setupPVs(settings)
 			{
 				console.log("setupPVs() : " , settings);
 			}
-			
+
 			function newWidget(widget, parameters) 
 			{			
 				var table = document.createElement('table');
@@ -62,10 +58,10 @@
 				{
 					counter++;
 				}
-				
+
 				var rows = Math.round(Math.sqrt(counter));
 				var columns = Math.ceil(counter / rows);
-				
+
 				for(var col = 1; col <= columns; col++)
 				{
 					var tr = document.createElement('tr');
@@ -84,15 +80,14 @@
 				document.getElementById("display").innerHTML = "";
 				document.getElementById("display").appendChild(table);
 
-
 				//console.log("newWidget() called *************************************");
 				if(counter > 1){counter = 2;}
 				console.log("counter" + counter);
 				for(var pv in widget.PVList)
 				{
-					
 					var a = document.createElement('a');
 					a.id = pv;
+					a.title = pv;
 					a.innerHTML = "N/A";
 					a.style.width = "100%";
 					a.style.height = "100%";
@@ -110,10 +105,9 @@
 //					console.log(counter);
 //					console.log(columns);
 //					console.log(rows);
-
 				}
 			}
-			
+
 			function getParameters()
 			{
 				paramters = {
@@ -127,9 +121,13 @@
 				return paramters;
 			}
 
+			function setParameters(attributes)
+			{
+				
+			}
+
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
-
 				/*if(document.getElementById(pvName) == null)
 				{
 					var div = document.createElement('div');
@@ -138,8 +136,8 @@
 					div.appendChild(a);
 					document.getElementById("display").appendChild(div);
 				}*/
-				//console.log("newValue() reached", pvName, pvValue);
-				
+				console.log("newValue() reached", pvName, pvValue);
+
 				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
 				document.getElementById(pvName).title = pvName + ":" + pvTime;
 				document.getElementById(pvName).parentElement.style.border = pvName + ":" + pvTime;
@@ -162,7 +160,7 @@
 				{
 					document.getElementById(pvName).parentElement.style.color = "Light Grey";
 				}
-				
+
 				if(pvStatus == "NO_ALARM")
 				{
 					document.getElementById(pvName).parentElement.style.border = "thin dotted green";
@@ -178,7 +176,7 @@
 					document.getElementById(pvName).parentElement.style.border = "thin dotted red";
 				}else if(pvStatus == "LOW")
 				{
-					document.getElementById(pvName).parentElement.style.border = "thing dotted blue";
+					document.getElementById(pvName).parentElement.style.border = "thin dotted blue";
 				}else if(pvStatus == "DC")
 				{
 					document.getElementById(pvName).parentElement.style["background-color"] = "Gainsboro";
@@ -186,21 +184,17 @@
 				{
 					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
 				}
-				
 			}
 
 		</script>
-		
-	</head>
-	
-	
-	<body onload='Javascript:init();'>	
-			
-	<div id="display" width="100%" height="100%">
 
+	</head>
+
+	<body onload='Javascript:init();'>
+
+	<div id="display" width="100%" height="100%">
 	</div>
-				
-		
+
 	</body>
-	
+
 </html>

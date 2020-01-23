@@ -677,8 +677,8 @@
 		var _forceUseOfAliases;// = Do not provide user with option to use an arbitrary group
 		var _forceGroupsOnly;//= Do not provide user with option to use Macros
 		
-		var _ITERATE_BASE_PATH = "IterateConfiguration";	
-		var _PLAN_BASE_PATH = "IterationPlanConfiguration";	
+		var _ITERATE_BASE_PATH = "IterateTable";	
+		var _PLAN_BASE_PATH = "IterationPlanTable";	
 		var _recordsAlias = "Iteration Plan";
 		
 		//global vars for iteration plan records
@@ -689,9 +689,9 @@
 		var _modifiedTables;
 		
 		//global vars for editing plans
-		var _configGroupAliases = []; //array of objects:{alias,name,key,groupComment,aliasComment}, only configuration groups
+		var _tableGroupAliases = []; //array of objects:{alias,name,key,groupComment,aliasComment}, only configuration groups
 		var _fsmNames = [];	//array of names
-		var _configGroups = []; //array of objects:{name,key,groupComment}, only configuration groups
+		var _tableGroups = []; //array of objects:{name,key,groupComment}, only configuration groups
         var _commands = [];
         
 		var _COMMAND_TYPES = {}; //for now, keys are same as value, but value is (intended to be) display name
@@ -715,7 +715,7 @@
 		_COMMAND_PARAM_FIELDS.ServerTargetTablesName			= "CSVTargetTables";
 		_COMMAND_PARAM_FIELDS.ServerTargetUIDsName				= "CSVTargetUIDs";
 		_COMMAND_PARAM_FIELDS.RelativePathToField				= "RelativePathToField";
-		_COMMAND_PARAM_FIELDS.LinkToMacroDimensions				= "LinkToMacroDimensionalLoops";
+		_COMMAND_PARAM_FIELDS.LinkToMacroDimensions				= "LinkToMacroDimensionalLoopTable";
 		_COMMAND_PARAM_FIELDS.EnableSavingOutputsToFile			= "EnableSavingOutputsToFile";
 		
 		var _COMMAND_PARAMS = {}; //NOTE!!! Fields must be in same order as the tables (in the future could ask server for this order, or not) 
@@ -744,44 +744,49 @@
         var _cmdTargetParentSelArr = [];
 		
 	
-		var _HEADER_ERROR_BGCLR = 		"rgb(226, 205, 197)";
-		var _HEADER_PAUSED_BGCLR = 		"rgb(197, 205, 226)";
-		var _HEADER_RUNNING_BGCLR = 	"rgb(177, 206, 178)";
-		var _HEADER_INACTIVE_BGCLR = 	"transparent";
+		var _HEADER_ERROR_BGCLR 		= "rgb(226, 205, 197)";
+		var _HEADER_PAUSED_BGCLR 		= "rgb(197, 205, 226)";
+		var _HEADER_RUNNING_BGCLR 		= "rgb(177, 206, 178)";
+		var _HEADER_INACTIVE_BGCLR 		= "transparent";
+		
+		var _FE_TABLE 					= "FEInterfaceTable";
+		var _FE_SUPERVISOR_TABLE		= "FESupervisorTable";
+		var _MACRO_DIM_LOOP_TABLE		= "IterationCommandMacroDimensionalLoopTable";
         
 
 		//=====================================================================================
 		//init ~~
 		//	init called once body has loaded
 		function init() 
-		{									
+		{		
+			var windowTooltip = "Welcome to the Iterate GUI. Here you can create 'Iteration Plans' that can facilitate " +
+				"calibrations or complex run plans. \n\n" +
+
+				"For an example calibration case, you might create an Iteration Plan to step through " +
+				"a register value from 0 to 50, counting by 10.\n\n" +
+
+				"For an example run plan case, you might create an Iteration Plan to take 5 runs for " +
+				"10 minutes each.\n\n" +
+
+				"The organization of the Iterate GUI is in the form of two panes, a top and bottom.\n\n" +
+
+				"Briefly, here is a description of the two panes: " +
+				"<INDENT> " +
+				"- <b>Top Pane</b>\n" +
+				"<INDENT> The 'Top Pane' is for controlling the selected Iteration Plan. " +
+				"You can Play, Pause, or Stop the Iteration Plan. Or if you make modifications " +
+				"you can Save or Discard them." +
+				"</INDENT>" +
+				"</INDENT>" +
+				"<INDENT> " +
+				"- <b>Bottom Pane</b>\n" +
+				"<INDENT> The 'Bottom Pane' is for viewing and modifying the selected Iteration Plan. " +
+				"</INDENT>" +
+				"</INDENT>"	;						
 			Debug.log("Iterate init ");
 			DesktopContent.tooltip("Iterate Introduction",
-					"Welcome to the Iterate GUI. Here you can create 'Iteration Plans' that can facilitate "+
-					"calibrations or complex run plans. \n\n" +
-					
-					"For an example calibration case, you might create an Iteration Plan to step through " +
-					"a register value from 0 to 50, counting by 10.\n\n" +
-					
-					"For an example run plan case, you might create an Iteration Plan to take 5 runs for " +
-					"10 minutes each.\n\n" +
-					
-					"The organization of the Iterate GUI is in the form of two panes, a top and bottom.\n\n" +
-					
-					"Briefly, here is a description of the two panes: " +
-					"<INDENT> " +
-					"- <b>Top Pane</b>\n" +
-					"<INDENT> The 'Top Pane' is for controlling the selected Iteration Plan. " +
-					"You can Play, Pause, or Stop the Iteration Plan. Or if you make modifications " +
-					"you can Save or Discard them." +
-					"</INDENT>" +
-					"</INDENT>" + 
-					"<INDENT> " +
-					"- <b>Bottom Pane</b>\n" +
-					"<INDENT> The 'Bottom Pane' is for viewing and modifying the selected Iteration Plan. " +
-					"</INDENT>" +
-					"</INDENT>"
-			);
+			windowTooltip);
+			DesktopContent.setWindowTooltip(windowTooltip);
 			
 			//extract get parameters
 			if(!extractGETParameters())
@@ -985,8 +990,8 @@
                 });
                 commands.push({		//CONFIGURE_ALIAS aliasMap[0]
                 "type" : _COMMAND_TYPES.CONFIGURE_ALIAS,
-                "param" : {"SystemAlias":(_configGroupAliases.length? //use first alias, if any exist
-                		_configGroupAliases[0].alias
+                "param" : {"SystemAlias":(_tableGroupAliases.length? //use first alias, if any exist
+                		_tableGroupAliases[0].alias
 						:"")},
                 });
                 commands.push({		//RUN 5 minutes
@@ -1066,7 +1071,7 @@
                 								type = commandChildren[k].children[0].getAttribute("value");
                 								params = [];
                 							}
-                							else if(commandChildren[k].getAttribute("value") == "LinkToCommandConfiguration")
+                							else if(commandChildren[k].getAttribute("value") == "LinkToCommandTable")
                 							{
                 								parameterChildren = commandChildren[k].children;
 
@@ -1102,7 +1107,7 @@
                 													//		first two nodes are uid and table
                 													targetCSVStr += 
                 															targetChildren[m].children[1].getElementsByTagName(
-                																	"LinkConfigurationName")[0].getAttribute("value") +
+                																	"LinkTableName")[0].getAttribute("value") +
 																					"/" + 
 																					targetChildren[m].children[1].getElementsByTagName(
 																							"UID")[0].getAttribute("value");                                                            	
@@ -2021,10 +2026,10 @@
 					var groupTypes = req.responseXML.getElementsByTagName("GroupType");
 					var aliasComments = req.responseXML.getElementsByTagName("AliasComment");
 	
-					_configGroupAliases = [];
+					_tableGroupAliases = [];
 					for(var i=0;i<groupAliases.length;++i) 
 						if(groupTypes[i].getAttribute('value') == "Configuration")
-							_configGroupAliases.push({
+							_tableGroupAliases.push({
 									"alias" : groupAliases[i].getAttribute('value'),
 									"name" : groupNames[i].getAttribute('value'),
 									"key" : groupKeys[i].getAttribute('value'),
@@ -2032,36 +2037,36 @@
 									"aliasComment" : aliasComments[i].getAttribute('value')
 						});
 	
-					console.log("_configGroupAliases",_configGroupAliases);
+					console.log("_tableGroupAliases",_tableGroupAliases);
 	
 	
 						}); //end getGroupAliases handler
 				
 				
-				DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups"
+				DesktopContent.XMLHttpRequest("Request?RequestType=getTableGroups"
 						+"&doNotReturnMembers=1", //end get data 
 						"", //end post data
 						function(req)
 						{
-					Debug.log("getConfigurationGroups handler");
+					Debug.log("getTableGroups handler");
 					
-					var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
-					var groupKeys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
-					var groupTypes = req.responseXML.getElementsByTagName("ConfigurationGroupType");
-					var groupComments = req.responseXML.getElementsByTagName("ConfigurationGroupComment");
+					var groupNames = req.responseXML.getElementsByTagName("TableGroupName");
+					var groupKeys = req.responseXML.getElementsByTagName("TableGroupKey");
+					var groupTypes = req.responseXML.getElementsByTagName("TableGroupType");
+					var groupComments = req.responseXML.getElementsByTagName("TableGroupComment");
 					
-					_configGroups = [];
+					_tableGroups = [];
 					for(var i=0;i<groupNames.length;++i) 
 						if(groupTypes[i].getAttribute('value') == "Configuration")
-							_configGroups.push({								
+							_tableGroups.push({								
 									"name" : groupNames[i].getAttribute('value'),
 									"key" : groupKeys[i].getAttribute('value'),
 									"groupComment" : groupComments[i].getAttribute('value')
 						});
 					
-					console.log("_configGroups",_configGroups);
+					console.log("_tableGroups",_tableGroups);
 					
-						}); //end getConfigurationGroups handler
+						}); //end getTableGroups handler
 						
 			} //end localGetGroups()
 			localGetGroups();
@@ -2111,12 +2116,12 @@
 					function(members)
 					{
 				Debug.log("getGroupTypeMemberNames handler");				
-				var configMapStr = "configList=";
+				var tableMapStr = "tableList=";
 				for(var i=0;i<members.length;++i)
-					configMapStr += members[i] + ",-1,";
+					tableMapStr += members[i] + ",-1,";
 				ConfigurationAPI.saveGroupAndActivate(
 						"iterateDefaultGroup",
-						configMapStr,
+						tableMapStr,
 						responseHandler, //pass handler to be called
 						true /*doReturnParams*/						
 						)			
@@ -2361,13 +2366,13 @@
 					_modifiedTables = modifiedTables;
 
 					var fieldArr = ["Status",
-									"LinkToIterationPlanConfiguration",
+									"LinkToIterationPlanTable",
 									"LinkToIterationPlanGroupID",
 									"CommentDescription"
 									];
 
 					var valueArr = ["1",//"Status",
-									_PLAN_BASE_PATH,//"LinkToIterationPlanConfiguration",
+									_PLAN_BASE_PATH,//"LinkToIterationPlanTable",
 									planName+"-Plan",//"LinkToIterationPlanGroupID",
 									"Generated by Iterate app"//"CommentDescription"
 									];
@@ -2407,8 +2412,8 @@
 											_fsmNames[0]
 													  :"")]);
 							addCommand(_COMMAND_TYPES.CONFIGURE_ALIAS,
-									[(_configGroupAliases.length? //use first alias, if any exist
-											_configGroupAliases[0].alias
+									[(_tableGroupAliases.length? //use first alias, if any exist
+											_tableGroupAliases[0].alias
 											:"")]);//"SystemAlias"
 							addCommand(_COMMAND_TYPES.BEGIN_LABEL,
 									["Main"]);
@@ -2434,10 +2439,10 @@
 													  :"")]);
 							addCommand(_COMMAND_TYPES.MODIFY_ACTIVE_GROUP,
 									[								
-									 "FEInterfaceConfiguration",//"Tables":params[0],
+									 _FE_TABLE,//"Tables":params[0],
 									 "ExampleInterface0",//"UIDs":params[1],
 									 0,//"DoTrackGroupChanges":params[2], 
-									 "LinkToFETypeConfiguration/FirmwareVersion",//"RelativePathToField":params[3],
+									 "LinkToFETypeTable/FirmwareVersion",//"RelativePathToField":params[3],
 									 5,//"FieldStartValue":params[4],
 									 3]);//"FieldIterationStepSize":params[5]);
 							addCommand(_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP);
@@ -2637,7 +2642,7 @@
 				_popUpParamsModified = false; //reset
 
 				//set position and size
-				var w = 520;
+				var w = 550;
 				var h = 250; //+32 for each parameter
 				ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/,
 						undefined /*padding*/,
@@ -2840,14 +2845,14 @@
 
 									});
 
-							for(var j=0;j<_configGroupAliases.length;++j)
+							for(var j=0;j<_tableGroupAliases.length;++j)
 								str += htmlOpen("option" +
-										(_configGroupAliases[j].alias == initValue? //select the init value if match
+										(_tableGroupAliases[j].alias == initValue? //select the init value if match
 												" selected":""),
 												{
-														"value":_configGroupAliases[j].alias
+														"value":_tableGroupAliases[j].alias
 												},
-												_configGroupAliases[j].alias/*innerHTML*/, true /*closeTag*/);
+												_tableGroupAliases[j].alias/*innerHTML*/, true /*closeTag*/);
 
 							str += "</select>";	
 
@@ -2855,9 +2860,9 @@
 									{
 											"id":"popUp-param-systemAliasDetails"										
 									});
-							if(_configGroupAliases.length)
+							if(_tableGroupAliases.length)
 								str += popUpParamSystemAliasOnChange(
-										_configGroupAliases[0].alias);
+										_tableGroupAliases[0].alias);
 							str += "</div>";
 							hDelta += 90;						
 						}
@@ -2977,7 +2982,7 @@
 								_COMMAND_PARAM_FIELDS.LinkToMacroDimensions)
 						{
 							if(initValue == "") //set default table name
-								initValue = "IterationCommandMacroDimensionalLoopConfiguration";
+								initValue = _MACRO_DIM_LOOP_TABLE;
 							str += htmlOpen("input",
 									{
 											"id":("popUp-param-" + i),
@@ -3528,7 +3533,7 @@
 				}
 				Debug.log("localFeCheckboxHandler " + el.checked);
 
-				var path = el.checked?"FESupervisorConfiguration":"/";
+				var path = el.checked?_FE_SUPERVISOR_TABLE:"/";
 				ConfigurationAPI.getTree(path,
 						1, //down through command parameters
 						_modifiedTables,
@@ -3656,7 +3661,7 @@
 			var allUidMode = document.getElementById("popUp-targetWizAllUIDs").checked;
 			
 			var path = feMode?
-					"FESupervisorConfiguration":"";
+					_FE_SUPERVISOR_TABLE:"";
 			
 
 			
@@ -3680,7 +3685,7 @@
 						//different, so load children and act
 						
 						parentTable = feMode?
-								"FEInterfaceConfiguration":
+								_FE_TABLE:
 								MultiSelectBox.getSelectionElementByIndex(
 									sel,i).innerText;
 
@@ -3708,7 +3713,7 @@
 			
 			
 			_cmdTargetWizParentTable = feMode?
-					"FEInterfaceConfiguration":sel.innerText;
+					_FE_TABLE:sel.innerText;
 						
 			path += "/" + sel.innerText;
 			path += feMode?
@@ -3877,9 +3882,9 @@
 			var str = "";
 			
 
-			for(var j=0;j<_configGroupAliases.length;++j)
+			for(var j=0;j<_tableGroupAliases.length;++j)
 			{
-				if(_configGroupAliases[j].alias == value)
+				if(_tableGroupAliases[j].alias == value)
 				{
 					//found details
 					str += htmlClearDiv();
@@ -3887,18 +3892,18 @@
 					str += "<tr><td style='white-space:nowrap;font-weight:bold;'>" +
 							"Translates to:</td>";
 					str += "<td style='white-space:nowrap'>" +
-							_configGroupAliases[j].name + " (" +
-							_configGroupAliases[j].key +
+							_tableGroupAliases[j].name + " (" +
+							_tableGroupAliases[j].key +
 							")</td></tr>";
 					str += "<tr><td style='white-space:nowrap;font-weight:bold;'>" +
 							"Group comment:</td>";
 					str += "<td style='white-space:nowrap'>" +
-							_configGroupAliases[j].groupComment +
+							_tableGroupAliases[j].groupComment +
 							"</td></tr>";
 					str += "<tr><td style='white-space:nowrap;font-weight:bold;'>" +
 							"Alias comment:</td>";
 					str += "<td style='white-space:nowrap'>" +
-							_configGroupAliases[j].aliasComment +
+							_tableGroupAliases[j].aliasComment +
 							"</td></tr>";
 					str += "</table>";
 							
@@ -4174,6 +4179,9 @@
 				_updateTimer = window.setTimeout(updateIterateStatus,_UPDATE_TIMER_PERIOD);
 				
 				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				if(!error_message || error_message == "")
+					error_message		= DesktopContent.getXMLValue(req,"state_tranisition_attempted_err");
+					
 				if(error_message && error_message != "")
 					Debug.log(error_message,Debug.HIGH_PRIORITY);
 				else
@@ -4365,9 +4373,16 @@
 							val = DesktopContent.getXMLValue(depth_iterations[i]) | 0;
 							if(val > 99) //truncate text length
 								val = "...";
-							document.getElementById("plan-command-bounceBall-text-" + 
+							try
+							{
+								document.getElementById("plan-command-bounceBall-text-" + 
 									command_index + "-depth-" + 
 									(i+1)).innerHTML = val;
+							}
+							catch(e)
+							{
+								console.log("ignoring",e);
+							}
 						}
 						val = command_iteration | 0;
 						if(val > 99) //truncate text length

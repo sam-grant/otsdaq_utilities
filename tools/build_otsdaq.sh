@@ -20,27 +20,84 @@ version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
-case ${qual_set} in
-    s64:e15)
-        basequal=e15
-        squal=s64
-        artver=v2_10_02
-        ;;
-	s50:e14)
-		basequal=e14
-		squal=s50
-		artver=v2_07_03
-		;;
-    s46:e10)
-        basequal=e10
-        squal=s46
-        artver=v2_06_01
-        ;;
-    *)
+IFS_save=$IFS
+IFS=":"
+read -a qualarray <<<"$qual_set"
+IFS=$IFS_save
+basequal=
+squal=
+artver=
+build_db=1
+
+# Remove shared memory segments which have 0 nattach
+killall art && sleep 5 && killall -9 art
+killall transfer_driver
+for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
+
+for qual in ${qualarray[@]};do
+	case ${qual} in
+        e15)
+            basequal=e15
+            ;;
+		e17)
+			basequal=e17
+			;;
+        e19)
+            basequal=e19
+            ;;
+        c2)
+            basequal=c2
+            ;;
+        c7)
+            basequal=c7
+            ;;
+        s67)
+            squal=s67
+            artver=v2_11_01
+            ;;
+        s73)
+            squal=s73
+            artver=v2_11_05
+            ;;
+        s82)
+            squal=s82
+            artver=v3_02_04
+            ;;
+		s83)
+			squal=s83
+			artver=v3_02_05
+			;;
+		s85)
+			squal=s85
+			artver=v2_13_00
+			;;
+        s87)
+            squal=s87
+            artver=v3_03_00
+            ;;
+        s89)
+            squal=s89
+            artver=v3_03_01
+            ;;
+		s92)
+			squal=s92
+			artver=v3_02_06c
+			;;
+		s94)
+			squal=s94
+			artver=v3_04_00
+			;;
+        nodb)
+            build_db=0
+            ;;
+		esac
+done
+
+if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	echo "unexpected qualifier set ${qual_set}"
 	usage
 	exit 1
-esac
+fi
 
 wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/revisions/${version}/raw/ups/product_deps && \
 artdaq_ver=`grep "^artdaq " product_deps|awk '{print $2}'` || \

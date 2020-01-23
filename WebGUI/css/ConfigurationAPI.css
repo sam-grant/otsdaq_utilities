@@ -1,51 +1,57 @@
 
 		#clearDiv {
-			clear: both;
+			clear: 					both;
 		}
 		
 		#ConfigurationAPI-popUpDialog {
-			position: absolute;
-			z-index: 1000;    
-			border: 1px solid #770000;
-		    background-color: #efeaea;
-		    text-align: center;
-		    padding: 10px;
-			font-size: 16px;
-			font-family: 'Inconsolata', monospace;	
+			position: 				absolute;
+			z-index: 				1000;    
+			border: 				1px solid #770000;
+		    background-color: 		#efeaea;
+		    text-align: 			center;
+		    padding: 				10px;
+			font-size: 				16px;
+			font-family: 			'Inconsolata', monospace;	
 			
 
 			outline: 				none; /* to stop firefox selection*/
-			-webkit-user-select: 	none; /* prevent selection*/
+			-webkit-user-select:	none; /* prevent selection*/
 			-moz-user-select: 		none;
 			user-select:			none;
 		}
-		
+		#ConfigurationAPI-popUpDialog, 
+		#ConfigurationAPI-popUpDialog * {
+			color: 					black;
+			font-family: 			'Inconsolata', monospace;
+			font-size:				16px;
+		}
+			
 		#ConfigurationAPI-popUpDialog #clearDiv {
-			clear: both;
+			clear: 					both;
 		}
 		
 		#ConfigurationAPI-popUpDialog a {
-			color: rgb(44, 44, 187);
+			color: 					rgb(44, 44, 187);
 		}
 		
 		#ConfigurationAPI-popUpDialog a:hover {
-			pointer: cursor;
+			pointer: 				cursor;
 		}
 		
 		#ConfigurationAPI-popUpDialog h3, 
 		#ConfigurationAPI-popUpDialog h1 {
-			color: 				rgb(65, 86, 146);
-			font-size: 			20px;
+			color: 					rgb(65, 86, 146);
+			font-size: 				20px;
 		}
 		
 		#ConfigurationAPI-popUpDialog .bold-header {
-			color: 				rgb(81, 152, 204);
-			font-size: 			16px;
+			color: 					rgb(81, 152, 204);
+			font-size: 				16px;
 		}
 		
 		#ConfigurationAPI-popUpDialog b {
-			color: 				rgb(65, 86, 146);
-			font-size: 			16px;
+			color: 					rgb(65, 86, 146);
+			font-size: 				16px;
 		}
 		
 		/*firefox seems to put an extra pixel of letter-spacing in bold words*/
@@ -68,62 +74,62 @@
 		/* make buttons have a hand cursor */
 		#ConfigurationAPI-popUpDialog input[type="button"], 
 		#ConfigurationAPI-popUpDialog button {
-			cursor: pointer;
+			cursor: 				pointer;
 		}
 		
 		/* style text inputs */
 		#ConfigurationAPI-popUpDialog input[type="text"], 
 		#ConfigurationAPI-popUpDialog select {
-			height: 			24px;
-			margin:				5px;
-			padding-left: 		5px;
-			width: 				200px;
-			border: 			1px solid rgb(171, 171, 230);
+			height: 				24px;
+			margin:					5px;
+			padding-left: 			5px;
+			width: 					200px;
+			border: 				1px solid rgb(171, 171, 230);
 		}
 		
 		#ConfigurationAPI-popUpDialog .prevButton,
 		#ConfigurationAPI-popUpDialog .nextButton {
-			margin:				10px;
+			margin:					10px;
 		}		
 		
 		.ConfigurationAPI-popUpDialog-editIcon {			
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
-			width: 				24px;
-			height: 			20px;
-			float: 				left;
-			border: 			0;
-			margin: 			-2px 0 -7px 10px;
-			display:			none;
+			background-image: 		url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
+			width: 					24px;
+			height: 				20px;
+			float: 					left;
+			border: 				0;
+			margin: 				-2px 0 -7px 10px;
+			display:				none;
 		}
 		.ConfigurationAPI-popUpDialog-editIcon:hover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
-			cursor: 			pointer;
+			background-image: 		url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
+			cursor: 				pointer;
 		}		
 
 		.ConfigurationAPI-popUpDialog-deleteIcon {			
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
-			width: 				16px;
-			height: 			20px;
-			border: 			0;
-			margin: 			-9px 0 -10px 10px;
+			background-image: 		url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			width: 					16px;
+			height: 				20px;
+			border: 				0;
+			margin: 				-9px 0 -10px 10px;
 		}
 		.ConfigurationAPI-popUpDialog-deleteIcon:hover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
-			cursor: 			pointer;
+			background-image: 		url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			cursor: 				pointer;
 		}
 		
 		.ConfigurationAPI-popUpDialog-preloadImage {			
-			width: 				24px;
-			height: 			20px;
-			position:			absolute;
-			left: 				-100000px;
-			top: 				-100000px;
+			width: 					24px;
+			height: 				20px;
+			position:				absolute;
+			left: 					-100000px;
+			top: 					-100000px;
 		}
 		#ConfigurationAPI-popUpDialog-preloadImage-editIconHover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
+			background-image: 		url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
 		}
 		#ConfigurationAPI-popUpDialog-preloadImage-treeEditTrashIconHover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			background-image: 		url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 		}
 		
 		
@@ -269,9 +275,16 @@
 		}
 		
 		.ConfigurationAPI-EditableField-SelectedField {
-			background-color:red;
+			background-color:	red;
 		}
 		
+		.ConfigurationAPI-EditableField .editableFieldNode-ChildLink-SubConfigLink {
+			margin-top:			3px;
+			font-size: 			12px;
+			text-decoration:	underline;
+			color:				rgb(44, 44, 187);
+			cursor:				pointer;
+		}
 		
 		
 		

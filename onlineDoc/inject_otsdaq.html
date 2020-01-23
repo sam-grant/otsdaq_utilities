@@ -3,12 +3,11 @@
 <!-- Note: this code is to be injected into the doxygen main.html @ <div class="contents"> -->
 
 
-<h1 style="font-family: 'Comfortaa', cursive;">Welcome to the <i>otsdaq</i> Source Code Documentation</h1>
-<center>
+<h1 style="font-family: 'Comfortaa', arial;">Welcome to the <i>otsdaq</i> Source Code Documentation</h1>
+
 <a href="http://otsdaq.fnal.gov">
-<img border='0' src='/otsdaq_icons/android-icon-48x48.png'>
+<img style='margin-left:60px; margin-bottom:10px' border='0' src='/otsdaq_icons/android-icon-48x48.png'>
 </a>
-</center>
 
 <br>
 <a name='topicList'></a>
@@ -45,8 +44,8 @@ Here are the links to the source code documentation for each respository:
 <br><br>
 <div style='margin-left:40px'>
 <li><a target='_blank'href='https://cdcvs.fnal.gov/redmine/projects/artdaq'><i>artdaq</i></a>
-<li><a target='_blank' href='https://svnweb.cern.ch/trac/cmsos'>XDAQ</a> 
-(specifically <a target='_blank' href='https://xdaq.web.cern.ch/xdaq/doxygen/baseline14/index.html'>XDAQ v14</a>)
+<!--<li><a target='_blank' href='https://svnweb.cern.ch/trac/cmsos'>XDAQ</a>-->
+<li><a target='_blank' href='https://gitlab.cern.ch/cmsos'>XDAQ</a>
 <li><a target='_blank' href='http://otsdaq.fnal.gov'>otsdaq</a> 
 </div>
 
@@ -288,8 +287,8 @@ to verify user access. It also provides the functionality for client supervisors
 	<h1>Front-ends</h1>
 	<div class='topicDescDiv'>
 The classes in this section are involved with the control and management of front-end interface. Front-end interfaces
-are considered to be the specifics for how to interface to a device external to otsdaq. For example, a front-end interface might be
-a physics detector or a detector emulator.
+are considered to be the specifics for how to interface to a device external to otsdaq. For example, a front-end interface might 
+interface to physics detector readout electronics or a detector readout software emulator.
 	</div>
 	<table>
 	<tr><th class='topicClassNameCol'>
@@ -499,6 +498,13 @@ base that class that is a hybrid between a FEVInterface (see
 	</th>
 	</tr>
 
+<!-- :::::::::::: -->
+<tr><td>
+<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_a_r_t_d_a_q_supervisor.html'>
+ARTDAQSupervisor
+</a>
+</td><td>This class handles interfacing to the artdaq DAQ interface which manages all artdaq processes in the system.
+</td></tr>
 <!-- :::::::::::: -->
 <tr><td>
 <a href='http://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_a_r_t_d_a_q_data_manager_supervisor.html'>

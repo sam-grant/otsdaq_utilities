@@ -449,7 +449,14 @@
 			    Debug.log("Chat sendChat  ");
 			    
 				//send chat to server
-				DesktopContent.XMLHttpRequest("Request?RequestType=SendChat", "chat="+chat+"&user="+_displayName);		
+				DesktopContent.XMLHttpRequest(
+					"Request?RequestType=SendChat", 
+					"chat="+chat+"&user="+_displayName,
+					0 /*returnHandler*/, 
+					0 /*reqParam*/, 
+					0 /*progressHandler*/, 
+					0 /*callHandlerOnErr*/, 
+					true /*doNoShowLoadingOverlay*/);		
 			    
 				_lastSentChat = _lastTypedChat = _inputEl.value;
 			    _inputEl.value = ""; 	//clear input 
@@ -568,13 +575,27 @@
 			//	if _lastUpdateIndex doesn't match server, server will give all new info since
 			//	initially _lastUpdateIndex = 0
 			function getChatUpdates() {			
-				DesktopContent.XMLHttpRequest("Request?RequestType=RefreshChat","lastUpdateIndex="+_lastUpdateIndex+"&user="+_displayName,handleRefreshChat);
+				DesktopContent.XMLHttpRequest(
+					"Request?RequestType=RefreshChat",
+					"lastUpdateIndex="+_lastUpdateIndex+"&user="+_displayName,
+					handleRefreshChat,
+					0 /*reqParam*/, 
+					0 /*progressHandler*/, 
+					0 /*callHandlerOnErr*/, 
+					true /*doNoShowLoadingOverlay*/);
 			}
 
 			//getActiveUsers ~
 			// 	get active users from server
 			function getActiveUsers() {	
-				DesktopContent.XMLHttpRequest("Request?RequestType=RefreshUsers","",handleActiveUsers);
+				DesktopContent.XMLHttpRequest(
+				"Request?RequestType=RefreshUsers",
+				"",
+				handleActiveUsers,
+				0 /*reqParam*/, 
+				0 /*progressHandler*/, 
+				0 /*callHandlerOnErr*/, 
+				true /*doNoShowLoadingOverlay*/);
 			}
 			
 			//handleActiveUsers ~

@@ -48,7 +48,10 @@ find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( otsdaq v1_00_00 )
 find_ups_product( artdaq v0_04_02 )
 find_ups_product( artdaq_core v1_00_00 )
+find_ups_product( artdaq_utilities v1_00_00 )
 find_ups_product( art v1_06_00 )
+find_ups_product( python v2_7_14)
+include_directories($ENV{PYTHON_INCLUDE})
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )
 find_ups_product( cetlib v1_03_00 )
@@ -59,8 +62,6 @@ find_ups_boost( v1_50_0 filesystem
                         unit_test_framework
  )
 
-find_library( EPICS_CA NAMES ca PATHS $ENV{EPICS_LIBRARY} )
-find_library( EPICS_COM NAMES Com PATHS $ENV{EPICS_LIBRARY} )
 
 ##find_package(MPI QUIET)
 
@@ -78,7 +79,7 @@ message("-DMESSAGEFACILITY_HEX_VERSION=0x${MESSAGEFACILITY_MAJOR_VERSION}${MESSA
 add_definitions(-DMESSAGEFACILITY_HEX_VERSION=0x${MESSAGEFACILITY_MAJOR_VERSION}${MESSAGEFACILITY_MINOR_VERSION}${MESSAGEFACILITY_PATCH_VERSION})
 
 # macros for art_dictionary and simple_plugin
-include(ArtDictionary)
+
 include(ArtMake)
 include(BuildPlugins)
 include(CetTest)
@@ -89,9 +90,9 @@ add_subdirectory(otsdaq-utilities)
 # Scripts
 add_subdirectory(tools)
 
-# Documentation directory
-add_subdirectory(doc)
-add_subdirectory(onlineDoc)
+# Documentation directory (to comment out if not needed DOXYGEN locally)
+#add_subdirectory(doc)
+#add_subdirectory(onlineDoc)
 
 # UPS Version files
 add_subdirectory(ups)
