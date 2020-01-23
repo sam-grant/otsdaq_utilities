@@ -447,7 +447,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 	    "getRoot")  //################################################################################################################
 	{
 		// return directory structure for requested ROOT path, types are "dir" and "file"
-
+	  theDataManager_->setWait(true);
 		std::string  path = CgiDataUtilities::postData(cgiIn, "RootPath");
 		boost::regex re("%2F");
 		path = boost::regex_replace(path, re, "/");  // Dario: should be transparent for
@@ -635,6 +635,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 		}
 		// std::ostringstream* out ;
 		// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+	  theDataManager_->setWait(false);
 	}
 	else if(
 	    requestType ==

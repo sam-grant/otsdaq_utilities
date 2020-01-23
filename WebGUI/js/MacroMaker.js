@@ -94,6 +94,8 @@
 	var barWidth = 0;
 	var barIncrement = 0;
 	
+	
+	var _codeEditorAppId; //Code Editor Supervisor LID
 
 	//=====================================================================================
 	function init() 
@@ -123,7 +125,24 @@
 		loadUserHistory();
 		toggleDisplay(0);
 		toggleMacroPublicity(0);
-	}
+		
+		
+
+		//fill in CodeEditor appId
+		DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
+				"&classNeedle=ots::CodeEditorSupervisor",
+				"", //end post data, 
+				function(req) 
+				{			
+			_codeEditorAppId = DesktopContent.getXMLValue(req,"id") | 0;
+			Debug.log("_codeEditorAppId " + _codeEditorAppId);
+				}, //end handler
+				0, 0, true,//reqParam, progressHandler, callHandlerOnErr, 
+				false,//doNotShowLoadingOverlay,
+				true //targetSupervisor
+		); //end getAppId request
+		
+	} //end init()
 
 	//=====================================================================================
 	//This is what refresh button and redrawWindow() calls
@@ -1603,66 +1622,18 @@
 				function(req)
 				{
     		var err = DesktopContent.getXMLValue(req,"Error");
-    		if(err)
-    		{
-    			Debug.log("To view your front-end plugin " +
-    					"source code files...\n" + 
-						"(Click " +
-						"<a onclick='DesktopContent.openNewBrowserTab(" +
-						"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
-						"\"?startFilePrimary=" +
-						headerFile + "&startFileSecondary=" +
-						sourceFile + "&startViewMode=1\",undefined /*unique undefined for LID lookup*/);' " +
-						"title='Click to open a new browser tab with both source files in the Code Editor.'>" +
-						"here</a> to open them in the Code Editor)" +
-						"\n\n" + 
-
-						"<a onclick='DesktopContent.openNewWindow(" +
-						"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
-						"\"?startFilePrimary=" +
-						headerFile + "\",undefined /*unique undefined for LID lookup*/);' " +
-						"title='Click to open this header file in the Code Editor.'>" +
-						headerFile + "</a>\n\nand...\n\n" +  
-
-
-						"<a onclick='DesktopContent.openNewWindow(" +
-						"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
-						"\"?startFilePrimary=" +
-						sourceFile + "\",undefined /*unique undefined for LID lookup*/);' " +
-						"title='Click to open this source file in the Code Editor.'>" +
-						sourceFile + "</a>\n\n" +
-
-						"Click the links above to open the source code files in the Code Editor.\n\n"
-						+
-
-						"If you would like to run existing FE Macros, try doing so here...\n" +
-						"(You MUST compile the plugin, and reconfigure otsdaq for FE Macro changes to take effect!): " +
-						"<a onclick='DesktopContent.openNewWindow(" +
-						"\"FE Macro Test\",\".h\"," + 
-						"\"/WebPath/html/FEMacroTest.html?urn=" +
-						DesktopContent._localUrnLid + //same LID as MacroMaker
-						"\",0 /*unique*/);' " +
-						"title='Click to open the FE Macro Test web app.'>" +
-						"FE Macro Test" + "</a>\n\n"
-						,
-						Debug.HIGH_PRIORITY);
-
-    			Debug.log("Error! Something went wrong with your FE Macro export: " +
-    					err,Debug.HIGH_PRIORITY);
-    			
-    			return;
-    		}
-    		
     		var headerFile = DesktopContent.getXMLValue(req,"headerFile");
     		var sourceFile = DesktopContent.getXMLValue(req,"sourceFile");
-    		if(headerFile && sourceFile)
-    		{
-    			Debug.log("Your FE Macro was succesfully exported to the front-end plugin " +
-    					"source code files...\n" + 
+    		if(err)
+    		{    			
+    			if(headerFile && sourceFile && _codeEditorAppId)
+    				err += "\n\nYou can view FE source code files...\n" + 
 						"(Click " +
 						"<a onclick='DesktopContent.openNewBrowserTab(" +
 						"\"Code Editor\",\"\"," + 
-						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						"\"/WebPath/html/CodeEditor.html?" + 
+						"urn=" + _codeEditorAppId + 
+						"&startFilePrimary=" +
 						headerFile + "&startFileSecondary=" +
 						sourceFile + "&startViewMode=1\",0 /*unique*/);' " +
 						"title='Click to open a new browser tab with both source files in the Code Editor.'>" +
@@ -1671,15 +1642,96 @@
 												
 						"<a onclick='DesktopContent.openNewWindow(" +
 						"\"Code Editor\",\".h\"," + 
-						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						"\"/WebPath/html/CodeEditor.html" + 
+						"urn=" + _codeEditorAppId + 
+						"&startFilePrimary=" +
 						headerFile + "\",0 /*unique*/);' " +
 						"title='Click to open this header file in the Code Editor.'>" +
 						headerFile + "</a>\n\nand...\n\n" +  
-						
-						
+												
 						"<a onclick='DesktopContent.openNewWindow(" +
 						"\"Code Editor\",\".cc\"," + 
-						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						"\"/WebPath/html/CodeEditor.html" + 
+						"urn=" + _codeEditorAppId + 
+						"&startFilePrimary=" +
+						sourceFile + "\",0 /*unique*/);' " +
+						"title='Click to open this source file in the Code Editor.'>" +
+						sourceFile + "</a>\n\n" +
+												
+						"Click the links above to open the source code files in the Code Editor.\n\n"
+						+
+						
+						"If you would like to run existing FE Macros, try doing so here...\n" +
+						"(You MUST compile the plugin, and reconfigure otsdaq for your FE Macro changes to take effect!): " +
+						"<a onclick='DesktopContent.openNewWindow(" +
+						"\"FE Macro Test\",\".h\"," + 
+						"\"/WebPath/html/FEMacroTest.html?urn=" +
+						DesktopContent._localUrnLid + //same LID as MacroMaker
+						"\",0 /*unique*/);' " +
+						"title='Click to open the FE Macro Test web app.'>" +
+						"FE Macro Test" + "</a>"
+    						
+    			Debug.log("Error! Something went wrong with your FE Macro export: " +
+    					err,Debug.HIGH_PRIORITY);    	
+    			return;
+    		}
+    		
+    		
+    		if(headerFile && sourceFile)
+    		{    		
+    			if(!_codeEditorAppId)
+    			{
+    				DesktopContent.tooltip("Using the Code Editor", 
+    						"You can edit and view files in the Code Editor, however " +
+							"no active Code Editor Supervisor was found in your system. You can not open files without a Code Editor Supervisor. " + 
+							"Please edit the Context group to include a Code Editor Supervisor and relaunch ots.");
+    				
+    				Debug.log("Your FE Macro was succesfully exported to the front-end plugin " +
+    						"source code files...\n" +
+							"\n\n" + 
+							headerFile + "\n\nand...\n\n" +  
+							sourceFile + "\n\n" +
+							"If you would like to run your new FE Macro, try doing so here...\n" +
+							"(You MUST compile the plugin, and reconfigure otsdaq for your FE Macro changes to take effect!): " +
+							"<a onclick='DesktopContent.openNewWindow(" +
+							"\"FE Macro Test\",\".h\"," + 
+							"\"/WebPath/html/FEMacroTest.html?urn=" +
+							DesktopContent._localUrnLid + //same LID as MacroMaker
+							"\",0 /*unique*/);' " +
+							"title='Click to open the FE Macro Test web app.'>" +
+							"FE Macro Test" + "</a>\n\n"
+							,
+							Debug.INFO_PRIORITY);
+    			}
+    			else     									
+    				Debug.log("Your FE Macro was succesfully exported to the front-end plugin " +
+    					"source code files...\n" + 
+						"(Click " +
+						"<a onclick='DesktopContent.openNewBrowserTab(" +
+						"\"Code Editor\",\"\"," + 
+						"\"/WebPath/html/CodeEditor.html?" + 
+						"urn=" + _codeEditorAppId + 
+						"&startFilePrimary=" +
+						headerFile + "&startFileSecondary=" +
+						sourceFile + "&startViewMode=1\",0 /*unique*/);' " +
+						"title='Click to open a new browser tab with both source files in the Code Editor.'>" +
+						"here</a> to open them in the Code Editor)" +
+						"\n\n" + 
+												
+						"<a onclick='DesktopContent.openNewWindow(" +
+						"\"Code Editor\",\".h\"," + 
+						"\"/WebPath/html/CodeEditor.html" + 
+						"urn=" + _codeEditorAppId + 
+						"&startFilePrimary=" +
+						headerFile + "\",0 /*unique*/);' " +
+						"title='Click to open this header file in the Code Editor.'>" +
+						headerFile + "</a>\n\nand...\n\n" +  
+												
+						"<a onclick='DesktopContent.openNewWindow(" +
+						"\"Code Editor\",\".cc\"," + 
+						"\"/WebPath/html/CodeEditor.html" + 
+						"urn=" + _codeEditorAppId + 
+						"&startFilePrimary=" +
 						sourceFile + "\",0 /*unique*/);' " +
 						"title='Click to open this source file in the Code Editor.'>" +
 						sourceFile + "</a>\n\n" +
@@ -1695,11 +1747,11 @@
 						DesktopContent._localUrnLid + //same LID as MacroMaker
 						"\",0 /*unique*/);' " +
 						"title='Click to open the FE Macro Test web app.'>" +
-						"FE Macro Test" + "</a>\n\n"
+						"FE Macro Test" + "</a>"
 						,
 						Debug.INFO_PRIORITY);
     		}
-    		else    			
+    		else			
     			Debug.log("Error! Something went wrong with your FE Macro export." +
     					" Please check the logs to understand the error.",
 						Debug.HIGH_PRIORITY);
@@ -1716,9 +1768,47 @@
     	
 		var exportFile = DesktopContent.getXMLValue(req,"ExportFile");
 		if(exportFile)
-			Debug.log("Your Macro was succesfully exported!" +
-					" It was saved to...\n\n" + exportFile					
-					,Debug.INFO_PRIORITY);
+		{	
+			if(!_codeEditorAppId)
+			{
+				Debug.log("Your Macro was succesfully exported!" +
+						" It was saved to...\n\n" + exportFile					
+						,Debug.INFO_PRIORITY);
+
+				DesktopContent.tooltip("Using the Code Editor", 
+						"You can edit and view files in the Code Editor, however " +
+						"no active Code Editor Supervisor was found in your system. You can not open files without a Code Editor Supervisor. " + 
+						"Please edit the Context group to include a Code Editor Supervisor and relaunch ots.");
+			}
+			else
+				Debug.log("Your Macro was succesfully exported to a " +
+						"source code file...\n" + 
+						"(Click " +
+						"<a onclick='DesktopContent.openNewBrowserTab(" +
+						"\"Code Editor\",\"\"," + 
+						"\"/WebPath/html/CodeEditor.html?" + 
+						"urn=" + _codeEditorAppId + 
+						"&startFilePrimary=" +
+						exportFile + "\",0 /*unique*/);' " +
+						"title='Click to open a new browser tab with the source file in the Code Editor.'>" +
+						"here</a> to open them in the Code Editor)" +
+						"\n\n" + 
+
+						"<a onclick='DesktopContent.openNewWindow(" +
+						"\"Code Editor\",\".h\"," + 
+						"\"/WebPath/html/CodeEditor.html" + 
+						"urn=" + _codeEditorAppId + 
+						"&startFilePrimary=" +
+						exportFile + "\",0 /*unique*/);' " +
+						"title='Click to open this source file in the Code Editor.'>" +
+						exportFile + "</a>",
+					Debug.INFO_PRIORITY);
+
+		}
+		else
+			Debug.log("Error! Something went wrong with your Macro export." +
+					" Please check the logs to understand the error.",
+					Debug.HIGH_PRIORITY);	
    	} //end exportMacroHandler()
 
 	//=====================================================================================
