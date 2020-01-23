@@ -100,7 +100,7 @@ fi
 
 QUAL=$2
 if [ "$2" == "DEFAULT" ]; then
-	QUAL="$LATEST_QUAL:prof"
+	QUAL="s85:e17:prof" #"$LATEST_QUAL:prof"
 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t\t\t DEFAULT QUALS = $QUAL"
 fi
 
