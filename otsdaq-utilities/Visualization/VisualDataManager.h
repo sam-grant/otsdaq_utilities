@@ -35,6 +35,7 @@ class VisualDataManager : public DataManager
 	// Getters
 	DQMHistosBase* getLiveDQMHistos(void);
 	DQMHistosBase& getFileDQMHistos(void);
+	void           setWait(bool wait){wait_ = wait;}
 	// const Visual3DEvents&   getVisual3DEvents   (void);
 	// const Visual3DGeometry& getVisual3DGeometry (void);
 
@@ -48,6 +49,7 @@ class VisualDataManager : public DataManager
 	// Visual3DData           the3DData_;
 
 	RawDataVisualizerConsumer* theRawDataConsumer_;
+	bool           wait_;
 
 };
 }
