@@ -9,6 +9,8 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
 
 using namespace ots;
 
@@ -18,6 +20,7 @@ VisualDataManager::VisualDataManager(const ConfigurationTree& theXDAQContextConf
     : DataManager(theXDAQContextConfigTree, supervisorConfigurationPath)
     , theLiveDQMHistos_(nullptr)
     , theRawDataConsumer_(nullptr)
+    , wait_ (false)
 //, theFileDQMHistos_ (supervisorType, supervisorInstance, "VisualBuffer",
 //"FileDQMHistos") , theFileDQMHistos_ (supervisorType, supervisorInstance,
 //"VisualBuffer", "FileDQMHistos",0) , theFileDQMHistos_ ()
@@ -148,8 +151,9 @@ void VisualDataManager::start(std::string runNumber)
 //========================================================================================================================
 void VisualDataManager::stop(void)
 {
-	theLiveDQMHistos_ = nullptr;
-	DataManager::stop();
+  //while(wait_) std::this_thread::sleep_for (std::chrono::milliseconds(200));
+  theLiveDQMHistos_ = nullptr;
+  DataManager::stop();
 }
 
 //========================================================================================================================
