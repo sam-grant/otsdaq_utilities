@@ -43,7 +43,7 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 #undef __MF_SUBJECT__
 #define __MF_SUBJECT__ "Console"
 
-//========================================================================================================================
+//==============================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
     : CoreSupervisorBase(stub), messageCount_(0), maxMessageCount_(100000)
 {
@@ -59,9 +59,9 @@ ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
 	__SUP_COUT__ << "Constructor complete." << __E__;
 }
 
-//========================================================================================================================
+//==============================================================================
 ConsoleSupervisor::~ConsoleSupervisor(void) { destroy(); }
-//========================================================================================================================
+//==============================================================================
 void ConsoleSupervisor::init(void)
 {
 	// start mf msg listener
@@ -73,13 +73,13 @@ void ConsoleSupervisor::init(void)
 	    .detach();
 }  // end init()
 
-//========================================================================================================================
+//==============================================================================
 void ConsoleSupervisor::destroy(void)
 {
 	// called by destructor
 }  // end destroy()
 
-//========================================================================================================================
+//==============================================================================
 // messageFacilityReceiverWorkLoop ~~
 //	Thread for printing Message Facility messages without decorations
 //	Note: Uses std::mutex to avoid conflict with reading thread.
@@ -110,7 +110,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 	ReceiverSocket rsock(myip, myport);  // Take Port from Configuration
 	try
 	{
-		rsock.initialize(0x100000 /*socketReceiveBufferSize*/);
+		rsock.initialize(0xA00000 /*socketReceiveBufferSize*/);
 	}
 	catch(...)
 	{
@@ -302,7 +302,7 @@ catch(...)
 	__COUT_ERR__ << "Unknown error caught at Console Supervisor thread." << __E__;
 }
 
-//========================================================================================================================
+//==============================================================================
 void ConsoleSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 {
 	__SUP_COUT__ << "ApplicationDescriptor LID="
@@ -312,7 +312,7 @@ void ConsoleSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 	     << getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
 }  // end defaultPage()
 
-//========================================================================================================================
+//==============================================================================
 // forceSupervisorPropertyValues
 //		override to force supervisor property values (and ignore user settings)
 void ConsoleSupervisor::forceSupervisorPropertyValues()
@@ -324,7 +324,7 @@ void ConsoleSupervisor::forceSupervisorPropertyValues()
 	//			"SaveUserPreferences | LoadUserPreferences");
 }  // end forceSupervisorPropertyValues()
 
-//========================================================================================================================
+//==============================================================================
 //	Request
 //		Handles Web Interface requests to Console supervisor.
 //		Does not refresh cookie for automatic update checks.
@@ -467,7 +467,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	}
 }  // end request()
 
-//========================================================================================================================
+//==============================================================================
 // ConsoleSupervisor::insertMessageRefresh()
 //	if lastUpdateClock is current, return nothing
 //	else return new messages

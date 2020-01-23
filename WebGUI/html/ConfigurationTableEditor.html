@@ -17,7 +17,6 @@
 			color: rgb(15, 152, 76);
 		}
 
-
 		.treeNode-deleteIcon {			
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
 			width: 				16px;
@@ -153,7 +152,9 @@
 			//transposeTable()
 			//createEditTableMenu(event)
 			//setupFindAndReplace()
-			//configReplace()
+			//setupCopyAndMoveFields()
+			//copyOrMoveField(deleteSrc)
+			//tableReplace()
 		
 			//keyHandler(e)
 			//descriptionKeyHandler(e,tel)
@@ -170,10 +171,12 @@
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 						
-		
+
+		//==============================================================================
 		//init ~
 		//	init called once body has loaded
-		function init() {			
+		function init() 
+		{			
 			Debug.log("CfgTableEditor init");
 			
 			//attempt to get last table name used.. to load after refresh
@@ -264,7 +267,8 @@
 				//Debug.log(_mouseIsSelecting);
 			};		
 		}
-		
+
+		//==============================================================================
 		//setupTableEditor(req) ~
 		function setupTableEditor(req)
 		{
@@ -340,6 +344,7 @@
 			
 		} //end setupTableEditor
 
+		//==============================================================================
 		//handleTypeSelect ~
 		function handleTypeSelect()
 		{
@@ -359,7 +364,8 @@
 			el.style.display = found?"block":"none";	
 			
 		}
-		
+
+		//==============================================================================
 		//loadTable ~
 		function loadTable()
 		{
@@ -372,7 +378,8 @@
 			//load mockup for chosen table
 			setupSpecificConfig(tableName, -1);
 		}
-		
+
+		//==============================================================================
 		//saveTable ~
 		function saveTable(allowOverwrite)
 		{
@@ -431,7 +438,7 @@
 				true /*callHandlerOnErr*/);	
 		}
 		
-
+		//==============================================================================
 		//verifyDeleteTable ~
 		function verifyDeleteTable()
 		{
@@ -447,7 +454,8 @@
 					Debug.WARN_PRIORITY);
 			document.getElementById("reallyDeleteButton").style.display = "inline";			
 		}
-		
+
+		//==============================================================================
 		//deleteTable ~
 		function deleteTable()
 		{
@@ -474,9 +482,11 @@
 			);
 		}
 
+		//==============================================================================
 		//setupSpecificConfig ~
 		//	undefined version gives latest
-		function setupSpecificConfig(tableName,version) {
+		function setupSpecificConfig(tableName,version) 
+		{
 			var v = "";
 			if(version) v = "&version="+version;
 			document.getElementById("SaveAsConfigName").value = tableName;
@@ -490,9 +500,11 @@
 					0 /*progressHandler*/,
 					true /*callHandlerOnErr*/);		
 		}		
-		
+
+		//==============================================================================
 		//setupEmptyTable
-		function setupEmptyTable() {
+		function setupEmptyTable()
+		{
 			
 			var colTypes = ["UID","Comment","Author","Timestamp"];
 			var colDataTypes = [_STRING_TYPE, _STRING_TYPE, _STRING_TYPE, _DATE_TYPE];
@@ -502,8 +514,10 @@
 			setupTable("Empty Table Template",colHdrs,colTypes,colDataTypes,colChoices,"No description.");
 		}
 
+		//==============================================================================
 		//specificConfigRequestHandler
-		function specificConfigRequestHandler(req, isFromSaveReq) {
+		function specificConfigRequestHandler(req, isFromSaveReq) 
+		{
 
 			var tableName = DesktopContent.getXMLValue(req,"TableName");
 			var err = DesktopContent.getXMLValue(req,"Error");
@@ -526,9 +540,9 @@
 					//try to power through
 				}
 			}
-			else if(tableName != "")
-				Debug.log("Column info for table '" + tableName + "' was successfully loaded!",
-						Debug.INFO_PRIORITY);
+//			else if(tableName != "")
+//				Debug.log("Column info for table '" + tableName + "' was successfully loaded!",
+//						Debug.INFO_PRIORITY);
 				
 			document.getElementById("overwriteButton").style.display = "none";						
 			
@@ -584,7 +598,8 @@
 			Debug.log("tableDescription = " + tableDescription);
 			setupTable(tableName,colHdrsArr,colTypesArr,colDataTypesArr,colChoicesArr,tableDescription);
 		}
-		
+
+		//==============================================================================
 		//setupTable ~
 		function setupTable(srcName,colHdrs,colTypes,colDataTypes,colChoices,tableDescription)
 		{
@@ -635,7 +650,9 @@
 						
 			var str = "";
 			
-			str += "Starting point was...<br>";
+			str += "Starting point was loaded at " +
+					(new Date()) + 
+					"...<br>";
 
 			//display edit menu
 			str +=
@@ -649,7 +666,8 @@
 			
 
 			str += "<div id='clearDiv'></div>";						
-			str += "<div id='findAndReplace'></div>";
+			str += "<div id='findAndReplace'></div>";				
+			str += "<div id='copyAndMoveFields'></div>";
 			
 			//display table
 			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
@@ -850,13 +868,18 @@
 				//show +/- columns where possible to add/delete
 				if(c <= colTypes.length - _CONFIG_FIXED_CELLS)					
 				{
-					str += " <a href='javascript:addColumn(" + c + ");'>";
+					str += c + ". ";
+					str += " <a class='tableAddRowButton' " +
+							"title='Add a field before this field.' " +
+							"onclick='addColumn(" + c + ");'>";
 					str += "+";
 					str += "</a>";
 
 					if(c < colTypes.length - _CONFIG_FIXED_CELLS && colTypes[c] != "UID")
 					{
-						str += "/<a href='javascript:deleteColumn(" + c + ");'>";
+						str += "/<a class='tableDeleteRowButton' " +
+								"title='Delete this field.' " +
+								"onclick='deleteColumn(" + c + ");'>";
 						str += "-";
 						str += "</a>";
 					}
@@ -1289,12 +1312,14 @@
 			return true;
 		}
 		
+		//==============================================================================
 		//setCaretPosition
 		function setCaretPosition(elem, caretPos, endPos) {
             elem.focus();
             elem.setSelectionRange(caretPos, endPos);
 		}
-		
+
+		//==============================================================================
 		//fixedChoiceKeyHandler
 		//	enter and tab key adds to list without popup success message
 		function fixedChoiceKeyHandler(e,c) 
@@ -1315,6 +1340,7 @@
 			return false; //done
 		} //end fixedChoiceKeyHandler()
 
+		//==============================================================================
 		//descriptionKeyHandler
 		//	add tab character to textareal element value
 		function descriptionKeyHandler(e,tel) 
@@ -1335,7 +1361,8 @@
 			}
 			return false; //done if text area was identified
 		} //end descriptionKeyHandler()
-		
+
+		//==============================================================================
 		//keyHandler
 		function keyHandler(e) 
 		{
@@ -1447,7 +1474,8 @@
 				return false;
 			}
 		} //end keyHandler
-		
+
+		//==============================================================================
 		//editCellOK
 		function editCellOK() 
 		{				
@@ -1587,7 +1615,8 @@
 			_editingCell = false;
 			_editingCellEl = 0;
 		}
-		
+
+		//==============================================================================
 		//editCellCancel
 		function editCellCancel() 
 		{	
@@ -1596,9 +1625,9 @@
 			
 			_editingCell = false;
 			_editingCellEl = 0;
-		}
-		
+		}		
 
+		//==============================================================================
 		//addColumn ~~
 		// adds col to position c (relative to view on page)
 		// absolute col is _dataOffset + c
@@ -1613,7 +1642,8 @@
 			
 			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colChoicesArr);
 		}
-		
+
+		//==============================================================================
 		//deleteColumn ~~
 		// deletes col to position c (relative to view on page)
 		// absolute col is _dataOffset + c
@@ -1629,6 +1659,7 @@
 			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colChoicesArr);
 		}
 
+		//==============================================================================
 		//transposeTable ~~
 		function transposeTable()
 		{
@@ -1637,18 +1668,20 @@
 			
 			setupTable();
 		}
-		
 
+		//==============================================================================
 		//createEditTableMenu ~~
 		function createEditTableMenu(event)
 		{
 			var menuItems = [
-							 "Find and Replace",							 
+							 "Find and Replace",	
+							 "Copy and Move",
 							 "Transpose Table View"
 									 ];
 			var menuItemHandlers = [
-							 "setupFindAndReplace()",
-							 "transposeTable()"							 							 
+							"setupFindAndReplace()",
+							"setupCopyAndMoveFields()",
+							"transposeTable()"							 							 
 									 ];
 			Debug.log("createEditTableMenu()");
 			SimpleContextMenu.createMenu(
@@ -1660,15 +1693,17 @@
 					"rgb(130, 51, 51)"				//secondary color
 			);
 		}
-		
 
+		//==============================================================================
 		//setupFindAndReplace
 		function setupFindAndReplace()
-		{			 
-			var el;
+		{			
 			
 			//if there were any other types of controls, clear them 
 			//	here {}
+
+			var el = document.getElementById('copyAndMoveRows');
+			el.innerHTML = ""; //clear the other type of controls
 			
 			el = document.getElementById('findAndReplace'); 
 			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
@@ -1689,15 +1724,108 @@
 			//					"Find every occurance of \'For text...\" in the Column(s) specified by \'Search in column.\'" +
 			//					"'/>";
 			//			str += " ";
-			str += "<input type='button' onmouseup='configReplace()' value='Replace' title='" +
+			str += "<input type='button' onmouseup='tableReplace()' value='Replace' title='" +
 					"Replace every occurance of \'For text...\" in the Column(s) specified by \'Search in column\' with the string specified in \'Replace with...\'" +
 					"'/>";			
 			str += "<br><br>";
-			el.innerHTML = str;						
-		}
+			el.innerHTML = str;		
+		} //end setupFindAndReplace()
 
-		//configReplace ~~
-		function configReplace()
+		//==============================================================================
+		//setupCopyAndMoveFields
+		function setupCopyAndMoveFields()
+		{		
+			Debug.log("setupCopyAndMoveFields()");
+
+			var el = document.getElementById('findAndReplace');
+			el.innerHTML = ""; //clear the other type of controls
+			el = document.getElementById('copyAndMoveFields');
+			if (el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
+
+			var str = "";
+			str += "Source starting Field... ";
+			str += "<input type='text' id='copyAndMoveFieldsSrc' style='margin:0;width:" +
+					(el.offsetWidth - 6) + "px; height:" + (17) + "px' value='0'>";
+			str += "<br>";
+			str += "Number of Fields to Copy or Move... ";
+			str += "<input type='text' id='copyAndMoveFieldsSrcCount' style='margin:0;width:" +
+					(el.offsetWidth - 6) + "px; height:" + (17) + "px' value='1'>";
+			str += "<br>";
+			str += "Destination Field location (-1 for new last field)... ";
+			str += "<input type='text' id='copyAndMoveFieldsDest' style='margin:0;width:" +
+					(el.offsetWidth - 6) + "px; height:" + (17) + "px' value='-1'>";
+
+			//make div for translating innerHTML and value
+			str += "<div id='copyAndMoveFieldsHTML' style='display:none'></div>";
+
+			str += "<br><br>";
+			str += "<input type='button' onmouseup='copyOrMoveField(0)' value='Copy Field' title='" +
+					"Copy Source Field and paste at Destination Field, pushing previously existing Fields down." +
+					"'/>";
+			str += " ";
+			str += "<input type='button' onmouseup='copyOrMoveField(1)' value='Move Field' title='" +
+					"Cut Source Field and paste at Destination Field, pushing previously existing Fields down." +
+					"'/>";
+
+			str += "<br><br>";
+			el.innerHTML = str;
+		} //end setupCopyAndMoveFields()
+
+		//==============================================================================
+		//copyOrMoveField
+		function copyOrMoveField(deleteSrc)
+		{		
+			var src = document.getElementById("copyAndMoveFieldsSrc").value | 0;
+			var dest = document.getElementById("copyAndMoveFieldsDest").value | 0;
+			var srcCount = document.getElementById("copyAndMoveFieldsSrcCount").value | 0;
+
+			Debug.log("tableCopyOrMoveField src=" + src + " srcCount=" + 
+					srcCount + " dest=" + dest);
+
+			if (srcCount < 1) {
+				Debug.log("Error: Illegal Number of Fields '" + (srcCount) +
+						"' given. Number of Fields must be greater than or equal to 1.",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			if(dest < 0) //change to end
+				dest = _colHdrArr.length - 3; //do not change last 3
+			
+			//steps:
+			//	add field(s) in right place
+			//	delete source field(s) if necessary
+			var deleteField = src;
+			for(var i=srcCount-1;i>=0;--i) //go backwards, so inserted in order
+			{
+				
+				_colHdrArr.splice(dest,0,_colHdrArr[src + i]);
+				_colTypeArr.splice(dest,0,_colTypeArr[src + i]);
+				_colDataTypeArr.splice(dest,0,_colDataTypeArr[src + i]);
+				_colChoicesArr.splice(dest,0,_colChoicesArr[src + i]);
+				
+				if(dest < src)
+					++src; //compensate for new add 
+				if(dest < deleteField)
+					++deleteField;  //compensate for new add
+			} //end add field loop
+
+			if(deleteSrc)
+				for(var i=0;i<srcCount;++i)
+				{
+					_colHdrArr.splice(deleteField,1);
+					_colTypeArr.splice(deleteField,1);
+					_colDataTypeArr.splice(deleteField,1);
+					_colChoicesArr.splice(deleteField,1);
+				}	// end delete field loop
+				
+			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colChoicesArr);
+						
+		} //end tableCopyOrMoveRow()
+
+		//==============================================================================
+		//tableReplace ~~
+		function tableReplace()
 		{			
 			editCellCancel();			
 			var needle = document.getElementById("findAndReplaceNeedle").value;
@@ -1715,7 +1843,7 @@
 			convertEl.appendChild(document.createTextNode(replaceStr));
 			replaceStr = convertEl.innerHTML; //converted text
 			
-			Debug.log("configReplace '" + needle + "' with '" + replaceStr + "'");
+			Debug.log("tableReplace '" + needle + "' with '" + replaceStr + "'");
 			
 			//change hdrs and types 
 			var cellStr;
@@ -1762,7 +1890,8 @@
 			setupTable();
 						
 		}
-		
+
+		//==============================================================================
 		//addFixedChoice ~~
 		//	for column c
 		function addFixedChoice(c,quiet)
@@ -1829,8 +1958,9 @@
 			var el = document.getElementById("newChoiceInput-" + c);
 			setCaretPosition(el,0,el.value.length);
 			
-		} // end addFixedChoice()
-		
+		} //end addFixedChoice()
+
+		//==============================================================================
 		//handlefixedChoiceArbitraryCheckbox ~~
 		//	set the value in fixed choice array
 		//	if setSelectValue, then take the select box value as entry 1 in the array
@@ -1863,7 +1993,8 @@
 			}
 			Debug.log("_colChoicesArr[c] " + _colChoicesArr[c]);
 		}
-		
+
+		//==============================================================================
 		//deleteSelectedFixedChoice ~~
 		//	for column c
 		function deleteSelectedFixedChoice(c)
@@ -1951,7 +2082,7 @@
 					Debug.INFO_PRIORITY);
 		}
 		
-
+		//==============================================================================
 		//downloadFixedChoices ~~
 		//	for column c
 		//
@@ -1996,6 +2127,7 @@
 			link.parentNode.removeChild(link);
 		}
 
+		//==============================================================================
 		//popUpUploadFixedChoicesForm ~~
 		//	for column c
 		var _dataUploadStr;
@@ -2067,7 +2199,8 @@
 			}, false);
 		
 		}
-		
+
+		//==============================================================================
 		//uploadFixedChoices ~~
 		//	for column c
 		function uploadFixedChoices(c)
@@ -2096,7 +2229,7 @@
 			
 			Debug.log("Fixed choices were successfully uploaded!",
 					Debug.INFO_PRIORITY);
-		}
+		} //end uploadFixedChoices()
 		
 		
 	</script>
@@ -2112,10 +2245,10 @@
 	<a href='javascript:init()'>Refresh Window</a> 	&nbsp;&nbsp;
 	<a href='javascript:setupEmptyTable()'>Clear Table</a> 	&nbsp;&nbsp;
 
-	<a style='margin-left:300px' target="_blank" 
+	<!--<a style='margin-left:300px' target="_blank" 
 			href="https://cdcvs.fnal.gov/redmine/projects/otsdaq/search?utf8=%E2%9C%93&wiki_pages=1&q=table+editor&all_words=1&issues=1&documents=1" 
 					title="Click to open ots documentation">
-	<img src="/WebPath/images/dashboardImages/icon-Help.png"></a>
+	<img src="/WebPath/images/dashboardImages/icon-Help.png"></a> -->
 	</div>
 	
 	<hr>

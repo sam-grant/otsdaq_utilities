@@ -103,11 +103,14 @@ else {
 
       	//=====================================================================================
       	// this.resetWithPermissions ~~      	
-      	this.resetWithPermissions = function(permissions) 
+      	this.resetWithPermissions = function(permissions, keepSamePermissions) 
 		{
-      		Debug.log("Desktop resetWithPermissions " + permissions,Debug.LOW_PRIORITY);
+      		Debug.log("Desktop resetWithPermissions " + permissions +
+      				", " + keepSamePermissions,Debug.LOW_PRIORITY);
 
-      		if(permissions !== undefined)
+      		if(permissions === undefined && !keepSamePermissions)
+      			return;
+      		else if(!keepSamePermissions)
       			_permissions = permissions;
       		////////////
 
@@ -156,7 +159,11 @@ else {
 		    	
 		    	iconArray = Desktop.getXMLValue(req,"iconList"); 
 				//Debug.log("icon Array unsplit: " + iconArray);
-				iconArray = iconArray.split(","); 
+		    	
+		    	if(iconArray)
+		    		iconArray = iconArray.split(",");
+		    	else
+		    		iconArray = [];
 			}
       		else //it is the wizard
       		{ 
@@ -204,10 +211,12 @@ else {
      		
      		
       	}
-      	
+
+      	//=====================================================================================
       	// this.addIcon ~~
       	//	adds an icon subtext wording underneath and image icon (if picfn defined, else alt text icon)
-      	this.addIcon = function(subtext, altText, linkurl, uniqueWin, picfn, folderPath) {
+      	this.addIcon = function(subtext, altText, linkurl, uniqueWin, picfn, folderPath) 
+      	{
       	      		
       		//Debug.log("this.addIcon");
       		      		
@@ -482,7 +491,8 @@ else {
 				}
 			}
       	} //end this.addIcon()
-      	
+
+      	//=====================================================================================
       	//this.openFolder ~~
       	//	this version is called from desktop icons
       	//		it opens up the div content at a position
@@ -515,7 +525,8 @@ else {
       		
       		this.openSubFolder(folderName);
       	}
-      	
+
+      	//=====================================================================================
       	//this.openSubFolder ~~
       	//	folderArray is a list of folder and icon objects
       	this.openSubFolder = function(folderName) {
@@ -585,6 +596,7 @@ else {
       			vals.push(subfolders[i]);
       			types.push("folder");
       			keys.push(i);  
+      			
       			imgURLs.push("/WebPath/images/iconImages/" + 
       					"icon-Folder.png");
       		}
@@ -599,9 +611,13 @@ else {
       			if(_openFolderPtr[1][i][4] != "0" && 
       					_openFolderPtr[1][i][4] != "DEFAULT" && 
 						_openFolderPtr[1][i][4] != "") //if icon image	
-      			{      						
-      				imgURLs.push("/WebPath/images/iconImages/" + 
-      					_openFolderPtr[1][i][4]);
+      			{      	
+
+          			if(_openFolderPtr[1][i][4][0] != '/')
+          				imgURLs.push("/WebPath/images/iconImages/" + 
+          						_openFolderPtr[1][i][4]);
+          			else
+          				imgURLs.push(_openFolderPtr[1][i][4]);          			
       			}
       			else
       				imgURLs.push("=" + _openFolderPtr[1][i][1]);
@@ -654,7 +670,8 @@ else {
 					"Desktop.desktop.icons.mouseUpFolderContents");
       		MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
       	}
-      	
+
+      	//=====================================================================================
       	//this.closeFolder ~~
       	this.closeFolder = function() {
       		//Debug.log("Close folder");
@@ -672,6 +689,7 @@ else {
       		_openFolderPtr = undefined; //clear
       	}
 
+      	//=====================================================================================
       	//this.clickFolderContents ~~
       	this.clickFolderContents = function(el) {
       		
@@ -699,7 +717,8 @@ else {
             else
             	this.openSubFolder(val);
       	}
-      	
+
+      	//=====================================================================================
       	//this.mouseUpFolderContents ~~
       	//	this functionality should mirror addIcon()
       	this.mouseUpFolderContents = function(el,event) {
@@ -710,6 +729,7 @@ else {
       		}
       	}
 
+      	//=====================================================================================
       	//this.mouseDownFolderContents ~~
       	//	this functionality should mirror local function
       	//	deepClickHandler() in addIcon()

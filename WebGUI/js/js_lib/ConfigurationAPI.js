@@ -5480,7 +5480,7 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 		}			
 		else if(type == "value-groupid")
 		{					
-			el.appendChild(document.createTextNode(newValue));
+			el.appendChild(document.createTextNode(decodeURIComponent(newValue)));
 		}
 		else	//unrecognized type!?
 		{
@@ -5557,7 +5557,7 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 		Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
 		editCellCancel(); return;
 	}
-}
+} //end handleEditableFieldEditOK()
 
 
 //=====================================================================================

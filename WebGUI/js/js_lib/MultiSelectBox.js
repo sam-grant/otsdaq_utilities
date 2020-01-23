@@ -180,6 +180,16 @@ MultiSelectBox.getSelectionElementByIndex = function(el,i)
 MultiSelectBox.setSelectionElementByIndex = function(el,i,selected)
 {    
 	var name = el.getElementsByClassName("mySelect")[0].id;
+	
+	if(!MultiSelectBox.isSingleSelect_[name] && 
+			i == -1) //apply to all
+	{
+		var size = MultiSelectBox.mySelects_[name].length;
+		for (var opt=0; opt<size; opt++)
+			MultiSelectBox.mySelects_[name][opt] = selected?1:0;
+		return;
+	}
+	
 	if(MultiSelectBox.isSingleSelect_[name] && 
 			selected) //if true, only allow one select at a time, so deselect others
 	{
@@ -595,6 +605,12 @@ MultiSelectBox.performSearchSelect = function(id,el,altstr)
 
 MultiSelectBox.makeSearchBar = function(id)
 {
+	//remove old existing search bars
+	
+	var el;
+	while(el = document.getElementById(id + "search"))
+		el.parentNode.removeChild(el);					
+	
 	var searchBox=document.createElement("input");
 	var onchange='MultiSelectBox.searchSelect("' + id + '",this)';
 	

@@ -5,7 +5,7 @@
 
 GETPACKAGEINFO(Chat)
 
-//========================================================================================================================
+//==============================================================================
 void Chat::checkPackageDependencies()
 {
 	CHECKDEPENDENCY(config);
@@ -13,7 +13,7 @@ void Chat::checkPackageDependencies()
 	CHECKDEPENDENCY(xdaq);
 }
 
-//========================================================================================================================
+//==============================================================================
 std::set<std::string, std::less<std::string> > Chat::getPackageDependencies()
 {
 	std::set<std::string, std::less<std::string> > dependencies;
