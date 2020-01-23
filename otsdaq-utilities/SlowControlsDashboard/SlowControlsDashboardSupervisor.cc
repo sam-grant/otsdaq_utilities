@@ -325,6 +325,10 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	{
 		SaveControlsPage(cgiIn, xmlOut, userInfo);
 	}
+	else if(Command == "createPhoebusControlsPage")
+	{
+		SavePhoebusControlsPage(cgiIn, xmlOut, userInfo);
+	}
 	//	else if(Command == "savePage")
 	//	{
 	//		std::string pageName = CgiDataUtilities::getData(cgiIn, "PageName");
@@ -950,6 +954,62 @@ void SlowControlsDashboardSupervisor::SaveControlsPage(
 	outputFile << "Time: " << Time << "\n";
 	outputFile << "Notes: " << Notes << "\n";
 	outputFile << "Page: " << pageString;
+	outputFile.close();
+
+	std::cout << "Finished writing file" << std::endl;
+
+	return;
+}
+
+//==============================================================================
+void SlowControlsDashboardSupervisor::SavePhoebusControlsPage(
+    cgicc::Cgicc&                    cgiIn,
+    HttpXmlDocument&                 xmlOut,
+    const WebUsers::RequestUserInfo& userInfo)
+{
+	__SUP_COUT__ << "ControlsDashboard wants to create a Controls Page!" << __E__;
+
+	std::string controlsPageName = CgiDataUtilities::postData(cgiIn, "Name");
+	std::string pageString       = CgiDataUtilities::postData(cgiIn, "Page");
+	std::string isControlsPagePublic = CgiDataUtilities::postData(cgiIn, "isPublic");
+
+	__SUP_COUTV__(controlsPageName);
+	__SUP_COUTV__(pageString);
+	__SUP_COUTV__(isControlsPagePublic);
+
+	if(controlsPageName == "")
+		return;
+
+	__SUP_COUTV__(CONTROLS_SUPERVISOR_DATA_PATH);
+
+	std::string fullPath;
+	if(isControlsPagePublic == "true")
+		fullPath = (std::string)CONTROLS_SUPERVISOR_DATA_PATH + "public/";
+	else
+		fullPath = (std::string)CONTROLS_SUPERVISOR_DATA_PATH + "private/";
+
+	__SUP_COUTV__(fullPath);
+
+	std::string file = fullPath + controlsPageName;
+
+	__SUP_COUTV__("Saving Controls Page to: " + file);
+
+	std::string extension = file.substr(file.length() - 4, 4);
+	if(extension != ".dat")
+	{
+		__SUP_COUT__ << "Extension : " << extension << std::endl;
+		file += std::string(".dat");
+	}
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+	             << "Trying to save page: " << controlsPageName << std::endl;
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+	             << "Trying to save page as: " << file << std::endl;
+	// read file
+	// for each line in file
+
+	std::ofstream outputFile;
+	outputFile.open(file);
+	outputFile << pageString << "\n";
 	outputFile.close();
 
 	std::cout << "Finished writing file" << std::endl;
