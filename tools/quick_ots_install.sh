@@ -1,11 +1,14 @@
 #!/bin/bash
 #
-# This script is expected to be executed (not sourced) as root from the directory you want ots installed into.
+# This script is expected to be sourced as root from the directory into which you want ots installed.
+#
+# Note: you can try to install as a standard user, but the yum install commands will probably fail
+# 	(this might be ok, if the system has already been setup).
 #
 # cd my/install/path
 # wget https://cdcvs.fnal.gov/redmine/projects/otsdaq-utilities/repository/revisions/develop/raw/tools/quick_ots_install.sh -O quick_ots_install.sh --no-check-certificate
 # chmod 755 quick_ots_install.sh
-# ./quick_ots_install.sh -u <user name> -g <user group>
+# source quick_ots_install.sh
 #
 
 USER=$(whoami)
@@ -14,6 +17,8 @@ FOR_GROUP=$(stat -c "%G" $PWD)
 	
 echo -e "quick_ots_install.sh [${LINENO}]  "
 echo -e "quick_ots_install.sh [${LINENO}]  \t ~~ quick_ots_install ~~ "
+echo -e "quick_ots_install.sh [${LINENO}]  "
+echo -e "quick_ots_install.sh [${LINENO}]  \t usage: source quick_ots_install.sh"
 echo -e "quick_ots_install.sh [${LINENO}]  "
 echo -e "quick_ots_install.sh [${LINENO}]  \t user '$USER' installing for target user '$FOR_USER $FOR_GROUP'"
 echo -e "quick_ots_install.sh [${LINENO}]  \t (note: target user is set based on the owner of $PWD)"
@@ -120,6 +125,7 @@ echo -e "quick_ots_install.sh [${LINENO}]  \t\t source setup_ots.sh     ########
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t mb                      #########################################   #for incremental build"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t mz                      #########################################   #for clean build"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t UpdateOTS.sh            #########################################   #to see update options"
+echo -e "quick_ots_install.sh [${LINENO}]  \t\t ./change_ots_qualifiers.sh           ############################   #to see qualifier options"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t chmod 755 reset_ots_tutorial.sh; ./reset_ots_tutorial.sh --list     #to see tutorial options"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t ots -w                  #########################################   #to run ots in wiz(safe) mode"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t ots                     #########################################   #to run ots in normal mode"
