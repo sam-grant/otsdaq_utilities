@@ -4991,10 +4991,11 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	         cfgViewPtr->getSourceColumnMismatch() !=
 	             0))  // check for column size mismatch
 	{
+		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
 		__SUP_SS__ << "\n\nThere were warnings found when loading the table " << tableName
 		           << ":v" << version << ". Please see the details below:\n\n"
 		           << "The source column size was found to be "
-		           << cfgViewPtr->getDataColumnSize()
+		           << srcColNames.size()
 		           << ", and the current number of columns for this table is "
 		           << cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of "
 		           << cfgViewPtr->getSourceColumnMismatch()
@@ -5002,7 +5003,6 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		           << cfgViewPtr->getSourceColumnMissing() << " table entries missing in "
 		           << cfgViewPtr->getNumberOfRows() << " row(s) of data." << __E__;
 
-		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
 		ss << "\n\nSource column names in ALPHABETICAL order were as follows:\n";
 		char        index       = 'a';
 		std::string preIndexStr = "";
