@@ -9,6 +9,8 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
 
 using namespace ots;
 
@@ -148,8 +150,8 @@ void VisualDataManager::start(std::string runNumber)
 //==============================================================================
 void VisualDataManager::stop(void)
 {
-	theLiveDQMHistos_ = nullptr;
-	DataManager::stop();
+  theLiveDQMHistos_ = nullptr;
+  DataManager::stop();
 }
 
 //==============================================================================

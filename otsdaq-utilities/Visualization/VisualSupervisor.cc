@@ -8,8 +8,8 @@
 //#include "otsdaq/otsdaq/Macros/MessageTools.h"
 #include "otsdaq/DataManager/DQMHistosConsumerBase.h"
 //#include <boost/regex.hpp>
-#include "otsdaq/RootUtilities/RootFileExplorer.h"
 #include "otsdaq/Macros/MessageTools.h"
+#include "otsdaq/RootUtilities/RootFileExplorer.h"
 
 // ROOT documentation
 // http://root.cern.ch/root/html/index.html
@@ -38,7 +38,6 @@
 
 #include <iostream>
 #include <mutex>
-
 
 #define ROOT_BROWSER_PATH __ENV__("ROOT_BROWSER_PATH")
 #define ROOT_DISPLAY_CONFIG_PATH __ENV__("ROOT_DISPLAY_CONFIG_PATH")
@@ -447,7 +446,6 @@ void VisualSupervisor::request(const std::string&               requestType,
 	    "getRoot")  //################################################################################################################
 	{
 		// return directory structure for requested ROOT path, types are "dir" and "file"
-
 		std::string  path = CgiDataUtilities::postData(cgiIn, "RootPath");
 		boost::regex re("%2F");
 		path = boost::regex_replace(path, re, "/");  // Dario: should be transparent for
@@ -480,28 +478,9 @@ void VisualSupervisor::request(const std::string&               requestType,
 		ss << "rootDirectoryName " << rootDirectoryName;
 		STDLINE(ss.str(), "");
 		std::string::size_type LDQM_pos = path.find("/" + LIVEDQM_DIR + ".root/");
-		TFile*                 rootFile;
+		TFile* rootFile = nullptr;
 
-		if(theDataManager_->getLiveDQMHistos() != nullptr && LDQM_pos == 0)
-		{
-			STDLINE("=========> From file", "");
-			//__SUP_COUT__ << "Attempting to get LIVE file." << __E__;
-			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
-			//ss.str("") ; ss << "rootFile " << rootFile->GetName() ;
-			STDLINE(ss.str(),"") ;
-			if(rootFile == nullptr)
-				__SUP_COUT__ << "File was closed." << __E__;
-			else
-			{
-				__SUP_COUT__ << "LIVE file name: " << rootFile->GetName() << __E__;
-				rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
-				// ss.str("") ; ss << "rootDirectoryName " << rootDirectoryName ;
-				STDLINE(ss.str(), "");
-			}
-			// ss.str("") ; ss << "rootDirectoryName " << rootDirectoryName ;
-			STDLINE(ss.str(), "");
-		}
-		else
+		if(LDQM_pos != 0)//If it is not from LIVE_DQM
 		{
 			ss.str("");
 			ss << "rootFileName " << rootFileName;
@@ -511,9 +490,15 @@ void VisualSupervisor::request(const std::string&               requestType,
 			ss << "rootFile " << rootFile->GetName();
 			STDLINE(ss.str(), "");
 		}
-
-		__SUP_COUT__ << "FileName : " << rootFileName << " Object: " << rootDirectoryName
-		             << __E__;
+		else if(theDataManager_->getLiveDQMHistos() != nullptr)
+		{
+			STDLINE("=========> From file", "");
+			__SUP_COUT__ << "Attempting to get LIVE file." << __E__;
+			__SUP_COUT__ << "rootDirectoryName: " << rootDirectoryName << __E__;
+			rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
+			__SUP_COUT__ << "rootDirectoryName: " << rootDirectoryName << __E__;
+			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
+		}
 
 		if(rootFile == nullptr || !rootFile->IsOpen())
 		{
@@ -521,116 +506,130 @@ void VisualSupervisor::request(const std::string&               requestType,
 		}
 		else
 		{
+			__SUP_COUT__ << "LIVE file name: " << rootFile->GetName() << __E__;
 			xmlOut.addTextElementToData("path", path);
-			try{
-			TDirectory* directory;
-			directory = rootFile->GetDirectory(rootDirectoryName.c_str());
-			if(directory == 0)
+			try
 			{
-				//__SUP_COUT__ << "This is not a directory!" << __E__;
-				directory = rootFile;
-
-				// failed directory so assume it's file
-				// __SUP_COUT__ << "Getting object name: " << rootDirectoryName << __E__;
-				//ss.str("") ; ss << "rootDirectoryName: |" << rootDirectoryName << "| rootFile->GetName()" << rootFile->GetName() ;
-				//STDLINE(ss.str(),"") ;
-				//rootFile->ls() ;
-				TObject* histoClone = nullptr;
-				TObject* histo      = (TObject*)rootFile->Get(rootDirectoryName.c_str());
-				ss.str("");
-				ss << "histo ptr: |" << histo;
-				STDLINE(ss.str(), "");
-
-				if(histo != nullptr)  // turns out was a root object path
+				TDirectory* directory;
+				directory = rootFile->GetDirectory(rootDirectoryName.c_str());
+				if(directory == 0)
 				{
-					// Clone histo to avoid conflict when it is filled by other threads
-					//STDLINE("","") ;
-					if(theDataManager_->getLiveDQMHistos() != nullptr && LDQM_pos == 0)
+					//__SUP_COUT__ << "This is not a directory!" << __E__;
+					directory = rootFile;
+
+					// failed directory so assume it's file
+					// __SUP_COUT__ << "Getting object name: " << rootDirectoryName <<
+					// __E__;
+					// ss.str("") ; ss << "rootDirectoryName: |" << rootDirectoryName <<
+					// "| rootFile->GetName()" << rootFile->GetName() ;
+					// STDLINE(ss.str(),"") ;
+					// rootFile->ls() ;
+					TObject* histoClone = nullptr;
+					TObject* histo = (TObject*)rootFile->Get(rootDirectoryName.c_str());
+					ss.str("");
+					ss << "histo ptr: |" << histo;
+					STDLINE(ss.str(), "");
+
+					if(histo != nullptr)  // turns out was a root object path
 					{
-						std::unique_lock<std::mutex> lock(static_cast<DQMHistosConsumerBase*>(theDataManager_->getLiveDQMHistos())->getFillHistoMutex());
-						histoClone = histo = histo->Clone();
-					}
-					//STDLINE("","") ;
-					TString     json = TBufferJSON::ConvertToJSON(histoClone);
-					//STDLINE("","") ;
-					TBufferFile tBuffer(TBuffer::kWrite);
-					histo->Streamer(tBuffer);
-					//STDLINE("","") ;
+						// Clone histo to avoid conflict when it is filled by other
+						// threads
+						// STDLINE("","") ;
+						if(theDataManager_->getLiveDQMHistos() != nullptr &&
+						   LDQM_pos == 0)
+						{
+							std::unique_lock<std::mutex> lock(
+							    static_cast<DQMHistosConsumerBase*>(
+							        theDataManager_->getLiveDQMHistos())
+							        ->getFillHistoMutex());
+							histoClone = histo = histo->Clone();
+						}
+						// STDLINE("","") ;
+						TString json = TBufferJSON::ConvertToJSON(histoClone);
+						// STDLINE("","") ;
+						TBufferFile tBuffer(TBuffer::kWrite);
+						histo->Streamer(tBuffer);
+						// STDLINE("","") ;
 
-					//__SUP_COUT__ << "histo length " << tbuff.Length() << __E__;
+						//__SUP_COUT__ << "histo length " << tbuff.Length() << __E__;
 
-					std::string destination = BinaryStringMacros::binaryStringToHexString(
-					    tBuffer.Buffer(), tBuffer.Length());
+						std::string destination =
+						    BinaryStringMacros::binaryStringToHexString(tBuffer.Buffer(),
+						                                                tBuffer.Length());
 
-					xmlOut.addTextElementToData("rootType", histo->ClassName());
-					xmlOut.addTextElementToData("rootData", destination);
-					xmlOut.addTextElementToData("rootJSON", json.Data());
-					ss.str("") ; ss << "histo->GetName(): " << histo->GetName() ;
-					STDLINE(ss.str(),"") ;
-					ss.str("") ; ss << "histo->ClassName(): " << histo->ClassName() ;
-					STDLINE(ss.str(),"") ;
-					// ss.str("") ; ss << "json.Data(): " <<json.Data() ;
-					// //STDLINE(ss.str(),"") ;
-					if(histoClone != nullptr) delete histoClone;
-				}
-				else
-					__SUP_COUT_ERR__ << "Failed to access:-" << rootDirectoryName << "-"
-					                 << __E__;
-				STDLINE("Done with it!", ACBlue);
-			}
-			else
-			{
-				__SUP_COUT__ << "directory found getting the content!" << __E__;
-				STDLINE("Directory found getting the content!", ACGreen);
-				TRegexp re("*", kTRUE);
-				if(LDQM_pos == 0)
-				{
-					TObject* obj;
-					TIter    nextobj(directory->GetList());
-					while((obj = (TObject*)nextobj()))
-					{
-						TString s = obj->GetName();
-						if(s.Index(re) == kNPOS)
-							continue;
-						__SUP_COUT__ << "Class Name: " << obj->IsA()->GetName() << __E__;
-						xmlOut.addTextElementToData(
-						    (std::string(obj->IsA()->GetName()).find("Directory") !=
-						     std::string::npos)
-						        ? "dir"
-						        : "file",
-						    obj->GetName());
-						// ss.str("") ; ss << "obj->GetName(): " << obj->GetName() ;
+						xmlOut.addTextElementToData("rootType", histo->ClassName());
+						xmlOut.addTextElementToData("rootData", destination);
+						xmlOut.addTextElementToData("rootJSON", json.Data());
+						ss.str("");
+						ss << "histo->GetName(): " << histo->GetName();
+						STDLINE(ss.str(), "");
+						ss.str("");
+						ss << "histo->ClassName(): " << histo->ClassName();
+						STDLINE(ss.str(), "");
+						// ss.str("") ; ss << "json.Data(): " <<json.Data() ;
 						// //STDLINE(ss.str(),"") ;
+						if(histoClone != nullptr)
+							delete histoClone;
 					}
+					else
+						__SUP_COUT_ERR__ << "Failed to access:-" << rootDirectoryName
+						                 << "-" << __E__;
+					STDLINE("Done with it!", ACBlue);
 				}
 				else
 				{
-					TKey* key;
-					TIter next(directory->GetListOfKeys());
-					while((key = (TKey*)next()))
+					__SUP_COUT__ << "directory found getting the content!" << __E__;
+					STDLINE("Directory found getting the content!", ACGreen);
+					TRegexp re("*", kTRUE);
+					if(LDQM_pos == 0)
 					{
-						TString s = key->GetName();
-						if(s.Index(re) == kNPOS)
-							continue;
-						__SUP_COUT__ << "Class Name: " << key->GetClassName() << __E__;
-						xmlOut.addTextElementToData(
-						    (std::string(key->GetClassName()).find("Directory") !=
-						     std::string::npos)
-						        ? "dir"
-						        : "file",
-						    key->GetName());
-						// ss.str("") ; ss << "key->GetName(): " << key->GetName() ;
-						////STDLINE(ss.str(),"") ;
+						TObject* obj;
+						TIter    nextobj(directory->GetList());
+						while((obj = (TObject*)nextobj()))
+						{
+							TString s = obj->GetName();
+							if(s.Index(re) == kNPOS)
+								continue;
+							__SUP_COUT__ << "Class Name: " << obj->IsA()->GetName()
+							             << __E__;
+							xmlOut.addTextElementToData(
+							    (std::string(obj->IsA()->GetName()).find("Directory") !=
+							     std::string::npos)
+							        ? "dir"
+							        : "file",
+							    obj->GetName());
+							// ss.str("") ; ss << "obj->GetName(): " << obj->GetName() ;
+							// //STDLINE(ss.str(),"") ;
+						}
+					}
+					else
+					{
+						TKey* key;
+						TIter next(directory->GetListOfKeys());
+						while((key = (TKey*)next()))
+						{
+							TString s = key->GetName();
+							if(s.Index(re) == kNPOS)
+								continue;
+							__SUP_COUT__ << "Class Name: " << key->GetClassName()
+							             << __E__;
+							xmlOut.addTextElementToData(
+							    (std::string(key->GetClassName()).find("Directory") !=
+							     std::string::npos)
+							        ? "dir"
+							        : "file",
+							    key->GetName());
+							// ss.str("") ; ss << "key->GetName(): " << key->GetName() ;
+							////STDLINE(ss.str(),"") ;
+						}
 					}
 				}
-			}
-			if(LDQM_pos == std::string::npos)
-				rootFile->Close();
+				if(LDQM_pos == std::string::npos)
+					rootFile->Close();
 			}
 			catch(...)
 			{
-					__SUP_COUT_ERR__ << "File was probably closed!" << __E__;
-
+				__SUP_COUT_ERR__ << "File was probably closed!" << __E__;
 			}
 		}
 		// std::ostringstream* out ;
