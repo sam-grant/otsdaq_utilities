@@ -1,3 +1,4 @@
+
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   	<head>
@@ -14,14 +15,18 @@
 
 		</style>
 
-		<script type="text/javascript" src="libraries/dist/js/tabulator.min.js"></script>
+		<link href="libraries/tabulator-master/dist/css/tabulator.min.css" rel="stylesheet">
+		<script type="text/javascript" src="libraries/tabulator-master/dist/js/moment.js"></script>
+		<script type="text/javascript" src="libraries/tabulator-master/dist/js/tabulator.min.js"></script>
 
 		<script>
-			//functions:			
-			//init()					
+			//functions:
+			//init()
 
 			var pv_settings_ = [];
-			var PVList = {};
+
+			//define data sample
+			 var tabledata = [];
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -45,19 +50,20 @@
 			function newWidget(widget, parameters)
 			{
 				var i = 0;
-				PVList = {};
+				tabledata = []
 				for (pv in widget.PVList)
 				{
-					PVList[pv] = i;
+					var row = {id:i, pvName:pv, pvValue:"", pvStatus:"", pvSeverity:"", pvTime:""};
+					tabledata.push(row);
 					i++;
 				}
-				newGraph();
+
+				newTable();
 			}
 
 			function getParameters()
 			{
 				parameters = {};
-
 				return parameters;
 			}
 
@@ -69,27 +75,116 @@
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("newValue() reached", pvName, pvValue);
-
-				drawTable(pvName, pvValue, pvStatus, pvSeverity);
+				drawTable(pvName, pvValue, pvStatus, pvSeverity, pvTime);
 			}
 
+			var table;
 			function newTable()
 			{
+				var minL = 0;
+				var maxL = 100;
+				var unit = "";
+				//create Tabulator on DOM element "display"
+				table = new Tabulator("#display", {
+					height:"100%", // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+				 	data:tabledata, //assign data to table
+				 	layout:"fitColumns", //fit columns to width of table (optional)
+					rowFormatter:function(row){
+        				//row - row component
+			        	var data = row.getData();
+    				},
+					columns:[ //Define Table Columns
+					 	{
+						 	  title:"PV Name"
+					 		, field:"pvName"
+					 		, width:50
+					 		, formatter: function(cell, formatterParams, onRendered){
+					 			//console.log("Alarm Status");console.log(cell);console.log(formatterParams);
+					 			return cell.getValue();
+					 		}
+					 	},
 
-				
+						{
+					 		  title:"value"
+					 		, field:"pvValue"
+					 		, align:"left"
+					 		, formatter:"progress"
+							, formatterParams: function(cell){
+					 			var data = cell.getRow().getData();
+					 			if (pv_settings_[data.pvName] !== undefined){
+					 				minL = pv_settings_[data.pvName].Lower_Warning_Limit;
+									maxL = pv_settings_[data.pvName].Upper_Warning_Limit;
+									unit = pv_settings_[data.pvName].Units;
+			 					}
+			 					console.log("rowFormatter Data: " + data.pvName + " unit " + unit + " min " + minL + " max " + maxL);
+					 			return {
+					 				  legend: cell.getValue() + " " + unit
+					 				, min: minL
+									, max: maxL
+									, color:["green", "green", "green", "red"]
+								}
+							}
+					 	},
+
+						{
+					 		  title:"Alarm Status"
+					 		, field:"pvStatus"
+					 		, formatter: function(cell, formatterParams, onRendered){
+					 			//console.log("Alarm Status");console.log(cell);console.log(formatterParams);
+					 			cell.getElement().style.color = (cell.getValue() !== "" && cell.getValue() !== "NO_ALARM") ? "red" : "green";
+					 			return "" + cell.getValue() + "";
+					 		}
+						},
+
+						{	  title:"Alarm Severity"
+					 		, field:"pvSeverity"
+					 		, formatter: function(cell, formatterParams, onRendered){
+					 			//console.log("Alarm Severity");console.log(cell);console.log(formatterParams);
+					 			cell.getElement().style.color = (cell.getValue() !== "" && cell.getValue() !== "NO_ALARM") ? "red" : "green";
+					 			return "" + cell.getValue() + "";
+					 		}
+					 	},
+
+						{	  title:"Last Update"
+					 		, field:"pvTime"
+					 		, formatter:"datetime"
+					 		, formatterParams:
+					 		{
+//								  inputFormat:"YYYY-MM-DD hh:mm:ss"
+								  outputFormat:"MM/DD/YY hh:mm:ss"
+								, invalidPlaceholder:"(invalid date)"
+							}
+					 		, sorter:"date"
+					 		, align:"center"
+					 	}
+					],
+				 	rowClick:function(e, row){ //trigger an alert message when the row is clicked
+				 		console.log("Row " + row.getData().id + " Clicked!!!!");
+				 	},
+				});
+
 				console.log("newTable() reached");
 			}
 
-			function drawTable(pvName, pvValue, pvStatus, pvSeverity)
+			function drawTable(pvName, pvValue, pvStatus, pvSeverity, pvTime)
 			{
+				var date = new Date(pvTime*1000);
 
-;
+				var index = tabledata.findIndex(function (name){return name.pvName == pvName});
+				tabledata[index].pvValue = pvValue;
+				tabledata[index].pvStatus = pvStatus;
+				tabledata[index].pvSeverity = pvSeverity;
+				tabledata[index].pvTime = date;
+				console.log(tabledata);
+				table.setData(tabledata);
+
 				console.log("drawTable() reached, pv: " + pvName);
 			}
 
 			window.onresize = function() {
 				//width: window.innerWidth,
 				//height: window.innerHeight
+				table.redraw(true);
 				console.log("window.onresize Table");
 			};
 
