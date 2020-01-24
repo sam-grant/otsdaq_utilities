@@ -95,7 +95,7 @@ void SlowControlsDashboardSupervisor::init(void)
 		    // lockout the messages array for the remainder of the scope
 		    // this guarantees the reading thread can safely access the messages
 		    // std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
-		    cs->checkSubscriptions(cs);
+		    //cs->checkSubscriptions(cs);
 	    },
 	    this)
 	    .detach();  // thread check clients subscription for all channels
