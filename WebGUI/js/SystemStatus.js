@@ -202,11 +202,18 @@ function getAppsArray()
 					
 				var all0 = true;
 				for(var i=1;i<appTime.length;++i)
-					if(appTime[i].getAttribute("value") != "0")
+				{
+					//Wed Oct 14 05:20:48 1970 CDT
+					var appTimeSplit = appTime[i].getAttribute("value").split(' ');
+					if(appTime[i].getAttribute("value") != "0" &&
+							(appTimeSplit.length > 2 && 
+									appTimeSplit[appTimeSplit.length-2] != 1970)
+							)
 					{
 						all0 = false;
 						break;
 					}
+				}
 				
 				if(all0)
 				{
