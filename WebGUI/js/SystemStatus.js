@@ -221,7 +221,7 @@ function getAppsArray()
 							"\n\n\n" +
 							"To verify it is on, check the Gateway Supervisor parameter that " +
 							"controls it. To check app status, set this field to YES in your Context Group Configuration Tree: \n\n" +
-							"<b>GatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>" +
+							"<b>XDAQApplicationTable --> \nGatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>" +
 							"\n\n" +
 							"Remember, to restart ots after a Context group configuration change.",
 							Debug.HIGH_PRIORITY);
