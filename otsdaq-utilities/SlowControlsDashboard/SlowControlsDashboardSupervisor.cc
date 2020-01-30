@@ -554,11 +554,11 @@ void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc&    cg
 	}
 	else
 	{
-		__SUP_COUT__ << "Did not find any settings because Channel list is length zero!"
+		__SUP_COUT__ << "Did not find any data because Channel list is length zero!"
 		             << std::endl;
 
 		xmlOut.addTextElementToData(
-		    "JSON", "{ \"message\": \"GetPVSettings\"}");  // add to response
+		    "JSON", "{ \"message\": \"GetChannelArchiverData\"}");  // add to response
 	}
 
 	/*
