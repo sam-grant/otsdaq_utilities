@@ -202,11 +202,18 @@ function getAppsArray()
 					
 				var all0 = true;
 				for(var i=1;i<appTime.length;++i)
-					if(appTime[i].getAttribute("value") != "0")
+				{
+					//Wed Oct 14 05:20:48 1970 CDT
+					var appTimeSplit = appTime[i].getAttribute("value").split(' ');
+					if(appTime[i].getAttribute("value") != "0" &&
+							(appTimeSplit.length > 2 && 
+									appTimeSplit[appTimeSplit.length-2] != 1970)
+							)
 					{
 						all0 = false;
 						break;
 					}
+				}
 				
 				if(all0)
 				{
@@ -214,7 +221,7 @@ function getAppsArray()
 							"\n\n\n" +
 							"To verify it is on, check the Gateway Supervisor parameter that " +
 							"controls it. To check app status, set this field to YES in your Context Group Configuration Tree: \n\n" +
-							"<b>GatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>" +
+							"<b>XDAQApplicationTable --> \nGatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>" +
 							"\n\n" +
 							"Remember, to restart ots after a Context group configuration change.",
 							Debug.HIGH_PRIORITY);
