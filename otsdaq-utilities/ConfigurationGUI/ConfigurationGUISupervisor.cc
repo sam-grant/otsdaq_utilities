@@ -4990,6 +4990,8 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		xmlOut.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
 	}
 
+	const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
+
 	if(accumulatedErrors != "")  // add accumulated errors to xmlOut
 	{
 		__SUP_SS__ << (std::string("Column errors were allowed for this request, so "
@@ -5001,11 +5003,11 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	}
 	else if(!version.isTemporaryVersion() &&  // not temporary (these are not filled from
 	                                          // interface source)
-	        (cfgViewPtr->getDataColumnSize() != cfgViewPtr->getNumberOfColumns() ||
+	        (srcColNames.size() != cfgViewPtr->getNumberOfColumns() ||
 	         cfgViewPtr->getSourceColumnMismatch() !=
 	             0))  // check for column size mismatch
 	{
-		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
+
 		__SUP_SS__ << "\n\nThere were warnings found when loading the table " << tableName
 		           << ":v" << version << ". Please see the details below:\n\n"
 		           << "The source column size was found to be "
