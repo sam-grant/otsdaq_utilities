@@ -1677,14 +1677,29 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 	std::map<std::string, TableVersion> allActivePairs = cfgMgr->getActiveVersions();
 	xmlOut.addTextElementToData("DefaultNoLink",
 	                            TableViewColumnInfo::DATATYPE_LINK_DEFAULT);
-	for(auto& activePair : allActivePairs)
+
+
+	//construct specially ordered table name set
+	std::set<std::string,StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
+	for(const auto& tablePair:allActivePairs)
+		orderedTableSet.emplace(tablePair.first);
+
+	std::map<std::string, TableInfo>::const_iterator tableInfoIt;
+	for(auto& orderedTableName : orderedTableSet)
 	{
+		tableInfoIt = allTableInfo.find(orderedTableName);
+		if(tableInfoIt == allTableInfo.end())
+		{
+			__SS__ << "Impossible missing table in map '" << orderedTableName << "'" << __E__;
+			__SS_THROW__;
+		}
+
 		if(outputActiveTables)
-			xmlOut.addTextElementToData("ActiveTableName", activePair.first);
+			xmlOut.addTextElementToData("ActiveTableName", orderedTableName);
 
 		// check if name is in modifiedTables
 		// if so, activate the temporary version
-		if((modifiedTablesMapIt = modifiedTablesMap.find(activePair.first)) !=
+		if((modifiedTablesMapIt = modifiedTablesMap.find(orderedTableName)) !=
 		   modifiedTablesMap.end())
 		{
 			__SUP_COUT__ << "Found modified table " << (*modifiedTablesMapIt).first
@@ -1692,15 +1707,14 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 
 			try
 			{
-				allTableInfo.at(activePair.first)
-				    .tablePtr_->setActiveView((*modifiedTablesMapIt).second);
+				tableInfoIt->second.tablePtr_->setActiveView((*modifiedTablesMapIt).second);
 			}
 			catch(...)
 			{
 				__SUP_SS__
 				    << "Modified table version v" << (*modifiedTablesMapIt).second
 				    << " failed. Reverting to v"
-				    << allTableInfo.at(activePair.first).tablePtr_->getView().getVersion()
+				    << tableInfoIt->second.tablePtr_->getView().getVersion()
 				    << "." << __E__;
 				__SUP_COUT_WARN__ << "Warning detected!\n\n " << ss.str() << __E__;
 				xmlOut.addTextElementToData(
@@ -1712,20 +1726,20 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		if(outputActiveTables)
 		{
 			xmlOut.addTextElementToData("ActiveTableVersion",
-			                            allTableInfo.at(activePair.first)
+			                            tableInfoIt->second
 			                                .tablePtr_->getView()
 			                                .getVersion()
 			                                .toString());
 			xmlOut.addTextElementToData(
 			    "ActiveTableComment",
-			    allTableInfo.at(activePair.first).tablePtr_->getView().getComment());
+			    tableInfoIt->second.tablePtr_->getView().getComment());
 		}
 
 		//__SUP_COUT__ << "Active table = " <<
 		//		activePair.first << "-v" <<
 		//		allTableInfo.at(activePair.first).tablePtr_->getView().getVersion() <<
 		//__E__;
-	}
+	} //end ordered table loop
 }  // end setupActiveTablesXML()
 catch(std::runtime_error& e)
 {
@@ -6336,11 +6350,18 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 {
 	xercesc::DOMElement* parentEl;
 
+	__COUTV__(allowIllegalColumns);
 	std::string                             accumulatedErrors = "";
 	const std::map<std::string, TableInfo>& allTableInfo      = cfgMgr->getAllTableInfo(
-        allowIllegalColumns,
-        allowIllegalColumns ? &accumulatedErrors
-                            : 0);  // if allowIllegalColumns, then also refresh
+        true, // always refresh!!  allowIllegalColumns /*refresh*/,
+        &accumulatedErrors);  // if allowIllegalColumns, then also refresh
+
+
+	//construct specially ordered table name set
+	std::set<std::string,StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
+	for(const auto& tablePair:allTableInfo)
+		orderedTableSet.emplace(tablePair.first);
+
 	std::map<std::string, TableInfo>::const_iterator it = allTableInfo.begin();
 
 	__SUP_COUT__ << "# of tables found: " << allTableInfo.size() << __E__;
@@ -6350,8 +6371,16 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 
 	__SUP_COUT__ << "# of tables w/aliases: " << versionAliases.size() << __E__;
 
-	while(it != allTableInfo.end())
+	for(const auto& orderedTableName : orderedTableSet)//while(it != allTableInfo.end())
 	{
+		std::map<std::string, TableInfo>::const_iterator it =
+				allTableInfo.find(orderedTableName);
+		if(it == allTableInfo.end())
+		{
+			__SS__ << "Impossible missing table in map '" << orderedTableName << "'" << __E__;
+			__SS_THROW__;
+		}
+
 		// for each table name
 		// get existing version keys
 
@@ -6394,8 +6423,8 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 			if(!version.isScratchVersion())
 				xmlOut.addTextElementToParent("Version", version.toString(), parentEl);
 
-		++it;
-	}
+		//++it;
+	} //end table loop
 
 	if(accumulatedErrors != "")
 		xmlOut.addTextElementToData(
