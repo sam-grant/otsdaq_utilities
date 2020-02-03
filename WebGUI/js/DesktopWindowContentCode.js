@@ -247,7 +247,7 @@ DesktopContent.init = function()
 	
 	DesktopContent._serverUrnLid = DesktopContent.getDesktopWindowParameter(0,"urn");//((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
-		Debug.log("ERROR -- Gateway Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
+		Debug.log("ERROR -- Gateway Supervisor Application URN-LID not found!"); //,Debug.HIGH_PRIORITY);
 	Debug.log("Gateway Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
 	DesktopContent._serverOrigin = DesktopContent._theWindow.parent.window.location.origin;
 	Debug.log("Gateway Supervisor Application Origin = " + DesktopContent._serverOrigin);
@@ -1155,16 +1155,30 @@ DesktopContent.tooltip = function(id,tip) {
 				(oldId[i] >= 'A' && oldId[i] <= 'Z') ||
 				(oldId[i] >= '0' && oldId[i] <= '9'))
 			id += oldId[i];
+	
 
-	DesktopContent.XMLHttpRequest(
-			"TooltipRequest?RequestType=check" + 
+	if(id == "ALWAYS") //no need to check
+		localFinishTooltip();
+	else	
+		DesktopContent.XMLHttpRequest(
+			"TooltipRequest?RequelstType=check" + 
 			"&srcFunc=" + srcFunc +
 			"&srcFile=" + srcFile +
 			"&srcId=" + id
-			,""
-			, function(req) {
+			,"" //post data
+			,localFinishTooltip //handler
+			,0,0,0,true,true); //show loading, and target supervisor
+	
+	
+	return;
+	
+	//:::::::::::::::::::::::::::::::::::::::::
+	//popupResize ~~
+	function localFinishTooltip(req)
+	{
 
-		var showTooltip = DesktopContent.getXMLValue(req,"ShowTooltip");	
+		var showTooltip = !req || 
+				DesktopContent.getXMLValue(req,"ShowTooltip");	
 		
 		//Debug.log("showTooltip: " + showTooltip);
 		
@@ -1267,8 +1281,9 @@ DesktopContent.tooltip = function(id,tip) {
 			Debug.log("srcStackString " + srcStackString);
 			Debug.log(str,Debug.TIP_PRIORITY);
 		}
-	},0,0,0,true,true); //show loading, and target supervisor
 	
+	} //end localFinishTooltip()
+
 } //end tooltip()
 
 //=====================================================================================

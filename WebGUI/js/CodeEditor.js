@@ -203,7 +203,7 @@ appMode = "Code Editor";
 CodeEditor.showTooltip = function(alwaysShow)
 {
 	DesktopContent.tooltip(
-		(alwaysShow ? "ALWAYS" : appMode), windowTooltip); 
+		(alwaysShow? "ALWAYS" : appMode), windowTooltip); 
 	
 	DesktopContent.setWindowTooltip(windowTooltip);
 } //end showTooltip()
@@ -215,10 +215,12 @@ CodeEditor.showTooltip = function(alwaysShow)
 //call create to create instance of a SmartLaunch
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-CodeEditor.create = function() {
+CodeEditor.create = function(standAlone) {
 	
-	
-	
+	//STAND ALONE mode allows for single upload/download file features only
+	//	no directory notion.
+	console.log("standAlone",standAlone);
+	var _STAND_ALONE = standAlone;
 	
 	//outline:			
 	//
@@ -412,7 +414,7 @@ CodeEditor.create = function() {
 		}
 
 
-		CodeEditor.showTooltip();
+		CodeEditor.showTooltip(_STAND_ALONE);
 		
 		//proceed
 		
@@ -425,7 +427,25 @@ CodeEditor.create = function() {
 			_needEventListeners = false;
 		}
 		
-		
+		//stop here if standalone with no server
+		if(_STAND_ALONE) 
+		{
+			
+			//set directory situation after CodeEditor has been fully instantiated
+			window.setTimeout(
+					function()
+					{
+				//at this point, CodeEditor is intantiated
+				Debug.log("CodeEditor stand alone setup...");
+				CodeEditor.editor.toggleDirectoryNav(true /*forPrimary*/,false /*value*/);
+				
+				//open upload window to get the ball rolling
+				CodeEditor.editor.upload(true /*forPrimary*/); 
+					}, 100);
+			
+			
+			return; 
+		}
 
 		DesktopContent.XMLHttpRequest("Request?RequestType=" + _requestPreamble +
 				"codeEditor" + 
@@ -615,7 +635,9 @@ CodeEditor.create = function() {
 						{
 							"id":"directoryNavToggle",
 							"class":"controlsButton",
-							"style":"float:left;",
+							"style":"float:left;" + 
+							(_STAND_ALONE ?
+									"display:none":""),
 							"onclick":"CodeEditor.editor.toggleDirectoryNav(" + forPrimary + ");",
 							"title": "Open a file... (Ctrl + D)",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
@@ -634,27 +656,16 @@ CodeEditor.create = function() {
 					str += "</div>"; //close directoryNavToggle
 					
 					//save
-					if (_requestPreamble == "readOnly"){
-
-						str += htmlOpen("div",
-							{
-								"id":"saveFile",
-								"class":"controlsButton",
-								"style": "float:left; display:none;",
-								"onclick":"CodeEditor.editor.saveFile(" + forPrimary + ");",
-								"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
-							},"" /*innerHTML*/, 0 /*doCloseTag*/);
-					}
-					else{
-						str += htmlOpen("div",
-							{
-								"id": "saveFile",
-								"class": "controlsButton",
-								"style": "float:left;",
-								"onclick": "CodeEditor.editor.saveFile(" + forPrimary + ");",
-								"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
-							}, "" /*innerHTML*/, 0 /*doCloseTag*/);
-					}
+					str += htmlOpen("div",
+						{
+							"id": "saveFile",
+							"class": "controlsButton",
+							"style": "float:left;" + 
+							((_STAND_ALONE || _READ_ONLY)?
+									"display:none":""),
+							"onclick": "CodeEditor.editor.saveFile(" + forPrimary + ");",
+							"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
+						}, "" /*innerHTML*/, 0 /*doCloseTag*/);
 					{
 						str += htmlOpen("div",
 							{
@@ -671,7 +682,7 @@ CodeEditor.create = function() {
 								"id":"saveFileMainBottom",
 								
 							},"" /*innerHTML*/, 1 /*doCloseTag*/);
-					} //end directoryNavToggle
+					} //end save content
 					str += "</div>"; //close saveFile
 					
 				} //end locals controlsPane
@@ -722,26 +733,17 @@ CodeEditor.create = function() {
 				str += "</div>"; //close viewToggle
 				
 				//incremental compile
-			if (_requestPreamble == "readOnly") {
-				str += htmlOpen("div",
-					{
-						"id":"incrementalBuild",
-						"class":"controlsButton",
-						"style":"float:right; display: none;",
-						"onclick":"CodeEditor.editor.build(0 /*cleanBuild*/);",
-						"title":"Incremental Build... (Ctrl + B)",
-					},"" /*innerHTML*/, 0 /*doCloseTag*/);
-				}
-			else {
+			
 				str += htmlOpen("div",
 					{
 						"id": "incrementalBuild",
 						"class": "controlsButton",
-						"style": "float:right",
+						"style": "float:right;" + 
+						((_STAND_ALONE || _READ_ONLY)?
+								"display:none":""),
 						"onclick": "CodeEditor.editor.build(0 /*cleanBuild*/);",
 						"title": "Incremental Build... (Ctrl + B)",
-					}, "" /*innerHTML*/, 0 /*doCloseTag*/);
-			}
+					}, "" /*innerHTML*/, 0 /*doCloseTag*/);			
 				{
 					
 					str += htmlOpen("div",
@@ -752,26 +754,16 @@ CodeEditor.create = function() {
 				str += "</div>"; //close incrementalBuild
 				
 				//clean compile
-			if (_requestPreamble == "readOnly") {
-				str += htmlOpen("div",
-					{
-						"id":"cleanBuild",
-						"class":"controlsButton",
-						"style":"float:right; display: none;",
-						"onclick":"CodeEditor.editor.build(1 /*cleanBuild*/);",
-						"title":"Clean Build... (Ctrl + N)",
-					},"" /*innerHTML*/, 0 /*doCloseTag*/);
-				}
-			else {
 				str += htmlOpen("div",
 					{
 						"id": "cleanBuild",
 						"class": "controlsButton",
-						"style": "float:right",
+						"style": "float:right;" + 
+						((_STAND_ALONE || _READ_ONLY)?
+								"display:none":""),
 						"onclick": "CodeEditor.editor.build(1 /*cleanBuild*/);",
 						"title": "Clean Build... (Ctrl + N)",
-					}, "" /*innerHTML*/, 0 /*doCloseTag*/);
-			}
+					}, "" /*innerHTML*/, 0 /*doCloseTag*/);			
 				{
 					
 					str += htmlOpen("div",
@@ -2794,14 +2786,28 @@ CodeEditor.create = function() {
 		var decor, fontWeight;
 		var specialString;
 		var commentString = "#";
+		//var blockCommentStartString,blockCommentEndString; //TODO
+		
 		if(_fileExtension[forPrimary][0] == 'c' || 
 				_fileExtension[forPrimary][0] == 'C' ||
 				_fileExtension[forPrimary][0] == 'h' ||
 				_fileExtension[forPrimary][0] == 'j' ||
 				_fileExtension[forPrimary] == "icc")
+		{
 			commentString = "//"; //comment string
+			//blockCommentStartString = "/*"; //TODO
+			//blockCommentEndString = "*/"; //TODO
+		}
+		
+//		if(_fileExtension[forPrimary].length > 2 &&
+//				_fileExtension[forPrimary].substr(0,3) == "htm")
+//		{
+//			blockCommentStartString = "<!--"; //TODO
+//			blockCommentEndString = "-->";		//TODO	
+//		}
+		
 			
-			var fileDecorType = "txt";
+		var fileDecorType = "txt";
 		if(	_fileExtension[forPrimary] == "html" ||
 				_fileExtension[forPrimary] == "js")
 			fileDecorType = "js"; //js style
@@ -3098,7 +3104,7 @@ CodeEditor.create = function() {
 							(val[0] != commentString[0] || //break up comment if there is a new line
 								val.indexOf('\n') >= 0)	&& 
 							val[0] != '"') || 
-						//or if cursor is close
+						//or if cursor is nearby
 						(n+1 >= cursor.startNodeIndex && n-1 <= cursor.endNodeIndex))
 				{
 					//Debug.log("val lost " + val);
@@ -4043,7 +4049,7 @@ CodeEditor.create = function() {
 		var endi;
 		var strLength;
 		var str;
-		var endPi, startCi;
+		var endPi, startCi, lastWhiteSpacei;
 		var newLinei;
 		var localNewLineCount;
 		
@@ -4064,14 +4070,38 @@ CodeEditor.create = function() {
 		if(isCcSource) indicator = "::";
 		if(isJsSource) indicator = "function";
 		
+		var inComment = false; //ignore indicator in comment
+		var inBlockComment = false; //ignore indicator in comment
+		
 		for(i=0;i<elTextObj.text.length;++i)
 		{
 			if(elTextObj.text[i] == '\n') 
 			{
 				++newLineCount;
 				indicatorIndex = 0; //reset
+				inComment = false; //reset 
 				continue;
 			}
+			else if(inBlockComment && i+1 < elTextObj.text.length &&
+					elTextObj.text[i] == '*' && 
+					elTextObj.text[i+1] == '/') 
+				inBlockComment = false;
+			else if(inComment || inBlockComment) continue;
+			else if(i+1 < elTextObj.text.length)
+			{
+				if(elTextObj.text[i] == '/' && 
+						elTextObj.text[i+1] == '*') 
+				{
+					inBlockComment = true;
+					continue;
+				}
+				else if(elTextObj.text[i] == '/' && 
+						elTextObj.text[i+1] == '/') 
+				{
+					inComment = true;
+					continue;
+				}
+			} //end comment handling
 			
 			//find indicators
 			if(elTextObj.text[i] == indicator[indicatorIndex])
@@ -4094,6 +4124,11 @@ CodeEditor.create = function() {
 						outline.push([newLineCount+1,
 								str + 
 								"()"]);						
+					}
+					else
+					{
+						inComment = false;
+						inBlockComment = false;
 					}
 				}
 			}
@@ -4191,7 +4226,10 @@ CodeEditor.create = function() {
 			endi = -1;
 			startCi = -1;
 			endPi = -1;
+			lastWhiteSpacei = -1;
 			
+			if(newLineCount > 2300)
+				console.log("hi");
 			//do this:
 			//			endi = elTextObj.text.indexOf('(',starti+3);
 			//			startCi = elTextObj.text.indexOf('{',endi+2);
@@ -4199,15 +4237,62 @@ CodeEditor.create = function() {
 			
 			for(j=i+2;j<elTextObj.text.length;++j)
 			{
+				if(inComment && elTextObj.text[j] == '\n') 
+					inComment = false; //reset 
+				else if(inBlockComment && j+1 < elTextObj.text.length &&
+						elTextObj.text[j] == '*' && 
+						elTextObj.text[j+1] == '/') 
+					inBlockComment = false;
+				else if(inComment || inBlockComment) continue;
+				else if(j+1 < elTextObj.text.length)
+				{
+					if(elTextObj.text[j] == '/' && 
+							elTextObj.text[j+1] == '*') 
+					{
+						inBlockComment = true;
+						continue;
+					}
+					else if(elTextObj.text[j] == '/' && 
+							elTextObj.text[j+1] == '/') 
+					{
+						inComment = true;
+						continue;
+					}
+				} //end comment handling
+
 				if(elTextObj.text[j] == ';' || //any semi-colon is a deal killer
 						elTextObj.text[j] == '+' || //or non-function name characters
 						elTextObj.text[j] == '"' ||
-						elTextObj.text[j] == "'") 					
+						elTextObj.text[j] == "'" || 
+						elTextObj.text[j] == "!" ||
+						elTextObj.text[j] == "|") 					
 					return undefined;
+				
+				
+				
 				if(endi < 0) //first find end of name
 				{
 					if(elTextObj.text[j] == '(')
 						endi = j++; //found end of name, and skip ahead
+					else
+					{
+						if(elTextObj.text[j] == ')') 
+							return undefined; //found wrong direction brace
+						
+						//if space, then moveup start index
+						if(elTextObj.text[j] == ' ' || 
+								elTextObj.text[j] == '\t' ||
+								elTextObj.text[j] == '\n')
+							lastWhiteSpacei = j;
+						else if(lastWhiteSpacei != -1 &&
+								elTextObj.text[j] == ':')
+						{
+							//then found a white space after indicator
+							// then another indicator started, so give up
+							return undefined;
+						}
+							
+					}
 				}
 				else if(startCi < 0)
 				{
@@ -4934,7 +5019,7 @@ CodeEditor.create = function() {
 		{			
 			if(keyCode == 83) 		// S for file save
 			{
-				if (_requestPreamble !== "readOnly") {
+				if (!_STAND_ALONE && !_READ_ONLY) {
 					CodeEditor.editor.saveFile(forPrimary,true /*quiet*/);
 					e.preventDefault();
 					return;
@@ -4942,13 +5027,15 @@ CodeEditor.create = function() {
 			}
 			else if(keyCode == 68) 	// D for directory toggle
 			{
-				CodeEditor.editor.toggleDirectoryNav(forPrimary);
-				e.preventDefault();
-				return;
+				if (!_STAND_ALONE) {
+					CodeEditor.editor.toggleDirectoryNav(forPrimary);
+					e.preventDefault();
+					return;
+				}
 			}
 			else if(keyCode == 66) 	// B for incremental build
 			{
-				if (_requestPreamble !== "readOnly") {
+				if (!_STAND_ALONE && !_READ_ONLY) {
 					CodeEditor.editor.build();
 					e.preventDefault();
 					return;
@@ -4968,7 +5055,7 @@ CodeEditor.create = function() {
 			}
 			else if(keyCode == 78) 	// N for clean build
 			{
-				if (_requestPreamble !== "readOnly") {
+				if (!_STAND_ALONE && !_READ_ONLY) {
 					CodeEditor.editor.build(true /*clean*/);
 					e.preventDefault();
 					return;
@@ -6475,26 +6562,16 @@ CodeEditor.create = function() {
 			},0 /*innerHTML*/, false /*doCloseTag*/);
 		str += "<center>";
 		
-		//add rename button		
-		if (_requestPreamble == "readOnly") {
+		
 		str += htmlOpen("div", //this is place holder, that keeps height spacing
-			{
-				"class":"fileButtonContainer",
-					"style":"width: 48px;",
-				"id":"fileButtonContainer" + forPrimary,
-				
-			},0 /*innerHTML*/, false /*doCloseTag*/);	
-		}	
-		else{
-			str += htmlOpen("div", //this is place holder, that keeps height spacing
 				{
-					
-					"style": "width: 172px;",
-					"class": "fileButtonContainer",
-					"id": "fileButtonContainer" + forPrimary,
+
+						"style": "width: 172px;", //_READ_ONLY make different width
+						"class": "fileButtonContainer",
+						"id": "fileButtonContainer" + forPrimary,
 
 				}, 0 /*innerHTML*/, false /*doCloseTag*/);	
-		}
+
 		str += htmlOpen("div", //this is el that gets hide/show toggle
 			{
 				"class":"fileButtonContainerShowHide",
@@ -6505,17 +6582,20 @@ CodeEditor.create = function() {
 				",1 /*doNotStartTimer*/);",
 				
 			},0 /*innerHTML*/, false /*doCloseTag*/);	
-		if (_requestPreamble !== "readOnly") {		
+		
+		//add rename button		
+		if (!_READ_ONLY)
+		{		
 			str += htmlOpen("div", 
-				{
-					"class":"fileButton",
-					"id":"fileRenameButton" + forPrimary,
-					"title": "Change the filename\n" + path + "." + extension,
-					"onclick":
-					"event.stopPropagation(); " + 
-					"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
-				},0 /*innerHTML*/, true /*doCloseTag*/);
-			}
+					{
+							"class":"fileButton",
+							"id":"fileRenameButton" + forPrimary,
+							"title": "Change the filename\n" + path + "." + extension,
+							"onclick":
+							"event.stopPropagation(); " + 
+							"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
+					},0 /*innerHTML*/, true /*doCloseTag*/);
+		}
 		str += htmlOpen("div", 
 			{
 				"class":"fileButton",
@@ -6530,7 +6610,7 @@ CodeEditor.create = function() {
 			"<div class='fileDownloadButtonBorderChild' style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid rgb(202, 204, 210);'></div>" +
 			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 2px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
 			/*innerHTML*/, true /*doCloseTag*/);
-		if (_requestPreamble !== "readOnly") {	
+		if (!_READ_ONLY) {	
 			str += htmlOpen("div", 
 				{
 					"class":"fileButton",
@@ -6547,7 +6627,7 @@ CodeEditor.create = function() {
 			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 3px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
 			/*innerHTML*/, true /*doCloseTag*/);
 		}
-		if (_requestPreamble !== "readOnly") {	
+		if (!_READ_ONLY) {	
 			str += htmlOpen("div",
 				{
 					"class":"fileButton fileUndoButton",
@@ -7106,6 +7186,13 @@ CodeEditor.create = function() {
 				_fileUploadString = this.result;
 				Debug.log("_fileUploadString = " + _fileUploadString);							
 				document.getElementById('popUpDialog-submitButton').disabled = false;
+				
+				if(_STAND_ALONE)
+				{
+					var i=file.name.lastIndexOf('.');
+					_filePath[forPrimary] = file.name.substr(0,i);
+					_fileExtension[forPrimary] = file.name.substr(i+1);
+				}
 			}
 			reader.readAsText(file);
 		}, false);
@@ -7134,7 +7221,7 @@ CodeEditor.create = function() {
 				//	with spaces		
 				_fileUploadString = _fileUploadString.replace(new RegExp(
 						String.fromCharCode(160),'g'),' ');
-				_fileUploadString = "hi";
+				
 				var el = _eel[forPrimary];
 				el.textContent = _fileUploadString;
 				CodeEditor.editor.displayFileHeader(forPrimary);
