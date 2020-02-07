@@ -1,0 +1,128 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>Text</title>
+		<style type="text/css">	
+			body {
+				font: 10px arial;
+				background-color: rgba(250, 250, 250, 0);
+				width: 30;
+				height: 30;
+				//margin: 0px !important;
+			}
+
+			div {
+				font-size: 14px;
+			}
+		</style>
+
+		<script>
+
+			var parameters_ = [];
+			//functions:
+			//init()
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			//init called once body has loaded
+			function init()
+			{
+				console.log("Label init()");
+				console.log(window.frameElement.id);
+				window.parent.setupWidget(window.frameElement.id, getParameters());
+			}
+
+			function setupPVs(settings)	{}
+
+			function newWidget(widget, parameters)
+			{
+				setParameters(window.parent.page_.widgets[widget.el.id].attributes);
+			}
+
+			//=====================================================================================
+			// rootReq ~~
+			//	if refreshIndex, then request is meant to replace root object at index
+			function rootReq (rootPath,refreshIndex)
+			{
+
+				if(refreshIndex === undefined) refreshIndex = -1;
+
+				Debug.log("ViewerRoot.rootReq " + rootPath );
+				DesktopContent.XMLHttpRequest("Request?RequestType=getRoot", 
+						"RootPath="+rootPath,
+						getRootDataHandler,
+						refreshIndex /*reqParam*/, 
+						0 /*progressHandler*/, 
+						0 /*callHandlerOnErr*/, 
+						refreshIndex<0?false:true /*doNoShowLoadingOverlay*/);
+			} //end rootReq()
+
+			//=====================================================================================
+			// ViewerRoot.getRootDataHandler ~~
+			//	receives streamed root object from server and prepares it for js structures
+			function getRootDataHandler (req, refreshIndex)
+			{
+
+				Debug.log("root visulazire getRootDataHandler " + req.responseText );
+
+				var rootType = DesktopContent.getXMLValue(req,"rootType");
+				var rootStr = DesktopContent.getXMLValue(req,"rootData");
+				var rootName = DesktopContent.getXMLValue(req,"path");
+
+				var rootJSON = DesktopContent.getXMLValue(req,"rootJSON");
+
+				Debug.log("tmpRootDataHandler JSON \n\n" + rootJSON );
+
+				var ojbect = JSROOT.parse(rootJSON);
+				var rootTitle = ojbect.fTitle;
+
+				if(!ojbect || !rootType || !rootName)
+				{ 
+//					Debug.log("Pausing auto-refresh! \n\nPlease resolve the erros before resuming refreshes.", Debug.HIGH_PRIORITY);
+//
+//					var chk = document.getElementById("hudCheckbox" + 2); //pause refresh checkbox
+//					chk.checked = true;
+//					ViewerRoot.pauseRefresh = true;
+//
+//				  	Debug.log("Error reading Root object from server - Name: " + rootName, Debug.HIGH_PRIORITY);
+//				    ViewerRoot.autoRefreshMatchArr = [];	//clearing the array so that future refreshes work
+				    return;
+				}
+			} //end getRootDataHandler()
+
+			function getParameters()
+			{
+				parameters_["class"] = "";
+				parameters_["file"] = "/WebPath/html/widgets/picture-icon.png";
+				return parameters_;
+			}
+
+			function setParameters(attributes)
+			{
+				parameters_ = attributes;
+				console.log(parameters_);
+
+				document.getElementById("display").innerHTML = "<img id='img1' src='" + parameters_["file"] + "' title='" + parameters_["file"] + "'></img>";
+				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
+			}
+
+			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}
+
+			window.onresize = function() {
+				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
+			}
+
+		</script>
+
+</head>
+
+	<body onload='Javascript:init();'>
+
+	<div id="display"></div>
+
+	</body>
+
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>Text</title>
+		<style type="text/css">	
+			body {
+				font: 10px arial;
+				background-color: rgba(250, 250, 250, 0);
+				width: 30;
+				height: 30;
+				//margin: 0px !important;
+			}
+		</style>
+
+		<script>
+
+			//functions:
+			//init()
+
+			var pv_settings_ = [];
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			//init called once body has loaded
+			function init()
+			{
+				console.log("LED init()");
+				console.log(window.frameElement.id);
+				window.parent.setupWidget(window.frameElement.id, getParameters());
+			}
+
+			function setupPVs(settings)
+			{
+				console.log("LED setupPVs() : " , settings);
+				pv_settings_ = settings;
+			}
+
+			function newWidget(widget, parameters)
+			{
+				drawLed();
+				var canvas = document.getElementById('led');
+				var context = canvas.getContext('2d');
+				context.fillStyle = 'gray';
+				context.fill();
+			}
+
+			function getParameters()
+			{
+				parameters = {};
+				return parameters;
+			}
+
+			function setParameters(attributes)
+			{
+				
+			}
+
+			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+				console.log("LED newValue() reached", pvName, pvValue);
+				var canvas = document.getElementById('led');
+				canvas.title =
+								pvName
+								+ "\n Last value "
+								+  pvValue
+								+ " "
+								+ pv_settings_[pvName].Units
+								+ " time "
+								+ pvTime
+							  	+ "\nLower Warning Limit:\t" + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
+							  	+ "Upper Warning Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
+							  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+							  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+							  	+ "Lower Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
+							  	+ "Upper Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
+							  	+ "Lower Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
+							  	+ "Upper Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
+	
+				var context = canvas.getContext('2d');
+				context.fillStyle = 'green';
+				if( pvSeverity == "MAJOR" )
+					context.fillStyle = 'red';
+				if( isNaN(pvValue) || pvSeverity == "INVALID" )
+					context.fillStyle = 'grey';
+				context.fill();
+			}
+
+			function drawLed()
+			{
+				var canvas = document.getElementById('led');
+				canvas.style.width = Math.min(window.innerWidth, window.innerHeight) - 18 + "px";
+				var context = canvas.getContext('2d');
+				var centerX = canvas.width / 2;
+				var centerY = canvas.height / 2;
+				var radius = Math.min(canvas.width/2 - 10, canvas.height/2 - 10);
+				
+				context.beginPath();
+				context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+				context.fillStyle = 'grey';
+				context.fill();
+				context.lineWidth = 5;
+				context.strokeStyle = '#003300';
+				context.stroke();				
+			}
+
+			window.onresize = function() {
+				drawLed();
+			}
+
+		</script>
+
+</head>
+
+	<body onload='Javascript:init();'>
+
+	<canvas id="led"></canvas>
+	</body>
+
+</html>

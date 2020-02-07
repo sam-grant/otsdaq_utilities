@@ -23,7 +23,9 @@ widgetLibrary.typeToSrc =		{
 							   		"3" :"plotly_bar_chart.html",
 									"4" :"thermometer.html",
 									"5" :"siren_alarm.html",
-									"6" :"label.html"
+									"6" :"label.html",
+									"7" :"led.html",
+									"8" :"picture.html"
 								}
 
 widgetLibrary.typeToImgSrc =	{
@@ -34,7 +36,9 @@ widgetLibrary.typeToImgSrc =	{
 		   							"3" :"basic-chart-icon.png",
 		   					 		"4" :"thermometer-icon.png" ,
 		   					 		"5" :"red_siren.png",
-		   					 		"6" :"label-icon.png"		   
+		   					 		"6" :"label-icon.png",
+		   					 		"7" :"led-icon.png",
+		   					 		"8" :"picture-icon.png"
 								}
 
 widgetLibrary.typeToName =		{
@@ -46,7 +50,9 @@ widgetLibrary.typeToName =		{
 									"3" : "Basic Line Chart",
 									"4" : "Basic Thermometer",
 									"5" : "Basic Siren Alarm",
-									"6" : "Basic Label for widgets"
+									"6" : "Basic Label for widgets",
+									"7" : "Basic Led",
+									"8" : "Basic picture"
 								}
 
 widgetLibrary.typeToPurpose =	{
@@ -57,7 +63,9 @@ widgetLibrary.typeToPurpose =	{
 									"3" : "Chart",
 									"4" : "Thermometer",
 									"5" : "Siren Alarm",
-									"6" : "Label widgets"
+									"6" : "Label widgets",
+									"7" : "Led",
+									"8" : "Picture"
 								}
 
 widgetLibrary.dimensions =		{

@@ -30,6 +30,8 @@
 			//functions:
 				//init()
 
+			var pv_settings_ = [];
+
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 
@@ -43,7 +45,8 @@
 
 			function setupPVs(settings)
 			{
-				console.log("setupPVs() : " , settings);
+				console.log("Text setupPVs() : " , settings);
+				pv_settings_ = settings;
 			}
 
 			function newWidget(widget, parameters) 
@@ -110,14 +113,7 @@
 
 			function getParameters()
 			{
-				paramters = {
-							"param1": "",
-							"param2": "",
-							"param3": "",
-							"param4": "",
-							"param5": "",
-							"param6": "",
-							"param7": ""};
+				paramters = {};
 				return paramters;
 			}
 
@@ -128,18 +124,9 @@
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
-				/*if(document.getElementById(pvName) == null)
-				{
-					var div = document.createElement('div');
-					var a = document.createElement('a');
-					a.id = pvName;
-					div.appendChild(a);
-					document.getElementById("display").appendChild(div);
-				}*/
-				console.log("newValue() reached", pvName, pvValue);
+				console.log("Text newValue() reached", pvName, pvValue);
 
-				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
-				document.getElementById(pvName).title = pvName + ":" + pvTime;
+				document.getElementById(pvName).innerHTML = (pvValue);
 				document.getElementById(pvName).parentElement.style.border = pvName + ":" + pvTime;
 				document.getElementById(pvName).parentElement.style["background-color"] = "transparent";
 				if(pvSeverity == "NO_ALARM")
@@ -184,6 +171,23 @@
 				{
 					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
 				}
+
+				document.getElementById(pvName).title =
+								pvName
+								+ "\nLast value "
+								+  pvValue
+								+ " "
+								+ pv_settings_[pvName].Units
+								+ " time "
+								+ pvTime
+								+ "\nLower Warning Limit:\t" + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
+							  	+ "Upper Warning Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
+							  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+							  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+							  	+ "Lower Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
+							  	+ "Upper Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
+							  	+ "Lower Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
+							  	+ "Upper Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
 			}
 
 		</script>

@@ -64,6 +64,7 @@
 			var columns = 1;
 			var thermometers = [];
 			var containers = [];
+			var pv_settings_ = [];
 
 			//init called once body has loaded
 			function init()
@@ -75,7 +76,8 @@
 
 			function setupPVs(settings)
 			{
-				console.log("setupPVs() : " , settings);
+				console.log("Thermometer setupPVs() : " , settings);
+				pv_settings_ = settings;
 			}
 
 			function newWidget(widget, parameters)
@@ -115,15 +117,7 @@
 
 			function getParameters()
 			{
-				parameters = {
-//							"param1": "",
-//							"param2": "",
-//							"param3": "",
-//							"param4": "",
-//							"param5": "",
-//							"param6": "",
-//							"param7": ""
-							};
+				parameters = {};
 				return parameters;
 			}
 
@@ -134,7 +128,7 @@
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
-				console.log("Termometer newValue() reached", pvName, pvValue);
+				console.log("Thermometer newValue() reached", pvName, pvValue);
 				//updateThermometer(pvName, containers[pvName], pvValue, (pvValue * 0.5), (pvValue * 1.5));
 				if(pvSeverity == "MAJOR" )
 					containers[pvName].innerHTML = "<center style = 'color: red'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
@@ -149,6 +143,23 @@
 					(pvValue * 0.5),
 					(pvValue * 1.5)
 				);
+
+				thermometers[pvName]._svg._groups[0][0].parentElement.title = 
+											pvName
+											+ "\nlast value "
+											+ pvValue
+											+ " "
+											+ pv_settings_[pvName].Units
+											+ " time "
+											+ pvTime
+											+ "\nLower Warning Limit:\t" + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
+										  	+ "Upper Warning Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
+										  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+										  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+										  	+ "Lower Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
+										  	+ "Upper Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
+										  	+ "Lower Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
+										  	+ "Upper Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
 			}
 
 			function drawThermometer(name, container, wdth, hght, val, min, max)
