@@ -29,7 +29,7 @@
 			//init()					
 
 			var gauges = [];
-			var guages_settings = [];
+			var pv_settings_ = [];
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@
 			function setupPVs(settings)
 			{
 				console.log("Gauge setupPVs() : " , settings);
-				guages_settings = settings;
+				pv_settings_ = settings;
 			}
 
 			var widget_;
@@ -78,12 +78,12 @@
 					//var max_size = Math.min(window.innerHeight, window.innerWidth) / Math.max(rows, columns);
 					var max_size = Math.min(window.innerHeight - 60, window.innerWidth) / Object.keys(widget.PVList).length;
 
-					var label = guages_settings[pv] !== undefined ? guages_settings[pv].Units : "";
-					var min   = guages_settings[pv] !== undefined ? guages_settings[pv].Lower_Display_Limit !== "DC'd" ? parseInt(guages_settings[pv].Lower_Display_Limit) : 0 : 0;
-					var max   = guages_settings[pv] !== undefined ? guages_settings[pv].Upper_Display_Limit !== "DC'd" ? parseInt(guages_settings[pv].Upper_Display_Limit) : 0 : 0;
+					var label = pv_settings_[pv] !== undefined ? pv_settings_[pv].Units : "";
+					var min   = pv_settings_[pv] !== undefined ? pv_settings_[pv].Lower_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pv].Lower_Display_Limit) : 0 : 0;
+					var max   = pv_settings_[pv] !== undefined ? pv_settings_[pv].Upper_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pv].Upper_Display_Limit) : 0 : 0;
 					max = max == "DC'd" || max <= min ? 100 : max;
 
-					console.log("Gauge pv: " + guages_settings[pv]);
+					console.log("Gauge pv: " + pv_settings_[pv]);
 					console.log("Gauge: " + pv + "(" + pv_number + ") : " + label +"," + min +"," + max + ".");
 					console.log("Gauge: " + pv + "(" + pv_number + ") : " + parameters["label_" + pv_number] + "," + parameters["min_" + pv_number] + "," + parameters["max_" + pv_number] + ".");
 
@@ -97,13 +97,6 @@
 			{
 				parameters = [];
 
-				for(var i = 0; i < 15; i++)
-				{
-					parameters["label_" + i] = "";
-					parameters["min_" + i]   = "";
-					parameters["max_" + i]   = "";
-				}
-				console.log(parameters);
 				return parameters;
 			}
 
@@ -115,7 +108,7 @@
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("Gauge newValue() reached", pvName, pvValue);
-				var pv="p-" + pvName;
+				var pv = "p-" + pvName;
 
 				if(pvSeverity == "MAJOR" )
 					document.getElementById(pv).innerHTML = "<left style = 'color: red'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</left>";
@@ -125,6 +118,22 @@
 					document.getElementById(pv).innerHTML = "<left style = 'color: green'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</left>";
 
 				gauges[pvName].redraw(pvValue);
+				gauges[pvName].body[0][0].parentElement.title = 
+											pvName
+											+ "\nlast value "
+											+ pvValue
+											+ " "
+											+ pv_settings_[pvName].Units
+											+ " time "
+											+ pvTime
+											+ "\nLower Warning Limit:\t" + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
+										  	+ "Upper Warning Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
+										  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+										  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+										  	+ "Lower Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
+										  	+ "Upper Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
+										  	+ "Lower Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
+										  	+ "Upper Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
 
 //				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
 //				document.getElementById(pvName).title = pvName + ":" + pvTime;

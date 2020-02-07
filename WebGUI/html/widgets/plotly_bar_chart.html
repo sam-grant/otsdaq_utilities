@@ -81,11 +81,30 @@
 				if (timeData[pvName] !== undefined) timeData[pvName].push(date);
 				if (valueData[pvName] !== undefined) valueData[pvName].push(pvValue);
 
-				console.log("newValue() reached", pvName, pvValue);
+				console.log("Strip Chart newValue() reached", pvName, pvValue);
 				console.log(timeData);
 				console.log(valueData);				
 
 				drawGraph(pvName, pvStatus, pvSeverity);
+
+				var display = document.getElementById('display');
+				display.title =
+								pvName
+								+ "\nlast value "
+								+ Number.parseFloat(pvValue).toFixed(2)
+								+ " "
+								+ pv_settings_[pvName].Units
+								+ " time "
+								+ pvTime
+								+ "\nLower Warning Limit:\t" + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
+							  	+ "Upper Warning Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
+							  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+							  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+							  	+ "Lower Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
+							  	+ "Upper Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
+							  	+ "Lower Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
+							  	+ "Upper Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
+
 			}
 
 			function newGraph()

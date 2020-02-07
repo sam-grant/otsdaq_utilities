@@ -356,7 +356,7 @@
 
 
 			//=====================================================================================
-			var PHOEBUS_MAP = {"textupdate": 0, "table": 1, "meter": 2, "stripchart": 3, "thermometer": 4, "siren": 5, "label": 6};
+			var PHOEBUS_MAP = {"textupdate": 0, "table": 1, "meter": 2, "stripchart": 3, "thermometer": 4, "siren": 5, "label": 6, "led": 7, "picture": 8};
 			function loadPhoebusPageReqHandler(req)
 			{
 				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
@@ -439,6 +439,7 @@
 					var foreground_color = widgets[i].getElementsByTagName("foreground_color")[0];
 					var transparent = widgets[i].getElementsByTagName("transparent")[0];
 					var wrap_words = widgets[i].getElementsByTagName("wrap_words")[0];
+					var file = widgets[i].getElementsByTagName("file")[0];
 
 					//set attributes
 					if (label_class !== undefined) widgetObject.attributes["class"] = label_class.innerHTML;
@@ -449,6 +450,7 @@
 					if (foreground_color !== undefined) widgetObject.attributes["foreground_color"] = foreground_color.innerHTML;
 					if (transparent !== undefined) widgetObject.attributes["transparent"] = transparent.innerHTML;
 					if (wrap_words !== undefined) widgetObject.attributes["wrap_words"] = wrap_words.innerHTML;
+					if (file !== undefined) widgetObject.attributes["file"] = file.innerHTML;
 
 					widgetObject.loaded = true;
 					widgetObject.el = "";

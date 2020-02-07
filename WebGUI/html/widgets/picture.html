@@ -16,8 +16,6 @@
 			}
 		</style>
 
-		<script src="https://d3js.org/d3.v5.min.js"></script>
-
 		<script>
 
 			var parameters_ = [];
@@ -33,7 +31,6 @@
 				console.log("Label init()");
 				console.log(window.frameElement.id);
 				window.parent.setupWidget(window.frameElement.id, getParameters());
-			
 			}
 
 			function setupPVs(settings)	{}
@@ -46,11 +43,7 @@
 			function getParameters()
 			{
 				parameters_["class"] = "";
-				parameters_["border"] = "true";
-				parameters_["text"] = "";
-				parameters_["text_position"] = "left";
-				parameters_["font"] = "";
-				parameters_["foreground_color"] = "";
+				parameters_["file"] = "/WebPath/html/widgets/picture-icon.png";
 				return parameters_;
 			}
 
@@ -58,13 +51,10 @@
 			{
 				parameters_ = attributes;
 				console.log(parameters_);
-				if (parameters_["border"]=="true")
-					document.getElementById("display").style.border = "1px solid #000";
-				else
-					document.getElementById("display").style.border = "";
 
-				document.getElementById("display").innerHTML = parameters_["text"];
-			        document.getElementById("display").style.textAlign = parameters_["text_position"];
+				document.getElementById("display").innerHTML = "<img id='img1' src='" + parameters_["file"] + "' title='" + parameters_["file"] + "'></img>";
+				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
 			}
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}
@@ -72,12 +62,11 @@
 			window.parent.document.getElementById("editWidgetAttributesPopup-container").onclick = function()
 			{
 				console.log("attribute menu onclick. label widgets parameters: " + window.parent.page_.widgets[window.frameElement.id].attributes["label"]);
-				//document.getElementById("label-text").innerHTML = window.parent.page_.widgets[window.frameElement.id].attributes["label"];
 			};
 
 			window.onresize = function() {
-				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("display").style.height = (parseInt(window.innerHeight) - 16) + "px";
+				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
 			}
 
 		</script>
