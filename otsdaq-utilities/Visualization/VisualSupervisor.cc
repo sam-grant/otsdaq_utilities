@@ -542,13 +542,18 @@ void VisualSupervisor::request(const std::string&               requestType,
 							    static_cast<DQMHistosConsumerBase*>(
 							        theDataManager_->getLiveDQMHistos())
 							        ->getFillHistoMutex());
-							histoClone = histo = histo->Clone();
+							histoClone = histo->Clone();
 						}
+						else
+						{
+							histoClone = histo->Clone();
+						}
+						
 						// STDLINE("","") ;
 						TString json = TBufferJSON::ConvertToJSON(histoClone);
 						// STDLINE("","") ;
 						TBufferFile tBuffer(TBuffer::kWrite);
-						histo->Streamer(tBuffer);
+						histoClone->Streamer(tBuffer);
 						// STDLINE("","") ;
 
 						//__SUP_COUT__ << "histo length " << tbuff.Length() << __E__;
@@ -557,14 +562,14 @@ void VisualSupervisor::request(const std::string&               requestType,
 						    BinaryStringMacros::binaryStringToHexString(tBuffer.Buffer(),
 						                                                tBuffer.Length());
 
-						xmlOut.addTextElementToData("rootType", histo->ClassName());
+						xmlOut.addTextElementToData("rootType", histoClone->ClassName());
 						xmlOut.addTextElementToData("rootData", destination);
 						xmlOut.addTextElementToData("rootJSON", json.Data());
 						ss.str("");
-						ss << "histo->GetName(): " << histo->GetName();
+						ss << "histo->GetName(): " << histoClone->GetName();
 						STDLINE(ss.str(), "");
 						ss.str("");
-						ss << "histo->ClassName(): " << histo->ClassName();
+						ss << "histo->ClassName(): " << histoClone->ClassName();
 						STDLINE(ss.str(), "");
 						// ss.str("") ; ss << "json.Data(): " <<json.Data() ;
 						// //STDLINE(ss.str(),"") ;
