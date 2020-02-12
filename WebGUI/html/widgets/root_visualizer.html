@@ -1,7 +1,12 @@
+
 <!DOCTYPE HTML>
 <html lang="en">
+
 	<head>
-		<title>Text</title>
+		<title>Root Visualizer</title>
+
+		<link rel='stylesheet' type='text/css' href='/WebPath/css/fonts.css?family=Donegal+One'>
+
 		<style type="text/css">	
 			body {
 				font: 10px arial;
@@ -16,11 +21,24 @@
 			}
 		</style>
 
-		<script>
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+<!-- 
+		<link   rel="stylesheet" type="text/css" href="/WebPath/css/ViewerRoot.css" />
+		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/ViewerRoot.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/ViewerRoot_lib/JsRoot-original/scripts/JSRootCore.js?jq2d&onload=createGUI"></script>
+-->
+		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/ViewerRoot_lib/JsRoot-original/scripts/JSRootCore.js?gui"></script>
+
+	<script>
 
 			var parameters_ = [];
 			//functions:
 			//init()
+
+			var _visualLID = undefined;
+			var _savedLID = 0;
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -28,9 +46,28 @@
 			//init called once body has loaded
 			function init()
 			{
-				console.log("Label init()");
+				console.log("Root Visualizer init()");
 				console.log(window.frameElement.id);
+
+				_savedLID = DesktopContent._localUrnLid;
+				//fill in Visualizer appId
+				DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
+						"&classNeedle=ots::VisualSupervisor",
+						"", //end post data,
+						function(req)
+						{			
+							_visualLID = DesktopContent.getXMLValue(req,"id") | 0;
+							DesktopContent._localUrnLid = _visualLID;
+							Debug.log("_ViusalizerAppId " + _visualLID);
+						}, //end handler
+						0, 0, true,//reqParam, progressHandler, callHandlerOnErr, 
+						false,//doNotShowLoadingOverlay,
+						true //targetSupervisor
+				); //end getAppId request
+				//getting the LID
+
 				window.parent.setupWidget(window.frameElement.id, getParameters());
+				JSROOT.Initialize();
 			}
 
 			function setupPVs(settings)	{}
@@ -38,17 +75,51 @@
 			function newWidget(widget, parameters)
 			{
 				setParameters(window.parent.page_.widgets[widget.el.id].attributes);
+				//rootReq (parameters_["file"]);
 			}
 
-			//=====================================================================================
+			function createGUI() {
+				var filename = "/WebPath/html/widgets/hsimple.root";
+				//var filename = "/WebPath/UserWebPath/OutputData/strawHit.root";
+				//var filename = "https://root.cern.ch/js/files/hsimple.root";
+				var h = new JSROOT.HierarchyPainter("example", "tree");
+
+				// configure 'simple' in provided <dev> element
+				// one also can specify "grid2x2" or "flex" or "tabs"
+				h.SetDisplay("simple", "display");
+				// open file and display element
+				h.OpenRootFile(filename, function() {
+					h.display("hpxpy;1","colz");
+				});
+
+//				JSROOT.OpenFile(filename, function(file) {
+//					file.ReadObject("hpxpy;1", function(obj) {
+//
+//						JSROOT.draw("display", obj, "colz");
+//					});
+//				});
+			}
+
+	//=====================================================================================
 			// rootReq ~~
 			//	if refreshIndex, then request is meant to replace root object at index
 			function rootReq (rootPath,refreshIndex)
-			{
+ 			{
 
+				if(_visualLID === undefined)
+				{
+					console.log("Delaying rootReq...");
+					window.setTimeout(
+						function()
+						{					
+							console.log("Trying delayed rootReq()..");
+							rootReq(rootPath,refreshIndex);
+						},500/*ms*/);
+					return;
+				}	
 				if(refreshIndex === undefined) refreshIndex = -1;
 
-				Debug.log("ViewerRoot.rootReq " + rootPath );
+				console.log("Widget rootReq " + rootPath );
 				DesktopContent.XMLHttpRequest("Request?RequestType=getRoot", 
 						"RootPath="+rootPath,
 						getRootDataHandler,
@@ -56,6 +127,8 @@
 						0 /*progressHandler*/, 
 						0 /*callHandlerOnErr*/, 
 						refreshIndex<0?false:true /*doNoShowLoadingOverlay*/);
+
+				//DesktopContent._localUrnLid = savedLID;
 			} //end rootReq()
 
 			//=====================================================================================
@@ -63,8 +136,8 @@
 			//	receives streamed root object from server and prepares it for js structures
 			function getRootDataHandler (req, refreshIndex)
 			{
-
-				Debug.log("root visulazire getRootDataHandler " + req.responseText );
+				console.log(req);
+				console.log("root visualizer getRootDataHandler\n" + req.responseText );
 
 				var rootType = DesktopContent.getXMLValue(req,"rootType");
 				var rootStr = DesktopContent.getXMLValue(req,"rootData");
@@ -72,29 +145,13 @@
 
 				var rootJSON = DesktopContent.getXMLValue(req,"rootJSON");
 
-				Debug.log("tmpRootDataHandler JSON \n\n" + rootJSON );
-
-				var ojbect = JSROOT.parse(rootJSON);
-				var rootTitle = ojbect.fTitle;
-
-				if(!ojbect || !rootType || !rootName)
-				{ 
-//					Debug.log("Pausing auto-refresh! \n\nPlease resolve the erros before resuming refreshes.", Debug.HIGH_PRIORITY);
-//
-//					var chk = document.getElementById("hudCheckbox" + 2); //pause refresh checkbox
-//					chk.checked = true;
-//					ViewerRoot.pauseRefresh = true;
-//
-//				  	Debug.log("Error reading Root object from server - Name: " + rootName, Debug.HIGH_PRIORITY);
-//				    ViewerRoot.autoRefreshMatchArr = [];	//clearing the array so that future refreshes work
-				    return;
-				}
+				console.log("tmpRootDataHandler JSON \n\n" + rootJSON );
 			} //end getRootDataHandler()
 
 			function getParameters()
 			{
-				parameters_["class"] = "";
-				parameters_["file"] = "/WebPath/html/widgets/picture-icon.png";
+				//parameters_["file"] = "/WebPath/html/widgets/strawHit.root";
+				parameters_["file"] = "/strawHit.root";
 				return parameters_;
 			}
 
@@ -102,17 +159,13 @@
 			{
 				parameters_ = attributes;
 				console.log(parameters_);
-
-				document.getElementById("display").innerHTML = "<img id='img1' src='" + parameters_["file"] + "' title='" + parameters_["file"] + "'></img>";
-				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
 			}
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}
 
 			window.onresize = function() {
-				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
+				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("display").style.height = (parseInt(window.innerHeight) - 16) + "px";
 			}
 
 		</script>
@@ -120,9 +173,13 @@
 </head>
 
 	<body onload='Javascript:init();'>
-
-	<div id="display"></div>
-
+<div id="simpleGUI" path="/WebPath/html/widgets/"></div>
+	<div>
+	<div id="tree">
+		</div>
+		<div id='display'>
+		</div>
+	</div>
 	</body>
 
 </html>
