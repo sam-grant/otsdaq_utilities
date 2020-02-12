@@ -6,6 +6,8 @@
 #include "otsdaq/PluginMakers/MakeSlowControls.h"
 #include "otsdaq/SlowControlsCore/SlowControlsVInterface.h"
 
+#include <boost/regex.hpp>
+
 using namespace ots;
 
 #define CONTROLS_SUPERVISOR_DATA_PATH \
