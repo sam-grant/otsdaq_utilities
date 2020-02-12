@@ -28,8 +28,9 @@
 		<link   rel="stylesheet" type="text/css" href="/WebPath/css/ViewerRoot.css" />
 		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/ViewerRoot.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/ViewerRoot_lib/JsRoot-original/scripts/JSRootCore.js?jq2d&onload=createGUI"></script>
+		<script type="text/JavaScript" src="/WebPath/html/widgets/require.js"></script>
 -->
-		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/ViewerRoot_lib/JsRoot-original/scripts/JSRootCore.js?gui"></script>
+		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/ViewerRoot_lib/JsRoot-5.8.0/scripts/JSRootCore.js?gui"></script>
 
 	<script>
 
@@ -67,6 +68,17 @@
 				//getting the LID
 
 				window.parent.setupWidget(window.frameElement.id, getParameters());
+
+				//var rootFiles = "streamerInfo.root;hsimple.root";
+				var rootFiles = "";
+				window.parent.pagesList_.forEach(function(page){
+						if(page != "undefined"){
+							rootFiles += page + ";"; 
+							console.log(rootFiles)
+						}
+					});
+				
+				document.getElementById("simpleGUI").attributes["files"].nodeValue = rootFiles;
 				JSROOT.Initialize();
 			}
 
@@ -75,32 +87,12 @@
 			function newWidget(widget, parameters)
 			{
 				setParameters(window.parent.page_.widgets[widget.el.id].attributes);
-				//rootReq (parameters_["file"]);
+				rootReq (parameters_["file"]);
+				var variableNameForData = localStorage.setItem('/WebPath/UserWebPath/OutputData/','*');
+				console.log(document.getElementById("simpleGUI"));
 			}
 
-			function createGUI() {
-				var filename = "/WebPath/html/widgets/hsimple.root";
-				//var filename = "/WebPath/UserWebPath/OutputData/strawHit.root";
-				//var filename = "https://root.cern.ch/js/files/hsimple.root";
-				var h = new JSROOT.HierarchyPainter("example", "tree");
-
-				// configure 'simple' in provided <dev> element
-				// one also can specify "grid2x2" or "flex" or "tabs"
-				h.SetDisplay("simple", "display");
-				// open file and display element
-				h.OpenRootFile(filename, function() {
-					h.display("hpxpy;1","colz");
-				});
-
-//				JSROOT.OpenFile(filename, function(file) {
-//					file.ReadObject("hpxpy;1", function(obj) {
-//
-//						JSROOT.draw("display", obj, "colz");
-//					});
-//				});
-			}
-
-	//=====================================================================================
+			//=====================================================================================
 			// rootReq ~~
 			//	if refreshIndex, then request is meant to replace root object at index
 			function rootReq (rootPath,refreshIndex)
@@ -173,7 +165,7 @@
 </head>
 
 	<body onload='Javascript:init();'>
-<div id="simpleGUI" path="/WebPath/html/widgets/"></div>
+<div id="simpleGUI" path="/WebPath/UserWebPath/OutputData/"	files=""></div>
 	<div>
 	<div id="tree">
 		</div>
