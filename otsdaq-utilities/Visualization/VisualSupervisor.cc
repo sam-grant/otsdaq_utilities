@@ -486,9 +486,9 @@ void VisualSupervisor::request(const std::string&               requestType,
 			ss << "rootFileName " << rootFileName;
 			STDLINE(ss.str(), "");
 			rootFile = TFile::Open(rootFileName.c_str());
-			ss.str("");
-			ss << "rootFile " << rootFile->GetName();
-			STDLINE(ss.str(), "");
+			//ss.str("");
+			//ss << "rootFile " << rootFile->GetName();
+			//STDLINE(ss.str(), "");
 		}
 		else if(theDataManager_->getLiveDQMHistos() != nullptr)
 		{
