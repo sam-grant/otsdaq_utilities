@@ -19,6 +19,8 @@
 #include <TCanvas.h>
 #include <TClass.h>
 #include <TDirectory.h>
+#include <TTree.h>
+#include <TBranchElement.h>
 #include <TFile.h>
 #include <TH1.h>
 #include <TH2.h>
@@ -58,6 +60,9 @@ using namespace ots;
 #define __MF_SUBJECT__ "Visualizer"
 
 XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
+
+#undef STDLINE
+#define STDLINE(X,Y) __COUT__ << X
 
 //==============================================================================
 VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
@@ -449,197 +454,304 @@ void VisualSupervisor::request(const std::string&               requestType,
 		std::string  path = CgiDataUtilities::postData(cgiIn, "RootPath");
 		boost::regex re("%2F");
 		path = boost::regex_replace(path, re, "/");  // Dario: should be transparent for
-		                                             // Ryan's purposes but required by
-		                                             // Extjs
+		// Ryan's purposes but required by
+		// Extjs
 		boost::regex re1("%3A");
 		path = boost::regex_replace(path, re1, "");  // Dario: should be transparent for
-		                                             // Ryan's purposes but required by
-		                                             // Extjs
+		// Ryan's purposes but required by
+		// Extjs
+
 		ss.str("");
 		ss << "path    : " << path;
 		STDLINE(ss.str(), ACCyan);
 		std::string fullPath = std::string(__ENV__("ROOT_BROWSER_PATH")) + path;
-		ss.str("");
-		ss << "fullPath: " << fullPath;
-		STDLINE(ss.str(), "");
 
-		//__SUP_COUT__ << "Full path:-" << fullPath << "-" << __E__;
+		__SUP_COUTV__(fullPath);
 
-		std::string rootFileName = fullPath.substr(0, fullPath.find(".root") + 5);
-		ss.str("");
-		ss << "rootFileName " << rootFileName;
-		STDLINE(ss.str(), "");
+		const size_t rootExtensionStart = fullPath.find(".root");
+		const size_t rootExtensionEnd = rootExtensionStart + std::string(".root").size();
+
+		std::string rootFileName = fullPath.substr(0, rootExtensionEnd);
+
+		__SUP_COUTV__(rootFileName);
 		std::string rootDirectoryName =
-		    rootFileName + ":" +
-		    fullPath.substr(fullPath.find(".root") + 5,
-		                    fullPath.size() - fullPath.find(".root") + 5 + 1);
+				rootFileName + ":" +
+				fullPath.substr(rootExtensionEnd,
+						fullPath.size() - rootExtensionEnd + 1);
 
-		ss.str("");
-		ss << "rootDirectoryName " << rootDirectoryName;
-		STDLINE(ss.str(), "");
+		__SUP_COUTV__(rootDirectoryName);
 		std::string::size_type LDQM_pos = path.find("/" + LIVEDQM_DIR + ".root/");
 		TFile* rootFile = nullptr;
 
 		if(LDQM_pos != 0)//If it is not from LIVE_DQM
 		{
-			ss.str("");
-			ss << "rootFileName " << rootFileName;
-			STDLINE(ss.str(), "");
+			__SUP_COUTV__(rootFileName);
 			rootFile = TFile::Open(rootFileName.c_str());
-			ss.str("");
-			ss << "rootFile " << rootFile->GetName();
-			STDLINE(ss.str(), "");
+
+			if(rootFile == nullptr || !rootFile->IsOpen())
+			{
+				__SUP_SS__ << "Failed to access ROOT file: " << rootFileName << __E__;
+				__SUP_SS_THROW__;
+			}
 		}
 		else if(theDataManager_->getLiveDQMHistos() != nullptr)
 		{
-			STDLINE("=========> From file", "");
-			__SUP_COUT__ << "Attempting to get LIVE file." << __E__;
-			__SUP_COUT__ << "rootDirectoryName: " << rootDirectoryName << __E__;
+			__SUP_COUT__ << "Attempting to get LIVE ROOT object." << __E__;
+			__SUP_COUTV__(rootDirectoryName);
 			rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
-			__SUP_COUT__ << "rootDirectoryName: " << rootDirectoryName << __E__;
+			__SUP_COUTV__(rootDirectoryName);
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
-		}
 
-		if(rootFile == nullptr || !rootFile->IsOpen())
-		{
-			__SUP_COUT__ << "Failed to access root file: " << rootFileName << __E__;
-		}
-		else
-		{
 			__SUP_COUT__ << "LIVE file name: " << rootFile->GetName() << __E__;
-			xmlOut.addTextElementToData("path", path);
-			try
+
+			if(rootFile == nullptr || !rootFile->IsOpen())
 			{
-				TDirectory* directory;
-				directory = rootFile->GetDirectory(rootDirectoryName.c_str());
-				if(directory == 0)
+				__SUP_SS__ << "Failed to access LIVE ROOT file: " << rootFileName << __E__;
+				__SUP_COUT__ << ss.str();
+				xmlOut.addTextElementToData("Warning", ss.str());
+				return; //do not treat LIVE root file missing as error, .. assume just not Running
+			}
+		}
+
+		//at this point initial ROOT object has been successfully opened
+
+
+		xmlOut.addTextElementToData("path", path);
+
+		TDirectory* directory = rootFile->GetDirectory(rootDirectoryName.c_str());
+		TObject* tobject = nullptr;
+
+		if(!directory) //if not directory yet, peak at object for TTree or TBranchElement with children
+		{
+			//if TTree or TBranchElement with children, then treat as a directory
+			//else if TBranchElement without children, then treat as leaf ROOT object
+
+			rootDirectoryName = fullPath.substr(rootExtensionEnd); //re-purpose rootDirectoryName as path within TTree
+
+			std::vector<std::string> splitTTreePath =
+					StringMacros::getVectorFromString(rootDirectoryName,{'/'});
+			__SUP_COUTV__(StringMacros::vectorToString(splitTTreePath));
+
+			unsigned int spliti = 0;
+			while(spliti<splitTTreePath.size() &&
+					splitTTreePath[spliti].size() == 0) ++spliti; //search for first non-empty
+
+			if(spliti < splitTTreePath.size())
+			{
+				__SUP_COUTV__(splitTTreePath[spliti]);
+				tobject = (TObject*)rootFile->Get(splitTTreePath[spliti].c_str());
+				++spliti; //search for next non-empty
+			}
+
+			if(tobject == nullptr)
+			{
+				__SUP_SS__ << "Failed to access ROOT sub path: " << rootDirectoryName << __E__;
+				__SUP_SS_THROW__;
+			}
+			__SUP_COUTV__(tobject->ClassName());
+
+			if(std::string(tobject->ClassName()) == "TTree" ||
+					std::string(tobject->ClassName()) == "TBranchElement")
+			{
+				//continue traversing name split
+				do
 				{
-					//__SUP_COUT__ << "This is not a directory!" << __E__;
-					directory = rootFile;
+					while(spliti<splitTTreePath.size() &&
+										splitTTreePath[spliti].size() == 0) ++spliti; //search for next non-empty
+					if(spliti >= splitTTreePath.size()) break; //reached end of traversal!
 
-					// failed directory so assume it's file
-					// __SUP_COUT__ << "Getting object name: " << rootDirectoryName <<
-					// __E__;
-					// ss.str("") ; ss << "rootDirectoryName: |" << rootDirectoryName <<
-					// "| rootFile->GetName()" << rootFile->GetName() ;
-					// STDLINE(ss.str(),"") ;
-					// rootFile->ls() ;
-					TObject* histoClone = nullptr;
-					TObject* histo = (TObject*)rootFile->Get(rootDirectoryName.c_str());
-					ss.str("");
-					ss << "histo ptr: |" << histo;
-					STDLINE(ss.str(), "");
+					__SUP_COUTV__(splitTTreePath[spliti]);
+					__SUP_COUT__ << "Parent class = " << (tobject->ClassName()) << __E__;
+					if(std::string(tobject->ClassName()) == "TTree")
+						tobject = (TObject*)((TTree*)tobject)->GetBranch(splitTTreePath[spliti].c_str());
+					else if(std::string(tobject->ClassName()) == "TBranchElement")
+						tobject = (TObject*)((TBranchElement*)tobject)->FindBranch(splitTTreePath[spliti].c_str());
+					++spliti; //search for next non-empty
+				} while(tobject);
 
-					if(histo != nullptr)  // turns out was a root object path
+				if(tobject == nullptr)
+				{
+					__SUP_SS__ << "Failed to access root sub path: " << rootDirectoryName << __E__;
+					__SUP_SS_THROW__;
+				}
+
+				__SUP_COUTV__(tobject->ClassName());
+
+				//now at path's target element with tobject
+				//	if no branches, then "file" and tobject stringified
+				//	else "dir"
+
+				TObjArray* objects = nullptr;
+
+				if(std::string(tobject->ClassName()) == "TTree")
+					objects = ((TTree*)tobject)->GetListOfBranches();
+				else if(std::string(tobject->ClassName()) == "TBranchElement")
+					objects = ((TBranchElement*)tobject)->GetListOfBranches();
+
+				if(objects != nullptr && !objects->IsEmpty())
+				{
+					__SUP_COUT__ << "Handling as TTree/TBranchElement directory" << __E__;
+
+					//treat like a directory, and return branches
+					TObject* obj;
+					TIter    nextobj(objects->MakeIterator());
+					TRegexp re("*", kTRUE);
+					while((obj = (TObject*)nextobj()))
 					{
-						// Clone histo to avoid conflict when it is filled by other
-						// threads
-						// STDLINE("","") ;
-						if(theDataManager_->getLiveDQMHistos() != nullptr &&
-						   LDQM_pos == 0)
+						std::string name = obj->GetName();
+						TString s = name;
+						if(s.Index(re) == kNPOS)
+							continue;
+
+
+						__SUP_COUT__ << "Child class Name: " << obj->IsA()->GetName() <<
+								" " << name << __E__;
+
+
+						if(std::string(obj->IsA()->GetName()) == "TBranchElement")
 						{
-							std::unique_lock<std::mutex> lock(
-							    static_cast<DQMHistosConsumerBase*>(
-							        theDataManager_->getLiveDQMHistos())
-							        ->getFillHistoMutex());
-							histoClone = histo->Clone();
+							//decide if leave based on children branches
+							__SUP_COUT__ << "Child '" << name << "' of type '" <<
+									((TBranchElement*)obj)->GetTypeName() << "' isLeaf=" <<
+									((TBranchElement*)obj)->GetListOfBranches()->IsEmpty() << __E__;
+
+							xmlOut.addTextElementToData(
+									(((TBranchElement*)obj)->GetListOfBranches()->IsEmpty())
+									? "file" : "dir",
+											name);
 						}
-						else
+						else // handle normal way
 						{
-							histoClone = histo->Clone();
+							xmlOut.addTextElementToData(
+									(std::string(obj->IsA()->GetName()).find("Directory") !=
+											std::string::npos ||
+											std::string(obj->IsA()->GetName()) == "TTree")
+											? "dir"
+													: "file",
+													  name);
 						}
-						
-						// STDLINE("","") ;
-						TString json = TBufferJSON::ConvertToJSON(histoClone);
-						// STDLINE("","") ;
-						TBufferFile tBuffer(TBuffer::kWrite);
-						histoClone->Streamer(tBuffer);
-						// STDLINE("","") ;
-
-						//__SUP_COUT__ << "histo length " << tbuff.Length() << __E__;
-
-						std::string destination =
-						    BinaryStringMacros::binaryStringToHexString(tBuffer.Buffer(),
-						                                                tBuffer.Length());
-
-						xmlOut.addTextElementToData("rootType", histoClone->ClassName());
-						xmlOut.addTextElementToData("rootData", destination);
-						xmlOut.addTextElementToData("rootJSON", json.Data());
-						ss.str("");
-						ss << "histo->GetName(): " << histoClone->GetName();
-						STDLINE(ss.str(), "");
-						ss.str("");
-						ss << "histo->ClassName(): " << histoClone->ClassName();
-						STDLINE(ss.str(), "");
-						// ss.str("") ; ss << "json.Data(): " <<json.Data() ;
-						// //STDLINE(ss.str(),"") ;
-						if(histoClone != nullptr)
-							delete histoClone;
 					}
-					else
-						__SUP_COUT_ERR__ << "Failed to access:-" << rootDirectoryName
-						                 << "-" << __E__;
-					STDLINE("Done with it!", ACBlue);
+					return;
+				} //done handling TTree branches
+			} //end TTree and branch handling
+
+			//at this point have tobject to stringify
+		} // peaking for TTree
+
+		if(directory == nullptr)
+		{
+			__SUP_COUT__ << "This is not a directory!" << __E__;
+
+			if(tobject == nullptr)
+			{
+				__SUP_SS__ << "Something is wrong. Failed to access ROOT TObject at path: " << fullPath << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			TObject* tobjectClone = nullptr;
+
+			if(tobject != nullptr)  // turns out was a root object path
+			{
+				// Clone tobject to avoid conflict when it is filled by other
+				// threads
+				if(theDataManager_->getLiveDQMHistos() != nullptr &&
+						LDQM_pos == 0)
+				{
+					std::unique_lock<std::mutex> lock(
+							static_cast<DQMHistosConsumerBase*>(
+									theDataManager_->getLiveDQMHistos())
+									->getFillHistoMutex());
+					tobjectClone = tobject->Clone();
 				}
 				else
 				{
-					__SUP_COUT__ << "directory found getting the content!" << __E__;
-					STDLINE("Directory found getting the content!", ACGreen);
-					TRegexp re("*", kTRUE);
-					if(LDQM_pos == 0)
-					{
-						TObject* obj;
-						TIter    nextobj(directory->GetList());
-						while((obj = (TObject*)nextobj()))
-						{
-							TString s = obj->GetName();
-							if(s.Index(re) == kNPOS)
-								continue;
-							__SUP_COUT__ << "Class Name: " << obj->IsA()->GetName()
-							             << __E__;
-							xmlOut.addTextElementToData(
-							    (std::string(obj->IsA()->GetName()).find("Directory") !=
-							     std::string::npos)
-							        ? "dir"
-							        : "file",
-							    obj->GetName());
-							// ss.str("") ; ss << "obj->GetName(): " << obj->GetName() ;
-							// //STDLINE(ss.str(),"") ;
-						}
-					}
-					else
-					{
-						TKey* key;
-						TIter next(directory->GetListOfKeys());
-						while((key = (TKey*)next()))
-						{
-							TString s = key->GetName();
-							if(s.Index(re) == kNPOS)
-								continue;
-							__SUP_COUT__ << "Class Name: " << key->GetClassName()
-							             << __E__;
-							xmlOut.addTextElementToData(
-							    (std::string(key->GetClassName()).find("Directory") !=
-							     std::string::npos)
-							        ? "dir"
-							        : "file",
-							    key->GetName());
-							// ss.str("") ; ss << "key->GetName(): " << key->GetName() ;
-							////STDLINE(ss.str(),"") ;
-						}
-					}
+					tobjectClone = tobject->Clone();
 				}
-				if(LDQM_pos == std::string::npos)
-					rootFile->Close();
+
+				TString json = TBufferJSON::ConvertToJSON(tobjectClone);
+				TBufferFile tBuffer(TBuffer::kWrite);
+				tobjectClone->Streamer(tBuffer);
+
+				std::string hexString =
+						BinaryStringMacros::binaryStringToHexString(tBuffer.Buffer(),
+								tBuffer.Length());
+
+				__SUP_COUT__ << "Returning object '" <<
+						tobjectClone->GetName() << "' of class '" <<
+						tobjectClone->ClassName() << __E__;
+
+				xmlOut.addTextElementToData("rootType", tobjectClone->ClassName());
+				xmlOut.addTextElementToData("rootData", hexString);
+				xmlOut.addTextElementToData("rootJSON", json.Data());
+
+				if(tobjectClone != nullptr)
+					delete tobjectClone;
 			}
-			catch(...)
+			else
+				__SUP_COUT_ERR__ << "Failed to access:-" << rootDirectoryName
+				<< "-" << __E__;
+			STDLINE("Done with it!", ACBlue);
+		}
+		else //handle as directory
+		{
+			__SUP_COUT__ << "directory found getting the content!" << __E__;
+			STDLINE("Directory found getting the content!", ACGreen);
+			TRegexp re("*", kTRUE);
+			if(LDQM_pos == 0)
 			{
-				__SUP_COUT_ERR__ << "File was probably closed!" << __E__;
+				TObject* obj;
+				TIter    nextobj(directory->GetList());
+				while((obj = (TObject*)nextobj()))
+				{
+					TString s = obj->GetName();
+					if(s.Index(re) == kNPOS)
+						continue;
+					__SUP_COUT__ << "Class Name: " << obj->IsA()->GetName()
+							            				 << __E__;
+
+
+
+					xmlOut.addTextElementToData(
+							(std::string(obj->IsA()->GetName()).find("Directory") !=
+									std::string::npos ||
+									std::string(obj->IsA()->GetName()) == "TTree"||
+									std::string(obj->IsA()->GetName()) == "TBranchElement")
+									? "dir"
+											: "file",
+											  obj->GetName());
+					// ss.str("") ; ss << "obj->GetName(): " << obj->GetName() ;
+					// //STDLINE(ss.str(),"") ;
+				}
+			}
+			else
+			{
+				TKey* key;
+				TIter next(directory->GetListOfKeys());
+				while((key = (TKey*)next()))
+				{
+					TString s = key->GetName();
+					if(s.Index(re) == kNPOS)
+						continue;
+					__SUP_COUT__ << "Class Name: " << key->GetClassName()
+							            				 << __E__;
+					xmlOut.addTextElementToData(
+							(std::string(key->GetClassName()).find("Directory") !=
+									std::string::npos ||
+									std::string(key->GetClassName()) == "TTree"||
+									std::string(key->GetClassName()) == "TBranchElement")
+									? "dir"
+											: "file",
+											  key->GetName());
+					// ss.str("") ; ss << "key->GetName(): " << key->GetName() ;
+					////STDLINE(ss.str(),"") ;
+				}
 			}
 		}
-		// std::ostringstream* out ;
-		// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
-	}
+		if(LDQM_pos == std::string::npos)
+			rootFile->Close();
+
+
+	} //end getRoot handling
 	else if(
 	    requestType ==
 	    "getEvents")  //################################################################################################################
