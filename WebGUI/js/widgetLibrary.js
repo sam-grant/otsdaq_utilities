@@ -25,7 +25,8 @@ widgetLibrary.typeToSrc =		{
 									"5" :"siren_alarm.html",
 									"6" :"label.html",
 									"7" :"led.html",
-									"8" :"picture.html"
+									"8" :"picture.html",
+									"9" :"root_visualizer.html"
 								}
 
 widgetLibrary.typeToImgSrc =	{
@@ -38,7 +39,8 @@ widgetLibrary.typeToImgSrc =	{
 		   					 		"5" :"red_siren.png",
 		   					 		"6" :"label-icon.png",
 		   					 		"7" :"led-icon.png",
-		   					 		"8" :"picture-icon.png"
+		   					 		"8" :"picture-icon.png",
+		   					 		"9" :"root-icon.png"
 								}
 
 widgetLibrary.typeToName =		{
@@ -52,7 +54,8 @@ widgetLibrary.typeToName =		{
 									"5" : "Basic Siren Alarm",
 									"6" : "Basic Label for widgets",
 									"7" : "Basic Led",
-									"8" : "Basic picture"
+									"8" : "Basic picture",
+									"9" : "Basic Root file viewer"
 								}
 
 widgetLibrary.typeToPurpose =	{
@@ -65,7 +68,8 @@ widgetLibrary.typeToPurpose =	{
 									"5" : "Siren Alarm",
 									"6" : "Label widgets",
 									"7" : "Led",
-									"8" : "Picture"
+									"8" : "Picture",
+									"9" : "Root file"
 								}
 
 widgetLibrary.dimensions =		{
