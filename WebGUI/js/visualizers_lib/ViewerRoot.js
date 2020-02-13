@@ -580,9 +580,22 @@ ViewerRoot.resizeRootObjects = function(needToRedraw) {
 		{
 			//Debug.log("ViewerRoot resizeRootObjects redraw " + i  + "-" + ViewerRoot.rootObjIndexArr[i] );
 			//JSROOTPainter.drawObject(ViewerRoot.rootObjArr[i], ViewerRoot.rootObjIndexArr[i]);
-			JSROOT.redraw('histogram'+
-					ViewerRoot.rootObjIndexArr[i],
-					ViewerRoot.rootObjArr[i], "colz"); //last arg, root draw option
+			
+			try
+			{
+				JSROOT.redraw('histogram'+
+						ViewerRoot.rootObjIndexArr[i],
+						ViewerRoot.rootObjArr[i], "colz"); //last arg, root draw option
+			}
+			catch(e)
+			{
+				Debug.log("ROOT Object type '" + ViewerRoot.rootObjArr[i]._typename +
+						"' failed to draw: " + e);//, Debug.HIGH_PRIORITY); 
+				document.getElementById("histogram" + 
+						ViewerRoot.rootObjIndexArr[i],).textContent = 
+								ViewerRoot.rootObjArr[i].JSON;
+								//JSON.stringify(ViewerRoot.rootObjArr[i]); //fill with text
+			}
 			ViewerRoot.refreshTransparency(i);
 		}			
 	}
@@ -600,7 +613,7 @@ ViewerRoot.resizeRootObjects = function(needToRedraw) {
 		ViewerRoot.rootHeaderElArr[i].style.backgroundColor =
 			ViewerRoot.rootTargetIndex==i?'rgb(178,222,166)':'rgba(0,0,0,0)';
 	}
-}
+} //end resizeRootObjects()
 
 //=====================================================================================
 // ViewerRoot.refreshTransparency ~~
@@ -809,12 +822,11 @@ ViewerRoot.getRootDataHandler = function(req, refreshIndex)
 		
 	//Debug.log("ViewerRoot tmpRootDataHandler JSON \n\n" + rootJSON );
 		
-	var ojbect = JSROOT.parse(rootJSON);
-	var rootTitle = ojbect.fTitle;
-		
-	if(!ojbect || !rootType || !rootName)
+	var object = JSROOT.parse(rootJSON);
+			
+	if(!object || !rootType || !rootName)
 	{ 
-		Debug.log("Pausing auto-refresh! \n\nPlease resolve the erros before resuming refreshes.", Debug.HIGH_PRIORITY);
+		Debug.log("Pausing auto-refresh! \n\nPlease resolve the errors before resuming refreshes.", Debug.HIGH_PRIORITY);
 
 		var chk = document.getElementById("hudCheckbox" + 2); //pause refresh checkbox
 		chk.checked = true;
@@ -824,6 +836,9 @@ ViewerRoot.getRootDataHandler = function(req, refreshIndex)
 	    ViewerRoot.autoRefreshMatchArr = [];	//clearing the array so that future refreshes work
 	    return;
 	}
+	
+	var rootTitle = object.fTitle;
+	object.JSON = rootJSON;
 
 	if(refreshIndex === undefined) refreshIndex = -1;
 	
@@ -908,7 +923,7 @@ ViewerRoot.getRootDataHandler = function(req, refreshIndex)
 //		ViewerRoot.autoRefreshDefault = tmpAutoRefreshDefault;
 	}
 	
-	ViewerRoot.interpretObjectJSON(ojbect,rootType,rootName,refreshIndex);
+	ViewerRoot.interpretObjectJSON(object,rootType,rootName,refreshIndex);
 	if(ViewerRoot.iterLoading) ViewerRoot.iterativeConfigLoader();
 } //end getRootDataHandler()
 
@@ -945,16 +960,43 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex)
 		}
 		
 		//draw based on refresh index
+		var targetEl = document.getElementById("histogram" + ViewerRoot.objIndex);
 		try
-		{
+		{			
+			var isFirstTime = targetEl.innerHTML == ""; //if empty, assume it is first time
 			JSROOT.redraw('histogram'+
 					(ViewerRoot.objIndex),
 					object, "colz"); //last arg, root draw option
+			
+			if(isFirstTime) //try again, to see if there are errors (because async causes craziness)
+			{
+				if(targetEl.innerHTML == "")
+				{
+					Debug.log("Empty first time handling!");
+					window.setTimeout(function()
+							{
+						Debug.log("Async Empty first time handling!");
+						try
+						{
+							JSROOT.redraw('histogram'+
+									(ViewerRoot.objIndex),
+									object, "colz"); //last arg, root draw option
+						}
+						catch(e)
+						{
+							Debug.log("ROOT Object type '" + object._typename +
+									"' failed to draw: " + e);//, Debug.HIGH_PRIORITY); 
+							targetEl.textContent = object.JSON;//JSON.stringify(object); //fill with text
+						}
+							},500/*ms*/); //end asynch 2nd try
+				} //end empty first time handling
+			} //end special first time handling
 		}
 		catch(e)
 		{
 			Debug.log("ROOT Object type '" + object._typename +
-					"' failed to draw: " + e, Debug.HIGH_PRIORITY); 
+					"' failed to draw: " + e);//, Debug.HIGH_PRIORITY); 
+			targetEl.textContent = object.JSON;// JSON.stringify(object); //fill with text
 		}
 		
 		ViewerRoot.objIndex++;
