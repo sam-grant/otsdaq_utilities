@@ -16108,7 +16108,12 @@
 				sel.style.display = "none";
 
 				if (tel.value == "") //take value from select (rather than old value)
-					tel.value = sel.value; //_editingCellElOldValue;
+				{
+					if(sel.value == "DEFAULT" && _editingCellElOldValue != "")
+						tel.value = _editingCellElOldValue;
+					else
+						tel.value = sel.value;
+				}
 
 				tel.style.display = "block";
 				ConfigurationAPI.setCaretPosition(tel, 0, tel.value.length);
