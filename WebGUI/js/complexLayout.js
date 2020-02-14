@@ -13,33 +13,35 @@ Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
 Ext.onReady(
 function() 
 {
- var enableDebug_         = true                                                                   ;
- var canvasTabs_          = []                                                                      ;
- var currentPad_          = 0                                                                       ;
- var globalCanvas_        = 0                                                                       ;
- var ROOTControlsPanel_   = 0                                                                       ;
- var theInformationPanel_ = 0                                                                       ;
- var theNavigatorPanel_   = 0                                                                       ;
- var theViewPort_         = 0                                                                       ;
- var theStore_            = 0                                                                       ;
- var nxPlots_             = 1                                                                       ;
- var nyPlots_             = 1                                                                       ;
- var grid_                = ""                                                                      ;
- var dataModel_           = ""                                                                      ;
- var mdi_                 = ""                                                                      ;
- var doReset_             = true                                                                    ;
- var clearCanvas_         = true                                                                    ;     
- var superimposeFlag_     = false                                                                   ;
- var currentCanvas_       = 1                                                                       ;
- var currentDiv_          = 'canvas1'                                                               ;
- var gridDivision_        = "grid1x1"                                                               ;
- var selectedItem_        = "getDirectories";                                                       ;
- var treeDisplayField_    = "fDisplayName"                                                          ;
  var buttonStyle_         = 'margin-left  : 2px;' +
                             'margin-right : 2px;' + 
                             'margin-top   : 2px;' +
                             'margin-bottom: 2px;' +
                             'padding      : 2px;'                                                   ;
+ var canvasTabs_          = []                                                                      ;
+ var clearCanvas_         = true                                                                    ;     
+ var currentCanvas_       = 0                                                                       ;
+ var currentPad_          = 0                                                                       ;
+ var dataModel_           = ""                                                                      ;
+ var enableDebug_         = true                                                                    ;
+ var globalCanvas_        = 0                                                                       ;
+ var gridDivision_        = "grid1x1"                                                               ;
+ var doReset_             = true                                                                    ;
+ var grid_                = ""                                                                      ;
+ var mdi_                 = ""                                                                      ;
+ var nxPlots_             = 1                                                                       ;
+ var nyPlots_             = 1                                                                       ;
+ var periodicPlotID_      = 0                                                                       ;
+ var ROOTControlsPanel_   = 0                                                                       ;
+ var selectedItem_        = "getDirectories";                                                       ;
+ var superimposeFlag_     = false                                                                   ;
+ var theInformationPanel_ = 0                                                                       ;
+ var theNavigatorPanel_   = 0                                                                       ;
+ var theStore_            = 0                                                                       ;
+ var theViewPort_         = 0                                                                       ;
+ var timeoutInterval_     = 2                                                                       ;
+ var treeDisplayField_    = "fDisplayName"                                                          ;
+
  var _cookieCodeMailbox   = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
  var _cookieCode          = _cookieCodeMailbox.innerHTML                                            ;
  var _theWindow           = self                                                                    ;
@@ -51,8 +53,8 @@ function()
 
  enableSTDLINE(enableDebug_) ;
 
+ generateDIVPlaceholderSize('canvas0',350,440) ;	   
  generateDIVPlaceholderSize('canvas1',350,440) ;	   
- generateDIVPlaceholderSize('canvas2',350,440) ;	   
  //--------------------------------------------------------------------------------------------------
  getCanvasDiv_ = function(number)
                  {
@@ -68,64 +70,64 @@ function()
                        fFileName_     : {},                                                 
                        fHistName_     : {},                                                 
                        fRFoldersPath_ : {},                                                 
-                       setSystemPath  : function(SystemPath  , frame)                                
+                       setSystemPath  : function(SystemPath  , thePad)                                
                                         { 
-                                         if( typeof SystemPath   === "undefined" ) this.fSystemPath_  [frame]=""
-                                         else                                      this.fSystemPath_  [frame]=SystemPath  ;
-                                         STDLINE("%%%%%%%%%%%%%%%%%%%%%%%%% frame: "+frame+" "+ this.fSystemPath_  [frame]) ;               
+                                         if( typeof SystemPath   === "undefined" ) this.fSystemPath_  [thePad]=""
+                                         else                                      this.fSystemPath_  [thePad]=SystemPath  ;
+                                         STDLINE("thePad: "+thePad+" "+ this.fSystemPath_  [thePad]) ;               
                                         },                                                   
-                       setRootPath    : function(RootPath    , frame)                                     
+                       setRootPath    : function(RootPath    , thePad)                                     
                                         {                                                    
-                                         if( typeof RootPath     === "undefined" ) this.fRootPath_    [frame]="" 
-                                         else                                      this.fRootPath_    [frame]=RootPath    ;                 
+                                         if( typeof RootPath     === "undefined" ) this.fRootPath_    [thePad]="" 
+                                         else                                      this.fRootPath_    [thePad]=RootPath    ;                 
                                         },                                                   
-                       setFoldersPath : function(FoldersPath , frame)                                
+                       setFoldersPath : function(FoldersPath , thePad)                                
                                         {                                                    
-                                         if( typeof FoldersPath  === "undefined" ) this.fFoldersPath_ [frame]="" 
-                                         else                                      this.fFoldersPath_ [frame]=FoldersPath ;                   
+                                         if( typeof FoldersPath  === "undefined" ) this.fFoldersPath_ [thePad]="" 
+                                         else                                      this.fFoldersPath_ [thePad]=FoldersPath ;                   
                                         },                                                   
-                       setFileName    : function(FileName    , frame)                                    
+                       setFileName    : function(FileName    , thePad)                                    
                                         {                                                    
-                                         if( typeof FileName     === "undefined" ) this.fFileName_    [frame]=""           
-                                         else                                      this.fFileName_    [frame]=FileName    ;             
+                                         if( typeof FileName     === "undefined" ) this.fFileName_    [thePad]=""           
+                                         else                                      this.fFileName_    [thePad]=FileName    ;             
                                         },                                                   
-                       setHistName    : function(HistName    , frame)                                    
+                       setHistName    : function(HistName    , thePad)                                    
                                         {                                                    
-                                         if( typeof HistName     === "undefined" ) this.fHistName_    [frame]="" 
-                                         else                                      this.fHistName_    [frame]=HistName    ;             
+                                         if( typeof HistName     === "undefined" ) this.fHistName_    [thePad]="" 
+                                         else                                      this.fHistName_    [thePad]=HistName    ;             
                                         },                                                   
-                       setRFoldersPath: function(RFoldersPath, frame)                              
+                       setRFoldersPath: function(RFoldersPath, thePad)                              
                                         {                                                    
-                                         if( typeof RFoldersPath === "undefined" ) this.fRFoldersPath_[frame]="" 
-                                         else                                      this.fRFoldersPath_[frame]=RFoldersPath;                   
+                                         if( typeof RFoldersPath === "undefined" ) this.fRFoldersPath_[thePad]="" 
+                                         else                                      this.fRFoldersPath_[thePad]=RFoldersPath;                   
                                         },                                                  
                        getPathsNumber : function()
                                         {
                                          return Object.keys(this.fSystemPath_).length ;
                                         },
-                       getSystemPath  : function(frame)                              
+                       getSystemPath  : function(thePad)                              
                                         {  
-                                         return this.fSystemPath_  [frame] ;                    
+                                         return this.fSystemPath_  [thePad] ;                    
                                         },                                            
-                       getRootPath    : function(frame)                          
+                       getRootPath    : function(thePad)                          
                                         {                                             
-                                         return this.fRootPath_    [frame] ;                    
+                                         return this.fRootPath_    [thePad] ;                    
                                         },                                            
-                       getFoldersPath : function(frame)                       
+                       getFoldersPath : function(thePad)                       
                                         {                                             
-                                         return this.fFoldersPath_ [frame] ;                     
+                                         return this.fFoldersPath_ [thePad] ;                     
                                         },                                             
-                       getFileName    : function(frame)                           
+                       getFileName    : function(thePad)                           
                                         {                                             
-                                         return this.fFileName_    [frame] ;                     
+                                         return this.fFileName_    [thePad] ;                     
                                         },                                            
-                       getHistName    : function(frame)                           
+                       getHistName    : function(thePad)                           
                                         {                                             
-                                         return this.fHistName_    [frame] ;                     
+                                         return this.fHistName_    [thePad] ;                     
                                         },                                            
-                       getRFoldersPath: function(frame)                       
+                       getRFoldersPath: function(thePad)                       
                                         {                                             
-                                         return this.fRFoldersPath_[frame] ;                      
+                                         return this.fRFoldersPath_[thePad] ;                      
                                         },                                                  
                        dumpAll        : function(fromWhere)                                 
                                         {                                                   
@@ -157,65 +159,100 @@ function()
                       } ;                                                                   
 
  //--------------------------------------------------------------------------------------------------
+ // This is a class to handle the canvases displayed on the GUI as distinct tabs.
  var theCanvasModel_ = {
+                        currentCanvas : 0  ,
+                        currentWidth  : 350,
+                        currentHeight : 440,
                         canvases      : [
                                          {
-                                          canvasName: 'canvas1',
+                                          canvasName: 'canvas0',
                                           nDivX     : 1        ,
                                           nDivY     : 1        ,
-                                          divPos    : 1        ,
+                                          currentPad: 0        ,
                                           objects   : {}       ,
                                           provenance: {}
                                          },
                                          {
-                                          canvasName: 'canvas2',
+                                          canvasName: 'canvas1',
                                           nDivX     : 1        ,
                                           nDivY     : 1        ,
-                                          divPos    : 1        ,
+                                          currentPad: 0        ,
                                           objects   : {}       ,
                                           provenance: {}
                                          }
                                         ],
-                        currentCanvas : 0  ,
-                        currentDiv    : 1  ,
-                        currentWidth  : 350,
-                        currentHeight : 440,
                         addCanvas     : function()
                                         {
-                                         var l = this.canvases.length ;
+                                         var l = this.canvases.length - 1;
                                          this.canvases[l] = {
                                                              canvasName: 'canvas' + l,
                                                              nDivX     : 1           ,
                                                              nDivY     : 1           ,
-                                                             divPos    : 1           ,
+                                                             currentPad: 0           ,
                                                              objects   : {}          ,
                                                              provenance: {}
                                                             }
                                         },  
-                        addROOTObject : function(canvasNumber, frame, object, theProvenance)
+                        addROOTObject : function(canvasNumber, object, theProvenance)
                                         {
-                                         canvasNumber-- 
-                                         if( canvasNumber > this.canvases.length-1      ) return   ;
-                                         var t = this.canvases[canvasNumber]                       ; // Canvas array starts from zero!
-                                         if( t.objects[frame] ) return                             ;
-                                         t.objects    [frame] = object                             ;
-                                         t.provenance [frame] = theProvenance                      ;
+                                         STDLINE("canvasNumber: " + canvasNumber ) ;
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         var   t = this.canvases[canvasNumber]                     ;
+                                         STDLINE("currentPad: "       +
+                                                 t.currentPad         +
+                                                 " on canvasNumber: " +
+                                                 canvasNumber         )                            ;
+                                         var pad = t.currentPad                                    ;
+                                         if( t.objects[pad] ) return                               ;
+                                         t.objects    [pad] = object                               ;
+                                         t.provenance [pad] = theProvenance                        ;
+                                         STDLINE("currentPad: "+
+                                                 this.canvases[canvasNumber].currentPad)           ;
+                                         if( t.currentPad >= t.nDivX * t.nDivY ) 
+                                             this.canvases[canvasNumber].currentPad = 0            ;
+                                         STDLINE("currentPad: "+
+                                         this.canvases[canvasNumber].currentPad)                   ;
                                         },
+                        nextPad       : function(canvasNumber)
+                                        {
+                                         if( canvasNumber > this.canvases.length-1 ) return        ;
+                                         var currentPad = this.canvases[canvasNumber].currentPad   ;
+                                         STDLINE("currentPad: "+
+                                         this.canvases[canvasNumber].currentPad)                   ;
+                                         this.canvases[canvasNumber].currentPad = currentPad + 1   ;
+                                         STDLINE("currentPad: "+
+                                         this.canvases[canvasNumber].currentPad)                   ;
+                                        },
+                        populate      : function(object)
+                                        {
+                                         STDLINE("currentCanvas: "+currentCanvas_);
+                                        },
+                        getCurrentPad : function(whichCanvas)
+                                        {
+                                         if(whichCanvas< 0 || whichCanvas>this.canvases.length-1) 
+                                           return                                                  ;
+                                         var t = this.canvases[whichCanvas]                        ;
+                                         if( t.currentPad >= t.nDivX * t.nDivY ) 
+                                             this.canvases[whichCanvas].currentPad = 0             ;
+                                         STDLINE("currentPad: "+
+                                                 t.currentPad  +
+                                                 " on canvas: "+
+                                                 whichCanvas) ;
+                                         return t.currentPad ;
+                                        },                
                         getROOTObjects: function(canvasNumber)
                                         {
-                                         canvasNumber--                                            ;
                                          if( canvasNumber > this.canvases.length-1      ) return   ;
                                          return this.canvases[canvasNumber].objects                ;
                                         },
                         getROOTObject:  function(canvasNumber,padNumber)
                                         {
-                                         canvasNumber--                                            ;
                                          if( canvasNumber > this.canvases.length-1      ) return   ;
                                          return this.canvases[canvasNumber].objects[padNumber]     ;
                                         },
                         clearCanvas   : function(canvasNumber)
                                         {
-                                         canvasNumber--                                            ;
                                          if( canvasNumber > this.canvases.length-1      ) return   ;
                                          currentPad_ = 0                                           ;
                                          this.canvases[canvasNumber].objects.length = 0            ;
@@ -223,61 +260,75 @@ function()
                                         },  
                         removeCanvas  : function(canvasNumber)
                                         {
-                                         canvasNumber--                                            ;
                                          var index = this.canvases.indexOf(canvasNumber)           ;
                                          this.canvases.splice(index,1)                             ;
                                         },  
                         changenDivX   : function(canvasNumber, newnDivX)
                                         {
-                                         canvasNumber--                                            ;
                                          if( canvasNumber > this.canvases.length-1      ) return   ;
                                          this.canvases[canvasNumber].nDivX = newnDivX              ;
                                         },
                         changenDivY   : function(canvasNumber, newnDivY)
                                         {
-                                         canvasNumber--                                            ;
                                          if( canvasNumber > this.canvases.length-1      ) return   ;
                                          this.canvases[canvasNumber].nDivY = newnDivY              ;
                                         },
                         setnDivX      : function(canvasNumber, newValue)
                                         {
-                                         canvasNumber--                                            ;
                                          if( canvasNumber > this.canvases.length-1      ) return   ;
                                          STDLINE("setting divX: "+newValue)                        ;
                                          this.canvases[canvasNumber].nDivX = newValue              ;
                                         },                
                         getnDivX      : function(canvasNumber)
                                         {
-                                         canvasNumber--                                            ;
                                          if( canvasNumber > this.canvases.length-1      ) return   ;
                                          STDLINE("divX: "+this.canvases[canvasNumber].nDivX)       ;
                                          return this.canvases[canvasNumber].nDivX                  ;
                                         },                
                         setnDivY      : function(canvasNumber, newValue)
                                         {
-                                         canvasNumber--                                            ;
                                          if( canvasNumber > this.canvases.length-1      ) return   ;
                                          STDLINE("setting divY: "+newValue)                        ;
                                          this.canvases[canvasNumber].nDivY = newValue              ;
                                         },                
                         getnDivY      : function(canvasNumber)
                                         {
-                                         canvasNumber--                                            ;
                                          if( canvasNumber > this.canvases.length-1      ) return   ;
                                          STDLINE("divY: "+this.canvases[canvasNumber].nDivY)       ;
                                          return this.canvases[canvasNumber].nDivY                  ;
                                         },                
                         setDivPosition: function(canvasNumber, posX, posY)
                                         {
-                                         canvasNumber--                                            ;
                                          if( canvasNumber > this.canvases.length-1       ) return  ;
                                          var nx   = this.canvases[canvasNumber].nDivX              ;
                                          var ny   = this.canvases[canvasNumber].nDivY              ;
                                          if( posX > nx || posY > ny ) return                       ;
                                          var modY = posY%nx                                        ;
                                          var pos  = modY * nx + posX                               ;
-                                         this.canvases[canvasNumber].divPos = pos                  ;
+                                         this.canvases[canvasNumber].currentPad = pos              ;
                                         },
+                        dump          : function(theCanvas)
+                                        {
+                                         var theC = this.canvases[theCanvas] ;
+                                         STDLINE(" -------- "     + theC.canvasName  + " ---------"         ) ;
+                                         STDLINE(" name      : "  + theC.canvasName                         ) ;
+                                         STDLINE(" divs      : "  + theC.nDivX + "x" + theC.nDivY           ) ;
+                                         STDLINE(" objects   : "  + Object.keys(theC.objects).length        ) ;
+                                         for( var j in theC.objects)
+                                         {
+                                          var o      = theC.objects[j]                                        ;
+                                          var fTitle = o.fTitle                                               ;
+                                          var fName  = o.fName                                                ;
+                                          var c      = 'canvas' + theCanvas + '_' + theC.currentPad           ;
+                                          STDLINE("   object #  : " + j                                     ) ;
+                                          STDLINE("   fTitle    : " + fTitle                                ) ;
+                                          STDLINE("   fName     : " + fName                                 ) ;
+                                          STDLINE("   provenance: " + theC.provenance[j].dump(fTitle ,c)    ) ;
+                                          STDLINE("   nDivX     : " + theC.nDivX                            ) ;
+                                          STDLINE("   nDivY     : " + theC.nDivY                            ) ;
+                                          STDLINE("   currentPad: " + theC.currentPad                       ) ;
+                                         }
+                                        }, 
                         dumpContent   : function()
                                         {
                                          STDLINE("=============== theCanvasModel_ dump =====================") ;
@@ -285,18 +336,7 @@ function()
                                          STDLINE("Number of canvases: "+this.canvases.length                 ) ;
                                          for(var i=0; i<this.canvases.length; i++)
                                          {
-                                          var theC = this.canvases[i] ;
-                                          STDLINE(" ---"                                                     ) ;
-                                          STDLINE(" name   : "+theC.canvasName                               ) ;
-                                          STDLINE(" divs   : "+theC.nDivX+"x"+theC.nDivY                     ) ;
-                                          STDLINE(" objects: "+Object.keys(theC.objects).length              ) ;
-                                          for( var j in theC.objects)
-                                          {
-                                           STDLINE("   object #: " + j                      +
-                                                   " title: "      + theC.objects[j].fTitle +
-                                                   " name: "       + theC.objects[j].fName                   ) ; 
-                                           STDLINE(" provenance: " + theC.provenance[j].dump("-",j)          ) ; 
-                                          }
+                                          this.dump(i) ;
                                          }
                                          STDLINE("==========================================================") ;
                                         }
@@ -306,14 +346,15 @@ function()
  // Resize the div signed by id to width/height sizes
  function changeHistogramPanelSize(thisPanel, width, height, from)      
  {
-  var ROOTObjects = theCanvasModel_.getROOTObjects(currentCanvas_) ;
-  STDLINE("New canvas size: "             +
-          width                           +
-          "x"                             +
-          height                          +
-          " for "                         +
-          Object.keys(ROOTObjects).length +
-          " objects"                                             );
+  var ROOTObjects = theCanvasModel_.getROOTObjects(currentCanvas_);
+  STDLINE("New canvas size: "                                    +
+          width                                                  +
+          "x"                                                    +
+          height                                                 +
+          " for "                                                +
+          Object.keys(ROOTObjects).length                        +
+          " objects on canvas "                                  +
+          currentCanvas_                                         );
   var div = document.getElementById(getCanvasDiv_(currentCanvas_));
   div.style.width  = width  - 20                                  ;
   div.style.height = height - 30                                  ;
@@ -328,7 +369,7 @@ function()
  {
   STDLINE("Creating canvas tab number "+tabNumber) ;
   var closable = false ;
-  if(tabNumber>1) closable = true ;
+  if(tabNumber>0) closable = true ;
   canvasTabs_.push(Ext.create(
                               'Ext.panel.Panel',
                               {
@@ -343,8 +384,8 @@ function()
   STDLINE("New tab created") ;
  }
 
+ createCanvasTab(0) ;
  createCanvasTab(1) ;
- createCanvasTab(2) ;
 
  //-----------------------------------------------------------------------------------------------
  var nDivXCB = Ext.create(
@@ -406,7 +447,24 @@ function()
                                        }
                           }
                          ) ;
-                          
+ //-----------------------------------------------------------------------------------------------
+ var refreshIntervalSpinbox = Ext.create(
+                                         'Ext.form.field.Number',
+                                         {
+                                          xtype           : 'numberfield'     ,
+                                          width           : 100               ,
+                                          height          : 10                ,
+                                          fieldLabel      : 'Interval'        ,
+                                          labelWidth      : 45                ,
+                                          name            : 'updateInterval'  ,
+                                          value           : 1.000             ,
+                                          minValue        : 1.00              ,
+                                          maxValue        : 30.000            ,
+                                          allowDecimals   : true              ,
+                                          tooltip         : 'Refresh interval',
+                                          decimalPrecision: 2
+                                         }
+                                        );                                                         
  //-----------------------------------------------------------------------------------------------
  function makeROOTControlsPanel()
  {
@@ -542,7 +600,8 @@ function()
                                                                                 handler   : function(thisCheckbox,status)
                                                                                             {
                                                                                              superimposeFlag_ = status      ;
-                                                                                             STDLINE("Superimpose: "+superimposeFlag_) ;
+                                                                                             STDLINE("Superimpose: "+
+                                                                                                     superimposeFlag_)      ;
                                                                                             } 
                                                                                }
                                                                               ]
@@ -578,13 +637,20 @@ function()
                                                    padding   : '5 5 5 5'                                                  ,
                                                    iconCls   : 'info'                                                     ,
                                                    items     : [
+                                                                refreshIntervalSpinbox                                    ,
                                                                 {
-                                                                 xtype     : 'button'                                     ,
-                                                                 text      : 'Stop'                                       ,
-                                                                 pressed   : true                                         ,
-                                                                 style     : buttonStyle_                                 ,   
-                                                                 tooltip   : 'Stop periodical refreshing of histograms'   ,
-                                                                 border    : true
+                                                                 xtype       : 'button'                                   ,
+                                                                 text        : 'Stop'                                     ,
+                                                                 pressed     : true                                       ,
+                                                                 style       : buttonStyle_                               ,
+                                                                 tooltip     : 'Stop refreshing of histograms'            ,
+                                                                 border      : true                                       ,
+                                                                 handler     : function()
+                                                                               {
+                                                                                var v = refreshIntervalSpinbox.getValue()  ;
+                                                                                STDLINE("Clearing timeout: "+v) ;
+                                                                                clearInterval(periodicPlotID_) ;
+                                                                               }
                                                                 }
                                                                ]
                                                   }, {
@@ -690,7 +756,7 @@ function()
                                    split       : true              ,
                                    width       : 200               ,
                                    minWidth    : 175               ,
-                                   maxWidth    : 400               ,
+                                   maxWidth    : 1000              ,
                                    collapsible : true              ,
                                    animCollapse: true              ,
                                    multi       : true              ,
@@ -698,7 +764,7 @@ function()
                                    layout      : 'accordion'       ,
                                    items       : [
                                                   {
-                                                   title     : 'FileSystem navigation'                            ,
+                                                   title     : 'FileSystem navigation'                                  ,
                                                    id        : 'navigatorDiv'                                           ,
                                                    autoScroll: true                                                     ,
                                                    tools     : [
@@ -763,6 +829,24 @@ function()
  makeNavigatorPanel() ;
  
  //-----------------------------------------------------------------------------------------------
+ var theStatusBar_ = Ext.create(
+                                'Ext.ux.StatusBar', 
+                                {
+                                 id            : 'my-status'   ,
+                                 defaultText   : 'Ready'       ,
+                                 defaultIconCls: 'default-icon',
+                                 text          : 'Ready'       ,
+                                 iconCls       : 'ready-icon'  
+//                                  items         : [
+//                                                   {
+//                                                     text: 'A Button'
+//                                                   }, 
+//                                                   '-', 
+//                                                   'Current canvas'
+//                                                  ]
+                                }
+                               );
+ //-----------------------------------------------------------------------------------------------
  function makeInformationPanel()
  {
   if( theInformationPanel_ ) theInformationPanel_.destroy() ;
@@ -772,19 +856,33 @@ function()
                                      region      : 'south'              ,
                                      contentEl   : 'south'              ,
                                      split       : true                 ,
-                                     height      : 100                  ,
-                                     minSize     : 100                  ,
+                                     height      : 50                   ,
+                                     minSize     : 20                   ,
                                      maxSize     : 200                  ,
                                      collapsible : true                 ,
-                                     collapsed   : true                 ,
-                                     title       : 'General information',
+                                     collapsed   : false                ,
+                                     bbar        : theStatusBar_        ,
+                                     html        : 'Panel initialized'  ,
+                                     title       : 'Status bar'         ,
                                      margins     : '0 0 0 0'
                                     },
                                    ) ;
  }
- 
+ //-----------------------------------------------------------------------------------------------
+ function displayStatus(message) 
+ {
+  theStatusBar_.showBusy() ;
+  theStatusBar_.setStatus(
+                          {
+                           text   : message  ,
+                           iconCls: 'ok-icon',
+                           clear  : true      // auto-clear after a set interval
+                          }
+                         );
+ }
+
  makeInformationPanel() ;
- 
+
  //-----------------------------------------------------------------------------------------------
  function makeViewPort() 
  {
@@ -842,31 +940,41 @@ function()
                               listeners   : {
                                              select    : function(thisCombo, record, eOpts)
                                                          {
-                                                          var thisRootPath = record.data.dir             ;
-                                                          var thePad       = 'canvas'                   + 
-                                                                             currentCanvas_             + 
-                                                                             '_'                        + 
-                                                                             currentPad_                 ;
-                                                          theProvenance_.setRootPath(thisRootPath,thePad);
-                                                          STDLINE("fRootPath_: "+thisRootPath           );
-                                                          selectedItem_ = "getDirectories"               ;
-                                                          makeStore(thisRootPath, 
-                                                                    'RequestType=getMeDirs'             );
+                                                          var thisRootPath = record.data.dir              ;
+                                                          var thePad       = 'canvas'                    + 
+                                                                             currentCanvas_              + 
+                                                                             '_'                         + 
+                                                                             currentPad_                  ;
+                                                          theProvenance_.setRootPath(thisRootPath,thePad );
+                                                          STDLINE("fRootPath_: "+thisRootPath            );
+                                                          if(thisRootPath == "LIVE_DQM.root")
+                                                          {
+                                                           selectedItem_ = "getMeLIVE-DQMFile"            ;
+                                                           makeStore(thisRootPath, 
+                                                                     'RequestType=getMeLIVE-DQMFile'     );
+                                                          }
+                                                          else
+                                                          {
+                                                           selectedItem_ = "getDirectories"               ;
+                                                           makeStore(thisRootPath, 
+                                                                     'RequestType=getMeDirs'             );
+                                                          }
+                                                          STDLINE("selectedItem_: "+selectedItem_        );
                                                           makeGrid (thisRootPath,              
-                                                                    'Directories and files'             );
+                                                                    'Directories and files'              );
                                                          },
                                              focusleave: function (thisCombo) 
                                                          {
-                                                          STDLINE('remove  selection listener'          );
-                                                          theSourcesCB_.suspendEvent('select'           );
-                                                          STDLINE('removed selection listener'          );
+                                                          STDLINE('remove  selection listener'           );
+                                                          theSourcesCB_.suspendEvent('select'            );
+                                                          STDLINE('removed selection listener'           );
                                                          },
                                              focusenter: function (thisCombo) 
                                                          {
-                                                          STDLINE('reinstate  selection listener'       );
-                                                          thisCombo.resumeEvent('select'                );
-                                                          theSourcesCB_.resumeEvent('select'            );
-                                                          STDLINE('reinstated selection listener'       );
+                                                          STDLINE('reinstate  selection listener'        );
+                                                          thisCombo.resumeEvent('select'                 );
+                                                          theSourcesCB_.resumeEvent('select'             );
+                                                          STDLINE('reinstated selection listener'        );
                                                          }
                                             }
                              }
@@ -887,6 +995,7 @@ function()
                      'Ext.tree.Panel', 
                      {
                       title      : what                  ,
+                      width      : 1200                  ,
                       header     : false                 ,
                       id         : 'navigator'           ,
                       store      : theStore_             ,
@@ -971,7 +1080,13 @@ function()
                                                 {
                                                  var selection = this.getSelection()                                    ;
                                                  STDLINE("Selected "+selection.length+" items")                         ;
-                                                 var thePad = 'canvas' + currentCanvas_ + '_' + currentPad_ ;
+                                                 var thePad = 'canvas'       + 
+                                                              currentCanvas_ + 
+                                                              '_'            + 
+                                                              theCanvasModel_.getCurrentPad(currentCanvas_)             ;
+                                                 STDLINE("thePad       : "+thePad                   )                   ;      
+                                                 STDLINE("selectedItem_: "+selectedItem_            )                   ;      
+                                                 STDLINE("Selected     : "+selection.length+" items")                   ;
                                                  for(var i=0; i<selection.length; i++)  
                                                  {  
                                                   theProvenance_.setSystemPath  (selection[i].data.fSystemPath  ,thePad);
@@ -980,10 +1095,9 @@ function()
                                                   theProvenance_.setFileName    (selection[i].data.fFileName    ,thePad);
                                                   theProvenance_.setRFoldersPath(selection[i].data.fRFoldersPath,thePad);
                                                   theProvenance_.setHistName    (selection[i].data.fHistName    ,thePad);
-                                                  theProvenance_.dump("Item selected")                                  ;      
+                                                  //theProvenance_.dump           ("Item selected"                ,thePad);      
                                                  }  
-                                                 STDLINE("Selected     : "+selection.length+" items")                   ;      
-                                                 STDLINE("selectedItem_: "+selectedItem_            )                   ;      
+                                                 theCanvasModel_.dumpContent()                                          ;
                                                  //clearInterval(periodicPlotID_)                                       ;      
                                                  var itemSplit     = item.innerText.split("\n\t\n")                     ;      
                                                  var isLeaf        = itemSplit[1].replace("\n","").replace("\t","")     ;      
@@ -1012,9 +1126,15 @@ function()
                                                    makeStore(currentDirectory_,'RequestType=getMeRootFile')             ;       
                                                    makeGrid (currentDirectory_,'ROOT file content'        )             ;       
                                                   }
-                                                  else if( selectedItem_ == "getRootObject" )
+                                                  else if( selectedItem_ == "getRootObject" || 
+                                                           selectedItem_ == "getMeLIVE-DQMFile" )
                                                   { 
-                                                   //theProvenance_.dump("getRootObject")                                ;      
+                                                   theProvenance_.dumpAll("getRootObject")                              ;
+                                                   thePad = 'canvas'       + 
+                                                            currentCanvas_ + 
+                                                            '_'            + 
+                                                            theCanvasModel_.getCurrentPad(currentCanvas_)               ;
+                                                   STDLINE("Request for thePad: " + thePad)                             ;      
                                                    currentRootObject_  = "/"                                           +        
                                                                          theProvenance_.getRootPath    (thePad)        +    
                                                                          "/"                                           +        
@@ -1029,27 +1149,27 @@ function()
                                                    theAjaxRequest(
                                                                   _requestURL+"RequestType=getRoot",
                                                                   {                                                           
-                                                                   CookieCode: _cookieCode,                                  
+                                                                   CookieCode: _cookieCode         ,                                  
                                                                    RootPath  : currentRootObject_                                     
-                                                                  }, 
+                                                                  }                                , 
                                                                   ""
                                                                  )
-                                                // var tOut = Math.round(timeoutInterval_.getValue() * 1000);
-                                                //    periodicPlotID_ = setInterval(
-                                                //                                  function()
-                                                //                                  {
-                                                //                                   STDLINE("Launching Ajax Request with refresh time: "+tOut) ;
-                                                //                                   theAjaxRequest(
-                                                //                                                  _requestURL+"RequestType=getRoot",
-                                                //                                                  {                                                           
-                                                //                                                   CookieCode: _cookieCode,                                  
-                                                //                                                   RootPath  : currentRootObject_                                     
-                                                //                                                  }, 
-                                                //                                                  ""
-                                                //                                                 )
-                                                //                                  },
-                                                //                                  tOut 
-                                                //                                 )                                                          
+//                                                    var refreshTime = refreshIntervalSpinbox.getValue() * 1000 ;
+//                                                    periodicPlotID_ = setInterval(
+//                                                                                  function()
+//                                                                                  {
+//                                                                                   STDLINE("Launching Ajax Request with refresh time: "+refreshTime) ;
+//                                                                                   theAjaxRequest(
+//                                                                                                  _requestURL+"RequestType=getRoot",
+//                                                                                                  {                                                         
+//                                                                                                   CookieCode: _cookieCode,                                
+//                                                                                                   RootPath  : currentRootObject_                                   
+//                                                                                                  }, 
+//                                                                                                  ""
+//                                                                                                 )
+//                                                                                  },
+//                                                                                  refreshTime 
+//                                                                                 )                                                          
                                                   }
                                                  }
                                                 },
@@ -1091,20 +1211,21 @@ function()
  //-----------------------------------------------------------------------------
  function makeStore(path, reqType)
  { 
-  theProvenance_.dump("makeStore"      ) ;
+//  theProvenance_.dump("makeStore", 0   ) ;
+  theProvenance_.dumpAll("makeStore"   ) ;
   STDLINE("path       : " + path       ) ;
   STDLINE("reqType    : " + reqType    ) ;
   STDLINE("_requestURL: " + _requestURL) ;
-  var thePad    = 'canvas'              + 
-                  currentCanvas_        + 
-                  '_'                   + 
-                  currentPad_            ;
+  var thePad = 'canvas'                 + 
+               currentCanvas_           + 
+               '_'                      + 
+               currentPad_               ;
   theStore_ = Ext.create(
                          'Ext.data.TreeStore', 
                          {
                           model    : 'DirectoriesDataModel',
-                          id       : 'theStore',
-                          autoLoad : false,
+                          id       : 'theStore'            ,
+                          autoLoad : false                 ,
                           root     : {
                                       expanded     : true
                                      },
@@ -1149,8 +1270,8 @@ function()
  function theAjaxRequest(theRequestURL,theParams,theRawData)                                                                   
  { 
   var today = new Date();
-  var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
-  STDLINE("Ajax request issued to "+theRequestURL+ " at " + time) ;                                                                                                                                      
+  var time = today.getHours() + ":" + today.getMinutes() + ": "   + today.getSeconds();
+  STDLINE("Ajax request issued to " + theRequestURL      + " at " + time) ;                                                                                                                                      
   Ext.Ajax.request(                                                                                                                       
                    {                                                                                                                      
                     url    : theRequestURL,                                                                                               
@@ -1163,20 +1284,16 @@ function()
                     timeout: 50000        ,                                                                                                       
                     success: function(response, request)                                                                                  
                              { 
-                              STDLINE("Successful") ;
                               if(getXMLValue(response,"headOfSearch") == 'located') // Returns the list of available fRooPaths                                                                     
                               { // Get list of head-points
-                               STDLINE("headOfSearch") ;
                                var dirs     = [] ;
                                var theNodes = getXMLNodes(response,'dir') ;
                                for(var i=0; i<theNodes.length; ++i)
                                {
                                 var theDir = theNodes[i].getAttribute("value")
-                                STDLINE("Adding "+theDir+" to the list of enty points") ;
                                 dirs.push({"abbr":  theDir, "dir": theDir}) ;
                                }
 
-                               STDLINE("Create sources") ;
                                createSources(dirs) ;
                               }                                                                                                         
                               else if(!(typeof getXMLValue(response,"rootType") == 'undefined')) // Returns the plot to display                                                                     
@@ -1184,7 +1301,9 @@ function()
                                var rootName  = getXMLValue (response,"path"    );                     
                                var rootJSON  = getXMLValue (response,"rootJSON");                 
                                var object    = JSROOT.parse(rootJSON           );
-                               displayPlot_                 (object            );
+                               STDLINE("Cuccato " + object.fTitle) ;
+                               theCanvasModel_.populate    (object             );
+                               displayPlot_                (object             );
                               }
                              },                                                                                                           
                     failure: function(response, options)                                                                                  
@@ -1204,24 +1323,39 @@ function()
  displayPlot_ = function(object)
                 {
                  if( ! object ) return ;
-                 var nx        = theCanvasModel_.getnDivX   (currentCanvas_)  ;
-                 var ny        = theCanvasModel_.getnDivY   (currentCanvas_)  ;
+                 var nx        = theCanvasModel_.getnDivX     (currentCanvas_);
+                 var ny        = theCanvasModel_.getnDivY     (currentCanvas_);
+                 currentPad    = theCanvasModel_.getCurrentPad(currentCanvas_);
+                 STDLINE(      "Plot: "      + 
+                               object.fTitle + 
+                               ' on pad: '   +
+                               currentPad    ) ;
+                 displayStatus("Plot: "      + 
+                               object.fTitle + 
+                               ' on pad: '   +
+                               currentPad    ) ;
+
                  gridDivision_ = "gridi" + nx + "x" + ny ;
                  mdi_ = new JSROOT.GridDisplay(getCanvasDiv_(currentCanvas_) , 
                                                              gridDivision_ )  ;
-                 if (mdi_!=null) theFrame = mdi_.FindFrame(  currentPad_     , 
+                 if (mdi_!=null) theFrame = mdi_.FindFrame  (currentPad      , 
                                                              false         )  ;
                  if( nx == 1 & ny == 1 ) 
                  {
                   theFrame = 'canvas' + currentCanvas_                        ;
                  } else {
-                  theFrame = 'canvas' + currentCanvas_ + '_' + currentPad_    ;
+                  theFrame = 'canvas' + currentCanvas_ + '_' + currentPad     ;
                  }
                  theCanvasModel_.addROOTObject(currentCanvas_    ,
-                                               theFrame          ,
                                                object            ,
                                                theProvenance_    );
-                 STDLINE("Plotting "+object._typename+": "+object.fTitle)     ;
+                 theCanvasModel_.dumpContent(currentCanvas_) ;
+                 STDLINE("Plotting "      +
+                         object._typename +
+                         ": "             +
+                         object.fTitle    +
+                         " on: "          +
+                         theFrame        );
                  if( superimposeFlag_ )
                  {
                   STDLINE("Superimpose on "+theFrame+"...") ;
@@ -1232,15 +1366,19 @@ function()
                                ); 
                  } else {
                   STDLINE("Do NOT superimpose on "+theFrame+"...") ;
-                  if( nx == 1 & ny == 1 ) JSROOT.cleanup(getCanvasDiv_(currentCanvas_))    ;
+                  if( nx == 1 && ny == 1 ) JSROOT.cleanup(getCanvasDiv_(currentCanvas_))    ;
                   JSROOT.redraw(
                                 theFrame,
                                 object  ,
                                 ""
                                ); 
-                  currentPad_++ ; 
-                  if( currentPad_ > nx * ny - 1) {currentPad_=0;}
-                 }                                                                          
+//                   currentPad_++ ; 
+//                   if( currentPad_ > nx * ny - 1) {currentPad_=0;}
+                 } 
+                 theCanvasModel_.nextPad(currentCanvas_) ;
+                 STDLINE("##########################################################################") ;                                                                         
+                 STDLINE("currentPad: "+theCanvasModel_.getCurrentPad(currentCanvas_)) ;                                                                         
+                 STDLINE("##########################################################################") ;                                                                         
                 }
  //-----------------------------------------------------------------------------
  //
