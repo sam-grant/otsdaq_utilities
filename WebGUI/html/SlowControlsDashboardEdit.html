@@ -768,14 +768,14 @@
 
 	</head>
 
-	<body onload='Javascript:initEdit();'>	
+	<body onload='Javascript:initEdit();'>
 
 		<div id="titleDiv" class="mainBlock">
 			<h2 class="editorPanelTitle">Editor Panel</h2>
 		</div>
-		
+
 		<div class='mainBlock' id='buttonsDiv'>
-			<div>Search and Filter widgets</div> 
+			<div>Search and Filter widgets</div>
 			<div id="searchFields" class="absolute">
 				<input id="widgetSearch" type="text" class="focus" onchange="searchWidgets(this)"></input>
 				<select id="widgetFilter" class="absolute" onchange="filterWidgets(this)"></select>
@@ -785,33 +785,37 @@
 		<div class='mainBlock' id='divider'></div>
 		<div class='mainBlock' id='userSettingsDiv'>
 			<div id="switchesContainer">
-	      			<span class="toggle toggle-margin">
-			      		<input type="checkbox" id="checkbox" onclick="" checked>
-			      			<label data-off="Off" data-on="On"></label>
-			      		</input>
-		      		</span>
+
+<!-- TODO for new functionalities
 				<span class="toggle toggle-margin">
-                                	<input type="checkbox" id="checkbox" onclick="" checked>
-                                        	<label data-off="Off" data-on="On"></label>
-                                        </input>
-                                </span>
+					<input type="checkbox" id="checkbox" onclick="" checked>
+						<label data-off="Off" data-on="On"></label>
+					</input>
+				</span>
 				<span class="toggle toggle-margin">
-                                         <input type="checkbox" id="checkbox" onclick="" checked>
-                                                 <label data-off="Off" data-on="On"></label>
-                                         </input>
-                                 </span>
-		      		</div>
-				<div id="settingsContainer">
+					<input type="checkbox" id="checkbox" onclick="" checked>
+						<label data-off="Off" data-on="On"></label>
+					</input>
+				</span>
+				<span class="toggle toggle-margin">
+					<input type="checkbox" id="checkbox" onclick="" checked>
+						<label data-off="Off" data-on="On"></label>
+					</input>
+				</span>
+-->
+
+			</div>
+			<div id="settingsContainer">
 				<span class="toggle">
-                                         <input type="checkbox" id="gridCheckbox" onclick="toggleGrid(this)" checked>
-                                         	<label data-off="Off" data-on="On"></label>
-                                         </input>
-			 	</span>
+					<input type="checkbox" id="gridCheckbox" onclick="toggleGrid(this)" checked>
+						<label data-off="Off" data-on="On"></label>
+					</input>
+				</span>
 				<span class="colorPickersDiv"
 				<br><input type="color"  id="gridColorPicker"       onchange="setGridColor(this)">Grid Color</input>
-                                <br><input type="color"  id="backgroundColorPicker" onchange="setBackgroundColor(this)">Background</input>
-                                <br><input type="button" id="resetGrid"             onclick="resetToDefault()" value="Default Values"></input>
-	      			</span>
+				<br><input type="color"  id="backgroundColorPicker" onchange="setBackgroundColor(this)">Background</input>
+				<br><input type="button" id="resetGrid"             onclick="resetToDefault()" value="Default Values"></input>
+				</span>
 			</div>
 		</div>
 
