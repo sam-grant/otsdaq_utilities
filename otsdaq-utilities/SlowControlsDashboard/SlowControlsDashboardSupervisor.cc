@@ -997,10 +997,10 @@ void SlowControlsDashboardSupervisor::SavePhoebusControlsPage(
 	__SUP_COUTV__("Saving Controls Page to: " + file);
 
 	std::string extension = file.substr(file.length() - 4, 4);
-	if(extension != ".dat")
+	if(extension != ".bob")
 	{
 		__SUP_COUT__ << "Extension : " << extension << std::endl;
-		file += std::string(".dat");
+		file += std::string(".bob");
 	}
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 	             << "Trying to save page: " << controlsPageName << std::endl;

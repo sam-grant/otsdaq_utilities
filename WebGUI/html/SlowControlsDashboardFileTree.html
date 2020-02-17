@@ -168,7 +168,7 @@
 			}
 			li input + ol
 			{
-				//background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-toggle-small-expand.png) 40px 0 no-repeat;
+//				background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-toggle-small-expand.png) 40px 0 no-repeat;
 //				border-bottom: 2px solid black;
 //				border-top: 2px solid black;
 				margin: -0.938em 0 0 -44px; /* 15px */
@@ -201,6 +201,10 @@
 		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 
+		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.8/themes/default/style.min.css" />
+		<script src="//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.8/jstree.min.js"></script>
+
 		<script>
 
 			var _CONTEXT_MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
@@ -215,22 +219,11 @@
 			//init called once body has loaded
 			function initFileTree() {
 				Debug.log("initFileTree() was called");
-
-				//DesktopContent.XMLHttpRequest("Request?RequestType=getList","",handlerFunction);
-
-				//window.onresize = redrawWindow;
 				redrawWindow(); //redraw window for first time
 			}
 
 			function handlerFunction(req) {
 				Debug.log("handlerFunction() was called. Req: " + req.responseText);
-
-				//var child1data = DesktopContent.getXMLValue(req,"child");
-				//var child2data = DesktopContent.getXMLValue(req,"child2");
-
-				//Debug.log("--child1data:",child1data," --child2data:",child2data);
-				//block1El = document.getElementById('block1');
-				//block1.innerHTML = child1data;
 			}
 
 			function addPV(pv)
@@ -248,9 +241,9 @@
 					return false;
 			}
 
+			var folderCounter = 0;
 			function dir(parentElement, path, fullPathToPage)
 			{
-			    //var parentElement = document.getElementById(baseDir);
 			    var ol;
 			    var pathToPath;
 
@@ -261,30 +254,31 @@
 
 				if(isFile(path))
 				{
-					var li = document.createElement("li");
-					li.id = fullPathToPage;
-					li.className = "file";
-					var a = document.createElement("a");
-					a.innerHTML = path.substring(0, path.search(".dat"));
-					a.href = "javascript:void(0)";
-					a.onclick = function(e){
-						createFileContextMenu(e, fullPathToPage);
-					};
-					//a.onclick = function(){parent.loadPage(fullPathToPage)};//"addPV()";// + pv + ')';
+					if (path.search(".bob")!= -1){
+						var li = document.createElement("li");
+						li.id = fullPathToPage;
+						li.className = "file";
 
-					li.appendChild(a);
-
-				    parentElement.appendChild(li);
+						var a = document.createElement("a");
+						a.innerHTML = path.substring(0, path.search(".bob"));
+						a.href = "javascript:void(0)";
+						a.onclick = function(e){
+							createFileContextMenu(e, fullPathToPage);
+						};
+						//a.onclick = function(){parent.loadPage(fullPathToPage)};//"addPV()";// + pv + ')';
+						li.appendChild(a);
+					
+						parentElement.appendChild(li);
+					}
 				}
 				else
 				{
 					var exists = false;
-
+					console.log("file dir() - path: ", folderCounter++, path);
 					if(document.getElementById(parentID) != null)
 					{
 						ol = document.getElementById(parentID+ "-ol");
 						exists = true;
-						//console.log('Found ' + ol);
 					}
 
 					if(!exists)
@@ -306,7 +300,6 @@
 					    li.appendChild(ol);
 					    parentElement.appendChild(li);
 
-					    //console.log(path.substring(path.search("/") + 1));
 						dir(ol, path.substring(path.search("/") + 1), fullPathToPage);
 					}
 					else
@@ -350,38 +343,16 @@
 
 			function save()
 			{
-//				var pageName = "myDCSPage";
-//				var folderName = "";
-//				var permissionsString = "";
-//				
-//				
-//				Debug.log("Creating icon pageName=" + pageName +
-//					" folderName=" + folderName + 
-//					" permissionsString=" + permissionsString);
-//					
-//				
-//				DesktopContent.XMLHttpRequest("Request?RequestType=getList",
-//					"",
-//					function()
-//					{
-//						Debug.log("Handler()");
-//					},
-//					0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, false /*doNotShowLoadingOverlay*/,
-//					true /*targetSupervisor*/);
-//				
-//				
-//				return;
-
 				Debug.log("Saving....");
 				Debug.log(window.parent.pvList_);
                 window.parent.document.getElementById("mailbox").innerHTML = "Save";
-            }
+			}
 
             function saveAs()
             {
-	            Debug.log("Saving As....");
+				Debug.log("Saving As....");
 				Debug.log(window.parent.pvList_);
-                window.parent.document.getElementById("mailbox").innerHTML = "SaveAs";
+				window.parent.document.getElementById("mailbox").innerHTML = "SaveAs";
             }
 
 			function redrawWindow(clicked, hover) {
@@ -406,10 +377,6 @@
 				else
 				{
 					var title = document.createElement("h2");
-					/*var a = document.createElement("a");
-					a.href = "#";
-					a.onclick = "";
-					a.className = "fileTreeTitle";*/
 
 					title.id = "title";
 					title.innerHTML = "Files";
@@ -421,8 +388,8 @@
 						size = parseInt(title.css("font-size"), 10);
 						title.css("font-size", size + 1);
 					}
-					//console.log(window.parent.pagesList_);
 
+					document.getElementById("pagesFolder-ol").innerHTML = "";
 					window.parent.pagesList_.forEach(function(page){
 						if(page != "undefined"){dir(document.getElementById("pagesFolder-ol"), page, page)} //FIXME, if pass undefined as filename -> throws error
 					});
@@ -445,7 +412,6 @@
 
 					document.getElementById("saveli").innerHTML = "";
 					document.getElementById("saveli").appendChild(saveButton);
-					//document.getElementById("saveli").appendChild(saveAsButton);
 					document.getElementById("saveli").appendChild(closeButton);
 
 					var fileTreeDiv = document.getElementById("fileTreeDiv");
@@ -455,38 +421,6 @@
 					fileTreeDiv.style.height = window.innerHeight * 0.75 + "px";
 					controlsDiv.style.height = window.innerHeight * 0.10 + "px";
 					controlsDiv.style.top = fileTreeDiv.style.top + fileTreeDiv.style.height;
-
-					/*
-						console.log(page);
-
-						var li = document.createElement("li");
-						li.id = page;
-						li.className = "file";
-						var a = document.createElement("a");
-						a.innerHTML = page;
-						a.href = "";
-						a.onclick = function(){parent.loadPage(page)};//"addPV()";// + pv + ')';
-						console.log("Here is my file: " + a);
-						li.appendChild(a);
-
-						document.getElementById("pagesFolderol").appendChild(li);
-
-						var button = document.createElement("button");
-						button.style.width = "inherit";
-						button.style.overflow =  "hidden";
-						button.id = page; 
-						button.onclick = 
-						button.innerHTML = page;
-						if(button.style.width > maxWidth)
-						{
-							maxWidth = button.style.width;
-						}
-						li.appendChild(button);
-						ul.appendChild(li);*/
-					//});
-
-//					document.getElementById("fileTree").innerHTML = "";
-//					document.getElementById("fileTree").appendChild(ul);
 				}
 			}
 
