@@ -72,7 +72,7 @@
 				//var rootFiles = "streamerInfo.root;hsimple.root";
 				var rootFiles = "";
 				window.parent.pagesList_.forEach(function(page){
-						if(page != "undefined"){
+						if(page != "undefined" && page.includes(".root")){
 							rootFiles += page + ";"; 
 							console.log(rootFiles)
 						}
@@ -87,58 +87,8 @@
 			function newWidget(widget, parameters)
 			{
 				setParameters(window.parent.page_.widgets[widget.el.id].attributes);
-				rootReq (parameters_["file"]);
-				var variableNameForData = localStorage.setItem('/WebPath/UserWebPath/OutputData/','*');
 				console.log(document.getElementById("simpleGUI"));
 			}
-
-			//=====================================================================================
-			// rootReq ~~
-			//	if refreshIndex, then request is meant to replace root object at index
-			function rootReq (rootPath,refreshIndex)
- 			{
-
-				if(_visualLID === undefined)
-				{
-					console.log("Delaying rootReq...");
-					window.setTimeout(
-						function()
-						{					
-							console.log("Trying delayed rootReq()..");
-							rootReq(rootPath,refreshIndex);
-						},500/*ms*/);
-					return;
-				}	
-				if(refreshIndex === undefined) refreshIndex = -1;
-
-				console.log("Widget rootReq " + rootPath );
-				DesktopContent.XMLHttpRequest("Request?RequestType=getRoot", 
-						"RootPath="+rootPath,
-						getRootDataHandler,
-						refreshIndex /*reqParam*/, 
-						0 /*progressHandler*/, 
-						0 /*callHandlerOnErr*/, 
-						refreshIndex<0?false:true /*doNoShowLoadingOverlay*/);
-
-				//DesktopContent._localUrnLid = savedLID;
-			} //end rootReq()
-
-			//=====================================================================================
-			// ViewerRoot.getRootDataHandler ~~
-			//	receives streamed root object from server and prepares it for js structures
-			function getRootDataHandler (req, refreshIndex)
-			{
-				console.log(req);
-				console.log("root visualizer getRootDataHandler\n" + req.responseText );
-
-				var rootType = DesktopContent.getXMLValue(req,"rootType");
-				var rootStr = DesktopContent.getXMLValue(req,"rootData");
-				var rootName = DesktopContent.getXMLValue(req,"path");
-
-				var rootJSON = DesktopContent.getXMLValue(req,"rootJSON");
-
-				console.log("tmpRootDataHandler JSON \n\n" + rootJSON );
-			} //end getRootDataHandler()
 
 			function getParameters()
 			{
@@ -160,12 +110,13 @@
 				document.getElementById("display").style.height = (parseInt(window.innerHeight) - 16) + "px";
 			}
 
-		</script>
+	</script>
 
 </head>
 
 	<body onload='Javascript:init();'>
-<div id="simpleGUI" path="/WebPath/UserWebPath/OutputData/"	files=""></div>
+	<div id="container"></div>
+	<div id="simpleGUI" path="/WebPath/UserWebPath/ControlsDashboardData/"	files=""></div>
 	<div>
 	<div id="tree">
 		</div>
