@@ -924,6 +924,20 @@ CodeEditor.create = function(standAlone) {
 					
 				}); //end addEventListener
 			
+			_eel[i].addEventListener('paste', 
+					function(e)
+					{
+				Debug.log("paste handler() for editor" + forPrimary);
+				var paste = (e.clipboardData || window.clipboardData).getData('text');
+				
+				var selection = window.getSelection();
+				if (!selection.rangeCount) return false;
+				selection.deleteFromDocument();
+				selection.getRangeAt(0).insertNode(document.createTextNode(paste));
+
+				e.preventDefault();
+					});  //end addEventListener
+			
 			//add click handler to track active pane
 			box = document.getElementById("editorPane" + i);
 			box.addEventListener("click",
@@ -2636,6 +2650,7 @@ CodeEditor.create = function(standAlone) {
 			"#undef" 				: _DECORATION_RED,
 			"#include" 				: _DECORATION_RED,
 			"#ifndef" 				: _DECORATION_RED,
+			"#if"	 				: _DECORATION_RED,
 			"#else" 				: _DECORATION_RED,
 			"#endif" 				: _DECORATION_RED,
 			"using"					: _DECORATION_RED,
@@ -2656,6 +2671,8 @@ CodeEditor.create = function(standAlone) {
 			"uint32_t" 				: _DECORATION_RED,
 			"uint16_t" 				: _DECORATION_RED,
 			"uint8_t" 				: _DECORATION_RED,
+			"size_t" 				: _DECORATION_RED,
+			"time_t" 				: _DECORATION_RED,
 			"long"	 				: _DECORATION_RED,
 			"float"	 				: _DECORATION_RED,
 			"double" 				: _DECORATION_RED,
@@ -2674,14 +2691,20 @@ CodeEditor.create = function(standAlone) {
 			"this"					: _DECORATION_RED,
 			"true"					: _DECORATION_RED,
 			"false"					: _DECORATION_RED,
+			"auto"					: _DECORATION_RED,
 			
-			//"std::" 				: _DECORATION_BLACK,
+			"fstream"				: _DECORATION_GREEN,
+			"sstream"				: _DECORATION_GREEN,
+			"istream"				: _DECORATION_GREEN,
+			"ostream"				: _DECORATION_GREEN,
 			
 			"std"					: _DECORATION_GREEN,
-			"ots"					: _DECORATION_GREEN,	
+			"ots"					: _DECORATION_GREEN,
+			"ConfigurationTree"		: _DECORATION_GREEN,		
 			"string" 				: _DECORATION_GREEN,
 			"set" 					: _DECORATION_GREEN,
 			"vector"				: _DECORATION_GREEN,
+			"array"					: _DECORATION_GREEN,
 			"pair"					: _DECORATION_GREEN,
 			"get" 					: _DECORATION_GREEN,
 			"map" 					: _DECORATION_GREEN,
@@ -2861,17 +2884,16 @@ CodeEditor.create = function(standAlone) {
 				var str = newNode.textContent;	
 				str = str.substr(str.lastIndexOf('.')+1);
 				
-				
-				if(str.length > 0 && str.length <= 4 && 
-						(
-								str[0] == 'c' || 
-								str[0] == 'C' ||
-								str[0] == 'h' ||
-								str == "txt" || 
-								str == "py" ||
-								str == "sh" ||
-								str[0] == "j"
-						))
+				//note that trailing " or ' is still there
+				if(str.length > 0 && str.length <= 4 && (
+						str[0] == 'c' || 
+						str[0] == 'C' ||
+						str[0] == 'h' ||
+						str.substr(0,3) == "txt" || 
+						str.substr(0,2) == "py" ||
+						str.substr(0,2) == "sh" ||
+						str[0] == "j"
+				))
 				{
 					Debug.log("is quote " + str);
 				
@@ -4228,8 +4250,6 @@ CodeEditor.create = function(standAlone) {
 			endPi = -1;
 			lastWhiteSpacei = -1;
 			
-			if(newLineCount > 2300)
-				console.log("hi");
 			//do this:
 			//			endi = elTextObj.text.indexOf('(',starti+3);
 			//			startCi = elTextObj.text.indexOf('{',endi+2);
