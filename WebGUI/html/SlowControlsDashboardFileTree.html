@@ -273,6 +273,7 @@
 				}
 				else
 				{
+					if (fullPathToPage.search(".bob")!= -1){
 					var exists = false;
 					console.log("file dir() - path: ", folderCounter++, path);
 					if(document.getElementById(parentID) != null)
@@ -305,6 +306,7 @@
 					else
 					{
 						dir(ol, path.substring(path.search("/") + 1), fullPathToPage);
+					}
 					}
 				}
 			}
