@@ -99,7 +99,7 @@
 					data:tabledata, //assign data to table
 					layout:"fitColumns", //fit columns to width of table (optional)
 					//layout:"fitDataFill",
-					responsiveLayout:"collapse",
+					//responsiveLayout:"collapse",
 					dataTree:false,
 					tooltips:function(cell){
 						//cell - cell component
@@ -214,8 +214,6 @@
 			}
 
 			window.onresize = function() {
-				//width: window.innerWidth,
-				//height: window.innerHeight
 				table.redraw(true);
 				console.log("window.onresize Table");
 			};
