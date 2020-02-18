@@ -4,7 +4,7 @@
 		<title>Controls Dashboard Editor</title>
 		<style type="text/css">			
 			body {
-				background-color: rgba(87,87,87,0.8);//241, 241, 212, 0.6);//rgba(255,255,255,0.9);
+				background-color: #838383;
 				overflow:hidden;
 			}
 
@@ -142,14 +142,26 @@
                                 
                 background-color: white;
             }
+            
             .editorPanelTitle {
 				color: #d3d3d3;
-                font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:22px;
+                font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; 
+                letter-spacing:-0.5px; 
+                font-size:22px;
                 appearance: none;
                 -webkit-appearance: none;
                 -moz-appearance: none;                
                 text-shadow: 0 -1px 3px #202020;
     			font-weight: normal;
+        	}
+        	
+        	.mainBlock div {
+				color: 					#d3d3d3;
+        		font-family: 			"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
+        		letter-spacing:			-0.5px; 
+        		font-size:				16px;                         
+                text-shadow: 			0 -1px 3px #202020;
+    			font-weight: 			normal;
         	}
 
 			#widgetSearch {	
@@ -779,10 +791,10 @@
 		<div id="titleDiv" class="mainBlock">
 			<h2 class="editorPanelTitle">Editor Panel</h2>
 		</div>
-
+		
 		<div class='mainBlock' id='buttonsDiv'>
-			<div>Search and Filter widgets</div>
-			<div id="searchFields" class="absolute">
+			<div>Choose your widgets:</div>
+			<div id="searchFields" class="absolute"  style='display:none'>
 				<input id="widgetSearch" type="text" class="focus" onchange="searchWidgets(this)"></input>
 				<select id="widgetFilter" class="absolute" onchange="filterWidgets(this)"></select>
 			</div>
