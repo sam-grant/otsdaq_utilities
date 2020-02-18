@@ -183,7 +183,7 @@
 					//Plotly.deleteTraces(plot, i);
 					i++;
 				}
-				Plotly.deleteTraces(plot, ntraces);
+				if(ntraces.length) Plotly.deleteTraces(plot, ntraces);
 				Plotly.addTraces(plot, traces);
 				//Plotly.extendTraces(plot, { x: plotData[pvName].time, y: plotData[pvName+1].value }, [PVList[pvName]]);
 				console.log("drawGraph() reached, pv: " + pvName);
