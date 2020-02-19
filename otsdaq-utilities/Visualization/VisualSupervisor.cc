@@ -634,6 +634,13 @@ void VisualSupervisor::request(const std::string&               requestType,
 					return;
 				} //done handling TTree branches
 			} //end TTree and branch handling
+			else if(spliti+1 < splitTTreePath.size())
+			{
+				__COUTV__(rootDirectoryName);
+				//if more name to mystery object (likely TDirectoryFile), then attempt to get full subpath
+				tobject = (TObject*)rootFile->Get(rootDirectoryName.c_str());
+			}
+			
 
 			//at this point have tobject to stringify
 		} // peaking for TTree

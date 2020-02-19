@@ -218,7 +218,9 @@ DesktopContent.init = function()
 			DesktopContent._theWindow.window.name.search("DesktopWindowFrame") < 0)
 		DesktopContent._theWindow = DesktopContent._theWindow.parent;
 	DesktopContent._theWindow = DesktopContent._theWindow.window;
+	try{
 
+	
 	DesktopContent._myDesktopFrame        = DesktopContent._theWindow.parent.document.getElementById(DesktopContent._theWindow.name);
 	DesktopContent._zMailbox              = DesktopContent._theWindow.parent.document.getElementById("Desktop-windowZmailbox");
 	DesktopContent._mouseOverXmailbox     = DesktopContent._theWindow.parent.document.getElementById("Desktop-mouseOverXmailbox");
@@ -233,8 +235,14 @@ DesktopContent.init = function()
 	DesktopContent._windowColorPostbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-windowColorPostbox");
 	DesktopContent._dashboardColorPostbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-dashboardColorPostbox");
 	
+	
 	if(DesktopContent._theWindow.parent.document.body)
 		DesktopContent._desktopColor 		  = DesktopContent._theWindow.parent.document.body.style.backgroundColor;
+	}
+	catch(e)
+	{
+		Debug.log("Ignoring error during init(): " + e);
+	}
 
 	window.onfocus = DesktopContent.handleFocus;
 	window.onmousedown = DesktopContent.handleFocus;
@@ -245,13 +253,19 @@ DesktopContent.init = function()
 
 	Debug.log("Window URL " + window.location.href);
 	
+	try{
 	DesktopContent._serverUrnLid = DesktopContent.getDesktopWindowParameter(0,"urn");//((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
 		Debug.log("ERROR -- Gateway Supervisor Application URN-LID not found!"); //,Debug.HIGH_PRIORITY);
 	Debug.log("Gateway Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
 	DesktopContent._serverOrigin = DesktopContent._theWindow.parent.window.location.origin;
 	Debug.log("Gateway Supervisor Application Origin = " + DesktopContent._serverOrigin);
-		
+	}
+	catch(e)
+	{
+		Debug.log("Ignoring error during init(): " + e);
+	}
+	
 	DesktopContent._localUrnLid = DesktopContent.getParameter(0,"urn");
 	if(typeof DesktopContent._localUrnLid == 'undefined')
 		DesktopContent._localUrnLid = 0;
@@ -306,6 +320,7 @@ DesktopContent.getParameter = function(index,name)
 //	if using name, then (mostly) ignore index
 DesktopContent.getDesktopParameter = function(index, name) 
 {	
+	try{
 	// Debug.log(window.location)
 	
 	var win = DesktopContent._theWindow;
@@ -334,6 +349,12 @@ DesktopContent.getDesktopParameter = function(index, name)
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return decodeURIComponent(vs[1]); //return value
+	}
+	catch(e)
+	{
+		Debug.log("Ignoring get desktop parameter error :" + e);
+		return;
+	}
 } //end DesktopContent.getDesktopParameter()
 
 //=====================================================================================
