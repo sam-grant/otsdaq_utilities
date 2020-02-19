@@ -61,9 +61,9 @@ class SlowControlsDashboardSupervisor : public CoreSupervisorBase
 	void SaveControlsPage(cgicc::Cgicc&                    cgiIn,
 	                      HttpXmlDocument&                 xmlOut,
 	                      const WebUsers::RequestUserInfo& userInfo);
-	void SavePhoebusControlsPage(cgicc::Cgicc&             cgiIn,
-	                      HttpXmlDocument&                 xmlOut,
-	                      const WebUsers::RequestUserInfo& userInfo);
+	void SavePhoebusControlsPage(cgicc::Cgicc&                    cgiIn,
+	                             HttpXmlDocument&                 xmlOut,
+	                             const WebUsers::RequestUserInfo& userInfo);
 	void Subscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 	void Unsubscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut);
 

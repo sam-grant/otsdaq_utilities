@@ -61,17 +61,30 @@ void SlowControlsDashboardSupervisor::init(void)
 
 	__SUP_COUT__ << std::endl;
 	ConfigurationTree node = CorePropertySupervisorBase::getSupervisorTableNode();
-	std::string       pluginType =
-	    CorePropertySupervisorBase::getSupervisorProperty("ControlsInterfacePluginType");
+	std::string       pluginType;
 
-	std::string supervisorConfigurationPath =
-	    "/" + CorePropertySupervisorBase::getContextUID() + "/LinkToApplicationTable/" +
-	    CorePropertySupervisorBase::getSupervisorUID();
-	//
-	interface_ = makeSlowControls(pluginType,
-	                              CorePropertySupervisorBase::getSupervisorUID(),
-	                              CorePropertySupervisorBase::getContextTreeNode(),
-	                              supervisorConfigurationPath);
+	try
+	{
+		pluginType =
+		    node.getNode("SlowControlsInterfacePluginType").getValue<std::string>();
+	}
+	catch(...)
+	{
+		// failed to get plugin type through supervisor table link, so try app property
+		__COUT__ << "Pluging type was not definded through supervisor table, trying "
+		            "supervisor property..."
+		         << __E__;
+		pluginType = CorePropertySupervisorBase::getSupervisorProperty(
+		    "ControlsInterfacePluginType");
+	}
+
+	__COUTV__(pluginType);
+
+	interface_ =
+	    makeSlowControls(pluginType,
+	                     CorePropertySupervisorBase::getSupervisorUID(),
+	                     CorePropertySupervisorBase::getContextTreeNode(),
+	                     CorePropertySupervisorBase::getSupervisorConfigurationPath());
 	__COUT__ << std::endl;
 
 	//
@@ -97,7 +110,7 @@ void SlowControlsDashboardSupervisor::init(void)
 		    // lockout the messages array for the remainder of the scope
 		    // this guarantees the reading thread can safely access the messages
 		    // std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
-		    //cs->checkSubscriptions(cs);
+		    // cs->checkSubscriptions(cs);
 	    },
 	    this)
 	    .detach();  // thread check clients subscription for all channels
@@ -837,10 +850,11 @@ void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc&                    
 	xmlOut.addTextElementToData("Page", controlsPage);  // add to response
 }  // end loadPage()
 
-void SlowControlsDashboardSupervisor::loadPhoebusPage(cgicc::Cgicc&                    cgiIn,
-                                                      HttpXmlDocument&                 xmlOut,
-                                                      std::string                      page,
-                                                      const WebUsers::RequestUserInfo& userInfo)
+void SlowControlsDashboardSupervisor::loadPhoebusPage(
+    cgicc::Cgicc&                    cgiIn,
+    HttpXmlDocument&                 xmlOut,
+    std::string                      page,
+    const WebUsers::RequestUserInfo& userInfo)
 {
 	page = StringMacros::decodeURIComponent(page);
 
@@ -895,9 +909,9 @@ void SlowControlsDashboardSupervisor::loadPhoebusPage(cgicc::Cgicc&             
 	{
 		xml += line + "\n";
 	}
-	__SUP_COUT__ << xml << std::endl; 
+	__SUP_COUT__ << xml << std::endl;
 	xmlOut.addTextElementToData("PHOEBUS", xml);
-	
+
 }  // end loadPhoebusPage()
 
 //==============================================================================
@@ -971,8 +985,8 @@ void SlowControlsDashboardSupervisor::SavePhoebusControlsPage(
 {
 	__SUP_COUT__ << "ControlsDashboard wants to create a Controls Page!" << __E__;
 
-	std::string controlsPageName = CgiDataUtilities::postData(cgiIn, "Name");
-	std::string pageString       = CgiDataUtilities::postData(cgiIn, "Page");
+	std::string controlsPageName     = CgiDataUtilities::postData(cgiIn, "Name");
+	std::string pageString           = CgiDataUtilities::postData(cgiIn, "Page");
 	std::string isControlsPagePublic = CgiDataUtilities::postData(cgiIn, "isPublic");
 
 	__SUP_COUTV__(controlsPageName);
