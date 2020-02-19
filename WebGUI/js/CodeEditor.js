@@ -1824,7 +1824,7 @@ CodeEditor.create = function(standAlone) {
 			altExtensions.push("cc");
 			altPaths.push(relatedPath+"_processor");
 			altExtensions.push("cc");
-			altPaths.push(relatedPath+"_controls");
+			altPaths.push(relatedPath+"_slowcontrols");
 			altExtensions.push("cc");
 			altPaths.push(relatedPath+"_table");
 			
@@ -1851,7 +1851,7 @@ CodeEditor.create = function(standAlone) {
 			else if(relatedPath.indexOf("Producer") >= 0)
 				relatedPath += "_processor";			
 			else if(relatedPath.indexOf("Controls") >= 0)
-				relatedPath += "_controls";			
+				relatedPath += "_slowcontrols";			
 			else if(relatedPath.indexOf("Table") >= 0)
 				relatedPath += "_table";				
 			
@@ -1901,8 +1901,8 @@ CodeEditor.create = function(standAlone) {
 			if((i = relatedPath.indexOf("_processor")) > 0 &&
 					i == relatedPath.length-("_processor").length)
 				relatedPath = relatedPath.substr(0,i); //remove processor
-			if((i = relatedPath.indexOf("_controls")) > 0 &&
-					i == relatedPath.length-("_controls").length)
+			if((i = relatedPath.indexOf("_slowcontrols")) > 0 &&
+					i == relatedPath.length-("_slowcontrols").length)
 				relatedPath = relatedPath.substr(0,i); //remove controls
 			if((i = relatedPath.indexOf("_table")) > 0 &&
 					i == relatedPath.length-("_table").length)

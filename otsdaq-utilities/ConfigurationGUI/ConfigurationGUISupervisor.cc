@@ -730,7 +730,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			else
 				cfgMgr->clearCachedVersions(tableName);
 
-			//Force manual reload... not cfgMgr->getAllTableInfo(true /*refresh*/);
+			// Force manual reload... not cfgMgr->getAllTableInfo(true /*refresh*/);
 		}
 		catch(std::runtime_error& e)
 		{
@@ -1678,10 +1678,9 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 	xmlOut.addTextElementToData("DefaultNoLink",
 	                            TableViewColumnInfo::DATATYPE_LINK_DEFAULT);
 
-
-	//construct specially ordered table name set
-	std::set<std::string,StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
-	for(const auto& tablePair:allActivePairs)
+	// construct specially ordered table name set
+	std::set<std::string, StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
+	for(const auto& tablePair : allActivePairs)
 		orderedTableSet.emplace(tablePair.first);
 
 	std::map<std::string, TableInfo>::const_iterator tableInfoIt;
@@ -1690,7 +1689,8 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		tableInfoIt = allTableInfo.find(orderedTableName);
 		if(tableInfoIt == allTableInfo.end())
 		{
-			__SS__ << "Impossible missing table in map '" << orderedTableName << "'" << __E__;
+			__SS__ << "Impossible missing table in map '" << orderedTableName << "'"
+			       << __E__;
 			__SS_THROW__;
 		}
 
@@ -1707,15 +1707,15 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 
 			try
 			{
-				tableInfoIt->second.tablePtr_->setActiveView((*modifiedTablesMapIt).second);
+				tableInfoIt->second.tablePtr_->setActiveView(
+				    (*modifiedTablesMapIt).second);
 			}
 			catch(...)
 			{
-				__SUP_SS__
-				    << "Modified table version v" << (*modifiedTablesMapIt).second
-				    << " failed. Reverting to v"
-				    << tableInfoIt->second.tablePtr_->getView().getVersion()
-				    << "." << __E__;
+				__SUP_SS__ << "Modified table version v" << (*modifiedTablesMapIt).second
+				           << " failed. Reverting to v"
+				           << tableInfoIt->second.tablePtr_->getView().getVersion() << "."
+				           << __E__;
 				__SUP_COUT_WARN__ << "Warning detected!\n\n " << ss.str() << __E__;
 				xmlOut.addTextElementToData(
 				    "Warning",
@@ -1725,11 +1725,9 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 
 		if(outputActiveTables)
 		{
-			xmlOut.addTextElementToData("ActiveTableVersion",
-			                            tableInfoIt->second
-			                                .tablePtr_->getView()
-			                                .getVersion()
-			                                .toString());
+			xmlOut.addTextElementToData(
+			    "ActiveTableVersion",
+			    tableInfoIt->second.tablePtr_->getView().getVersion().toString());
 			xmlOut.addTextElementToData(
 			    "ActiveTableComment",
 			    tableInfoIt->second.tablePtr_->getView().getComment());
@@ -1739,7 +1737,7 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		//		activePair.first << "-v" <<
 		//		allTableInfo.at(activePair.first).tablePtr_->getView().getVersion() <<
 		//__E__;
-	} //end ordered table loop
+	}  // end ordered table loop
 }  // end setupActiveTablesXML()
 catch(std::runtime_error& e)
 {
@@ -5007,11 +5005,9 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	         cfgViewPtr->getSourceColumnMismatch() !=
 	             0))  // check for column size mismatch
 	{
-
 		__SUP_SS__ << "\n\nThere were warnings found when loading the table " << tableName
 		           << ":v" << version << ". Please see the details below:\n\n"
-		           << "The source column size was found to be "
-		           << srcColNames.size()
+		           << "The source column size was found to be " << srcColNames.size()
 		           << ", and the current number of columns for this table is "
 		           << cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of "
 		           << cfgViewPtr->getSourceColumnMismatch()
@@ -5089,9 +5085,9 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
-//	__SUP_COUT__ << "Using Config Session " << mapKey
-//	             << " ... Total Session Count: " << userConfigurationManagers_.size()
-//	             << __E__;
+	//	__SUP_COUT__ << "Using Config Session " << mapKey
+	//	             << " ... Total Session Count: " << userConfigurationManagers_.size()
+	//	             << __E__;
 
 	time_t now = time(0);
 
@@ -6355,13 +6351,12 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 	__COUTV__(allowIllegalColumns);
 	std::string                             accumulatedErrors = "";
 	const std::map<std::string, TableInfo>& allTableInfo      = cfgMgr->getAllTableInfo(
-        true, // always refresh!!  allowIllegalColumns /*refresh*/,
+        true,                 // always refresh!!  allowIllegalColumns /*refresh*/,
         &accumulatedErrors);  // if allowIllegalColumns, then also refresh
 
-
-	//construct specially ordered table name set
-	std::set<std::string,StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
-	for(const auto& tablePair:allTableInfo)
+	// construct specially ordered table name set
+	std::set<std::string, StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
+	for(const auto& tablePair : allTableInfo)
 		orderedTableSet.emplace(tablePair.first);
 
 	std::map<std::string, TableInfo>::const_iterator it = allTableInfo.begin();
@@ -6373,13 +6368,15 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 
 	__SUP_COUT__ << "# of tables w/aliases: " << versionAliases.size() << __E__;
 
-	for(const auto& orderedTableName : orderedTableSet)//while(it != allTableInfo.end())
+	for(const auto& orderedTableName : orderedTableSet)  // while(it !=
+	                                                     // allTableInfo.end())
 	{
 		std::map<std::string, TableInfo>::const_iterator it =
-				allTableInfo.find(orderedTableName);
+		    allTableInfo.find(orderedTableName);
 		if(it == allTableInfo.end())
 		{
-			__SS__ << "Impossible missing table in map '" << orderedTableName << "'" << __E__;
+			__SS__ << "Impossible missing table in map '" << orderedTableName << "'"
+			       << __E__;
 			__SS_THROW__;
 		}
 
@@ -6426,7 +6423,7 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 				xmlOut.addTextElementToParent("Version", version.toString(), parentEl);
 
 		//++it;
-	} //end table loop
+	}  // end table loop
 
 	if(accumulatedErrors != "")
 		xmlOut.addTextElementToData(
