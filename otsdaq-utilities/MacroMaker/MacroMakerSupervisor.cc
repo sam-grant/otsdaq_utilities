@@ -492,12 +492,12 @@ void MacroMakerSupervisor::request(const std::string&               requestType,
 		std::string publicPath = (std::string)MACROS_DB_PATH + "publicMacros/";
 		mkdir(publicPath.c_str(), 0755);
 		std::string exportPath =
-				__ENV__("SERVICE_DATA_PATH") + MACROS_EXPORT_PATH + userInfo.username_ + "/";
+		    __ENV__("SERVICE_DATA_PATH") + MACROS_EXPORT_PATH + userInfo.username_ + "/";
 		mkdir(exportPath.c_str(), 0755);
 	}
 	else
 		handleRequest(requestType, xmlOut, cgiIn, userInfo.username_);
-} //end request()
+}  // end request()
 catch(const std::runtime_error& e)
 {
 	__SS__ << "Error occurred handling request '" << requestType << "': " << e.what()
@@ -510,7 +510,7 @@ catch(...)
 	__SS__ << "Unknown error occurred handling request '" << requestType << "!'" << __E__;
 	__SUP_COUT__ << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
-} //end request() error handling
+}  // end request() error handling
 
 //==============================================================================
 void MacroMakerSupervisor::handleRequest(const std::string  Command,
@@ -1796,8 +1796,8 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
 
 	std::string fileName = macroName + ".cc";
 
-	std::string fullPath = __ENV__("SERVICE_DATA_PATH") +
-			MACROS_EXPORT_PATH + username + "/" + fileName;
+	std::string fullPath =
+	    __ENV__("SERVICE_DATA_PATH") + MACROS_EXPORT_PATH + username + "/" + fileName;
 	__SUP_COUT__ << fullPath << __E__;
 	std::ofstream exportFile(fullPath.c_str(), std::ios::trunc);
 	if(exportFile.is_open())
@@ -1824,8 +1824,9 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
 
 		exportFile.close();
 
-		xmldoc.addTextElementToData("ExportFile", "$USER_DATA/ServiceData/" +
-				MACROS_EXPORT_PATH + username + "/" + fileName);
+		xmldoc.addTextElementToData(
+		    "ExportFile",
+		    "$USER_DATA/ServiceData/" + MACROS_EXPORT_PATH + username + "/" + fileName);
 	}
 	else
 		__SUP_COUT__ << "Unable to open file" << __E__;
