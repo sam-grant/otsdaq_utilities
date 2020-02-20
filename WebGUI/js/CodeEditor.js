@@ -1827,6 +1827,7 @@ CodeEditor.create = function(standAlone) {
 			altPaths.push(relatedPath+"_slowcontrols");
 			altExtensions.push("cc");
 			altPaths.push(relatedPath+"_table");
+			altExtensions.push("cc");
 			
 			altPaths.push(relatedPath);
 			altExtensions.push("cpp");
