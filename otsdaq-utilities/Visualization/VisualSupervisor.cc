@@ -480,9 +480,10 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 		__SUP_COUTV__(rootDirectoryName);
 		std::string::size_type LDQM_pos = path.find("/" + LIVEDQM_DIR + ".root/");
-		TFile*                 rootFile = nullptr;
+		__SUP_COUTV__(LDQM_pos);
+		TFile* rootFile = nullptr;
 
-		if(LDQM_pos != 0)  // If it is not from LIVE_DQM
+		if(LDQM_pos == std::string::npos)  // If it is not from LIVE_DQM
 		{
 			__SUP_COUTV__(rootFileName);
 			rootFile = TFile::Open(rootFileName.c_str());
@@ -493,17 +494,29 @@ void VisualSupervisor::request(const std::string&               requestType,
 				__SUP_SS_THROW__;
 			}
 		}
-		else if(theDataManager_->getLiveDQMHistos() != nullptr)
+		else
 		{
-			__SUP_COUT__ << "Attempting to get LIVE ROOT object." << __E__;
-			__SUP_COUTV__(rootDirectoryName);
-			rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
-			__SUP_COUTV__(rootDirectoryName);
-			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
+			if(theDataManager_->getLiveDQMHistos() != nullptr)
+			{
+				__SUP_COUT__ << "Attempting to get LIVE ROOT object." << __E__;
+				__SUP_COUTV__(rootDirectoryName);
+				rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
+				__SUP_COUTV__(rootDirectoryName);
+				rootFile = theDataManager_->getLiveDQMHistos()->getFile();
 
-			__SUP_COUT__ << "LIVE file name: " << rootFile->GetName() << __E__;
+				__SUP_COUT__ << "LIVE file name: " << rootFile->GetName() << __E__;
 
-			if(rootFile == nullptr || !rootFile->IsOpen())
+				if(rootFile == nullptr || !rootFile->IsOpen())
+				{
+					__SUP_SS__ << "Failed to access LIVE ROOT file: " << rootFileName
+					           << __E__;
+					__SUP_COUT__ << ss.str();
+					xmlOut.addTextElementToData("Warning", ss.str());
+					return;  // do not treat LIVE root file missing as error, .. assume
+					         // just not Running
+				}
+			}
+			else
 			{
 				__SUP_SS__ << "Failed to access LIVE ROOT file: " << rootFileName
 				           << __E__;
@@ -641,15 +654,15 @@ void VisualSupervisor::request(const std::string&               requestType,
 						}
 					}
 					return;
-				} //done handling TTree branches
-			} //end TTree and branch handling
-			else if(spliti+1 < splitTTreePath.size())
+				}  // done handling TTree branches
+			}      // end TTree and branch handling
+			else if(spliti + 1 < splitTTreePath.size())
 			{
 				__COUTV__(rootDirectoryName);
-				//if more name to mystery object (likely TDirectoryFile), then attempt to get full subpath
+				// if more name to mystery object (likely TDirectoryFile), then attempt to
+				// get full subpath
 				tobject = (TObject*)rootFile->Get(rootDirectoryName.c_str());
 			}
-			
 
 			// at this point have tobject to stringify
 		}  // peaking for TTree
