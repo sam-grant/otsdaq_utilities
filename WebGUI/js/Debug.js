@@ -129,13 +129,13 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 					var source = window.location.href;
 					source = source.substr(source.lastIndexOf('/'));
 					source = source.substr(0,source.indexOf('?'));
-					console.log("%c" + type + "-Priority" +  
+/* 					console.log("%c" + type + "-Priority" +  
 							 ":\t " + Debug.lastLog + " from " + source + ":\n" +
 							 Debug.lastLogger + "::\t" + str,							 
 							 num == 0?"color:#F30;"	//chrome/firefox allow css styling
 									 :(num == 1?"color:#F70" //warn
 											 :(num < 99?"color:#092":"color:#333"))); 
-					Debug.lastLog = str;
+ */					Debug.lastLog = str;
 					
 					if(num < 4) //show all high priorities as popup!
 						Debug.errorPop(str,num);
