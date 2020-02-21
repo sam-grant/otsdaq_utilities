@@ -898,9 +898,6 @@ void VisualSupervisor::request(const std::string& requestType,
  	 if(theDataManager_->getLiveDQMHistos() != nullptr )
          {
           rootFile  = theDataManager_->getLiveDQMHistos()->getFile();
-//          fRootPath = rootFile->GetName() ;
-//          boost::regex rea(fSystemPath) ;
-//          fRootPath = boost::regex_replace(fRootPath ,rea,"") ;
           fRootPath = "LIVE_DQM.root" ;
          } 
          else

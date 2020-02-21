@@ -56,28 +56,6 @@ function()
  generateDIVPlaceholderSize('canvas0',350,440) ;	   
  generateDIVPlaceholderSize('canvas1',350,440) ;	   
 
-//  var go = function vai()
-//  {
-//   var aDivX = 2 ;
-//   var aDivY = 3 ;
-//   var area = aDivX * aDivY  ;
-//   var p = 0;
-//   for(var r=0; r<aDivY; r++)
-//   {
-//    for(var c=0; c<aDivX; c++)
-//    {
-//      var row  = Math.floor(p / aDivY) ;
-//      var col  = p % aDivY ;
-//      STDLINE(r+"x"+c+" p: "+p+ " row: "+row + " col: "+col ) ;
-//      p++ ;
-//    }
-//   }
-//   
-//  }
-//  STDLINE(">>>>A>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>") ;
-//  go() ;
-//  STDLINE(">>>>C>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>") ;
-
  //--------------------------------------------------------------------------------------------------
  getCanvasDiv_ = function(number)
                  {
@@ -85,14 +63,29 @@ function()
                  }
  
  //--------------------------------------------------------------------------------------------------
- // Hash elements are addressed by an index of type canvasx_y where x is the currentCanvas_ and y is currentPad_
+ /* Hash elements are addressed by an index of type canvasx_y where x is the currentCanvas_ and y is currentPad_
+
+    A provenance record has the following structure:
+    
+    {
+     fSystemPath_   : {},                                                 
+     fRootPath_     : {},                                                 
+     fFoldersPath_  : {},                                                 
+     fRFoldersPath_ : {},                                                 
+     fFileName_     : {},                                                 
+     fHistName_     : {}
+    }                                                 
+ */
+ 
  var theProvenance_ = {
-                       fSystemPath_   : {},                                                 
-                       fRootPath_     : {},                                                 
-                       fFoldersPath_  : {},                                                 
-                       fFileName_     : {},                                                 
-                       fHistName_     : {},                                                 
-                       fRFoldersPath_ : {},                                                 
+                       fSystemPath_   : [],                                                 
+                       fRootPath_     : [],                                                 
+                       fFoldersPath_  : [],                                                 
+                       fRFoldersPath_ : [],
+                       fFileName_     : [],                                                 
+                       fHistName_     : [],                                                 
+                       fRequestURL_   : [],
+                       fParams_       : [],                                                               
                        setSystemPath  : function(SystemPath  , theCanvas, thePad)                                
                                         {  
                                          var addr = 'canvas'+ theCanvas + "_" + thePad; 
@@ -137,6 +130,18 @@ function()
                                          if( typeof HistName     === "undefined" ) this.fHistName_    [addr]="" 
                                          else                                      this.fHistName_    [addr]=HistName    ;             
                                         },                                                   
+                       setRequestURL  : function(requestURL, theCanvas, thePad) 
+                                        {
+                                         var addr = 'canvas'+ theCanvas + "_" + thePad; 
+                                         if( typeof requestURL   === "undefined" ) this.fRequestURL_  [addr]="" 
+                                         else                                      this.fRequestURL_  [addr]=requestURL   ;             
+                                        },
+                       setParams      : function(params, theCanvas, thePad) 
+                                        {
+                                         var addr = 'canvas'+ theCanvas + "_" + thePad; 
+                                         if( typeof params       === "undefined" ) this.fParams_      [addr]="" 
+                                         else                                      this.fParams_      [addr]=params   ;         
+                                        },
                        getPathsNumber : function()
                                         {
                                          return Object.keys(this.fSystemPath_).length ;
@@ -171,36 +176,38 @@ function()
                                          var addr = 'canvas'+ theCanvas + "_" + thePad; 
                                          return this.fHistName_    [addr] ;                     
                                         },                                            
+                       getRequestURL  : function(theCanvas, thePad) 
+                                        {
+                                         var addr = 'canvas'+ theCanvas + "_" + thePad; 
+                                         return this.fRequestURL_  [addr] ;                     
+                                        },
+                       getParams      : function(theCanvas, thePad) 
+                                        {
+                                         var addr = 'canvas'+ theCanvas + "_" + thePad; 
+                                         return this.fParams_      [addr] ;                     
+                                        },
                        dumpAll        : function(fromWhere)                                 
-                                        {                                                   
+                                        { 
+                                         STDLINE("<<=========== From: "+fromWhere+" ===========<<");                                              
                                          for(var j in this.fSystemPath_)
                                          {
-                                          STDLINE("tmptmp j             : "+j             ) ; 
-                                          STDLINE("tmptmp currentCanvas_: "+currentCanvas_) ; 
-                                          var i = 'canvas'+ currentCanvas_ + "_" + j; 
-                                          STDLINE("   --------------------------------------"        );
-                                          STDLINE("   From: '"+fromWhere+"' ("+i+ ")"                );
-                                          STDLINE("      --> fSystemPath_  : "+this.fSystemPath_  [i]); 
-                                          STDLINE("      --> fRootPath_    : "+this.fRootPath_    [i]); 
-                                          STDLINE("      --> fFoldersPath_ : "+this.fFoldersPath_ [i]); 
-                                          STDLINE("      --> fFileName_    : "+this.fFileName_    [i]); 
-                                          STDLINE("      --> fRFoldersPath_: "+this.fRFoldersPath_[i]); 
-                                          STDLINE("      --> fHistName_    : "+this.fHistName_    [i]); 
-                                          STDLINE("   --------------------------------------"        ); 
+                                          this.dump(fromWhere, j                                  ); 
                                          }
+                                         STDLINE(">>===================================>>"        );     
                                         },                                                   
-                       dump           : function(fromWhere, j)                                 
+                       dump           : function(fromWhere, i)                                 
                                         {                                                   
-                                         var i = 'canvas'+ currentCanvas_ + "_" + j; 
-                                         STDLINE("   --------------------------------------"         ); 
-                                         STDLINE("   From: '"+fromWhere+"' ("+i+ ")"                 ); 
-                                         STDLINE("      --> fSystemPath_  : "+this.fSystemPath_  [i] ); 
-                                         STDLINE("      --> fRootPath_    : "+this.fRootPath_    [i] ); 
-                                         STDLINE("      --> fFoldersPath_ : "+this.fFoldersPath_ [i] ); 
-                                         STDLINE("      --> fFileName_    : "+this.fFileName_    [i] ); 
-                                         STDLINE("      --> fRFoldersPath_: "+this.fRFoldersPath_[i] ); 
-                                         STDLINE("      --> fHistName_    : "+this.fHistName_    [i] ); 
-                                         STDLINE("   --------------------------------------"         ); 
+                                         STDLINE("   --------------------------------------"      ); 
+                                         STDLINE("   From: '"+fromWhere+"' ("+i+ ")"              ); 
+                                         STDLINE("   --> fSystemPath_  : "+this.fSystemPath_  [i] ); 
+                                         STDLINE("   --> fRootPath_    : "+this.fRootPath_    [i] ); 
+                                         STDLINE("   --> fFoldersPath_ : "+this.fFoldersPath_ [i] ); 
+                                         STDLINE("   --> fFileName_    : "+this.fFileName_    [i] ); 
+                                         STDLINE("   --> fRFoldersPath_: "+this.fRFoldersPath_[i] ); 
+                                         STDLINE("   --> fHistName_    : "+this.fHistName_    [i] ); 
+                                         STDLINE("   --> fRequestURL_  : "+this.fRequestURL_  [i] ); 
+                                         STDLINE("   --> fParams_      : "+this.fParams_      [i] ); 
+                                         STDLINE("   --------------------------------------"      ); 
                                         }                                                   
                       } ;                                                                   
 
@@ -276,18 +283,14 @@ function()
                                                      provenance: theProvenance
                                                     }                                               ;
                                           this.canvases[canvasNumber].objects.push(obj)             ;      
-//                                           if( t.objects[pad] ) return                               ;
-//                                           t.objects[pad].object     = object                        ;
-//                                           t.objects[pad].provenance = theProvenance                 ;
-//                                           if( t.currentPad >= t.nDivX * t.nDivY ) 
-//                                               this.canvases[canvasNumber].currentPad = 0            ;
-                                          this.dumpContent("Added new ROOT object")                 ;
+//                                          this.dumpContent("Added new ROOT object")                 ;
                                          },
                         nextPad        : function(canvasNumber)
                                          {
                                           if( canvasNumber > this.canvases.length-1 ) return        ;
                                           var currentPad = this.canvases[canvasNumber].currentPad   ;
                                           this.canvases[canvasNumber].currentPad = currentPad + 1   ;
+//                                          STDLINE("New pad: "+this.canvases[canvasNumber].currentPad) ;
                                          },
                         populate       : function(canvasNumber, theRequestURL,theParams,object)
                                          {
@@ -431,11 +434,12 @@ function()
                                            var obj    = o.object                                               ;
                                            var fTitle = obj.fTitle                                             ;
                                            var fName  = obj.fName                                              ;
+                                           var pad    = 'canvas' + theCanvas + '_' + j                         ;
                                            STDLINE("   object #  : " + j                                     ) ;
                                            STDLINE("   fTitle    : " + fTitle                                ) ;
                                            STDLINE("   fName     : " + fName                                 ) ;
                                            STDLINE("   pad       : " + pad                                   ) ;
-                                           theC.objects[j].provenance.dump("provenance: "+fTitle ,j)           ;
+                                           theC.objects[j].provenance.dump("provenance: "+fTitle ,pad        ) ;
 //                                            this.getDivXDivY(currentCanvas_,theC.currentPad                   ) ;
                                           }
                                           STDLINE(" >>______ "     + what             + " _______________>>" ) ;
@@ -1426,20 +1430,21 @@ function()
                               }                                                                                                         
                               else if(!(typeof getXMLValue(response,"rootType") == 'undefined')) // Returns the plot to display                                                                     
                               { // get specific ROOT Object and display
-                               var rootName  = getXMLValue (response,"path"    );                     
-                               var rootJSON  = getXMLValue (response,"rootJSON");                 
-                               var object    = JSROOT.parse(rootJSON           );
-                               STDLINE("Cuccato " + object.fTitle              ) ;
-                               theCanvasModel_.populate    (
-                                                            currentCanvas_     ,
-                                                            theRequestURL      ,
-                                                            theParams          ,
-                                                            object             
-                                                                               );
-                               theCanvasModel_.addROOTObject(currentCanvas_    ,
-                                                             object            ,
-                                                             theProvenance_    ) ;
-                               displayPlot_                (object             ) ;
+                               var rootName  = getXMLValue (response,"path"          );               
+                               var rootJSON  = getXMLValue (response,"rootJSON"      );           
+                               var object    = JSROOT.parse(rootJSON                 );
+                               STDLINE("Cuccato " + object.fTitle                    );
+                               var pad = theCanvasModel_.getCurrentPad(currentCanvas_);
+                               theProvenance_.setRequestURL(theRequestURL            ,
+                                                            currentCanvas_           ,
+                                                            pad                      );
+                               theProvenance_.setParams(theParams                    ,
+                                                            currentCanvas_           ,
+                                                            pad                      );
+                               theCanvasModel_.addROOTObject(currentCanvas_          ,
+                                                             object                  ,
+                                                             theProvenance_          );
+                               displayPlot_                (object                   );
                               }
                               STDLINE("None of the above...") ;
                              },                                                                                                           
@@ -1513,14 +1518,26 @@ function()
  //-----------------------------------------------------------------------------
  function redrawCanvas()
  {
-  theCanvasModel_.resetCurrentPad(currentCanvas_) ;
-  var objs = theCanvasModel_.getROOTObjects(currentCanvas_) ;
-  STDLINE("Found "+objs.length+" objects") ;
+  theCanvasModel_.resetCurrentPad(          currentCanvas_)      ;
+  theCanvasModel_.dumpContent("Redrawing canvas"          )      ;
+  var objs = theCanvasModel_.getROOTObjects(currentCanvas_)      ;
   for(var i=0; i<objs.length; ++i)
   {
-   var o = objs[i].object ;
-   STDLINE("Object "+i+": "+o) ;
-   displayPlot_(o) ;
+   var obj = objs[i].object                                      ;
+   var pro = objs[i].provenance                                  ;
+   var pad = 'canvas'                                           +
+             currentCanvas_                                     +
+             '_'                                                +
+             theCanvasModel_.getCurrentPad( currentCanvas_)      ;
+//   pro.dumpAll("Redraw canvas")                                  ;
+   STDLINE("Object "+i                                         ) ;
+   STDLINE("pad:: "+pad+" fSystemPath_: "+pro.fSystemPath_[pad]) ;                                                
+   STDLINE("pad:: "+pad+" fRootPath_  : "+pro.fRootPath_  [pad]) ; 
+   if( pro.fRootPath_[pad] == 'LIVE_DQM.root') 
+   {
+    STDLINE("************************* -> requesting again!!!!") ;
+   }                                           
+   displayPlot_(obj) ;
   } 
  }
  
