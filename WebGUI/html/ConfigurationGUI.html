@@ -10854,7 +10854,7 @@
 
 						//this could save a substantial amount of searching
 						if (treeEditingNodeDepth_ == 2 &&
-							depth == 2) continue; //can only possibly be self, which has already changed
+							depth == 2 && linkType != "GroupID") continue; //can only possibly be self, which has already changed
 
 						//if verifiably self, also skip
 						if (idString == treeEditingNodeIdString_) continue;
@@ -10862,10 +10862,48 @@
 						Debug.log("value-idString " + idString + " " + els[i].textContent);
 
 						//verify column match...
-
-						col = els[i].textContent.split('-')[0]; //get before dash
+						var tmpSplit = els[i].textContent.split('-');
+						col = tmpSplit[0]; //get before dash
 						if (col != treeEditingTargetColumn_)
+						{
+							//if group link, may still need to modify children
+							//	if matching table and groupID!
+							if(linkType == "GroupID")
+							{
+								Debug.log("Checking for groupID match");
+								
+								try
+								{
+									var p = tmpSplit[1].lastIndexOf('=')+2; //get past "= "
+									var tmpLinkId = tmpSplit[1].substr(p,tmpSplit[1].length-p-1); //remove last )
+									if(linkId == tmpLinkId
+											&&
+											linkTable == document.getElementById(
+													"treeNode-linkTableName-" + idString).innerText 
+											) 
+									{
+										Debug.log("Found matching table/groupId: " + linkId + "," +
+												linkTable);
+										
+										//change link table/id and clear children
+										//and edit peripheral link info
+										refreshLinkTreeNode(
+												els[i],//targetEl,
+												idString,//idString
+												col,//LinkColumnNameLabel
+												linkType,//linkType
+												linkTable,//linkTable
+												linkId);//linkId
+										//,tableComment,tableTitle,menuItems,menuItemHandlers);
+										continue; //keep looking for more matches
+									}
+								}
+								catch(e)
+								{} //ignore error
+							}
+							
 							continue; //skip if not column match
+						}
 
 						//need table/uid to verify match.. must get from parent of parent
 						parentIdString = document.getElementById("treeNode-ParentId-" +
