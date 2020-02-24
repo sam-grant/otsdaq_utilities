@@ -107,6 +107,7 @@ fi
 
 mkdir oldLocalProducts
 mv localProducts* oldLocalProducts/
+source setup_ots.sh
 mrb newDev -f -v $VERSION -q $QUAL
 
 echo -e "change_ots_qualifiers.sh [${LINENO}]  \t =================="
