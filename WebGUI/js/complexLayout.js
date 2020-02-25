@@ -188,26 +188,30 @@ function()
                                         },
                        dumpAll        : function(fromWhere)                                 
                                         { 
-                                         STDLINE("<<=========== From: "+fromWhere+" ===========<<");                                              
+                                         STDLINE("<<=========== From: "+fromWhere+" ===========<<"           );                                  
                                          for(var j in this.fSystemPath_)
                                          {
-                                          this.dump(fromWhere, j                                  ); 
+                                          this.dump(fromWhere, j                                             );
                                          }
-                                         STDLINE(">>===================================>>"        );     
+                                         STDLINE(">>===================================>>"                   );
                                         },                                                   
                        dump           : function(fromWhere, i)                                 
                                         {                                                   
-                                         STDLINE("   --------------------------------------"      ); 
-                                         STDLINE("   From: '"+fromWhere+"' ("+i+ ")"              ); 
-                                         STDLINE("   --> fSystemPath_  : "+this.fSystemPath_  [i] ); 
-                                         STDLINE("   --> fRootPath_    : "+this.fRootPath_    [i] ); 
-                                         STDLINE("   --> fFoldersPath_ : "+this.fFoldersPath_ [i] ); 
-                                         STDLINE("   --> fFileName_    : "+this.fFileName_    [i] ); 
-                                         STDLINE("   --> fRFoldersPath_: "+this.fRFoldersPath_[i] ); 
-                                         STDLINE("   --> fHistName_    : "+this.fHistName_    [i] ); 
-                                         STDLINE("   --> fRequestURL_  : "+this.fRequestURL_  [i] ); 
-                                         STDLINE("   --> fParams_      : "+this.fParams_      [i] ); 
-                                         STDLINE("   --------------------------------------"      ); 
+                                         STDLINE("   ------------------------------------------------------" );
+                                         STDLINE("   From: '"+fromWhere+"' ("+i+ ")"                         );
+                                         STDLINE("   --> fSystemPath_     : "+this.fSystemPath_  [i]         );
+                                         STDLINE("   --> fRootPath_       : "+this.fRootPath_    [i]         );
+                                         STDLINE("   --> fFoldersPath_    : "+this.fFoldersPath_ [i]         );
+                                         STDLINE("   --> fFileName_       : "+this.fFileName_    [i]         );
+                                         STDLINE("   --> fRFoldersPath_   : "+this.fRFoldersPath_[i]         );
+                                         STDLINE("   --> fHistName_       : "+this.fHistName_    [i]         );
+                                         STDLINE("   --> fRequestURL_     : "+this.fRequestURL_  [i]         );
+                                         if( typeof this.fParams_[i] !== "undefined" ) 
+                                         {
+                                          STDLINE("   --> fParams_.RootPath: "+this.fParams_     [i].RootPath); 
+                                         }
+                                         STDLINE("   ------------------------------------------------------" );
+                                          
                                         }                                                   
                       } ;                                                                   
 
@@ -290,7 +294,7 @@ function()
                                           if( canvasNumber > this.canvases.length-1 ) return        ;
                                           var currentPad = this.canvases[canvasNumber].currentPad   ;
                                           this.canvases[canvasNumber].currentPad = currentPad + 1   ;
-//                                          STDLINE("New pad: "+this.canvases[canvasNumber].currentPad) ;
+                                          STDLINE("New pad  : "+this.canvases[canvasNumber].currentPad) ;
                                          },
                         populate       : function(canvasNumber, theRequestURL,theParams,object)
                                          {
@@ -298,31 +302,32 @@ function()
                                           var thePad = this.canvases[canvasNumber].currentPad       ;
                                           var rowcol = this.getDivXDivY(canvasNumber,thePad)        ;
                                          },
-                        resetCurrentPad: function(whichCanvas)
+                        resetCurrentPad: function(canvasNumber)
                                          {
-                                          if(whichCanvas< 0 || whichCanvas>this.canvases.length-1) 
+                                          if(canvasNumber< 0 || canvasNumber>this.canvases.length-1) 
                                             return                                                  ;
-                                          this.canvases[whichCanvas].currentPad = 0                 ;  
+                                          this.canvases[canvasNumber].currentPad = 0                ;  
+                                          STDLINE("pad reset: "+this.canvases[canvasNumber].currentPad) ;
                                          },
-                        getCurrentPad  : function(whichCanvas)
+                        getCurrentPad  : function(canvasNumber)
                                          {
-                                          if(whichCanvas< 0 || whichCanvas>this.canvases.length-1) 
+                                          if(canvasNumber< 0 || canvasNumber>this.canvases.length-1) 
                                             return                                                  ;
-                                          var t = this.canvases[whichCanvas]                        ;
+                                          var t = this.canvases[canvasNumber]                       ;
                                           if( t.currentPad >= t.nDivX * t.nDivY ) 
-                                              this.canvases[whichCanvas].currentPad = 0             ;
+                                              this.canvases[canvasNumber].currentPad = 0            ;
                                           STDLINE("currentPad: "+
                                                   t.currentPad  +
                                                   " on canvas: "+
-                                                  whichCanvas)                                      ;
+                                                  canvasNumber)                                     ;
                                           return t.currentPad                                       ;
                                          },                
-                        getCurrentPadC : function(whichCanvas)
+                        getCurrentPadC : function(canvasNumber)
                                          {
-                                          var thePad ="canvas"     +
-                                                       whichCanvas +
-                                                       "_"         +
-                                                       this.getCurrentPad(whichCanvas)              ;
+                                          var thePad ="canvas"      +
+                                                       canvasNumber +
+                                                       "_"          +
+                                                       this.getCurrentPad(canvasNumber)             ;
                                           return thePad                                             ;
                                          },                
                         getDivXDivY    : function(canvasNumber, thePad)
@@ -1401,7 +1406,8 @@ function()
  { 
   var today = new Date();
   var time = today.getHours() + ":" + today.getMinutes() + ": "   + today.getSeconds();
-  STDLINE("Ajax request issued to " + theRequestURL      + " at " + time) ;                                                                                                                                      
+  STDLINE("Ajax request issued to " + theRequestURL      + " at " + time             );                                                                                                                         
+  STDLINE("theParams.RootPath: " + theParams.RootPath                                );                                                                                                                         
   Ext.Ajax.request(                                                                                                                       
                    {                                                                                                                      
                     url    : theRequestURL,                                                                                               
@@ -1428,7 +1434,7 @@ function()
 
                                createSources(dirs) ;
                               }                                                                                                         
-                              else if(!(typeof getXMLValue(response,"rootType") == 'undefined')) // Returns the plot to display                                                                     
+                              else if(!(typeof getXMLValue(response,"rootType") === 'undefined')) // Returns the plot to display                                                                     
                               { // get specific ROOT Object and display
                                var rootName  = getXMLValue (response,"path"          );               
                                var rootJSON  = getXMLValue (response,"rootJSON"      );           
@@ -1445,6 +1451,7 @@ function()
                                                              object                  ,
                                                              theProvenance_          );
                                displayPlot_                (object                   );
+                               theCanvasModel_.nextPad(currentCanvas_                );
                               }
                               STDLINE("None of the above...") ;
                              },                                                                                                           
@@ -1513,31 +1520,42 @@ function()
 //                   currentPad_++ ; 
 //                   if( currentPad_ > nx * ny - 1) {currentPad_=0;}
                  } 
-                 theCanvasModel_.nextPad(currentCanvas_) ;
+//                  theCanvasModel_.nextPad(currentCanvas_) ;
                 }
  //-----------------------------------------------------------------------------
  function redrawCanvas()
  {
-  theCanvasModel_.resetCurrentPad(          currentCanvas_)      ;
-  theCanvasModel_.dumpContent("Redrawing canvas"          )      ;
-  var objs = theCanvasModel_.getROOTObjects(currentCanvas_)      ;
+  theCanvasModel_.clearCanvas(currentCanvas_) ;
+//  theCanvasModel_.resetCurrentPad(          currentCanvas_)       ;
+  theCanvasModel_.dumpContent("Redrawing canvas"          )       ;
+  var objs = theCanvasModel_.getROOTObjects(currentCanvas_)       ;
+  STDLINE("") ;
+  STDLINE("^^^^^^^^^^^^^^^^^^^^^^^^^^^ Redrawing canvas") ;
   for(var i=0; i<objs.length; ++i)
   {
-   var obj = objs[i].object                                      ;
-   var pro = objs[i].provenance                                  ;
-   var pad = 'canvas'                                           +
-             currentCanvas_                                     +
-             '_'                                                +
-             theCanvasModel_.getCurrentPad( currentCanvas_)      ;
-//   pro.dumpAll("Redraw canvas")                                  ;
-   STDLINE("Object "+i                                         ) ;
-   STDLINE("pad:: "+pad+" fSystemPath_: "+pro.fSystemPath_[pad]) ;                                                
-   STDLINE("pad:: "+pad+" fRootPath_  : "+pro.fRootPath_  [pad]) ; 
+   var obj = objs[i].object                                                        ;
+   var pro = objs[i].provenance                                                    ;
+   var pad = 'canvas'                                                            + 
+             currentCanvas_                                                      + 
+             '_'                                                                 + 
+             theCanvasModel_.getCurrentPad( currentCanvas_                        );
+//   pro.dumpAll("Redraw canvas")                                                   ;
+   STDLINE("  Object "+i                                                          );
+   STDLINE("  pad: "+pad+" fSystemPath_       : "+pro.fSystemPath_[pad]           );                             
+   STDLINE("  pad: "+pad+" fRootPath_         : "+pro.fRootPath_  [pad]           );
+   STDLINE("  pad: "+pad+" fRequestURL_       : "+pro.fRequestURL_[pad]           );
+   STDLINE("  pad: "+pad+" fParams_.CookieCode: "+pro.fParams_    [pad].CookieCode); 
+   STDLINE("  pad: "+pad+" fParams_.RootPath  : "+pro.fParams_    [pad].RootPath  ); 
    if( pro.fRootPath_[pad] == 'LIVE_DQM.root') 
    {
-    STDLINE("************************* -> requesting again!!!!") ;
-   }                                           
-   displayPlot_(obj) ;
+    STDLINE("************************* -> requesting again!!!!"                   );
+    theAjaxRequest(pro.fRequestURL_[pad],pro.fParams_[pad],""                     );
+   }
+   else
+   {                                           
+     displayPlot_(obj) ;
+   }
+   theCanvasModel_.nextPad(currentCanvas_) ;
   } 
  }
  
