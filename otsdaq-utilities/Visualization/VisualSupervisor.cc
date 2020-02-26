@@ -517,7 +517,7 @@ void VisualSupervisor::request(const std::string& requestType,
 				// __SUP_COUT__ << "Getting object name: " << rootDirectoryName << __E__;
  				ss.str("") ; ss << "rootDirectoryName: |" << rootDirectoryName << "| rootFile->GetName()" << rootFile->GetName() ;
  				STDLINE(ss.str(),"") ;
-				rootFile->ls() ;
+				// rootFile->ls() ;
 				TObject* histoClone = nullptr;
 				TObject* histo      = (TObject*)rootFile->Get(rootDirectoryName.c_str());
  				ss.str("") ; ss << "histo ptr: |" << histo ;
@@ -526,7 +526,8 @@ void VisualSupervisor::request(const std::string& requestType,
 				if(histo != nullptr)  // turns out was a root object path
 				{
 					// Clone histo to avoid conflict when it is filled by other threads
-					histoClone       = histo->Clone();
+					histoClone       = histo->Clone()  ;
+                                        ((TH1*)histoClone)->SetStats(kTRUE);
 					TString     json = TBufferJSON::ConvertToJSON(histoClone);
 					TBufferFile tBuffer(TBuffer::kWrite);
 					histoClone->Streamer(tBuffer);
@@ -545,8 +546,8 @@ void VisualSupervisor::request(const std::string& requestType,
 // 					STDLINE(ss.str(),"") ;
 // 					ss.str("") ; ss << "histoClone->ClassName(): " << histoClone->ClassName() ;
 // 					STDLINE(ss.str(),"") ;
-// 					ss.str("") ; ss << "json.Data(): " <<json.Data() ;
-// 					STDLINE(ss.str(),"") ;
+ 					ss.str("") ; ss << "json.Data(): " <<json.Data() ;
+ 					STDLINE(ss.str(),"") ;
 					delete histoClone;
 				}
 				else
