@@ -118,22 +118,7 @@
 					document.getElementById(pv).innerHTML = "<left style = 'color: green'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</left>";
 
 				gauges[pvName].redraw(pvValue);
-				gauges[pvName].body[0][0].parentElement.title = 
-											pvName
-											+ "\nlast value "
-											+ pvValue
-											+ " "
-											+ pv_settings_[pvName].Units
-											+ " time "
-											+ pvTime
-											+ "\nLower Warning Limit:\t" + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
-										  	+ "Upper Warning Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
-										  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
-										  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
-										  	+ "Lower Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
-										  	+ "Upper Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
-										  	+ "Lower Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
-										  	+ "Upper Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
+				gauges[pvName].body[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
 
 //				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
 //				document.getElementById(pvName).title = pvName + ":" + pvTime;

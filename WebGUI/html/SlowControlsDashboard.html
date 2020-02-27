@@ -1099,6 +1099,29 @@
 
 
 			//=====================================================================================
+			function setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_)
+			{
+				var toolTip =
+				pvName
+				+ "\nlast value "
+				+ pvValue
+				+ " "
+				+ pv_settings_[pvName].Units
+				+ " time "
+				+ new Date(pvTime*1000)
+				+ "\nLower Warning Limit:\t" + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
+			  	+ "Upper Warning Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
+			  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+			  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+			  	+ "Lower Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
+			  	+ "Upper Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
+			  	+ "Lower Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
+			  	+ "Upper Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
+			  	return toolTip;
+			} //end setWidgetToolTip()
+
+
+			//=====================================================================================
 			function getHistory(id, parameters)
 			{
 				var pvList = "";
@@ -1150,7 +1173,7 @@
 					{
 						attributesNew[Object.keys(parameters)[attribute]] = page_.widgets[id].attributes[Object.keys(parameters)[attribute]];
 					}
-					else 
+					else
 					{
 						actionRequired = true;
 
@@ -1163,8 +1186,8 @@
 					}
 				}
 				page_.widgets[id].attributes = attributesNew;
-				if(actionRequired)
-					document.getElementById(id).className = "action-required";
+				//if(actionRequired)
+					//document.getElementById(id).className = "action-required";
 			} //end compareAttributes()
 
 
