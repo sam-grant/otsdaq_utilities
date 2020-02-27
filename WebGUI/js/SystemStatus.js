@@ -36,7 +36,11 @@ var _OFFSET_Y				= 80;
     // isEquivalent(a, b)
 	// setIntersection(list1, list2)
 
-
+var windowTooltip = "To verify Status Monitoring is enabled, check the Gateway Supervisor parameter that " +
+		"controls it. To check app status, set this field to YES in your Context Group Configuration Tree: \n\n" +
+		"<b>XDAQApplicationTable --> \nGatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>" +
+		"\n\n" +
+		"Remember, to restart ots after a Context group configuration change.";
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,6 +49,10 @@ var _OFFSET_Y				= 80;
 function init() 
 {					
     Debug.log("App status init");
+    
+
+	DesktopContent.setWindowTooltip(windowTooltip);
+    
     
     _statusDivElement = document.getElementById("appStatusDiv");
     _filtersDivElement = document.getElementById("filtersDiv");
@@ -218,12 +226,7 @@ function getAppsArray()
 				if(all0)
 				{
 					Debug.log("It appears that active application status monitoring is currently OFF! " +
-							"\n\n\n" +
-							"To verify it is on, check the Gateway Supervisor parameter that " +
-							"controls it. To check app status, set this field to YES in your Context Group Configuration Tree: \n\n" +
-							"<b>XDAQApplicationTable --> \nGatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>" +
-							"\n\n" +
-							"Remember, to restart ots after a Context group configuration change.",
+							"\n\n\n" + windowTooltip,
 							Debug.HIGH_PRIORITY);
 				}            	
 			}
