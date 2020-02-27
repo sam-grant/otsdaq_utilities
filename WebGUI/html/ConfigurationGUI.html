@@ -3413,7 +3413,7 @@
 						choices = nodes[i].children[1].children; //xml elements
 						for (var j = 0; j < choices.length; ++j) {
 							if (j) treeViewHandlerStr_ += ",";
-							treeViewHandlerStr_ += choices[j].getAttribute("value");
+							treeViewHandlerStr_ += encodeURIComponent(choices[j].getAttribute("value"));
 						}
 						treeViewHandlerStr_ += "</div>";
 					}
