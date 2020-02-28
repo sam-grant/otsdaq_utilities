@@ -897,14 +897,14 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 					for(var rh in DesktopContent._arrayOfFailedHandlers)
 						if(DesktopContent._arrayOfFailedHandlers[rh] == returnHandler) 
 						{
-							errStr = "Blocking multiple error responses to same handle. \nPoor error handling (Developer should fix) by returnHandler: " + returnHandler;
+							errStr = "Blocking multiple error responses to same handler. \nDoes target exist? Here is the (would be) returnHandler: \n\n" + returnHandler;
 							Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
 							found = true; break;
 						}
 				}
 				else 
 				{
-					errStr = "Quiet Mode. Blocking multiple error responses to ALL handles. \nPoor error handling (Developer should fix) by returnHandler: " + returnHandler;
+					errStr = "Quiet Mode. Blocking multiple error responses to ALL handlers. \nDoes target exist? Here is the (would be) returnHandler: \n\n " + returnHandler;
 					Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
 					found = true;
 				}
