@@ -309,7 +309,7 @@ Debug.errorPop = function(err,severity)
 					"<div class='" + 
 					Debug._errBoxId + 
 					"-moveBar' style='" +
-					"position:absolute;width:100%;height:15px;top:0;left:0;background-color:rgb(128, 128, 128);cursor:move;" +
+					"position:absolute;width:100%;height:15px;top:0;left:0;background-color:rgb(191, 191, 191);cursor:move;" +
 					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
 					"' " +
 					"onmousedown='javascript:Debug.handleErrorMoveStart(event);event.stopPropagation();' " +
@@ -336,7 +336,7 @@ Debug.errorPop = function(err,severity)
 
 			str += "<div class='" + Debug._errBoxId + "-resizeBarLeft' " +
 					"style='" +
-					"background-color:rgb(128, 128, 128);position:absolute;width:15px;height:15px;top:-1000px;left:0;cursor:nesw-resize;" +
+					"background-color:rgb(191, 191, 191);position:absolute;width:15px;height:15px;top:-1000px;left:0;cursor:nesw-resize;" +
 					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
 					"' " +
 					"onmousedown='javascript:Debug.handleErrorResizeStart(event,1,1);event.stopPropagation();' " +
@@ -352,7 +352,7 @@ Debug.errorPop = function(err,severity)
 					"></div>";
 			str += "<div class='" + Debug._errBoxId + "-resizeBarRight' " +
 					"style='" +
-					"background-color:rgb(128, 128, 128);position:absolute;width:15px;height:15px;top:-1000px;left:0;cursor:nwse-resize;" +
+					"background-color:rgb(191, 191, 191);position:absolute;width:15px;height:15px;top:-1000px;left:0;cursor:nwse-resize;" +
 					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
 					"' " +
 					"onmousedown='javascript:Debug.handleErrorResizeStart(event,1);event.stopPropagation();' " +
