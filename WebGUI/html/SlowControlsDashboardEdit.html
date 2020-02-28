@@ -182,13 +182,13 @@
 				border-left: 			2px solid #575757;
 			}
 
-			#userSettingsDiv {
+			#userSettingsContainer {
 				position:				absolute;
-				top: 					0px;
+				/*top: 					0px;
 				left: 					60%;
 				height: 				90%;
 				width: 					20%;
-				margin: 				10%;
+				margin: 				10%;*/
 			    font-family: 			"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px;    
 				color: 					#d3d3d3;
 			}
@@ -306,39 +306,39 @@
 			}
 
 			.toggle label:before {
-			  content:					attr(data-off);
-			  position:					absolute;
-			  top:						6px;
-			  right:					0;
-			  left:						0;
-			  z-index:					4;
+				content:				attr(data-off);
+				position:				absolute;
+				top:					6px;
+				right:					0;
+				left:					0;
+				z-index:				4;
 			}
 
 			.toggle label:after {
-			  content:					attr(data-on);
-			  position:					absolute;
-			  right:					0;
-			  bottom:					11px;
-			  left:						0;
-			  color:					#666;
-			  text-shadow:				0 -1px 0 #eee;
+				content:				attr(data-on);
+				position:				absolute;
+				right:					0;
+				bottom:					11px;
+				left:					0;
+				color:					#666;
+				text-shadow:			=0 -1px 0 #eee;
 			}
 
 			.toggle input:checked + label {
-			  background-image:			-webkit-linear-gradient(top,#eee 0%,#ccc 50%,#fff 50%,#eee 100%);
-			  background-image:			-moz-linear-gradient(top,#eee 0%,#ccc 50%,#fff 50%,#eee 100%);
-			  background-image:			-ms-linear-gradient(top,#eee 0%,#ccc 50%,#fff 50%,#eee 100%);
-			  background-image:			-o-linear-gradient(top,#eee 0%,#ccc 50%,#fff 50%,#eee 100%);
-			  background-image:			linear-gradient(top,#eee 0%,#ccc 50%,#fff 50%,#eee 100%);
-			  -webkit-box-shadow:		0 0 1px rgba(0,0,0,0.4),
+				background-image:		-webkit-linear-gradient(top,#eee 0%,#ccc 50%,#fff 50%,#eee 100%);
+				background-image:		-moz-linear-gradient(top,#eee 0%,#ccc 50%,#fff 50%,#eee 100%);
+				background-image:		-ms-linear-gradient(top,#eee 0%,#ccc 50%,#fff 50%,#eee 100%);
+				background-image:		-o-linear-gradient(top,#eee 0%,#ccc 50%,#fff 50%,#eee 100%);
+				background-image:		linear-gradient(top,#eee 0%,#ccc 50%,#fff 50%,#eee 100%);
+				-webkit-box-shadow:		0 0 1px rgba(0,0,0,0.4),
 										inset 0 1px 7px -1px #ccc,
 										inset 0 5px 1px #fafafa,
 										inset 0 6px 0 white;
-			  -moz-box-shadow:			0 0 1px rgba(0,0,0,0.4),
+				-moz-box-shadow:		0 0 1px rgba(0,0,0,0.4),
 										inset 0 1px 7px -1px #ccc,
 										inset 0 5px 1px #fafafa,
 										inset 0 6px 0 white;
-			  box-shadow:				0 0 1px rgba(0,0,0,0.4),
+				box-shadow:				0 0 1px rgba(0,0,0,0.4),
 										inset 0 1px 7px -1px #ccc,
 										inset 0 5px 1px #fafafa,
 										inset 0 6px 0 white;
@@ -365,10 +365,10 @@
 			}
 
 			.toggle input:checked + label:after {
-			  bottom:					9px;
-			  color:					#aaa;
-			  text-shadow:				none;
-			  z-index:					4;
+				bottom:					9px;
+				color:					#aaa;
+				text-shadow:			none;
+				z-index:				4;
 			}
 
 		</style>
@@ -381,68 +381,115 @@
 		<script>	
 
 			//functions:
-			//init()
-
-			var dimensions;
-			var counter;
-			var columns;
-			var rows;
-			var tilesDiv;
-			var divider;
+			//	initEdit()
+			//	drawicons(indexReferenceArray)
+			//	setupForDrawSelectionRectangle(tileNumber)
+			// 	searchWidgets(searchField)
+			//	filterWidgets(filterField)
+			//	toggleGrid(checkbox)
+			//	setBackgroundColor(color)
+			//	setGridColor(color)
+			//	resetToDefault()
+			//	rgbToHex(rgb)
+			//	redrawWindow(clicked, hover)
+			
+			var _codeEditorAppId = 0; //to open code editor
+		
+			//widget tile container parameters:
+			var widgetTiles_ = {
+					"WIDGET_TYPE_COUNT" 	: 0,
+					"widgetTiles_.columns" 	: 0,
+					"widgetTiles_.rows" 	: 0,
+					"tileSize"				: 0
+			};
+			
+			//main html elements:
+			var widgetTilesEl_;
+			var dividerEl;
 			var userSettingsDiv;
+			
+			//configurable settings
 			var defaultGridColor_;
 			var defaultBackgroundColor_;
 			var codeEditor_ = 12345678910;
+			var lastTileNumber_;
+			
+			
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 
+			//=====================================================================================						
 			//init called once body has loaded
-			function initEdit() {			
-				Debug.log("*****************************************initEdit() was called");
+			function initEdit() 
+			{			
 
-//				DesktopContent.XMLHttpRequest("Request?RequestType=getList","",handlerFunction);
-				tilesDiv = document.getElementById("tilesDiv");
-				tilesDiv.style.top = (window.innerHeight * 0.25) + "px";
-				tilesDiv.style.left = "0px";
-				tilesDiv.style.height = (window.innerHeight * 0.75) + "px";
-				tilesDiv.style.width = (window.innerWidth * 0.6)+ "px";
+				var w = window.innerWidth;
+				var h = window.innerHeight;
+				
 
-				counter = Object.keys(widgetLibrary.typeToSrc).length;
-				rows = Math.round(Math.sqrt(counter/3));
-				console.log("row")
-				if(rows < 4)
-				{
-					rows = 4;
-				}
-				else if(rows > 6)
-				{
-					rows = 6;
-				}
+				Debug.log("EditPane initEdit() was called w,h: " + 
+						w + " - " + h);
 
-				dimensions = ((parseFloat(tilesDiv.style.height) - (parseFloat(tilesDiv.style.height) * 0.1) - (rows * 5)) / (rows));	
-				console.log(parseFloat(tilesDiv.style.width), (parseFloat(tilesDiv.style.width) * 0.1), (dimensions + 5));
-				columns = Math.round((parseFloat(tilesDiv.style.width) - (parseFloat(tilesDiv.style.width) * 0.1))/ (dimensions + 5)); //Math.ceil(counter / rows);
-				if((dimensions * rows) > (parseFloat(tilesDiv.style.height) - (parseFloat(tilesDiv.style.height) * 0.1) - (5 * (rows - 1))))
+				//fill in CodeEditor appId
+				DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
+						"&classNeedle=ots::CodeEditorSupervisor",
+						"", //end post data, 
+						function(req) 
+						{			
+					_codeEditorAppId = DesktopContent.getXMLValue(req,"id") | 0;
+					Debug.log("_codeEditorAppId " + _codeEditorAppId);
+						}, //end handler
+						0, 0, true,//reqParam, progressHandler, callHandlerOnErr, 
+						false,//doNotShowLoadingOverlay,
+						true //targetSupervisor
+						);
+						
+				
+				widgetTilesEl_ = document.getElementById("widgetTilesContainer");
+
+				widgetTilesEl_.style.top = ((h * 0.25)|0) + "px";
+				widgetTilesEl_.style.left = "0px";
+				widgetTilesEl_.style.height = ((h * 0.75)|0) + "px";
+				widgetTilesEl_.style.width = ((w * 0.6)|0) + "px";
+				
+				//determine row and col widgetTiles_.tileSize of widget library
+				widgetTiles_.WIDGET_TYPE_COUNT = Object.keys(widgetLibrary.typeToSrc).length;
+				widgetTiles_.rows = Math.round(Math.sqrt(widgetTiles_.WIDGET_TYPE_COUNT/3));
+				console.log("row", widgetTiles_.rows);
+				if(widgetTiles_.rows < 4)
+					widgetTiles_.rows = 4;
+				else if(widgetTiles_.rows > 6)
+					widgetTiles_.rows = 6;
+				console.log("row", widgetTiles_.rows);
+
+				widgetTiles_.tileSize = ((parseFloat(widgetTilesEl_.style.height) - 
+						(parseFloat(widgetTilesEl_.style.height) * 0.1) - 
+						(widgetTiles_.rows * 5)) / (widgetTiles_.rows));	
+				
+				console.log(parseFloat(widgetTilesEl_.style.width), (parseFloat(widgetTilesEl_.style.width) * 0.1), (widgetTiles_.tileSize + 5));
+				
+				widgetTiles_.columns = Math.round((parseFloat(widgetTilesEl_.style.width) - (parseFloat(widgetTilesEl_.style.width) * 0.1))/ (widgetTiles_.tileSize + 5)); //Math.ceil(widgetTiles_.WIDGET_TYPE_COUNT / widgetTiles_.rows);
+				if((widgetTiles_.tileSize * widgetTiles_.rows) > (parseFloat(widgetTilesEl_.style.height) - (parseFloat(widgetTilesEl_.style.height) * 0.1) - (5 * (widgetTiles_.rows - 1))))
 				{
-					while((dimensions * rows) > (parseFloat(tilesDiv.style.height) - (parseFloat(tilesDiv.style.height) * 0.1) - (5 * (rows - 1))))
+					while((widgetTiles_.tileSize * widgetTiles_.rows) > (parseFloat(widgetTilesEl_.style.height) - (parseFloat(widgetTilesEl_.style.height) * 0.1) - (5 * (widgetTiles_.rows - 1))))
 					{
-						--rows;
+						--widgetTiles_.rows;
 					}
 				}
 
-				if((dimensions * columns) > (parseFloat(tilesDiv.style.width) - (parseFloat(tilesDiv.style.width) * 0.1) - (5 * (columns - 1))))
+				if((widgetTiles_.tileSize * widgetTiles_.columns) > (parseFloat(widgetTilesEl_.style.width) - (parseFloat(widgetTilesEl_.style.width) * 0.1) - (5 * (widgetTiles_.columns - 1))))
 				{
-					while((dimensions * columns) > (parseFloat(tilesDiv.style.width) - (parseFloat(tilesDiv.style.width) * 0.1) - (5 * (columns - 1))))
+					while((widgetTiles_.tileSize * widgetTiles_.columns) > (parseFloat(widgetTilesEl_.style.width) - (parseFloat(widgetTilesEl_.style.width) * 0.1) - (5 * (widgetTiles_.columns - 1))))
 					{
-						--columns;
+						--widgetTiles_.columns;
 					}
 				}
 				var titleDiv = document.getElementById("titleDiv");
-                                titleDiv.style.width = window.innerWidth + "px";
-                                titleDiv.style.height = (window.innerHeight * 0.1) + "px";
-                                titleDiv.style.top  = "0px";
-                                titleDiv.style.left = "0px";
+				titleDiv.style.width = w + "px";
+				titleDiv.style.height = ((h * 0.1)|0) + "px";
+				titleDiv.style.top  = "0px";
+				titleDiv.style.left = "0px";
 
 				var buttonsDiv = document.getElementById("buttonsDiv");
 //				buttonsDiv.style.width = window.innerWidth + "px";
@@ -451,9 +498,9 @@
 				buttonsDiv.left = "0px";
 
 				var searchFields = document.getElementById("searchFields");
-				searchFields.style.width  = (window.innerWidth * 0.6)+ "px";
-				searchFields.style.height =  (window.innerHeight * 0.15) + "px";
-				searchFields.style.top  = (window.innerHeight * 0.1) + "px"; //"0px";
+				searchFields.style.width  = ((w * 0.6)|0) + "px";
+				searchFields.style.height =  ((h * 0.15)|0) + "px";
+				searchFields.style.top  = ((h * 0.1)|0) + "px"; //"0px";
 				searchFields.style.left = "0px";
 
 				var widgetSearch = document.getElementById("widgetSearch");
@@ -466,10 +513,10 @@
 //                                widgetFilter.style.top  = (window.innerHeight * 0.1) + "px"; //"0px";
 
 //				var searchButtonDiv = document.getElementById("searchButtonDiv");
-//				searchButtonDiv.style.width  =  dimensions + "px";
-//				searchButtonDiv.style.height =  dimensions + "px";
+//				searchButtonDiv.style.width  =  widgetTiles_.tileSize + "px";
+//				searchButtonDiv.style.height =  widgetTiles_.tileSize + "px";
 //				searchButtonDiv.style.top  = "0px";
-//				searchButtonDiv.style.left = (window.innerWidth * 0.05 + ((dimensions + 5) * (columns - 1)) - 10) + "px";
+//				searchButtonDiv.style.left = (window.innerWidth * 0.05 + ((widgetTiles_.tileSize + 5) * (widgetTiles_.columns - 1)) - 10) + "px";
 //				searchButtonDiv.style.position = "absolute";
 //				
 //				var searchButton = document.getElementById("searchButton");
@@ -489,14 +536,14 @@
 //				document.getElementById("widgetSearch").style.width = "90%";
 //				document.getElementById("widgetFilter").style.width = "90%";
 
-				divider = document.getElementById("divider");
-				divider.style.left = tilesDiv.getBoundingClientRect().right + "px";
-				divider.style.top = parseFloat(tilesDiv.style.top) + "px";
-				divider.style.height = (parseFloat(tilesDiv.style.height) * 0.8) + "px";
+				dividerEl = document.getElementById("divider");
+				dividerEl.style.left = widgetTilesEl_.getBoundingClientRect().right + "px";
+				dividerEl.style.top = parseFloat(widgetTilesEl_.style.top) + "px";
+				dividerEl.style.height = (parseFloat(widgetTilesEl_.style.height) * 0.8) + "px";
 
-				userSettingsDiv = document.getElementById("userSettingsDiv");
-				userSettingsDiv.style.left = tilesDiv.getBoundingClientRect().right + "px";
-				userSettingsDiv.style.width = (parseFloat(window.innerWidth) - parseFloat(tilesDiv.getBoundingClientRect().right)) + "px";
+				userSettingsDiv = document.getElementById("userSettingsContainer");
+				userSettingsDiv.style.left = widgetTilesEl_.getBoundingClientRect().right + "px";
+				userSettingsDiv.style.width = (parseFloat(w) - parseFloat(widgetTilesEl_.getBoundingClientRect().right)) + "px";
 
 				var backgroundColorPicker = document.getElementById("backgroundColorPicker");
 				defaultBackgroundColor_ = parent.mainBlock_.el.style["background-color"];
@@ -531,39 +578,30 @@
 				}
 
 				var allIcons = [];			
-				for(var i = 0; i < counter; i++)
+				for(var i = 0; i < widgetTiles_.WIDGET_TYPE_COUNT; i++)
 					allIcons.push(i);
 
 				drawicons(allIcons);
 
 				window.onresize = redrawWindow;
 				redrawWindow(); //redraw window for first time
-			}
+			} //end initEdit()
 
-			function handlerFunction(req) {
-				Debug.log("handlerFunction() was called. Req: " + req.responseText);
-
-				//var child1data = DesktopContent.getXMLValue(req,"child");
-				//var child2data = DesktopContent.getXMLValue(req,"child2");
-
-				//Debug.log("--child1data:",child1data," --child2data:",child2data);
-				//block1El = document.getElementById('block1');
-				//block1.innerHTML = child1data;
-			}
-
+			//=====================================================================================
 			function drawicons(indexReferenceArray)
 			{
-				console.log(indexReferenceArray);
-				tilesDiv.innerHTML = "";
+				console.log("drawicons()",indexReferenceArray);
+				
+				widgetTilesEl_.innerHTML = "";
 				var tileNumber = -1;		
 				var positionX = window.innerWidth * 0.025;
 				var positionY = window.innerHeight * 0.1;
 				var tileNumber = -1;
 				indexReferenceArray.push(codeEditor_);
 
-				for(var cell = 0; cell < rows; cell++)
+				for(var cell = 0; cell < widgetTiles_.rows; cell++)
 				{
-					for(var col = 0; col < columns; col++)
+					for(var col = 0; col < widgetTiles_.columns; col++)
 					{
 						if(indexReferenceArray.indexOf(indexReferenceArray[tileNumber]) != indexReferenceArray.length-1)
 						{
@@ -572,8 +610,8 @@
 							tile.className = "tile";
 							//tile.innerHTML = "tiles-" + (tileNumber);
 	//						tile.style["background-color"] = "red";
-							tile.style.width = dimensions + "px";
-							tile.style.height = dimensions + "px";
+							tile.style.width = widgetTiles_.tileSize + "px";
+							tile.style.height = widgetTiles_.tileSize + "px";
 							tile.style.left = positionX + "px";
 							tile.style.top = positionY + "px";
 							tile.setAttribute("widgetID", tileNumber);
@@ -608,14 +646,17 @@
 							{	
 								tile.title = "Not finding what you're looking for? \nLaunch the Code Editor to make changes to the Widget Library, including making your own widget!";
 								tileIMG.src = "widgets/code-editor.png";
-                                tile.onclick = function()
-                                				{
-                                					DesktopContent.openNewWindow(
-						                       		"Code Editor", 
-						                       		undefined /*subname undefined for LID lookup*/,  
-						                       		"?startFilePrimary=/otsdaq_utilities/WebGUI/js/widgetLibrary.js",
-						                       		undefined /*unique undefined for LID lookup*/);
-                                				}
+								tile.onclick = 
+										function()
+										{
+									DesktopContent.openNewWindow(
+											"Code Editor", 
+											"" /*subname*/,
+											"/WebPath/html/CodeEditor.html?" +
+											"urn=" + _codeEditorAppId + 
+											"&startFilePrimary=/otsdaq_utilities/WebGUI/js/widgetLibrary.js",
+											0 /*unique*/);									 
+										};
 							}
 							else
 								tileIMG.onclick = setupForDrawSelectionRectangle(indexReferenceArray[tileNumber]); 
@@ -627,18 +668,20 @@
 							//tileIMG.onclick = setupForDrawSelectionRectangle(indexReferenceArray[tileNumber]); 
 
 							tile.appendChild(tileIMG);
-							tilesDiv.appendChild(tile);				
-							positionX = positionX + dimensions + 5;
+							widgetTilesEl_.appendChild(tile);				
+							positionX = positionX + widgetTiles_.tileSize + 5;
 						}
 					}
-					positionY = positionY + dimensions + 5;
+					positionY = positionY + widgetTiles_.tileSize + 5;
 					positionX = window.innerWidth * 0.025;
 				}
-			}
-
-			var lastTileNumber_;
+			} //end drawicons()
+			
+			//=====================================================================================
 			function setupForDrawSelectionRectangle(tileNumber)
 			{			
+				Debug.log("setupForDrawSelectionRectangle() " + tileNumber);
+				
 				return function(){
 					var el;
 					if(lastTileNumber_ !== undefined) //revert border
@@ -653,68 +696,86 @@
 
 					parent.setupForDrawSelectionRectangle(tileNumber);
 				};
-			}
+			} //end setupForDrawSelectionRectangle()
 
+			//=====================================================================================
 			function searchWidgets(searchField)
 			{
+				Debug.log("searchWidgets() " + searchField);
+				
 				var keyword = searchField.value;
 				var foundResult = [];
 				
-				for(var i = 0; i < counter; i++)
+				for(var i = 0; i < widgetTiles_.WIDGET_TYPE_COUNT; i++)
 				{
 					console.log(i + " : " + parent.widgetLibrary.typeToName + " : " + keyword);
+					
 					if(parent.widgetLibrary.typeToName[i] != undefined)
 						parent.widgetLibrary.typeToName[i].indexOf(keyword) != -1 ? foundResult.push(i) : console.log();
 					else if(parent.widgetLibrary.typeToSrc[i] != undefined)
 						parent.widgetLibrary.typeToSrc[i].indexOf(keyword) != -1 ? foundResult.push(i) : console.log();
 				}
+				
 				console.log(foundResult);
+				
 				drawicons(foundResult);
-			}
+			} //end searchWidgets()
 
+			//=====================================================================================
 			function filterWidgets(filterField)
 			{
+				Debug.log("filterWidgets() " + filterField);
+				
 				var keyword = filterField.value;
 				var foundResult = [];
 				console.log(keyword);
 				if(keyword === 'All')
 				{
-					for(var i = 0; i < counter; i++)
+					for(var i = 0; i < widgetTiles_.WIDGET_TYPE_COUNT; i++)
 						foundResult.push(i);
 				}
 				else
 				{
-					for(var i = 0; i < counter; i++)
+					for(var i = 0; i < widgetTiles_.WIDGET_TYPE_COUNT; i++)
 						if(typeof parent.widgetLibrary.typeToPurpose[i] != 'undefined')
 							parent.widgetLibrary.typeToPurpose[i].indexOf(keyword) != -1 ? foundResult.push(i) : console.log();
 				}
 				
 				console.log(foundResult);
+				
 				drawicons(foundResult);
-			}			
+			} //end filterWidgets()		
 
-			function addPV(pv)
-			{
-				//console.log("edit");
-			}
-
+			//=====================================================================================
 			function toggleGrid(checkbox)
 			{
+				Debug.log("toggleGrid() " + checkbox.checked);
+								
 				parent.toggleGrid(checkbox.checked);
-			}
+			} //end toggleGrid()
 
+			//=====================================================================================
 			function setBackgroundColor(color)
 			{
+				Debug.log("setBackgroundColor() " + color.value);
+								
 				parent.setBackgroundColor(color.value);
-			}
+			} //end setBackgroundColor()
 
+			//=====================================================================================
 			function setGridColor(color)
 			{
-				parent.setGridColor(color.value, document.getElementById("gridCheckbox").checked);
-			}
+				Debug.log("setGridColor() " + color.value);
+								
+				parent.setGridColor(color.value, 
+						document.getElementById("gridCheckbox").checked);
+			} //end setGridColor()
 
+			//=====================================================================================
 			function resetToDefault()
 			{
+				Debug.log("resetToDefault()");
+								
 				parent.toggleGrid(true);
 				document.getElementById("gridCheckbox").checked = true;
 				parent.setGridColor(defaultGridColor_, true);
@@ -725,62 +786,35 @@
 				
 				var gridColorPicker = document.getElementById("gridColorPicker");
 				gridColorPicker.value = rgbToHex(defaultGridColor_);
-			}
+			} //end resetToDefault()
 
-			function rgbToHex(rgb){
+			//=====================================================================================
+			function rgbToHex(rgb)
+			{
+				Debug.log("rgbToHex() " + rgb);
+				
 				 rgb = rgb.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
 				 return (rgb && rgb.length === 4) ? "#" +
-				  ("0" + parseInt(rgb[1],10).toString(16)).slice(-2) +
-				  ("0" + parseInt(rgb[2],10).toString(16)).slice(-2) +
-				  ("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
-			}
+						 ("0" + parseInt(rgb[1],10).toString(16)).slice(-2) +
+						 ("0" + parseInt(rgb[2],10).toString(16)).slice(-2) +
+						 ("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
+			} //end rgbToHex()
 
-			function redrawWindow(clicked, hover) {
-				//Debug.log("FileTree redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
+			//=====================================================================================
+			function redrawWindow(clicked, hover) 
+			{
+				var w = window.innerWidth;
+				var h = window.innerHeight;
+				Debug.log("EditPane redrawWindow() to " + w + " - " + 
+						h + " clicked:" + clicked + " hover:" + hover);
 
-				/*var buttonsDiv = document.getElementById("buttonsDiv");
-				buttonsDiv.style.width = parent.hiddenWidth_;
-				console.log(parent.hiddenWidth_);
-				buttonsDiv.style.height = window.innerHeight;
-				buttonsDiv.style.left = "0px";
-				buttonsDiv.style.top = "0px";
-				//console.log(window.parent.pvList_);
-				var ul = document.createElement("list");
-				var maxWidth = 0;
-				*/
-				/*window.parent.pvList_.forEach(function(pv){
-
-					//console.log(pv);
-
-					var li = document.createElement("li");
-
-					var button = document.createElement("button");
-					button.style.width = "auto";
-					button.style.overflow =  "hidden";
-					button.id = pv; 
-					button.onclick = function(){parent.addPV(pv)};//"addPV()";// + pv + ')';
-					button.innerHTML = pv;
-					if(button.style.width > maxWidth)
-					{
-						maxWidth = button.style.width;
-					}
-					li.appendChild(button);
-					ul.appendChild(li);	
-				});
+				//position widget tile container
+				widgetTilesEl_.style.top = ((h * 0.25)|0) + "px";
+				widgetTilesEl_.style.left = "0px";
+				widgetTilesEl_.style.height = ((h * 0.75)|0) + "px";
+				widgetTilesEl_.style.width = ((w * 0.6)|0) + "px";
 				
-				document.getElementById("tilesDiv").innerHTML = "";
-				document.getElementById("tilesDiv").appendChild(ul);
-
-				if(maxWidth <= (document.getElementById("tilesDiv").style.width / 3))
-				{
-					document.getElementById("tilesDiv").style.width = maxWidth
-				}
-				else
-				{
-					document.getElementById("tilesDiv").style.width = document.getElementById("tilesDiv").style.width / 4;
-				}
-				*/
-			}
+			} //end redrawWindow()
 
 		</script>
 
@@ -799,9 +833,9 @@
 				<select id="widgetFilter" class="absolute" onchange="filterWidgets(this)"></select>
 			</div>
 		</div>
-		<div class='mainBlock' id='tilesDiv'></div>
+		<div class='mainBlock' id='widgetTilesContainer'></div>
 		<div class='mainBlock' id='divider'></div>
-		<div class='mainBlock' id='userSettingsDiv'>
+		<div class='mainBlock' id='userSettingsContainer'>
 
 			<!-- TODO for new functionalities
 			<div id="switchesContainer">
