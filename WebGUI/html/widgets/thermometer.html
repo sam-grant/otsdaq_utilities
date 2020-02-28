@@ -11,8 +11,8 @@
 
 			.wrapper {
 			  display: grid;
-			  grid-template-columns: repeat(2, 1fr);
-			  //grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
+			  //grid-template-columns: repeat(2, 1fr);
+			  grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
 			  grid-gap: 0px;
 			  grid-auto-rows: minmax(100px, auto);
 			  //grid-auto-columns: 200px 200px;
@@ -65,6 +65,7 @@
 			var thermometers = [];
 			var containers = [];
 			var pv_settings_ = [];
+			var parameters_ = {class: "", "show_labels": "true"};
 
 			//init called once body has loaded
 			function init()
@@ -86,26 +87,35 @@
 				containers = [];
 				var olddiv = document.getElementById("dispaly-div");
 				if (olddiv != null)
-					document.getElementById("display").removeChild(olddiv);
+					document.getElementById("display").innerHTML = "";
 
 				var div = document.createElement('div');
-				div.className="wrapper";
+				div.className = "wrapper";
 				div.id = "dispaly-div";
 				document.getElementById("display").appendChild(div);
 
 				for(var pv in widget.PVList)
 				{
-					var divtemp = document.createElement('div');
+					var divtemp = document.getElementById('label-div-' + pv)
+					if (divtemp == null)
+					{
+						divtemp = document.createElement('div');
+						divtemp.id = "label-div-" + pv;
+					}
 					//divtemp.style.color = "white";
 					//divtemp.style.fontSize = "auto"; //"3vw";
-					divtemp.innerHTML = "<center>" + pv;// + "</center>";
+					if (parameters_["show_labels"] == "true")
+						divtemp.innerHTML = "<center>" + pv.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />");
+					else
+						divtemp.innerHTML = "";
+					console.log(pv.replace(" ", ""));
 					//divtemp.style.width = "100%";
 					//divtemp.style.height = "100%";
 					div.appendChild(divtemp);
 					containers[pv] = divtemp;
 
 					var wdth = (parseInt(window.innerWidth) - 16) / Object.keys(widget.PVList).length | 0;
-					var hght = (parseInt(window.innerHeight) - 56) / Object.keys(widget.PVList).length | 0;
+					var hght = (parseInt(window.innerHeight) - 56);
 
 					if(wdth < 100) wdth = 100;
 					if(hght < 100) hght = 100;
@@ -121,13 +131,14 @@
 
 			function getParameters()
 			{
-				parameters = {};
-				return parameters;
+				return parameters_;
 			}
 
 			function setParameters(attributes)
 			{
-				
+				parameters_ = attributes;
+				console.log("thermometer: set parameters()");
+				console.log(parameters_);
 			}
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
@@ -138,16 +149,28 @@
 				var max   = pv_settings_[pvName] !== undefined ? pv_settings_[pvName].Upper_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pvName].Upper_Display_Limit) : 0 : 0;
 				max = max == "DC'd" || max <= min ? 100 : max;
 
-				if(pvSeverity == "MAJOR" )
-					containers[pvName].innerHTML = "<center style = 'color: red'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
-				else if(pvSeverity == "MINOR")
-					containers[pvName].innerHTML = "<center style = 'color: orange'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+				if (parameters_["show_labels"] == "true")
+				{
+					if(pvSeverity == "MAJOR" )
+						containers[pvName].innerHTML = "<center style = 'color: red'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					else if(pvSeverity == "MINOR")
+						containers[pvName].innerHTML = "<center style = 'color: orange'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					else
+						containers[pvName].innerHTML = "<center style = 'color: green'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+				}
 				else
-					containers[pvName].innerHTML = "<center style = 'color: green'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					containers[pvName].innerHTML = "<center>";
 
 				thermometers[pvName].render(containers[pvName],	pvValue, min, max);
 
 				thermometers[pvName]._svg._groups[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+
+				var now = Math.floor(Date.now());
+				console.log("thermometer date now: " + now + " pvtime: " + pvTime + " refresh rate: ");
+				if (pvTime == undefined || pvTime + 10000 < now)
+					thermometers[pvName]._svg._groups[0][0].parentElement.style.backgroundColor = 'lightgrey';
+				else
+					thermometers[pvName]._svg._groups[0][0].parentElement.style.backgroundColor = 'white';
 			}
 
 			function drawThermometer(name, container, wdth, hght, val, min, max)
@@ -193,7 +216,7 @@
 				for(var name in thermometers)
 				{
 					thermometers[name]._config.width = (parseInt(window.innerWidth) - 16) / Object.keys(thermometers).length | 0;
-					thermometers[name]._config.height = (parseInt(window.innerHeight) - 56) / Object.keys(thermometers).length | 0;
+					thermometers[name]._config.height = (parseInt(window.innerHeight) - 56);
 					thermometers[name].render(
 						containers[name],
 						thermometers[name]._value.current,
