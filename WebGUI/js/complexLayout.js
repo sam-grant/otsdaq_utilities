@@ -19,7 +19,6 @@ function()
                             'margin-bottom: 2px;' +
                             'padding      : 2px;'                                                   ;
  var canvasTabs_          = []                                                                      ;
- var clearCanvas_         = true                                                                    ;     
  var currentCanvas_       = 0                                                                       ;
  var dataModel_           = ""                                                                      ;
  var enableDebug_         = true                                                                    ;
@@ -41,6 +40,11 @@ function()
  var timeoutInterval_     = 2                                                                       ;
  var treeDisplayField_    = "fDisplayName"                                                          ;
  var options1D_           = []                                                                      ;
+ var options2D_           = []                                                                      ;
+ var options3D_           = []                                                                      ;
+ var optionsBodies1D_     = []                                                                      ;
+ var optionsBodies2D_     = []                                                                      ;
+ var optionsBodies3D_     = []                                                                      ;
 
  var _cookieCodeMailbox   = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
  var _cookieCode          = _cookieCodeMailbox.innerHTML                                            ;
@@ -49,7 +53,6 @@ function()
                             "/urn:xdaq-application:lid="                                           +
                             getLocalURN(0,"urn")                                                   +
                             "/Request?"                                                             ;
-
 
  options1D_[ 0] = 'P'         ;
  options1D_[ 1] = 'P0'        ;
@@ -78,35 +81,77 @@ function()
  options1D_[24] = 'fill_green';
  options1D_[25] = 'fill_blue' ;
 
- var optionsBodies1D_ = [] ;
- for(var i=0; i< options1D_.length; i++)
+ options2D_[ 0] = 'col'       ;
+ options2D_[ 1] = 'colPal77'  ;
+ options2D_[ 2] = 'colz'      ;
+ options2D_[ 3] = 'acol'      ;
+ options2D_[ 4] = 'projx1'    ;
+ options2D_[ 5] = 'projx3'    ;
+ options2D_[ 6] = 'arr'       ;
+ options2D_[ 7] = 'cont'      ;
+ options2D_[ 8] = 'cont1'     ;
+ options2D_[ 9] = 'cont2'     ;
+ options2D_[10] = 'cont3'     ;
+ options2D_[11] = 'cont4'     ;
+ options2D_[12] = 'surf'      ;
+ options2D_[13] = 'surf1'     ;
+ options2D_[14] = 'surf2'     ;
+ options2D_[15] = 'surf3'     ;
+ options2D_[16] = 'surf4'     ;
+ options2D_[17] = 'lego'      ;
+ options2D_[18] = 'lego1'     ;
+ options2D_[19] = 'lego2'     ;
+ options2D_[20] = 'lego3'     ;
+ options2D_[21] = 'lego4'     ;
+ options2D_[22] = 'text'      ;
+ options2D_[23] = 'scat'      ;
+ options2D_[24] = 'box'       ;
+ options2D_[25] = 'box1'      ;
+
+ options3D_[ 0] = 'box'       ;
+ options3D_[ 1] = 'box1'      ;
+ options3D_[ 2] = 'box2'      ;
+ options3D_[ 3] = 'box3'      ;
+ options3D_[ 4] = 'glbox'     ;
+ options3D_[ 5] = 'glbox1'    ;
+ options3D_[ 6] = 'glbox2'    ;
+ options3D_[ 7] = 'glbox3'    ;
+ options3D_[ 8] = 'glcol'     ;
+         
+ function initializeOptions(theBody, theArray)
  {
-  var v = options1D_[i] ;
-  optionsBodies1D_.push(
-                        {
-                         xtype   : 'checkbox'                      ,
-                         id      : 'ID-'         + v + '_CB'       ,
-                         boxLabel:                 v               ,
-                         name    :                 v               ,
-                         value   :                 v               ,
-                         tooltip : 'Set option ' + v + ' for plots'          
-                        }
-                       )
+  for(var i=0; i< theArray.length; i++)
+  {
+   var v = theArray[i] ;
+   theBody.push(
+                {
+                 xtype   : 'checkbox'                      ,
+                 id      : 'ID-'         + v + '_CB'       ,
+                 boxLabel:                 v               ,
+                 name    :                 v               ,
+                 value   :                 v               ,
+                 tooltip : 'Set option ' + v + ' for plots'          
+                }
+               )
+  }
+  theBody.push(
+               {
+                xtype     : 'textfield' ,
+                name      : 'Opts'      ,
+                width      : 180        ,
+                id        : 'ID-Opts-TF',
+                fieldLabel: 'Options'
+               }
+              )
  }
- optionsBodies1D_.push(
-                       {
-                        xtype     : 'textfield' ,
-                        name      : 'Opts'      ,
-                        width      : 180        ,
-                        id        : 'ID-Opts-TF',
-                        fieldLabel: 'Options'
-                       }
-                      )
 
  enableSTDLINE(enableDebug_) ;
 
- generateDIVPlaceholderSize('canvas0',350,440) ;	   
- generateDIVPlaceholderSize('canvas1',350,440) ;	   
+ initializeOptions         (optionsBodies1D_, options1D_ ) ;               
+ initializeOptions         (optionsBodies2D_, options2D_ ) ;               
+ initializeOptions         (optionsBodies3D_, options3D_ ) ;               
+ generateDIVPlaceholderSize('canvas0'       , 350, 440   ) ;
+ generateDIVPlaceholderSize('canvas1'       , 350, 440   ) ;
 
  //--------------------------------------------------------------------------------------------------
  getCanvasDiv_ = function(number)
@@ -137,7 +182,19 @@ function()
                        fFileName_     : [],                                                 
                        fHistName_     : [],                                                 
                        fRequestURL_   : [],
-                       fParams_       : [],                                                               
+                       fParams_       : [],
+                       clearAll       : function(theCanvas, thePad)
+                                        {
+                                         var addr = 'canvas'+ theCanvas + "_" + thePad;
+                                         this.fSystemPath_  [addr]="" ;
+                                         this.fRootPath_    [addr]="" ;                          
+                                         this.fFoldersPath_ [addr]="" ;                          
+                                         this.fRFoldersPath_[addr]="" ; 
+                                         this.fFileName_    [addr]="" ;                          
+                                         this.fHistName_    [addr]="" ;                          
+                                         this.fRequestURL_  [addr]="" ; 
+                                         this.fParams_      [addr]="" ; 
+                                        },                                                               
                        setSystemPath  : function(SystemPath  , theCanvas, thePad)                                
                                         {  
                                          var addr = 'canvas'+ theCanvas + "_" + thePad; 
@@ -525,6 +582,7 @@ function()
  // Resize the div signed by id to width/height sizes
  function changeHistogramPanelSize(thisPanel, width, height, from)      
  {
+  STDLINE("getdiv: "+getCanvasDiv_(currentCanvas_)) ;
   var div = document.getElementById(getCanvasDiv_(currentCanvas_));
   div.style.width  = width  - 20                                  ;
   div.style.height = height - 30                                  ;
@@ -885,26 +943,16 @@ function()
                               activeTab     : 0             ,
                               items         : canvasTabs_   ,
                               listeners     : {
-                                               tabchange : function( thisPanel, newCard, oldCard, eOpts ) 
+                                               tabchange : function(thisPanel, newCard, oldCard, eOpts ) 
                                                            {
-                                                            clearCanvas_   = false                                     ;
-                                                            var str        = newCard.title                             ;
-                                                            STDLINE("str: " + str) ;
-                                                            var matches    = str.match(/Canvas (\d+)/)                  ;
-                                                            //STDLINE("matches[0] " + matches[0]) ;
-                                                            //STDLINE("matches[1] " + matches[1]) ;
-                                                            currentCanvas_ = matches[1]                                ;
-                                                            STDLINE("Changed tab to " + getCanvasDiv_(currentCanvas_)) ;
-//                                                             nDivXCB.setValue(theCanvasModel_.getnDivX(currentCanvas_)) ;
-//                                                             nDivYCB.setValue(theCanvasModel_.getnDivY(currentCanvas_)) ;
-//                                                             width  = theCanvasModel_.currentWidth                      ;
-//                                                             height = theCanvasModel_.currentHeight                     ;
-//                                                             changeHistogramPanelSize(
-//                                                                                      thisPanel                        ,
-//                                                                                      width                            ,
-//                                                                                      height                           ,
-//                                                                                      "resized"
-//                                                                                     ) ;
+                                                            var matches    = newCard.title.match(/Canvas (\d+)/)      ; 
+                                                            currentCanvas_ = matches[1]                               ; 
+                                                            changeHistogramPanelSize(
+                                                                                     newCard                          , 
+                                                                                     newCard.getWidth()               , 
+                                                                                     newCard.getHeight()              , 
+                                                                                     "resized"
+                                                                                    ) ;
                                                            },
                                                resize    : function(thisPanel, width, height, oldWidth, oldHeight, eOpt)
                                                            {                                                           ;
@@ -1018,7 +1066,15 @@ function()
                                                    title     : 'Plot options (2D)'                                  ,
                                                    html      : '<p>Options available for 2D histogramming.</p>'     ,
                                                    autoScroll: true                                                 ,
-                                                   iconCls   : 'info'
+                                                   iconCls   : 'info'                                               ,
+                                                   items     : optionsBodies2D_                                   
+                                                  }, 
+                                                  {
+                                                   title     : 'Plot options (3D)'                                  ,
+                                                   html      : '<p>Options available for 3D histogramming.</p>'     ,
+                                                   autoScroll: true                                                 ,
+                                                   iconCls   : 'info'                                               ,
+                                                   items     : optionsBodies3D_                                   
                                                   }
                                                  ],
                                    listeners   : {
@@ -1150,41 +1206,43 @@ function()
                               listeners   : {
                                              select    : function(thisCombo, record, eOpts)
                                                          {
-                                                          var thisRootPath = record.data.dir              ;
-                                                          var thePad       = theCanvasModel_.getCurrentPadC(currentCanvas_) ;
-                                                          STDLINE("thisRootPath: "+thisRootPath          );
+                                                          Ext.getCmp('navigatorDiv').expand()                              ;
+                                                          var thisRootPath = record.data.dir                               ;
+                                                          var thePad       = theCanvasModel_.getCurrentPadC(currentCanvas_);
+                                                          theProvenance_.clearAll(currentCanvas_,thePad                   );
+                                                          STDLINE("thisRootPath: "+thisRootPath                           );
                                                           theProvenance_.setRootPath(thisRootPath,
-                                                                                     currentCanvas_      ,
-                                                                                     thePad              );
-                                                          STDLINE("fRootPath_: "+thisRootPath            );
+                                                                                     currentCanvas_                       ,
+                                                                                     thePad                               );
+                                                          STDLINE("fRootPath_: "+thisRootPath                             );
                                                           if(thisRootPath == "LIVE_DQM.root")
                                                           {
-                                                           selectedItem_ = "getMeLIVE-DQMFile"            ;
+                                                           selectedItem_ = "getMeLIVE-DQMFile"                             ;
                                                            makeStore(thisRootPath, 
-                                                                     'RequestType=getMeLIVE-DQMFile'     );
+                                                                     'RequestType=getMeLIVE-DQMFile'                      );
                                                           }
                                                           else
                                                           {
-                                                           selectedItem_ = "getDirectories"               ;
+                                                           selectedItem_ = "getDirectories"                                ;
                                                            makeStore(thisRootPath, 
-                                                                     'RequestType=getMeDirs'             );
+                                                                     'RequestType=getMeDirs'                              );
                                                           }
-                                                          STDLINE("selectedItem_: "+selectedItem_        );
+                                                          STDLINE("selectedItem_: "+selectedItem_                         );
                                                           makeGrid (thisRootPath,              
-                                                                    'Directories and files'              );
+                                                                    'Directories and files'                               );
                                                          },
                                              focusleave: function (thisCombo) 
                                                          {
-                                                          STDLINE('remove  selection listener'           );
-                                                          theSourcesCB_.suspendEvent('select'            );
-                                                          STDLINE('removed selection listener'           );
+                                                          STDLINE('remove  selection listener'                            );
+                                                          theSourcesCB_.suspendEvent('select'                             );
+                                                          STDLINE('removed selection listener'                            );
                                                          },
                                              focusenter: function (thisCombo) 
                                                          {
-                                                          STDLINE('reinstate  selection listener'        );
-                                                          thisCombo.resumeEvent('select'                 );
-                                                          theSourcesCB_.resumeEvent('select'             );
-                                                          STDLINE('reinstated selection listener'        );
+                                                          STDLINE('reinstate  selection listener'                         );
+                                                          thisCombo.resumeEvent('select'                                  );
+                                                          theSourcesCB_.resumeEvent('select'                              );
+                                                          STDLINE('reinstated selection listener'                         );
                                                          }
                                             }
                              }
@@ -1294,6 +1352,7 @@ function()
                                                  STDLINE("thePad       : "+thePad                   )                   ;      
                                                  STDLINE("selectedItem_: "+selectedItem_            )                   ;      
                                                  STDLINE("Selected     : "+selection.length+" items")                   ;
+theProvenance_.clearAll(currentCanvas_,thePad) ;
                                                  for(var i=0; i<selection.length; i++)  
                                                  {  
                                                   theProvenance_.setSystemPath  (selection[i].data.fSystemPath        ,
@@ -1348,7 +1407,13 @@ function()
                                                            selectedItem_ == "getMeLIVE-DQMFile" )
                                                   { 
 //                                                   theProvenance_.dumpAll("getRootObject")                              ;
-//                                                   STDLINE("Request for thePad: " + thePad)                             ;      
+//                                                   STDLINE("Request for thePad: " + thePad)                             ;
+                                                   if( selectedItem_ == "getMeLIVE-DQMFile" ) 
+                                                   {
+                                                    theProvenance_.setFileName  (""                                   ,
+                                                                                 currentCanvas_                       ,
+                                                                                 thePad                                );
+                                                   }
                                                    currentRootObject_  = "/"                                           +        
                                                                          theProvenance_.getRootPath    (currentCanvas_,
                                                                                                         thePad)        +    
@@ -1363,9 +1428,9 @@ function()
                                                                          "/"                                           +        
                                                                          theProvenance_.getHistName    (currentCanvas_,
                                                                                                         thePad)         ;    
-                                                   STDLINE('RequestType       : getRootObject'      )                   ;        
-                                                   STDLINE('currentRootObject_: '+currentRootObject_)                   ;        
-                                                   STDLINE('_requestURL       : '+_requestURL       )                   ;        
+//                                                    STDLINE('RequestType       : getRootObject'      )                   ;        
+//                                                    STDLINE('currentRootObject_: '+currentRootObject_)                   ;        
+//                                                    STDLINE('_requestURL       : '+_requestURL       )                   ;        
                                                    theAjaxRequest(
                                                                   _requestURL+"RequestType=getRoot",
                                                                   {                                                           
@@ -1455,18 +1520,18 @@ function()
                           listeners: {
                                       beforeload   : function(thisStore, operation, eOpts) 
                                                      {
-                                                      STDLINE("Request: "+_requestURL + reqType) ;
+//                                                       STDLINE("Request: "+_requestURL + reqType) ;
                                                      },
                                       load         : function( thisStore, records, successful, operation, node, eOpts )
                                                      {
-                                                      STDLINE("Load was succesful? "+successful) ;
+//                                                       STDLINE("Load was succesful? "+successful) ;
                                                      }
                                      }
                          }
                         );
-  STDLINE("Going to load...") ;
+//   STDLINE("Going to load...") ;
   theStore_.load() ;
-  STDLINE("...loaded!") ;
+//   STDLINE("...loaded!") ;
  }
  
  //-----------------------------------------------------------------------------
@@ -1481,14 +1546,14 @@ function()
   var pad   = 0 ;
   if( updateProvenance )
   {
-   pad   = theCanvasModel_.getCurrentPad(currentCanvas_                           );
+   pad   = theCanvasModel_.getCurrentPad(currentCanvas_                 );
   }
   else
   {
    pad = theParams.pad ;
   }
-  STDLINE("Ajax request issued to " + theRequestURL      + " at " + time             );                                                                                                                         
-  STDLINE("theParams.RootPath: " + theParams.RootPath                                );                                                                                                                         
+//   STDLINE("Ajax request issued to " + theRequestURL      + " at " + time);
+//   STDLINE("theParams.RootPath: "    + theParams.RootPath                );
   Ext.Ajax.request(                                                                                                                       
                    {                                                                                                                      
                     url    : theRequestURL,                                                                                               
@@ -1523,7 +1588,7 @@ function()
 //                                STDLINE("Cuccato " + object.fTitle                    );
                                if( updateProvenance ) 
                                {
-                                STDLINE("Updating provenance"                        );
+//                                 STDLINE("Updating provenance"                        );
                                 theProvenance_.setRequestURL(          theRequestURL ,
                                                                        currentCanvas_,
                                                                        thePad        );
@@ -1536,7 +1601,7 @@ function()
                                }
                                else
                                {                              
-                                STDLINE("Not updating provenance"                    );
+//                                 STDLINE("Not updating provenance"                    );
                                }
                                displayPlot_                  (        object, thePad );
                               }
@@ -1559,15 +1624,43 @@ function()
  } ; 
  
  //-----------------------------------------------------------------------------
+ function applyOptions()
+ {
+  var opts = "" ;
+  for(var i=0; i<options1D_.length-1; i++)
+  {
+   var idx = 'ID-' + options1D_[i] + '_CB' ;
+   if(Ext.getCmp(idx).getValue()) 
+   {
+    opts += Ext.getCmp(idx).getName()
+    opts += "," ;
+   }
+  }
+  for(var i=0; i<options2D_.length-1; i++)
+  {
+   var idx = 'ID-' + options2D_[i] + '_CB' ;
+   if(Ext.getCmp(idx).getValue()) 
+   {
+    opts += Ext.getCmp(idx).getName()
+    opts += "," ;
+   }
+  }
+  opts = opts.replace(/,$/,"") ;
+  var o = Ext.getCmp('ID-Opts-TF').getValue() ;
+  if( o != '') opts = o ;
+  return opts ;
+ }
+ 
+ //-----------------------------------------------------------------------------
  displayPlot_ = function(object, currentPad)
                 {
                  if( ! object ) return ;
                  var nx        = theCanvasModel_.getnDivX   (currentCanvas_);
                  var ny        = theCanvasModel_.getnDivY   (currentCanvas_);
-                 STDLINE(      "Plot: "      + 
-                               object.fTitle + 
-                               ' on pad: '   +
-                               currentPad    ) ;
+//                  STDLINE(      "Plot: "      + 
+//                                object.fTitle + 
+//                                ' on pad: '   +
+//                                currentPad    ) ;
                  displayStatus("Plot: "      + 
                                object.fTitle + 
                                ' on pad: '   +
@@ -1591,27 +1684,16 @@ function()
 //                          " on: "          +
 //                          theFrame        );
 
-                 var opts = "" ;
-                 for(var i=0; i<options1D_.length-1; i++)
-                 {
-                  var idx = 'ID-' + options1D_[i] + '_CB' ;
-                  if(Ext.getCmp(idx).getValue()) 
-                  {
-                   opts += Ext.getCmp(idx).getName()
-                   opts += "," ;
-                  }
-                 }
-                 opts = opts.replace(/,$/,"") ;
-                 var o = Ext.getCmp('ID-Opts-TF').getValue() ;
-                 if( o != '') opts = o ;
-                 STDLINE("Options selected: "+opts) ;
+//                  STDLINE("Options selected: "+opts) ;
+                 options = applyOptions() ;
+STDLINE("Options: "+options) ;
                  if( superimposeFlag_ )
                  {
 //                   STDLINE("Superimpose on "+theFrame+"...") ;
                   JSROOT.draw  (
                                 theFrame,
                                 object  ,
-                                opts
+                                options
                                ); 
                  } else {
 //                   STDLINE("Do NOT superimpose on "+theFrame+"...") ;
@@ -1619,7 +1701,7 @@ function()
                   JSROOT.redraw(
                                 theFrame,
                                 object  ,
-                                opts
+                                options
                                ); 
                  } 
                  theCanvasModel_.nextPad(currentCanvas_) ;
@@ -1639,12 +1721,12 @@ function()
    var pad = i ;
    var padC = 'canvas' + currentCanvas_ + '_' + i ;
 //   pro.dumpAll("Redraw canvas")                                                    ;
-   STDLINE("  Object "+i                                                            );
-   STDLINE("  pad: "+padC+" fSystemPath_       : "+pro.fSystemPath_[padC]           );                             
-   STDLINE("  pad: "+padC+" fRootPath_         : "+pro.fRootPath_  [padC]           );
-   STDLINE("  pad: "+padC+" fRequestURL_       : "+pro.fRequestURL_[padC]           );
-   STDLINE("  pad: "+padC+" fParams_.CookieCode: "+pro.fParams_    [padC].CookieCode); 
-   STDLINE("  pad: "+padC+" fParams_.RootPath  : "+pro.fParams_    [padC].RootPath  ); 
+//    STDLINE("  Object "+i                                                            );
+//    STDLINE("  pad: "+padC+" fSystemPath_       : "+pro.fSystemPath_[padC]           );                             
+//    STDLINE("  pad: "+padC+" fRootPath_         : "+pro.fRootPath_  [padC]           );
+//    STDLINE("  pad: "+padC+" fRequestURL_       : "+pro.fRequestURL_[padC]           );
+//    STDLINE("  pad: "+padC+" fParams_.CookieCode: "+pro.fParams_    [padC].CookieCode); 
+//    STDLINE("  pad: "+padC+" fParams_.RootPath  : "+pro.fParams_    [padC].RootPath  ); 
    if( pro.fRootPath_[padC] == 'LIVE_DQM.root') 
    {
     theAjaxRequest(pro.fRequestURL_[padC], pro.fParams_[padC], "", pad, false   );
@@ -1657,11 +1739,12 @@ function()
 //  theCanvasModel_.dump(currentCanvas_,"Just after redraw"                          ); 
  }
  
- //-----------------------------------------------------------------------------
- //
- //    H e r e   b e g i n s  t h e  a c t i o n
- //
- //-----------------------------------------------------------------------------
+ //-----------------------------------------------------------------------------//
+ //                                                                             //
+ //             H e r e    t h e   a c t i o n    b e g i n s                   //
+ //                                                                             //
+ //-----------------------------------------------------------------------------//
+
  theAjaxRequest(
                 _requestURL+"RequestType=getDirectoryContents",
                 {                                                            
@@ -1672,9 +1755,7 @@ function()
                 0 ,
                 true
                ) ;                                                          
-
  makeStore("where","what") ;
-
- STDLINE("Calling makeViewPort") ;
  makeViewPort() ;
+
 });
