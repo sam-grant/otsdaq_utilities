@@ -23,6 +23,8 @@
 			var fileBlock_ = {name:"", isHidden:false, el:"", savePopup:""}; // = ["fileBlock", false ];
 			var mainBlock_ = {name:"", isHidden:false, el:""}; // = ["mainBlock", false ];
 			var editBlock_ = {name:"", isHidden:true, el:""}; // = [false ];
+			var EDIT_BLOCK_PEEK_HEIGHT = 30;
+			var EDIT_BLOCK_HEIGHT = 300;
 			var page_ = page_ || {}; //define the namespace
 			var PAGE_POSITIONS_ = 1000; //number of allowed integer locations (e.g. x,y,w,h for widgets) 
 			var refreshRate_ = 15000; //set default to refresh every 15 seconds (ms)
@@ -163,6 +165,11 @@
 				editBlock_.el.innerHTML = "";
 				editBlock_.el.style.border = "0";
 				editBlock_.el.appendChild(editFrame);
+				
+				editBlock_.el.style.zIndex = 50;
+				editBlock_.el.addEventListener("mouseover", mouseoverEditBlock, true);
+				editBlock_.el.addEventListener("mouseleave", mouseoutEditBlock, true);
+
 
 				//BEGIN JS Style
 				mainBlock_.el.style["background-color"] = "rgb(255, 255, 255)";
@@ -1442,7 +1449,8 @@
 
 					if(!editBlock_.isHidden) 
 					{
-						coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
+						Debug.log("FIXME use edit pencil icon instead of double click",Debug.HIGH_PRIORITY);
+						//coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
 					}
 
 					coverDiv.addEventListener("mousedown", startWidgetDrag);
@@ -1840,17 +1848,20 @@
 			//=====================================================================================
 			function mouseoverEditBlock(e)
 			{
-				editBlock_.el.style.marginBottom = editBlock_.el.style.height;
+				Debug.log("mouseoverEditBlock()");
+				editBlock_.el.style.marginBottom = (
+						EDIT_BLOCK_HEIGHT
+						- EDIT_BLOCK_PEEK_HEIGHT) + "px";
+				
 			} // end mouseoverEditBlock()
 
 
 			//=====================================================================================
 			function mouseoutEditBlock(e)
 			{
-				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
-				editBlock_.el.style.marginBottom = 1.5 * hiddenWidth_ + "px";
-				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
-				editBlock_.el.style.marginBottom = parseInt(document.getElementById("editorPanelTitle")) + "px";
+				Debug.log("mouseoutEditBlock()");
+				editBlock_.el.style.marginBottom = 0 + "px";
+				
 			} //end mouseoutEditBlock()
 
 
@@ -1859,8 +1870,8 @@
 			{
 				Debug.log("Toggle Edit Mode");
 
-				editBlock_.el.style.marginBottom = parseInt(document.getElementById("editorPanelTitle")) + "px";
-
+				mouseoutEditBlock();
+				
 				var covers = document.getElementsByClassName("widgetCover");
 			    var resize_covers = document.getElementsByClassName("resizeWidgetCover");
 				var editButton = document.getElementById("menuli2");
@@ -1884,11 +1895,7 @@
 					editButton.classList.add("navigationMenu--Edit");
 					mainBlock_.el.classList.add("editMode");
 
-					editBlock_.el.style.zIndex = "50";
-					editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
-					editBlock_.el.addEventListener("mouseover", mouseoverEditBlock, true);
-					editBlock_.el.addEventListener("mouseleave", mouseoutEditBlock, true);
-
+					
 					editBlock_.isHidden = false;
 
 					for(widget in page_.widgets)
@@ -1938,8 +1945,7 @@
 
 					mainBlock_.el.classList.remove("editMode");
 					editButton.classList.remove("navigationMenu--Edit");
-					editBlock_.el.style.marginBottom = "0px";
-					editBlock_.el.style.zIndex = "30";
+					
 					editBlock_.isHidden = true;
 
 					for(var i = 0;i<covers.length;++i)
@@ -2916,8 +2922,8 @@
 			//=====================================================================================
 			function redrawWindow(event, hover) 
 			{
-				Debug.log("redrawWindow() clicked-hover w,h: " + event + "-" + hover
-				 	+ window.innerWidth + "," + window.innerHeight);
+				Debug.log("redrawWindow() clicked-hover: " + event + "-" + hover
+				 	+ " w,h: " + window.innerWidth + "," + window.innerHeight);
 
 				var _MARGIN = 10;
 				var _TOPMARGIN = 40;
@@ -2932,7 +2938,7 @@
 
 				//DEFAULT VALUES //Sides Hidden
 				var fileTop = _MARGIN, fileWidth = unhiddenWidth_, fileHeight = window.innerHeight;
-				var editWidth = maxWidth, editHeight = unhiddenWidth_;
+				var editWidth = maxWidth, editHeight = EDIT_BLOCK_HEIGHT;
 				var mainLeft = 0, mainTop = 0, mainWidth = maxWidth, mainHeight = window.innerHeight;				
 
 				mainBlock_.el.style.left = mainLeft + "px";
@@ -2953,8 +2959,10 @@
 				cover.style.height	    = 	window.innerHeight + "px";
 				cover.style.left		= 	mainLeft + "px";
 
-				editBlock_.el.style.bottom = (-5 - parseInt(editBlock_.el.style.height)) + "px";
-				editBlock_.el.style.marginBottom = parseInt(document.getElementById("editorPanelTitle")) + "px";
+				editBlock_.el.style.bottom = (						
+						EDIT_BLOCK_PEEK_HEIGHT //i.e. document.getElementById("editorPanelTitle").offsetHeight, but it does not exist yet
+						- EDIT_BLOCK_HEIGHT) + "px";
+				editBlock_.el.style.marginBottom = 0 + "px";
 
 				if(!editBlock_.isHidden)
 				{
