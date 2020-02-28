@@ -1161,7 +1161,7 @@
 				{
 					if(Object.keys(parameters).indexOf(Object.keys(page_.widgets[id].attributes)[attribute]) == -1)
 					{
-						Debug.log("Attribute [" + Object.keys(page_.widgets[id].attributes)[attribute] + "] for " + page_.widgets[id].Display_Name + " is no longer required. No action required.", Debug.HIGH_PRIORITY);
+						//Debug.log("Attribute [" + Object.keys(page_.widgets[id].attributes)[attribute] + "] for " + page_.widgets[id].Display_Name + " is no longer required. No action required.", Debug.HIGH_PRIORITY);
 					}
 				}
 
@@ -1182,7 +1182,7 @@
 						else
 							attributesNew[Object.keys(parameters)[attribute]] = parameters[Object.keys(parameters)[attribute]];
 
-						Debug.log("Attribute [" + Object.keys(parameters)[attribute] + "] for " + page_.widgets[id].Display_Name + " is now a required attribute. Action Required.", Debug.HIGH_PRIORITY);
+						//Debug.log("Attribute [" + Object.keys(parameters)[attribute] + "] for " + page_.widgets[id].Display_Name + " is now a required attribute. Action Required.", Debug.HIGH_PRIORITY);
 					}
 				}
 				page_.widgets[id].attributes = attributesNew;
@@ -2247,11 +2247,12 @@
 						}
 					}
 					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setParameters(page_.widgets[menu_.getAttribute("widgetID")].attributes);
+					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.newWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
 
-					if(actionRequired)
-						document.getElementById(menu_.getAttribute("widgetID")).className = "action-required";
-					else
-						document.getElementById(menu_.getAttribute("widgetID")).className = "";
+//					if(actionRequired)
+//						document.getElementById(menu_.getAttribute("widgetID")).className = "action-required";
+//					else
+//						document.getElementById(menu_.getAttribute("widgetID")).className = "";
 				}
 			} //end editWidgetAttributesSave()
 
