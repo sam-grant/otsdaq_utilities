@@ -77,7 +77,6 @@
 		-webkit-transition: 		margin-bottom .5s;
 		overflow: 					hidden;
 		
-
 		box-shadow: 				inset rgba(255,254,255,0.6) 0 0.3em .3em,
 									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
 									rgb(150,150,150) 0 .1em 3px,
@@ -111,7 +110,6 @@
 		cursor: 					ew-resize !important;
 	}
 
-	//Corners
 	.resizeWidgetCoverTopLeft {
 		cursor: 					nwse-resize !important;
 	}
