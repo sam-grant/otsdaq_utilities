@@ -23,7 +23,7 @@
 			var fileBlock_ = {name:"", isHidden:false, el:"", savePopup:""}; // = ["fileBlock", false ];
 			var mainBlock_ = {name:"", isHidden:false, el:""}; // = ["mainBlock", false ];
 			var editBlock_ = {name:"", isHidden:true, el:""}; // = [false ];
-			var EDIT_BLOCK_PEEK_HEIGHT = 30;
+			var EDIT_BLOCK_PEEK_HEIGHT = 40;
 			var EDIT_BLOCK_HEIGHT = 300;
 			var page_ = page_ || {}; //define the namespace
 			var PAGE_POSITIONS_ = 1000; //number of allowed integer locations (e.g. x,y,w,h for widgets) 
@@ -1870,8 +1870,8 @@
 			{
 				Debug.log("Toggle Edit Mode");
 
-				//mouseoutEditBlock();
-				mouseoverEditBlock();
+				mouseoutEditBlock();
+				//mouseoverEditBlock();
 				
 				var covers = document.getElementsByClassName("widgetCover");
 			    var resize_covers = document.getElementsByClassName("resizeWidgetCover");
