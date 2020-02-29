@@ -1909,6 +1909,7 @@
 
 					
 					editBlock_.isHidden = false;
+					editBlock_.el.style.display = "block";
 
 					for(widget in page_.widgets)
 					{
@@ -1959,11 +1960,10 @@
 					editButton.classList.remove("navigationMenu--Edit");
 					
 					editBlock_.isHidden = true;
+					editBlock_.el.style.display = "none";
 
 					for(var i = 0;i<covers.length;++i)
-					{
-						covers[i].style.display = "none";	
-					}
+						covers[i].style.display = "none";
 
 					toggleWidgetSelection();
 					toggleGrid(false);
@@ -2610,7 +2610,8 @@
 						page_.widgets[widget].el.style.display = "none";
 					}	
 				}
-				else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && editBlock_.isHidden == false)
+				else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && 
+						editBlock_.isHidden == false)
 				{
 					console.log("editBlock is hidden ", editBlock_.isHidden);
 					toggleWidgetSelection(e.target);
