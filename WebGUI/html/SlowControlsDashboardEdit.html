@@ -47,19 +47,25 @@
 				position:				absolute;
 				overflow: 				hidden;
 			}
-
-			.tile {
+			
+			#widgetTilesContainer {
 				position: 				absolute;
+				overflow-x:				hidden;
+				overflow-y:				auto;
+			}
+			
+			.tile {
+				/*position: 				absolute;*/
 				background-color: 		#b2b2b2;
-				border: 				thin solid rgba(0,0,0,0.1);
+				border: 				2px solid rgba(0,0,0,0.1);
 				border-radius: 			8px;
+				float:					left;
+				margin:					2px;
 			}
 
 			.tile:hover {
 				cursor: 				pointer;
-				border-style: 			dotted;
-  				border-width: 			2px;
-  				border-color: 			gold;
+				border: 				2px dotted gold;
 			}
 
 			.rotate270 {
@@ -382,7 +388,8 @@
 
 			//functions:
 			//	initEdit()
-			//	drawicons(indexReferenceArray)
+			//	redrawWindow()
+			//	drawIcons(indexReferenceArray)
 			//	setupForDrawSelectionRectangle(tileNumber)
 			// 	searchWidgets(searchField)
 			//	filterWidgets(filterField)
@@ -391,27 +398,30 @@
 			//	setGridColor(color)
 			//	resetToDefault()
 			//	rgbToHex(rgb)
-			//	redrawWindow(clicked, hover)
 			
 			var _codeEditorAppId = 0; //to open code editor
 		
 			//widget tile container parameters:
-			var widgetTiles_ = {
-					"WIDGET_TYPE_COUNT" 	: 0,
-					"widgetTiles_.columns" 	: 0,
-					"widgetTiles_.rows" 	: 0,
-					"tileSize"				: 0
+			var draw_ = {
+					"titleText_H"			: 40,
+					"widgetTileContainer_W"	: 0,
+					"widgetTileContainer_H"	: 0,
+					"TILE_SIZE"				: 96, //widget tile square size in pixels
+					"SETTINGS_W"			: 220, //color, grid etc settings on right
+					"MARGIN"				: 5,
 			};
+			
+			var widgetKeys_; //keys of existing widgets (from parent dashboard at init time)
 			
 			//main html elements:
 			var widgetTilesEl_;
-			var dividerEl;
-			var userSettingsDiv;
+			var dividerEl_;
+			var userSettingsEl_;
+			var widgetFilterContainerEl_;
 			
 			//configurable settings
 			var defaultGridColor_;
 			var defaultBackgroundColor_;
-			var codeEditor_ = 12345678910;
 			var lastTileNumber_;
 			
 			
@@ -446,105 +456,19 @@
 						);
 						
 				
-				widgetTilesEl_ = document.getElementById("widgetTilesContainer");
-
-				widgetTilesEl_.style.top = ((h * 0.25)|0) + "px";
-				widgetTilesEl_.style.left = "0px";
-				widgetTilesEl_.style.height = ((h * 0.75)|0) + "px";
-				widgetTilesEl_.style.width = ((w * 0.6)|0) + "px";
+				widgetTilesEl_ 				= document.getElementById("widgetTilesContainer");
+				dividerEl_ 					= document.getElementById("divider");
+				userSettingsEl_ 			= document.getElementById("userSettingsContainer");
+				widgetFilterContainerEl_ 	= document.getElementById("widgetFilterContainer");
 				
-				//determine row and col widgetTiles_.tileSize of widget library
-				widgetTiles_.WIDGET_TYPE_COUNT = Object.keys(widgetLibrary.typeToSrc).length;
-				widgetTiles_.rows = Math.round(Math.sqrt(widgetTiles_.WIDGET_TYPE_COUNT/3));
-				console.log("row", widgetTiles_.rows);
-				if(widgetTiles_.rows < 4)
-					widgetTiles_.rows = 4;
-				else if(widgetTiles_.rows > 6)
-					widgetTiles_.rows = 6;
-				console.log("row", widgetTiles_.rows);
+				//determine row and col draw_.TILE_SIZE of widget library
+				widgetKeys_ = Object.keys(widgetLibrary.typeToSrc);
 
-				widgetTiles_.tileSize = ((parseFloat(widgetTilesEl_.style.height) - 
-						(parseFloat(widgetTilesEl_.style.height) * 0.1) - 
-						(widgetTiles_.rows * 5)) / (widgetTiles_.rows));	
+
+				console.log("draw_", draw_);
+				console.log("widgetLibrary", widgetLibrary);
+
 				
-				console.log(parseFloat(widgetTilesEl_.style.width), (parseFloat(widgetTilesEl_.style.width) * 0.1), (widgetTiles_.tileSize + 5));
-				
-				widgetTiles_.columns = Math.round((parseFloat(widgetTilesEl_.style.width) - (parseFloat(widgetTilesEl_.style.width) * 0.1))/ (widgetTiles_.tileSize + 5)); //Math.ceil(widgetTiles_.WIDGET_TYPE_COUNT / widgetTiles_.rows);
-				if((widgetTiles_.tileSize * widgetTiles_.rows) > (parseFloat(widgetTilesEl_.style.height) - (parseFloat(widgetTilesEl_.style.height) * 0.1) - (5 * (widgetTiles_.rows - 1))))
-				{
-					while((widgetTiles_.tileSize * widgetTiles_.rows) > (parseFloat(widgetTilesEl_.style.height) - (parseFloat(widgetTilesEl_.style.height) * 0.1) - (5 * (widgetTiles_.rows - 1))))
-					{
-						--widgetTiles_.rows;
-					}
-				}
-
-				if((widgetTiles_.tileSize * widgetTiles_.columns) > (parseFloat(widgetTilesEl_.style.width) - (parseFloat(widgetTilesEl_.style.width) * 0.1) - (5 * (widgetTiles_.columns - 1))))
-				{
-					while((widgetTiles_.tileSize * widgetTiles_.columns) > (parseFloat(widgetTilesEl_.style.width) - (parseFloat(widgetTilesEl_.style.width) * 0.1) - (5 * (widgetTiles_.columns - 1))))
-					{
-						--widgetTiles_.columns;
-					}
-				}
-				var titleDiv = document.getElementById("titleDiv");
-				titleDiv.style.width = w + "px";
-				titleDiv.style.height = ((h * 0.1)|0) + "px";
-				titleDiv.style.top  = "0px";
-				titleDiv.style.left = "0px";
-
-				var buttonsDiv = document.getElementById("buttonsDiv");
-//				buttonsDiv.style.width = window.innerWidth + "px";
-//				buttonsDiv.style.height = (window.innerHeight * 0.1) + "px";
-				buttonsDiv.style.top  = (parseFloat(titleDiv.style.height) * 1.5) + "px"; //(window.innerHeight * 0.2) + "px"; //"0px";
-				buttonsDiv.left = "0px";
-
-				var searchFields = document.getElementById("searchFields");
-				searchFields.style.width  = ((w * 0.6)|0) + "px";
-				searchFields.style.height =  ((h * 0.15)|0) + "px";
-				searchFields.style.top  = ((h * 0.1)|0) + "px"; //"0px";
-				searchFields.style.left = "0px";
-
-				var widgetSearch = document.getElementById("widgetSearch");
-				widgetSearch.title = "Search the widget library by name of widget! \nCheck out the widgetLibrary.js in the Code Editor to set widgets' name and other properties."
-				widgetSearch.placeholder = "Search";
-				var widgetFilter = document.getElementById("widgetFilter");
-				widgetFilter.title = "Filter the widget library by type of widget! \nCheck out the widgetLibrary.js in the Code Editor to set widgets' type and other properties."
-				widgetFilter.placeholder = "Filter";
-//		                          widgetSearch.style.top  = (window.innerHeight * 0.1) + "px"; //"0px";
-//                                widgetFilter.style.top  = (window.innerHeight * 0.1) + "px"; //"0px";
-
-//				var searchButtonDiv = document.getElementById("searchButtonDiv");
-//				searchButtonDiv.style.width  =  widgetTiles_.tileSize + "px";
-//				searchButtonDiv.style.height =  widgetTiles_.tileSize + "px";
-//				searchButtonDiv.style.top  = "0px";
-//				searchButtonDiv.style.left = (window.innerWidth * 0.05 + ((widgetTiles_.tileSize + 5) * (widgetTiles_.columns - 1)) - 10) + "px";
-//				searchButtonDiv.style.position = "absolute";
-//				
-//				var searchButton = document.getElementById("searchButton");
-//				searchButton.style.width  = "100%";
-//				searchButton.style.height = "100%";
-//				
-//				var img = document.createElement("img");
-//				img.src = "/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-magnifyingGlass.png";
-//				img.style.height = "50%";
-//				img.style.width = "auto";
-//				img.style.top = "0px";
-//				img.style.left = "0px";
-//				searchButton.appendChild(img);
-//				
-//				document.getElementById("widgetFilter").style.width = (window.innerWidth * 0.7) + "px";
-//				
-//				document.getElementById("widgetSearch").style.width = "90%";
-//				document.getElementById("widgetFilter").style.width = "90%";
-
-				dividerEl = document.getElementById("divider");
-				dividerEl.style.left = widgetTilesEl_.getBoundingClientRect().right + "px";
-				dividerEl.style.top = parseFloat(widgetTilesEl_.style.top) + "px";
-				dividerEl.style.height = (parseFloat(widgetTilesEl_.style.height) * 0.8) + "px";
-
-				userSettingsDiv = document.getElementById("userSettingsContainer");
-				userSettingsDiv.style.left = widgetTilesEl_.getBoundingClientRect().right + "px";
-				userSettingsDiv.style.width = (parseFloat(w) - parseFloat(widgetTilesEl_.getBoundingClientRect().right)) + "px";
-
 				var backgroundColorPicker = document.getElementById("backgroundColorPicker");
 				defaultBackgroundColor_ = parent.mainBlock_.el.style["background-color"];
 				backgroundColorPicker.value = rgbToHex(defaultBackgroundColor_);
@@ -553,129 +477,216 @@
 				var gridColorPicker = document.getElementById("gridColorPicker");
 				defaultGridColor_ = parent.gridColor_;
 				gridColorPicker.value = rgbToHex(defaultGridColor_);
-				backgroundColorPicker.innerHTML = "<p>Grid Color</p>";
-				gridColorPicker.title = "Set the color of the grid lines."
-				backgroundColorPicker.title = "Set the background color."
-				document.getElementById("gridCheckbox").title = "Toggle the grid lines on/off."				
-				document.getElementById("resetGrid").title = "Reset the grid to default values."  
+				backgroundColorPicker.innerHTML = "<p>Grid Color</p>";				
+				gridColorPicker.title = "Set the color of the grid lines.";
+				backgroundColorPicker.title = "Set the background color.";
+				document.getElementById("gridCheckbox").title = "Toggle the grid lines on/off.";				
+				document.getElementById("resetGrid").title = "Reset the grid to default values.";  
 
-				var filter = document.getElementById("widgetFilter");
-				var option = document.createElement("option");
-				option.value = "All";
-				option.innerHTML = "";
-				filter.appendChild(option);
-				var filterOptions = [];
-				for(purpose in parent.widgetLibrary.typeToPurpose)
-				{
-					if(filterOptions.indexOf(parent.widgetLibrary.typeToPurpose[purpose]) == -1)
-					{
-						var option = document.createElement("option");
-						option.value = parent.widgetLibrary.typeToPurpose[purpose];
-						option.innerHTML = parent.widgetLibrary.typeToPurpose[purpose];
-						filterOptions.push(option.value);
-						filter.appendChild(option);
-					}
-				}
-
-				var allIcons = [];			
-				for(var i = 0; i < widgetTiles_.WIDGET_TYPE_COUNT; i++)
-					allIcons.push(i);
-
-				drawicons(allIcons);
 
 				window.onresize = redrawWindow;
-				redrawWindow(); //redraw window for first time
-			} //end initEdit()
+				redrawWindow();
+				
+				//commented is equivalent to undefined (but keep for search example)
+				var allIcons = [];			
+				for(var i = 0; i < widgetKeys_.length; i++)
+					allIcons.push(widgetKeys_[i]);
+
+				drawIcons(allIcons);				
+				//FIXME!!!!
+				//drawIcons();
+
+
+//				var filter = document.getElementById("widgetFilter");
+//				var option = document.createElement("option");
+//				option.value = "All";
+//				option.innerHTML = "";
+//				filter.appendChild(option);
+//				var filterOptions = [];
+//				for(purpose in parent.widgetLibrary.typeToPurpose)
+//				{
+//					if(filterOptions.indexOf(parent.widgetLibrary.typeToPurpose[purpose]) == -1)
+//					{
+//						var option = document.createElement("option");
+//						option.value = parent.widgetLibrary.typeToPurpose[purpose];
+//						option.innerHTML = parent.widgetLibrary.typeToPurpose[purpose];
+//						filterOptions.push(option.value);
+//						filter.appendChild(option);
+//					}
+//				}
+
+
+			} //end initEdit()			
 
 			//=====================================================================================
-			function drawicons(indexReferenceArray)
+			function redrawWindow() 
 			{
-				console.log("drawicons()",indexReferenceArray);
+				var w = window.innerWidth;
+				var h = window.innerHeight;
 				
-				widgetTilesEl_.innerHTML = "";
-				var tileNumber = -1;		
-				var positionX = window.innerWidth * 0.025;
-				var positionY = window.innerHeight * 0.1;
-				var tileNumber = -1;
-				indexReferenceArray.push(codeEditor_);
+				Debug.log("EditPane redrawWindow() to " + 
+						w + " - " + h);
 
-				for(var cell = 0; cell < widgetTiles_.rows; cell++)
+				draw_.widgetTileContainer_W = (w - draw_.SETTINGS_W - 
+						4*draw_.MARGIN) |0;
+				draw_.widgetTileContainer_H = (h * 0.75) |0;
+				
+				console.log("draw_", draw_);
+				
+				//--------------
+				//position widget tile container
+				widgetTilesEl_.style.left = "0px";
+				widgetTilesEl_.style.top = (h - draw_.widgetTileContainer_H) + "px";
+				widgetTilesEl_.style.height = draw_.widgetTileContainer_H + "px";
+				widgetTilesEl_.style.width = draw_.widgetTileContainer_W + "px";
+
+								
+				//--------------
+				//position divider
+				dividerEl_.style.left = draw_.widgetTileContainer_W + "px";
+				dividerEl_.style.top = (((h - draw_.widgetTileContainer_H)/2)|0) + "px";
+				dividerEl_.style.height = draw_.widgetTileContainer_H + "px";
+
+
+				//--------------
+				//position settings container
+				userSettingsEl_.style.left = draw_.widgetTileContainer_W + "px";
+				userSettingsEl_.style.top = (draw_.titleText_H) + "px";
+				userSettingsEl_.style.width = (w - draw_.widgetTileContainer_W) + "px";
+
+				//--------------
+				//position widget filter container
+				//				widgetFilterContainer.style.width = window.innerWidth + "px";
+				//				widgetFilterContainer.style.height = (window.innerHeight * 0.1) + "px";
+				widgetFilterContainerEl_.style.top  = draw_.titleText_H + "px"; 
+				widgetFilterContainerEl_.left = "0px";
+
+
+				
+
+				//				var searchFields = document.getElementById("searchFields");
+				//				searchFields.style.width  = ((w * 0.6)|0) + "px";
+				//				searchFields.style.height =  ((h * 0.15)|0) + "px";
+				//				searchFields.style.top  = ((h * 0.1)|0) + "px"; //"0px";
+				//				searchFields.style.left = "0px";
+				//
+				//				var widgetSearch = document.getElementById("widgetSearch");
+				//				widgetSearch.title = "Search the widget library by name of widget! \nCheck out the widgetLibrary.js in the Code Editor to set widgets' name and other properties."
+				//				widgetSearch.placeholder = "Search";
+				//				var widgetFilter = document.getElementById("widgetFilter");
+				//				widgetFilter.title = "Filter the widget library by type of widget! \nCheck out the widgetLibrary.js in the Code Editor to set widgets' type and other properties."
+				//				widgetFilter.placeholder = "Filter";
+				//				var searchButtonDiv = document.getElementById("searchButtonDiv");
+				//				searchButtonDiv.style.width  =  draw_.TILE_SIZE + "px";
+				//				searchButtonDiv.style.height =  draw_.TILE_SIZE + "px";
+				//				searchButtonDiv.style.top  = "0px";
+				//				searchButtonDiv.style.left = (window.innerWidth * 0.05 + ((draw_.TILE_SIZE + 5) * (draw_.columns - 1)) - 10) + "px";
+				//				searchButtonDiv.style.position = "absolute";
+				//				
+				//				var searchButton = document.getElementById("searchButton");
+				//				searchButton.style.width  = "100%";
+				//				searchButton.style.height = "100%";
+				//				
+				//				var img = document.createElement("img");
+				//				img.src = "/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-magnifyingGlass.png";
+				//				img.style.height = "50%";
+				//				img.style.width = "auto";
+				//				img.style.top = "0px";
+				//				img.style.left = "0px";
+				//				searchButton.appendChild(img);
+			} //end redrawWindow()
+
+			//=====================================================================================
+			//draw widget icons in widget container
+			//	input parameter is result of filtering or searching
+			function drawIcons(indexReferenceArray)
+			{
+				console.log("drawIcons()",indexReferenceArray);
+				
+				widgetTilesEl_.innerHTML = ""; //clear all existing widget icons
+								
+				var positionIndex = 0;
+				
+				if(indexReferenceArray === undefined) //do all widgets
 				{
-					for(var col = 0; col < widgetTiles_.columns; col++)
-					{
-						if(indexReferenceArray.indexOf(indexReferenceArray[tileNumber]) != indexReferenceArray.length-1)
-						{
-							var tile = document.createElement('div');
-							tile.id = "tiles-" + (indexReferenceArray[++tileNumber]);
-							tile.className = "tile";
-							//tile.innerHTML = "tiles-" + (tileNumber);
-	//						tile.style["background-color"] = "red";
-							tile.style.width = widgetTiles_.tileSize + "px";
-							tile.style.height = widgetTiles_.tileSize + "px";
-							tile.style.left = positionX + "px";
-							tile.style.top = positionY + "px";
-							tile.setAttribute("widgetID", tileNumber);
-
-							var tileIMG = document.createElement("img");
-							var name = "";
-							var type = "";
-
-							console.log(indexReferenceArray[indexReferenceArray.length-1] + " " + tileNumber);
-
-							if(typeof parent.widgetLibrary.typeToName[indexReferenceArray[tileNumber]] !== 'undefined')
-								name = parent.widgetLibrary.typeToName[indexReferenceArray[tileNumber]];
-							else
-								name = parent.widgetLibrary.typeToSrc[indexReferenceArray[tileNumber]];
-
-							if(typeof parent.widgetLibrary.typeToName[indexReferenceArray[tileNumber]] !== 'undefined')
-								type = parent.widgetLibrary.typeToPurpose[indexReferenceArray[tileNumber]];
-							else
-								type = "Undefined";
-
-							tile.title = "Name: " + name + "\nType: " + type;
-
-							if(typeof parent.widgetLibrary.typeToImgSrc[indexReferenceArray[tileNumber]] !== 'undefined')
-								tileIMG.src = "widgets/" + parent.widgetLibrary.typeToImgSrc[indexReferenceArray[tileNumber]];
-							else
-								tileIMG.src = "widgets/default-icon.png";
-
-							tileIMG.style.width = tile.style.width;
-							tileIMG.style.height = "100%";
-
-							if(indexReferenceArray[tileNumber] == codeEditor_) //last tile -> [+] brings user to widget editor in Code Editor
-							{	
-								tile.title = "Not finding what you're looking for? \nLaunch the Code Editor to make changes to the Widget Library, including making your own widget!";
-								tileIMG.src = "widgets/code-editor.png";
-								tile.onclick = 
-										function()
-										{
-									DesktopContent.openNewWindow(
-											"Code Editor", 
-											"" /*subname*/,
-											"/WebPath/html/CodeEditor.html?" +
-											"urn=" + _codeEditorAppId + 
-											"&startFilePrimary=/otsdaq_utilities/WebGUI/js/widgetLibrary.js",
-											0 /*unique*/);									 
-										};
-							}
-							else
-								tileIMG.onclick = setupForDrawSelectionRectangle(indexReferenceArray[tileNumber]); 
-
-							console.log("name and indexReferenceArray[tileNumber]: " + name + " " +  indexReferenceArray[tileNumber]);
-
-							//tileIMG.style.width = tile.style.width;
-							//tileIMG.style.height = "100%";
-							//tileIMG.onclick = setupForDrawSelectionRectangle(indexReferenceArray[tileNumber]); 
-
-							tile.appendChild(tileIMG);
-							widgetTilesEl_.appendChild(tile);				
-							positionX = positionX + widgetTiles_.tileSize + 5;
-						}
-					}
-					positionY = positionY + widgetTiles_.tileSize + 5;
-					positionX = window.innerWidth * 0.025;
+					
+					for(var i=0;i<widgetKeys_.length;++i)
+						 localDrawIcon(widgetKeys_.length[i],positionIndex++);
+					localDrawIcon(-1,positionIndex++); //always add code editor widget at end
 				}
-			} //end drawicons()
+				else //target index reference array
+				{
+					for(var i=0;i<indexReferenceArray.length;++i)
+						localDrawIcon(indexReferenceArray[i],positionIndex++);
+				}
+								
+				return;
+				
+				//==============
+				//	draw icon for widget index i in keys of widgetLibrary.typeToSrc
+				function localDrawIcon(i,positionIndex)
+				{
+					var tile = document.createElement('div');
+
+					var name = "";
+					var type = "";
+					
+					if(parent.widgetLibrary.typeToName[i] !== undefined)
+						name = parent.widgetLibrary.typeToName[i];
+					else
+						name = parent.widgetLibrary.typeToSrc[i];
+					
+					if(parent.widgetLibrary.typeToName[i] !== undefined)
+						type = parent.widgetLibrary.typeToPurpose[i];
+					else
+						type = "Undefined";
+					
+					console.log("localDrawIcon() i,positionIndex,name,type:",
+							i,positionIndex,name,type);
+
+					tile.title = "Name: " + name + "\nType: " + type;
+					
+					tile.id = "tiles-" + i;
+					tile.className = "tile";
+					tile.style.width = draw_.TILE_SIZE + "px";
+					tile.style.height = draw_.TILE_SIZE + "px";
+					tile.setAttribute("widgetID", positionIndex);
+					
+					var tileIMG = document.createElement("img");
+					if(parent.widgetLibrary.typeToImgSrc[i] !== undefined)
+						tileIMG.src = "widgets/" + parent.widgetLibrary.typeToImgSrc[i];
+					else
+						tileIMG.src = "widgets/default-icon.png";
+
+					tileIMG.style.width = tile.style.width;
+					tileIMG.style.height = "100%";
+					
+					if(i == -1) //handle code editor icon
+					{	
+						tile.title = "Not finding what you're looking for? \nLaunch the Code Editor to make changes to the Widget Library, including making your own widget!";
+						tileIMG.src = "widgets/code-editor.png";
+						tile.onclick = 
+								function()
+								{
+							DesktopContent.openNewWindow(
+									"Code Editor", 
+									"" /*subname*/,
+									"/WebPath/html/CodeEditor.html?" +
+									"urn=" + _codeEditorAppId + 
+									"&startFilePrimary=/otsdaq_utilities/WebGUI/js/widgetLibrary.js",
+									0 /*unique*/);									 
+								};
+					}
+					else
+						tileIMG.onclick = setupForDrawSelectionRectangle(i); 
+					
+					tile.appendChild(tileIMG);
+					widgetTilesEl_.appendChild(tile);				
+
+				} //end localDrawIcon
+				
+				
+			} //end drawIcons()
 			
 			//=====================================================================================
 			function setupForDrawSelectionRectangle(tileNumber)
@@ -706,7 +717,7 @@
 				var keyword = searchField.value;
 				var foundResult = [];
 				
-				for(var i = 0; i < widgetTiles_.WIDGET_TYPE_COUNT; i++)
+				for(var i = 0; i < widgetKeys_.length; i++)
 				{
 					console.log(i + " : " + parent.widgetLibrary.typeToName + " : " + keyword);
 					
@@ -718,7 +729,7 @@
 				
 				console.log(foundResult);
 				
-				drawicons(foundResult);
+				drawIcons(foundResult);
 			} //end searchWidgets()
 
 			//=====================================================================================
@@ -731,19 +742,19 @@
 				console.log(keyword);
 				if(keyword === 'All')
 				{
-					for(var i = 0; i < widgetTiles_.WIDGET_TYPE_COUNT; i++)
+					for(var i = 0; i < widgetKeys_.length; i++)
 						foundResult.push(i);
 				}
 				else
 				{
-					for(var i = 0; i < widgetTiles_.WIDGET_TYPE_COUNT; i++)
+					for(var i = 0; i < widgetKeys_.length; i++)
 						if(typeof parent.widgetLibrary.typeToPurpose[i] != 'undefined')
 							parent.widgetLibrary.typeToPurpose[i].indexOf(keyword) != -1 ? foundResult.push(i) : console.log();
 				}
 				
 				console.log(foundResult);
 				
-				drawicons(foundResult);
+				drawIcons(foundResult);
 			} //end filterWidgets()		
 
 			//=====================================================================================
@@ -800,22 +811,6 @@
 						 ("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
 			} //end rgbToHex()
 
-			//=====================================================================================
-			function redrawWindow(clicked, hover) 
-			{
-				var w = window.innerWidth;
-				var h = window.innerHeight;
-				Debug.log("EditPane redrawWindow() to " + w + " - " + 
-						h + " clicked:" + clicked + " hover:" + hover);
-
-				//position widget tile container
-				widgetTilesEl_.style.top = ((h * 0.25)|0) + "px";
-				widgetTilesEl_.style.left = "0px";
-				widgetTilesEl_.style.height = ((h * 0.75)|0) + "px";
-				widgetTilesEl_.style.width = ((w * 0.6)|0) + "px";
-				
-			} //end redrawWindow()
-
 		</script>
 
 	</head>
@@ -826,14 +821,14 @@
 			<h2 id="editorPanelTitle">Editor Panel</h2>
 		</div>
 		
-		<div class='mainBlock' id='buttonsDiv'>
+		<div class='mainBlock' id='widgetFilterContainer'>
 			<div>Choose your widgets:</div>
 			<div id="searchFields" class="absolute"  style='display:none'>
 				<input id="widgetSearch" type="text" class="focus" onchange="searchWidgets(this)"></input>
 				<select id="widgetFilter" class="absolute" onchange="filterWidgets(this)"></select>
 			</div>
 		</div>
-		<div class='mainBlock' id='widgetTilesContainer'></div>
+		<div id='widgetTilesContainer'></div>
 		<div class='mainBlock' id='divider'></div>
 		<div class='mainBlock' id='userSettingsContainer'>
 
