@@ -20,11 +20,21 @@
 			var pvList_ = {};
 			var elPointer_ = {};
 			var pagesList_ = [];
-			var fileBlock_ = {name:"", isHidden:false, el:"", savePopup:""}; // = ["fileBlock", false ];
 			var mainBlock_ = {name:"", isHidden:false, el:""}; // = ["mainBlock", false ];
+			
+			//---- file pane:
+			var fileBlock_ = {name:"", isHidden:false, el:"", savePopup:""}; // = ["fileBlock", false ];
+
+			var FILE_BLOCK_WIDTH = 300;
+			//==== end file pane.
+			
+			//---- edit pane:
 			var editBlock_ = {name:"", isHidden:true, el:""}; // = [false ];
+			
 			var EDIT_BLOCK_PEEK_HEIGHT = 40;
 			var EDIT_BLOCK_HEIGHT = 300;
+			//==== end edit pane.
+			
 			var page_ = page_ || {}; //define the namespace
 			var PAGE_POSITIONS_ = 1000; //number of allowed integer locations (e.g. x,y,w,h for widgets) 
 			var refreshRate_ = 15000; //set default to refresh every 15 seconds (ms)
@@ -178,7 +188,7 @@
 				console.log(("-" + fileBlock_.el.style.width));
 				fileBlock_.el.style.left = "-4000px"; //hack because the file tree page probably didnt load by now
 				editBlock_.el.style.bottom = "-4000px"; //hack because the edit page probably didnt load by now
-				backgroundCover_ = "rgba(87,87,87, 0.6)";
+				
 				nav_ = document.getElementById("navigationMenu");
 				nav_.classList.add("navigationMenu--active");
 				//END JS Style
@@ -1341,7 +1351,7 @@
 				widgetFrame.scrolling="No";
 
 				var containerDiv;
-				var coverDiv;
+				var mainBlockContainer;
 
 				var OUTLINE_OFFSET = 15;
 				var resizeDiv;
@@ -1395,10 +1405,10 @@
 					containerDiv.style["background-color"] = "rgba(0,0,0,0.)";
 					//containerDiv.innerHTML = "containerDiv";
 
-					coverDiv = document.createElement("div");
-					coverDiv.className = "widgetCover";
-					coverDiv.id = widgetFrame.id + "-cover";
-					//coverDiv.innerHTML = "coverDiv";
+					mainBlockContainer = document.createElement("div");
+					mainBlockContainer.className = "widgetCover";
+					mainBlockContainer.id = widgetFrame.id + "-cover";
+					//mainBlockContainer.innerHTML = "mainBlockContainer";
 
 					resizeDiv = document.createElement("div");
 					resizeDiv.className = "resizeWidgetCover";
@@ -1450,11 +1460,11 @@
 					if(!editBlock_.isHidden) 
 					{
 						Debug.log("FIXME use edit pencil icon instead of double click",Debug.HIGH_PRIORITY);
-						//coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
+						//mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
 					}
 
-					coverDiv.addEventListener("mousedown", startWidgetDrag);
-					coverDiv.addEventListener("mouseup", endWidgetDrag);	
+					mainBlockContainer.addEventListener("mousedown", startWidgetDrag);
+					mainBlockContainer.addEventListener("mouseup", endWidgetDrag);	
 
 					resizeDivTop.addEventListener("mousedown", startWidgetResize);
 					resizeDivLeft.addEventListener("mousedown", startWidgetResize);
@@ -1488,7 +1498,7 @@
 					widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
 
 					containerDiv.appendChild(resizeDiv);
-					containerDiv.appendChild(coverDiv);
+					containerDiv.appendChild(mainBlockContainer);
 
 					page_.widgets[widget].el = widgetFrame;
 
@@ -1500,7 +1510,7 @@
 					widgetFrame = document.getElementById(widget);
 				
 					containerDiv = document.getElementById(widgetFrame.id + "-container");
-					coverDiv = document.getElementById(widgetFrame.id + "-cover");
+					mainBlockContainer = document.getElementById(widgetFrame.id + "-cover");
 					resizeDiv = document.getElementById(widgetFrame.id + "-resize-cover");
 					resizeDivTop = document.getElementById(widgetFrame.id + "-resize-cover-north");
 					resizeDivLeft = document.getElementById(widgetFrame.id + "-resize-cover-west");
@@ -1527,12 +1537,12 @@
 				containerDiv.style.top = y + "px";
 				containerDiv.style.zIndex = "5";
 
-				coverDiv.style.width = w + "px";
-				coverDiv.style.height = h + "px";
-				coverDiv.style.position = "absolute";
-				coverDiv.style.left = "0px";
-				coverDiv.style.top = "0px";
-				coverDiv.style.zIndex = "50";
+				mainBlockContainer.style.width = w + "px";
+				mainBlockContainer.style.height = h + "px";
+				mainBlockContainer.style.position = "absolute";
+				mainBlockContainer.style.left = "0px";
+				mainBlockContainer.style.top = "0px";
+				mainBlockContainer.style.zIndex = "50";
 
 				resizeDiv.style.width = (w + (2 * OUTLINE_OFFSET)) + "px";
 				resizeDiv.style.height = (h + (2 * OUTLINE_OFFSET)) + "px";
@@ -1631,7 +1641,7 @@
 				page_.widgets[widget].y = (PAGE_POSITIONS_*yy/windowHeight) | 0;
 
 				var containerDiv;
-				var coverDiv;
+				var mainBlockContainer;
 
 				var OUTLINE_OFFSET = 15;
 				var resizeDiv;
@@ -1649,10 +1659,10 @@
 				containerDiv.style["background-color"] = "rgba(0,0,0,0.0)";
 				//containerDiv.innerHTML = "containerDiv";
 
-				coverDiv = document.createElement("div");
-				coverDiv.className = "widgetCover";
-				coverDiv.id = widgetFrame.id + "-cover";
-				//coverDiv.innerHTML = "coverDiv";
+				mainBlockContainer = document.createElement("div");
+				mainBlockContainer.className = "widgetCover";
+				mainBlockContainer.id = widgetFrame.id + "-cover";
+				//mainBlockContainer.innerHTML = "mainBlockContainer";
 
 				resizeDiv = document.createElement("div");
 				resizeDiv.className = "resizeWidgetCover";
@@ -1704,11 +1714,12 @@
 				widgetFrame.src = "widgets/" + widgetLibrary.typeToSrc[page_.widgets[widget].type];
 				widgetFrame.style.border = "0";
 				widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
+				
+				Debug.log("FIXME make edit pencil",Debug.HIGH_PRIORITY);
+				//mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
 
-				coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
-
-				coverDiv.addEventListener("mousedown", startWidgetDrag);
-				coverDiv.addEventListener("mouseup", endWidgetDrag);	
+				mainBlockContainer.addEventListener("mousedown", startWidgetDrag);
+				mainBlockContainer.addEventListener("mouseup", endWidgetDrag);	
 
 				resizeDivTop.addEventListener("mousedown", startWidgetResize);
 				resizeDivLeft.addEventListener("mousedown", startWidgetResize);
@@ -1750,12 +1761,12 @@
 				containerDiv.style.top = y + "px";
 				containerDiv.style.zIndex = "5";
 
-				coverDiv.style.width = w + "px";
-				coverDiv.style.height = h + "px";
-				coverDiv.style.position = "absolute";
-				coverDiv.style.left = "0px";
-				coverDiv.style.top = "0px";
-				coverDiv.style.zIndex = "50";
+				mainBlockContainer.style.width = w + "px";
+				mainBlockContainer.style.height = h + "px";
+				mainBlockContainer.style.position = "absolute";
+				mainBlockContainer.style.left = "0px";
+				mainBlockContainer.style.top = "0px";
+				mainBlockContainer.style.zIndex = "50";
 
 				resizeDiv.style.width = (w + (2 * OUTLINE_OFFSET)) + "px";
 				resizeDiv.style.height = (h + (2 * OUTLINE_OFFSET)) + "px";
@@ -1833,7 +1844,7 @@
 				}
 
 				containerDiv.appendChild(resizeDiv);
-				containerDiv.appendChild(coverDiv);
+				containerDiv.appendChild(mainBlockContainer);
 
 				page_.widgets[widget].el = widgetFrame;
 
@@ -2040,37 +2051,47 @@
 			//=====================================================================================
 			function toggleFileMenu()
 			{
-				var coverDiv = document.getElementById("coverDiv")
-				var cover = document.getElementById("mainBlockCoverDiv");
-				cover.style.width = coverDiv.style.width;
-				cover.style.height = coverDiv.style.height;
-				cover.style.x = coverDiv.style.x;
-				cover.style.y = coverDiv.style.y;
-				fileBlock_.el.style.left = ("-" + fileBlock_.el.style.width)
+				Debug.log("Toggle File Pane");
+				
+				var mainBlockContainer = document.getElementById("mainBlockContainer");
+				var cover = document.getElementById("grayOutCoverDiv");
+				cover.style.width = mainBlockContainer.offsetWidth + "px";
+				cover.style.height = mainBlockContainer.offsetHeight + "px";
+				
+				//file toggle movement approach is always leave left
+				//	the same, and change margin-left 
+				//	(style transition speed on margin-left property for graceful movement)
+				fileBlock_.el.style.left = (- FILE_BLOCK_WIDTH) + "px";
+				
 
 				if(fileBlock_.isHidden)
 				{
+					console.log("Showing file pane!");
+
+					fileBlock_.isHidden = false;
+					fileBlock_.el.style.marginLeft = FILE_BLOCK_WIDTH + "px";
+
+					cover.style.display = "block";
+					
+					editBlock_.isHidden = true;
+					editBlock_.el.style.display = "none";
+					
 					nav_.classList.remove("navigationMenu--active");
 					nav_.style.display = "none";
-					editBlock_.isHidden = true;
-					fileBlock_.isHidden = false;
-					fileBlock_.el.style.zIndex = "150";
-					console.log("Hovering!");
-					cover.style.backgroundColor = backgroundCover_;
-					cover.style.zIndex = parseInt(fileBlock_.el.style.zIndex) -1;
-					editBlock_.el.style.display = "none";
-					fileBlock_.el.style.marginLeft = fileBlock_.el.style.width;
 				}
 				else
 				{
+					console.log("Hiding file pane!");
+					
 					fileBlock_.isHidden = true;
-					fileBlock_.el.style.zIndex = "30";
 					fileBlock_.el.style.marginLeft = "0px";
-					cover.style.backgroundColor = "rgba(0,0,0,0)";
-					mainBlock_.el.style.display = "block";
+
+					cover.style.display = "none";
+					
+					//mainBlock_.el.style.display = "block";
+					
 					editBlock_.el.style.display = "block";
-					fileBlock_.el.style.zIndex = "-1";
-					cover.style.zIndex = parseInt(fileBlock_.el.style.zIndex) -1;
+					
 					nav_.classList.add("navigationMenu--active");
 					nav_.style.display = "block";
 				}
@@ -2890,6 +2911,10 @@
 				{			
 					endWidgetResize(e);
 				}
+				else if(!fileBlock_.isHidden)
+				{
+					toggleFileMenu();
+				}
 			} //end handleMouseUp()
 
 
@@ -2932,7 +2957,7 @@
 				var maxWidth = window.innerWidth; // - (2 * _MARGIN);
 				var maxHeight = window.innerHeight - (1 * _MARGIN);
 				var marginLeft = 0;
-				var cover = document.getElementById("coverDiv");
+				var cover = document.getElementById("mainBlockContainer");
 				var editCover = document.getElementById("editCoverDiv");
 
 				hiddenWidth_ = maxWidth * 0.05;
@@ -3042,178 +3067,182 @@
 		<div id="navigationBarDiv">	
 	    	  <nav>
 		    <ul id="navigationMenu">
-		      <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File</a></li>
+		      <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File Menu</a></li>
 		      <!--<li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>-->
-		      <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">EditMode</a></li>
+		      <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">Edit Mode</a></li>
 		      <!--<li><a href="#" title="" id="menuli3" onclick="toggleHotkeyMenu()">Quick Views</a></li>-->
 		      <!--<li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>-->
 		    </ul>
 	          </nav>
 		</div>
+		
 		<div class='mainBlock' 	id='fileBlock'  ></div>
-		<div class="cover" 		id="mainBlockCoverDiv"></div>
-		<div class="cover"     	id="coverDiv" height="auto" width="auto">
-		<div class='mainBlock '	id='mainBlock' > <!-- onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)"> -->
-		<div id="contextMenuDiv">
-		<nav id="contextMenu" class="menu ">
-		  <ul class="menu__items ">
-		    <li class="menu__item ">
-		      <a href="#" class="menu__link " onclick="toggleAddPV()">
-		        <i class=""></i> Add PV
-		      </a>
-		    </li>
-		    <li class="menu__item">
-		      <a href="#" class="menu__link" onclick="editWidgetAttributesOpen()" >
-		        <i class=""></i> Edit Attributes
-		      </a>
-		    </li>
-		    <li class="menu__item">
-		      <a href="#" class="menu__link" onclick="deleteWidget()">
-		        <i class=""></i> Delete Widget
-		      </a>
-		    </li>
-		    <li class="menu__item">
-		      <a href="#" class="menu__link" onclick="toggleContextMenuOff()" >
-		        <i class=""></i> Close
-		      </a>
-		    </li>
-		  </ul>
-		</nav>
-		</div>
-		<div id="addPVMenuDiv">
-		  <nav id="addPVMenu" class="menu ">
-		    <ul class="menu__items ">
-		      <li class="menu__item ">
-			<span class="menu__link">
-			  <i class=""></i><input type="text" id="addPVPV" class="editableInput addPVMenuInput" placeholder="PV" list="pvDatalist"></input>
-			</span> 		
-		      </li>
-		      <li class="menu__item">
-			<span class="menu__link">
-			  <i class=""></i><input type="text" id="addPVRefreshRate" class="editableInput addPVMenuInput" placeholder="Refresh Rate (ms)"></input>
-			</span>
-		      </li>
-		      <li class="menu__item" style="height: auto">
-			<span style="width: 100%; height: auto;">
-			  <a href="#" onclick="addPVToWidget(document.getElementById('addPVPV').value, document.getElementById('addPVRefreshRate').value, document.getElementById('addPVMenuDiv').getAttribute('widgetID'), true)"><button type="button" class="menu__button" >Add PV </button></a>
-			  <a href="#"	onclick="toggleAddPV()"><button type="button" class="menu__button">Close</button></a>
-		    	</span>
-		      </li>
-		    </ul>
-		  </nav>
-		</div>
-		<div class="ghost-select" id="selectionRectangle"><span></span></div>
-		</div>
-		<div class="cover"     id='editCoverDiv' onclick=toggleEditMode(true)></div>
-		<div class='mainBlock' id='editBlock' ></div>
-		</div>
-		<div id="hotkeyMenuDiv">
-		  <nav id="hotkeyMenu" class="menu menu--active">
-		    <ul class="menu__items ">
-		      <li class="menu__item ">
-			<span class="menu__label " >
-			  <i class=""></i> &nbsp
-			</span>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(49)">
-			  <span class="">Shift + 1</span> <span id="hotkey49" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(50)">
-			  <span class="">Shift + 2</span> <span id="hotkey50" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(51)">
-			  <span class="">Shift + 3</span> <span id="hotkey51" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(52)">
-			  <span class="">Shift + 4</span> <span id="hotkey52" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(53)">
-			  <span class="">Shift + 5</span> <span id="hotkey53" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(54)">
-			  <span class="">Shift + 6</span> <span id="hotkey54" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item">
-			<a href="#" class="menu__link" onclick="setHotkey(55)" >
-			  <span class="">Shift + 7</span> <span id="hotkey55" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item">
-			<a href="#" class="menu__link" onclick="setHotkey(56)">
-			  <span class="">Shift + 8</span> <span id="hotkey56" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item">
-			<a href="#" class="menu__link" onclick="setHotkey(57)">
-			  <span class="">Shift + 9</span> <span id="hotkey57" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item">
-			<a href="#" class="menu__link" onclick="setHotkey(48)">
-			  <span class="">Shift + 0</span> <span id="hotkey48" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		    </ul>
-		  </nav>
-		</div>
-		<div id="popupSaveControlsPage" class="popup">
-		  <center><h2>Save your Controls Page</h2></center>
-		  <div>
-		    <p><b>Page Name</b></p>
-		    <center><textarea id="controlsPageName" cols="43" rows="1"></textarea></center>
-		    <p><b>Controls Page Notes</b></p>
-		    <center><textarea id="controlsPageNotes" cols="43" rows="6"></textarea></center>
-		    <div id="makeControlsPagePublic">
-		      <input type="checkbox" id="isControlsPagePublic"> Make accessible to public</input>
-		    </div>
-		    <div class="buttongroup">
-		      <center>
-			<button onclick="hidePopupSaveControlsPage()">Cancel</button>
-			<button onclick="savePhoebusPageAs()">Save as Controls Page</button>
-		      </center>
-		    </div>
-		  </div>
-		</div>
-		<div class="editWidgetAttributesPopup-container" id="editWidgetAttributesPopup-container">
-		  <div class="editWidgetAttributesPopup-header" id="editWidgetAttributesPopup-header" ></div>
-		  <div class="editWidgetAttributesPopup-menu"   id="editWidgetAttributesPopup-menu">
-		    <nav id="editWidgetAttributesPopup-menu-nav">
-		      <ul class="menu__items ">
-			<li class="menu__item ">
-			  <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('PVList')">
-			    <i class=""></i> Edits PVs
-			  </a>
-			</li>
-			<li class="menu__item">
-			  <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('EditAttributes')" >
-			    <i class=""></i> Edit Attributes
-			  </a>
-			</li>
-			<!--<li class="menu__item">
-			    <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('Macromaker')">
-			      <i class=""></i> Macromaker
-			    </a>
-			</li>-->
-		      </ul>
-		    </nav>
-		  </div>
-		  <div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-pvlist"></div>
-		  <div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-attributes"><p>body</p></div>
-		  <!--<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>-->
-		  <div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
-		</div>
+		
+		<div id="grayOutCoverDiv"></div>
+		
+		<div id="mainBlockContainer" height="auto" width="auto">
+			<div class='mainBlock '	id='mainBlock' > <!-- onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)"> -->
+				<div id="contextMenuDiv">
+					<nav id="contextMenu" class="menu ">
+					  <ul class="menu__items ">
+						<li class="menu__item ">
+						  <a href="#" class="menu__link " onclick="toggleAddPV()">
+							<i class=""></i> Add PV
+						  </a>
+						</li>
+						<li class="menu__item">
+						  <a href="#" class="menu__link" onclick="editWidgetAttributesOpen()" >
+							<i class=""></i> Edit Attributes
+						  </a>
+						</li>
+						<li class="menu__item">
+						  <a href="#" class="menu__link" onclick="deleteWidget()">
+							<i class=""></i> Delete Widget
+						  </a>
+						</li>
+						<li class="menu__item">
+						  <a href="#" class="menu__link" onclick="toggleContextMenuOff()" >
+							<i class=""></i> Close
+						  </a>
+						</li>
+					  </ul>
+					</nav>
+				</div>
+				<div id="addPVMenuDiv">
+				  <nav id="addPVMenu" class="menu ">
+					<ul class="menu__items ">
+					  <li class="menu__item ">
+					<span class="menu__link">
+					  <i class=""></i><input type="text" id="addPVPV" class="editableInput addPVMenuInput" placeholder="PV" list="pvDatalist"></input>
+					</span> 		
+					  </li>
+					  <li class="menu__item">
+					<span class="menu__link">
+					  <i class=""></i><input type="text" id="addPVRefreshRate" class="editableInput addPVMenuInput" placeholder="Refresh Rate (ms)"></input>
+					</span>
+					  </li>
+					  <li class="menu__item" style="height: auto">
+					<span style="width: 100%; height: auto;">
+					  <a href="#" onclick="addPVToWidget(document.getElementById('addPVPV').value, document.getElementById('addPVRefreshRate').value, document.getElementById('addPVMenuDiv').getAttribute('widgetID'), true)"><button type="button" class="menu__button" >Add PV </button></a>
+					  <a href="#"	onclick="toggleAddPV()"><button type="button" class="menu__button">Close</button></a>
+						</span>
+					  </li>
+					</ul>
+				  </nav>
+				</div>
+				<div class="ghost-select" id="selectionRectangle"><span></span></div>
+				</div>
+				<div class="cover"     id='editCoverDiv' onclick=toggleEditMode(true)></div>
+				<div class='mainBlock' id='editBlock' ></div>
+			</div>
+			<div id="hotkeyMenuDiv">
+			  <nav id="hotkeyMenu" class="menu menu--active">
+				<ul class="menu__items ">
+				  <li class="menu__item ">
+				<span class="menu__label " >
+				  <i class=""></i> &nbsp
+				</span>
+				  </li>
+				  <li class="menu__item ">
+				<a href="#" class="menu__link " onclick="setHotkey(49)">
+				  <span class="">Shift + 1</span> <span id="hotkey49" class="menu__setting">Not Set</span>
+				</a>
+				  </li>
+				  <li class="menu__item ">
+				<a href="#" class="menu__link " onclick="setHotkey(50)">
+				  <span class="">Shift + 2</span> <span id="hotkey50" class="menu__setting">Not Set</span>
+				</a>
+				  </li>
+				  <li class="menu__item ">
+				<a href="#" class="menu__link " onclick="setHotkey(51)">
+				  <span class="">Shift + 3</span> <span id="hotkey51" class="menu__setting">Not Set</span>
+				</a>
+				  </li>
+				  <li class="menu__item ">
+				<a href="#" class="menu__link " onclick="setHotkey(52)">
+				  <span class="">Shift + 4</span> <span id="hotkey52" class="menu__setting">Not Set</span>
+				</a>
+				  </li>
+				  <li class="menu__item ">
+				<a href="#" class="menu__link " onclick="setHotkey(53)">
+				  <span class="">Shift + 5</span> <span id="hotkey53" class="menu__setting">Not Set</span>
+				</a>
+				  </li>
+				  <li class="menu__item ">
+				<a href="#" class="menu__link " onclick="setHotkey(54)">
+				  <span class="">Shift + 6</span> <span id="hotkey54" class="menu__setting">Not Set</span>
+				</a>
+				  </li>
+				  <li class="menu__item">
+				<a href="#" class="menu__link" onclick="setHotkey(55)" >
+				  <span class="">Shift + 7</span> <span id="hotkey55" class="menu__setting">Not Set</span>
+				</a>
+				  </li>
+				  <li class="menu__item">
+				<a href="#" class="menu__link" onclick="setHotkey(56)">
+				  <span class="">Shift + 8</span> <span id="hotkey56" class="menu__setting">Not Set</span>
+				</a>
+				  </li>
+				  <li class="menu__item">
+				<a href="#" class="menu__link" onclick="setHotkey(57)">
+				  <span class="">Shift + 9</span> <span id="hotkey57" class="menu__setting">Not Set</span>
+				</a>
+				  </li>
+				  <li class="menu__item">
+				<a href="#" class="menu__link" onclick="setHotkey(48)">
+				  <span class="">Shift + 0</span> <span id="hotkey48" class="menu__setting">Not Set</span>
+				</a>
+				  </li>
+				</ul>
+			  </nav>
+			</div>
+			<div id="popupSaveControlsPage" class="popup">
+			  <center><h2>Save your Controls Page</h2></center>
+			  <div>
+				<p><b>Page Name</b></p>
+				<center><textarea id="controlsPageName" cols="43" rows="1"></textarea></center>
+				<p><b>Controls Page Notes</b></p>
+				<center><textarea id="controlsPageNotes" cols="43" rows="6"></textarea></center>
+				<div id="makeControlsPagePublic">
+				  <input type="checkbox" id="isControlsPagePublic"> Make accessible to public</input>
+				</div>
+				<div class="buttongroup">
+				  <center>
+				<button onclick="hidePopupSaveControlsPage()">Cancel</button>
+				<button onclick="savePhoebusPageAs()">Save as Controls Page</button>
+				  </center>
+				</div>
+			  </div>
+			</div>
+			<div class="editWidgetAttributesPopup-container" id="editWidgetAttributesPopup-container">
+			  <div class="editWidgetAttributesPopup-header" id="editWidgetAttributesPopup-header" ></div>
+			  <div class="editWidgetAttributesPopup-menu"   id="editWidgetAttributesPopup-menu">
+				<nav id="editWidgetAttributesPopup-menu-nav">
+				  <ul class="menu__items ">
+				<li class="menu__item ">
+				  <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('PVList')">
+					<i class=""></i> Edits PVs
+				  </a>
+				</li>
+				<li class="menu__item">
+				  <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('EditAttributes')" >
+					<i class=""></i> Edit Attributes
+				  </a>
+				</li>
+				<!--<li class="menu__item">
+					<a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('Macromaker')">
+					  <i class=""></i> Macromaker
+					</a>
+				</li>-->
+				  </ul>
+				</nav>
+			  </div>
+			  <div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-pvlist"></div>
+			  <div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-attributes"><p>body</p></div>
+			  <!--<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>-->
+			  <div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
+			</div> <!-- end main block -->
+		</div> <!-- end main block container -->
 
 		<datalist id="pvDatalist"></datalist>
 		<p hidden id="mailbox"></p>

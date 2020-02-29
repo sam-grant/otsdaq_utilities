@@ -488,13 +488,13 @@
 				redrawWindow();
 				
 				//commented is equivalent to undefined (but keep for search example)
-				var allIcons = [];			
-				for(var i = 0; i < widgetKeys_.length; i++)
-					allIcons.push(widgetKeys_[i]);
-
-				drawIcons(allIcons);				
+//				var allIcons = [];			
+//				for(var i = 0; i < widgetKeys_.length; i++)
+//					allIcons.push(widgetKeys_[i]);
+//
+//				drawIcons(allIcons);				
 				//FIXME!!!!
-				//drawIcons();
+				drawIcons();
 
 
 //				var filter = document.getElementById("widgetFilter");
@@ -611,7 +611,7 @@
 				{
 					
 					for(var i=0;i<widgetKeys_.length;++i)
-						 localDrawIcon(widgetKeys_.length[i],positionIndex++);
+						 localDrawIcon(widgetKeys_[i],positionIndex++);
 					localDrawIcon(-1,positionIndex++); //always add code editor widget at end
 				}
 				else //target index reference array
