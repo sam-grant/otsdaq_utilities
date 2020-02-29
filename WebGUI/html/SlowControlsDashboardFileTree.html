@@ -1,8 +1,3 @@
-
-
-
-
-
 <!DOCTYPE HTML>
 <html lang="en"> 
 	<head>
@@ -212,40 +207,46 @@
 			var _CONTEXT_MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
 			var _CONTEXT_MENU_SECONDARY_COLOR = "rgb(130, 51, 51)";
 
+			var folderCounter = 0;
+			
 			//functions:
-			//init()
+			//	initFileTree()
+			//	isFile(path)
+			//	dir(parentElement, path, fullPathToPage)
+			//	createFileContextMenu(event, fullPathToPage)
+			//	close()
+			//	save()
+			//	saveAs()
+			//	redrawWindow(clicked, hover)
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 
+			//=====================================================================================						
 			//init called once body has loaded
-			function initFileTree() {
+			function initFileTree() 
+			{
 				Debug.log("initFileTree() was called");
 				redrawWindow(); //redraw window for first time
-			}
+			} //end initFileTree()
 
-			function handlerFunction(req) {
-				Debug.log("handlerFunction() was called. Req: " + req.responseText);
-			}
-
-			function addPV(pv)
-			{
-				console.log("edit");
-			}
-
+			//=====================================================================================
 			function isFile(path)
 			{			
+				console.log("isFile()", path);
 				if(path.indexOf("/") != -1)
 					return false;
 				else if(path.indexOf(".") != -1)
 					return true;
 				else
 					return false;
-			}
+			} //end isFile()
 
-			var folderCounter = 0;
+			//=====================================================================================
 			function dir(parentElement, path, fullPathToPage)
 			{
+				console.log("dir() was called", path);
+				
 			    var ol;
 			    var pathToPath;
 
@@ -267,7 +268,7 @@
 						a.onclick = function(e){
 							createFileContextMenu(e, fullPathToPage);
 						};
-						//a.onclick = function(){parent.loadPage(fullPathToPage)};//"addPV()";// + pv + ')';
+						//a.onclick = function(){parent.loadPage(fullPathToPage)};
 						li.appendChild(a);
 					
 						parentElement.appendChild(li);
@@ -310,10 +311,14 @@
 						}
 					}
 				}
-			}
+			} //end dir()
 
+			//=====================================================================================
 			//createFileContextMenu ~~
-			function createFileContextMenu(event, fullPathToPage) {
+			function createFileContextMenu(event, fullPathToPage) 
+			{
+				Debug.log("createFileContextMenu()");
+				
 				var menuItems = [
 					"Load Page",
 					"Load Page in new Desktop Window",
@@ -336,30 +341,35 @@
 					_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
 					_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
 				);
-			} //end createFileContextMenu
+			} //end createFileContextMenu()
 
+			//=====================================================================================
 			function close()
 			{
-				console.log("closing");
+				Debug.log("File close()");
 				window.parent.toggleFileMenu();
 			}
 
+			//=====================================================================================
 			function save()
 			{
-				Debug.log("Saving....");
+				Debug.log("File Saving....");
 				Debug.log(window.parent.pvList_);
                 window.parent.document.getElementById("mailbox").innerHTML = "Save";
 			}
 
+			//=====================================================================================
             function saveAs()
             {
-				Debug.log("Saving As....");
+				Debug.log("File Saving As....");
 				Debug.log(window.parent.pvList_);
 				window.parent.document.getElementById("mailbox").innerHTML = "SaveAs";
             }
 
-			function redrawWindow(clicked, hover) {
-				Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
+			//=====================================================================================
+			function redrawWindow(clicked, hover) 
+			{
+				Debug.log("File redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
 
 				var ul = document.createElement("list");
 				var maxWidth = 0;
@@ -425,7 +435,7 @@
 					controlsDiv.style.height = window.innerHeight * 0.10 + "px";
 					controlsDiv.style.top = fileTreeDiv.style.top + fileTreeDiv.style.height;
 				}
-			}
+			} //end redrawWindow()
 
 		</script>
 
