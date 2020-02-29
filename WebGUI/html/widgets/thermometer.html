@@ -52,7 +52,7 @@
 
 		<script src="https://d3js.org/d3.v5.min.js"></script>
 		<script type="text/javascript" src="libraries/thermometer.js"></script>
-
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/widgetAPI.js"></script>
 		<script>
 
 			//functions:
@@ -144,6 +144,7 @@
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("Thermometer newValue() reached", pvName, pvValue);
+				var now = Math.floor(Date.now());
 
 				var min   = pv_settings_[pvName] !== undefined ? pv_settings_[pvName].Lower_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pvName].Lower_Display_Limit) : 0 : 0;
 				var max   = pv_settings_[pvName] !== undefined ? pv_settings_[pvName].Upper_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pvName].Upper_Display_Limit) : 0 : 0;
@@ -156,17 +157,21 @@
 					else if(pvSeverity == "MINOR")
 						containers[pvName].innerHTML = "<center style = 'color: orange'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
 					else
-						containers[pvName].innerHTML = "<center style = 'color: green'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+						if (pvTime == undefined || pvTime + 10000 < now)
+							 containers[pvName].innerHTML = "<center style = 'color: grey'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+						else
+							containers[pvName].innerHTML = "<center style = 'color: green'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
 				}
 				else
 					containers[pvName].innerHTML = "<center>";
 
 				thermometers[pvName].render(containers[pvName],	pvValue, min, max);
-
 				thermometers[pvName]._svg._groups[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
 
-				var now = Math.floor(Date.now());
+				var now2 =  widgetAPI.getDateString(new Date((pvTime | 0) * 1000));
+
 				console.log("thermometer date now: " + now + " pvtime: " + pvTime + " refresh rate: ");
+				console.log("thermometer date now: " + now2);
 				if (pvTime == undefined || pvTime + 10000 < now)
 					thermometers[pvName]._svg._groups[0][0].parentElement.style.backgroundColor = 'lightgrey';
 				else
@@ -233,7 +238,7 @@
 
 	<body onload='Javascript:init();'>	
 
-	<div id="display"></div>
+		<div id="display"></div>
 
 	</body>
 
