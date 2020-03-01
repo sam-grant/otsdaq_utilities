@@ -10,6 +10,7 @@
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 
 		<script>
 
@@ -1120,20 +1121,20 @@
 			{
 				var toolTip =
 				pvName
-				+ "\nlast value "
+				+ "\nlast value: "
 				+ pvValue
 				+ " "
 				+ pv_settings_[pvName].Units
-				+ " time "
-				+ new Date(pvTime*1000)
-				+ "\nLower Warning Limit:\t" + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
-			  	+ "Upper Warning Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
-			  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
-			  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
-			  	+ "Lower Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
-			  	+ "Upper Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
-			  	+ "Lower Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
-			  	+ "Upper Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
+				+ "\ntime: "
+				+ ConfigurationAPI.getDateString(new Date((pvTime | 0) * 1000))
+				+ "\nLower Warning Limit:  " + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
+			  	+ "Upper Warning Limit:  "   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
+			  	+ "Lower Alarm Limit:    "   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+			  	+ "Upper Alarm Limit:    "   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+			  	+ "Lower Control Limit:   "   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
+			  	+ "Upper Control Limit:   "   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
+			  	+ "Lower Display Limit:   "   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
+			  	+ "Upper Display Limit:   "   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
 			  	return toolTip;
 			} //end setWidgetToolTip()
 
