@@ -3,195 +3,143 @@
 	<head>
 		<title>File Tree</title>
 
-		<link rel="stylesheet" type="text/css" href="/WebPath/css/SlowControlsDashboardFileTree.css">
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/SlowControlsDashboard.css">
 
 		<style type="text/css">
 
 		body {
-			background-color: 				rgba(250,250,250,0.8);
+			background-color: 			rgba(250,250,250,0.8);
 		}
 
 		body * {
-			font-family: 					"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
+			font-family: 				"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
 		}
 
-		button {
-			background-color: 				#52a8e8;
-			background-image: 				-webkit-gradient(linear, left top, left bottom, color-stop(0%, #52a8e8), color-stop(100%, #377ad0));
-			background-image: 				-webkit-linear-gradient(top, #52a8e8, #377ad0);
-			background-image: 				-moz-linear-gradient(top, #52a8e8, #377ad0);
-			background-image: 				-ms-linear-gradient(top, #52a8e8, #377ad0);
-			background-image: 				-o-linear-gradient(top, #52a8e8, #377ad0);
-			background-image: 				linear-gradient(top, #52a8e8, #377ad0);
-			border-top: 					1px solid #4081af;
-			border-right: 					1px solid #2e69a3;
-			border-bottom: 					1px solid #20559a;
-			border-left: 					1px solid #2e69a3;
-			border-radius: 					16px;
-			-webkit-box-shadow: 			inset 0 1px 0 0 #72b9eb, 0 1px 2px 0 #b3b3b3;
-			box-shadow: 					inset 0 1px 0 0 #72b9eb, 0 1px 2px 0 #b3b3b3;
-			color: 							#fff;
-			font: 							normal 11px/1 "lucida grande", sans-serif;
-			padding: 						3px 5px;
-			text-align: 					center;
-			text-shadow: 					0 -1px 1px #3275bc;
-			width: 							100%;
-			-webkit-background-clip: 		padding-box;
-		}
-
-		button:hover {
-			background: 					#2a81d7;
-			background: 					-moz-linear-gradient(0% 100% 90deg, #206bcb, #3e9ee5);
-			background: 					-webkit-gradient(linear, 0% 0%, 0% 100%, from(#3e9ee5), to(#206bcb));
-			border-top: 					1px solid #2a73a6;
-			border-right: 					1px solid #165899;
-			border-bottom: 					1px solid #07428f;
-			border-left: 					1px solid #165899;
-			-moz-box-shadow:				inset 0 1px 0 0 #62b1e9;
-			-webkit-box-shadow: 			inset 0 1px 0 0 #62b1e9;
-			cursor: 						pointer;
-			text-shadow: 					0 -1px 1px #1d62ab;
-		}
-
-		button:active {
-			background: #3282d3;
-			border: 1px solid #154c8c;
-			border-bottom: 1px solid #0e408e;
-			-moz-box-shadow: inset 0 0 6px 3px #1657b5, 0 1px 0 0 #fff;
-			-webkit-box-shadow: inset 0 0 6px 3px #1657b5, 0 1px 0 0 #fff;
-			text-shadow: 0 -1px 1px #2361a4;
-		}
-
-		button[disabled],
-		button[disabled]:hover,
-		button[disabled]:active {
-			background: #999;
-			background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#dadada), to(#f3f3f3));
-			border-top: 1px solid #c5c5c5;
-			border-right: 1px solid #cecece;
-			border-bottom: 1px solid #d9d9d9;
-			border-left: 1px solid #cecece;
-			color: #8f8f8f;
-			box-shadow: none;
-			-moz-box-shadow: none;
-			-webkit-box-shadow: none;
-			cursor: not-allowed;
-			text-shadow: 0 -1px 1px #ebebeb;
-		}
-
+		
 		#header {
-			position: relative;
+			position: 					relative;
 		}
 
 		.fileTreeTitle{
-			background-color: transparent;
-			text-decoration: none;
+			background-color: 			transparent;
+			text-decoration: 			none;
 			color: black;
 		}
 
 		.fileTreeTitle:active {
-		    background-color: red;
+		    background-color: 			red;
 		}
 
 		h2 {
-			margin: 0px;
-			padding: 0px;
+			margin: 					0px;
+			padding: 					0px;
 		}
 
 		a {
-			color: blue;
+			color: 						blue;
 		}
 		
 		div {
-			position: relative;
+			position: 					relative;
 		}
 
 		#fileBlock {
-			background-color: rgb(26,148,49);
+			background-color: 			rgb(26,148,49);
 		}				
 
 		#mainBlock {
-			background-color: rgb(240,234,214);
+			background-color: 			rgb(240,234,214);
 		}
 
 		#fileTreeDiv {
-			height: auto;
+			height: 					auto;
 		}
 
 		.mainBlock {
-			position:absolute;
+			position:					absolute;
 		}
+		
 		#saveul {
-			margin: 0px;
-			padding: 0px;
+			margin: 					0px;
+			padding: 					0px;
 		}
 
 		#saveli {
-			margin: 10%;
+			margin: 					12px 12px 2px 3px;
 		}
 
 		/* CSS Tree menu styles */
 		ol.tree {
-			padding: 0 0 0 30px;
-			width: inherit;
+			padding: 					0 0 0 30px;
+			width: 						inherit;
 		}
 
 		li { 
-			position: relative; 
-			margin-left: -15px;
-			list-style: none;
+			position: 					relative; 
+			margin-left: 				-15px;
+			list-style: 				none;
 		}
 
 		li.file {
-			margin-left: -1px !important;
+			margin-left: 				-1px !important;
 		}
 		li.file a {
-			background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat;
-			color: #000000;
-			padding-left: 21px;
-			text-decoration: none;
-			font: none "Helvetica Neue"
-			display: block;
+			background: 				url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat;
+			color: 						#000000;
+			padding-left:				21px;
+			text-decoration: 			none;
+			display: 					block;
 		}
 		li.file a:hover {
-			color: rgba(0,0,0,0.7);
+			color: 						rgba(0,0,0,0.7);
 		}
-		li.file a[href *= '.page']	{ background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat; }
+		li.file a[href *= '.page']	{ 
+			background: 				url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat; 
+		}
 
 		li input
 		{
-			position: absolute;
-			left: 0;
-			margin-left: 0;
-			opacity: 0;
-			z-index: 2;
-			cursor: pointer;
-			height: 1em;
-			width: 1em;
-			top: 0;
+			position: 					absolute;
+			left: 						0;
+			margin-left: 				0;
+			opacity: 					0;
+			z-index: 					2;
+			cursor: 					pointer;
+			height: 					1em;
+			width: 						1em;
+			top: 						0;
 		}
 		li input + ol
 		{
-			margin: -0.938em 0 0 -44px; /* 15px */
-			height: 1em;
+			margin: 					-0.938em 0 0 -44px; /* 15px */
+			height: 					1em;
 		}
-		li input + ol > li { display: none; margin-left: -14px !important; padding-left: 1px; }
+		li input + ol > li {
+			display: 					none; 
+			margin-left: 				-14px !important;
+			padding-left: 				1px; 
+		}
 		li label
 		{
-			background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-folder-horizontal.png) 15px 1px no-repeat;
-			cursor: pointer;
-			display: block;
-			padding-left: 37px;
+			background: 				url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-folder-horizontal.png) 15px 1px no-repeat;
+			cursor: 					pointer;
+			display: 					block;
+			padding-left: 				37px;
 		}
 
 		li input:checked + ol
 		{
-			margin: -1.25em 0 0 -44px; /* 20px */
-			padding: 1.563em 0 0 80px;
-			height: auto;
+			margin: 					-1.25em 0 0 -44px; /* 20px */
+			padding: 					1.563em 0 0 80px;
+			height: 					auto;
 		}
-		li input:checked + ol > li { display: block; margin: 0 0 0.125em;  /* 2px */}
-		li input:checked + ol > li:last-child { margin: 0 0 0.063em; /* 1px */ }
+		li input:checked + ol > li { 
+			display: 					block; 
+			margin: 					0 0 0.125em;  /* 2px */
+		}
+		li input:checked + ol > li:last-child {
+			margin: 0 0 0.063em; /* 1px */ 
+		}
 
 		</style>
 
@@ -212,6 +160,9 @@
 
 			var folderCounter = 0;
 			
+
+			var FILE_BLOCK_WIDTH = 300;
+			
 			//functions:
 			//	initFileTree()
 			//	isFile(path)
@@ -220,7 +171,7 @@
 			//	close()
 			//	save()
 			//	saveAs()
-			//	redrawWindow(clicked, hover)
+			//	redrawWindow()
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -233,6 +184,78 @@
 				redrawWindow(); //redraw window for first time
 			} //end initFileTree()
 
+			//=====================================================================================
+			function redrawWindow() 
+			{
+				Debug.log("File redrawWindow() to " + window.innerWidth + 
+						" - " + window.innerHeight);
+
+				var ul = document.createElement("list");
+				var maxWidth = 0;
+				var size;
+
+				if(window.parent.pagesList_ == "Loading")
+				{
+					var title = document.createElement("h2");
+					title.id = "title";
+					title.innerHTML = window.parent.pagesList_;
+					document.getElementById("header").appendChild(title);
+					while(title = document.getElementById("title").width < document.getElementById("header").width)
+					{
+						size = parseInt(title.css("font-size"), 10);
+						loading.css("font-size", size + 1);
+					}
+				}
+				else
+				{
+					var title = document.createElement("h2");
+
+					title.id = "title";
+					title.innerHTML = "File Manager";
+					document.getElementById("header").innerHTML = "";
+					//title.appendChild(a);
+					document.getElementById("header").appendChild(title);
+					while(title = document.getElementById("title").width < document.getElementById("header").width)
+					{
+						size = parseInt(title.css("font-size"), 10);
+						title.css("font-size", size + 1);
+					}
+
+					document.getElementById("pagesFolder-ol").innerHTML = "";
+					window.parent.pagesList_.forEach(function(page){
+						if(page != "undefined"){dir(document.getElementById("pagesFolder-ol"), page, page)} //FIXME, if pass undefined as filename -> throws error
+					});
+
+					var saveButton = document.createElement("button");
+					var saveAsButton = document.createElement("button");
+					var closeButton = document.createElement("button");
+
+					saveButton.type = "text";
+					saveAsButton.type = "text";
+					closeButton.type = "text";
+
+					saveButton.innerHTML = "Save";
+					saveAsButton.innerHTML = "Save As";
+					closeButton.innerHTML = "Close";
+
+					closeButton.onclick = function(){close();};
+					saveButton.onclick = function(){save();};
+					saveAsButton.onclick = function(){saveAs();};
+
+					document.getElementById("saveli").innerHTML = "";
+					document.getElementById("saveli").appendChild(saveButton);
+					document.getElementById("saveli").appendChild(closeButton);
+
+					var fileTreeDiv = document.getElementById("fileTreeDiv");
+					var header = document.getElementById("header");
+
+					header.style.height      = window.innerHeight * 0.05 + "px";
+					fileTreeDiv.style.height = window.innerHeight * 0.75 + "px";
+					controlsDiv.style.height = window.innerHeight * 0.10 + "px";
+					controlsDiv.style.top = fileTreeDiv.style.top + fileTreeDiv.style.height;
+				}
+			} //end redrawWindow()
+			
 			//=====================================================================================
 			function isFile(path)
 			{			
@@ -368,77 +391,6 @@
 				Debug.log(window.parent.pvList_);
 				window.parent.document.getElementById("mailbox").innerHTML = "SaveAs";
             }
-
-			//=====================================================================================
-			function redrawWindow(clicked, hover) 
-			{
-				Debug.log("File redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
-
-				var ul = document.createElement("list");
-				var maxWidth = 0;
-				var size;
-
-				if(window.parent.pagesList_ == "Loading")
-				{
-					var title = document.createElement("h2");
-					title.id = "title";
-					title.innerHTML = window.parent.pagesList_;
-					document.getElementById("header").appendChild(title);
-					while(title = document.getElementById("title").width < document.getElementById("header").width)
-					{
-						size = parseInt(title.css("font-size"), 10);
-						loading.css("font-size", size + 1);
-					}
-				}
-				else
-				{
-					var title = document.createElement("h2");
-
-					title.id = "title";
-					title.innerHTML = "Files";
-					document.getElementById("header").innerHTML = "";
-					//title.appendChild(a);
-					document.getElementById("header").appendChild(title);
-					while(title = document.getElementById("title").width < document.getElementById("header").width)
-					{
-						size = parseInt(title.css("font-size"), 10);
-						title.css("font-size", size + 1);
-					}
-
-					document.getElementById("pagesFolder-ol").innerHTML = "";
-					window.parent.pagesList_.forEach(function(page){
-						if(page != "undefined"){dir(document.getElementById("pagesFolder-ol"), page, page)} //FIXME, if pass undefined as filename -> throws error
-					});
-
-					var saveButton = document.createElement("button");
-					var saveAsButton = document.createElement("button");
-					var closeButton = document.createElement("button");
-
-					saveButton.type = "text";
-					saveAsButton.type = "text";
-					closeButton.type = "text";
-
-					saveButton.innerHTML = "Save";
-					saveAsButton.innerHTML = "Save As";
-					closeButton.innerHTML = "Close";
-
-					closeButton.onclick = function(){close();};
-					saveButton.onclick = function(){save();};
-					saveAsButton.onclick = function(){saveAs();};
-
-					document.getElementById("saveli").innerHTML = "";
-					document.getElementById("saveli").appendChild(saveButton);
-					document.getElementById("saveli").appendChild(closeButton);
-
-					var fileTreeDiv = document.getElementById("fileTreeDiv");
-					var header = document.getElementById("header");
-
-					header.style.height      = window.innerHeight * 0.05 + "px";
-					fileTreeDiv.style.height = window.innerHeight * 0.75 + "px";
-					controlsDiv.style.height = window.innerHeight * 0.10 + "px";
-					controlsDiv.style.top = fileTreeDiv.style.top + fileTreeDiv.style.height;
-				}
-			} //end redrawWindow()
 
 		</script>
 
