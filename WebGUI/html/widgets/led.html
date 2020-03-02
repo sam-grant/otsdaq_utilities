@@ -14,10 +14,11 @@
 			.wrapper {
 			  display: grid;
 			  //grid-template-columns: repeat(2, 1fr);
-			  grid-template-columns: repeat(auto-fill,minmax(50px, 1fr));
+			  grid-template-columns: repeat(auto-fill,minmax(30px, 1fr));
 			  grid-gap: 0px;
-			  grid-auto-rows: minmax(100px, auto);
-			  //grid-auto-columns: 200px 200px;
+			  flex-direction: row;
+			  grid-auto-rows: minmax(10px, auto);
+			  //grid-auto-columns: 20px 20px;
 			}
 		</style>
 
@@ -29,7 +30,7 @@
 			var leds = [];
 			var labelContainers = [];
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "show_labels": "true"};
+			var parameters_ = {class: "", "show_labels": "false"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -48,7 +49,7 @@
 				pv_settings_ = settings;
 			}
 
-			function newWidget(widget, parameters)
+			function drawWidget(widget, parameters)
 			{
 				leds = [];
 				containers = [];
@@ -118,7 +119,7 @@
 				console.log("LED newValue() reached", pvName, pvValue);
 				var canvas = document.getElementById('led');
 				canvas.title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
-	
+
 				var context = canvas.getContext('2d');
 				context.fillStyle = 'green';
 				if( pvSeverity == "MAJOR" )
