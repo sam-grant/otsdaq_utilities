@@ -1230,6 +1230,7 @@
 
 
 			//=====================================================================================
+<<<<<<< HEAD
 			function setWidgetPVinfo(pvName, pvValue, pvTime, pvStatus, pvSeverity, showLabel, containers, widgetElement)
 			{
 				var now = Math.floor(Date.now())/1000;
@@ -1266,6 +1267,8 @@
 
 
 			//=====================================================================================
+=======
+>>>>>>> 4ce12db11ed77471f86ba6a212f4f36eccd349db
 			function getHistory(id, parameters)
 			{
 				var pvList = "";
@@ -1586,8 +1589,13 @@
 
 					if(!editBlock_.isHidden) 
 					{
+<<<<<<< HEAD
 						//Debug.log("FIXME use edit pencil icon instead of double click",Debug.HIGH_PRIORITY);
 						mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
+=======
+						Debug.log("FIXME use edit pencil icon instead of double click",Debug.HIGH_PRIORITY);
+						//mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
+>>>>>>> 4ce12db11ed77471f86ba6a212f4f36eccd349db
 					}
 
 					mainBlockContainer.addEventListener("mousedown", startWidgetDrag);
@@ -1686,6 +1694,7 @@
 				resizeDivTop.style.left = OUTLINE_OFFSET + "px";
 				resizeDivTop.style.top = "0px";
 				resizeDivTop.style.zIndex = "49";
+<<<<<<< HEAD
 
 				resizeDivLeft.style.width = OUTLINE_OFFSET + "px";
 				resizeDivLeft.style.height = h + "px";
@@ -1737,6 +1746,59 @@
 				resizeDivBottomLeft.style.bottom = "0px";
 				resizeDivBottomLeft.style.zIndex = "49";
 
+=======
+
+				resizeDivLeft.style.width = OUTLINE_OFFSET + "px";
+				resizeDivLeft.style.height = h + "px";
+				resizeDivLeft.style.position = "absolute";
+				resizeDivLeft.style.left ="0px";
+				resizeDivLeft.style.top = OUTLINE_OFFSET + "px";
+				resizeDivLeft.style.zIndex = "49";
+
+				resizeDivRight.style.width = OUTLINE_OFFSET + "px";
+				resizeDivRight.style.height = h + "px";
+				resizeDivRight.style.position = "absolute";
+				resizeDivRight.style.right = "0px";
+				resizeDivRight.style.top = OUTLINE_OFFSET + "px";
+				resizeDivRight.style.zIndex = "49";
+
+				resizeDivBottom.style.width = w + "px";
+				resizeDivBottom.style.height = OUTLINE_OFFSET + "px";
+				resizeDivBottom.style.position = "absolute";
+				resizeDivBottom.style.left = OUTLINE_OFFSET + "px";
+				resizeDivBottom.style.bottom = "0px";
+				resizeDivBottom.style.zIndex = "49";
+
+				//Corners for resize
+				resizeDivTopLeft.style.width = OUTLINE_OFFSET + "px";
+				resizeDivTopLeft.style.height = OUTLINE_OFFSET + "px";
+				resizeDivTopLeft.style.position = "absolute";
+				resizeDivTopLeft.style.left = "0px";
+				resizeDivTopLeft.style.top = "0px";
+				resizeDivTopLeft.style.zIndex = "49";
+
+				resizeDivTopRight.style.width = OUTLINE_OFFSET + "px";
+				resizeDivTopRight.style.height = OUTLINE_OFFSET + "px";
+				resizeDivTopRight.style.position = "absolute";
+				resizeDivTopRight.style.right = "0px";
+				resizeDivTopRight.style.top = "0px";
+				resizeDivTopRight.style.zIndex = "49";
+
+				resizeDivBottomRight.style.width = OUTLINE_OFFSET + "px";
+				resizeDivBottomRight.style.height = OUTLINE_OFFSET + "px";
+				resizeDivBottomRight.style.position = "absolute";
+				resizeDivBottomRight.style.right = "0px";
+				resizeDivBottomRight.style.bottom = "0px";
+				resizeDivBottomRight.style.zIndex = "49";
+
+				resizeDivBottomLeft.style.width = OUTLINE_OFFSET + "px";
+				resizeDivBottomLeft.style.height = OUTLINE_OFFSET + "px";
+				resizeDivBottomLeft.style.position = "absolute";
+				resizeDivBottomLeft.style.left = "0px";
+				resizeDivBottomLeft.style.bottom = "0px";
+				resizeDivBottomLeft.style.zIndex = "49";
+
+>>>>>>> 4ce12db11ed77471f86ba6a212f4f36eccd349db
 				if(!hideFrame)
 				{
 					widgetFrame.style.position = "absolute";
