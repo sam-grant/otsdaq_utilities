@@ -18,36 +18,6 @@
 			  //grid-auto-columns: 200px 200px;
 			}
 
-			div{
-				//display: flex;
-	    		//white-space: nowrap;
-    			//text-overflow: ellipsis;
-			    //display: block;
-    			//overflow: hidden
-    			//resize: both;
-				//overflow: auto;
-			}
-
-			table{
-				//table-layout: auto
-				//border-spacing: 0px !important;
-			}
-
-			tr {
-				//margin: auto;
-				//padding: auto;
-			}
-			#td{
-				//writing-mode: vertical-lr;
-				//transform: rotate(90deg);
-				//text-align: left;
-				//vertical-align: bottom;
-				//font-size: 100%;
-				//color: white;
-				//height: 1px;
-				//width: 1px;
-				//float: left;
-			}
 		</style>
 
 		<script src="https://d3js.org/d3.v5.min.js"></script>
@@ -59,8 +29,7 @@
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
-			var rows = 1;
-			var columns = 1;
+
 			var thermometers = [];
 			var containers = [];
 			var pv_settings_ = [];
@@ -107,9 +76,7 @@
 						divtemp.innerHTML = "<center>" + pv.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...";
 					else
 						divtemp.innerHTML = "WAITING FOR A NEW PV VALUE...";
-					console.log(pv.replace(" ", ""));
-					//divtemp.style.width = "100%";
-					//divtemp.style.height = "100%";
+
 					div.appendChild(divtemp);
 					containers[pv] = divtemp;
 
