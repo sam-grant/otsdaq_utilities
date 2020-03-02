@@ -104,7 +104,7 @@
 					//divtemp.style.color = "white";
 					//divtemp.style.fontSize = "auto"; //"3vw";
 					if (parameters_["show_labels"] == "true")
-						divtemp.innerHTML = "<center>" + pv.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...";
+						divtemp.innerHTML = "<center>" + pv.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...";
 					else
 						divtemp.innerHTML = "WAITING FOR A NEW PV VALUE...";
 					console.log(pv.replace(" ", ""));
@@ -143,39 +143,24 @@
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("Thermometer newValue() reached", pvName, pvValue);
-				var now = Math.floor(Date.now())/1000;
-				var time2compare = pvTime*1. + 24.;
+
+				window.parent.setWidgetPVinfo(
+									  pvName
+									, pvValue
+									, pvTime
+									, pvStatus
+									, pvSeverity
+									, parameters_["show_labels"]
+									, containers
+									, thermometers[pvName]._svg._groups[0][0].parentElement
+									);
 
 				var min   = pv_settings_[pvName] !== undefined ? pv_settings_[pvName].Lower_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pvName].Lower_Display_Limit) : 0 : 0;
 				var max   = pv_settings_[pvName] !== undefined ? pv_settings_[pvName].Upper_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pvName].Upper_Display_Limit) : 0 : 0;
 				max = max == "DC'd" || max <= min ? 100 : max;
-
-				if (parameters_["show_labels"] == "true")
-				{
-					if(pvSeverity == "MAJOR" )
-						containers[pvName].innerHTML = "<center style = 'color: red'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
-					else if(pvSeverity == "MINOR")
-						containers[pvName].innerHTML = "<center style = 'color: orange'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
-					else
-						if ((pvTime !== undefined) && (time2compare > now))
-							containers[pvName].innerHTML = "<center style = 'color: green'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
-						else
-							containers[pvName].innerHTML = "<center style = 'color: grey'>"
-															+ pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />")
-															//+ "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity
-															+ "<br>NOT UPDATED FOR MORE THAN " + parseInt((now - pvTime*1.)/60) + " MINUTES</center>";
-				}
-				else
-					containers[pvName].innerHTML = "<center>";
-
 				thermometers[pvName].render(containers[pvName],	pvValue, min, max);
-				thermometers[pvName]._svg._groups[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
 
-				console.log("thermometer date now: " + now + " pvtime: " + pvTime + " refresh rate: 10 sec");
-				if ((pvTime !== undefined) && (time2compare > now))
-					thermometers[pvName]._svg._groups[0][0].parentElement.style.backgroundColor = 'white';
-				else
-					thermometers[pvName]._svg._groups[0][0].parentElement.style.backgroundColor = 'lightgrey';
+				thermometers[pvName]._svg._groups[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
 			}
 
 			function drawThermometer(name, container, wdth, hght, val, min, max)
