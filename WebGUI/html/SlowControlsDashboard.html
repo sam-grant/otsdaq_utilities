@@ -15,7 +15,85 @@
 		<script>
 
 			//functions:
-			//init()
+			//	init()
+			//	checkMailbox()
+			//	handleMail(mail)
+			//	pagesReqHandler(req)
+			//	isUserAdminHandler(req)
+			//	pvListReqHandler(req)
+			//	loadPageReqHandler(req)
+			//	loadPhoebusPageReqHandler(req)
+			//	pollServerHandlerFunction(req)
+			//	generateUIDHandlerFunction(req)
+			//	settingsReqHandler(req, passParams)
+			//	historyReqHandler(req, passParams)
+			//	savePageReqHandler(req)
+			//	createControlsPageHandler(req)
+			//	handlerFunction(req)
+			//	pollServer()
+			//	generateUID()
+			//	updateRefreshInterval()
+			//	loadPage(page)
+			//	loadPhoebusPage(page)
+			//	loadPageNewWindow(fullPathToPage)
+			//	loadPageNewBrowserTab(fullPathToPage)
+			//	createDesktopIcon(fullPathToPage)
+			//	savePage()
+			//	hidePopupSaveControlsPage()
+			//	savePageAs()
+			//	savePhoebusPageAs()
+			//	setupWidget(id, parameters)
+			//	setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_)
+			//	getHistory(id, parameters)
+			//	addPVToWidget(pv, refreshRate, widgetID, fromAddPV)
+			//	compareAttributes(id, parameters)
+			//	setupForDrawSelectionRectangle(id)
+			//	drawSelectionRectangle(event)
+			//	stopdrawSelectionRectangle(event)
+			//	drawWidget(widget, newWidget, xx, yy, width, height, hideFrame)
+			//	drawWidgetFromFile(widget, xx, yy, width, height, hideFrame)
+			//	mouseoverEditBlock(e)
+			//	mouseoutEditBlock(e)
+			//	toggleEditMode()
+			//	toggleContextMenuCaller(id)
+			//	toggleContextMenu(e, id)
+			//	toggleContextMenuOff(e)
+			//	toggleHotkeyMenu()
+			//	toggleAddPV()
+			//	toggleFileMenu()
+			//	editWidgetAttributesOpen()
+			//	editWidgetAttributesClose()
+			//	editWidgetAttributesSave()
+			//	editWidgetAttributesaddRowPVList(keyParam, valueParam, tablebody, list)
+			//	checkIfMoreRowsNeeded(inputEl)
+			//	setWidgetDisplayName(widget, displayName)
+			//	showeditWidgetAttributesPopupBody(body)
+			//	clearBlock(el)
+			//	toggleGrid(on)
+			//	setBackgroundColor(color)
+			//	setGridColor(color, on)
+			//	handleKeys(event)
+			//	deleteWidget()
+			//	cutWidget(widgetCover)
+			//	pasteWidget()
+			//	toggleWidgetSelection(target)
+			//	startWidgetDrag(e)
+			//	endWidgetDrag(e)
+			//	startWidgetResize(e)
+			//	endWidgetResize(e)
+			//	translateWidget(widgetId, deltaX, deltaY)
+			//	resizeWidget(widgetId, deltaX, deltaY, deltaW, deltaH)
+			//	redrawTargetWidget(e)			
+			//	handleMouseDown(e)
+			//	handleMouseUp(e)
+			//	handleMouseMove(e)
+			//	handleResize(e)
+			//	redrawWindow(event, hover)
+			//	evaluateJS(str)
+			//	setRefreshRate(keyField,rateField)
+			//	isEmpty(obj)
+
+
 
 			//top-level scope (global) variables:
 			var pvList_ = {};
@@ -89,19 +167,32 @@
 			var resizeFrom_ = "";
 			var _saveCursorType;
 			//END Resize
+			
+			var cutWidget_;
+			var cutWidgetName_;
 
+			var pageOffSetX_ = 0;
+			var pageOffSetY_ = 0;
+			var dragLockout_ = false;
+			var targetElement_ = undefined;
+			var dragTargetElement_ = undefined;
+			
 			var setupForDrawingID_ = undefined;
-			hotkey_ = [];
+			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 
 
 			//=====================================================================================
 			//init called once body has loaded
-			function init() {
+			function init() 
+			{
 
 				Debug.log("init() was called");
 
+				window.onkeyup = handleKeys;
+				window.onresize = handleResize;
+				
 				var parameterPageName = DesktopContent.getParameter(0,"page_name");				
 
 				Debug.log("Parameter filename: " + parameterPageName);
@@ -124,9 +215,7 @@
 				elPointer_["addPVMenuDiv"] = document.getElementById("addPVMenuDiv");
 				elPointer_["editWidgetAttributesPopup-body-pvlist"] = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				elPointer_["editWidgetAttributesPopup-body-attributes"] = document.getElementById("editWidgetAttributesPopup-body-attributes");
-				elPointer_["hotkeyMenuDiv"] = document.getElementById("hotkeyMenuDiv");
-				elPointer_["hotkeyMenuDiv"].style.display = "none";
-
+			
 				menuDiv_ = document.getElementById("contextMenuDiv");
 				menu_= document.getElementById("contextMenu");
 				mailbox_ = document.getElementById("mailbox");
@@ -660,7 +749,8 @@
 
 
 			//=====================================================================================
-			function handlerFunction(req) {
+			function handlerFunction(req) 
+			{
 				var child1data = DesktopContent.getXMLValue(req,"child");
 				var child2data = DesktopContent.getXMLValue(req,"child2");
 				Debug.log("--child1data:",child1data," --child2data:",child2data);
@@ -1893,6 +1983,10 @@
 				{
 					Debug.log("Edit Mode On");
 
+					editBlock_.isHidden = false;
+					editBlock_.el.style.display = "block";
+					editButton.innerHTML = "Go Live!";
+
 					//Make sure pv list is up-to-date
 					DesktopContent.XMLHttpRequest(
 						"Request?RequestType=getList",
@@ -1905,13 +1999,10 @@
 
 					UID_ = 0;
 					window.clearInterval(timerVariable_);
-					editButton.classList.add("navigationMenu--Edit");
+					//editButton.classList.add("navigationMenu--Edit");
 					mainBlock_.el.classList.add("editMode");
 
 					
-					editBlock_.isHidden = false;
-					editBlock_.el.style.display = "block";
-
 					for(widget in page_.widgets)
 					{
 						drawWidget(widget, false, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y);
@@ -1938,6 +2029,10 @@
 				{
 					Debug.log("Edit Mode Off");
 
+					editBlock_.isHidden = true;
+					editBlock_.el.style.display = "none";
+					editButton.innerHTML = "Switch to Edit Mode";
+
 					UID_ = 0;
 
 					if (page_.widgets != undefined && !isEmpty(page_.widgets))
@@ -1958,10 +2053,8 @@
 					}
 
 					mainBlock_.el.classList.remove("editMode");
-					editButton.classList.remove("navigationMenu--Edit");
+					//editButton.classList.remove("navigationMenu--Edit");
 					
-					editBlock_.isHidden = true;
-					editBlock_.el.style.display = "none";
 
 					for(var i = 0;i<covers.length;++i)
 						covers[i].style.display = "none";
@@ -2085,7 +2178,7 @@
 					console.log("Hiding file pane!");
 					
 					fileBlock_.isHidden = true;
-					fileBlock_.el.style.marginLeft = "0px";
+					fileBlock_.el.style.marginLeft = -50 + "px";
 
 					cover.style.display = "none";
 					
@@ -2361,15 +2454,6 @@
 
 
 			//=====================================================================================
-			function sleep(miliseconds) 
-			{
-				   var currentTime = new Date().getTime();
-				   while (currentTime + miliseconds >= new Date().getTime()) {
-				   }
-			} //end sleep()
-
-
-			//=====================================================================================
 			function clearBlock(el)
 			{
 				for(var child = 0; child < el.childNodes.length; child++)
@@ -2413,91 +2497,59 @@
 				gridColor_ = color;
 				toggleGrid(on);
 			} //end setGridColor()
-
-
+			
 			//=====================================================================================
-			function setHotkey(key)
-			{
-				hotkey_[key] = [pageOffSetX_, pageOffSetY_];
-				document.getElementById(("hotkey" + key)).innerHTML = pageOffSetX_ + "x" + pageOffSetY_;
-				document.getElementById(("hotkey" + key)).style.color = "#00cc00";
-			} //end setHotkey()
-
-			keyMap_ = [];
-
-
-			//=====================================================================================
-			window.onkeyup = window.onkeydown = function(e){
-			    //e = e || event; // to deal with IE
-				keyMap_[e.keyCode]  = e.type == 'keydown';
-				handleKeys(e);
-			 }
-
-
-			//=====================================================================================
-			function handleKeys(event)
-			{
-				event.clientX = 0;
-				event.clientY = 0;
-				
-			    if (event.shiftKey && keyMap_[82])//Shift + r(eset)
-			    {
-			    	resetToOrigin();
-				}
-			    else if(event.shiftKey && (keyMap_[48] || keyMap_[49] || keyMap_[50] || keyMap_[51] || keyMap_[52] || keyMap_[53] || keyMap_[54] || keyMap_[55] || keyMap_[56] || keyMap_[57]))
-			    {
-			    	pageOffSetX_ = hotkey_[event.keyCode][0];
-					pageOffSetY_ = hotkey_[event.keyCode][1];
-					mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");
-					redrawWindow();
-			    }
-			    else if(event.shiftKey && keyMap_[72]) //Shift + h(otkey)
-			    {
-			    	toggleHotkeyMenu();
-			    }
-			    else if(event.shiftKey && keyMap_[88])//Shift Key + X(cut)
-			    {
-			    	console.log(targetElement_);
-			    	cutWidget(targetElement_);
-			    }
-			    else if(event.shiftKey && keyMap_[86])//Shift Key + v(paste)
-			    {
-			    	pasteWidget();
-			    }
-			    else if(event.shiftKey && keyMap_[79])//Shift Key + o(pen)
-			    {
-			    	toggleFileMenu();
-			    }
-			    else if(event.shiftKey && keyMap_[69])//Shift Key + e(dit)
-			    {
-			    	toggleEditMode();
-			    }
-
-			    if(keyMap_[38])//up arrow
-			    {
-			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 0, -1);}
-			    	else {pageOffSetY_+=3; redrawWindow();}
-					
-			    }
-			    if(keyMap_[40])//down arrow
-			    {
-			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 0, 1);}
-			    	else {pageOffSetY_-=3; redrawWindow(); }
-						
-			    }
-			    if(keyMap_[37])//left arrow
-			    {
-			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, -1, 0);}
-			    	else { pageOffSetX_+=3; redrawWindow(); }
-						
-			    }
-			    if(keyMap_[39])// right arrow
-			    {
-			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 1, 0)}
-			    	else { pageOffSetX_-=3; redrawWindow(); }
-			    }
+			function handleKeys(e)
+			{				
+				if(e.shiftKey)
+				{
+					switch(e.keyCode)
+					{
+					case 88: 	//X (cut)
+				    	console.log("cut widget",targetElement_);
+				    	cutWidget(targetElement_);
+				    	break;
+					case 86: 	//V (paste)
+				    	console.log("paste widget");
+				    	pasteWidget();
+				    	break;
+					case 79: 	//O (open)
+				    	console.log("toggle file manager");
+				    	toggleFileMenu();
+				    	break;
+					case 69: 	//E (edit mode)
+				    	console.log("toggle edit mode");
+				    	toggleEditMode();
+				    	break;
+				    	
+					default:;
+					}
+				} //end shift key + key handling
+				else //no shift key
+				{
+					switch(e.keyCode)
+					{
+					case 38: 	//up arrow (move widget)
+				    	console.log("up move widget",targetElement_);
+				    	translateWidget(targetElement_, 0, -1);
+				    	break;
+					case 40: 	//down arrow (move widget)
+				    	console.log("down move widget",targetElement_);
+				    	translateWidget(targetElement_, 0, 1);
+				    	break;
+					case 37: 	//left arrow (move widget)
+				    	console.log("left move widget",targetElement_);
+				    	translateWidget(targetElement_, -1, 0);
+				    	break;
+					case 39: 	//right arrow (move widget)
+				    	console.log("right move widget",targetElement_);
+				    	translateWidget(targetElement_, 1, 0);
+				    	break;
+					default:;
+					}
+				} //end no shift key key handling
+			    
 			} //end handleKeys()
-
 
 			//=====================================================================================
 			function deleteWidget()
@@ -2508,10 +2560,6 @@
 				mainBlock_.el.removeChild(widgetCover.parentNode);
 				toggleContextMenuOff();
 			} //end deleteWidget()
-
-
-			var cutWidget_;
-			var cutWidgetName_;
 
 			//=====================================================================================
 			function cutWidget(widgetCover)
@@ -2528,7 +2576,6 @@
 				delete page_.widgets[id];
 				mainBlock_.el.removeChild(widgetCover.parentNode);
 			} //end cutWidget()
-
 
 			//=====================================================================================
 			function pasteWidget()
@@ -2562,7 +2609,6 @@
 				redrawWindow();
 			} //end pasteWidget()
 
-
 			//=====================================================================================
 			function toggleWidgetSelection(target)
 			{
@@ -2579,13 +2625,6 @@
 					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "block";
 				}	
 			} //end toggleWidgetSelection()
-
-
-			var pageOffSetX_ = 0;
-			var pageOffSetY_ = 0;
-			var dragLockout_ = false;
-			var targetElement_ = undefined;
-			var dragTargetElement_ = undefined;
 
 			//=====================================================================================
 			function startWidgetDrag(e)
@@ -2639,7 +2678,6 @@
 				dragLockout_ = true;
 			} //end startWidgetDrag()
 
-
 			//=====================================================================================
 			function endWidgetDrag(e)
 			{			
@@ -2681,7 +2719,6 @@
 				}
 			} //end endWidgetDrag()
 
-
 			//=====================================================================================
 			function startWidgetResize(e)
 			{
@@ -2722,7 +2759,6 @@
 
 				dragLockout_ = true;
 			} //end startWidgetResize()
-
 
 			//=====================================================================================
 			function endWidgetResize(e)
@@ -2768,7 +2804,6 @@
 				redrawWindow();
 			} //end endWidgetResize()
 
-
 			//=====================================================================================
 			function translateWidget(widgetId, deltaX, deltaY)
 			{
@@ -2785,7 +2820,6 @@
 				drawWidget(widgetId,false,0,0,0,0, //newWidget, x, y, width, height
 					true /*hideFrame*/);
 			} //end translateWidget()
-
 
 			//================================================================================
 			// resizeWidget(id, resize_from = "center", new_suggested_width, new_suggested_height)
@@ -2808,7 +2842,6 @@
 				drawWidget(widgetId,false,0,0,0,0, //newWidget, x, y, width, height
 					true /*hideFrame*/);
 			} //end resizeWidget()
-
 
 			//=====================================================================================
 			//redrawTargetWidget ~~
@@ -2886,7 +2919,6 @@
 				y_Pos_forDrag_ = e.clientY;
 			} //end redrawTargetWidget()
 
-
 			//=====================================================================================
 			function handleMouseDown(e)
 			{				
@@ -2919,7 +2951,6 @@
 				}
 			} //end handleMouseUp()
 
-
 			//=====================================================================================
 			function handleMouseMove(e)
 			{
@@ -2940,13 +2971,17 @@
 				}
 			} //end handleMouseMove()
 
-
 			//=====================================================================================
-			function drawGrid()
+			function handleResize(e) 
 			{
-				mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");				
-			} //end drawGrid()
-
+				console.log("handleResize()");
+				
+				for(widget in page_.widgets)
+					drawWidget(widget, false);
+				
+				toggleWidgetSelection();
+				redrawWindow();
+			}; //end onresize()
 
 			//=====================================================================================
 			function redrawWindow(event, hover) 
@@ -3020,7 +3055,6 @@
 					navBar.style.display = "block";
 				}
 
-				drawGrid();
 			} //end redrawWindow()
 
 
@@ -3036,7 +3070,7 @@
 			//=====================================================================================
 			function setRefreshRate(keyField,rateField)
 			{
-				Debug.log("setRefreshRate() reached");
+				console.log("setRefreshRate()",keyField.value,rateField.value);
 				if(keyField.value != "")
 					if(pvList_[keyField.value] != "")
 						rateField.value = pvList_[keyField.value];
@@ -3044,21 +3078,9 @@
 						rateField.value = 10;
 			} //end setRefreshRate()
 
-
 			//=====================================================================================
-			window.onresize = function() {
-				console.log("window.onresize!");
-				for(widget in page_.widgets)
-				{
-					drawWidget(widget, false);//, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y);
-				}
-
-				toggleWidgetSelection();
-				redrawWindow();
-			}; //end onresize()
-
-			//=====================================================================================
-			function isEmpty(obj){
+			function isEmpty(obj)
+			{
 				return (Object.getOwnPropertyNames(obj).length === 0);
 			} //end isEmpty()
 
@@ -3069,11 +3091,8 @@
 		<div id="navigationBarDiv">	
 	    	  <nav>
 		    <ul id="navigationMenu">
-		      <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File Menu</a></li>
-		      <!--<li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>-->
-		      <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">Edit Mode</a></li>
-		      <!--<li><a href="#" title="" id="menuli3" onclick="toggleHotkeyMenu()">Quick Views</a></li>-->
-		      <!--<li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>-->
+		      <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File Manager</a></li>		      
+		      <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">Edit Mode</a></li>		      
 		    </ul>
 	          </nav>
 		</div>
@@ -3137,67 +3156,7 @@
 				<div class="cover"     id='editCoverDiv' onclick=toggleEditMode(true)></div>
 				<div class='mainBlock' id='editBlock' ></div>
 			</div>
-			<div id="hotkeyMenuDiv">
-			  <nav id="hotkeyMenu" class="menu menu--active">
-				<ul class="menu__items ">
-				  <li class="menu__item ">
-				<span class="menu__label " >
-				  <i class=""></i> &nbsp
-				</span>
-				  </li>
-				  <li class="menu__item ">
-				<a href="#" class="menu__link " onclick="setHotkey(49)">
-				  <span class="">Shift + 1</span> <span id="hotkey49" class="menu__setting">Not Set</span>
-				</a>
-				  </li>
-				  <li class="menu__item ">
-				<a href="#" class="menu__link " onclick="setHotkey(50)">
-				  <span class="">Shift + 2</span> <span id="hotkey50" class="menu__setting">Not Set</span>
-				</a>
-				  </li>
-				  <li class="menu__item ">
-				<a href="#" class="menu__link " onclick="setHotkey(51)">
-				  <span class="">Shift + 3</span> <span id="hotkey51" class="menu__setting">Not Set</span>
-				</a>
-				  </li>
-				  <li class="menu__item ">
-				<a href="#" class="menu__link " onclick="setHotkey(52)">
-				  <span class="">Shift + 4</span> <span id="hotkey52" class="menu__setting">Not Set</span>
-				</a>
-				  </li>
-				  <li class="menu__item ">
-				<a href="#" class="menu__link " onclick="setHotkey(53)">
-				  <span class="">Shift + 5</span> <span id="hotkey53" class="menu__setting">Not Set</span>
-				</a>
-				  </li>
-				  <li class="menu__item ">
-				<a href="#" class="menu__link " onclick="setHotkey(54)">
-				  <span class="">Shift + 6</span> <span id="hotkey54" class="menu__setting">Not Set</span>
-				</a>
-				  </li>
-				  <li class="menu__item">
-				<a href="#" class="menu__link" onclick="setHotkey(55)" >
-				  <span class="">Shift + 7</span> <span id="hotkey55" class="menu__setting">Not Set</span>
-				</a>
-				  </li>
-				  <li class="menu__item">
-				<a href="#" class="menu__link" onclick="setHotkey(56)">
-				  <span class="">Shift + 8</span> <span id="hotkey56" class="menu__setting">Not Set</span>
-				</a>
-				  </li>
-				  <li class="menu__item">
-				<a href="#" class="menu__link" onclick="setHotkey(57)">
-				  <span class="">Shift + 9</span> <span id="hotkey57" class="menu__setting">Not Set</span>
-				</a>
-				  </li>
-				  <li class="menu__item">
-				<a href="#" class="menu__link" onclick="setHotkey(48)">
-				  <span class="">Shift + 0</span> <span id="hotkey48" class="menu__setting">Not Set</span>
-				</a>
-				  </li>
-				</ul>
-			  </nav>
-			</div>
+			
 			<div id="popupSaveControlsPage" class="popup">
 			  <center><h2>Save your Controls Page</h2></center>
 			  <div>

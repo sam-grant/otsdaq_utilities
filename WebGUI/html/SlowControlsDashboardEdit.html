@@ -2,6 +2,9 @@
 <html lang="en"> 
 	<head>
 		<title>Controls Dashboard Editor</title>
+
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/SlowControlsDashboard.css">
+
 		<style type="text/css">			
 			body {
 				background-color: 		#838383;
@@ -405,7 +408,7 @@
 					"titleText_H"			: 40,
 					"widgetTileContainer_W"	: 0,
 					"widgetTileContainer_H"	: 0,
-					"TILE_SIZE"				: 96, //widget tile square size in pixels
+					"TILE_SIZE"				: 64, //widget tile square size in pixels
 					"SETTINGS_W"			: 220, //color, grid etc settings on right
 					"MARGIN"				: 5,
 			};
@@ -853,16 +856,19 @@
 			</div>
 			-->
 			<div id="settingsContainer">
-				<span class="toggle">
+				Grid Settings:<br>
+				<span class="toggle" style="margin-top:10px">					
 					<input type="checkbox" id="gridCheckbox" onclick="toggleGrid(this)" checked>
 						<label data-off="Off" data-on="On"></label>
 					</input>
 				</span>
-				<span class="colorPickersDiv"
-				<br><input type="color"  id="gridColorPicker"       onchange="setGridColor(this)">Grid Color</input>
-				<br><input type="color"  id="backgroundColorPicker" onchange="setBackgroundColor(this)">Background</input>
-				<br><input type="button" id="resetGrid"             onclick="resetToDefault()" value="Default Values"></input>
-				</span>
+				<div class="colorPickersDiv" style="margin-top:-10px">
+					<br><input type="color"  id="gridColorPicker"       onchange="setGridColor(this)">Grid Color</input>
+					<br><input type="color"  id="backgroundColorPicker" onchange="setBackgroundColor(this)">Background</input>
+					<br><button id="resetGrid" 
+							style="margin-bottom:1px; margin-left:20px; width:100px;"
+							onclick="resetToDefault()">Default Values</button>
+				</div>
 			</div>
 		</div>
 

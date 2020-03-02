@@ -454,20 +454,21 @@ CodeEditor.create = function(standAlone) {
 				function(req, reqParam, errStr)
 				{	
 			console.log("getAllowedExtensions",req,errStr);
-
-			if(errStr && errStr != "")
-				Debug.log(errStr,Debug.HIGH_PRIORITY);
 			
 			if(!_READ_ONLY && !req)
 			{
 				if(DesktopContent._sequence)
-					Debug.log("Assuming invalid permissions (remember the wiz mode sequence access code must be at least 8 characters to allow write access)! Reverting to read-only mode.", Debug.HIGH_PRIORITY);
+					Debug.log("Assuming invalid permissions (remember the wiz mode sequence access code must be at least 8 characters to allow write access)!\n\nReverting to read-only mode.", Debug.WARN_PRIORITY);
 				else
-					Debug.log("Assuming invalid permissions (remember only named users can have write access, not the anonymous admin user)! Reverting to read-only mode.", Debug.HIGH_PRIORITY);
+					Debug.log("Assuming invalid permissions (remember only named users can have write access, not the anonymous admin user)!\n\nReverting to read-only mode.", Debug.WARN_PRIORITY);
 				_READ_ONLY = true;
 				init();
 				return;
-			}
+			}			
+
+			if(errStr && errStr != "")
+				Debug.log(errStr,Debug.HIGH_PRIORITY);
+			
 			if(!req) //request failed
 			{
 				Debug.log("Does the Code Editor Supervisor exist? You must connect the web editor to a valid Code Editor Supervisor application (please check your Configuration Tree and then restart ots).",Debug.HIGH_PRIORITY);				
