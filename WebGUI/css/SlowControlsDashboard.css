@@ -13,11 +13,6 @@
 		vspace:						0;
 		margin:						0;
 
-		box-shadow: 				inset rgba(255,254,255,0.6) 0 0.3em .3em,
-									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
-									rgb(150,150,150) 0 .1em 3px,
-									rgb(175,175,175) 0 .2em 1px, /* color border */
-									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
 	}
 
 	#clearDiv {
@@ -110,6 +105,13 @@
 		background:					rgba(87,87,87, 0.6);
 	}
 
+	#fileFrame, #editFrame {
+		box-shadow: 				inset rgba(255,254,255,0.6) 0 0.3em .3em,
+									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+									rgb(150,150,150) 0 .1em 3px,
+									rgb(175,175,175) 0 .2em 1px, /* color border */
+									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+	}
 	
 	#fileBlock {
 		z-index:					150;
@@ -156,7 +158,6 @@
 	.widgetCover {
 		z-index: 					9;
 		cursor: 					grab;
-		background-color: 			rgba(239, 28, 190, 0.6);
 	}
 
 	.resizeWidgetCover {
@@ -264,8 +265,6 @@
 		top: 						30%;
 		left: 						36%;
 		z-index: 					32;
-
-		box-shadow: 				1px 1px 2px #cfcfcf;
 	}
 
 	#addPVMenu {

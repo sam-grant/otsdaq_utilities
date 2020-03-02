@@ -59,7 +59,7 @@
 			
 			.tile {
 				background-color: 		#b2b2b2;
-				border: 				2px solid rgba(0,0,0,0.1);
+				border: 				2px solid rgba(0,0,0,0);
 				border-radius: 			8px;
 				float:					left;
 				margin:					2px;
@@ -700,11 +700,13 @@
 					if(lastTileNumber_ !== undefined) //revert border
 					{
 						el = document.getElementById("tiles-" + lastTileNumber_ );
-						el.style.border = "thin solid rgba(0,0,0,0.1)";
+						el.style.border = "2px solid rgba(0,0,0,0)";
+						el.style.backgroundColor = "#b2b2b2";
 					}
 
 					el = document.getElementById("tiles-" + tileNumber);
 					el.style.border = "2px dotted orange";
+					el.style.backgroundColor = "white";
 					lastTileNumber_  = tileNumber;
 
 					parent.setupForDrawSelectionRectangle(tileNumber);
