@@ -1586,8 +1586,8 @@
 
 					if(!editBlock_.isHidden) 
 					{
-						Debug.log("FIXME use edit pencil icon instead of double click",Debug.HIGH_PRIORITY);
-						//mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
+						//Debug.log("FIXME use edit pencil icon instead of double click",Debug.HIGH_PRIORITY);
+						mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
 					}
 
 					mainBlockContainer.addEventListener("mousedown", startWidgetDrag);
