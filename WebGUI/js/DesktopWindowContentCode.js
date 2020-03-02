@@ -881,7 +881,9 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			else //bad address response
 			{
 
-				errStr = "Request Failed (code: " + req.status + ") - Bad Address:\n" + requestURL;
+				errStr = "Request Failed (code: " + req.status + 
+						") - Bad Address: " + origin + "?urn=" + urn + 
+						"\n" + requestURL;
 				Debug.log(errStr,Debug.HIGH_PRIORITY);
 				
 				//login should not help for bad address (and it is confusing to user)
@@ -1125,7 +1127,7 @@ DesktopContent.tooltipConditionString = function(str) {
 //			add checkbox to never show again
 // id of "ALWAYS".. disables never show handling (no checkboxes)
 //
-DesktopContent.tooltip = function(id,tip) {
+DesktopContent.tooltip = function(id,tip,alwaysShow) {
 
 	if(typeof Desktop !== 'undefined') //This call is from Desktop page.. so can use it
 	{
@@ -1178,11 +1180,11 @@ DesktopContent.tooltip = function(id,tip) {
 			id += oldId[i];
 	
 
-	if(id == "ALWAYS") //no need to check
+	if(alwaysShow || id == "ALWAYS") //no need to check
 		localFinishTooltip();
 	else	
 		DesktopContent.XMLHttpRequest(
-			"TooltipRequest?RequelstType=check" + 
+			"TooltipRequest?RequestType=check" + 
 			"&srcFunc=" + srcFunc +
 			"&srcFile=" + srcFile +
 			"&srcId=" + id

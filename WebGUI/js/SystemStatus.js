@@ -215,7 +215,10 @@ function getAppsArray()
 					var appTimeSplit = appTime[i].getAttribute("value").split(' ');
 					if(appTime[i].getAttribute("value") != "0" &&
 							(appTimeSplit.length > 2 && 
-									appTimeSplit[appTimeSplit.length-2] != 1970)
+									(appTimeSplit[appTimeSplit.length-2]|0) != 1970 
+									&& 
+									(appTimeSplit[appTimeSplit.length-2]|0) < 4000
+									) //i.e. real if year is not 0 or -1
 							)
 					{
 						all0 = false;
@@ -249,6 +252,14 @@ function getAppsArray()
 					"url"       :   appUrls[i].getAttribute("value"),
 					"context"   :   appContexts[i].getAttribute("value")
 				});
+				
+				var appTimeSplit = _allAppsArray[_allAppsArray.length-1].time.split(' ');
+				if(!(appTimeSplit.length > 2 && 
+						(appTimeSplit[appTimeSplit.length-2]|0) != 1970 
+						&& 
+						(appTimeSplit[appTimeSplit.length-2]|0) < 4000
+						)) //i.e. real if year is not 0 or -1
+					_allAppsArray[_allAppsArray.length-1].progress = 0;
 
 				// populate the array of classes
 

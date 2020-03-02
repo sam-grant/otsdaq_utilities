@@ -5,7 +5,7 @@
 		<style type="text/css">	
 			body {
 				font: 10px arial;
-				background-color: rgb(250, 250, 250);
+				background-color: rgb(255, 255, 255);
 				//margin: 0px !important;
 			}
 
@@ -32,6 +32,7 @@
 			//init()
 
 			var pv_settings_ = [];
+			var parameters_ = {class: "", "show_labels": "true"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -59,15 +60,14 @@
 
 			function getParameters()
 			{
-				parameters = {
-
-				};
-				return parameters;
+				return parameters_;
 			}
 
 			function setParameters(attributes)
 			{
-				
+				parameters_ = attributes;
+				console.log("thermometer: set parameters()");
+				console.log(parameters_);
 			}
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
@@ -75,18 +75,18 @@
 				console.log("SireneAlarm newValue() reached", pvName, pvValue);
 				if(pvSeverity == "MAJOR" )
 				{
-					document.getElementById("alarm-text").innerHTML = "<center style = 'color: red'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					document.getElementById("alarm-text").innerHTML = "<center style = 'color: red'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
 					document.getElementById("alarm-image").src = "./red_siren.png";
 				}
 				else if(pvSeverity == "MINOR")
 				{
 					if(_soundsEnabled) _chatSound.play();
-					document.getElementById("alarm-text").innerHTML = "<center style = 'color: orange'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					document.getElementById("alarm-text").innerHTML = "<center style = 'color: orange'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
 					document.getElementById("alarm-image").src = "./yellow_siren.png";
 				}
 				else if(pvSeverity == "INVALID")
 				{
-					document.getElementById("alarm-text").innerHTML = "<center style = 'color: blue'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					document.getElementById("alarm-text").innerHTML = "<center style = 'color: blue'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
 					document.getElementById("alarm-image").src = "./blue_siren.png";
 				}
 				else

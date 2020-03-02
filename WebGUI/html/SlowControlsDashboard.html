@@ -10,21 +10,110 @@
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 
 		<script>
 
 			//functions:
-			//init()
+			//	init()
+			//	checkMailbox()
+			//	handleMail(mail)
+			//	pagesReqHandler(req)
+			//	isUserAdminHandler(req)
+			//	pvListReqHandler(req)
+			//	loadPageReqHandler(req)
+			//	loadPhoebusPageReqHandler(req)
+			//	pollServerHandlerFunction(req)
+			//	generateUIDHandlerFunction(req)
+			//	settingsReqHandler(req, passParams)
+			//	historyReqHandler(req, passParams)
+			//	savePageReqHandler(req)
+			//	createControlsPageHandler(req)
+			//	handlerFunction(req)
+			//	pollServer()
+			//	generateUID()
+			//	updateRefreshInterval()
+			//	loadPage(page)
+			//	loadPhoebusPage(page)
+			//	loadPageNewWindow(fullPathToPage)
+			//	loadPageNewBrowserTab(fullPathToPage)
+			//	createDesktopIcon(fullPathToPage)
+			//	savePage()
+			//	hidePopupSaveControlsPage()
+			//	savePageAs()
+			//	savePhoebusPageAs()
+			//	setupWidget(id, parameters)
+			//	setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_)
+			//	getHistory(id, parameters)
+			//	addPVToWidget(pv, refreshRate, widgetID, fromAddPV)
+			//	compareAttributes(id, parameters)
+			//	setupForDrawSelectionRectangle(id)
+			//	drawSelectionRectangle(event)
+			//	stopdrawSelectionRectangle(event)
+			//	drawWidget(widget, newWidget, xx, yy, width, height, hideFrame)
+			//	drawWidgetFromFile(widget, xx, yy, width, height, hideFrame)
+			//	mouseoverEditBlock(e)
+			//	mouseoutEditBlock(e)
+			//	toggleEditMode()
+			//	toggleContextMenuCaller(id)
+			//	toggleContextMenu(e, id)
+			//	toggleContextMenuOff(e)
+			//	toggleHotkeyMenu()
+			//	toggleAddPV()
+			//	toggleFileMenu()
+			//	editWidgetAttributesOpen()
+			//	editWidgetAttributesClose()
+			//	editWidgetAttributesSave()
+			//	editWidgetAttributesaddRowPVList(keyParam, valueParam, tablebody, list)
+			//	checkIfMoreRowsNeeded(inputEl)
+			//	setWidgetDisplayName(widget, displayName)
+			//	showeditWidgetAttributesPopupBody(body)
+			//	clearBlock(el)
+			//	toggleGrid(on)
+			//	setBackgroundColor(color)
+			//	setGridColor(color, on)
+			//	handleKeys(event)
+			//	deleteWidget()
+			//	cutWidget(widgetCover)
+			//	pasteWidget()
+			//	toggleWidgetSelection(target)
+			//	startWidgetDrag(e)
+			//	endWidgetDrag(e)
+			//	startWidgetResize(e)
+			//	endWidgetResize(e)
+			//	translateWidget(widgetId, deltaX, deltaY)
+			//	resizeWidget(widgetId, deltaX, deltaY, deltaW, deltaH)
+			//	redrawTargetWidget(e)			
+			//	handleMouseDown(e)
+			//	handleMouseUp(e)
+			//	handleMouseMove(e)
+			//	handleResize(e)
+			//	redrawWindow(event, hover)
+			//	evaluateJS(str)
+			//	setRefreshRate(keyField,rateField)
+			//	isEmpty(obj)
+
+
 
 			//top-level scope (global) variables:
 			var pvList_ = {};
 			var elPointer_ = {};
 			var pagesList_ = [];
-			var fileBlock_ = {name:"", isHidden:false, el:"", savePopup:""}; // = ["fileBlock", false ];
 			var mainBlock_ = {name:"", isHidden:false, el:""}; // = ["mainBlock", false ];
+			
+			//---- file pane:
+			var fileBlock_ = {name:"", isHidden:false, el:"", savePopup:""}; // = ["fileBlock", false ];
+
+			var FILE_BLOCK_WIDTH = 300;
+			//==== end file pane.
+			
+			//---- edit pane:
 			var editBlock_ = {name:"", isHidden:true, el:""}; // = [false ];
-			var EDIT_BLOCK_PEEK_HEIGHT = 30;
+			
+			var EDIT_BLOCK_PEEK_HEIGHT = 40;
 			var EDIT_BLOCK_HEIGHT = 300;
+			//==== end edit pane.
+			
 			var page_ = page_ || {}; //define the namespace
 			var PAGE_POSITIONS_ = 1000; //number of allowed integer locations (e.g. x,y,w,h for widgets) 
 			var refreshRate_ = 15000; //set default to refresh every 15 seconds (ms)
@@ -78,19 +167,32 @@
 			var resizeFrom_ = "";
 			var _saveCursorType;
 			//END Resize
+			
+			var cutWidget_;
+			var cutWidgetName_;
 
+			var pageOffSetX_ = 0;
+			var pageOffSetY_ = 0;
+			var dragLockout_ = false;
+			var targetElement_ = undefined;
+			var dragTargetElement_ = undefined;
+			
 			var setupForDrawingID_ = undefined;
-			hotkey_ = [];
+			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 
 
 			//=====================================================================================
 			//init called once body has loaded
-			function init() {
+			function init() 
+			{
 
 				Debug.log("init() was called");
 
+				window.onkeyup = handleKeys;
+				window.onresize = handleResize;
+				
 				var parameterPageName = DesktopContent.getParameter(0,"page_name");				
 
 				Debug.log("Parameter filename: " + parameterPageName);
@@ -113,9 +215,7 @@
 				elPointer_["addPVMenuDiv"] = document.getElementById("addPVMenuDiv");
 				elPointer_["editWidgetAttributesPopup-body-pvlist"] = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				elPointer_["editWidgetAttributesPopup-body-attributes"] = document.getElementById("editWidgetAttributesPopup-body-attributes");
-				elPointer_["hotkeyMenuDiv"] = document.getElementById("hotkeyMenuDiv");
-				elPointer_["hotkeyMenuDiv"].style.display = "none";
-
+			
 				menuDiv_ = document.getElementById("contextMenuDiv");
 				menu_= document.getElementById("contextMenu");
 				mailbox_ = document.getElementById("mailbox");
@@ -178,7 +278,7 @@
 				console.log(("-" + fileBlock_.el.style.width));
 				fileBlock_.el.style.left = "-4000px"; //hack because the file tree page probably didnt load by now
 				editBlock_.el.style.bottom = "-4000px"; //hack because the edit page probably didnt load by now
-				backgroundCover_ = "rgba(87,87,87, 0.6)";
+				
 				nav_ = document.getElementById("navigationMenu");
 				nav_.classList.add("navigationMenu--active");
 				//END JS Style
@@ -649,7 +749,8 @@
 
 
 			//=====================================================================================
-			function handlerFunction(req) {
+			function handlerFunction(req) 
+			{
 				var child1data = DesktopContent.getXMLValue(req,"child");
 				var child2data = DesktopContent.getXMLValue(req,"child2");
 				Debug.log("--child1data:",child1data," --child2data:",child2data);
@@ -1110,20 +1211,20 @@
 			{
 				var toolTip =
 				pvName
-				+ "\nlast value "
+				+ "\nlast value: "
 				+ pvValue
 				+ " "
 				+ pv_settings_[pvName].Units
-				+ " time "
-				+ new Date(pvTime*1000)
-				+ "\nLower Warning Limit:\t" + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
-			  	+ "Upper Warning Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
-			  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
-			  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
-			  	+ "Lower Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
-			  	+ "Upper Control Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
-			  	+ "Lower Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
-			  	+ "Upper Display Limit:\t"   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
+				+ "\ntime: "
+				+ ConfigurationAPI.getDateString(new Date((pvTime | 0) * 1000))
+				+ "\nLower Warning Limit:  " + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
+			  	+ "Upper Warning Limit:  "   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
+			  	+ "Lower Alarm Limit:    "   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+			  	+ "Upper Alarm Limit:    "   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+			  	+ "Lower Control Limit:   "   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
+			  	+ "Upper Control Limit:   "   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
+			  	+ "Lower Display Limit:   "   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
+			  	+ "Upper Display Limit:   "   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
 			  	return toolTip;
 			} //end setWidgetToolTip()
 
@@ -1168,7 +1269,7 @@
 				{
 					if(Object.keys(parameters).indexOf(Object.keys(page_.widgets[id].attributes)[attribute]) == -1)
 					{
-						Debug.log("Attribute [" + Object.keys(page_.widgets[id].attributes)[attribute] + "] for " + page_.widgets[id].Display_Name + " is no longer required. No action required.", Debug.HIGH_PRIORITY);
+						//Debug.log("Attribute [" + Object.keys(page_.widgets[id].attributes)[attribute] + "] for " + page_.widgets[id].Display_Name + " is no longer required. No action required.", Debug.HIGH_PRIORITY);
 					}
 				}
 
@@ -1189,7 +1290,7 @@
 						else
 							attributesNew[Object.keys(parameters)[attribute]] = parameters[Object.keys(parameters)[attribute]];
 
-						Debug.log("Attribute [" + Object.keys(parameters)[attribute] + "] for " + page_.widgets[id].Display_Name + " is now a required attribute. Action Required.", Debug.HIGH_PRIORITY);
+						//Debug.log("Attribute [" + Object.keys(parameters)[attribute] + "] for " + page_.widgets[id].Display_Name + " is now a required attribute. Action Required.", Debug.HIGH_PRIORITY);
 					}
 				}
 				page_.widgets[id].attributes = attributesNew;
@@ -1341,7 +1442,7 @@
 				widgetFrame.scrolling="No";
 
 				var containerDiv;
-				var coverDiv;
+				var mainBlockContainer;
 
 				var OUTLINE_OFFSET = 15;
 				var resizeDiv;
@@ -1395,10 +1496,10 @@
 					containerDiv.style["background-color"] = "rgba(0,0,0,0.)";
 					//containerDiv.innerHTML = "containerDiv";
 
-					coverDiv = document.createElement("div");
-					coverDiv.className = "widgetCover";
-					coverDiv.id = widgetFrame.id + "-cover";
-					//coverDiv.innerHTML = "coverDiv";
+					mainBlockContainer = document.createElement("div");
+					mainBlockContainer.className = "widgetCover";
+					mainBlockContainer.id = widgetFrame.id + "-cover";
+					//mainBlockContainer.innerHTML = "mainBlockContainer";
 
 					resizeDiv = document.createElement("div");
 					resizeDiv.className = "resizeWidgetCover";
@@ -1450,11 +1551,11 @@
 					if(!editBlock_.isHidden) 
 					{
 						Debug.log("FIXME use edit pencil icon instead of double click",Debug.HIGH_PRIORITY);
-						//coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
+						//mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
 					}
 
-					coverDiv.addEventListener("mousedown", startWidgetDrag);
-					coverDiv.addEventListener("mouseup", endWidgetDrag);	
+					mainBlockContainer.addEventListener("mousedown", startWidgetDrag);
+					mainBlockContainer.addEventListener("mouseup", endWidgetDrag);	
 
 					resizeDivTop.addEventListener("mousedown", startWidgetResize);
 					resizeDivLeft.addEventListener("mousedown", startWidgetResize);
@@ -1488,7 +1589,7 @@
 					widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
 
 					containerDiv.appendChild(resizeDiv);
-					containerDiv.appendChild(coverDiv);
+					containerDiv.appendChild(mainBlockContainer);
 
 					page_.widgets[widget].el = widgetFrame;
 
@@ -1500,7 +1601,7 @@
 					widgetFrame = document.getElementById(widget);
 				
 					containerDiv = document.getElementById(widgetFrame.id + "-container");
-					coverDiv = document.getElementById(widgetFrame.id + "-cover");
+					mainBlockContainer = document.getElementById(widgetFrame.id + "-cover");
 					resizeDiv = document.getElementById(widgetFrame.id + "-resize-cover");
 					resizeDivTop = document.getElementById(widgetFrame.id + "-resize-cover-north");
 					resizeDivLeft = document.getElementById(widgetFrame.id + "-resize-cover-west");
@@ -1527,12 +1628,12 @@
 				containerDiv.style.top = y + "px";
 				containerDiv.style.zIndex = "5";
 
-				coverDiv.style.width = w + "px";
-				coverDiv.style.height = h + "px";
-				coverDiv.style.position = "absolute";
-				coverDiv.style.left = "0px";
-				coverDiv.style.top = "0px";
-				coverDiv.style.zIndex = "50";
+				mainBlockContainer.style.width = w + "px";
+				mainBlockContainer.style.height = h + "px";
+				mainBlockContainer.style.position = "absolute";
+				mainBlockContainer.style.left = "0px";
+				mainBlockContainer.style.top = "0px";
+				mainBlockContainer.style.zIndex = "50";
 
 				resizeDiv.style.width = (w + (2 * OUTLINE_OFFSET)) + "px";
 				resizeDiv.style.height = (h + (2 * OUTLINE_OFFSET)) + "px";
@@ -1631,7 +1732,7 @@
 				page_.widgets[widget].y = (PAGE_POSITIONS_*yy/windowHeight) | 0;
 
 				var containerDiv;
-				var coverDiv;
+				var mainBlockContainer;
 
 				var OUTLINE_OFFSET = 15;
 				var resizeDiv;
@@ -1649,10 +1750,10 @@
 				containerDiv.style["background-color"] = "rgba(0,0,0,0.0)";
 				//containerDiv.innerHTML = "containerDiv";
 
-				coverDiv = document.createElement("div");
-				coverDiv.className = "widgetCover";
-				coverDiv.id = widgetFrame.id + "-cover";
-				//coverDiv.innerHTML = "coverDiv";
+				mainBlockContainer = document.createElement("div");
+				mainBlockContainer.className = "widgetCover";
+				mainBlockContainer.id = widgetFrame.id + "-cover";
+				//mainBlockContainer.innerHTML = "mainBlockContainer";
 
 				resizeDiv = document.createElement("div");
 				resizeDiv.className = "resizeWidgetCover";
@@ -1704,11 +1805,12 @@
 				widgetFrame.src = "widgets/" + widgetLibrary.typeToSrc[page_.widgets[widget].type];
 				widgetFrame.style.border = "0";
 				widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
+				
+				Debug.log("FIXME make edit pencil",Debug.HIGH_PRIORITY);
+				//mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
 
-				coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
-
-				coverDiv.addEventListener("mousedown", startWidgetDrag);
-				coverDiv.addEventListener("mouseup", endWidgetDrag);	
+				mainBlockContainer.addEventListener("mousedown", startWidgetDrag);
+				mainBlockContainer.addEventListener("mouseup", endWidgetDrag);	
 
 				resizeDivTop.addEventListener("mousedown", startWidgetResize);
 				resizeDivLeft.addEventListener("mousedown", startWidgetResize);
@@ -1750,12 +1852,12 @@
 				containerDiv.style.top = y + "px";
 				containerDiv.style.zIndex = "5";
 
-				coverDiv.style.width = w + "px";
-				coverDiv.style.height = h + "px";
-				coverDiv.style.position = "absolute";
-				coverDiv.style.left = "0px";
-				coverDiv.style.top = "0px";
-				coverDiv.style.zIndex = "50";
+				mainBlockContainer.style.width = w + "px";
+				mainBlockContainer.style.height = h + "px";
+				mainBlockContainer.style.position = "absolute";
+				mainBlockContainer.style.left = "0px";
+				mainBlockContainer.style.top = "0px";
+				mainBlockContainer.style.zIndex = "50";
 
 				resizeDiv.style.width = (w + (2 * OUTLINE_OFFSET)) + "px";
 				resizeDiv.style.height = (h + (2 * OUTLINE_OFFSET)) + "px";
@@ -1833,7 +1935,7 @@
 				}
 
 				containerDiv.appendChild(resizeDiv);
-				containerDiv.appendChild(coverDiv);
+				containerDiv.appendChild(mainBlockContainer);
 
 				page_.widgets[widget].el = widgetFrame;
 
@@ -1871,6 +1973,7 @@
 				Debug.log("Toggle Edit Mode");
 
 				mouseoutEditBlock();
+				//mouseoverEditBlock();
 				
 				var covers = document.getElementsByClassName("widgetCover");
 			    var resize_covers = document.getElementsByClassName("resizeWidgetCover");
@@ -1879,6 +1982,10 @@
 				if(editBlock_.isHidden && !isReadOnly_)
 				{
 					Debug.log("Edit Mode On");
+
+					editBlock_.isHidden = false;
+					editBlock_.el.style.display = "block";
+					editButton.innerHTML = "Go Live!";
 
 					//Make sure pv list is up-to-date
 					DesktopContent.XMLHttpRequest(
@@ -1892,12 +1999,10 @@
 
 					UID_ = 0;
 					window.clearInterval(timerVariable_);
-					editButton.classList.add("navigationMenu--Edit");
+					//editButton.classList.add("navigationMenu--Edit");
 					mainBlock_.el.classList.add("editMode");
 
 					
-					editBlock_.isHidden = false;
-
 					for(widget in page_.widgets)
 					{
 						drawWidget(widget, false, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y);
@@ -1924,6 +2029,10 @@
 				{
 					Debug.log("Edit Mode Off");
 
+					editBlock_.isHidden = true;
+					editBlock_.el.style.display = "none";
+					editButton.innerHTML = "Switch to Edit Mode";
+
 					UID_ = 0;
 
 					if (page_.widgets != undefined && !isEmpty(page_.widgets))
@@ -1944,14 +2053,11 @@
 					}
 
 					mainBlock_.el.classList.remove("editMode");
-					editButton.classList.remove("navigationMenu--Edit");
+					//editButton.classList.remove("navigationMenu--Edit");
 					
-					editBlock_.isHidden = true;
 
 					for(var i = 0;i<covers.length;++i)
-					{
-						covers[i].style.display = "none";	
-					}
+						covers[i].style.display = "none";
 
 					toggleWidgetSelection();
 					toggleGrid(false);
@@ -2039,37 +2145,47 @@
 			//=====================================================================================
 			function toggleFileMenu()
 			{
-				var coverDiv = document.getElementById("coverDiv")
-				var cover = document.getElementById("mainBlockCoverDiv");
-				cover.style.width = coverDiv.style.width;
-				cover.style.height = coverDiv.style.height;
-				cover.style.x = coverDiv.style.x;
-				cover.style.y = coverDiv.style.y;
-				fileBlock_.el.style.left = ("-" + fileBlock_.el.style.width)
+				Debug.log("Toggle File Pane");
+				
+				var mainBlockContainer = document.getElementById("mainBlockContainer");
+				var cover = document.getElementById("grayOutCoverDiv");
+				cover.style.width = mainBlockContainer.offsetWidth + "px";
+				cover.style.height = mainBlockContainer.offsetHeight + "px";
+				
+				//file toggle movement approach is always leave left
+				//	the same, and change margin-left 
+				//	(style transition speed on margin-left property for graceful movement)
+				fileBlock_.el.style.left = (- FILE_BLOCK_WIDTH) + "px";
+				
 
 				if(fileBlock_.isHidden)
 				{
+					console.log("Showing file pane!");
+
+					fileBlock_.isHidden = false;
+					fileBlock_.el.style.marginLeft = FILE_BLOCK_WIDTH + "px";
+
+					cover.style.display = "block";
+					
+					editBlock_.isHidden = true;
+					editBlock_.el.style.display = "none";
+					
 					nav_.classList.remove("navigationMenu--active");
 					nav_.style.display = "none";
-					editBlock_.isHidden = true;
-					fileBlock_.isHidden = false;
-					fileBlock_.el.style.zIndex = "150";
-					console.log("Hovering!");
-					cover.style.backgroundColor = backgroundCover_;
-					cover.style.zIndex = parseInt(fileBlock_.el.style.zIndex) -1;
-					editBlock_.el.style.display = "none";
-					fileBlock_.el.style.marginLeft = fileBlock_.el.style.width;
 				}
 				else
 				{
+					console.log("Hiding file pane!");
+					
 					fileBlock_.isHidden = true;
-					fileBlock_.el.style.zIndex = "30";
-					fileBlock_.el.style.marginLeft = "0px";
-					cover.style.backgroundColor = "rgba(0,0,0,0)";
-					mainBlock_.el.style.display = "block";
+					fileBlock_.el.style.marginLeft = -50 + "px";
+
+					cover.style.display = "none";
+					
+					//mainBlock_.el.style.display = "block";
+					
 					editBlock_.el.style.display = "block";
-					fileBlock_.el.style.zIndex = "-1";
-					cover.style.zIndex = parseInt(fileBlock_.el.style.zIndex) -1;
+					
 					nav_.classList.add("navigationMenu--active");
 					nav_.style.display = "block";
 				}
@@ -2253,11 +2369,12 @@
 						}
 					}
 					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setParameters(page_.widgets[menu_.getAttribute("widgetID")].attributes);
+					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.newWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
 
-					if(actionRequired)
-						document.getElementById(menu_.getAttribute("widgetID")).className = "action-required";
-					else
-						document.getElementById(menu_.getAttribute("widgetID")).className = "";
+//					if(actionRequired)
+//						document.getElementById(menu_.getAttribute("widgetID")).className = "action-required";
+//					else
+//						document.getElementById(menu_.getAttribute("widgetID")).className = "";
 				}
 			} //end editWidgetAttributesSave()
 
@@ -2337,15 +2454,6 @@
 
 
 			//=====================================================================================
-			function sleep(miliseconds) 
-			{
-				   var currentTime = new Date().getTime();
-				   while (currentTime + miliseconds >= new Date().getTime()) {
-				   }
-			} //end sleep()
-
-
-			//=====================================================================================
 			function clearBlock(el)
 			{
 				for(var child = 0; child < el.childNodes.length; child++)
@@ -2389,91 +2497,59 @@
 				gridColor_ = color;
 				toggleGrid(on);
 			} //end setGridColor()
-
-
+			
 			//=====================================================================================
-			function setHotkey(key)
-			{
-				hotkey_[key] = [pageOffSetX_, pageOffSetY_];
-				document.getElementById(("hotkey" + key)).innerHTML = pageOffSetX_ + "x" + pageOffSetY_;
-				document.getElementById(("hotkey" + key)).style.color = "#00cc00";
-			} //end setHotkey()
-
-			keyMap_ = [];
-
-
-			//=====================================================================================
-			window.onkeyup = window.onkeydown = function(e){
-			    //e = e || event; // to deal with IE
-				keyMap_[e.keyCode]  = e.type == 'keydown';
-				handleKeys(e);
-			 }
-
-
-			//=====================================================================================
-			function handleKeys(event)
-			{
-				event.clientX = 0;
-				event.clientY = 0;
-				
-			    if (event.shiftKey && keyMap_[82])//Shift + r(eset)
-			    {
-			    	resetToOrigin();
-				}
-			    else if(event.shiftKey && (keyMap_[48] || keyMap_[49] || keyMap_[50] || keyMap_[51] || keyMap_[52] || keyMap_[53] || keyMap_[54] || keyMap_[55] || keyMap_[56] || keyMap_[57]))
-			    {
-			    	pageOffSetX_ = hotkey_[event.keyCode][0];
-					pageOffSetY_ = hotkey_[event.keyCode][1];
-					mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");
-					redrawWindow();
-			    }
-			    else if(event.shiftKey && keyMap_[72]) //Shift + h(otkey)
-			    {
-			    	toggleHotkeyMenu();
-			    }
-			    else if(event.shiftKey && keyMap_[88])//Shift Key + X(cut)
-			    {
-			    	console.log(targetElement_);
-			    	cutWidget(targetElement_);
-			    }
-			    else if(event.shiftKey && keyMap_[86])//Shift Key + v(paste)
-			    {
-			    	pasteWidget();
-			    }
-			    else if(event.shiftKey && keyMap_[79])//Shift Key + o(pen)
-			    {
-			    	toggleFileMenu();
-			    }
-			    else if(event.shiftKey && keyMap_[69])//Shift Key + e(dit)
-			    {
-			    	toggleEditMode();
-			    }
-
-			    if(keyMap_[38])//up arrow
-			    {
-			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 0, -1);}
-			    	else {pageOffSetY_+=3; redrawWindow();}
-					
-			    }
-			    if(keyMap_[40])//down arrow
-			    {
-			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 0, 1);}
-			    	else {pageOffSetY_-=3; redrawWindow(); }
-						
-			    }
-			    if(keyMap_[37])//left arrow
-			    {
-			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, -1, 0);}
-			    	else { pageOffSetX_+=3; redrawWindow(); }
-						
-			    }
-			    if(keyMap_[39])// right arrow
-			    {
-			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 1, 0)}
-			    	else { pageOffSetX_-=3; redrawWindow(); }
-			    }
+			function handleKeys(e)
+			{				
+				if(e.shiftKey)
+				{
+					switch(e.keyCode)
+					{
+					case 88: 	//X (cut)
+				    	console.log("cut widget",targetElement_);
+				    	cutWidget(targetElement_);
+				    	break;
+					case 86: 	//V (paste)
+				    	console.log("paste widget");
+				    	pasteWidget();
+				    	break;
+					case 79: 	//O (open)
+				    	console.log("toggle file manager");
+				    	toggleFileMenu();
+				    	break;
+					case 69: 	//E (edit mode)
+				    	console.log("toggle edit mode");
+				    	toggleEditMode();
+				    	break;
+				    	
+					default:;
+					}
+				} //end shift key + key handling
+				else //no shift key
+				{
+					switch(e.keyCode)
+					{
+					case 38: 	//up arrow (move widget)
+				    	console.log("up move widget",targetElement_);
+				    	translateWidget(targetElement_, 0, -1);
+				    	break;
+					case 40: 	//down arrow (move widget)
+				    	console.log("down move widget",targetElement_);
+				    	translateWidget(targetElement_, 0, 1);
+				    	break;
+					case 37: 	//left arrow (move widget)
+				    	console.log("left move widget",targetElement_);
+				    	translateWidget(targetElement_, -1, 0);
+				    	break;
+					case 39: 	//right arrow (move widget)
+				    	console.log("right move widget",targetElement_);
+				    	translateWidget(targetElement_, 1, 0);
+				    	break;
+					default:;
+					}
+				} //end no shift key key handling
+			    
 			} //end handleKeys()
-
 
 			//=====================================================================================
 			function deleteWidget()
@@ -2484,10 +2560,6 @@
 				mainBlock_.el.removeChild(widgetCover.parentNode);
 				toggleContextMenuOff();
 			} //end deleteWidget()
-
-
-			var cutWidget_;
-			var cutWidgetName_;
 
 			//=====================================================================================
 			function cutWidget(widgetCover)
@@ -2504,7 +2576,6 @@
 				delete page_.widgets[id];
 				mainBlock_.el.removeChild(widgetCover.parentNode);
 			} //end cutWidget()
-
 
 			//=====================================================================================
 			function pasteWidget()
@@ -2538,7 +2609,6 @@
 				redrawWindow();
 			} //end pasteWidget()
 
-
 			//=====================================================================================
 			function toggleWidgetSelection(target)
 			{
@@ -2555,13 +2625,6 @@
 					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "block";
 				}	
 			} //end toggleWidgetSelection()
-
-
-			var pageOffSetX_ = 0;
-			var pageOffSetY_ = 0;
-			var dragLockout_ = false;
-			var targetElement_ = undefined;
-			var dragTargetElement_ = undefined;
 
 			//=====================================================================================
 			function startWidgetDrag(e)
@@ -2587,7 +2650,8 @@
 						page_.widgets[widget].el.style.display = "none";
 					}	
 				}
-				else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && editBlock_.isHidden == false)
+				else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && 
+						editBlock_.isHidden == false)
 				{
 					console.log("editBlock is hidden ", editBlock_.isHidden);
 					toggleWidgetSelection(e.target);
@@ -2613,7 +2677,6 @@
 
 				dragLockout_ = true;
 			} //end startWidgetDrag()
-
 
 			//=====================================================================================
 			function endWidgetDrag(e)
@@ -2656,7 +2719,6 @@
 				}
 			} //end endWidgetDrag()
 
-
 			//=====================================================================================
 			function startWidgetResize(e)
 			{
@@ -2697,7 +2759,6 @@
 
 				dragLockout_ = true;
 			} //end startWidgetResize()
-
 
 			//=====================================================================================
 			function endWidgetResize(e)
@@ -2743,7 +2804,6 @@
 				redrawWindow();
 			} //end endWidgetResize()
 
-
 			//=====================================================================================
 			function translateWidget(widgetId, deltaX, deltaY)
 			{
@@ -2760,7 +2820,6 @@
 				drawWidget(widgetId,false,0,0,0,0, //newWidget, x, y, width, height
 					true /*hideFrame*/);
 			} //end translateWidget()
-
 
 			//================================================================================
 			// resizeWidget(id, resize_from = "center", new_suggested_width, new_suggested_height)
@@ -2783,7 +2842,6 @@
 				drawWidget(widgetId,false,0,0,0,0, //newWidget, x, y, width, height
 					true /*hideFrame*/);
 			} //end resizeWidget()
-
 
 			//=====================================================================================
 			//redrawTargetWidget ~~
@@ -2861,7 +2919,6 @@
 				y_Pos_forDrag_ = e.clientY;
 			} //end redrawTargetWidget()
 
-
 			//=====================================================================================
 			function handleMouseDown(e)
 			{				
@@ -2888,8 +2945,11 @@
 				{			
 					endWidgetResize(e);
 				}
+				else if(!fileBlock_.isHidden)
+				{
+					toggleFileMenu();
+				}
 			} //end handleMouseUp()
-
 
 			//=====================================================================================
 			function handleMouseMove(e)
@@ -2911,13 +2971,17 @@
 				}
 			} //end handleMouseMove()
 
-
 			//=====================================================================================
-			function drawGrid()
+			function handleResize(e) 
 			{
-				mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");				
-			} //end drawGrid()
-
+				console.log("handleResize()");
+				
+				for(widget in page_.widgets)
+					drawWidget(widget, false);
+				
+				toggleWidgetSelection();
+				redrawWindow();
+			}; //end onresize()
 
 			//=====================================================================================
 			function redrawWindow(event, hover) 
@@ -2930,7 +2994,7 @@
 				var maxWidth = window.innerWidth; // - (2 * _MARGIN);
 				var maxHeight = window.innerHeight - (1 * _MARGIN);
 				var marginLeft = 0;
-				var cover = document.getElementById("coverDiv");
+				var cover = document.getElementById("mainBlockContainer");
 				var editCover = document.getElementById("editCoverDiv");
 
 				hiddenWidth_ = maxWidth * 0.05;
@@ -2991,7 +3055,6 @@
 					navBar.style.display = "block";
 				}
 
-				drawGrid();
 			} //end redrawWindow()
 
 
@@ -3007,7 +3070,7 @@
 			//=====================================================================================
 			function setRefreshRate(keyField,rateField)
 			{
-				Debug.log("setRefreshRate() reached");
+				console.log("setRefreshRate()",keyField.value,rateField.value);
 				if(keyField.value != "")
 					if(pvList_[keyField.value] != "")
 						rateField.value = pvList_[keyField.value];
@@ -3015,21 +3078,9 @@
 						rateField.value = 10;
 			} //end setRefreshRate()
 
-
 			//=====================================================================================
-			window.onresize = function() {
-				console.log("window.onresize!");
-				for(widget in page_.widgets)
-				{
-					drawWidget(widget, false);//, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y);
-				}
-
-				toggleWidgetSelection();
-				redrawWindow();
-			}; //end onresize()
-
-			//=====================================================================================
-			function isEmpty(obj){
+			function isEmpty(obj)
+			{
 				return (Object.getOwnPropertyNames(obj).length === 0);
 			} //end isEmpty()
 
@@ -3040,178 +3091,119 @@
 		<div id="navigationBarDiv">	
 	    	  <nav>
 		    <ul id="navigationMenu">
-		      <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File</a></li>
-		      <!--<li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>-->
-		      <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">EditMode</a></li>
-		      <!--<li><a href="#" title="" id="menuli3" onclick="toggleHotkeyMenu()">Quick Views</a></li>-->
-		      <!--<li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>-->
+		      <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File Manager</a></li>		      
+		      <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">Edit Mode</a></li>		      
 		    </ul>
 	          </nav>
 		</div>
+		
 		<div class='mainBlock' 	id='fileBlock'  ></div>
-		<div class="cover" 		id="mainBlockCoverDiv"></div>
-		<div class="cover"     	id="coverDiv" height="auto" width="auto">
-		<div class='mainBlock '	id='mainBlock' > <!-- onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)"> -->
-		<div id="contextMenuDiv">
-		<nav id="contextMenu" class="menu ">
-		  <ul class="menu__items ">
-		    <li class="menu__item ">
-		      <a href="#" class="menu__link " onclick="toggleAddPV()">
-		        <i class=""></i> Add PV
-		      </a>
-		    </li>
-		    <li class="menu__item">
-		      <a href="#" class="menu__link" onclick="editWidgetAttributesOpen()" >
-		        <i class=""></i> Edit Attributes
-		      </a>
-		    </li>
-		    <li class="menu__item">
-		      <a href="#" class="menu__link" onclick="deleteWidget()">
-		        <i class=""></i> Delete Widget
-		      </a>
-		    </li>
-		    <li class="menu__item">
-		      <a href="#" class="menu__link" onclick="toggleContextMenuOff()" >
-		        <i class=""></i> Close
-		      </a>
-		    </li>
-		  </ul>
-		</nav>
-		</div>
-		<div id="addPVMenuDiv">
-		  <nav id="addPVMenu" class="menu ">
-		    <ul class="menu__items ">
-		      <li class="menu__item ">
-			<span class="menu__link">
-			  <i class=""></i><input type="text" id="addPVPV" class="editableInput addPVMenuInput" placeholder="PV" list="pvDatalist"></input>
-			</span> 		
-		      </li>
-		      <li class="menu__item">
-			<span class="menu__link">
-			  <i class=""></i><input type="text" id="addPVRefreshRate" class="editableInput addPVMenuInput" placeholder="Refresh Rate (ms)"></input>
-			</span>
-		      </li>
-		      <li class="menu__item" style="height: auto">
-			<span style="width: 100%; height: auto;">
-			  <a href="#" onclick="addPVToWidget(document.getElementById('addPVPV').value, document.getElementById('addPVRefreshRate').value, document.getElementById('addPVMenuDiv').getAttribute('widgetID'), true)"><button type="button" class="menu__button" >Add PV </button></a>
-			  <a href="#"	onclick="toggleAddPV()"><button type="button" class="menu__button">Close</button></a>
-		    	</span>
-		      </li>
-		    </ul>
-		  </nav>
-		</div>
-		<div class="ghost-select" id="selectionRectangle"><span></span></div>
-		</div>
-		<div class="cover"     id='editCoverDiv' onclick=toggleEditMode(true)></div>
-		<div class='mainBlock' id='editBlock' ></div>
-		</div>
-		<div id="hotkeyMenuDiv">
-		  <nav id="hotkeyMenu" class="menu menu--active">
-		    <ul class="menu__items ">
-		      <li class="menu__item ">
-			<span class="menu__label " >
-			  <i class=""></i> &nbsp
-			</span>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(49)">
-			  <span class="">Shift + 1</span> <span id="hotkey49" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(50)">
-			  <span class="">Shift + 2</span> <span id="hotkey50" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(51)">
-			  <span class="">Shift + 3</span> <span id="hotkey51" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(52)">
-			  <span class="">Shift + 4</span> <span id="hotkey52" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(53)">
-			  <span class="">Shift + 5</span> <span id="hotkey53" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item ">
-			<a href="#" class="menu__link " onclick="setHotkey(54)">
-			  <span class="">Shift + 6</span> <span id="hotkey54" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item">
-			<a href="#" class="menu__link" onclick="setHotkey(55)" >
-			  <span class="">Shift + 7</span> <span id="hotkey55" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item">
-			<a href="#" class="menu__link" onclick="setHotkey(56)">
-			  <span class="">Shift + 8</span> <span id="hotkey56" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item">
-			<a href="#" class="menu__link" onclick="setHotkey(57)">
-			  <span class="">Shift + 9</span> <span id="hotkey57" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		      <li class="menu__item">
-			<a href="#" class="menu__link" onclick="setHotkey(48)">
-			  <span class="">Shift + 0</span> <span id="hotkey48" class="menu__setting">Not Set</span>
-			</a>
-		      </li>
-		    </ul>
-		  </nav>
-		</div>
-		<div id="popupSaveControlsPage" class="popup">
-		  <center><h2>Save your Controls Page</h2></center>
-		  <div>
-		    <p><b>Page Name</b></p>
-		    <center><textarea id="controlsPageName" cols="43" rows="1"></textarea></center>
-		    <p><b>Controls Page Notes</b></p>
-		    <center><textarea id="controlsPageNotes" cols="43" rows="6"></textarea></center>
-		    <div id="makeControlsPagePublic">
-		      <input type="checkbox" id="isControlsPagePublic"> Make accessible to public</input>
-		    </div>
-		    <div class="buttongroup">
-		      <center>
-			<button onclick="hidePopupSaveControlsPage()">Cancel</button>
-			<button onclick="savePhoebusPageAs()">Save as Controls Page</button>
-		      </center>
-		    </div>
-		  </div>
-		</div>
-		<div class="editWidgetAttributesPopup-container" id="editWidgetAttributesPopup-container">
-		  <div class="editWidgetAttributesPopup-header" id="editWidgetAttributesPopup-header" ></div>
-		  <div class="editWidgetAttributesPopup-menu"   id="editWidgetAttributesPopup-menu">
-		    <nav id="editWidgetAttributesPopup-menu-nav">
-		      <ul class="menu__items ">
-			<li class="menu__item ">
-			  <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('PVList')">
-			    <i class=""></i> Edits PVs
-			  </a>
-			</li>
-			<li class="menu__item">
-			  <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('EditAttributes')" >
-			    <i class=""></i> Edit Attributes
-			  </a>
-			</li>
-			<!--<li class="menu__item">
-			    <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('Macromaker')">
-			      <i class=""></i> Macromaker
-			    </a>
-			</li>-->
-		      </ul>
-		    </nav>
-		  </div>
-		  <div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-pvlist"></div>
-		  <div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-attributes"><p>body</p></div>
-		  <!--<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>-->
-		  <div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
-		</div>
+		
+		<div id="grayOutCoverDiv"></div>
+		
+		<div id="mainBlockContainer" height="auto" width="auto">
+			<div class='mainBlock '	id='mainBlock' > <!-- onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)"> -->
+				<div id="contextMenuDiv">
+					<nav id="contextMenu" class="menu ">
+					  <ul class="menu__items ">
+						<li class="menu__item ">
+						  <a href="#" class="menu__link " onclick="toggleAddPV()">
+							<i class=""></i> Add PV
+						  </a>
+						</li>
+						<li class="menu__item">
+						  <a href="#" class="menu__link" onclick="editWidgetAttributesOpen()" >
+							<i class=""></i> Edit Attributes
+						  </a>
+						</li>
+						<li class="menu__item">
+						  <a href="#" class="menu__link" onclick="deleteWidget()">
+							<i class=""></i> Delete Widget
+						  </a>
+						</li>
+						<li class="menu__item">
+						  <a href="#" class="menu__link" onclick="toggleContextMenuOff()" >
+							<i class=""></i> Close
+						  </a>
+						</li>
+					  </ul>
+					</nav>
+				</div>
+				<div id="addPVMenuDiv">
+				  <nav id="addPVMenu" class="menu ">
+					<ul class="menu__items ">
+					  <li class="menu__item ">
+					<span class="menu__link">
+					  <i class=""></i><input type="text" id="addPVPV" class="editableInput addPVMenuInput" placeholder="PV" list="pvDatalist"></input>
+					</span> 		
+					  </li>
+					  <li class="menu__item">
+					<span class="menu__link">
+					  <i class=""></i><input type="text" id="addPVRefreshRate" class="editableInput addPVMenuInput" placeholder="Refresh Rate (ms)"></input>
+					</span>
+					  </li>
+					  <li class="menu__item" style="height: auto">
+					<span style="width: 100%; height: auto;">
+					  <a href="#" onclick="addPVToWidget(document.getElementById('addPVPV').value, document.getElementById('addPVRefreshRate').value, document.getElementById('addPVMenuDiv').getAttribute('widgetID'), true)"><button type="button" class="menu__button" >Add PV </button></a>
+					  <a href="#"	onclick="toggleAddPV()"><button type="button" class="menu__button">Close</button></a>
+						</span>
+					  </li>
+					</ul>
+				  </nav>
+				</div>
+				<div class="ghost-select" id="selectionRectangle"><span></span></div>
+				</div>
+				<div class="cover"     id='editCoverDiv' onclick=toggleEditMode(true)></div>
+				<div class='mainBlock' id='editBlock' ></div>
+			</div>
+			
+			<div id="popupSaveControlsPage" class="popup">
+			  <center><h2>Save your Controls Page</h2></center>
+			  <div>
+				<p><b>Page Name</b></p>
+				<center><textarea id="controlsPageName" cols="43" rows="1"></textarea></center>
+				<p><b>Controls Page Notes</b></p>
+				<center><textarea id="controlsPageNotes" cols="43" rows="6"></textarea></center>
+				<div id="makeControlsPagePublic">
+				  <input type="checkbox" id="isControlsPagePublic"> Make accessible to public</input>
+				</div>
+				<div class="buttongroup">
+				  <center>
+				<button onclick="hidePopupSaveControlsPage()">Cancel</button>
+				<button onclick="savePhoebusPageAs()">Save as Controls Page</button>
+				  </center>
+				</div>
+			  </div>
+			</div>
+			<div class="editWidgetAttributesPopup-container" id="editWidgetAttributesPopup-container">
+			  <div class="editWidgetAttributesPopup-header" id="editWidgetAttributesPopup-header" ></div>
+			  <div class="editWidgetAttributesPopup-menu"   id="editWidgetAttributesPopup-menu">
+				<nav id="editWidgetAttributesPopup-menu-nav">
+				  <ul class="menu__items ">
+				<li class="menu__item ">
+				  <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('PVList')">
+					<i class=""></i> Edits PVs
+				  </a>
+				</li>
+				<li class="menu__item">
+				  <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('EditAttributes')" >
+					<i class=""></i> Edit Attributes
+				  </a>
+				</li>
+				<!--<li class="menu__item">
+					<a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('Macromaker')">
+					  <i class=""></i> Macromaker
+					</a>
+				</li>-->
+				  </ul>
+				</nav>
+			  </div>
+			  <div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-pvlist"></div>
+			  <div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-attributes"><p>body</p></div>
+			  <!--<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>-->
+			  <div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
+			</div> <!-- end main block -->
+		</div> <!-- end main block container -->
 
 		<datalist id="pvDatalist"></datalist>
 		<p hidden id="mailbox"></p>
