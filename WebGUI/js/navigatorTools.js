@@ -126,3 +126,9 @@ function changeDivSize(id,width,height)
  if( top  != "" ) div.style.width    = width  + "px";
  if( left != "" ) div.style.height   = height + "px";
 }
+//-----------------------------------------------------------------------------
+// Get name of calling function
+function getCalleName(argc)	   
+{
+  return argc.toString().match(/function ([^\(]+)/)[1];
+}

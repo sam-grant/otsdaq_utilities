@@ -439,10 +439,12 @@ void VisualSupervisor::request(const std::string& requestType,
                 ss.str("") ; ss << "PID: " << ::getpid() ;
                 STDLINE(ss.str(),ACCyan) ;
 		std::string path     = CgiDataUtilities::postData(cgiIn, "RootPath");
-		boost::regex re("%2F") ;
-		path = boost::regex_replace(path,re,"/") ;// Dario: should be transparent for Ryan's purposes but required by Extjs
-		boost::regex re1("%3A") ;
-		path = boost::regex_replace(path,re1,"") ;// Dario: should be transparent for Ryan's purposes but required by Extjs
+		boost::regex re1("%2F") ;
+		path = boost::regex_replace(path,re1,"/") ;// Dario: should be transparent for Ryan's purposes but required by Extjs
+		boost::regex re2("%20") ;
+		path = boost::regex_replace(path,re2," ") ;// Dario: should be transparent for Ryan's purposes but required by Extjs
+		boost::regex re3("%3A") ;
+		path = boost::regex_replace(path,re3,"" ) ;// Dario: should be transparent for Ryan's purposes but required by Extjs
  		ss.str("") ; ss << "path    : " << path ;
  		STDLINE(ss.str(),ACCyan) ;
 		std::string fullPath = std::string(__ENV__("ROOT_BROWSER_PATH")) + path;
@@ -527,7 +529,6 @@ void VisualSupervisor::request(const std::string& requestType,
 				{
 					// Clone histo to avoid conflict when it is filled by other threads
 					histoClone       = histo->Clone()  ;
-                                        ((TH1*)histoClone)->SetStats(kTRUE);
 					TString     json = TBufferJSON::ConvertToJSON(histoClone);
 					TBufferFile tBuffer(TBuffer::kWrite);
 					histoClone->Streamer(tBuffer);
@@ -875,7 +876,7 @@ void VisualSupervisor::request(const std::string& requestType,
          RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, fRootPath, fFoldersPath, fHistName, fFileName) ;
          xmlOut.setDocument(theExplorer->initialize(false)) ;
          std::ostringstream* out ;
-	 //xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+	 xmlOut.outputXmlDocument((std::ostringstream*) out, true);
         }
 	else if(requestType == "getMeLIVE-DQMFile") //################################################################################################################
         {
