@@ -120,17 +120,46 @@
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("Gauge newValue() reached", pvName, pvValue);
+				var pv = "p-" + pvName;
 
-				window.parent.setWidgetPVinfo(
-									  pvName
-									, pvValue
-									, pvTime
-									, pvStatus
-									, pvSeverity
-									, parameters_["show_labels"]
-									, containers[pvName]
-									, gauges[pvName].body[0][0].parentElement
-									);
+//				window.parent.setWidgetPVinfo(
+//									  pvName
+//									, pvValue
+//									, pvTime
+//									, pvStatus
+//									, pvSeverity
+//									, parameters_["show_labels"]
+//									, containers[pvName]
+//									, gauges[pvName].body[0][0].parentElement
+//									);
+
+				var now = Math.floor(Date.now())/1000;
+				var time2compare = pvTime*1. + 240.;
+
+				if (parameters_["show_labels"] == "true")
+				{
+					if(pvSeverity == "MAJOR" )
+						 document.getElementById(pv).innerHTML = "<center style = 'color: red'>" + pvName.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					else if(pvSeverity == "MINOR")
+						 document.getElementById(pv).innerHTML = "<center style = 'color: orange'>" + pvName.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					else
+						if ((pvTime !== undefined) && (time2compare > now))
+							 document.getElementById(pv).innerHTML = "<center style = 'color: green'>" + pvName.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+						else
+							 document.getElementById(pv).innerHTML = "<center style = 'color: grey'>"
+															+ pvName.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />")
+															//+ "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity
+															+ "<br>NOT UPDATED FOR MORE THAN " + parseInt((now - pvTime*1.)/60) + " MINUTES</center>";
+				}
+
+				console.log("thermometer date now: " + now + " pvtime: " + pvTime + " refresh rate: 10 sec");
+				if (gauges[pvName].body[0][0].parentElement !== null)
+					if ((pvTime !== undefined) && (time2compare > now))
+						gauges[pvName].body[0][0].parentElement.style.backgroundColor = 'white';
+					else
+						gauges[pvName].body[0][0].parentElement.style.backgroundColor = 'lightgrey';
+				else
+					console.log("setWidgetPVinfo(): Error widgetElement = null");
 
 				gauges[pvName].redraw(pvValue);
 				gauges[pvName].body[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
