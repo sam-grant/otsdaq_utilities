@@ -24,6 +24,7 @@
 		//setupTableViewMode(anchorTarget)							//gets tables
 		//tableViewRequestHandler(req,anchorTarget)
 		//tableSearchSelectionHandler(el)
+		//showTableTooltip(tableName)
 
 		//setupSpecificTableGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific table group
 		//specificGroupRequestHandler(req,param)			
@@ -735,7 +736,6 @@
 		//setupTableViewMode ~
 		function setupTableViewMode(anchorTarget) 
 		{
-
 			editCellCancel();
 
 			var el = document.getElementById("display");
@@ -1738,6 +1738,40 @@
 		} //end tableViewRequestHandler()
 
 		//==============================================================================
+		//showTableTooltip ~~
+		function showTableTooltip(tableName)
+		{
+			Debug.log("showTableTooltip() " + tableName);
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable" +
+					"&tableName=" + tableName,"",
+					function(req)
+					{
+				var tableDescription = DesktopContent.getXMLValue(req, "TableDescription");
+				Debug.log("tableDescription: " + tableDescription);
+				//if there is a description show tooltip
+				if (tableDescription != "" &&
+						tableDescription.toUpperCase().indexOf("NO DESCRIPTION") != 0)
+					DesktopContent.tooltip(tableName + " Description",
+							"The table description may be useful in determining how to use this " +
+							"table or the meaning of the column fields (admins can edit the description in the Table Editor in wiz mode). Here is the description for " +
+							"the '" + tableName + "' table:<br><br>" +
+							"<div style='margin-left:20px'>" +
+							tableDescription + "</div>", true /*alwaysShow*/);
+				else
+					DesktopContent.tooltip("Missing " + tableName + " Description",
+							"There is no table description for '" + 
+							tableName + 
+							".' To create or edit a table description, go to the Table Editor in wiz mode.",
+							true /*alwaysShow*/);
+					}, //end table response handler
+
+					0, //parameter 
+					0, true  //progressHandler, callHandlerOnErr
+			); //end request
+		} //end showTableTooltip
+		
+		//==============================================================================
 		//specificGroupRequestHandler ~~
 		//	backLinkStr is defined to call functions one after the other
 		function specificGroupRequestHandler(req, param)
@@ -2446,7 +2480,7 @@
 				tableDescription.toUpperCase().indexOf("NO DESCRIPTION") != 0)
 				DesktopContent.tooltip(tableName + " Table Description",
 					"The table description may be useful in determining how to use this " +
-					"table or the meaning of the column fields. Here is the description for " +
+					"table or the meaning of the column fields (admins can edit the description in the Table Editor in wiz mode). Here is the description for " +
 					"the '" + tableName + "' table:<br><br>" +
 					"<div style='margin-left:20px'>" +
 					tableDescription + "</div>");
@@ -3865,6 +3899,7 @@
 
 			var DEFAULT_treeNavContextMenuItems = [
 				"Go-to Table View",
+				"See Table Tooltip",
 				"Open Table View in new Desktop Window",
 				"Open Table View in new Browser Tab",
 				"Open Subset Editor in new Desktop Window",
@@ -3897,6 +3932,15 @@
 
 					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
 					treeNavContextMenuItemHandlers.push(onmouseupJS);
+				}
+				
+				//see table tooltip
+				{
+					onmouseupJS = "showTableTooltip(\"" +
+											treeMemberNames_[j] + "\");";
+
+					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
+					treeNavContextMenuItemHandlers.push(onmouseupJS);											
 				}
 
 				//open table-view in new window link
@@ -6534,16 +6578,17 @@
 					var vel = document.getElementById("treeNode-FixedChoice-CSV-" +
 						idString);
 					var choices = vel.textContent.split(',');
-
+					var choice;
 					for (var i = 0; i < choices.length; ++i)
 					{
+						choice = decodeURIComponent(choices[i]);
 						if (i == 1)//check for arbitraryBool flag
 						{
-							if (choices[i].indexOf("arbitraryBool=") == 0) 
+							if (choice.indexOf("arbitraryBool=") == 0) 
 							{
 								//found arbitraryBool flag								
 								allowFixedChoiceArbitraryEdit =
-									choices[i][("arbitraryBool=").length] == "1" ?
+										choice[("arbitraryBool=").length] == "1" ?
 										true : false;
 								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
 								continue;
@@ -6557,10 +6602,9 @@
 							++optionCount; //count as an option in dropdown
 
 						str += "<option>";
-						str += decodeURIComponent(choices[i]);	//can display however
+						str += choice;	//can display however
 						str += "</option>";
-						if (decodeURIComponent(choices[i])
-							== _editingCellElOldValue)
+						if (choice == _editingCellElOldValue)
 							optionIndex = optionCount; //save selected index
 					}
 					str += "</select>";
@@ -9099,7 +9143,7 @@
 								{
 									if (retParams) 
 									{
-										if (retParams.newBackbone)
+										if (retParams.newGroupCreated)
 											Debug.log("Successfully modified the active Backbone group " +
 												" to set the System Alias '" + groupAlias + "' to " +
 												" refer to the current group '" + groupName +
