@@ -19,6 +19,43 @@
 		clear: 						both;
 	}
 
+	.preloadImage {			
+		width: 				24px;
+		height: 			20px;
+		position:			absolute;
+		left: 				-100px;
+		top: 				0;
+	}
+	#preloadImage-treeEditTrashIconHover {
+		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+	}
+	#preloadImage-treeEditIconHover {
+		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
+	}
+	.widgetEditIcon {			
+		background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
+		width: 				24px;
+		height: 			20px;
+		border: 			0;
+		margin: 			23px -16px -45px 0px;
+	}
+	.widgetEditIcon:hover {
+		background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
+		cursor: 			pointer;
+	}
+	
+	.widgetDeleteIcon {			
+		background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+		width: 				16px;
+		height: 			20px;
+		border: 			0;
+		margin: 			22px 0 -45px -12px;
+	}
+	.widgetDeleteIcon:hover {
+		background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+		cursor: 			pointer;
+	}
+	
 	button {
 		cursor: 					pointer;
 		
@@ -147,6 +184,7 @@
 		-webkit-transition-timing-function: ease-out;
 		-webkit-transition: 		margin-bottom .5s;
 		overflow: 					hidden;
+		z-index:					149;
 		
 		box-shadow: 				inset rgba(255,254,255,0.6) 0 0.3em .3em,
 									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */

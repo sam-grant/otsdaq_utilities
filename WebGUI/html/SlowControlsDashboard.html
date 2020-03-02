@@ -50,8 +50,8 @@
 			//	setupForDrawSelectionRectangle(id)
 			//	drawSelectionRectangle(event)
 			//	stopdrawSelectionRectangle(event)
-			//	drawWidget(widget, newWidget, xx, yy, width, height, hideFrame)
-			//	drawWidgetFromFile(widget, xx, yy, width, height, hideFrame)
+			//	drawWidget(widgetType, widgetId, xx, yy, width, height, hideFrame, alreadyInPageObject)
+			//	 RAR DELETED -- drawWidgetFromFile(widget, xx, yy, width, height, hideFrame)
 			//	mouseoverEditBlock(e)
 			//	mouseoutEditBlock(e)
 			//	toggleEditMode()
@@ -96,6 +96,58 @@
 
 
 			//top-level scope (global) variables:
+
+			var page_ = page_ || {}; 	//define the page object if needed
+										//	page_.widgets = {
+										//		<widgetID> : <widget object := x, y, 
+										//			size_x, size_y, pvList{}, attributes{},
+										//			displayName, loaded,
+										//			el /*iframe element*/
+										//	} 
+
+			//====================== start high-level behavior description
+			//
+			//	High-level description of page-widget interactions:
+			//
+			//	- widget's init() is called by 2: 
+			//		1. widget's own onload() 
+			//		2. top-level addPVToWidget()
+			//	- In edit mode, user draws a widget square...		
+			//		* immediately onload, widget should call init()
+			//		* widget should call setupWidget() like this from init: 
+			//				function init() { 	
+			//					window.parent.setupWidget(window.frameElement.id, 
+			//						getAttributes());   
+			//				}
+			//		* getAttributes() is defined by user widget and
+			//			should describe user-editable fields for widget:
+			//			- like { "param1" : "DEFAULT_VAL", "param2" : "" }
+			//		* calling setupWidget() propagates parameters to the high-level page object
+			//	- parent.setupWidget(): 
+			//		* Note: this gets called by widget's init() (e.g. from onload)
+			//		* setupWidget gives Top-level parameters that become user-editable
+			//		* Then top-level gets PV settings (e.g. alarm thresholds) through server request based on widgets pvList
+			//			and then propagates settings back to widget by calling... 
+			//				- contentWindow.setupPVs(settings)
+			//				- contentWindow.drawWidget(object)
+			//	
+			//
+			//	- contentWindow.setupPVs(settings)
+			//		* Pass alarm thresholds, etc associated with pvList to widget content
+			//	- contentWindow.setAttributes(attributes)
+			//		* Notify widget attributes have been changed
+			//	- contentWindow.drawWidget(object, attributes)			
+			//		* (re)Draw widget elements, based on attributes.
+			//		* Note: called by window resize
+			//
+			//	Once we go Live, all widgets get PV values as available:
+			//	- contentWindow.drawNewValue()
+			//		* Update widget drawing based on new value (and append to history if needed)
+			//
+			//====================== end high-level behavior description
+			
+
+
 			var pvList_ = {};
 			var elPointer_ = {};
 			var pagesList_ = [];
@@ -114,7 +166,6 @@
 			var EDIT_BLOCK_HEIGHT = 300;
 			//==== end edit pane.
 			
-			var page_ = page_ || {}; //define the namespace
 			var PAGE_POSITIONS_ = 1000; //number of allowed integer locations (e.g. x,y,w,h for widgets) 
 			var refreshRate_ = 15000; //set default to refresh every 15 seconds (ms)
 			var timerVariable_;
@@ -266,7 +317,6 @@
 				editBlock_.el.style.border = "0";
 				editBlock_.el.appendChild(editFrame);
 				
-				editBlock_.el.style.zIndex = 50;
 				editBlock_.el.addEventListener("mouseover", mouseoverEditBlock, true);
 				editBlock_.el.addEventListener("mouseleave", mouseoutEditBlock, true);
 
@@ -447,8 +497,21 @@
 
 				for (var widget in page_.widgets)
 				{
-					console.log(widget + " " + page_.widgets[widget].x + " " + page_.widgets[widget].y + " " + page_.widgets[widget].size_x + " " + page_.widgets[widget].size_y);
-					drawWidgetFromFile(widget, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y, true);
+					console.log("Load widget from file: " + 
+							widget + " " + page_.widgets[widget].x + 
+							" " + page_.widgets[widget].y + " " +
+							page_.widgets[widget].size_x + " " + 
+							page_.widgets[widget].size_y);
+					
+					drawWidget(
+							widget, 
+							true/*drawWidget*/,
+							page_.widgets[widget].x, 
+							page_.widgets[widget].y, 
+							page_.widgets[widget].size_x, 
+							page_.widgets[widget].size_y,
+							true /*hideFrame*/, 
+							true /*alreadyInPageObject*/);
 				}
 
 				//updateRefreshInterval();
@@ -494,14 +557,14 @@
 				for(i=0; i<widgets.length; ++i)
 				{
 					var widgetObject = {};
-					widgetObject.PVList = {};
+					widgetObject.pvList = {};
 					widgetObject.attributes = {};
 
 					var type = PHOEBUS_MAP[ widgets[i].attributes["type"].nodeValue ];
 					var group = -1;
 					if (widgets[i].attributes["ots_group"] !== undefined) group = widgets[i].attributes["ots_group"].nodeValue;
 					
-					var Display_Name = widgets[i].getElementsByTagName("name")[0];
+					var displayName = widgets[i].getElementsByTagName("name")[0];
 					var x = widgets[i].getElementsByTagName("x")[0];
 					var y = widgets[i].getElementsByTagName("y")[0];
 					var size_x = widgets[i].getElementsByTagName("width")[0];
@@ -509,7 +572,7 @@
 					var pv = widgets[i].getElementsByTagName("pv_name")[0];
 
 					if (type !== undefined) widgetObject.type = type; else widgetObject.type = 0;
-					if (Display_Name !== undefined) widgetObject.Display_Name = Display_Name.innerHTML; else widgetObject.Display_Name = "undefined";
+					if (displayName !== undefined) widgetObject.displayName = displayName.innerHTML; else widgetObject.displayName = "undefined";
 					if (x !== undefined) widgetObject.x = x.innerHTML; else widgetObject.x = 10;
 					if (y !== undefined) widgetObject.y = y.innerHTML; else widgetObject.y = 10;
 					if (size_x !== undefined) widgetObject.size_x = size_x.innerHTML; else widgetObject.size_x = 50;
@@ -517,7 +580,7 @@
 					if (pv !== undefined)
 					{
 						var pv_refresh = pv.attributes["refresh_rate"];
-						if (pv_refresh !== undefined) widgetObject.PVList[pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.PVList[pv.innerHTML] = 10000;
+						if (pv_refresh !== undefined) widgetObject.pvList[pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[pv.innerHTML] = 10000;
 					}
 
 					if (type == 3)
@@ -532,7 +595,7 @@
 								if (y_pv !== undefined)
 								{
 									var pv_refresh = y_pv.attributes["refresh_rate"];
-									if (pv_refresh !== undefined) widgetObject.PVList[y_pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.PVList[y_pv.innerHTML] = 10000;
+									if (pv_refresh !== undefined) widgetObject.pvList[y_pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[y_pv.innerHTML] = 10000;
 								}
 							}
 						}
@@ -569,11 +632,11 @@
 						{
 							if (   page_.widgets["widget" + j] !== undefined 
 								&& page_.widgets["widget" + j].type == widgetObject.type 
-							    && page_.widgets["widget" + j].Display_Name == widgetObject.Display_Name
-							    && Display_Name !== undefined
+							    && page_.widgets["widget" + j].displayName == widgetObject.displayName
+							    && displayName !== undefined
 							    && groups["widget" + j] == group)
 							{
-								if (pv !== undefined) page_.widgets["widget" + j].PVList[pv.innerHTML] = 30000;
+								if (pv !== undefined) page_.widgets["widget" + j].pvList[pv.innerHTML] = 30000;
 								groups["widget" + i] = group;
 							}
 						}
@@ -652,20 +715,19 @@
 						for (var widget in page_.widgets)
 						{
 							console.log("pollServerHandlerFunction: " + page_.widgets[widget]);
-							for(var dependendentPV in page_.widgets[widget].PVList)
+							for(var dependendentPV in page_.widgets[widget].pvList)
 							{
 								console.log("poll: " + dependendentPV);
 								if(pv == dependendentPV && page_.widgets[widget].loaded != "false")
 								{
 									console.log("Widget*************", widget, pv);
-									document.getElementById(widget).contentWindow.newValue(pv, serverResponse[pv].Value, serverResponse[pv].Timestamp, serverResponse[pv].Status, serverResponse[pv].Severity);
+									document.getElementById(widget).contentWindow.drawNewValue(pv, serverResponse[pv].Value, serverResponse[pv].Timestamp, serverResponse[pv].Status, serverResponse[pv].Severity);
 								}
 							}
 						}
 					}
 				}
 			} //end pollServerHandlerFunction()
-
 
 			//=====================================================================================
 			function generateUIDHandlerFunction(req)
@@ -687,26 +749,23 @@
 				}
 			} //end generateUIDHandlerFunction()
 
-
 			//=====================================================================================
 			function settingsReqHandler(req, passParams)
 			{
 				var settings = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));				
-				var id = passParams[0];
-				var parameters = passParams[1];
+				var id = passParams[0]|0; //force integer
+				var attributes = passParams[1];
 
-				console.log("id: " + id + " parameter: " + parameters);
+				console.log("id:",id," attributes:", attributes);
 
 				console.log(req);
 				console.log(settings);
 				console.log(id);
 
-				//if(newWidget_)
 				page_.widgets[id].el.contentWindow.setupPVs(settings);
-				page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
+				page_.widgets[id].el.contentWindow.drawWidget(page_.widgets[id], attributes);
 
 			} //end settingsReqHandler()
-
 
 			//=====================================================================================
 			function historyReqHandler(req, passParams) 
@@ -726,11 +785,10 @@
 					for (var pv in history) {
 						console.log(pv);
 						console.log(history[pv].Timestamp + " " + history[pv].Value);
-						page_.widgets[id].el.contentWindow.newValue(pv, history[pv].Value, history[pv].Timestamp, history[pv].Status, history[pv].Severity);
+						page_.widgets[id].el.contentWindow.drawNewValue(pv, history[pv].Value, history[pv].Timestamp, history[pv].Status, history[pv].Severity);
 					}
 				}
 			} //end historyReqHandler()
-
 
 			//=====================================================================================
 			function savePageReqHandler(req)
@@ -739,14 +797,12 @@
 				Debug.log(response);
 			} //end savePageReqHandler()
 
-
 			//=====================================================================================
 			function createControlsPageHandler(req)
 			{
 				Debug.log("createControlsPageHandler() was called for " + controlsPageName);// Req: " + req.responseText);
 				Debug.log("Your page was succesfully saved!",Debug.INFO_PRIORITY);		
 			} //end createControlsPageHandler()
-
 
 			//=====================================================================================
 			function handlerFunction(req) 
@@ -755,7 +811,6 @@
 				var child2data = DesktopContent.getXMLValue(req,"child2");
 				Debug.log("--child1data:",child1data," --child2data:",child2data);
 			} //end handlerFunction()
-
 
 			//=====================================================================================
 			function pollServer()
@@ -777,7 +832,6 @@
 				}
 			} //end pollServer()
 
-
 			//=====================================================================================
 			function generateUID()
 			{
@@ -786,20 +840,19 @@
 				//console.log("page: ", page_);
 				for (var widget in page_.widgets)
 				{
-					console.log("generateUID: " +  page_.widgets[widget] + " " +  page_.widgets[widget].PVList);
+					console.log("generateUID: " +  page_.widgets[widget] + " " +  page_.widgets[widget].pvList);
 
-					for(var pv in page_.widgets[widget].PVList)
+					for(var pv in page_.widgets[widget].pvList)
 					{
-						pvList += pv + ":"  + page_.widgets[widget].PVList.valueOf()[pv] + ",";
+						pvList += pv + ":"  + page_.widgets[widget].pvList.valueOf()[pv] + ",";
 					}
 				}
 
 				console.log(pvList);
 
 				//END Put all pvs in a JSON and send to server
-				DesktopContent.XMLHttpRequest("Request?RequestType=generateUID","PVList=" + pvList, generateUIDHandlerFunction);//, undefined, undefined, "sequence");
+				DesktopContent.XMLHttpRequest("Request?RequestType=generateUID","pvList=" + pvList, generateUIDHandlerFunction);//, undefined, undefined, "sequence");
 			} //end generateUID()
-
 
 			//=====================================================================================
 			function updateRefreshInterval()
@@ -809,20 +862,17 @@
 				timerVariable_ = setInterval(pollServer, refreshRate_);
 			} //end updateRefreshInterval()
 
-
 			//=====================================================================================
 			function loadPage(page)
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=loadPage&Page=" + page, "", loadPageReqHandler);//, undefined, undefined, "sequence");
 			} //end loadPage()
 
-
 			//=====================================================================================
 			function loadPhoebusPage(page)
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=loadPhoebusPage&Page=" + page, "", loadPhoebusPageReqHandler);//, undefined, undefined, "sequence");
 			} //end loadPhoebusPage()
-
 
 			//=====================================================================================
 			function loadPageNewWindow(fullPathToPage)
@@ -833,7 +883,6 @@
 				DesktopContent.openNewWindow("Controls Dashboard", "", newWindowStr, false /*unique*/);
 			} //end loadPageNewWindow()
 
-
 			//=====================================================================================
 			function loadPageNewBrowserTab(fullPathToPage)
 			{
@@ -842,7 +891,6 @@
 
 				DesktopContent.openNewBrowserTab("Controls Dashboard","", newWindowStr ,false /*unique*/);
 			} //end loadPageNewBrowserTab()
-
 
 			//=====================================================================================
 			//CreateDesktopIcon page loader~~
@@ -861,7 +909,6 @@
 					);
 			} //end CreateDesktopIcon
 
-
 			//=====================================================================================
 			function savePage() 
 			{
@@ -878,7 +925,6 @@
     			}
 			} //end savePage()
 
-
 			//=====================================================================================
 			function hidePopupSaveControlsPage()
 			{
@@ -888,7 +934,6 @@
 	            document.getElementById("controlsPageNotes").value="";
 		        Debug.log("Controls Page successfully saved!");
 			} //end hidePopupSaveControlsPage()
-
 
 			//=====================================================================================
 			function savePageAs()
@@ -957,7 +1002,6 @@
     			}
 			} //end savePageAs()
 
-
 			//=====================================================================================
 			function savePhoebusPageAs()
 			{
@@ -992,7 +1036,7 @@
 					var group = 0;
 	    			for (var widg in page_.widgets)
 					{
-						if(isEmpty(page_.widgets[widg].PVList))
+						if(isEmpty(page_.widgets[widg].pvList))
 						{
 							var widget = pageString.createElement("widget");
 							var type = Object.keys(PHOEBUS_MAP).find(key => PHOEBUS_MAP[key] === page_.widgets[widg].type);
@@ -1004,7 +1048,7 @@
 							var width = pageString.createElement("width");
 							var height = pageString.createElement("height");
 
-							name.innerHTML = page_.widgets[widg].Display_Name;
+							name.innerHTML = page_.widgets[widg].displayName;
 							widget.appendChild(name);
 
 							//attribute objects
@@ -1041,7 +1085,7 @@
 								var y = pageString.createElement("y");
 								var width = pageString.createElement("width");
 								var height = pageString.createElement("height");
-								name.innerHTML = page_.widgets[widg].Display_Name;
+								name.innerHTML = page_.widgets[widg].displayName;
 								widget.appendChild(name);
 
 								x.innerHTML = page_.widgets[widg].x * windowWidth / (PAGE_POSITIONS_) | 0;
@@ -1056,12 +1100,12 @@
 
 								var traces = pageString.createElement("traces");
 
-								for (var pv_name in page_.widgets[widg].PVList)
+								for (var pv_name in page_.widgets[widg].pvList)
 								{
 									var trace = pageString.createElement("trace");
 
 									var pv = pageString.createElement("y_pv");
-									var pv_refresh = page_.widgets[widg].PVList[pv_name];
+									var pv_refresh = page_.widgets[widg].pvList[pv_name];
 									pv.setAttribute("refresh_rate", pv_refresh);
 									pv.innerHTML = pv_name;
 									trace.appendChild(pv);
@@ -1083,12 +1127,12 @@
 							else
 							{
 							var counter = 0;
-							for (var pv_name in page_.widgets[widg].PVList)
+							for (var pv_name in page_.widgets[widg].pvList)
 								{
 									var widget = pageString.createElement("widget");
 									widget.setAttribute("type", type);
 									widget.setAttribute("version",	"2.0.0");
-									if (Object.getOwnPropertyNames(page_.widgets[widg].PVList).length > 1) widget.setAttribute("ots_group", group);
+									if (Object.getOwnPropertyNames(page_.widgets[widg].pvList).length > 1) widget.setAttribute("ots_group", group);
 									var name = pageString.createElement("name");
 									var pv = pageString.createElement("pv_name");
 									var x = pageString.createElement("x");
@@ -1096,9 +1140,9 @@
 									var width = pageString.createElement("width");
 									var height = pageString.createElement("height");
 
-									name.innerHTML = page_.widgets[widg].Display_Name;
+									name.innerHTML = page_.widgets[widg].displayName;
 									widget.appendChild(name);
-									var pv_refresh = page_.widgets[widg].PVList[pv_name];
+									var pv_refresh = page_.widgets[widg].pvList[pv_name];
 									pv.setAttribute("refresh_rate", pv_refresh);
 									pv.innerHTML = pv_name;
 									widget.appendChild(pv);
@@ -1125,7 +1169,7 @@
 									display.appendChild(widget);
 									counter++;
 								}
-								if (Object.getOwnPropertyNames(page_.widgets[widg].PVList).length > 1) group++;
+								if (Object.getOwnPropertyNames(page_.widgets[widg].pvList).length > 1) group++;
 							}
 						}
 					}
@@ -1172,39 +1216,51 @@
     			}
 			} //end savePhoebusPageAs()
 
-
 			//=====================================================================================
+			//	expecting id as 'widget-#' ..and this function extracts the 
+			//	widget UID as integer #
 			function setupWidget(id, parameters)
 			{
-				console.log("setting up widget!");
-				page_.widgets[id].loaded = "true";
-				page_.widgets[id].el = document.getElementById(id);
-				if(typeof page_.widgets[id].attributes == 'undefined')
+				console.log("setting up widget! " + id);
+				id = id.split('-')[1];
+				
+				if(page_.widgets[id] === undefined)
 				{
-					page_.widgets[id].attributes = parameters;
+					Debug.log("Illegal widget UID (not found in widget list) received from child widget frame: " + 
+							id, Debug.HIGH_PRIORITY);
+					return;
 				}
-				else
-				{
+				
+				page_.widgets[id].loaded = true;
+				//if(page_.widgets[id].attributes === undefined)
+				//{
+				//	page_.widgets[id].attributes = parameters;
+				//}
+				//else
+				//{
 					compareAttributes(id, parameters);
-				}
-				var pvList = "";
+				//}
+					
+				//now page_.widgets[id].attributes is merged
+				console.log("page_.widgets[id].attributes", page_.widgets[id].attributes);
+					
+				var pvListCSV = "";
 
-				console.log(page_.widgets[id].PVList);
-				for(var pv in page_.widgets[id].PVList)
+				console.log("page_.widgets[id].pvList", page_.widgets[id].pvList);
+				for(var pv in page_.widgets[id].pvList)
 				{
-					pvList += pv + ",";
+					pvListCSV += pv + ",";
 				}
 
-				var passParams = [id, parameters];	
+				var passParams = [id, page_.widgets[id].attributes];	
 				DesktopContent.XMLHttpRequest("Request?RequestType=getPVSettings",
 							//post data 
-    						"PVList=" + pvList + 
+    						"pvList=" + pvListCSV + 
 							"&id=" + id,
 							settingsReqHandler /*handler*/,
-							 passParams /*parameter*/);
+							passParams /*parameter*/);
 
 			} //end setupWidget()
-
 
 			//=====================================================================================
 			function setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_)
@@ -1227,7 +1283,6 @@
 			  	+ "Upper Display Limit:   "   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
 			  	return toolTip;
 			} //end setWidgetToolTip()
-
 
 			//=====================================================================================
 			function setWidgetPVinfo(pvName, pvValue, pvTime, pvStatus, pvSeverity, showLabel, containers, widgetElement)
@@ -1264,13 +1319,12 @@
 					console.log("setWidgetPVinfo(): Error widgetElement = null");
 			} //end setWidgetPVinfo()
 
-
 			//=====================================================================================
 			function getHistory(id, parameters)
 			{
 				var pvList = "";
 
-				for(var pv in page_.widgets[id].PVList)
+				for(var pv in page_.widgets[id].pvList)
 				{
 					pvList += pv + ",";
 				}
@@ -1278,23 +1332,21 @@
 				var passParams = [id, parameters];
 				DesktopContent.XMLHttpRequest("Request?RequestType=getPVArchiverData",
 									//post data 
-		    						"PVList=" + pvList + 
+		    						"pvList=" + pvList + 
 									"&id=" + id,
 									historyReqHandler /*handler*/,
 									 passParams /*parameter*/);
 				console.log("get history for widget! pvList: " + pvList);
 			} //end getHistory()
 
-
 			//=====================================================================================
 			function addPVToWidget(pv, refreshRate, widgetID, fromAddPV)
 			{
 				if(fromAddPV){toggleAddPV();}
-				page_.widgets[widgetID].PVList[pv] = refreshRate;
+				page_.widgets[widgetID].pvList[pv] = refreshRate;
 				page_.widgets[widgetID].el.contentWindow.init();
 				//newWidget_ = true;
 			} //end addPVToWidget()
-
 
 			//=====================================================================================
 			function compareAttributes(id, parameters)
@@ -1305,7 +1357,7 @@
 				{
 					if(Object.keys(parameters).indexOf(Object.keys(page_.widgets[id].attributes)[attribute]) == -1)
 					{
-						//Debug.log("Attribute [" + Object.keys(page_.widgets[id].attributes)[attribute] + "] for " + page_.widgets[id].Display_Name + " is no longer required. No action required.", Debug.HIGH_PRIORITY);
+						//Debug.log("Attribute [" + Object.keys(page_.widgets[id].attributes)[attribute] + "] for " + page_.widgets[id].displayName + " is no longer required. No action required.", Debug.HIGH_PRIORITY);
 					}
 				}
 
@@ -1326,14 +1378,13 @@
 						else
 							attributesNew[Object.keys(parameters)[attribute]] = parameters[Object.keys(parameters)[attribute]];
 
-						//Debug.log("Attribute [" + Object.keys(parameters)[attribute] + "] for " + page_.widgets[id].Display_Name + " is now a required attribute. Action Required.", Debug.HIGH_PRIORITY);
+						//Debug.log("Attribute [" + Object.keys(parameters)[attribute] + "] for " + page_.widgets[id].displayName + " is now a required attribute. Action Required.", Debug.HIGH_PRIORITY);
 					}
 				}
 				page_.widgets[id].attributes = attributesNew;
 				//if(actionRequired)
 					//document.getElementById(id).className = "action-required";
 			} //end compareAttributes()
-
 
 			//=====================================================================================
 			function setupForDrawSelectionRectangle(id)
@@ -1342,9 +1393,8 @@
 
 				Debug.log("setupForDrawSelectionRectangle " + id);
 
-				setupForDrawingID_ = id;
+				setupForDrawingID_ = id|0;
 			} //end setupForDrawSelectionRectangle()
-
 
 			//=====================================================================================
 			function drawSelectionRectangle(event)
@@ -1403,7 +1453,6 @@
 				selectionRectangle.style.display = "block";
 			} //end drawSelectionRectangle()
 
-
 			//=====================================================================================
 			function redrawSelectionRectangle(event) 
 			{
@@ -1443,7 +1492,6 @@
 				}
 			} //end redrawSelectionRectangle()
 
-
 			//=====================================================================================
 			function stopdrawSelectionRectangle(event) 
 			{
@@ -1470,17 +1518,18 @@
 				drawingSelectionRectangle_  = false;
 			} //end stopdrawSelectionRectangle()
 
+			//================================================================================			
+			function drawWidget(widgetType, widgetId, xx, yy, width,
+					height, hideFrame)
+			{			
+				widgetType |= 0; //for integer type
+				
 
-			//================================================================================
-			function drawWidget(widget, newWidget, xx, yy, width, height, hideFrame)
-			{
-				var widgetFrame = document.createElement("iframe");
-				widgetFrame.scrolling="No";
-
+				var OUTLINE_OFFSET = 15;
+				
 				var containerDiv;
 				var mainBlockContainer;
 
-				var OUTLINE_OFFSET = 15;
 				var resizeDiv;
 				var resizeDivTop;
 				var resizeDivLeft;
@@ -1490,105 +1539,143 @@
 				var resizeDivTopRight;
 				var resizeDivBottomRight;
 				var resizeDivBottomLeft;
+				
+				var editIcon, deleteIcon;
 
 				var windowWidth = DesktopContent.getWindowWidth();
 				var windowHeight = DesktopContent.getWindowHeight();
 
-				if(newWidget)
+				//Steps:
+				//	- check page_ object for widget details
+				//		* if missing, add to object
+				//	- check page for widget elements
+				//		* if missing, add to page
+			
+				if(page_ === undefined)
 				{
-					if(typeof page_.widgets == 'undefined')
-					{
-						page_.widgets = {};
+					Debug.log("Impossible page object missing! Notify admins", Debug.HIGH_PRIORITY);
+					return;
+				}
+				
+				if(page_.widgets == undefined)
+				{
+					page_.widgets = {};
+				}
+				
+				var widgetObject;
+				
+				if(widgetId === undefined || page_.widgets[widgetId] === undefined)
+				{					
+					Debug.log("Creating new widget object..");
+					
+					//start at number of widgets, and then keep adding 1 until no record found in 
+					widgetId = Object.keys(page_.widgets).length;
+					while(page_.widgets[widgetId] !== undefined)
+						++widgetId;
+					Debug.log("Found new available widget ID = " + widgetId);
+					
+					widgetObject = {};
+					{ //filling widget object					
+	
+						//all x,y,w,h represented as "per thousand" (PAGE_POSITIONS_ positions, integer representation)
+						widgetObject.size_x 		= (PAGE_POSITIONS_*width/windowWidth) | 0;
+						widgetObject.size_y 		= (PAGE_POSITIONS_*height/windowHeight) | 0;
+						widgetObject.x 				= (PAGE_POSITIONS_*xx/windowWidth) | 0;
+						widgetObject.y 				= (PAGE_POSITIONS_*yy/windowHeight) | 0;
+
+						widgetObject.type 			= widgetType;
+						widgetObject.pvList 		= {};
+						widgetObject.attributes 	= {};
+						widgetObject.displayName 	= "widget-" + widgetId;
+						widgetObject.loaded 		= false;
+						widgetObject.el				= document.getElementById("widget-" + widgetId);
 					}
-
-					widgetFrame.id = "widget" + Object.keys(page_.widgets).length;//page[widget].Display_Name;
-					if(typeof page_.widgets[widgetFrame.id] != 'undefined')
-					{
-						var pos = 0;
-						while(typeof page_.widgets[widgetFrame.id] != 'undefined')
-						{
-							widgetFrame.id = "widget" + (pos++);
-						}
-					}
-
-					var widgetObject = {};
-					widgetObject.type = widget;
-
-					//all x,y,w,h represented as "per thousand" (PAGE_POSITIONS_ positions, integer representation)
-					widgetObject.size_x = (PAGE_POSITIONS_*width/windowWidth) | 0;
-					widgetObject.size_y = (PAGE_POSITIONS_*height/windowHeight) | 0;
-					widgetObject.x = (PAGE_POSITIONS_*xx/windowWidth) | 0;
-					widgetObject.y = (PAGE_POSITIONS_*yy/windowHeight) | 0;
-
-					widgetObject.PVList = {};
-					widgetObject.attributes = {};
-					widgetObject.Display_Name = widgetFrame.id;
-					widgetObject.loaded = "false";
-					widget = widgetFrame.id;
-					page_.widgets[widget] = widgetObject;
+					page_.widgets[widgetId] = widgetObject;
+				}
+				else
+				{
+					widgetObject = page_.widgets[widgetId];
+					Debug.log("Found existing widget with ID = " + widgetId +
+							" name = " + widgetObject.displayName);
+				}
+																
+				if(!widgetObject.el)
+				{
+					Debug.log("Creating widget elements for widget" + widgetId);
+					
+					widgetObject.el = document.createElement("iframe");
+					widgetObject.el.scrolling="No";	
+					widgetObject.el.id = "widget-" + widgetId;
 
 					containerDiv = document.createElement("div");
-					containerDiv.id = widgetFrame.id + "-container";
-					containerDiv.style["background-color"] = "rgba(0,0,0,0.)";
-					//containerDiv.innerHTML = "containerDiv";
+					containerDiv.id = "widget-" + widgetId + "-container";
+					containerDiv.style["background-color"] = "rgba(0,0,0,0.2)";
 
 					mainBlockContainer = document.createElement("div");
 					mainBlockContainer.className = "widgetCover";
-					mainBlockContainer.id = widgetFrame.id + "-cover";
-					//mainBlockContainer.innerHTML = "mainBlockContainer";
+					mainBlockContainer.id = "widget-" + widgetId + "-cover";
 
 					resizeDiv = document.createElement("div");
 					resizeDiv.className = "resizeWidgetCover";
-					resizeDiv.id = widgetFrame.id + "-resize-cover";
+					resizeDiv.id = "widget-" + widgetId + "-resize-cover";
 
-					//To handle the different resize arrows
-					//Edges for resize
-					resizeDivTop = document.createElement("div");
-					resizeDivTop.className = "resizeWidgetCoverTop";
-					resizeDivTop.id = widgetFrame.id + "-resize-cover-north";
-					resizeDivTop.style.cursor = "ns-resize";
+					//Create elements to handle the different resize arrows
+					{ //resize sides
+						resizeDivTop = document.createElement("div");
+						resizeDivTop.className = "resizeWidgetCoverTop";
+						resizeDivTop.id = "widget-" + widgetId + "-resize-cover-north";
+						resizeDivTop.style.cursor = "ns-resize";
+	
+						resizeDivLeft = document.createElement("div");
+						resizeDivLeft.className = "resizeWidgetCoverLeft";
+						resizeDivLeft.id = "widget-" + widgetId + "-resize-cover-west";
+						resizeDivLeft.style.cursor = "ew-resize";
+	
+						resizeDivRight = document.createElement("div");
+						resizeDivRight.className = "resizeWidgetCoverRight";
+						resizeDivRight.id = "widget-" + widgetId + "-resize-cover-east";
+						resizeDivRight.style.cursor = "ew-resize";
+	
+						resizeDivBottom = document.createElement("div");
+						resizeDivBottom.className = "resizeWidgetCoverBottom";
+						resizeDivBottom.id = "widget-" + widgetId + "-resize-cover-south";
+						resizeDivBottom.style.cursor = "ns-resize";
+					} //end resize sides
 
-					resizeDivLeft = document.createElement("div");
-					resizeDivLeft.className = "resizeWidgetCoverLeft";
-					resizeDivLeft.id = widgetFrame.id + "-resize-cover-west";
-					resizeDivLeft.style.cursor = "ew-resize";
-
-					resizeDivRight = document.createElement("div");
-					resizeDivRight.className = "resizeWidgetCoverRight";
-					resizeDivRight.id = widgetFrame.id + "-resize-cover-east";
-					resizeDivRight.style.cursor = "ew-resize";
-
-					resizeDivBottom = document.createElement("div");
-					resizeDivBottom.className = "resizeWidgetCoverBottom";
-					resizeDivBottom.id = widgetFrame.id + "-resize-cover-south";
-					resizeDivBottom.style.cursor = "ns-resize";
-
-					//Corners for resize
-					resizeDivTopLeft = document.createElement("div");
-					resizeDivTopLeft.className = "resizeWidgetCoverTopLeft";
-					resizeDivTopLeft.id = widgetFrame.id + "-resize-cover-northwest";
-					resizeDivTopLeft.style.cursor = "nwse-resize";
-
-					resizeDivTopRight = document.createElement("div");
-					resizeDivTopRight.className = "resizeWidgetCoverTopRight";
-					resizeDivTopRight.id = widgetFrame.id + "-resize-cover-northeast";
-					resizeDivTopRight.style.cursor = "nesw-resize";
-
-					resizeDivBottomRight = document.createElement("div");
-					resizeDivBottomRight.className = "resizeWidgetCoverBottomRight";
-					resizeDivBottomRight.id = widgetFrame.id + "-resize-cover-southeast";
-					resizeDivBottomRight.style.cursor = "nwse-resize";
-
-					resizeDivBottomLeft = document.createElement("div");
-					resizeDivBottomLeft.className = "resizeWidgetCoverBottomLeft";
-					resizeDivBottomLeft.id = widgetFrame.id + "-resize-cover-southwest";
-					resizeDivBottomLeft.style.cursor = "nesw-resize";
-
-					if(!editBlock_.isHidden) 
-					{
-						//Debug.log("FIXME use edit pencil icon instead of double click",Debug.HIGH_PRIORITY);
-						mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
-					}
+					{ //resize corners
+						resizeDivTopLeft = document.createElement("div");
+						resizeDivTopLeft.className = "resizeWidgetCoverTopLeft";
+						resizeDivTopLeft.id = "widget-" + widgetId + "-resize-cover-northwest";
+						resizeDivTopLeft.style.cursor = "nwse-resize";
+	
+						resizeDivTopRight = document.createElement("div");
+						resizeDivTopRight.className = "resizeWidgetCoverTopRight";
+						resizeDivTopRight.id = "widget-" + widgetId + "-resize-cover-northeast";
+						resizeDivTopRight.style.cursor = "nesw-resize";
+	
+						resizeDivBottomRight = document.createElement("div");
+						resizeDivBottomRight.className = "resizeWidgetCoverBottomRight";
+						resizeDivBottomRight.id = "widget-" + widgetId + "-resize-cover-southeast";
+						resizeDivBottomRight.style.cursor = "nwse-resize";
+	
+						resizeDivBottomLeft = document.createElement("div");
+						resizeDivBottomLeft.className = "resizeWidgetCoverBottomLeft";
+						resizeDivBottomLeft.id = "widget-" + widgetId + "-resize-cover-southwest";
+						resizeDivBottomLeft.style.cursor = "nesw-resize";
+					} //end resize corners
+					
+					editIcon = document.createElement("div");
+					editIcon.className = "widgetEditIcon";
+					editIcon.id = "widget-" + widgetId + "-editIcon";
+					editIcon.title = "Edit the settings and PV-list for this widget.";
+					editIcon.onmouseup = toggleContextMenuCaller("widget-" + widgetId);
+					
+					deleteIcon = document.createElement("div");
+					deleteIcon.className = "widgetDeleteIcon";
+					deleteIcon.id = "widget-" + widgetId + "-deleteIcon";
+					deleteIcon.title = "Delete this widget.";
+					deleteIcon.onmouseup = toggleContextMenuCaller("widget-" + widgetId);
+										
 
 					mainBlockContainer.addEventListener("mousedown", startWidgetDrag);
 					mainBlockContainer.addEventListener("mouseup", endWidgetDrag);	
@@ -1619,44 +1706,47 @@
 					resizeDiv.appendChild(resizeDivTopLeft);
 					resizeDiv.appendChild(resizeDivBottomRight);
 					resizeDiv.appendChild(resizeDivBottomLeft);
+					
 
-					widgetFrame.src = "widgets/" + widgetLibrary.typeToSrc[page_.widgets[widget].type];
-					widgetFrame.style.border = "0";
-					widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
+					widgetObject.el.src = "widgets/" + 
+							widgetLibrary.typeToSrc[widgetObject.type];
+					widgetObject.el.style.border = "0";
+					widgetObject.el.innerHTML = widgetObject.displayName;
 
 					containerDiv.appendChild(resizeDiv);
 					containerDiv.appendChild(mainBlockContainer);
-
-					page_.widgets[widget].el = widgetFrame;
-
-					containerDiv.appendChild(widgetFrame);
+					
+					containerDiv.appendChild(widgetObject.el);
+					
+					containerDiv.appendChild(editIcon);
+					containerDiv.appendChild(deleteIcon);
+					
 					mainBlock_.el.appendChild(containerDiv);
 				}
-				else
-				{
-					widgetFrame = document.getElementById(widget);
-				
-					containerDiv = document.getElementById(widgetFrame.id + "-container");
-					mainBlockContainer = document.getElementById(widgetFrame.id + "-cover");
-					resizeDiv = document.getElementById(widgetFrame.id + "-resize-cover");
-					resizeDivTop = document.getElementById(widgetFrame.id + "-resize-cover-north");
-					resizeDivLeft = document.getElementById(widgetFrame.id + "-resize-cover-west");
-					resizeDivRight = document.getElementById(widgetFrame.id + "-resize-cover-east");
-					resizeDivBottom = document.getElementById(widgetFrame.id + "-resize-cover-south");
+				else //iframe and elements already exist
+				{					
+					containerDiv = document.getElementById("widget-" + widgetId + "-container");
+					mainBlockContainer = document.getElementById("widget-" + widgetId + "-cover");
+					resizeDiv = document.getElementById("widget-" + widgetId + "-resize-cover");
+					resizeDivTop = document.getElementById("widget-" + widgetId + "-resize-cover-north");
+					resizeDivLeft = document.getElementById("widget-" + widgetId + "-resize-cover-west");
+					resizeDivRight = document.getElementById("widget-" + widgetId + "-resize-cover-east");
+					resizeDivBottom = document.getElementById("widget-" + widgetId + "-resize-cover-south");
 
 					//Corners for resize
-					resizeDivTopLeft = document.getElementById(widgetFrame.id + "-resize-cover-northwest");
-					resizeDivTopRight = document.getElementById(widgetFrame.id + "-resize-cover-northeast");
-					resizeDivBottomRight = document.getElementById(widgetFrame.id + "-resize-cover-southeast");
-					resizeDivBottomLeft = document.getElementById(widgetFrame.id + "-resize-cover-southwest");
+					resizeDivTopLeft = document.getElementById("widget-" + widgetId + "-resize-cover-northwest");
+					resizeDivTopRight = document.getElementById("widget-" + widgetId + "-resize-cover-northeast");
+					resizeDivBottomRight = document.getElementById("widget-" + widgetId + "-resize-cover-southeast");
+					resizeDivBottomLeft = document.getElementById("widget-" + widgetId + "-resize-cover-southwest");
 				}
 
-				//now widget object has been updated, now apply sizes in pixel units
-				var x = (page_.widgets[widget].x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
-				var y = (page_.widgets[widget].y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
-				var w = (page_.widgets[widget].size_x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
-				var h = (page_.widgets[widget].size_y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
-
+				//now widgetType object has been updated, now apply sizes in pixel units
+				var x = (widgetObject.x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
+				var y = (widgetObject.y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
+				var w = (widgetObject.size_x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
+				var h = (widgetObject.size_y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
+				var z = 50;
+				
 				containerDiv.style.width = w + "px";
 				containerDiv.style.height = h + "px";
 				containerDiv.style.position = "absolute";
@@ -1669,14 +1759,14 @@
 				mainBlockContainer.style.position = "absolute";
 				mainBlockContainer.style.left = "0px";
 				mainBlockContainer.style.top = "0px";
-				mainBlockContainer.style.zIndex = "50";
+				mainBlockContainer.style.zIndex = z;
 
 				resizeDiv.style.width = (w + (2 * OUTLINE_OFFSET)) + "px";
 				resizeDiv.style.height = (h + (2 * OUTLINE_OFFSET)) + "px";
 				resizeDiv.style.position = "absolute";
 				resizeDiv.style.left = -(OUTLINE_OFFSET) + "px";
 				resizeDiv.style.top = -(OUTLINE_OFFSET) + "px";
-				resizeDiv.style.zIndex = "49";
+				resizeDiv.style.zIndex = z-1;
 
 				//To handle the different resize arrows
 				//Edges for resize
@@ -1685,28 +1775,28 @@
 				resizeDivTop.style.position = "absolute";
 				resizeDivTop.style.left = OUTLINE_OFFSET + "px";
 				resizeDivTop.style.top = "0px";
-				resizeDivTop.style.zIndex = "49";
+				resizeDivTop.style.zIndex = z-1;
 
 				resizeDivLeft.style.width = OUTLINE_OFFSET + "px";
 				resizeDivLeft.style.height = h + "px";
 				resizeDivLeft.style.position = "absolute";
 				resizeDivLeft.style.left ="0px";
 				resizeDivLeft.style.top = OUTLINE_OFFSET + "px";
-				resizeDivLeft.style.zIndex = "49";
+				resizeDivLeft.style.zIndex = z-1;
 
 				resizeDivRight.style.width = OUTLINE_OFFSET + "px";
 				resizeDivRight.style.height = h + "px";
 				resizeDivRight.style.position = "absolute";
 				resizeDivRight.style.right = "0px";
 				resizeDivRight.style.top = OUTLINE_OFFSET + "px";
-				resizeDivRight.style.zIndex = "49";
+				resizeDivRight.style.zIndex = z-1;
 
 				resizeDivBottom.style.width = w + "px";
 				resizeDivBottom.style.height = OUTLINE_OFFSET + "px";
 				resizeDivBottom.style.position = "absolute";
 				resizeDivBottom.style.left = OUTLINE_OFFSET + "px";
 				resizeDivBottom.style.bottom = "0px";
-				resizeDivBottom.style.zIndex = "49";
+				resizeDivBottom.style.zIndex = z-1;
 
 				//Corners for resize
 				resizeDivTopLeft.style.width = OUTLINE_OFFSET + "px";
@@ -1714,273 +1804,284 @@
 				resizeDivTopLeft.style.position = "absolute";
 				resizeDivTopLeft.style.left = "0px";
 				resizeDivTopLeft.style.top = "0px";
-				resizeDivTopLeft.style.zIndex = "49";
+				resizeDivTopLeft.style.zIndex = z-1;
 
 				resizeDivTopRight.style.width = OUTLINE_OFFSET + "px";
 				resizeDivTopRight.style.height = OUTLINE_OFFSET + "px";
 				resizeDivTopRight.style.position = "absolute";
 				resizeDivTopRight.style.right = "0px";
 				resizeDivTopRight.style.top = "0px";
-				resizeDivTopRight.style.zIndex = "49";
+				resizeDivTopRight.style.zIndex = z-1;
 
 				resizeDivBottomRight.style.width = OUTLINE_OFFSET + "px";
 				resizeDivBottomRight.style.height = OUTLINE_OFFSET + "px";
 				resizeDivBottomRight.style.position = "absolute";
 				resizeDivBottomRight.style.right = "0px";
 				resizeDivBottomRight.style.bottom = "0px";
-				resizeDivBottomRight.style.zIndex = "49";
+				resizeDivBottomRight.style.zIndex = z-1;
 
 				resizeDivBottomLeft.style.width = OUTLINE_OFFSET + "px";
 				resizeDivBottomLeft.style.height = OUTLINE_OFFSET + "px";
 				resizeDivBottomLeft.style.position = "absolute";
 				resizeDivBottomLeft.style.left = "0px";
 				resizeDivBottomLeft.style.bottom = "0px";
-				resizeDivBottomLeft.style.zIndex = "49";
+				resizeDivBottomLeft.style.zIndex = z-1;
+				
+
+				editIcon.style.position = "absolute";
+				editIcon.style.right = 0 + "px";
+				editIcon.style.top = h + "px";
+				editIcon.style.zIndex = z-1;
+				
+				deleteIcon.style.position = "absolute";
+				deleteIcon.style.left = 0 + "px";
+				deleteIcon.style.top = h + "px";
+				deleteIcon.style.zIndex = z-1;
+				
 
 				if(!hideFrame)
 				{
-					widgetFrame.style.position = "absolute";
-					widgetFrame.width = w + "px";
-					widgetFrame.height = h + "px";
-					widgetFrame.style.left = 0 + "px";
-					widgetFrame.style.top = 0 + "px";
+					widgetObject.el.style.position = "absolute";
+					widgetObject.el.width = w + "px";
+					widgetObject.el.height = h + "px";
+					widgetObject.el.style.left = 0 + "px";
+					widgetObject.el.style.top = 0 + "px";
 				}
 
-				toggleWidgetSelection(page_.widgets[widget].el);
-				widgetFrame.style.display = hideFrame?"none":"block";
+				toggleWidgetSelection(widgetObject.el);
+				widgetObject.el.style.display = hideFrame?"none":"block";
 			} //end drawWidget()
 
-
-			//================================================================================
-			function drawWidgetFromFile(widget, xx, yy, width, height, hideFrame)
-			{
-				//newWidget_ = true;
-				var widgetFrame = document.createElement("iframe");
-				widgetFrame.id = widget;
-				widgetFrame.scrolling="No";
-
-				var windowWidth = DesktopContent.getWindowWidth();
-				var windowHeight = DesktopContent.getWindowHeight();
-
-				page_.widgets[widget].size_x = (PAGE_POSITIONS_*width/windowWidth) | 0;
-				page_.widgets[widget].size_y = (PAGE_POSITIONS_*height/windowHeight) | 0;
-				page_.widgets[widget].x = (PAGE_POSITIONS_*xx/windowWidth) | 0;
-				page_.widgets[widget].y = (PAGE_POSITIONS_*yy/windowHeight) | 0;
-
-				var containerDiv;
-				var mainBlockContainer;
-
-				var OUTLINE_OFFSET = 15;
-				var resizeDiv;
-				var resizeDivTop;
-				var resizeDivLeft;
-				var resizeDivRight;
-				var resizeDivBottom;
-				var resizeDivTopLeft;
-				var resizeDivTopRight;
-				var resizeDivBottomRight;
-				var resizeDivBottomLeft;
-
-				containerDiv = document.createElement("div");
-				containerDiv.id = widgetFrame.id + "-container";
-				containerDiv.style["background-color"] = "rgba(0,0,0,0.0)";
-				//containerDiv.innerHTML = "containerDiv";
-
-				mainBlockContainer = document.createElement("div");
-				mainBlockContainer.className = "widgetCover";
-				mainBlockContainer.id = widgetFrame.id + "-cover";
-				//mainBlockContainer.innerHTML = "mainBlockContainer";
-
-				resizeDiv = document.createElement("div");
-				resizeDiv.className = "resizeWidgetCover";
-				resizeDiv.id = widgetFrame.id + "-resize-cover";
-
-				//To handle the different resize arrows
-				//Edges for resize
-				resizeDivTop = document.createElement("div");
-				resizeDivTop.className = "resizeWidgetCoverTop";
-				resizeDivTop.id = widgetFrame.id + "-resize-cover-north";
-				resizeDivTop.style.cursor = "ns-resize";
-
-				resizeDivLeft = document.createElement("div");
-				resizeDivLeft.className = "resizeWidgetCoverLeft";
-				resizeDivLeft.id = widgetFrame.id + "-resize-cover-west";
-				resizeDivLeft.style.cursor = "ew-resize";
-
-				resizeDivRight = document.createElement("div");
-				resizeDivRight.className = "resizeWidgetCoverRight";
-				resizeDivRight.id = widgetFrame.id + "-resize-cover-east";
-				resizeDivRight.style.cursor = "ew-resize";
-
-				resizeDivBottom = document.createElement("div");
-				resizeDivBottom.className = "resizeWidgetCoverBottom";
-				resizeDivBottom.id = widgetFrame.id + "-resize-cover-south";
-				resizeDivBottom.style.cursor = "ns-resize";
-
-				//Corners for resize
-				resizeDivTopLeft = document.createElement("div");
-				resizeDivTopLeft.className = "resizeWidgetCoverTopLeft";
-				resizeDivTopLeft.id = widgetFrame.id + "-resize-cover-northwest";
-				resizeDivTopLeft.style.cursor = "nwse-resize";
-
-				resizeDivTopRight = document.createElement("div");
-				resizeDivTopRight.className = "resizeWidgetCoverTopRight";
-				resizeDivTopRight.id = widgetFrame.id + "-resize-cover-northeast";
-				resizeDivTopRight.style.cursor = "nesw-resize";
-
-				resizeDivBottomRight = document.createElement("div");
-				resizeDivBottomRight.className = "resizeWidgetCoverBottomRight";
-				resizeDivBottomRight.id = widgetFrame.id + "-resize-cover-southeast";
-				resizeDivBottomRight.style.cursor = "nwse-resize";
-
-				resizeDivBottomLeft = document.createElement("div");
-				resizeDivBottomLeft.className = "resizeWidgetCoverBottomLeft";
-				resizeDivBottomLeft.id = widgetFrame.id + "-resize-cover-southwest";
-				resizeDivBottomLeft.style.cursor = "nesw-resize";
-
-				widgetFrame.src = "widgets/" + widgetLibrary.typeToSrc[page_.widgets[widget].type];
-				widgetFrame.style.border = "0";
-				widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
-				
-				Debug.log("FIXME make edit pencil",Debug.HIGH_PRIORITY);
-				//mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id));
-
-				mainBlockContainer.addEventListener("mousedown", startWidgetDrag);
-				mainBlockContainer.addEventListener("mouseup", endWidgetDrag);	
-
-				resizeDivTop.addEventListener("mousedown", startWidgetResize);
-				resizeDivLeft.addEventListener("mousedown", startWidgetResize);
-				resizeDivRight.addEventListener("mousedown", startWidgetResize);
-				resizeDivBottom.addEventListener("mousedown", startWidgetResize);
-				resizeDivTopLeft.addEventListener("mousedown", startWidgetResize);
-				resizeDivTopRight.addEventListener("mousedown", startWidgetResize);
-				resizeDivBottomRight.addEventListener("mousedown", startWidgetResize);
-				resizeDivBottomLeft.addEventListener("mousedown", startWidgetResize);
-
-				resizeDivTop.addEventListener("mouseup", endWidgetResize);
-				resizeDivLeft.addEventListener("mouseup", endWidgetResize);
-				resizeDivRight.addEventListener("mouseup", endWidgetResize);
-				resizeDivBottom.addEventListener("mouseup", endWidgetResize);
-				resizeDivTopLeft.addEventListener("mouseup", endWidgetResize);
-				resizeDivTopRight.addEventListener("mouseup", endWidgetResize);
-				resizeDivBottomRight.addEventListener("mouseup", endWidgetResize);
-				resizeDivBottomLeft.addEventListener("mouseup", endWidgetResize);
-
-				resizeDiv.appendChild(resizeDivTop);
-				resizeDiv.appendChild(resizeDivLeft);
-				resizeDiv.appendChild(resizeDivRight);
-				resizeDiv.appendChild(resizeDivBottom);
-				resizeDiv.appendChild(resizeDivTopRight);
-				resizeDiv.appendChild(resizeDivTopLeft);
-				resizeDiv.appendChild(resizeDivBottomRight);
-				resizeDiv.appendChild(resizeDivBottomLeft);
-
-				//start resizing
-				var x = (page_.widgets[widget].x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
-				var y = (page_.widgets[widget].y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
-				var w = (page_.widgets[widget].size_x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
-				var h = (page_.widgets[widget].size_y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
-
-				containerDiv.style.width = w + "px";
-				containerDiv.style.height = h + "px";
-				containerDiv.style.position = "absolute";
-				containerDiv.style.left = x + "px";
-				containerDiv.style.top = y + "px";
-				containerDiv.style.zIndex = "5";
-
-				mainBlockContainer.style.width = w + "px";
-				mainBlockContainer.style.height = h + "px";
-				mainBlockContainer.style.position = "absolute";
-				mainBlockContainer.style.left = "0px";
-				mainBlockContainer.style.top = "0px";
-				mainBlockContainer.style.zIndex = "50";
-
-				resizeDiv.style.width = (w + (2 * OUTLINE_OFFSET)) + "px";
-				resizeDiv.style.height = (h + (2 * OUTLINE_OFFSET)) + "px";
-				resizeDiv.style.position = "absolute";
-				resizeDiv.style.left = -(OUTLINE_OFFSET) + "px";
-				resizeDiv.style.top = -(OUTLINE_OFFSET) + "px";
-				resizeDiv.style.zIndex = "49";
-
-				//To handle the different resize arrows
-				//Edges for resize
-				resizeDivTop.style.width = w + "px";
-				resizeDivTop.style.height = OUTLINE_OFFSET + "px";
-				resizeDivTop.style.position = "absolute";
-				resizeDivTop.style.left = OUTLINE_OFFSET + "px";
-				resizeDivTop.style.top = "0px";
-				resizeDivTop.style.zIndex = "49";
-
-				resizeDivLeft.style.width = OUTLINE_OFFSET + "px";
-				resizeDivLeft.style.height = h + "px";
-				resizeDivLeft.style.position = "absolute";
-				resizeDivLeft.style.left ="0px";
-				resizeDivLeft.style.top = OUTLINE_OFFSET + "px";
-				resizeDivLeft.style.zIndex = "49";
-
-				resizeDivRight.style.width = OUTLINE_OFFSET + "px";
-				resizeDivRight.style.height = h + "px";
-				resizeDivRight.style.position = "absolute";
-				resizeDivRight.style.right = "0px";
-				resizeDivRight.style.top = OUTLINE_OFFSET + "px";
-				resizeDivRight.style.zIndex = "49";
-
-				resizeDivBottom.style.width = w + "px";
-				resizeDivBottom.style.height = OUTLINE_OFFSET + "px";
-				resizeDivBottom.style.position = "absolute";
-				resizeDivBottom.style.left = OUTLINE_OFFSET + "px";
-				resizeDivBottom.style.bottom = "0px";
-				resizeDivBottom.style.zIndex = "49";
-
-				//Corners for resize
-				resizeDivTopLeft.style.width = OUTLINE_OFFSET + "px";
-				resizeDivTopLeft.style.height = OUTLINE_OFFSET + "px";
-				resizeDivTopLeft.style.position = "absolute";
-				resizeDivTopLeft.style.left = "0px";
-				resizeDivTopLeft.style.top = "0px";
-				resizeDivTopLeft.style.zIndex = "49";
-
-				resizeDivTopRight.style.width = OUTLINE_OFFSET + "px";
-				resizeDivTopRight.style.height = OUTLINE_OFFSET + "px";
-				resizeDivTopRight.style.position = "absolute";
-				resizeDivTopRight.style.right = "0px";
-				resizeDivTopRight.style.top = "0px";
-				resizeDivTopRight.style.zIndex = "49";
-
-				resizeDivBottomRight.style.width = OUTLINE_OFFSET + "px";
-				resizeDivBottomRight.style.height = OUTLINE_OFFSET + "px";
-				resizeDivBottomRight.style.position = "absolute";
-				resizeDivBottomRight.style.right = "0px";
-				resizeDivBottomRight.style.bottom = "0px";
-				resizeDivBottomRight.style.zIndex = "49";
-
-				resizeDivBottomLeft.style.width = OUTLINE_OFFSET + "px";
-				resizeDivBottomLeft.style.height = OUTLINE_OFFSET + "px";
-				resizeDivBottomLeft.style.position = "absolute";
-				resizeDivBottomLeft.style.left = "0px";
-				resizeDivBottomLeft.style.bottom = "0px";
-				resizeDivBottomLeft.style.zIndex = "49";
-
-				if(!hideFrame)
-				{
-					widgetFrame.style.position = "absolute";
-					widgetFrame.width = w + "px";
-					widgetFrame.height = h + "px";
-					widgetFrame.style.left = 0 + "px";
-					widgetFrame.style.top = 0 + "px";
-				}
-
-				containerDiv.appendChild(resizeDiv);
-				containerDiv.appendChild(mainBlockContainer);
-
-				page_.widgets[widget].el = widgetFrame;
-
-				containerDiv.appendChild(widgetFrame);
-				mainBlock_.el.appendChild(containerDiv);
-
-				toggleWidgetSelection(page_.widgets[widget].el);
-				widgetFrame.style.display = hideFrame?"none":"block";
-			} //end drawWidgetFromFile()
+//			//================================================================================
+//			function drawWidgetFromFile(widget, xx, yy, width, height, hideFrame)
+//			{
+//				//newWidget_ = true;
+//				var widgetFrame = document.createElement("iframe");
+//				"widget-" + widgetId = widget;
+//				widgetFrame.scrolling="No";
+//
+//				var windowWidth = DesktopContent.getWindowWidth();
+//				var windowHeight = DesktopContent.getWindowHeight();
+//
+//				page_.widgets[widget].size_x = (PAGE_POSITIONS_*width/windowWidth) | 0;
+//				page_.widgets[widget].size_y = (PAGE_POSITIONS_*height/windowHeight) | 0;
+//				page_.widgets[widget].x = (PAGE_POSITIONS_*xx/windowWidth) | 0;
+//				page_.widgets[widget].y = (PAGE_POSITIONS_*yy/windowHeight) | 0;
+//
+//				var containerDiv;
+//				var mainBlockContainer;
+//
+//				var OUTLINE_OFFSET = 15;
+//				var resizeDiv;
+//				var resizeDivTop;
+//				var resizeDivLeft;
+//				var resizeDivRight;
+//				var resizeDivBottom;
+//				var resizeDivTopLeft;
+//				var resizeDivTopRight;
+//				var resizeDivBottomRight;
+//				var resizeDivBottomLeft;
+//
+//				containerDiv = document.createElement("div");
+//				containerDiv.id = "widget-" + widgetId + "-container";
+//				containerDiv.style["background-color"] = "rgba(0,0,0,0.0)";
+//				//containerDiv.innerHTML = "containerDiv";
+//
+//				mainBlockContainer = document.createElement("div");
+//				mainBlockContainer.className = "widgetCover";
+//				mainBlockContainer.id = "widget-" + widgetId + "-cover";
+//				//mainBlockContainer.innerHTML = "mainBlockContainer";
+//
+//				resizeDiv = document.createElement("div");
+//				resizeDiv.className = "resizeWidgetCover";
+//				resizeDiv.id = "widget-" + widgetId + "-resize-cover";
+//
+//				//To handle the different resize arrows
+//				//Edges for resize
+//				resizeDivTop = document.createElement("div");
+//				resizeDivTop.className = "resizeWidgetCoverTop";
+//				resizeDivTop.id = "widget-" + widgetId + "-resize-cover-north";
+//				resizeDivTop.style.cursor = "ns-resize";
+//
+//				resizeDivLeft = document.createElement("div");
+//				resizeDivLeft.className = "resizeWidgetCoverLeft";
+//				resizeDivLeft.id = "widget-" + widgetId + "-resize-cover-west";
+//				resizeDivLeft.style.cursor = "ew-resize";
+//
+//				resizeDivRight = document.createElement("div");
+//				resizeDivRight.className = "resizeWidgetCoverRight";
+//				resizeDivRight.id = "widget-" + widgetId + "-resize-cover-east";
+//				resizeDivRight.style.cursor = "ew-resize";
+//
+//				resizeDivBottom = document.createElement("div");
+//				resizeDivBottom.className = "resizeWidgetCoverBottom";
+//				resizeDivBottom.id = "widget-" + widgetId + "-resize-cover-south";
+//				resizeDivBottom.style.cursor = "ns-resize";
+//
+//				//Corners for resize
+//				resizeDivTopLeft = document.createElement("div");
+//				resizeDivTopLeft.className = "resizeWidgetCoverTopLeft";
+//				resizeDivTopLeft.id = "widget-" + widgetId + "-resize-cover-northwest";
+//				resizeDivTopLeft.style.cursor = "nwse-resize";
+//
+//				resizeDivTopRight = document.createElement("div");
+//				resizeDivTopRight.className = "resizeWidgetCoverTopRight";
+//				resizeDivTopRight.id = "widget-" + widgetId + "-resize-cover-northeast";
+//				resizeDivTopRight.style.cursor = "nesw-resize";
+//
+//				resizeDivBottomRight = document.createElement("div");
+//				resizeDivBottomRight.className = "resizeWidgetCoverBottomRight";
+//				resizeDivBottomRight.id = "widget-" + widgetId + "-resize-cover-southeast";
+//				resizeDivBottomRight.style.cursor = "nwse-resize";
+//
+//				resizeDivBottomLeft = document.createElement("div");
+//				resizeDivBottomLeft.className = "resizeWidgetCoverBottomLeft";
+//				resizeDivBottomLeft.id = "widget-" + widgetId + "-resize-cover-southwest";
+//				resizeDivBottomLeft.style.cursor = "nesw-resize";
+//
+//				widgetFrame.src = "widgets/" + widgetLibrary.typeToSrc[page_.widgets[widget].type];
+//				widgetFrame.style.border = "0";
+//				widgetFrame.innerHTML = page_.widgets[widget].displayName;
+//				
+//				Debug.log("FIXME make edit pencil",Debug.HIGH_PRIORITY);
+//				//mainBlockContainer.addEventListener("dblclick", toggleContextMenuCaller("widget-" + widgetId));
+//
+//				mainBlockContainer.addEventListener("mousedown", startWidgetDrag);
+//				mainBlockContainer.addEventListener("mouseup", endWidgetDrag);	
+//
+//				resizeDivTop.addEventListener("mousedown", startWidgetResize);
+//				resizeDivLeft.addEventListener("mousedown", startWidgetResize);
+//				resizeDivRight.addEventListener("mousedown", startWidgetResize);
+//				resizeDivBottom.addEventListener("mousedown", startWidgetResize);
+//				resizeDivTopLeft.addEventListener("mousedown", startWidgetResize);
+//				resizeDivTopRight.addEventListener("mousedown", startWidgetResize);
+//				resizeDivBottomRight.addEventListener("mousedown", startWidgetResize);
+//				resizeDivBottomLeft.addEventListener("mousedown", startWidgetResize);
+//
+//				resizeDivTop.addEventListener("mouseup", endWidgetResize);
+//				resizeDivLeft.addEventListener("mouseup", endWidgetResize);
+//				resizeDivRight.addEventListener("mouseup", endWidgetResize);
+//				resizeDivBottom.addEventListener("mouseup", endWidgetResize);
+//				resizeDivTopLeft.addEventListener("mouseup", endWidgetResize);
+//				resizeDivTopRight.addEventListener("mouseup", endWidgetResize);
+//				resizeDivBottomRight.addEventListener("mouseup", endWidgetResize);
+//				resizeDivBottomLeft.addEventListener("mouseup", endWidgetResize);
+//
+//				resizeDiv.appendChild(resizeDivTop);
+//				resizeDiv.appendChild(resizeDivLeft);
+//				resizeDiv.appendChild(resizeDivRight);
+//				resizeDiv.appendChild(resizeDivBottom);
+//				resizeDiv.appendChild(resizeDivTopRight);
+//				resizeDiv.appendChild(resizeDivTopLeft);
+//				resizeDiv.appendChild(resizeDivBottomRight);
+//				resizeDiv.appendChild(resizeDivBottomLeft);
+//
+//				//start resizing
+//				var x = (page_.widgets[widget].x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
+//				var y = (page_.widgets[widget].y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
+//				var w = (page_.widgets[widget].size_x * windowWidth / PAGE_POSITIONS_) | 0; //get "pixel units"
+//				var h = (page_.widgets[widget].size_y * windowHeight / PAGE_POSITIONS_) | 0; //get "pixel units"
+//
+//				containerDiv.style.width = w + "px";
+//				containerDiv.style.height = h + "px";
+//				containerDiv.style.position = "absolute";
+//				containerDiv.style.left = x + "px";
+//				containerDiv.style.top = y + "px";
+//				containerDiv.style.zIndex = "5";
+//
+//				mainBlockContainer.style.width = w + "px";
+//				mainBlockContainer.style.height = h + "px";
+//				mainBlockContainer.style.position = "absolute";
+//				mainBlockContainer.style.left = "0px";
+//				mainBlockContainer.style.top = "0px";
+//				mainBlockContainer.style.zIndex = "50";
+//
+//				resizeDiv.style.width = (w + (2 * OUTLINE_OFFSET)) + "px";
+//				resizeDiv.style.height = (h + (2 * OUTLINE_OFFSET)) + "px";
+//				resizeDiv.style.position = "absolute";
+//				resizeDiv.style.left = -(OUTLINE_OFFSET) + "px";
+//				resizeDiv.style.top = -(OUTLINE_OFFSET) + "px";
+//				resizeDiv.style.zIndex = "49";
+//
+//				//To handle the different resize arrows
+//				//Edges for resize
+//				resizeDivTop.style.width = w + "px";
+//				resizeDivTop.style.height = OUTLINE_OFFSET + "px";
+//				resizeDivTop.style.position = "absolute";
+//				resizeDivTop.style.left = OUTLINE_OFFSET + "px";
+//				resizeDivTop.style.top = "0px";
+//				resizeDivTop.style.zIndex = "49";
+//
+//				resizeDivLeft.style.width = OUTLINE_OFFSET + "px";
+//				resizeDivLeft.style.height = h + "px";
+//				resizeDivLeft.style.position = "absolute";
+//				resizeDivLeft.style.left ="0px";
+//				resizeDivLeft.style.top = OUTLINE_OFFSET + "px";
+//				resizeDivLeft.style.zIndex = "49";
+//
+//				resizeDivRight.style.width = OUTLINE_OFFSET + "px";
+//				resizeDivRight.style.height = h + "px";
+//				resizeDivRight.style.position = "absolute";
+//				resizeDivRight.style.right = "0px";
+//				resizeDivRight.style.top = OUTLINE_OFFSET + "px";
+//				resizeDivRight.style.zIndex = "49";
+//
+//				resizeDivBottom.style.width = w + "px";
+//				resizeDivBottom.style.height = OUTLINE_OFFSET + "px";
+//				resizeDivBottom.style.position = "absolute";
+//				resizeDivBottom.style.left = OUTLINE_OFFSET + "px";
+//				resizeDivBottom.style.bottom = "0px";
+//				resizeDivBottom.style.zIndex = "49";
+//
+//				//Corners for resize
+//				resizeDivTopLeft.style.width = OUTLINE_OFFSET + "px";
+//				resizeDivTopLeft.style.height = OUTLINE_OFFSET + "px";
+//				resizeDivTopLeft.style.position = "absolute";
+//				resizeDivTopLeft.style.left = "0px";
+//				resizeDivTopLeft.style.top = "0px";
+//				resizeDivTopLeft.style.zIndex = "49";
+//
+//				resizeDivTopRight.style.width = OUTLINE_OFFSET + "px";
+//				resizeDivTopRight.style.height = OUTLINE_OFFSET + "px";
+//				resizeDivTopRight.style.position = "absolute";
+//				resizeDivTopRight.style.right = "0px";
+//				resizeDivTopRight.style.top = "0px";
+//				resizeDivTopRight.style.zIndex = "49";
+//
+//				resizeDivBottomRight.style.width = OUTLINE_OFFSET + "px";
+//				resizeDivBottomRight.style.height = OUTLINE_OFFSET + "px";
+//				resizeDivBottomRight.style.position = "absolute";
+//				resizeDivBottomRight.style.right = "0px";
+//				resizeDivBottomRight.style.bottom = "0px";
+//				resizeDivBottomRight.style.zIndex = "49";
+//
+//				resizeDivBottomLeft.style.width = OUTLINE_OFFSET + "px";
+//				resizeDivBottomLeft.style.height = OUTLINE_OFFSET + "px";
+//				resizeDivBottomLeft.style.position = "absolute";
+//				resizeDivBottomLeft.style.left = "0px";
+//				resizeDivBottomLeft.style.bottom = "0px";
+//				resizeDivBottomLeft.style.zIndex = "49";
+//
+//				if(!hideFrame)
+//				{
+//					widgetFrame.style.position = "absolute";
+//					widgetFrame.width = w + "px";
+//					widgetFrame.height = h + "px";
+//					widgetFrame.style.left = 0 + "px";
+//					widgetFrame.style.top = 0 + "px";
+//				}
+//
+//				containerDiv.appendChild(resizeDiv);
+//				containerDiv.appendChild(mainBlockContainer);
+//
+//				page_.widgets[widget].el = widgetFrame;
+//
+//				containerDiv.appendChild(widgetFrame);
+//				mainBlock_.el.appendChild(containerDiv);
+//
+//				toggleWidgetSelection(page_.widgets[widget].el);
+//				widgetFrame.style.display = hideFrame?"none":"block";
+//			} //end drawWidgetFromFile()
 
 
 			//=====================================================================================
@@ -2076,7 +2177,7 @@
 						var pvListSize = 0;
 						for (var widget in page_.widgets)
 						{						
-							if (!isEmpty(page_.widgets[widget].PVList))
+							if (!isEmpty(page_.widgets[widget].pvList))
 								;//Debug.log("You have no PV selection for " + widget + "!", Debug.HIGH_PRIORITY);
 							//else
 								pvListSize ++;
@@ -2239,7 +2340,7 @@
 				header.innerHTML = "";
 				var title = document.createElement("input");
 				title.setAttribute("type", "text")
-				title.value = page_.widgets[menu_.getAttribute("widgetID")].Display_Name;
+				title.value = page_.widgets[menu_.getAttribute("widgetID")].displayName;
 				title.onchange = function(){setWidgetDisplayName(menu_.getAttribute("widgetID"), this.value);};
 				title.className = "editableInput";
 				header.appendChild(title);
@@ -2279,9 +2380,9 @@
 				table.appendChild(tbody);
 				elPointer_["editWidgetAttributesPopup-body-pvlist"].appendChild(table);
 
-				for(var pv in page_.widgets[menu_.getAttribute("widgetID")].PVList)
+				for(var pv in page_.widgets[menu_.getAttribute("widgetID")].pvList)
 				{
-					editWidgetAttributesaddRowPVList(pv, page_.widgets[menu_.getAttribute("widgetID")].PVList[pv]/1000, "widgetPVTableBody", "pvDatalist");
+					editWidgetAttributesaddRowPVList(pv, page_.widgets[menu_.getAttribute("widgetID")].pvList[pv]/1000, "widgetPVTableBody", "pvDatalist");
 				}
 
 				for(var i = 0; i < 15; i++)
@@ -2351,7 +2452,7 @@
 			function editWidgetAttributesClose()
 			{
 				document.getElementById("editWidgetAttributesPopup-container").style.display = "none";
-				//if (isEmpty(page_.widgets[menu_.getAttribute("widgetID")].PVList))
+				//if (isEmpty(page_.widgets[menu_.getAttribute("widgetID")].pvList))
 					//Debug.log("You have no PV selection!", Debug.WARN_PRIORITY);
 			} //end editWidgetAttributesClose()
 
@@ -2360,7 +2461,7 @@
 			function editWidgetAttributesSave()
 			{
 				if(elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display == "table-row"){
-					page_.widgets[menu_.getAttribute("widgetID")].PVList = {};
+					page_.widgets[menu_.getAttribute("widgetID")].pvList = {};
 					var table = document.getElementById("widgetPVTable");
 					for(var tr = 0; tr < table.getElementsByTagName("tr").length; tr++)
 					{
@@ -2375,7 +2476,7 @@
 								if(refreshRate == "")
 									refreshRate = -1;
 
-								page_.widgets[menu_.getAttribute("widgetID")].PVList[pv] = refreshRate;
+								page_.widgets[menu_.getAttribute("widgetID")].pvList[pv] = refreshRate;
 								addPVToWidget(pv, refreshRate, menu_.getAttribute("widgetID"));
 							}
 						}
@@ -2404,8 +2505,8 @@
 							}
 						}
 					}
-					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setParameters(page_.widgets[menu_.getAttribute("widgetID")].attributes);
-					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.newWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
+					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setAttributes(page_.widgets[menu_.getAttribute("widgetID")].attributes);
+					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.drawWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
 
 //					if(actionRequired)
 //						document.getElementById(menu_.getAttribute("widgetID")).className = "action-required";
@@ -2461,7 +2562,7 @@
 			//=====================================================================================
 			function setWidgetDisplayName(widget, displayName)
 			{
-				page_.widgets[widget].Display_Name = displayName;
+				page_.widgets[widget].displayName = displayName;
 			} //end setWidgetDisplayName()
 
 
@@ -2647,19 +2748,24 @@
 
 			//=====================================================================================
 			function toggleWidgetSelection(target)
-			{
-				if(typeof targetElement_ != 'undefined'  && typeof targetElement_.parentNode != 'undefined')
+			{				
+				//unselect previous target, and select parameter target
+				
+				if(targetElement_ !== undefined  && 
+						targetElement_.parentNode !== undefined)
 				{
 					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "block";
 					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "none";			
 				}
 
 				targetElement_ = target;
-				if(typeof targetElement_ != 'undefined' && typeof targetElement_.parentNode != 'undefined')
+				if(targetElement_ !== undefined && 
+						targetElement_.parentNode !== undefined)
 				{
 					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "none";
 					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "block";
 				}	
+				
 			} //end toggleWidgetSelection()
 
 			//=====================================================================================
@@ -2853,7 +2959,7 @@
 				page_.widgets[widgetId].x += deltaX;
 				page_.widgets[widgetId].y += deltaY;
 
-				drawWidget(widgetId,false,0,0,0,0, //newWidget, x, y, width, height
+				drawWidget(widgetId,false,0,0,0,0, //drawWidget, x, y, width, height
 					true /*hideFrame*/);
 			} //end translateWidget()
 
@@ -2875,7 +2981,7 @@
 				page_.widgets[widgetId].size_x += deltaW;
 				page_.widgets[widgetId].size_y += deltaH;
 
-				drawWidget(widgetId,false,0,0,0,0, //newWidget, x, y, width, height
+				drawWidget(widgetId,false,0,0,0,0, //drawWidget, x, y, width, height
 					true /*hideFrame*/);
 			} //end resizeWidget()
 
@@ -3217,7 +3323,7 @@
 				<nav id="editWidgetAttributesPopup-menu-nav">
 				  <ul class="menu__items ">
 				<li class="menu__item ">
-				  <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('PVList')">
+				  <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('pvList')">
 					<i class=""></i> Edits PVs
 				  </a>
 				</li>
@@ -3243,5 +3349,8 @@
 
 		<datalist id="pvDatalist"></datalist>
 		<p hidden id="mailbox"></p>
+
+		<div class='preloadImage' id='preloadImage-treeEditTrashIconHover'></div>
+		<div class='preloadImage' id='preloadImage-treeEditIconHover'></div>
 	</body>
 </html>
