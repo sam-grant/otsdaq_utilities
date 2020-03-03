@@ -696,7 +696,9 @@
 				return function(){
 					
 					Debug.log("setupForDrawSelectionRectangle() handler " + tileNumber);
-														
+									
+					
+					
 					var el;
 					if(lastTileNumber_ !== undefined) //revert border
 					{
@@ -705,12 +707,20 @@
 						el.style.backgroundColor = "#b2b2b2";
 					}
 
-					el = document.getElementById("tiles-" + tileNumber);
-					el.style.border = "2px dotted orange";
-					el.style.backgroundColor = "white";
-					lastTileNumber_  = tileNumber;
+					if(lastTileNumber_ == tileNumber) //treat as unselecting
+						lastTileNumber_ = undefined; //clear new tile target
+					else
+						lastTileNumber_  = tileNumber|0;
+						
 
-					parent.setupForDrawSelectionRectangle(tileNumber);
+					if(lastTileNumber_ !== undefined)
+					{
+						el = document.getElementById("tiles-" + lastTileNumber_);
+						el.style.border = "2px dotted orange";
+						el.style.backgroundColor = "white";
+					}
+					
+					parent.setupForDrawSelectionRectangle(lastTileNumber_);
 				};
 			} //end setupForDrawSelectionRectangle()
 

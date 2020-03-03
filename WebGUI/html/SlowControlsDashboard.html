@@ -1392,13 +1392,21 @@
 			function setupForDrawSelectionRectangle(id)
 			{
 				Debug.log("parent level setupForDrawSelectionRectangle " + id);
-				
-				//crosshair primary indicator to user that draw and drag is active
-				mainBlock_.el.style.cursor = "crosshair"; 
-				
-				indicateUserActivityToServer();				
 
-				dragAndDrawWidgetType_ = id|0; //force integer type id
+				indicateUserActivityToServer();		
+				
+				if(id === undefined)
+				{
+					//treat as clearing drag and draw type mode
+					mainBlock_.el.style.cursor = "default"; 
+					dragAndDrawWidgetType_ = undefined;
+				}
+				else //drag-and-draw type was selected
+				{
+					//crosshair primary indicator to user that draw and drag is active
+					mainBlock_.el.style.cursor = "crosshair";								
+					dragAndDrawWidgetType_ = id|0; //force integer type id
+				}
 				
 			} //end setupForDrawSelectionRectangle()
 
