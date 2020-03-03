@@ -212,7 +212,8 @@ void SlowControlsDashboardSupervisor::checkSubscriptions(
 void SlowControlsDashboardSupervisor::setSupervisorPropertyDefaults()
 {
 	CorePropertySupervisorBase::setSupervisorProperty(
-	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.CheckUserLockRequestTypes, "*");
+	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.CheckUserLockRequestTypes,
+		"*");
 }
 
 //==============================================================================
@@ -221,7 +222,8 @@ void SlowControlsDashboardSupervisor::setSupervisorPropertyDefaults()
 void SlowControlsDashboardSupervisor::forceSupervisorPropertyValues()
 {
 	CorePropertySupervisorBase::setSupervisorProperty(
-	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes, "poll");
+	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
+		"poll");
 }
 
 //==============================================================================
@@ -281,6 +283,12 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	{
 		std::string uid = CgiDataUtilities::getOrPostData(cgiIn, "uid");
 		Poll(cgiIn, xmlOut, uid);
+	}
+	else if(Command == "userActivityHeartbeat")
+	{
+		//web client code should call this while user is building
+		//	in Edit Mode.
+		//Do nothing, just keep login alive
 	}
 	else if(Command == "generateUID")
 	{

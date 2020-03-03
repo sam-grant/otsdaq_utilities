@@ -1,6 +1,6 @@
 
 	body {
-		background-color: 			rgb(255,204,0);
+		background-color: 			white;
 		overflow: 					hidden;
 		transition: 				background-color .25s;
 	}
@@ -20,40 +20,36 @@
 	}
 
 	.preloadImage {			
-		width: 				24px;
-		height: 			20px;
-		position:			absolute;
-		left: 				-100px;
-		top: 				0;
+		width: 						24px;
+		height: 					20px;
+		position:					absolute;
+		left: 						-100px;
+		top: 						0;
+		z-index:					1000;
 	}
-	#preloadImage-treeEditTrashIconHover {
-		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
-	}
-	#preloadImage-treeEditIconHover {
-		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
-	}
+	
 	.widgetEditIcon {			
-		background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
-		width: 				24px;
-		height: 			20px;
-		border: 			0;
-		margin: 			23px -16px -45px 0px;
+		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
+		width: 						24px;
+		height: 					20px;
+		border: 					0;
+		margin: 					34px -3px -45px -21px;
+		cursor: 					pointer;
 	}
-	.widgetEditIcon:hover {
-		background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
-		cursor: 			pointer;
+	.widgetEditIcon:hover, #preloadImage-treeEditIconHover {
+		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);		
 	}
 	
 	.widgetDeleteIcon {			
-		background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
-		width: 				16px;
-		height: 			20px;
-		border: 			0;
-		margin: 			22px 0 -45px -12px;
+		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+		width: 						16px;
+		height: 					20px;
+		border: 					0;
+		margin: 					34px 0 -55px 1px;
+		cursor: 					pointer;
 	}
-	.widgetDeleteIcon:hover {
-		background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
-		cursor: 			pointer;
+	.widgetDeleteIcon:hover, #preloadImage-treeEditTrashIconHover {
+		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 	}
 	
 	button {
@@ -239,11 +235,11 @@
 		position:					absolute;
 	}
 
-	.ghost-active {
+	.drawAndDragBox-active {
 		display: 					block !important;
 	}
 
-	.ghost-select > span {
+	.drawAndDragBox-select > span {
 		background-color: 			rgba(255, 45, 85, 0.6);
 		border: 					1px solid #b20e8c;
 		width: 						100%;
@@ -251,7 +247,7 @@
 		float: 						left;
 	}
 
-	.ghost-select {
+	.drawAndDragBox-select {
 		display: 					none;
 		z-index: 					10;
 		position: 					absolute !important;

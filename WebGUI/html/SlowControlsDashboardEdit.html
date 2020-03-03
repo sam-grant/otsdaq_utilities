@@ -643,8 +643,8 @@
 					else
 						type = "Undefined";
 					
-					console.log("localDrawIcon() i,positionIndex,name,type:",
-							i,positionIndex,name,type);
+					//console.log("localDrawIcon() i,positionIndex,name,type:",
+					//		i,positionIndex,name,type);
 
 					tile.title = "Name: " + name + "\nType: " + type;
 					
@@ -692,10 +692,11 @@
 			
 			//=====================================================================================
 			function setupForDrawSelectionRectangle(tileNumber)
-			{			
-				Debug.log("setupForDrawSelectionRectangle() " + tileNumber);
-				
+			{							
 				return function(){
+					
+					Debug.log("setupForDrawSelectionRectangle() handler " + tileNumber);
+														
 					var el;
 					if(lastTileNumber_ !== undefined) //revert border
 					{
