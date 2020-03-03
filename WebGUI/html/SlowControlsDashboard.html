@@ -2768,8 +2768,14 @@
 			{						
 				if(e) e.stopPropagation();	
 
-				if((!resizeLockout_ && !dragLockout_) || 
+				if(!resizeLockout_ && !dragLockout_ && 
 						!dragAndDrawTargetEl_)
+				{
+					Debug.log("Unknown drag/resize end target. Ignoring drag/resize end.");
+					return;
+					
+				}
+				if(!dragAndDrawTargetEl_)
 				{
 					Debug.log("Unknown drag/resize end target?! Notify admins id=" + id,
 							Debug.HIGH_PRIORITY);
