@@ -1561,10 +1561,11 @@
 						type,  
 						x,y,w,h);
 
-				//clear globals bacl tp drawing mode
-				mainBlock_.el.style.cursor = "crosshair"; //"default";
+				//clear globals back to not drawing mode
+				mainBlock_.el.style.cursor = "default";//"crosshair"; //"default";
 				drawAndDragBox.style.display = "none";
 				drawingSelectionRectangle_  = false;
+				dragAndDrawWidgetType_ = undefined;
 			} //end stopDragAndDrawRectangle()
 
 			//================================================================================
@@ -2100,10 +2101,11 @@
 					var y = e.clientY;
 					
 					//prevent context menu from being offscreen
-					if(x + menu_.offsetLeft > w)
-						x = w - menu_.offsetLeft;
-					if(y + menu_.offsetTop > h - EDIT_BLOCK_PEEK_HEIGHT)
-						y = h - EDIT_BLOCK_PEEK_HEIGHT - menu_.offsetTop;
+					// context menu seems to be 320 x 300
+					if(x + 320 > w)
+						x = w - 320;
+					if(y + 280 > h - EDIT_BLOCK_PEEK_HEIGHT)
+						y = h - EDIT_BLOCK_PEEK_HEIGHT - 280;
 					
 					menu_.style.left = x + "px";
 					menu_.style.top = y + "px";
@@ -3154,22 +3156,30 @@
 					<nav id="contextMenu" class="menu ">
 					  <ul class="menu__items ">
 						<li class="menu__item ">
-						  <a href="#" class="menu__link " onclick="toggleAddPV()">
+						  <a href="#" class="menu__link " 
+						  	onmousedown="event.stopPropagation();"
+						  	onmouseup="event.stopPropagation(); toggleAddPV();">
 							<i class=""></i> Add PV
 						  </a>
 						</li>
 						<li class="menu__item">
-						  <a href="#" class="menu__link" onclick="editWidgetAttributesOpen()" >
+						  <a href="#" class="menu__link" 
+						  	onmousedown="event.stopPropagation();"
+						  	onmouseup="event.stopPropagation(); editWidgetAttributesOpen()" >
 							<i class=""></i> Edit Attributes
 						  </a>
 						</li>
 						<li class="menu__item">
-						  <a href="#" class="menu__link" onclick="deleteWidget()">
+						  <a href="#" class="menu__link" 
+						  	onmousedown="event.stopPropagation();"
+						  	onmouseup="event.stopPropagation(); deleteWidget()">
 							<i class=""></i> Delete Widget
 						  </a>
 						</li>
 						<li class="menu__item">
-						  <a href="#" class="menu__link" onclick="toggleContextMenuOff()" >
+						  <a href="#" class="menu__link" 
+						  	onmousedown="event.stopPropagation();"
+						  	onmouseup="event.stopPropagation(); toggleContextMenuOff()" >
 							<i class=""></i> Close
 						  </a>
 						</li>
