@@ -2948,14 +2948,13 @@
 					//console.log("handleMouseMove", dragAndDrawWidgetType_);
 					redrawSelectionRectangle(e);
 				}
-				else if(dragAndDrawTargetEl_ !== undefined)
-				{ //dragging or resizing
-					
+				else if(resizeLockout_ || dragLockout_)
+				{ //dragging or resizing					
 					//console.log("handleMouseMove", dragAndDrawTargetEl_);
 					if(e.buttons != 0)
 						redrawTargetWidget(e);
 					else //mouse up?! (should really be handled by mouse up, but maybe user went off screen with mouse)
-						endWidgetResize(e);
+						endWidgetDragAndResize(e);
 				}
 			} //end handleMouseMove()
 
@@ -2973,7 +2972,7 @@
 				
 				setEditModeWidgetTarget(/*no target*/);
 				redrawWindow();
-			}; //end onresize()
+			}; //end handleResize()
 
 			//=====================================================================================
 			function redrawWindow(event, hover) 
