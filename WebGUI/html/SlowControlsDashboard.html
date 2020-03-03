@@ -79,7 +79,7 @@
 			//	mouseoverEditBlock(e)
 			//	mouseoutEditBlock(e)
 			//	toggleEditMode()
-			//	makeWidgetHandler(id)
+			//	makeHandlerWithID(id)
 			//	toggleContextMenu(e, id)
 			//	toggleContextMenuOff(e)
 			//	toggleHotkeyMenu()
@@ -215,27 +215,22 @@
 			//==== BEGIN Drag and Resize parameters
 			var xPos_;
 			var yPos_;
-			//var newWidget_ = false;
-			//var id_forDrag_;
-			//var target_forDrag;
-			//var drawingSelectionRectangle_ = false;
+			var drawingSelectionRectangle_ = false;
+			var dragAndDrawTargetEl_ = undefined;			
+			var dragAndDrawWidgetType_ = undefined;
 			
 			var resizeLockout_ = false;
 			var resizeWidgetId_ = "";
 			var resizeFrom_ = "";
-			var _saveCursorType;
-			//==== END Resize
+			var saveCursorType_;
+			
+			var dragLockout_ = false;
+			var targetElement_ = undefined;
+			//==== END Drag and Resize
 			
 			var cutWidget_;
 			var cutWidgetId_;
 
-			var pageOffSetX_ = 0;
-			var pageOffSetY_ = 0;
-			var dragLockout_ = false;
-			var targetElement_ = undefined;
-			var dragAndDrawTargetEl_ = undefined;
-			
-			var dragAndDrawWidgetType_ = undefined;
 			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -249,6 +244,7 @@
 				Debug.log("init() was called");
 
 				window.onkeyup = handleKeys;
+				window.onkeydown = makeHandlerWithID(true/*isKeyDown*/,handleKeys);
 				window.onresize = handleResize;
 				
 				var parameterPageName = DesktopContent.getParameter(0,"page_name");				
@@ -533,9 +529,6 @@
 				dragAndDrawWidgetType_ = undefined;
 				drawingSelectionRectangle_ = false;
 
-		    	pageOffSetX_ = 0;
-				pageOffSetY_ = 0;
-
 				toggleEditMode();
 				redrawWindow();
 			} //end loadPageReqHandler()
@@ -689,9 +682,6 @@
 				//updateRefreshInterval();
 				dragAndDrawWidgetType_ = undefined;
 				drawingSelectionRectangle_ = false;
-
-		    	pageOffSetX_ = 0;
-				pageOffSetY_ = 0;
 
 				toggleEditMode();
 				redrawWindow();
@@ -1534,11 +1524,9 @@
 			{
 				var type = dragAndDrawWidgetType_;
 				Debug.log("stopDragAndDrawRectangle() " + type);
-
-				mainBlock_.el.style.cursor = "default";
-
-				var drawAndDragBox = document.getElementById("selectionRectangle");
 				
+				var drawAndDragBox = document.getElementById("selectionRectangle");
+			
 
 				//console.log((event.clientX - xPos_));
 				//console.log(drawAndDragBox.style.width);
@@ -1565,9 +1553,9 @@
 						type,  
 						x,y,w,h);
 
-				//clear globals
+				//clear globals bacl tp drawing mode
+				mainBlock_.el.style.cursor = "crosshair"; //"default";
 				drawAndDragBox.style.display = "none";
-				dragAndDrawWidgetType_ = undefined;
 				drawingSelectionRectangle_  = false;
 			} //end stopDragAndDrawRectangle()
 
@@ -1730,7 +1718,7 @@
 					editIcon.className = "widgetEditIcon";
 					editIcon.id = "widget-" + id + "-editIcon";
 					editIcon.title = "Edit the settings and PV-list for this widget.";
-					editIcon.onmouseup = makeWidgetHandler(id,
+					editIcon.onmouseup = makeHandlerWithID(id,
 							toggleContextMenu);
 					editIcon.onmousedown = function(e){e.stopPropagation();}
 					
@@ -1738,50 +1726,50 @@
 					deleteIcon.className = "widgetDeleteIcon";
 					deleteIcon.id = "widget-" + id + "-deleteIcon";
 					deleteIcon.title = "Delete this widget.";
-					deleteIcon.onmouseup = makeWidgetHandler(id,
+					deleteIcon.onmouseup = makeHandlerWithID(id,
 							toggleContextMenu);
 					deleteIcon.onmousedown = function(e){e.stopPropagation();}					
 
 					//widgetCover.addEventListener("dblclick", 
-					//		makeWidgetHandler(id,		toggleContextMenu));
+					//		makeHandlerWithID(id,		toggleContextMenu));
 					widgetCover.addEventListener("mousedown", 
-							makeWidgetHandler(id,		startWidgetDrag));
+							makeHandlerWithID(id,		startWidgetDrag));
 					widgetCover.addEventListener("mouseup", 
-							makeWidgetHandler(id,		endWidgetDragAndResize));	
+							makeHandlerWithID(id,		endWidgetDragAndResize));	
 
 					resizeDivTop.addEventListener("mousedown", 
-							makeWidgetHandler(id,		startWidgetResize));
+							makeHandlerWithID(id,		startWidgetResize));
 					resizeDivLeft.addEventListener("mousedown", 
-							makeWidgetHandler(id,		startWidgetResize));
+							makeHandlerWithID(id,		startWidgetResize));
 					resizeDivRight.addEventListener("mousedown", 
-							makeWidgetHandler(id,		startWidgetResize));
+							makeHandlerWithID(id,		startWidgetResize));
 					resizeDivBottom.addEventListener("mousedown", 
-							makeWidgetHandler(id,		startWidgetResize));
+							makeHandlerWithID(id,		startWidgetResize));
 					resizeDivTopLeft.addEventListener("mousedown", 
-							makeWidgetHandler(id,		startWidgetResize));
+							makeHandlerWithID(id,		startWidgetResize));
 					resizeDivTopRight.addEventListener("mousedown", 
-							makeWidgetHandler(id,		startWidgetResize));
+							makeHandlerWithID(id,		startWidgetResize));
 					resizeDivBottomRight.addEventListener("mousedown", 
-							makeWidgetHandler(id,		startWidgetResize));
+							makeHandlerWithID(id,		startWidgetResize));
 					resizeDivBottomLeft.addEventListener("mousedown", 
-							makeWidgetHandler(id,		startWidgetResize));
+							makeHandlerWithID(id,		startWidgetResize));
 
 					resizeDivTop.addEventListener("mouseup", 
-							makeWidgetHandler(id,		endWidgetDragAndResize));
+							makeHandlerWithID(id,		endWidgetDragAndResize));
 					resizeDivLeft.addEventListener("mouseup", 
-							makeWidgetHandler(id,		endWidgetDragAndResize));
+							makeHandlerWithID(id,		endWidgetDragAndResize));
 					resizeDivRight.addEventListener("mouseup",  
-							makeWidgetHandler(id,		endWidgetDragAndResize));
+							makeHandlerWithID(id,		endWidgetDragAndResize));
 					resizeDivBottom.addEventListener("mouseup", 
-							makeWidgetHandler(id,		endWidgetDragAndResize));
+							makeHandlerWithID(id,		endWidgetDragAndResize));
 					resizeDivTopLeft.addEventListener("mouseup",  
-							makeWidgetHandler(id,		endWidgetDragAndResize));
+							makeHandlerWithID(id,		endWidgetDragAndResize));
 					resizeDivTopRight.addEventListener("mouseup",  
-							makeWidgetHandler(id,		endWidgetDragAndResize));
+							makeHandlerWithID(id,		endWidgetDragAndResize));
 					resizeDivBottomRight.addEventListener("mouseup",  
-							makeWidgetHandler(id,		endWidgetDragAndResize));
+							makeHandlerWithID(id,		endWidgetDragAndResize));
 					resizeDivBottomLeft.addEventListener("mouseup",  
-							makeWidgetHandler(id,		endWidgetDragAndResize));
+							makeHandlerWithID(id,		endWidgetDragAndResize));
 
 					resizeDiv.appendChild(resizeDivTop);
 					resizeDiv.appendChild(resizeDivLeft);
@@ -1811,7 +1799,7 @@
 				else //iframe and elements already exist
 				{					
 					containerDiv 			= document.getElementById("widget-" + id + "-container");
-					widgetCover 		= document.getElementById("widget-" + id + "-cover");
+					widgetCover 			= document.getElementById("widget-" + id + "-cover");
 
 					editIcon 				= document.getElementById("widget-" + id + "-editIcon");
 					deleteIcon 				= document.getElementById("widget-" + id + "-deleteIcon");					
@@ -2073,20 +2061,15 @@
 
 
 			//=====================================================================================
-			// returns a hanlder function that can be used to respond 
-			//	to widget event handlers and pass the widget id
-			function makeWidgetHandler(id,handlerFunction)
+			// returns a handler function that can be used to respond 
+			//	to event handlers and pass an id parameter
+			function makeHandlerWithID(id,handlerFunction)
 			{
 				 return function(event) {
-					 console.log("makeWidgetHandler handlerFunction called id=",id);
+					 console.log("makeHandlerWithID handlerFunction called id=",id);
 					 handlerFunction(event, id);
-					 
-//					 if(!editBlock_.isHidden)
-//					 {
-//					 	toggleContextMenu(event, id);
-//					 }
 				};
-			} //end makeWidgetHandler()
+			} //end makeHandlerWithID()
 
 
 			//=====================================================================================
@@ -2527,10 +2510,16 @@
 			} //end setGridColor()
 			
 			//=====================================================================================
-			function handleKeys(e)
-			{				
+			function handleKeys(e,isKeyDown)
+			{	
+				var id;
+				
 				if(e.shiftKey)
 				{
+					if(isKeyDown) return; //ignore shift keys down (only up)
+
+					var ARROW_SPEED = 30;
+					
 					switch(e.keyCode)
 					{
 					case 88: 	//X (cut)
@@ -2549,34 +2538,89 @@
 				    	console.log("toggle edit mode");
 				    	toggleEditMode();
 				    	break;
-				    	
+					case 38: 	//up arrow (move widget)
+						id = localGetWidgetId();
+						console.log(isKeyDown,"up move widget",id);
+						page_.widgets[id].y -= ARROW_SPEED;
+						drawWidget(id);
+						break;
+					case 40: 	//down arrow (move widget)
+						id = localGetWidgetId();
+						console.log(isKeyDown,"down move widget",id);
+						page_.widgets[id].y += ARROW_SPEED;
+						drawWidget(id);
+						break;
+					case 37: 	//left arrow (move widget)
+						id = localGetWidgetId();
+						console.log(isKeyDown,"left move widget",id);
+						page_.widgets[id].x -= ARROW_SPEED;
+						drawWidget(id);
+						break;
+					case 39: 	//right arrow (move widget)
+						id = localGetWidgetId();
+						console.log(isKeyDown,"right move widget",id);
+						page_.widgets[id].x += ARROW_SPEED;
+						drawWidget(id);
+						break;
 					default:;
 					}
 				} //end shift key + key handling
 				else //no shift key
 				{
+					if(!isKeyDown) return; //ignore on key up side
+					
+					var ARROW_SPEED = 1;
 					switch(e.keyCode)
 					{
 					case 38: 	//up arrow (move widget)
-				    	console.log("up move widget",targetElement_);
-				    	translateWidget(targetElement_, 0, -1);
+						id = localGetWidgetId();
+				    	console.log(isKeyDown,"up move widget",id);
+				    	page_.widgets[id].y -= ARROW_SPEED;
+				    	drawWidget(id);
 				    	break;
 					case 40: 	//down arrow (move widget)
-				    	console.log("down move widget",targetElement_);
-				    	translateWidget(targetElement_, 0, 1);
+						id = localGetWidgetId();
+				    	console.log(isKeyDown,"down move widget",id);
+				    	page_.widgets[id].y += ARROW_SPEED;
+				    	drawWidget(id);
 				    	break;
 					case 37: 	//left arrow (move widget)
-				    	console.log("left move widget",targetElement_);
-				    	translateWidget(targetElement_, -1, 0);
+						id = localGetWidgetId();
+				    	console.log(isKeyDown,"left move widget",id);
+				    	page_.widgets[id].x -= ARROW_SPEED;
+				    	drawWidget(id);
 				    	break;
 					case 39: 	//right arrow (move widget)
-				    	console.log("right move widget",targetElement_);
-				    	translateWidget(targetElement_, 1, 0);
+						id = localGetWidgetId();
+				    	console.log(isKeyDown,"right move widget",id);
+				    	page_.widgets[id].x += ARROW_SPEED;
+				    	drawWidget(id);
 				    	break;
 					default:;
 					}
 				} //end no shift key key handling
-			    
+				
+				
+				return;
+				
+				//===============
+				function localGetWidgetId()
+				{
+					var id;
+					try
+					{
+						id = targetElement_.id.split('-')[1] | 0; //force integer
+						if(page_.widgets[id] === undefined)
+							throw ("Missing id target " + id);
+					}
+					catch(e)
+					{
+						Debug.log("Illegal target key element: " + e,
+								Debug.HIGH_PRIORITY);
+						throw(e);
+					}
+					return id;
+				} //end localGetWidgetId
 			} //end handleKeys()
 
 			//=====================================================================================
@@ -2725,7 +2769,7 @@
 				Debug.log("endWidgetDragAndResize() " + id);	
 				
 				//restore cursor
-				dragAndDrawTargetEl_.style.cursor = _saveCursorType;
+				dragAndDrawTargetEl_.style.cursor = saveCursorType_;
 				
 				//redraw target widget one more time and keep final position 
 				redrawTargetWidget(e, true /*doNotRestorePosition*/); 												
@@ -2751,7 +2795,7 @@
 					dragAndDrawTargetEl_ = e.target;
 
 					//save current cursor and set to grabbing cursor
-					_saveCursorType = dragAndDrawTargetEl_.style.cursor;
+					saveCursorType_ = dragAndDrawTargetEl_.style.cursor;
 					dragAndDrawTargetEl_.style.cursor = "grabbing";
 						
 					xPos_ = e.clientX;
@@ -2897,7 +2941,8 @@
 			function handleMouseDown(e)
 			{				
 				console.log("handleMouseDown",e.buttons,e.button);
-				if(dragAndDrawWidgetType_ !== undefined)
+				if(!drawingSelectionRectangle_ && 
+						dragAndDrawWidgetType_ !== undefined)
 				{
 					Debug.log("handleMouseDown " + dragAndDrawWidgetType_ );	
 					drawSelectionRectangle(e);
@@ -2912,7 +2957,7 @@
 				Debug.log("handleMouseUp()");
 				
 				
-				if(dragAndDrawWidgetType_ !== undefined)
+				if(drawingSelectionRectangle_)
 				{
 					Debug.log("handleMouseUp finish widget draw type=" + 
 							dragAndDrawWidgetType_);
@@ -2942,11 +2987,13 @@
 			{
 				//Debug.log("handleMouseMove");
 				
-				if(dragAndDrawWidgetType_ !== undefined && 
-					e.buttons != 0)
+				if(drawingSelectionRectangle_)
 				{ //drag and draw
 					//console.log("handleMouseMove", dragAndDrawWidgetType_);
-					redrawSelectionRectangle(e);
+					if(e.buttons != 0)
+						redrawSelectionRectangle(e);
+					else //mouse up?! (should really be handled by mouse up, but maybe user went off screen with mouse)
+						stopDragAndDrawRectangle(e);
 				}
 				else if(resizeLockout_ || dragLockout_)
 				{ //dragging or resizing					

@@ -4,7 +4,20 @@
 		overflow: 					hidden;
 		transition: 				background-color .25s;
 	}
-
+	
+	* {			
+		-webkit-user-select: 	none; /* prevent highlight selection (does not stop ghost images, must use el.ondragstart = function() {return false;}; */
+		-moz-user-select: 		none;
+		user-select:			none;
+		outline: 				none;  /* to stop firefox selection*/
+	}
+	
+	input {	/*normal highlight selecting effects on inputs*/
+		-webkit-user-select: 	auto; 
+		-moz-user-select: 		auto;
+		user-select: 			auto;
+	}
+	
 	iframe{
 		padding: 					0;
 		border: 					0;
