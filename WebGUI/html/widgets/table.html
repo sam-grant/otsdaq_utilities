@@ -24,9 +24,10 @@
 			//init()
 
 			var pv_settings_ = [];
+			var parameters_ = {class: "", "show_labels": "false"};
 
 			//define data sample
-			 var tabledata = [];
+			var tabledata = [];
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -38,7 +39,7 @@
 				console.log("init()");
 				console.log(window.frameElement.id);
 				console.log("Dimensions: " + window.innerWidth + " : " + window.innerHeight);
-				window.parent.setupWidget(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
@@ -70,20 +71,21 @@
 				newTable();
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
-				parameters = {};
-				return parameters;
+				return parameters_;
 			}
 
-			function setParameters(attributes)
+			function setAttributes(attributes)
 			{
-				
+				parameters_ = attributes;
+				console.log("Table: set parameters()");
+				console.log(parameters_);
 			}
 
-			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
-				console.log("newValue() reached", pvName, pvValue);
+				console.log("Table: newValue() reached", pvName, pvValue);
 				drawTable(pvName, pvValue, pvStatus, pvSeverity, pvTime);
 			}
 

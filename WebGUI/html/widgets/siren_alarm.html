@@ -43,7 +43,7 @@
 				console.log("init()");
 				console.log(window.frameElement.id);
 				_chatSound = new Audio(_SOUND_PATH);
-				window.parent.setupWidget(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
@@ -58,19 +58,19 @@
 				console.log(document.body);
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
 				return parameters_;
 			}
 
-			function setParameters(attributes)
+			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("thermometer: set parameters()");
+				console.log("Siren: set parameters()");
 				console.log(parameters_);
 			}
 
-			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("SireneAlarm newValue() reached", pvName, pvValue);
 				if(pvSeverity == "MAJOR" )

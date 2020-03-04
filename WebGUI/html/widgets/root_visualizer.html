@@ -67,7 +67,7 @@
 				); //end getAppId request
 				//getting the LID
 
-				window.parent.setupWidget(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
 
 				//var rootFiles = "streamerInfo.root;hsimple.root";
 				var rootFiles = "";
@@ -86,24 +86,24 @@
 
 			function drawWidget(widget, parameters)
 			{
-				setParameters(window.parent.page_.widgets[widget.el.id].attributes);
+				setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
 				console.log(document.getElementById("simpleGUI"));
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
 				//parameters_["file"] = "/WebPath/html/widgets/strawHit.root";
 				parameters_["file"] = "/strawHit.root";
 				return parameters_;
 			}
 
-			function setParameters(attributes)
+			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
 				console.log(parameters_);
 			}
 
-			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}
 
 			window.onresize = function() {
 				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 16) + "px";

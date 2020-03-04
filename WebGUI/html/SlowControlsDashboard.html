@@ -1,4 +1,6 @@
 
+
+
 <!DOCTYPE HTML>
 <html lang="en">
 	<head>
@@ -1329,6 +1331,15 @@
 			function getHistory(id, parameters)
 			{
 				var pvList = "";
+
+				id = id.split('-')[1];
+				
+				if(page_.widgets[id] === undefined)
+				{
+					Debug.log("Illegal widget UID (not found in widget list) received from child widget frame: " + 
+							id, Debug.HIGH_PRIORITY);
+					return;
+				}
 
 				for(var pv in page_.widgets[id].pvList)
 				{

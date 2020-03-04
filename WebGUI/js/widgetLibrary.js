@@ -73,11 +73,6 @@ widgetLibrary.typeToPurpose =	{
 								}
 
 widgetLibrary.dimensions =		{
-									"0": {
-										"X": "100",
-										"Y": "100",
-										"Scale": "False"
-									},
 									"3": {
 										"X": "300",
 										"Y": "200",

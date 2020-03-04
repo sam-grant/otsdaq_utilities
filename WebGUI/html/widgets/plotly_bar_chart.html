@@ -25,6 +25,7 @@
 			var timeData = {};
 			var valueData = {};
 			var PVList = {};
+			var parameters_ = {class: "", "show_labels": "false"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -36,8 +37,8 @@
 				console.log("init()");
 				console.log(window.frameElement.id);
 				console.log("Dimensions: " + window.innerWidth + " : " + window.innerHeight);
-				window.parent.setupWidget(window.frameElement.id, getParameters());
-				window.parent.getHistory(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
+				window.parent.getHistory(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
@@ -60,19 +61,19 @@
 				newGraph();
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
-				parameters = {};
-
-				return parameters;
+				return parameters_;
 			}
 
-			function setParameters(attributes)
+			function setAttributes(attributes)
 			{
-				
+				parameters_ = attributes;
+				console.log("Table: set parameters()");
+				console.log(parameters_);
 			}
 
-			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				var date = new Date(pvTime*1000);
 				if (timeData[pvName] !== undefined && timeData[pvName].length)

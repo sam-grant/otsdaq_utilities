@@ -6,7 +6,7 @@
 		<style type="text/css">	
 			body {
 				font: 10px arial;
-				background-color: rgba(250, 250, 250, 0);
+				background-color: rgba(255, 255, 255, 1);
 				width: 30;
 				height: 30;
 				//margin: 0px !important;
@@ -110,14 +110,14 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("thermometer: set parameters()");
+				console.log("LED: set parameters()");
 				console.log(parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("LED newValue() reached", pvName, pvValue);
-				var canvas = document.getElementById('led');
+				var canvas = document.getElementById('led-' + pvName);
 				canvas.title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
 
 				var context = canvas.getContext('2d');
