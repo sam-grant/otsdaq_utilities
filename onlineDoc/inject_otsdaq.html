@@ -6,7 +6,7 @@
 <h1 style="font-family: 'Comfortaa', arial;">Welcome to the <i>otsdaq</i> Source Code Documentation</h1>
 
 <a href="https://otsdaq.fnal.gov">
-<img style='margin-left:60px; margin-bottom:10px' border='0' src='/otsdaq_icons/android-icon-48x48.png'>
+<img style='margin-left:60px; margin-bottom:10px; width:64px;' border='0' src='/otsdaq_icons/android-icon-144x144.png'>
 </a>
 
 <br>
@@ -21,8 +21,9 @@ Below are some helpful links to <i>otsdaq</i> C++ classes organized by topic. Th
 <li><a href='#access'>Web Desktop Login and Requests</a>
 <li><a href='#frontends'>Front-ends</a>
 <li><a href='#dataManagers'>Data Managers</a>
-<!-- <li><a href='#visualization'>Visualization</a>-->
 <li><a href='#artdaq'><i>artdaq</i></a>
+<li><a href='#visualization'>Visualization and DQM</a>
+<li><a href='#slowControls'>Slow Controls</a>
 </div>
 
 <br>
@@ -259,7 +260,8 @@ the state machines of all other superviso
 WebUsers
 </a>
 </td><td>This class provides the functionality for managing all otsdaq user account preferences 
-and permissions.
+and permissions, including password access and 
+<a target='_blank' href='https://www.cilogon.org/'>CILogon</a> certificate access.
 </td></tr>
 <!-- :::::::::::: -->
 <tr><td>
@@ -346,9 +348,8 @@ base that class that is a hybrid between a FEVInterface and a DataProducerBase (
 FESlowControlsChannel
 </a>
 </td><td>This class provides base slow controls channel functionality for Front-end plugin classes
-that interface to front-end devices and place incoming streaming data in a Buffer. This is a plugin
-base that class that is a hybrid between a FEVInterface and a DataProducerBase (see 
-		<a href='#slowControls'>Slow Controls</a>).
+to monitor slow controls channels. Slow controls channels have fields like name, address, bit-field size,
+alarm thresholds, etc. (see	<a href='#slowControls'>Slow Controls</a>).
 </td></tr>
 
 </table>
@@ -391,13 +392,6 @@ FEDataManagerSupervisor
 		plugin as a Data Producer - thus creating a single plugin instance that is a hybrid between Front-end plugin
 		and Data Producer. This may be useful if, for example, it is convenient for the 
 		front-end interface to also receive streaming data to be saved or monitored.
-</td></tr>
-<!-- :::::::::::: -->
-<tr><td>
-<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_a_r_t_d_a_q_data_manager_supervisor.html'>
-ARTDAQDataManagerSupervisor
-</a>
-</td><td>This class handles a single artdaq Board Reader instance.
 </td></tr>
 <!-- :::::::::::: -->
 <tr><td>
@@ -459,39 +453,13 @@ base that class that is a hybrid between a FEVInterface (see
 </table>
 </div>
 
-<!-- =============================== -->
-<!-- 
-<a name='visualization'></a>
-<div class='topicDiv'><br><br><a href='#topicList'>Jump to Topics List</a>
-	<h1>Visualization</h1>
-	<div class='topicDescDiv'>
-	The classes in this section are involved with the visualization of incoming data.
-	</div>
-	<table>
-	<tr><th class='topicClassNameCol'>
-		Class Name and Link
-	</th><th>
-		Brief Description
-	</th>
-	</tr>
-
-	<!-- :::::::::::: --><!-- 
-	<tr><td>
-	<a href=''>
-	RunControlStateMachine
-	</a>
-	</td><td>
-	</td></tr>
-
-</table>
-</div> -->
 
 <!-- =============================== -->
 <a name='artdaq'></a>
 <div class='topicDiv'><br><br><a href='#topicList'>Jump to Topics List</a>
 	<h1><i>artdaq</i></h1>
 	<div class='topicDescDiv'>
-	The classes in this section are involved with otsdaq layer on top of the artdaq toolkit.
+	The classes in this section are involved with the otsdaq layer on top of the artdaq toolkit.
 	</div>
 	<table>
 	<tr><th class='topicClassNameCol'>
@@ -506,60 +474,148 @@ base that class that is a hybrid between a FEVInterface (see
 <a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_a_r_t_d_a_q_supervisor.html'>
 ARTDAQSupervisor
 </a>
-</td><td>This class handles interfacing to the artdaq DAQ interface which manages all artdaq processes in the system.
+</td><td>This class is the supervisor which handles interfacing to the artdaq DAQ 
+interface which, in turn, manages all 
+<a target='_blank' href='https://artdaq.fnal.gov'>artdaq</a> processes in a one or many node system.
+There
+can only be one ARTDAQSupervisor in your system.
+artdaq processes that are managed include Board Readers, Event Builders, 
+Data Loggers, Dispatcher, Metric plugins, and Routing Masters.
+The artdaq Configuration editor, in conjunction with ARTDAQTableBase 
+establish the configuration of artdaq processes for the ARTDAQSupervisor.
 </td></tr>
 <!-- :::::::::::: -->
 <tr><td>
-<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_a_r_t_d_a_q_data_manager_supervisor.html'>
-ARTDAQDataManagerSupervisor
+<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_a_r_t_d_a_q_table_base.html'>
+ARTDAQTableBase
 </a>
-</td><td>This class handles a single artdaq Board Reader instance.
-</td></tr>
-<!-- :::::::::::: -->
-<tr><td>
-<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_a_r_t_d_a_q_data_manager.html'>
-ARTDAQDataManager
-</a>
-</td><td>This class provides the otsdaq interface to a single artdaq Board Reader.
-</td></tr>
-<!-- :::::::::::: -->
-<tr><td>
-<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_a_r_t_d_a_q_producer.html'>
-ARTDAQProducer
-</a>
-</td><td>	This class is a Data Producer Plugin that allows a single artdaq Event Builder to be instantiate as a Producer to an otsdaq Buffer.
-</td></tr>
-<!-- :::::::::::: -->
-<tr><td>
-<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_a_r_t_d_a_q_consumer.html'>
-ARTDAQConsumer
-</a>
-</td><td>	This class is a Data Consumer Plugin that allows a single artdaq Event Builder to be instantiate as a Consumer to an otsdaq Buffer.
-</td></tr>
-<!-- :::::::::::: -->
-<tr><td>
-<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_event_builder_app.html'>
-EventBuilderApp
-</a>
-</td><td>	This class provides the otsdaq interface to a single artdaq Event Builder.
-</td></tr>
-<!-- :::::::::::: -->
-<tr><td>
-<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_data_logger_app.html'>
-DataLoggerApp
-</a>
-</td><td>	This class provides the otsdaq interface to a single artdaq Data Logger.
-</td></tr>
-<!-- :::::::::::: -->
-<tr><td>
-<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_dispatcher_app.html'>
-DispatcherApp
-</a>
-</td><td> This class provides the otsdaq interface to a single artdaq Dispatcher.
+</td><td>This class provides the base functionality for artdaq 
+configuration table plugins (i.e. ARTDAQBoardReaderTable,
+		ARTDAQEventBuilderTable
+		ARTDAQDataLoggerTable, ARTDAQDispatcherTable, ARTDAQRoutingMasterTable)
+to generate the configuration (including 
+		<a target='_blank' href='https://cdcvs.fnal.gov/redmine/projects/fhicl/wiki'>FHiCL</a>)
+of artdaq processes in the system.
 </td></tr>
 
 </table>
 </div>
+
+
+<!-- =============================== -->
+<a name='visualization'></a>
+<div class='topicDiv'><br><br><a href='#topicList'>Jump to Topics List</a>
+	<h1>Visualization and DQM</h1>
+	<div class='topicDescDiv'>
+	The classes in this section are involved with data visualization and Data Quality Monitoring (DQM).
+	</div>
+	<table>
+	<tr><th class='topicClassNameCol'>
+		Class Name and Link
+	</th><th>
+		Brief Description
+	</th>
+	</tr>
+
+<!-- :::::::::::: -->
+<tr><td>
+<a href='https://otsdaq.fnal.gov/docs/code/otsdaq_utilities/classots_1_1_visual_supervisor.html'>
+VisualSupervisor
+</a>
+</td><td>This class is the web server to visualize objects found on disk and also the 
+container of the VisualDataManager for serving live visualization objects during a finite state machine Run.
+Essentailly, this supervisor provides Data Quality Monitoring (DQM) features including 
+<a target='_blank' href='https://root.cern.ch/'>ROOT</a> 
+historgram visualization, as well as an ots custom protocol for 2-D and 3-D displays in the web browser.
+</td></tr>
+<!-- :::::::::::: -->
+<tr><td>
+<a href='https://otsdaq.fnal.gov/docs/code/otsdaq_utilities/classots_1_1_visual_data_manager.html'>
+VisualDataManager
+</a>
+</td><td>This class provides functionality for handling Visualizer data consumer plugin classes
+that can produce live visualization objects during a finite state machine Run. It inherits all
+Data Manager (see 
+		<a href='#dataManagers'>Data Managers</a>) functionality as well.
+</td></tr>
+<!-- :::::::::::: -->
+<tr><td>
+<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_raw_data_visualizer_consumer.html'>
+RawDataVisualizerConsumer
+</a>
+</td><td>This class provides example functionality for creating live visualization objects 
+from the incoming data. It inherits all functionality of a DataConsumer plugin class 
+(see <a href='#dataManagers'>Data Managers</a>). Custom visualizer plugins can be created 
+using this class as an example, and can be children plugins to the VisualDataManager container. 
+		An example DQM use case is to create a live ROOT TTree based on incoming data, then
+		users can use the Visualizer web-app to browser live data during a finite state machine Run.
+</td></tr>
+
+</table>
+</div> 
+
+
+
+<!-- =============================== -->
+<a name='slowControls'></a>
+<div class='topicDiv'><br><br><a href='#topicList'>Jump to Topics List</a>
+	<h1>Slow Controls</h1>
+	<div class='topicDescDiv'>
+	The classes in this section are involved with slow controls and monitoring. 
+	Generally, slow controls refers to a management and archiving system involving many channels. 
+	<a target='_blank'href='https://epics-controls.org/'>EPICS</a> is one such slow controls system.
+	Slow controls channels are usually treated independently. 
+	Channels have associated fields (e.g. name, value, timestamp, alarm thresholds, etc.) and persistent history. 
+	In EPICS, a “Channel” is known as a “Process Variable” (PV), so PV and channel are often used interchangeably.
+	</div>
+	<table>
+	<tr><th class='topicClassNameCol'>
+		Class Name and Link
+	</th><th>
+		Brief Description
+	</th>
+	</tr>
+
+<!-- :::::::::::: -->
+<tr><td>
+<a href='https://otsdaq.fnal.gov/docs/code/otsdaq_utilities/classots_1_1_slow_controls_dashboard_supervisor.html'>
+SlowControlsDashboardSupervisor
+</a>
+</td><td>This class is the web server and also the 
+container of a SlowControlsVInterface plugin for serving slow controls channels
+to the Slow Controls Dashboard web app.
+</td></tr>
+<!-- :::::::::::: -->
+<tr><td>
+<a href='https://otsdaq.fnal.gov/docs/code/otsdaq/classots_1_1_slow_controls_v_interface.html'>
+SlowControlsVInterface
+</a>
+</td><td>This class establishes the base functionality for slow controls interface plugins, 
+which are responsible for handling slow controls 
+channels within the SlowControlsDashboardSupervisor. Channels (or PVs) have a notion of 
+subscription, current values, and historical values.
+</td></tr>
+<!-- :::::::::::: -->
+<tr><td>
+<a href='https://otsdaq.fnal.gov/docs/code/otsdaq_components/class_ots_slow_controls_interface.html'>
+OtsSlowControlsInterface
+</a>
+</td><td>This class is an example slow controls interface plugin inheriting functionality from 
+the SlowControlsVInterface. It implements a custom ots slow controls protocol for saving and 
+retrieving channel values.
+</td></tr>
+<!-- :::::::::::: -->
+<tr><td>
+<a href='https://otsdaq.fnal.gov/docs/code/otsdaq_components/class_ots_slow_controls_interface.html'>
+OtsSlowControlsInterface
+</a>
+</td><td>This class is an example slow controls interface plugin inheriting functionality from 
+the SlowControlsVInterface. It implements a custom ots slow controls protocol for saving and 
+retrieving channel values.
+</td></tr>
+
+</table>
+</div> 
 
 
 <!-- =============================== -->
