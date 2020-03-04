@@ -391,6 +391,14 @@
 			text-decoration: underline;
 			cursor: pointer;
 		}
+		
+		#groupAddRemoveTable {
+			margin-bottom: 		10px;
+		}
+		#groupAddRemoveTable tr:nth-child(even) {
+			background-color: 	rgb(218, 194, 194);
+		}
+		
 	</style>
 
 
@@ -5370,9 +5378,9 @@
 
 			Debug.log("tableNames.length " + tableNames.length);
 
-			str += "<table>";
+			str += "<table id='groupAddRemoveTable' cellpadding=0 cellspacing=0>";
 
-			str += "<tr><td>";
+			str += "<tr style='height:30px;'><td>";
 
 			var title = "Select/Deselect checkboxes based on this selection.";
 			str += "<a onclick='selectForCreateTableGroup(1); return false;' title='" + title + "'>All</a> | " +

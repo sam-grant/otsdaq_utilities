@@ -5,6 +5,13 @@
 #
 # ./path/to/script/OnlineDocPushUpdate.sh <do NOT do mrb z> <only transfer main page> <transfer to dev area>
 #
+#	For example:  ./path/to/script/OnlineDocPushUpdate.sh 1 1 1
+#
+# Note: people keep commenting out CMakeLists requirements when doxygen causes issues,
+#	so remember to have 'add_subdirectory(doc)'  in repo/CMakeLists.txt 
+#	and ...				'include(artdaq_doxygen) \n create_doxygen_documentation()' in repo/doc/CMakeLists.txt
+#
+
 echo 
 echo
 echo -e "OnlineDoc [${LINENO}]  \t =================="
@@ -76,7 +83,7 @@ echo -e "OnlineDoc [${LINENO}]  \t =================="
 
 echo -e "OnlineDoc [${LINENO}]  \t Deleting current web documentation..."
 
-if [ $ONLY_MAIN == 0 ]; then
+if [ $ONLY_MAIN == 0 ]; then #should be careful to not delete /artdaq folder.. target only otsdaq*
 	ssh web-otsdaq@otsdaq.fnal.gov /web/sites/otsdaq.fnal.gov/data/deleteCodeNav.sh
 fi
 
