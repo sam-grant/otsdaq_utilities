@@ -393,6 +393,7 @@
 			//	redrawWindow()
 			//	drawIcons(indexReferenceArray)
 			//	setupForDrawSelectionRectangle(tileNumber)
+			//	selectWidgetTile(tileNumber)
 			// 	searchWidgets(searchField)
 			//	filterWidgets(filterField)
 			//	toggleGrid(checkbox)
@@ -696,34 +697,41 @@
 				return function(){
 					
 					Debug.log("setupForDrawSelectionRectangle() handler " + tileNumber);
-									
-					
-					
-					var el;
-					if(lastTileNumber_ !== undefined) //revert border
-					{
-						el = document.getElementById("tiles-" + lastTileNumber_ );
-						el.style.border = "2px solid rgba(0,0,0,0)";
-						el.style.backgroundColor = "#b2b2b2";
-					}
-
-					if(lastTileNumber_ == tileNumber) //treat as unselecting
-						lastTileNumber_ = undefined; //clear new tile target
-					else
-						lastTileNumber_  = tileNumber|0;
-						
-
-					if(lastTileNumber_ !== undefined)
-					{
-						el = document.getElementById("tiles-" + lastTileNumber_);
-						el.style.border = "2px dotted orange";
-						el.style.backgroundColor = "white";
-					}
+														
+					selectWidgetTile(tileNumber);					
 					
 					parent.setupForDrawSelectionRectangle(lastTileNumber_);
 				};
 			} //end setupForDrawSelectionRectangle()
 
+			//=====================================================================================
+			function selectWidgetTile(tileNumber)
+			{							
+				Debug.log("selectWidgetTile() " + tileNumber);
+				
+				var el;
+				if(lastTileNumber_ !== undefined) //revert border
+				{
+					el = document.getElementById("tiles-" + lastTileNumber_ );
+					el.style.border = "2px solid rgba(0,0,0,0)";
+					el.style.backgroundColor = "#b2b2b2";
+				}
+
+				if(lastTileNumber_ == tileNumber || 
+						tileNumber === undefined) 
+					lastTileNumber_ = undefined; //treat as unselecting
+				else
+					lastTileNumber_  = tileNumber|0;
+
+
+				if(lastTileNumber_ !== undefined)
+				{
+					el = document.getElementById("tiles-" + lastTileNumber_);
+					el.style.border = "2px dotted orange";
+					el.style.backgroundColor = "white";
+				}
+			} //end selectWidgetTile()
+			
 			//=====================================================================================
 			function searchWidgets(searchField)
 			{

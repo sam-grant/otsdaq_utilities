@@ -1546,7 +1546,7 @@
 				//if widget attribute Scale is set to false, then always a fixed size
 				if(widgetLibrary.dimensions[type] &&
 						widgetLibrary.dimensions[type]["Scale"] && 
-						toLowerCase(widgetLibrary.dimensions[type]["Scale"]) == "false")
+						widgetLibrary.dimensions[type]["Scale"].toLowerCase() == "false")
 				{
 					w = widgetLibrary.dimensions[type]["X"]|0;
 					h = widgetLibrary.dimensions[type]["Y"]|0;
@@ -1566,6 +1566,7 @@
 				drawAndDragBox.style.display = "none";
 				drawingSelectionRectangle_  = false;
 				dragAndDrawWidgetType_ = undefined;
+				editBlock_.el.firstChild.contentWindow.selectWidgetTile(); //unselect in edit block
 			} //end stopDragAndDrawRectangle()
 
 			//================================================================================
