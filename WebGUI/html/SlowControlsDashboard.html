@@ -726,7 +726,13 @@
 								if(pv == dependendentPV && page_.widgets[widget].loaded != "false")
 								{
 									console.log("Widget*************", widget, pv);
-									document.getElementById(widget).contentWindow.drawNewValue(pv, serverResponse[pv].Value, serverResponse[pv].Timestamp, serverResponse[pv].Status, serverResponse[pv].Severity);
+									document.getElementById("widget-" + 
+										widget).contentWindow.drawNewValue(
+											pv, 
+											serverResponse[pv].Value, 
+											serverResponse[pv].Timestamp, 
+											serverResponse[pv].Status, 
+											serverResponse[pv].Severity);
 								}
 							}
 						}
@@ -1595,7 +1601,7 @@
 				var resizeDivBottomRight;
 				var resizeDivBottomLeft;
 				
-				var editIcon, deleteIcon;
+				var editIcon, otherEditIcon;
 
 				//Steps:
 				//	- check page_ object for widget details
@@ -1727,18 +1733,20 @@
 					editIcon = document.createElement("div");
 					editIcon.className = "widgetEditIcon";
 					editIcon.id = "widget-" + id + "-editIcon";
-					editIcon.title = "Edit the settings and PV-list for this widget.";
+					editIcon.title = "Edit the attributes and PV-list for this widget-" +
+						id + ".";
 					editIcon.onmouseup = makeHandlerWithID(id,
 							toggleContextMenu);
 					editIcon.onmousedown = function(e){e.stopPropagation();}
 					
-					deleteIcon = document.createElement("div");
-					deleteIcon.className = "widgetDeleteIcon";
-					deleteIcon.id = "widget-" + id + "-deleteIcon";
-					deleteIcon.title = "Delete this widget.";
-					deleteIcon.onmouseup = makeHandlerWithID(id,
+					otherEditIcon = document.createElement("div");
+					otherEditIcon.className = "widgetEditIcon widgetOtherEditIcon";
+					otherEditIcon.id = "widget-" + id + "-otherEditIcon";
+					otherEditIcon.title = "Edit the attributes and PV-list for this widget-" + 
+						id + ".";
+					otherEditIcon.onmouseup = makeHandlerWithID(id,
 							toggleContextMenu);
-					deleteIcon.onmousedown = function(e){e.stopPropagation();}					
+					otherEditIcon.onmousedown = function(e){e.stopPropagation();}					
 
 					//widgetCover.addEventListener("dblclick", 
 					//		makeHandlerWithID(id,		toggleContextMenu));
@@ -1791,7 +1799,7 @@
 					resizeDiv.appendChild(resizeDivBottomLeft);
 
 					resizeDiv.appendChild(editIcon);
-					resizeDiv.appendChild(deleteIcon);
+					resizeDiv.appendChild(otherEditIcon);
 
 					widgetObject.el.src = "widgets/" + 
 							widgetLibrary.typeToSrc[widgetObject.type];
@@ -1812,7 +1820,7 @@
 					widgetCover 			= document.getElementById("widget-" + id + "-cover");
 
 					editIcon 				= document.getElementById("widget-" + id + "-editIcon");
-					deleteIcon 				= document.getElementById("widget-" + id + "-deleteIcon");					
+					otherEditIcon 				= document.getElementById("widget-" + id + "-otherEditIcon");					
 					
 					resizeDiv 				= document.getElementById("widget-" + id + "-resize-cover");
 					
@@ -1923,10 +1931,10 @@
 				editIcon.style.top = h + "px";
 				editIcon.style.zIndex = z-1;
 				
-				deleteIcon.style.position = "absolute";
-				deleteIcon.style.left = 0 + "px";
-				deleteIcon.style.top = h + "px";
-				deleteIcon.style.zIndex = z-1;
+				otherEditIcon.style.position = "absolute";
+				otherEditIcon.style.left = 0 + "px";
+				otherEditIcon.style.top = 0 + "px";
+				otherEditIcon.style.zIndex = z-1;
 				
 
 				if(!hideFrame)
@@ -2088,6 +2096,8 @@
 				if(e) e.stopPropagation();
 				
 				console.log("toggle toggleContextMenu id=",id);
+				
+				toggleContextMenuOff(); //hide first, so menu always comes up
 				if(menuState_ !== 1)
 				{
 					menuState_ = 1; //set state
@@ -2119,6 +2129,7 @@
 			//=====================================================================================
 			function toggleContextMenuOff(e)
 			{
+				if(e) e.stopPropagation();			
 				if(menuState_ !== 0)
 				{
 					menuState_ = 0;
@@ -2390,8 +2401,24 @@
 							}
 						}
 					}
-					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setAttributes(page_.widgets[menu_.getAttribute("widgetID")].attributes);
-					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.drawWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
+					try
+					{
+						page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setAttributes(page_.widgets[menu_.getAttribute("widgetID")].attributes);
+					}
+					catch(e)
+					{
+						Debug.log("There are errors when calling setAttributes() of target widget: " + e,
+							Debug.WARN_PRIORITY);
+					}
+					try
+					{
+						page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.drawWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
+					}
+					catch(e)
+					{
+						Debug.log("There are errors when calling drawWidget() of target widget: " + e,
+							Debug.WARN_PRIORITY);
+					}
 
 //					if(actionRequired)
 //						document.getElementById(menu_.getAttribute("widgetID")).className = "action-required";
@@ -2637,10 +2664,29 @@
 			//=====================================================================================
 			function deleteWidget()
 			{
-				var widgetCover = document.getElementById(menu_.getAttribute("widgetID") + "-cover")
-				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id].el
-				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id];
-				mainBlock_.el.removeChild(widgetCover.parentNode);
+				if(!targetElement_)
+				{
+					Debug.log("Ignoring deleteWidget() with no target element");
+					return;
+				}
+				var id = targetElement_.id.split('-')[1]|0;
+				
+										
+				if(page_.widgets[id] && page_.widgets[id].el)
+				{					
+					page_.widgets[id].el.parentNode.removeChild(page_.widgets[id].el);
+					delete page_.widgets[id].el;
+				}
+				if(page_.widgets[id])
+					delete page_.widgets[id];
+				
+				var widgetContainer = document.getElementById("widget-" + id + 
+					"-container");
+				if(widgetContainer)
+					widgetContainer.parentNode.removeChild(widgetContainer);
+				else
+					Debug.log("Could not find widget container to remove");
+				
 				toggleContextMenuOff();
 			} //end deleteWidget()
 
@@ -2685,19 +2731,27 @@
 				
 				//unselect previous target, and select parameter target
 				
-				if(targetElement_ !== undefined  && 
-						targetElement_.parentNode !== undefined)
+				if(targetElement_ && targetElement_.parentNode)
 				{
-					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "block";
-					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "none";			
+					var els = targetElement_.parentNode.getElementsByTagName("iframe");
+					if(els.length)
+						els[0].style.display = "block";
+					
+					els = targetElement_.parentNode.getElementsByTagName("resizeWidgetCover");
+					if(els.length)
+						els[0].style.display = "none";			
 				}
 
 				targetElement_ = target;
-				if(targetElement_ !== undefined && 
-						targetElement_.parentNode !== undefined)
+				if(targetElement_ && targetElement_.parentNode)
 				{
-					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "none";
-					targetElement_.parentNode.getElementsByClassName("resizeWidgetCover")[0].style.display = "block";
+					var els = targetElement_.parentNode.getElementsByTagName("iframe");
+					if(els.length)
+						els[0].style.display = "none";
+					
+					els = targetElement_.parentNode.getElementsByTagName("resizeWidgetCover");
+					if(els.length)
+						els[0].style.display = "block";					
 				}	
 				
 			} //end setEditModeWidgetTarget()
@@ -3162,13 +3216,13 @@
 				<div id="contextMenuDiv">
 					<nav id="contextMenu" class="menu ">
 					  <ul class="menu__items ">
-						<li class="menu__item ">
+						<!--li class="menu__item ">
 						  <a href="#" class="menu__link " 
 						  	onmousedown="event.stopPropagation();"
 						  	onmouseup="event.stopPropagation(); toggleAddPV();">
 							<i class=""></i> Add PV
 						  </a>
-						</li>
+						</li-->
 						<li class="menu__item">
 						  <a href="#" class="menu__link" 
 						  	onmousedown="event.stopPropagation();"

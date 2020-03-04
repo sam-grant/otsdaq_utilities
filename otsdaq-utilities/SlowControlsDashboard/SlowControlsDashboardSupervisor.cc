@@ -292,7 +292,7 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	}
 	else if(Command == "generateUID")
 	{
-		std::string channelList = CgiDataUtilities::getOrPostData(cgiIn, "PVList");
+		std::string channelList = CgiDataUtilities::getOrPostData(cgiIn, "pvList");
 		GenerateUID(cgiIn, xmlOut, channelList);
 	}
 	else if(Command == "isUserAdmin")
@@ -648,50 +648,27 @@ void SlowControlsDashboardSupervisor::GetUserPermissions(
 //==============================================================================
 void SlowControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
                                                   HttpXmlDocument& xmlOut,
-                                                  std::string      channellist)
+                                                  std::string      channelList)
 {
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
 	             << "Generating UID" << std::endl;
 
 	std::set<std::string> channelDependencies;
-	std::string           uid;
-	std::string           channel;
-	size_t                pos = 0;
-	size_t                nextPos;
-	size_t                lastIndex = channellist.find_last_of(",");
-
-	if(channellist.size() > 0)
-	{
-		// channellist.substr(2);
-		__SUP_COUT__ << channellist << std::endl;
-
-		while((nextPos = channellist.find(",", pos)) != std::string::npos)
-		{
-			channel = channellist.substr(pos, nextPos - pos);
-			//__SUP_COUT__ << UID_ << ":" << pos << "-" << nextPos << " ->" << channel <<
-			// std::endl;
-			channelDependencies.insert(channel);
-			pos = nextPos + 1;
-		}
-
-		channelDependencyLookupMap_.insert(
+	StringMacros::getSetFromString(channelList, channelDependencies);
+	
+	//make entry for new UID_ in UID-to-channel map
+	channelDependencyLookupMap_.insert(
 		    std::pair<int, std::set<std::string>>(++UID_, channelDependencies));
-
-		uid = (std::string("{ \"message\": \"") + std::to_string(UID_) + "\"}");
-
-		uidPollTimeMap_.insert(std::pair<int, long int>(UID_, std::time(NULL)));
-	}
-	else
-	{
-		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-		             << " ChannelList invalid: " << channellist << std::endl;
-		uid = "{ \"message\": \"-1\"}";
-	}
-
+		
+	uidPollTimeMap_.insert(std::pair<int, long int>(UID_, std::time(NULL)));
+	
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " NEW UID: " << UID_
-	             << std::endl;
+	             << " maps to " << channelDependencies.size() << " channels" << std::endl;
 
-	xmlOut.addTextElementToData("JSON", uid);  // add to response
+	xmlOut.addTextElementToData("JSON",
+		std::string("{ \"message\": \"") + 
+		std::to_string(UID_) + 
+		"\"}");  // add to response
 }  // end GenerateUID()
 
 //==============================================================================
