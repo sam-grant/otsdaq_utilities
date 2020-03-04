@@ -91,8 +91,8 @@ add_subdirectory(otsdaq-utilities)
 add_subdirectory(tools)
 
 # Documentation directory (to comment out if not needed DOXYGEN locally)
-add_subdirectory(doc)
-add_subdirectory(onlineDoc)
+#add_subdirectory(doc)
+#add_subdirectory(onlineDoc)
 
 # UPS Version files
 add_subdirectory(ups)
