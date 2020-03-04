@@ -1,7 +1,26 @@
-/*---------------------------------------------------------------------------------------------------
- Author : D. Menasce
- Purpose: Code to instantiate and manipulate the histogram navigator component
--------------------------------------------------------------------------------------------------- */
+/*===============================================================================*
+ * complexLayout.js:   the javascript code to instantiate a root objects         *
+ *                     navigator in the otsdaq framework                         *
+ *                                                                               *
+ * Copyright (C) 2019                                                            *
+ *                                                                               *
+ * Authors: Dario Menasce                                                        *
+ *                                                                               *
+ * INFN: Piazza della Scienza 3, Edificio U2, Milano, Italy 20126                *
+ *                                                                               *
+ * This program is free software: you can redistribute it and/or modify          *
+ * it under the terms of the GNU General Public License as published by          *
+ * the Free Software Foundation, either version 3 of the License, or             *
+ * (at your option) any later version.                                           *
+ *                                                                               *
+ * This program is distributed in the hope that it will be useful,               *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                 *
+ * GNU General Public License for more details.                                  *
+ *                                                                               *
+ * You should have received a copy of the GNU General Public License             *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.         *
+ ================================================================================*/
 
 Ext.require(['*']);
 Ext.QuickTips.init();
@@ -124,21 +143,33 @@ function()
  options3D_[ 7] = 'glbox3'    ;
  options3D_[ 8] = 'glcol'     ;
          
+//  var thisOne = self ;
+//  var theParentWindow   = thisOne.parent ;
+//  var this_ih = thisOne.innerHeight          ; 
+//  var this_iw = thisOne.innerWidth           ; 
+//  var pare_ih = theParentWindow.innerHeight  ; 
+//  var pare_iw = theParentWindow.innerWidth   ; 
+//  var this_oh = thisOne.outerHeight          ; 
+//  var this_ow = thisOne.outerWidth           ; 
+//  var pare_oh = theParentWindow.outerHeight  ; 
+//  var pare_ow = theParentWindow.outerWidth   ; 
+//  var a = 0 ;
+//  window.outerWidth  = 1600 ;
+//  window.outerHeight = 1000  ;
  //--------------------------------------------------------------------------------------------------
  function initializeOptions(dim, theBody, theArray)
  {
   for(var i=0; i< theArray.length; i++)
   {
    var v = theArray[i] ;
-   STDLINE("    v: "+v) ;
    theBody.push(
                 {
-                 xtype   : 'checkbox'                        ,
-                 id      : 'ID-' + dim + '-' + v + '_CB'     ,
-                 boxLabel:                   v               ,
-                 name    :                   v               ,
-                 value   :                   v               ,
-                 tooltip : 'Set option '   + v + ' for plots'        
+                 xtype   : 'checkbox'                          ,
+                 id      : 'ID-' + dim + '-' + v + '_CB'       ,
+                 boxLabel:                     v               ,
+                 name    :                     v               ,
+                 value   :                     v               ,
+                 tooltip : 'Set option '     + v + ' for plots'      
                 }
                )
   }
@@ -319,7 +350,6 @@ function()
                                       STDLINE("   --> fParams_.RootPath: "+this.fParams_     [i].RootPath); 
                                      }
                                      STDLINE("   ------------------------------------------------------" );
-                                      
                                     }                                                   
                   } ;                                                                   
 
@@ -962,7 +992,9 @@ function()
                                                                                      width                            ,
                                                                                      height                           ,
                                                                                      "resized"
-                                                                                    ) ;
+                                                                                    )                                  ;
+                                                            redrawCanvas()                                             ;
+                                                            
                                                            }
                                               }
                              }
@@ -979,19 +1011,23 @@ function()
   theNavigatorPanel_ = Ext.create(
                                   'Ext.panel.Panel',
                                   {
-                                   region      : 'west'            ,
-                                   stateId     : 'navigation-panel',
-                                   id          : 'west-panel'      ,
-                                   title       : 'The navigator'   ,
-                                   split       : true              ,
-                                   width       : 200               ,
-                                   minWidth    : 175               ,
-                                   maxWidth    : 1000              ,
-                                   collapsible : true              ,
-                                   animCollapse: true              ,
-                                   multi       : true              ,
-                                   margins     : '0 0 0 5'         ,
-                                   layout      : 'accordion'       ,
+                                   region      : 'west'               ,
+                                   stateId     : 'navigation-panel'   ,
+                                   id          : 'west-panel'         ,
+                                   title       : 'The navigator'      ,
+                                   split       : true                 ,
+                                   width       : 200                  ,
+                                   minWidth    : 175                  ,
+                                   maxWidth    : 1000                 ,
+                                   collapsible : true                 ,
+                                   animCollapse: true                 ,
+                                   margins     : '0 0 0 5'            ,
+                                   layout      : {
+                                                  type   : 'accordion',
+                                                  multi  : true       ,
+                                                  animate: true       ,
+                                                  fill   : true
+                                                 },
                                    tools       : [
                                                   {
                                                    type   : 'maximize'                      ,
@@ -1018,72 +1054,80 @@ function()
                                                  ],
                                    items       : [
                                                   {
-                                                   title     : 'FileSystem navigation'                                                  ,
-                                                   id        : 'navigatorDiv'                                                           ,
-                                                   autoScroll: true                                                                     ,
-                                                   tools     : [
-                                                                {
-                                                                 type   : 'prev'                                                        ,
-                                                                 tooltip: 'Go back to list of folders and files'                        ,
-                                                                 handler: function()
-                                                                          {
-                                                                           if( currentTree_ = 'fileContent' )
+                                                   title      : 'FileSystem navigation'                                                    ,
+                                                   id         : 'navigatorDiv'                                                             ,
+                                                   autoScroll : true                                                                       ,
+                                                   collapsible: true                                                                       ,
+                                                   collapsed  : false                                                                      ,
+                                                   tools      : [
+                                                                 {
+                                                                  type   : 'prev'                                                          ,
+                                                                  tooltip: 'Go back to list of folders and files'                          ,
+                                                                  handler: function()
                                                                            {
-                                                                            selectedItem_ = "getDirectories"                               ;
-                                                                            var thePad    = theCanvasModel_.getCurrentPadC(currentCanvas_) ;
-                                                                            makeStore(theProvenance_.getRootPath(currentCanvas_         ,
-                                                                                                                 thePad)                , 
-                                                                                      'RequestType=getMeDirs'                            ) ;
-                                                                            makeGrid (theProvenance_.getRootPath(currentCanvas_         ,
-                                                                                                                 thePad)                , 
-                                                                                       'Directories and files'                           ) ;
+                                                                            if( currentTree_ = 'fileContent' )
+                                                                            {
+                                                                             selectedItem_ = "getDirectories"                               ;
+                                                                             var thePad    = theCanvasModel_.getCurrentPadC(currentCanvas_) ;
+                                                                             makeStore(theProvenance_.getRootPath(currentCanvas_           ,
+                                                                                                                  thePad)                  ,
+                                                                                       'RequestType=getMeDirs'                            ) ;
+                                                                             makeGrid (theProvenance_.getRootPath(currentCanvas_           ,
+                                                                                                                  thePad)                  ,
+                                                                                        'Directories and files'                           ) ;
+                                                                            }
                                                                            }
-                                                                          }
-                                                                }
-//                                                                 {
-//                                                                  type   : 'left'                          ,
-//                                                                  tooltip: 'Slide out to the left'         ,
-//                                                                  handler: function()
-//                                                                           {
-//                                                                            STDLINE("Collapsing")          ;
-//                                                                            theNavigatorPanel_  .collapse();
-//                                                                            ROOTControlsPanel_  .collapse();
-//                                                                            theInformationPanel_.collapse();
-//                                                                           }
-//                                                                 }
-                                                               ]
+                                                                 }
+//                                                                  {
+//                                                                   type   : 'left'                          ,
+//                                                                   tooltip: 'Slide out to the left'         ,
+//                                                                   handler: function()
+//                                                                            {
+//                                                                             STDLINE("Collapsing")          ;
+//                                                                             theNavigatorPanel_  .collapse();
+//                                                                             ROOTControlsPanel_  .collapse();
+//                                                                             theInformationPanel_.collapse();
+//                                                                            }
+//                                                                  }
+                                                                ]
                                                   }, 
                                                   {
-                                                   title     : 'Plot options (1D)'                                  ,
-                                                   html      : '<p>Options available for 1D histogramming.</p>'     ,
-                                                   autoScroll: true                                                 ,
-                                                   iconCls   : 'settings'                                           ,
-                                                   items     : optionsBodies1D_                                   
+                                                   title      : 'Plot options (1D)'                                  ,
+                                                   html       : '<p>Options available for 1D histogramming.</p>'     ,
+                                                   autoScroll : true                                                 ,
+                                                   collapsible: true                                                 ,
+                                                   collapsed  : true                                                 ,
+                                                   iconCls    : 'settings'                                           ,
+                                                   items      : optionsBodies1D_                                   
                                                   }, 
                                                   {
-                                                   title     : 'Plot options (2D)'                                  ,
-                                                   html      : '<p>Options available for 2D histogramming.</p>'     ,
-                                                   autoScroll: true                                                 ,
-                                                   iconCls   : 'info'                                               ,
-                                                   items     : optionsBodies2D_                                   
+                                                   title      : 'Plot options (2D)'                                  ,
+                                                   html       : '<p>Options available for 2D histogramming.</p>'     ,
+                                                   autoScroll : true                                                 ,
+                                                   collapsible: true                                                 ,
+                                                   collapsed  : true                                                 ,
+                                                   iconCls    : 'info'                                               ,
+                                                   items      : optionsBodies2D_                                   
                                                   }, 
                                                   {
-                                                   title     : 'Plot options (3D)'                                  ,
-                                                   html      : '<p>Options available for 3D histogramming.</p>'     ,
-                                                   autoScroll: true                                                 ,
-                                                   iconCls   : 'info'                                               ,
-                                                   items     : optionsBodies3D_                                   
+                                                   title      : 'Plot options (3D)'                                  ,
+                                                   html       : '<p>Options available for 3D histogramming.</p>'     ,
+                                                   autoScroll : true                                                 ,
+                                                   collapsible: true                                                 ,
+                                                   collapsed  : true                                                 ,
+                                                   iconCls    : 'info'                                               ,
+                                                   items      : optionsBodies3D_                                   
                                                   }
                                                  ],
                                    listeners   : {
-                                                  collapse   : function() 
-                                                               {
-                                                                STDLINE("Collapse!!!");
-                                                               },
-                                                  expand     : function() 
-                                                               {
-                                                                STDLINE("Expand!!!"  );
-                                                               }
+                                                  collapse    : function() 
+                                                                {
+                                                                 STDLINE("Collapse!!!");
+                                                                },
+                                                  expand      : function() 
+                                                                {
+                                                                 STDLINE("Expand!!!"  );
+                                                                }
                                                  }
                                   },
                                  ) ;
@@ -1147,83 +1191,10 @@ function()
  makeInformationPanel() ;
 
  //-----------------------------------------------------------------------------
- function makeConfigStore()
- {
-  if( configStore_ ) configStore_.destroy() ;
-  var nc = theCanvasModel_.canvases.length ;
-  configStore_ = Ext.create(
-                            'Ext.data.Store', 
-                            {
-                             storeId:'configDataStore',
-                             fields :['Parameter', 'Component', 'value'],
-                             data   :{
-                                      'items': [
-                                                {'Parameter': 'Number of canvases', "Component":"canvas",  "value": nc  },
-                                                {'Parameter': '# of plots (X)'    , "Component":"canvas",  "value": "1" },
-                                                {'Parameter': '# of plots (Y)'    , "Component":"canvas",  "value": "1" }
-                                               ]
-                                     },
-                             proxy : {
-                                      type  : 'memory',
-                                      reader: {
-                                               type: 'json',
-                                               root: 'items'
-                                              }
-                                     }
-                            }
-                           );
-
-  if( configPanel_ ) configPanel_.destroy() ;
-  configPanel_ = Ext.create(
-                            'Ext.grid.Panel', 
-                            {
-                             title   : 'Current configuration parameters',
-                             store   : Ext.data.StoreManager.lookup('configDataStore'),
-                             columns : [
-                                        { text: 'Parameter', dataIndex: 'Parameter'          },
-                                        { text: 'Component', dataIndex: 'Component', flex: 1 },
-                                        { text: 'value'    , dataIndex: 'value'              }
-                                       ],
-                            }
-                           );
- }
- 
- makeConfigStore() ;
- 
- //-----------------------------------------------------------------------------
  function makeConfigWin() 
  {
-  makeConfigStore() ;
-  Ext.getCmp('saveConfig-ID').setDisabled(true);
-  if( theConfigWin_ ) theConfigWin_.destroy() ;
-  theConfigWin_ = Ext.create(
-                             'Ext.window.Window', 
-                             {
-                              title    : 'The configuration manager',
-                              height   : 486                        ,
-                              width    : 606                        ,
-                              //layout   : 'fit'                      ,
-                              margins  : '5 5 5 5'                  ,
-                              padding  : '5 5 5 5'                  ,
-                              items    : [
-                                          {
-                                           xtype  : 'button'            ,
-                                           name   : 'cucu'              ,
-                                           text   : 'Dump configuration',
-                                           pressed: 'true'              ,
-                                          },
-                                          configPanel_
-                                         ],
-                              listeners: {
-                                          beforedestroy: function()
-                                                         {
-                                                          Ext.getCmp('saveConfig-ID').setDisabled(false);
-                                                         }
-                                         }
-                             }
-                            ) ;
-  theConfigWin_.setPosition(0,52) ;
-  theConfigWin_.show()            ;      
+//  thePersistency(theCanvasModel_) ;
+  persistencyWin.initialize(theCanvasModel_) ;
  }
  
  //-----------------------------------------------------------------------------
@@ -1364,6 +1335,7 @@ function()
                                      ]
                             }
                            );
+  theViewPort_.setPosition(0,0) ;
  } ;
  
  //-----------------------------------------------------------------------------
@@ -1881,7 +1853,5 @@ function()
                 0 ,
                 true
                ) ;                                                          
-//  makeStore("where","what") ;
-//  makeViewPort() ;
 
 });
