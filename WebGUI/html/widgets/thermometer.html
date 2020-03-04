@@ -40,7 +40,7 @@
 			{
 				console.log("init()");
 				console.log(window.frameElement.id)
-				window.parent.setupWidget(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
@@ -95,19 +95,19 @@
 				console.log(document.body);
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
 				return parameters_;
 			}
 
-			function setParameters(attributes)
+			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
 				console.log("thermometer: set parameters()");
 				console.log(parameters_);
 			}
 
-			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("Thermometer newValue() reached", pvName, pvValue);
 				window.parent.setWidgetPVinfo(

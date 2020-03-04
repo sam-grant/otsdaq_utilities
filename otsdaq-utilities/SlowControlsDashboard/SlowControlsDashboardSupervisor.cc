@@ -468,7 +468,7 @@ void SlowControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 void SlowControlsDashboardSupervisor::GetChannelSettings(cgicc::Cgicc&    cgiIn,
                                                          HttpXmlDocument& xmlOut)
 {
-	std::string channelList = CgiDataUtilities::postData(cgiIn, "PVList");
+	std::string channelList = CgiDataUtilities::postData(cgiIn, "pvList");
 
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
 	             << "Getting settings for " << channelList << std::endl;
@@ -526,7 +526,7 @@ void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc&    cg
 {
 	__SUP_COUT__ << "Requesting archived data!" << std::endl;
 
-	std::string channelList = CgiDataUtilities::postData(cgiIn, "PVList");
+	std::string channelList = CgiDataUtilities::postData(cgiIn, "pvList");
 
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
 	             << "Getting History for " << channelList << std::endl;

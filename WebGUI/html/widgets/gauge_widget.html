@@ -1,7 +1,10 @@
 
 
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD
+HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   	<head>
     	<meta http-equiv="content-type" content="text/html;charset=utf-8">
@@ -45,7 +48,7 @@
 				console.log("Gauge init()");
 				console.log(window.frameElement.id)
 				console.log("Dimensions: " + window.innerWidth + " : " + window.innerHeight);
-				window.parent.setupWidget(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
@@ -104,19 +107,20 @@
 				console.log(document.body);
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
 				return parameters_;
 			}
 
-			function setParameters(attributes)
+			function setAttributes(attributes)
+			//function setParameters(attributes)
 			{
 				parameters_ = attributes;
 				console.log("thermometer: set parameters()");
 				console.log(parameters_);
 			}
 
-			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("Gauge newValue() reached", pvName, pvValue);
 				var pv = "p-" + pvName;

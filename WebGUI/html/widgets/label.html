@@ -32,7 +32,7 @@
 			{
 				console.log("Label init()");
 				console.log(window.frameElement.id);
-				window.parent.setupWidget(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			
 			}
 
@@ -40,10 +40,10 @@
 
 			function drawWidget(widget, parameters)
 			{
-				setParameters(window.parent.page_.widgets[widget.el.id].attributes);
+				setAttributes(window.parent.page_.widgets[widget.el.id].attributes);
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
 				parameters_["class"] = "";
 				parameters_["border"] = "true";
@@ -54,7 +54,7 @@
 				return parameters_;
 			}
 
-			function setParameters(attributes)
+			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
 				console.log(parameters_);
