@@ -56,7 +56,7 @@
 				table.style.width = "100%";
 
 				var counter = 0;
-				for(var pv in widget.PVList)
+				for(var pv in widget.pvList)
 				{
 					counter++;
 				}
@@ -85,7 +85,7 @@
 				//console.log("newWidget() called *************************************");
 				if(counter > 1){counter = 2;}
 				console.log("counter" + counter);
-				for(var pv in widget.PVList)
+				for(var pv in widget.pvList)
 				{
 					var a = document.createElement('a');
 					a.id = pv;
@@ -104,9 +104,6 @@
 					console.log("td" + first + "-" + (counter%rows +1));
 					document.getElementById("td" + first + "-" + (counter%rows +1)).appendChild(center);
 					counter++;
-//					console.log(counter);
-//					console.log(columns);
-//					console.log(rows);
 				}
 			}
 

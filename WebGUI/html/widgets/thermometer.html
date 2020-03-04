@@ -62,7 +62,7 @@
 				div.id = "dispaly-div";
 				document.getElementById("display").appendChild(div);
 
-				for(var pv in widget.PVList)
+				for(var pv in widget.pvList)
 				{
 					var divtemp = document.getElementById('label-div-' + pv)
 					if (divtemp == null)
@@ -80,7 +80,7 @@
 					div.appendChild(divtemp);
 					containers[pv] = divtemp;
 
-					var wdth = (parseInt(window.innerWidth) - 16) / Object.keys(widget.PVList).length | 0;
+					var wdth = (parseInt(window.innerWidth) - 16) / Object.keys(widget.pvList).length | 0;
 					var hght = (parseInt(window.innerHeight) - 56);
 
 					if(wdth < 100) wdth = 100;

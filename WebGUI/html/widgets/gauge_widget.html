@@ -69,7 +69,7 @@
 				div.id = "dispaly-div";
 				document.getElementById("display").appendChild(div);
 				var pv_number = 0;
-				for(var pv in widget.PVList)
+				for(var pv in widget.pvList)
 				{   
 					var divtemp = document.createElement('div');
 					//divtemp.style.color = "white";
@@ -77,12 +77,12 @@
 					if (parameters_["show_labels"] == "true")
 					{
 						divtemp.innerHTML = "<center id='p-" + pv + "'>" + pv.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...</center>";
-						var max_size = Math.max(window.innerHeight - 50, window.innerWidth - 50) / Object.keys(widget.PVList).length;
+						var max_size = Math.max(window.innerHeight - 50, window.innerWidth - 50) / Object.keys(widget.pvList).length;
 					}
 					else
 					{
 						divtemp.innerHTML = "";
-						var max_size = Math.max(window.innerHeight - 10, window.innerWidth -10) / Object.keys(widget.PVList).length;
+						var max_size = Math.max(window.innerHeight - 10, window.innerWidth -10) / Object.keys(widget.pvList).length;
 					}
 					divtemp.id = "gauge-div-" + pv_number;
 					divtemp.style.width = "100%";
@@ -204,7 +204,7 @@
 					//gauges[name].config.size = Math.min(window.innerHeight - 60, window.innerWidth) / Object.keys(gauges).length | 0;
 					//gauges[name].configure(gauges[name].config);
 					//gauges[name].redraw(50);
-					newWidget(widget_, parameters_);
+					drawWidget(widget_, parameters_);
 				}
 				console.log("gauge: window.onresize()");
 			};
