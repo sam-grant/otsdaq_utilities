@@ -20,7 +20,7 @@
 		</style>
 
 		<script src="https://d3js.org/d3.v5.min.js"></script>
-		<script type="text/javascript" src="libraries/thermometer.js"></script>
+		<script type="text/javascript" src="/WebPath/html/widgets/libraries/thermometer.js"></script>
 		<script>
 
 			//functions:
@@ -62,7 +62,7 @@
 				var display = document.getElementById("display");
 				display.innerHTML = "";
 				if (!Object.getOwnPropertyNames(widget.pvList).length)
-					display.innerHTML = "METER <br/> ADD PVs TO WIDGET";
+					display.innerHTML = "<center>THERMOMETER: <br/> No associated PVs to display.</center>";
 				display.appendChild(div);
 
 				for(var pv in widget.pvList)
@@ -192,8 +192,8 @@
 
 	<body onload='Javascript:init();'>	
 		<div id="display" width="100%" height="100%">
-			<center>THERMOMETER <br/> ADD PVs TO WIDGET</center>
-		<div>
+
+		</div>
 	</body>
 
 </html>

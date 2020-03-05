@@ -830,18 +830,18 @@
 			{
 				timeToPoll_ = false;
 				Debug.log("pollServer: polling server!");
-				console.log("pollServer(): " + page_.widgets);
+				console.log("pollServer(): ",page_.widgets);
 				//console.log("UID is ", UID_);
-				if(page_.widgets !== undefined)
+				if(page_.widgets)
 				{
 					DesktopContent.XMLHttpRequest(
-					  "Request?RequestType=poll&uid=" + UID_,
-					  "", 
-					  pollServerHandlerFunction /*returnHandler*/, 
-					  0 /*reqParam*/, 
-					  0 /*progressHandler*/, 
-					  0 /*callHandlerOnErr*/, 
-					  true /*doNoShowLoadingOverlay*/);	
+						"Request?RequestType=poll&uid=" + UID_,
+						"", 
+						pollServerHandlerFunction /*returnHandler*/, 
+						0 /*reqParam*/, 
+						0 /*progressHandler*/, 
+						0 /*callHandlerOnErr*/, 
+						true /*doNoShowLoadingOverlay*/);	
 				}
 			} //end pollServer()
 
@@ -857,14 +857,19 @@
 
 					for(var pv in page_.widgets[widget].pvList)
 					{
-						pvList += pv + ":"  + page_.widgets[widget].pvList.valueOf()[pv] + ",";
+						pvList += pv + ":"  + 
+							page_.widgets[widget].pvList.valueOf()[pv] + ",";
 					}
 				}
 
 				console.log(pvList);
+				timeToPoll_ = true;
 
 				//END Put all pvs in a JSON and send to server
-				DesktopContent.XMLHttpRequest("Request?RequestType=generateUID","pvList=" + pvList, generateUIDHandlerFunction);//, undefined, undefined, "sequence");
+				DesktopContent.XMLHttpRequest(
+					"Request?RequestType=generateUID",
+					"pvList=" + pvList,
+					generateUIDHandlerFunction);//, undefined, undefined, "sequence");
 			} //end generateUID()
 
 			//=====================================================================================
