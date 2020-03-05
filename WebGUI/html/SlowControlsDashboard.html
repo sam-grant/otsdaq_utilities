@@ -307,7 +307,8 @@
 				fileFrame.id = "fileFrame";
 				fileFrame.src = "/WebPath/html/SlowControlsDashboardFileTree.html";
 				fileFrame.style.height = "inherit";
-				fileFrame.style.width = "inherit";
+				fileBlock_.el.style.width = FILE_BLOCK_WIDTH + "px";
+				fileFrame.style.width = FILE_BLOCK_WIDTH + "px";
 				fileBlock_.el.innerHTML = "";
 				fileBlock_.el.style.border = "0";
 				fileBlock_.el.appendChild(fileFrame);
@@ -542,16 +543,18 @@
 			{
 				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
 
-				for (var widget in page_.widgets)
-				{
-					delete page_.widgets[widget].el;
-					delete page_.widgets[widget];
-					var widgetCover = document.getElementById(widget + "-cover");
-					mainBlock_.el.removeChild(widgetCover.parentNode);
-				}
-
-				clearBlock(mainBlock_.el);
-				page_.widgets = {};
+				
+//				for (var widget in page_.widgets)
+//				{
+//					delete page_.widgets[widget].el;
+//					delete page_.widgets[widget];
+//					var widgetCover = document.getElementById(widget + "-cover");
+//					mainBlock_.el.removeChild(widgetCover.parentNode);
+//				}
+//
+//				clearBlock(mainBlock_.el);
+				mainBlock_.el.innerHTML = ""; //clear 
+				page_.widgets = {}; //clear
 
 				if(!fileBlock_.isHidden)
 					toggleFileMenu();
@@ -633,32 +636,40 @@
 					if (wrap_words !== undefined) widgetObject.attributes["wrap_words"] = wrap_words.innerHTML;
 					if (file !== undefined) widgetObject.attributes["file"] = file.innerHTML;
 
+					console.log("Drawing and creating widget",i,widgetObject);
+
+						
 					widgetObject.loaded = true;
-					widgetObject.el = "";
+					widgetObject.el = undefined;
 
 					if (group !== -1)
 					{
 						for (j=0; j<i; ++j)
 						{
-							if (   page_.widgets["widget" + j] !== undefined 
-								&& page_.widgets["widget" + j].type == widgetObject.type 
-							    && page_.widgets["widget" + j].displayName == widgetObject.displayName
+							if (   page_.widgets[j] !== undefined 
+								&& page_.widgets[j].type == widgetObject.type 
+							    && page_.widgets[j].displayName == widgetObject.displayName
 							    && displayName !== undefined
-							    && groups["widget" + j] == group)
+							    && groups[j] == group)
 							{
-								if (pv !== undefined) page_.widgets["widget" + j].pvList[pv.innerHTML] = 30000;
-								groups["widget" + i] = group;
+								if (pv !== undefined) 
+									page_.widgets[j].pvList[pv.innerHTML] = 30000;
+								groups[i] = group;
 							}
 						}
-						if (groups["widget" + i] == undefined)
+						if (groups[i] == undefined)
 						{
-							page_.widgets["widget" + i] = widgetObject;
-							groups["widget" + i] = group;
+							page_.widgets[i] = widgetObject;
+							groups[i] = group;
 						}
 					}
 					else
-						page_.widgets["widget" + i] = widgetObject;
-				}
+						page_.widgets[i] = widgetObject;
+
+					drawWidget(i);
+
+
+				} //end widget extraction loop
 
 				var time =  xml.getElementsByTagName("time");
 				var notes = xml.getElementsByTagName("notes");
@@ -675,18 +686,18 @@
 				console.log("loadPhoebusPageReqHandler(): groups");
 				console.log(groups);
 
-				for (var widget in page_.widgets)
-				{
-					console.log(widget + " " + page_.widgets[widget].x + " " + page_.widgets[widget].y + " " + page_.widgets[widget].w + " " + page_.widgets[widget].h);
-					drawWidgetFromFile(widget, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].w, page_.widgets[widget].h, true);
-				}
+//				for (var widget in page_.widgets)
+//				{
+//					console.log(widget + " " + page_.widgets[widget].x + " " + page_.widgets[widget].y + " " + page_.widgets[widget].w + " " + page_.widgets[widget].h);
+//					drawWidget(widget, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].w, page_.widgets[widget].h, true);
+//				}
 
 				//updateRefreshInterval();
-				dragAndDrawWidgetType_ = undefined;
-				drawingSelectionRectangle_ = false;
+				//dragAndDrawWidgetType_ = undefined;
+				//drawingSelectionRectangle_ = false;
 
-				toggleEditMode();
-				redrawWindow();
+				//toggleEditMode();
+				//redrawWindow();
 			} //end loadPhoebusPageReqHandler()
 
 
@@ -695,6 +706,12 @@
 			{
 				Debug.log("pollServerHandlerFunction() was called. Req: " + req.responseText);
 
+				if(!editBlock_.isHidden)
+				{
+					Debug.log("Ingoring pool response in edit mode");	
+					return;
+				}
+				
  				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
 				jsonStr = jsonStr.replace(/\s/g, ''); //hack for removing whitespace 
     			if(!jsonStr || jsonStr == "") 
@@ -728,13 +745,21 @@
 								if(pv == dependendentPV && page_.widgets[widget].loaded != "false")
 								{
 									console.log("Widget*************", widget, pv);
-									document.getElementById("widget-" + 
-										widget).contentWindow.drawNewValue(
-											pv, 
-											serverResponse[pv].Value, 
-											serverResponse[pv].Timestamp, 
-											serverResponse[pv].Status, 
-											serverResponse[pv].Severity);
+									try
+									{
+										document.getElementById("widget-" + 
+											widget).contentWindow.drawNewValue(
+												pv, 
+												serverResponse[pv].Value, 
+												serverResponse[pv].Timestamp, 
+												serverResponse[pv].Status, 
+												serverResponse[pv].Severity);
+									}
+									catch(e)
+									{
+										Debug.log("Error was caught updating new value to widget 'widget-" +
+											widget + "': " + e);											
+									}
 								}
 							}
 						}
@@ -2211,11 +2236,12 @@
 
 					fileBlock_.isHidden = false;
 					fileBlock_.el.style.marginLeft = FILE_BLOCK_WIDTH + "px";
+					fileBlock_.el.style.width = FILE_BLOCK_WIDTH + "px";
 
 					cover.style.display = "block";
 					
-					editBlock_.isHidden = true;
-					editBlock_.el.style.display = "none";
+					//editBlock_.isHidden = true;
+					//editBlock_.el.style.display = "none";
 					
 					nav_.classList.remove("navigationMenu--active");
 					nav_.style.display = "none";
@@ -2231,7 +2257,7 @@
 					
 					//mainBlock_.el.style.display = "block";
 					
-					editBlock_.el.style.display = "block";
+					//editBlock_.el.style.display = "block";
 					
 					nav_.classList.add("navigationMenu--active");
 					nav_.style.display = "block";
@@ -2516,19 +2542,19 @@
 			} //end showeditWidgetAttributesPopupBody()
 
 
-			//=====================================================================================
-			function clearBlock(el)
-			{
-				for(var child = 0; child < el.childNodes.length; child++)
-				{
-					if(child.id == "contextMenuDiv"){}
-					else if(child.id == "selectionRectangle"){}
-					else 
-					{
-						el.removeChild(el.childNodes[child]);
-					}
-				}	
-			} //end clearBlock()
+//			//=====================================================================================
+//			function clearBlock(el)
+//			{
+//				for(var child = 0; child < el.childNodes.length; child++)
+//				{
+//					if(child.id == "contextMenuDiv"){}
+//					else if(child.id == "selectionRectangle"){}
+//					else 
+//					{
+//						el.removeChild(el.childNodes[child]);
+//					}
+//				}	
+//			} //end clearBlock()
 
 
 			//=====================================================================================
@@ -3119,13 +3145,13 @@
 				var maxHeight = windowHeight_ - (1 * _MARGIN);
 				var marginLeft = 0;
 				var cover = document.getElementById("mainBlockContainer");
-				var editCover = document.getElementById("editCoverDiv");
+				//var editCover = document.getElementById("editCoverDiv");
 
 				hiddenWidth_ = maxWidth * 0.05;
 				unhiddenWidth_ = maxWidth * 0.35;
 
 				//DEFAULT VALUES //Sides Hidden
-				var fileTop = _MARGIN, fileWidth = unhiddenWidth_, fileHeight = window.innerHeight;
+				var fileTop = _MARGIN, fileWidth = FILE_BLOCK_WIDTH, fileHeight = window.innerHeight;
 				var editWidth = maxWidth, editHeight = EDIT_BLOCK_HEIGHT;
 				var mainLeft = 0, mainTop = 0, mainWidth = maxWidth, mainHeight = window.innerHeight;				
 
@@ -3156,12 +3182,12 @@
 				{
 					console.log("Edit mode");
 					UID_ = 0;
-					editCover.style.display = "none";
+					//editCover.style.display = "none";
 				}
 				else
 				{
 					console.log("Not edit mode");
-					editCover.style.display = "block";
+					//editCover.style.display = "block";
 				}
 
 				var navBar = document.getElementById("navigationBarDiv");
@@ -3285,7 +3311,7 @@
 				</div>
 				<div class="drawAndDragBox-select" id="selectionRectangle"><span></span></div>
 				</div>
-				<div class="cover"     id='editCoverDiv' onclick=toggleEditMode(true)></div>
+				<!--div class="cover"     id='editCoverDiv' onclick=toggleEditMode(true)></div-->
 				<div class='mainBlock' id='editBlock' ></div>
 			</div>
 			

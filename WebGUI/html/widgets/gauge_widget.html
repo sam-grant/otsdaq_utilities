@@ -58,14 +58,11 @@ HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 			{
 				widget_ = widget;
 				parameters_ = parameters;
-//				var olddiv = document.getElementById("display-div");
-//				if (olddiv != null)
-//					document.getElementById("display").removeChild(olddiv);
 
 				var display = document.getElementById("display");
 				display.innerHTML = "";
 				if (!Object.getOwnPropertyNames(widget.pvList).length)
-					display.innerHTML = "METER <br/> ADD PVs TO WIDGET";
+					display.innerHTML = "<center>METER <br/> No associated PVs to display.</center>";
 
 				var div = document.createElement('div');
 				div.className = "wrapper";
@@ -187,7 +184,6 @@ HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 
 	<body onload="Javascript:init()">
 		<div id="display" width="100%" height="100%">
-			<center>METER <br/> ADD PVs TO WIDGET</center>
 		</div>
 	</body>
 

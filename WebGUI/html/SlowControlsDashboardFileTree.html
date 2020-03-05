@@ -49,6 +49,7 @@
 		
 		#saveButton {
 			width:						160px;
+			margin-left: 				65px;
 		}
 		
 		#mainBlock {
@@ -163,8 +164,8 @@
 
 		<script>
 
-			var _CONTEXT_MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
-			var _CONTEXT_MENU_SECONDARY_COLOR = "rgb(130, 51, 51)";
+			var _CONTEXT_MENU_PRIMARY_COLOR = "rgb(220, 220, 220)";;
+			var _CONTEXT_MENU_SECONDARY_COLOR = "rgb(70, 67, 67)";
 
 			var folderCounter = 0;
 			
@@ -380,9 +381,10 @@
 					menuItems,
 					menuItemHandlers,
 					"fileContextMenu",					//element ID
-					event.pageX - 1, event.pageY - 1, 	//top right position
+					10, event.pageY - 20, 	//top right position
 					_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
-					_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
+					_CONTEXT_MENU_SECONDARY_COLOR,		//secondary color
+					true /*defaultHighlighting*/
 				);
 			} //end createFileContextMenu()
 
