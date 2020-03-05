@@ -1318,13 +1318,13 @@
 						containers[pvName].innerHTML = "<center>";
 
 				console.log("thermometer date now: " + now + " pvtime: " + pvTime + " refresh rate: 10 sec");
-				if (widgetElement !== null)
+				if (widgetElement !== null && widgetElement !== undefined)
 					if ((pvTime !== undefined) && (time2compare > now))
 						widgetElement.style.backgroundColor = 'white';
 					else
 						widgetElement.style.backgroundColor = 'lightgrey';
 				else
-					console.log("setWidgetPVinfo(): Error widgetElement = null");
+					console.log("setWidgetPVinfo(): widgetElement is null or not defined!");
 			} //end setWidgetPVinfo()
 
 			//=====================================================================================

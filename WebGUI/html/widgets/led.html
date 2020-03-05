@@ -4,22 +4,21 @@
 	<head>
 		<title>LED</title>
 		<style type="text/css">	
+
 			body {
 				font: 10px arial;
 				background-color: rgba(255, 255, 255, 1);
-				width: 30;
-				height: 30;
-				//margin: 0px !important;
 			}
 			.wrapper {
-			  display: grid;
-			  //grid-template-columns: repeat(2, 1fr);
-			  grid-template-columns: repeat(auto-fill,minmax(30px, 1fr));
-			  grid-gap: 0px;
-			  flex-direction: row;
-			  grid-auto-rows: minmax(10px, auto);
-			  //grid-auto-columns: 20px 20px;
+				display: grid;
+				//grid-template-columns: repeat(2, 1fr);
+				grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
+				grid-gap: 0px;
+				//flex-direction: row;
+				grid-auto-rows: minmax(100px, auto);
+				//grid-auto-columns: 200px 200px;
 			}
+
 		</style>
 
 		<script>
@@ -53,8 +52,16 @@
 			{
 				leds = [];
 				containers = [];
+				var display = document.getElementById("display");
+				display.innerHTML = "";
+				if (!Object.getOwnPropertyNames(widget.pvList).length)
+					display.innerHTML = "LED <br/> ADD PVs TO WIDGET";
 
-				var div = document.getElementById("display")
+				var div = document.createElement('div');
+				div.className = "wrapper";
+				div.id = "display-div";
+				display.appendChild(div);
+
 				for(var pv in widget.pvList)
 				{
 					var divtemp = document.getElementById('label-div-' + pv)
@@ -87,7 +94,7 @@
 					div.appendChild(canvas);
 					leds[pv] = canvas;
 				}
-				canvas.style.width = Math.min(window.innerWidth, window.innerHeight) - 18 + "px";
+				canvas.style.width = Math.min(window.innerWidth, window.innerHeight) - 1 + "px";
 				var context = canvas.getContext('2d');
 				var centerX = canvas.width / 2;
 				var centerY = canvas.height / 2;
@@ -120,6 +127,16 @@
 				var canvas = document.getElementById('led-' + pvName);
 				canvas.title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
 
+//				window.parent.setWidgetPVinfo(
+//									  pvName
+//									, pvValue
+//									, pvTime
+//									, pvStatus
+//									, pvSeverity
+//									, parameters_["show_labels"]
+//									, labelContainers
+//									);
+
 				var context = canvas.getContext('2d');
 				context.fillStyle = 'green';
 				if( pvSeverity == "MAJOR" )
@@ -141,7 +158,9 @@
 </head>
 
 	<body onload='Javascript:init();'>
-		<div class="wrapper" id="display"></div>
+		<div id="display" width="100%" height="100%">
+			<center>LED <br/> ADD PVs TO WIDGET</center>
+		</div>
 	</body>
 
 </html>

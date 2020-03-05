@@ -3,16 +3,25 @@
 	<head>
 		<title>Text</title>
 		<style type="text/css">			
+
 			body {
-				background-color: rgb(250,250,250);
+				background-color: rgb(255,255,255);
+			}
+			.wrapper {
+			  display: grid;
+			  //grid-template-columns: repeat(2, 1fr);
+			  grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
+			  grid-gap: 10px;
+			  grid-auto-rows: minmax(100px, auto);
 			}
 			a{
 				color: green;
 				height: auto;
 		    	text-align: center;
+				fontSize : 12vw;
 			}
 			div{
-			padding: 2.5px;
+				padding: 2.5px;
 			}
 			table{
 				height:100%;
@@ -80,10 +89,14 @@
 					}
 					table.appendChild(tr);
 				}
-				document.getElementById("display").innerHTML = "";
-				document.getElementById("display").appendChild(table);
 
-				//console.log("newWidget() called *************************************");
+				var display = document.getElementById("display");
+				display.innerHTML = "";
+				if (!Object.getOwnPropertyNames(widget.pvList).length)
+					display.innerHTML = "TEXT: ADD PVs TO WIDGET";
+
+				display.appendChild(table);
+
 				if(counter > 1){counter = 2;}
 				console.log("counter" + counter);
 				for(var pv in widget.pvList)
@@ -94,9 +107,7 @@
 					a.innerHTML = "N/A";
 					a.style.width = "100%";
 					a.style.height = "100%";
-//					document.getElementById("display").appendChild(a);	
-//					a = document.getElementById(pv);
-//					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
+
 					var center = document.createElement("center");
 					center.appendChild(a);
 					console.log(document.body);
@@ -179,7 +190,8 @@
 
 	<body onload='Javascript:init();'>
 
-	<div id="display" width="100%" height="100%">
+	<div class="wrapper" id="display" width="100%" height="100%">
+		<center>TEXT: ADD PVs TO WIDGET</center>
 	</div>
 
 	</body>

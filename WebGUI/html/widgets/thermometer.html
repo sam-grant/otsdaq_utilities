@@ -2,20 +2,19 @@
 <html lang="en">
 	<head>
 		<title>Thermometer</title>
-		<style type="text/css">		
+		<style type="text/css">
+
 			body {
 				font: 10px arial;
 				background-color:  rgb(255, 255, 255);
-				//margin: 0px !important;
 			}
-
 			.wrapper {
-			  display: grid;
-			  //grid-template-columns: repeat(2, 1fr);
-			  grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
-			  grid-gap: 0px;
-			  grid-auto-rows: minmax(100px, auto);
-			  //grid-auto-columns: 200px 200px;
+				display: grid;
+			 	//grid-template-columns: repeat(2, 1fr);
+				grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
+				grid-gap: 0px;
+				grid-auto-rows: minmax(100px, auto);
+				//grid-auto-columns: 200px 200px;
 			}
 
 		</style>
@@ -53,14 +52,18 @@
 			{
 				thermometers = [];
 				containers = [];
-				var olddiv = document.getElementById("dispaly-div");
-				if (olddiv != null)
-					document.getElementById("display").innerHTML = "";
+//				var olddiv = document.getElementById("display-div");
+//				if (olddiv != null)
+//					document.getElementById("display").innerHTML = "";
 
 				var div = document.createElement('div');
 				div.className = "wrapper";
-				div.id = "dispaly-div";
-				document.getElementById("display").appendChild(div);
+				div.id = "display-div";
+				var display = document.getElementById("display");
+				display.innerHTML = "";
+				if (!Object.getOwnPropertyNames(widget.pvList).length)
+					display.innerHTML = "METER <br/> ADD PVs TO WIDGET";
+				display.appendChild(div);
 
 				for(var pv in widget.pvList)
 				{
@@ -188,9 +191,9 @@
 </head>
 
 	<body onload='Javascript:init();'>	
-
-		<div id="display"></div>
-
+		<div id="display" width="100%" height="100%">
+			<center>THERMOMETER <br/> ADD PVs TO WIDGET</center>
+		<div>
 	</body>
 
 </html>
