@@ -1025,7 +1025,9 @@
 	            console.log("Here is our name: " + controlsPageName);
 	            var Regex = /^[a-zA-Z0-9\_]+$/g;
 	            if (!Regex.test(controlsPageName)) 
-		        	Debug.log("Illegal characters in name. Please remove these characters and try again.", Debug.HIGH_PRIORITY);
+		        	Debug.log("Illegal characters in name " +
+		        		"(No spaces, only alpha-numeric, dash and underscore allowed)." +
+		        		" Please fix and try again.", Debug.HIGH_PRIORITY);
 	    		else
 	    		{
     		        var controlsPageNotes = document.getElementById("controlsPageNotes").value;
@@ -1033,7 +1035,7 @@
 
 					if(controlsPageNotes.indexOf("@") >= 0 || controlsPageNotes.indexOf("#") >= 0 || controlsPageNotes.indexOf("..") >= 0)
 					{
-				         Debug.log("Illegal characters in notes. Please remove these characters and try again.", Debug.HIGH_PRIORITY);
+				         Debug.log("Illegal characters in notes (no @, #, or .. allowed). Please remove these characters and try again.", Debug.HIGH_PRIORITY);
 				         return;
 					}
 
@@ -3287,20 +3289,22 @@
 				<div class='mainBlock' id='editBlock' ></div>
 			</div>
 			
-			<div id="popupSaveControlsPage" class="popup">
-			  <center><h2>Save your Controls Page</h2></center>
+			<div id="popupSaveControlsPage" class="popup"
+				onmouseup="event.stopPropagation();"
+				onmousedown="event.stopPropagation();">
+			  <center><h2>Save your page!</h2></center>
 			  <div>
-				<p><b>Page Name</b></p>
+				<p><b>Page Name:</b></p>
 				<center><textarea id="controlsPageName" cols="43" rows="1"></textarea></center>
-				<p><b>Controls Page Notes</b></p>
-				<center><textarea id="controlsPageNotes" cols="43" rows="6"></textarea></center>
+				<p><b>Page Notes:</b></p>
+				<center><textarea id="controlsPageNotes" cols="43" rows="5"></textarea></center>
 				<div id="makeControlsPagePublic">
 				  <input type="checkbox" id="isControlsPagePublic"> Make accessible to public</input>
 				</div>
 				<div class="buttongroup">
 				  <center>
 				<button onclick="hidePopupSaveControlsPage()">Cancel</button>
-				<button onclick="savePhoebusPageAs()">Save as Controls Page</button>
+				<button onclick="savePhoebusPageAs()">Save Page</button>
 				  </center>
 				</div>
 			  </div>
