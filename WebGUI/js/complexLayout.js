@@ -774,7 +774,6 @@ function()
                                                                                                    }
                                                                                                   );
                                                                               globalCanvas_.setActiveTab(addIndex)                            ;
-                                                                              STDLINE("Adding new canvas tab")                                ;
                                                                              }
                                                                 }, {
                                                                  xtype     : 'button'                                       ,
@@ -987,6 +986,12 @@ function()
                                                             STDLINE("Resizing "+getCanvasDiv_(currentCanvas_))         ;
                                                             theCanvasModel_.currentWidth  = width                      ;
                                                             theCanvasModel_.currentHeight = height                     ;
+                                                            if( theViewPort_ )
+                                                            {
+                                                             var w = theViewPort_.getWidth()                           ;
+                                                             var h = theViewPort_.getHeight()-100                      ;
+                                                             perWin.resize( w, h )                                     ;
+                                                            }
                                                             changeHistogramPanelSize(
                                                                                      thisPanel                        ,
                                                                                      width                            ,
@@ -1193,8 +1198,7 @@ function()
  //-----------------------------------------------------------------------------
  function makeConfigWin() 
  {
-//  thePersistency(theCanvasModel_) ;
-  persistencyWin.initialize(theCanvasModel_) ;
+  perWin.init(_requestURL, theCanvasModel_, theViewPort_) ;
  }
  
  //-----------------------------------------------------------------------------
@@ -1226,7 +1230,7 @@ function()
                                                           Ext.getCmp('navigatorDiv').expand()                              ;
                                                           var thisRootPath = record.data.dir                               ;
                                                           var thePad       = theCanvasModel_.getCurrentPadC(currentCanvas_);
-                                                          if( theConfigWin_ ) theConfigWin_.destroy()                      ;
+                                                          perWin.destroy()                                             ;
                                                           theProvenance_.clearAll(currentCanvas_,thePad                   );
                                                           theProvenance_.setRootPath(thisRootPath,
                                                                                      currentCanvas_                       ,
@@ -1336,6 +1340,7 @@ function()
                             }
                            );
   theViewPort_.setPosition(0,0) ;
+  STDLINE(" >>>>>>>>> w: "+theViewPort_.getWidth() + " h: " + theViewPort_.getHeight()) ;
  } ;
  
  //-----------------------------------------------------------------------------
@@ -1463,7 +1468,7 @@ function()
                                                   theProvenance_.dump           ("Item selected",thePad                );      
                                                  } 
                                                  theProvenance_.dumpAll("Selected plot to display") ; 
-//                                                 theCanvasModel_.dumpContent("Clicked on item "+selectedItem_)                                          ;
+//                                                 theCanvasModel_.dumpContent("Clicked on item "+selectedItem_)          ;
                                                  var itemSplit     = item.innerText.split("\n\t\n")                     ;      
                                                  var isLeaf        = itemSplit[1].replace("\n","").replace("\t","")     ;      
                                                  if( isLeaf == "true" ) 

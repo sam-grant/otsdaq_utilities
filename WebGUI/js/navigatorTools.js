@@ -59,7 +59,11 @@
  getXMLAttributeValue = function(req, name, attribute) 
                         {
                          var el;
-                         if(el = getXMLNode(req,name)) return el.getAttribute(attribute);
+                         if(el = getXMLNode(req,name)) 
+                         {
+                          var a = el.getAttribute(attribute); 
+                          return el.getAttribute(attribute);
+                         }
                          else if((name == "Error" )&& (!req || !req.responseXML)) 
                           return "Unknown error occured "               + 
                                  "(XML response may have been illegal)!";

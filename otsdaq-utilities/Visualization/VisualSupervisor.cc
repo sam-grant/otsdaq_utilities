@@ -34,6 +34,7 @@
 #include <xdaq/NamespaceURI.h>
 
 #include <iostream>
+#include <fstream>
 
 #define ROOT_BROWSER_PATH __ENV__("ROOT_BROWSER_PATH")
 #define ROOT_DISPLAY_CONFIG_PATH __ENV__("ROOT_DISPLAY_CONFIG_PATH")
@@ -132,10 +133,10 @@ void VisualSupervisor::forceSupervisorPropertyValues()
 }
 
 //========================================================================================================================
-void VisualSupervisor::request(const std::string& requestType,
-		cgicc::Cgicc                    & cgiIn      ,
-		HttpXmlDocument                 & xmlOut     ,
-		const WebUsers::RequestUserInfo & userInfo)
+void VisualSupervisor::request(const std::string               & requestType,
+		                     cgicc::Cgicc              & cgiIn      ,
+		                     HttpXmlDocument           & xmlOut     ,
+		               const WebUsers::RequestUserInfo & userInfo)
 {
 	// Commands
 	//	getRawData
@@ -195,12 +196,11 @@ void VisualSupervisor::request(const std::string& requestType,
 				(std::string)PREFERENCES_PATH + userInfo.username_ + PREFERENCES_FILE_EXT;
 		__SUP_COUT__ << "fullPath: " << fullPath << __E__;
 
-		std::string radioSelect = CgiDataUtilities::getData(cgiIn, "radioSelect");
-		std::string autoRefresh = CgiDataUtilities::getData(cgiIn, "autoRefresh");
-		std::string autoHide    = CgiDataUtilities::getData(cgiIn, "autoHide");
-		std::string hardRefresh = CgiDataUtilities::getData(cgiIn, "hardRefresh");
-		std::string autoRefreshPeriod =
-				CgiDataUtilities::getData(cgiIn, "autoRefreshPeriod");
+		std::string radioSelect       = CgiDataUtilities::getData(cgiIn, "radioSelect"      );
+		std::string autoRefresh       = CgiDataUtilities::getData(cgiIn, "autoRefresh"      );
+		std::string autoHide          = CgiDataUtilities::getData(cgiIn, "autoHide"         );
+		std::string hardRefresh       = CgiDataUtilities::getData(cgiIn, "hardRefresh"      );
+		std::string autoRefreshPeriod = CgiDataUtilities::getData(cgiIn, "autoRefreshPeriod");
 
 		__SUP_COUT__ << "radioSelect: " << radioSelect << __E__;
 		__SUP_COUT__ << "autoRefresh: " << autoRefresh << __E__;
@@ -876,7 +876,7 @@ void VisualSupervisor::request(const std::string& requestType,
          RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, fRootPath, fFoldersPath, fHistName, fFileName) ;
          xmlOut.setDocument(theExplorer->initialize(false)) ;
          std::ostringstream* out ;
-	 xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+	 //xmlOut.outputXmlDocument((std::ostringstream*) out, true);
         }
 	else if(requestType == "getMeLIVE-DQMFile") //################################################################################################################
         {
@@ -910,6 +910,38 @@ void VisualSupervisor::request(const std::string& requestType,
          xmlOut.setDocument(theExplorer->initialize(true)) ;
          std::ostringstream* out ;
 	 //xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+        }
+	else if(requestType == "saveConfiguration") //################################################################################################################
+        {
+	 std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
+         STDLINE("configPayload: ",ACRed   ) ;
+         STDLINE(configPayload    ,ACYellow) ;
+         
+         fstream outFile;
+         outFile.open("/tmp/configPayload.json", ios::out | ios::app);
+         outFile << configPayload << endl ;
+         outFile.close() ;
+        }
+	else if(requestType == "getConfiguration") //################################################################################################################
+        {
+	 std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
+         std::string JSONPayLoad   = "" ;
+         std::string line          = "" ;
+         
+         ifstream JSONFile("/tmp/configPayload.json");
+
+         if( JSONFile.is_open() )
+         {
+          while( getline(JSONFile,line) )
+          {
+           JSONPayLoad += line ;
+          }
+          JSONFile.close() ;
+         }
+
+	 xmlOut.addTextElementToData("JSONPayLoad", JSONPayLoad);
+         std::ostringstream* out ;
+	 xmlOut.outputXmlDocument((std::ostringstream*) out, true);
         }
 }
 
