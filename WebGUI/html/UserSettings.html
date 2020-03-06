@@ -547,7 +547,7 @@
 				if(el) //in wiz mode, there is now jump link
 				{
 					if(_usernameWithLock && _usernameWithLock != "") //insert user with lock if applicable
-						htmlStr += "<div style='color:yellow'>Note: <i>" + _usernameWithLock + "</i> currently has the ots Lock.</div>";
+						htmlStr += "<div style='color:yellow; margin-bottom:10px;'>Note: <i>" + _usernameWithLock + "</i> currently has the ots Lock.</div>";
 					
 					if(_accountsArray[0] && _accountsArray[0].length) //If have permissions, add Jump to Link
 					{
@@ -665,7 +665,7 @@
 				htmlStr += "<center style='padding-top: 5px;'><input id='theRealDelete' style='display:none; background-color: #EAABAB' type='submit' onmouseup='reallyDelete(event);' value='Really Delete!'></center><br>";
 				//////////////////////////////////////////////////////
 				//add new account option				
-						   htmlStr += "<h3 style='margin-bottom: -15px; margin-top: 10px'>Create New Account:</h3>";		
+				htmlStr += "<h3 style='margin-bottom: -30px; margin-top: 10px;'>Create New Account:</h3>";		
 				htmlStr += "<table><tr>";
 				for(j=0;j<_accountFields.length-1;++j) //omit nac field
 					htmlStr += "<td class='accountsHeaderFld'>" + _accountFieldNames[j] + "</td>";
@@ -1144,6 +1144,9 @@
 	
 	<body onload='Javascript:init();'>	
 		<div id='omni' style='display:none;'> <!-- hide by default until normal mode handling -->
+		
+		<center>This page consists of a Preferences section and an Accounts section.<br><br></center>
+		
 		<div id='jumpToAccounts'></div>
 		<div id = "header" style = "width:100%"><h1>General Preferences</h1>
 		 <!--<p align="right" onclick="groupsTips()" class="tip" style='font-size:30px;'>&#10067;</p></div>-->

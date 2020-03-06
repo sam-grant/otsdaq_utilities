@@ -361,7 +361,13 @@ Debug.errorPop = function(err,severity)
 			el.innerHTML = str;
 			body.appendChild(el); //add element to body of page
 			el.focus();
-			el.onmousemove = function(){event.stopPropagation();}
+			el.onmousemove = function(){				
+				//if doing some resize or movement, then stop blocking event propagation
+				if(Debug._errBoxOffResizeStartY == -1 && 
+						Debug._errBoxOffMoveStartX == -1 && 
+						Debug._errBoxOffResizeStartX == -1)
+					event.stopPropagation();
+			}
 			el.onmousedown = function(){console.log("debug down"); event.stopPropagation();}
 			el.onmouseup = function(){console.log("debug up"); event.stopPropagation();}
 			
@@ -614,14 +620,16 @@ Debug.errorPop = function(err,severity)
 Debug._errBoxLastContent = "";
 //=====================================================================================
 //Close the error popup on the window
-Debug.closeErrorPop = function() {
+Debug.closeErrorPop = function() 
+{
 	document.getElementById(Debug._errBoxId).style.display = "none";
 	Debug._errBoxLastContent = document.getElementById(Debug._errBoxId + "-err").innerHTML;
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = ""; //clear string
 }
 //=====================================================================================
 //Bring the error popup back
-Debug.bringBackErrorPop = function() {
+Debug.bringBackErrorPop = function() 
+{
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = Debug._errBoxLastContent; //bring back string
 	document.getElementById(Debug._errBoxId).style.display = "block";
 }
@@ -632,14 +640,16 @@ Debug._errBoxOffMoveStartY;
 Debug._errBoxOffResizeStartX = -1;
 Debug._errBoxOffResizeStartY = -1;
 //=====================================================================================
-Debug.handleErrorMoveStart = function(e) {
+Debug.handleErrorMoveStart = function(e) 
+{
 	Debug.log("Move Start");
 	Debug._errBoxOffMoveStartX = e.screenX - Debug._errBoxOffX;
 	Debug._errBoxOffMoveStartY = e.screenY - Debug._errBoxOffY;
 }
 
 //=====================================================================================
-Debug.handleErrorResizeStart = function(e,resizeW,moveLeft) {
+Debug.handleErrorResizeStart = function(e,resizeW,moveLeft) 
+{
 	Debug.log("Resize Start");
 	Debug._errBoxOffResizeStartY = e.screenY - Debug._errBoxOffH;
 	if(moveLeft)
@@ -650,12 +660,11 @@ Debug.handleErrorResizeStart = function(e,resizeW,moveLeft) {
 	else if(resizeW)
 		Debug._errBoxOffResizeStartX = e.screenX - Debug._errBoxOffW;
 	
-}
+} //end handleErrorResizeStart()
 
 //=====================================================================================
-Debug.handleErrorMoveStop = function(e) {
-
-	
+Debug.handleErrorMoveStop = function(e) 
+{	
 	if(Debug._errBoxOffResizeStartY != -1) //resize stop
 	{
 		Debug.log("Resize Stop");		
@@ -683,13 +692,13 @@ Debug.handleErrorMoveStop = function(e) {
 		Debug._errBoxOffY = e.screenY - Debug._errBoxOffMoveStartY;
 		Debug._errBoxOffMoveStartX = -1; //done with move
 		Debug.handleErrorResize();
-	}
-		
+	}		
 		
 } //end handleErrorMoveStop()
 
 //=====================================================================================
 Debug.handleErrorMove = function(e) {
+	console.log("moving",e);
 	
 	if(Debug._errBoxOffMoveStartX == -1 &&
 			Debug._errBoxOffResizeStartY == -1) return; //do nothing, not moving

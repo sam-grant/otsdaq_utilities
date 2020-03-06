@@ -1,253 +1,257 @@
-body
-{
-	width: 100%;
-	height: 100%;
-	margin: auto;
-	padding-top: 10px;
-	font-family: 'Comfortaa', serif;
-
-	/*background: #989791;*/
-	background:  #A7A8AA;
-}
-		/* make buttons and inputs have a hand cursor */
-		input, button, select, a {
-			cursor: 			pointer;
-			/*text-align: center;*/
-		}
-		.tip{
-		    cursor: pointer;
-		    float:right;
-		}
+	body
+	{
+		width: 100%;
+		height: 100%;
+		margin: auto;
+		padding-top: 10px;
+		font-family: 'Comfortaa', serif;
+	
+		/*background: #989791;*/
+		background:  #A7A8AA;
+	}
+	
+	/* make buttons and inputs have a hand cursor */
+	input, button, select, a {
+		cursor: 			pointer;
+		/*text-align: center;*/
+	}
+	.tip{
+		cursor: pointer;
+		float:right;
+	}
 		
-			#clearDiv {
-				clear: both;
-				text-align: center;
-			}
-			
-			a {
-				color: blue;
-				cursor:pointer;
-				text-decoration: underline;
-			} 
-			
-			input:not([type=submit]) {
-				border: 2px solid gray;
-				box-shadow: 
-				  inset 0 0 8px  rgba(0,0,0,0.1),
-				        0 0 16px rgba(0,0,0,0.1); 
-				padding: 5px;
-				background: rgba(255,255,255,0.75);
-				margin: 0 0 10px 0;
-				border-radius: 1px;	
-			}
-			
-			#colorInputs {
-				width: 400px;
-				padding: 8px;
+	#clearDiv {
+		clear: both;
+		text-align: center;
+	}
+	
+	a {
+		color: blue;
+		cursor:pointer;
+		text-decoration: underline;
+	} 
+	
+	input:not([type=submit]) {
+		border: 2px solid gray;
+		box-shadow: 
+		  inset 0 0 8px  rgba(0,0,0,0.1),
+				0 0 16px rgba(0,0,0,0.1); 
+		padding: 5px;
+		background: rgba(255,255,255,0.75);
+		margin: 0 0 10px 0;
+		border-radius: 1px;	
+	}
+	
+	#colorInputs {
+		width: 400px;
+		padding: 8px;
+		
+	}		
 				
-			}		
-						
-			#colorInputs input {
-				width: 30px;
-				text-align: center;
-			}				
-			
-			.Settings-el {
-				float: left;
-				margin: 5px;
-			}
-			
-			.Settings-colorName {
-				width:150px;
-				text-align: right;
-				white-space: nowrap;
-			}
-			
-			.Settings-colorBox {
-				width:25px;
-				height:25px;
-				margin: -1px 0 5px 10px;
-				border: 2px solid gray;
+	#colorInputs input {
+		width: 30px;
+		text-align: center;
+	}				
+	
+	.Settings-el {
+		float: left;
+		margin: 5px;
+	}
+	
+	.Settings-colorName {
+		width:150px;
+		text-align: right;
+		white-space: nowrap;
+	}
+	
+	.Settings-colorBox {
+		width:25px;
+		height:25px;
+		margin: -1px 0 5px 10px;
+		border: 2px solid gray;
 
-			}
-			table{
-				box-shadow: inset rgba(255,254,255,0.6) 0 0.3em .3em,
-				 inset rgba(0,0,0,0.15) 0 -0.1em .3em, 
-				 /* inner shadow */ rgba(200, 200, 200,0.6) 0 .1em 3px,
-				 rgba(200, 200, 200,0.6) 0 .1em 1px, /* color border */ 
-				 rgba(0,0,0,0.2) 0 .5em 5px;
-				 padding: 8px;
-			}
-			 
-			#windLayoutDiv {
-				margin-left: 20px;
-				width: 500px;
-				text-align: center;
-				box-shadow: inset rgba(255,254,255,0.6) 0 0.3em .3em,
-				 inset rgba(0,0,0,0.15) 0 -0.1em .3em, 
-				 /* inner shadow */ rgba(200, 200, 200,0.6) 0 .1em 3px,
-				 rgba(200, 200, 200,0.6) 0 .1em 1px, /* color border */ 
-				 rgba(0,0,0,0.2) 0 .5em 5px;
+	}
+	table{
+		box-shadow: inset rgba(255,254,255,0.6) 0 0.3em .3em,
+		 inset rgba(0,0,0,0.15) 0 -0.1em .3em, 
+		 /* inner shadow */ rgba(200, 200, 200,0.6) 0 .1em 3px,
+		 rgba(200, 200, 200,0.6) 0 .1em 1px, /* color border */ 
+		 rgba(0,0,0,0.2) 0 .5em 5px;
+		 padding: 8px;
+	}
+	 
+	#windLayoutDiv {
+		
+		width: 500px;
+		text-align: center;
+		box-shadow: 		inset rgba(255,254,255,0.6) 0 0.3em .3em,
+							inset rgba(0,0,0,0.15) 0 -0.1em .3em, 
+							/* inner shadow */ rgba(200, 200, 200,0.6) 0 .1em 3px,
+							rgba(200, 200, 200,0.6) 0 .1em 1px, /* color border */ 
+							rgba(0,0,0,0.2) 0 .5em 5px;
+		
+	}
+	
+	.winLayoutLink {
+		text-decoration: none;
+		font-weight: 800;
+		color: black;
+	}
+	.winLayoutLink:hover {
+		text-decoration: underline;
+	}
+		
+	li {
+		list-style-type:square;
+		width: 400px;
+		text-align: center;
+	}
+	
+	.winLayoutText {
+		white-space: nowrap;			
+	}
+	
+	tr {
+		text-align: center;
+	}
+	#newwacct{
+		padding-top: 5px;
+	}
+	.accountsHeaderFld {
+		font-weight: 800;
+	}
 				
-			}
-			
-			.winLayoutLink {
-				text-decoration: none;
-				font-weight: 800;
-				color: black;
-			}
-			.winLayoutLink:hover {
-				text-decoration: underline;
-			}
-				
-			li {
-				list-style-type:square;
-				width: 400px;
-				text-align: center;
-			}
-			
-			.winLayoutText {
-				white-space: nowrap;			
-			}
-			
-			tr {
-				text-align: center;
-			}
-			#newwacct{
-				padding-top: 5px;
-			}
-			.accountsHeaderFld {
-				font-weight: 800;
-			}
-						
-			#accountsPageNav a {
-				color: #880000;
-				text-decoration: none;
-				text-align: center;
-			}
-			#accountsPageNav a:hover {
-				text-decoration: underline;
-			}
-			.accountsHeaderFld a {
-				color: #880000;
-				text-decoration: none;
-			}
-			.accountsHeaderFld a:hover {
-				text-decoration: underline;
-			}
-			
-			#loaderGif {
-				margin: 50px 0 0 100px;
-			}
-			
-			.actPermInput {
-				width: 90px;
-				margin: 5px;
-			}
-			
-			.actDispNameInput {
-				width: 90px;	
-				margin: 25px 0 0 0;		
-			}
-			
-			table {
-				border: 2px solid #aaaaaa;
-			    border-radius: 2px;
-			    background-color: #dddddd;
-				text-align: center;
-			}
-			
-			#accountsPermNote {
-				font-size: 12px;	
-				margin-left: 10px;
-				color: #444444;			
-			}
-			#windSystemLayoutDiv hr{width: 80%;
-			}
+	#accountsPageNav a {
+		color: #880000;
+		text-decoration: none;
+		text-align: center;
+	}
+	#accountsPageNav a:hover {
+		text-decoration: underline;
+	}
+	.accountsHeaderFld a {
+		color: #880000;
+		text-decoration: none;
+	}
+	.accountsHeaderFld a:hover {
+		text-decoration: underline;
+	}
+	
+	#loaderGif {
+		margin: 50px 0 0 100px;
+	}
+	
+	.actPermInput {
+		width: 90px;
+		margin: 5px;
+	}
+	
+	.actDispNameInput {
+		width: 90px;	
+		margin: 25px 0 0 0;		
+	}
+	
+	table {
+		border: 2px solid #aaaaaa;
+		border-radius: 2px;
+		background-color: #dddddd;
+		text-align: center;
+	}
+	
+	#accountsPermNote {
+		font-size: 12px;	
+		margin-left: 10px;
+		color: #444444;			
+	}
+	#windSystemLayoutDiv hr {
+		width: 80%;
+	}
 
-			#jumpToAccounts {
-				width: 100%;
-				text-align: center;
-			}
-			#windLayoutDiv{
-				padding-top: 10px;
-				padding-bottom: 10px;
-				text-align: center;
-				background: rgb(167, 224, 250);
-			}
-			.winLayoutText{
-				border: 1 px solid red;
-				text-align: center;
-				
-			}
-			table{
-				text-align: center;
-				margin: auto;
-			}
-			h1,h3{
-				text-align:center;
-			}
-			td{
-				text-align: center;
-			}
-			
-			li:hover,li:active {font-size: 120%;}
-			#accountsPermNote{
-				padding: 5px;	
-			}
+	#jumpToAccounts {
+		width: 100%;
+		text-align: center;
+	}
+	#windLayoutDiv {
+		padding-top: 10px;
+		padding-bottom: 10px;
+		text-align: center;
+		background: rgb(167, 224, 250);
+	}
+	.winLayoutText {
+		border: 1 px solid red;
+		text-align: center;
+		
+	}
+	table {
+		text-align: center;
+		margin: auto;
+	}
+	h1,h3 {
+		text-align:				center;
+		margin-bottom: 			1px;
+	}
+	td{
+		text-align:				center;
+	}
+	
+	li:hover,li:active {
+		font-size: 				120%;
+	}
+	#accountsPermNote{
+		padding: 				5px;	
+	}
 
-
-			#accountsSearchDiv,	#accountsPageNav{
-				text-align: center;
-			}
-			.silence{
-				color: #fff !important;
-				text-transform: uppercase;
-				background: #ed3330;
-				padding: 10px;
-				border-radius: 5px;
-				display: inline-block;
-				border: none;
-			}
-			.silence:hover {
-				background: #434343;
-				letter-spacing: 1px;
-				-webkit-box-shadow: 0px 5px 40px -10px rgba(0,0,0,0.57);
-				-moz-box-shadow: 0px 5px 40px -10px rgba(0,0,0,0.57);
-				box-shadow: 5px 40px -10px rgba(0,0,0,0.57);
-				transition: all 0.4s ease 0s;
-				}
-			.reset{
-				color: #fff !important;
-				text-transform: uppercase;
-				background: #3072ed;
-				padding: 10px;
-				border-radius: 5px;
-				display: inline-block;
-				border: none;
-			}
-			.reset:hover {
-				background: #434343;
-				letter-spacing: 1px;
-				-webkit-box-shadow: 0px 5px 40px -10px rgba(0,0,0,0.57);
-				-moz-box-shadow: 0px 5px 40px -10px rgba(0,0,0,0.57);
-				box-shadow: 5px 40px -10px rgba(0,0,0,0.57);
-				transition: all 0.4s ease 0s;
-				}
-				input[type=submit] {
-					color: #020c07 !important;
-					text-transform: uppercase;
-					background: #ffffff;
-					padding: 5px;
-					border: 1px solid #010804 !important;
-					border-radius: 6px;
-					display: inline-block;
-				}
-				input[type=submit]:hover {
-					color: #494949 !important;
-					border-radius: 20px;
-					border-color: #494949 !important;
-					transition: all 0.3s ease 0s;
-				}
+	#accountsSearchDiv,	#accountsPageNav{
+		text-align: center;
+	}
+	.silence{
+		color: #fff !important;
+		text-transform: uppercase;
+		background: #ed3330;
+		padding: 10px;
+		border-radius: 5px;
+		display: inline-block;
+		border: none;
+	}
+	.silence:hover {
+		background: #434343;
+		letter-spacing: 1px;
+		-webkit-box-shadow: 0px 5px 40px -10px rgba(0,0,0,0.57);
+		-moz-box-shadow: 0px 5px 40px -10px rgba(0,0,0,0.57);
+		box-shadow: 5px 40px -10px rgba(0,0,0,0.57);
+		transition: all 0.4s ease 0s;
+		}
+	.reset{
+		color: #fff !important;
+		text-transform: uppercase;
+		background: #3072ed;
+		padding: 10px;
+		border-radius: 5px;
+		display: inline-block;
+		border: none;
+	}
+	.reset:hover {
+		background: #434343;
+		letter-spacing: 1px;
+		-webkit-box-shadow: 0px 5px 40px -10px rgba(0,0,0,0.57);
+		-moz-box-shadow: 0px 5px 40px -10px rgba(0,0,0,0.57);
+		box-shadow: 5px 40px -10px rgba(0,0,0,0.57);
+		transition: all 0.4s ease 0s;
+		}
+	input[type=submit] {
+		color: #020c07 !important;
+		text-transform: uppercase;
+		background: #ffffff;
+		padding: 5px;
+		border: 1px solid #010804 !important;
+		border-radius: 6px;
+		display: inline-block;
+	}
+	input[type=submit]:hover {
+		color: #494949 !important;
+		border-radius: 20px;
+		border-color: #494949 !important;
+		transition: all 0.3s ease 0s;
+	}
 		
 					
