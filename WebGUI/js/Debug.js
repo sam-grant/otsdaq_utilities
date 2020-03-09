@@ -698,7 +698,7 @@ Debug.handleErrorMoveStop = function(e)
 
 //=====================================================================================
 Debug.handleErrorMove = function(e) {
-	console.log("moving",e);
+	//console.log("moving",e);
 	
 	if(Debug._errBoxOffMoveStartX == -1 &&
 			Debug._errBoxOffResizeStartY == -1) return; //do nothing, not moving
