@@ -850,17 +850,20 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=setSettings", 
 						data,
 						settingsRequestHandler);
-			}
+			} //end setServerSettings()
 
 			//=====================================================================================
 			function defaultColors() 
 			{
 				Debug.log("Settings Default Colors");
-				
-				extractRGBtoForm("rgb(15,34,105)",0);
-				extractRGBtoForm("rgb(60,64,75)",1);
+
+//#define PREF_XML_BGCOLOR_DEFAULT 			"rgb(0,76,151)"     // -background color
+//#define PREF_XML_DBCOLOR_DEFAULT 			"rgb(0,40,85)"      // -dashboard color
+//#define PREF_XML_WINCOLOR_DEFAULT 		"rgba(196,229,255,0.9)"  	// -window color
+				extractRGBtoForm("rgb(0,76,151)",0);
+				extractRGBtoForm("rgb(0,40,85)",1);
 				extractRGBtoForm("rgba(196,229,255,0.9)",2);
-			}
+			} //end defaultColors()
 
 			//=====================================================================================
 			function colorEditHandler(e) 
@@ -869,7 +872,7 @@
 				for(var i=0;i<3;++i) //correct field and display result
 					extractRGBtoForm(extractFormToRGB(i),i);
 				return true;
-			}
+			} //end colorEditHandler()
 
 			//=====================================================================================
 			//setLayout ~~

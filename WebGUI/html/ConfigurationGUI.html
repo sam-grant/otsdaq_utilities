@@ -395,10 +395,28 @@
 		#groupAddRemoveTable {
 			margin-bottom: 		10px;
 		}
-		#groupAddRemoveTable tr:nth-child(even) {
+		#groupAddRemoveTable tr:nth-child(even),
+		#systemViewActiveTable tr:nth-child(even),
+		#systemAliasTable tr:nth-child(even),
+		#tableViewTable tr:nth-child(even) {
 			background-color: 	rgb(218, 194, 194);
 		}
-		
+		#systemViewActiveTable tr,
+		#systemAliasTable tr {
+			height: 			18px;
+		}
+		#systemViewActiveTable td,
+ 	 	#tableViewTable td {
+			padding: 			0 5px 0 5px;
+		}
+		#systemAliasTable {
+			padding-right:		20px;
+		}
+		#systemAliasTable th {
+			color: 				rgb(65, 86, 146);
+			border-left: 		2px solid rgb(140, 86, 86);
+			padding-bottom:		5px;
+		}
 	</style>
 
 
@@ -491,8 +509,8 @@
 		var _lastFindRow, _lastFindCol;
 		var _cachedTableComment, _cachedGroupComment;
 
-		var _activeConfigGroups = []; //sz 6 (each 2) := holds the group name,key for active Context, Backbone, Config
-		var _lastConfigGroups = []; //sz 6 (each 3):= holds the group name,key,TIME for last Configured, Started
+		var _activeTableGroups = []; //sz 6 (each 2) := holds the group name,key for currently active (could be none on failure) Context, Backbone, Config
+		var _lastTableGroups = []; //sz 18 (each 3):= holds the group name,key,TIME for last successfully Configured, Started, activated-Config, activated-Context, activated-Backbone, activated-Iterator 
 
 		var _versionTrackingIsOn = true;
 		var _firstTimeSilentActive = true;
@@ -696,15 +714,29 @@
 				function (req) {
 
 					//extract last config groups
-					_lastConfigGroups = [
+					_lastTableGroups = [
 						DesktopContent.getXMLValue(req, "LastConfiguredGroupName").trim(),
 						DesktopContent.getXMLValue(req, "LastConfiguredGroupKey").trim(),
 						DesktopContent.getXMLValue(req, "LastConfiguredGroupTime").trim(),
 						DesktopContent.getXMLValue(req, "LastStartedGroupName").trim(),
 						DesktopContent.getXMLValue(req, "LastStartedGroupKey").trim(),
-						DesktopContent.getXMLValue(req, "LastStartedGroupTime").trim()
+						DesktopContent.getXMLValue(req, "LastStartedGroupTime").trim(),
+						
+						DesktopContent.getXMLValue(req, "LastActivatedConfigGroupName").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedConfigGroupKey").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedConfigGroupTime").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedIteratorGroupName").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedIteratorGroupKey").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedIteratorGroupTime").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedBackboneGroupName").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedBackboneGroupKey").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedBackboneGroupTime").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedContextGroupName").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedContextGroupKey").trim(),
+						DesktopContent.getXMLValue(req, "LastActivatedContextGroupTime").trim()
+						
 					];
-					//console.log(_lastConfigGroups);
+					//console.log(_lastTableGroups);
 
 					systemViewPreventInfiniteLoop_ = true;
 					DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases&" +
@@ -991,100 +1023,157 @@
 			{
 				var activeConfigHeaders = ["Context", "Backbone", "Iterate Group", "Configuration"];
 
-				str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
+				str += "<table id='systemViewActiveTable' cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
 
-				for (var i = activeConfigHeaders.length-1; i >= 1 && i < activeConfigHeaders.length; --i) 
+				insertLocalLastConfigGroups();
+				
+				for (var i = activeConfigHeaders.length-1; i >= 0 && i < activeConfigHeaders.length; --i) 
 				{
-					str += "<tr><td style='text-align:left'>";
+					str += "<tr><td style='text-align:left; white-space:nowrap;'>";
 
-					if (i == activeConfigHeaders.length - 1) //for last configured 
-						str += "Last Activated " + activeConfigHeaders[i] + ": ";
-					else	//for backbone, iterate
-						str += "Currently Active " + activeConfigHeaders[i] + ": ";
+					//if (i == activeConfigHeaders.length - 1) //for last configured 
+					//	str += "Last Activated " + activeConfigHeaders[i] + ": ";
+					//else	//for backbone, iterate
+					str += "Currently Active " + activeConfigHeaders[i] + ": ";
 
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
 
-					if (!_activeConfigGroups[i * 2] || _activeConfigGroups[i * 2] == "")
+					if (!_activeTableGroups[i * 2] || _activeTableGroups[i * 2] == "")
 					{
 						str += "None";
 					}
 					else 
 					{
-						str += "<a href='#' onclick='setupSpecificTableGroup(\"" + _activeConfigGroups[i * 2] +
-							"\",\"" + _activeConfigGroups[i * 2 + 1] + "\"); return false;'>";
-						str += _activeConfigGroups[i * 2] + " (" + _activeConfigGroups[i * 2 + 1] + ")</a>";
+						str += "<a href='#' onclick='setupSpecificTableGroup(\"" + _activeTableGroups[i * 2] +
+							"\",\"" + _activeTableGroups[i * 2 + 1] + "\"); return false;'>";
+						str += _activeTableGroups[i * 2] + "</a>(" + _activeTableGroups[i * 2 + 1] + ")";
 					}
 
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
-					str += "<a href='#' onclick='setupTableGroupTreeView(\"" +
-						_activeConfigGroups[i * 2] +
-						"\",\"" +
-						_activeConfigGroups[i * 2 + 1] + "\"); return false;'>Tree-view</a>";
+					
+					if (!(!_activeTableGroups[i * 2] || _activeTableGroups[i * 2] == ""))
+						str += "<a href='#' onclick='setupTableGroupTreeView(\"" +
+							_activeTableGroups[i * 2] +
+							"\",\"" +
+							_activeTableGroups[i * 2 + 1] + "\"); return false;' " +
+							"title='Open the tree-view for " + _activeTableGroups[i * 2] + 
+							"(" + _activeTableGroups[i * 2 + 1] + ")'" +
+							">Tree-view</a>";
 
 					str += "</td></tr>";
 
-					if (i == activeConfigHeaders.length - 1) //for last configured 
-						insertLocalLastConfigGroups();
+					//if (i == activeConfigHeaders.length - 1) //for last configured 
+						//insertLocalLastConfigGroups();
 				}
 
 				/////////////////////
 				function insertLocalLastConfigGroups()
 				{
 					//last config groups for "Configured" and "Started:
-					var extraPadding;
-					for (var i = 0; i < _lastConfigGroups.length; i += 3) 
+					var extraPadding = "";
+					for (var i = 0; i < _lastTableGroups.length; i += 3) 
 					{
-						if(i) //add padding to last
-							extraPadding = "padding-bottom:10px;";
-						else
-							extraPadding = "";
+							
+//						if(((i/3)|0) == 5) //add padding to last
+//							extraPadding = "padding-bottom:10px;";
+//						else
+//							extraPadding = "";
 						
-						str += "<tr><td style='text-align:left;" + extraPadding + "'>";
+						str += "<tr><td style='text-align:left;white-space:nowrap;" +
+								extraPadding + "'>";
 
 
-						if (!_lastConfigGroups[i] || _lastConfigGroups[i] == "") 
+						if (!_lastTableGroups[i] || _lastTableGroups[i] == "") 
 						{
 							//no last group
 
-							if (i == 0) //for "Configured"
-								str += "Last Configured by FSM: ";
-							else	//for "Started"
+							switch((i/3)|0)
+							{
+							case 0:
+								str += "Last Configured by FSM: "; 
+								break;
+							case 1:
 								str += "Last Started by FSM: ";
+								break;
+							case 2:
+								str += "Last Activated Config: ";
+								break;
+							case 3:
+								str += "Last Activated Iterate Group: ";
+								break;
+							case 4:
+								str += "Last Activated Backbone: ";
+								break;
+							case 5:
+								str += "Last Activated Context: ";
+							default:; //impossible
+							}
 						}
 						else 
 						{
 							//there is a last group, so show time
 
-							if (i == 0) //for "Configured"
+							switch((i/3)|0)
+							{
+							case 0:
 								str += "Last Configured ";
-							else	//for "Started"
+								break;
+							case 1:
 								str += "Last Started ";
+								break;
+							case 2:
+								str += "Last Activated Config ";
+								break;
+							case 3:
+								str += "Last Activated Iterate ";
+								break;
+							case 4:
+								str += "Last Activated Backbone ";
+								break;
+							case 5:
+								str += "Last Activated Context ";
+							default:; //impossible
+							}
 
 							str += "<label style='font-size:10px;white-space:nowrap;'>[" +
-									_lastConfigGroups[i + 2] + "]</label>: ";
+									_lastTableGroups[i + 2] + "]</label>: ";
 						}
 
 						str += "</td><td style='text-align:left; padding-left:20px;" + extraPadding + "'>";
 
-						if (!_lastConfigGroups[i] || _lastConfigGroups[i] == "") 
+						if (!_lastTableGroups[i] || _lastTableGroups[i] == "") 
 						{
 							str += "None";
 						}
 						else 
 						{
 							str += "<a href='#' onclick='setupSpecificTableGroup(\"" +
-									_lastConfigGroups[i] +
-									"\",\"" + _lastConfigGroups[i + 1] + "\"); return false;'>";
-							str += _lastConfigGroups[i] + " (" + _lastConfigGroups[i + 1] + ")</a>";
+									_lastTableGroups[i] +
+									"\",\"" + _lastTableGroups[i + 1] + "\"); return false;'>";
+							str += _lastTableGroups[i] + "</a>(" + _lastTableGroups[i + 1] + ")";
 						}
 
 						str += "</td><td style='text-align:left; padding-left:20px;" + extraPadding + "'>";
-						str += "<a href='#' onclick='setupTableGroupTreeView(\"" +
-								_lastConfigGroups[i] +
-								"\",\"" +
-								_lastConfigGroups[i + 1] + "\"); return false;'>Tree-view</a>";
+					
+						if(!(!_lastTableGroups[i] || _lastTableGroups[i] == ""))
+							str += "<a href='#' onclick='setupTableGroupTreeView(\"" +
+									_lastTableGroups[i] +
+									"\",\"" +
+									_lastTableGroups[i + 1] + "\"); return false;' " +
+								"title='Open the tree-view for " + _lastTableGroups[i] + 
+								"(" + _lastTableGroups[i + 1] + ")'" +
+								">Tree-view</a>";
 
 						str += "</td></tr>";
+						
+						if(((i/3)|0) == 5 ||
+								((i/3)|0) == 1) //add extra rows for spacing
+							str += "<tr style='background-color: rgb(140, 86, 86);height:2px;'>" +
+								"<td colspan=3></td></tr>";
+						if(((i/3)|0) == 5 ||
+								((i/3)|0) == 1) //swap odd even coloring
+							str += "<tr style='background-color: rgb(140, 86, 86);height:0px;'>" +
+							"<td colspan=3></td></tr>";
 					}
 				}  //end insertLocalLastConfigGroups()
 
@@ -1120,12 +1209,12 @@
 
 
 
-			str += "<table style='white-space:nowrap' cellpadding='0' cellspacing='0' border='0' >"; //open system aliases table
+			str += "<table id='systemAliasTable' style='white-space:nowrap' cellpadding='0' cellspacing='0' border='0' >"; //open system aliases table
 
 			str += "<tr>";
-			str += "<th>";
+			str += "<th style='border-left: 0'>";
 			str += "<u>System Alias</u>";
-			str += "</th><th style='background-color:rgb(218, 194, 194);'>";
+			str += "</th><th>";
 			str += "<u>Translation</u>";
 			str += "</th><th colspan='4'>";
 			str += "";
@@ -1151,7 +1240,8 @@
 					groupAlias + "\\\");";
 
 
-				str += "<tr style='height:30px;'><td style='text-align:left;padding: 0 10px 0 0px;'>";
+				str += "<tr style='height:10px !important;'>" +
+						"<td style='text-align:left;padding: 0 10px 0 5px;'>";
 
 				//system alias
 				str += "<a name='anchorTag-" +
@@ -1165,25 +1255,31 @@
 				str += groupAlias + "</a>&quot;";
 
 
-				str += "</td><td style='text-align:left; padding: 0 10px 0 10px; background-color:rgb(218, 194, 194);'>";
+				str += "</td><td style='border-left: 2px solid rgb(140, 86, 86); " +						
+						"text-align:center; padding: 0 10px 0 10px;'>";
 
 
 				//add group view link				
-				str += "&lt; ";
+				//str += "&lt; ";
 				str += " <a href='#' onclick='setupSpecificTableGroup(\"" + groupName +
 					"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;' " +
-					"title='Group Comment:\n\"" + groupComment + "\"' " +
+					"title='Open group-view for " + groupName +
+					"(" + groupKey + ")' " +
 					">";
 				str += groupName + "</a>";
-				str += "(" + groupKey + ") &gt;";
+				str += "(" + groupKey + ")";
+				//str += " &gt;";
 
 
-				str += "</td><td style='text-align:left; padding-left:10px;'>";
+				str += "</td><td style='border-left: 2px solid rgb(140, 86, 86); " +
+						"text-align:left; padding-left:10px;'>";
 
 
 				//add tree view link
 				str += " <a href='#' onclick='setupTableGroupTreeView(\"" + groupName +
-					"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;'>";
+					"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;' " +
+					"title='Open tree-view for " + groupName +
+					"(" + groupKey + ")'>";
 				str += "Tree-view</a>";
 
 
@@ -1192,7 +1288,9 @@
 
 				//add Activate link
 				str += " <a onclick='activateSystemConfig(\"" + groupName +
-					"\",\"" + groupKey + "\"); return false;'>";
+					"\",\"" + groupKey + "\"); return false;' " +
+					"title='Activate " + groupName +
+					"(" + groupKey + ")'>";
 				str += "Activate</a>";
 
 
@@ -1208,14 +1306,14 @@
 				str += "Wiz-to-Latest</a>";
 
 
-				str += "</td><td style='text-align:left; padding: 0 0 0 10px;'>";
+				str += "</td><td style='text-align:left; padding: 0 10px 0 10px;'>";
 
 
 				//Wiz to active config group
 				str += " <a onclick='" +
 					//"wizToInitializedConfigGroup(\"" + groupAlias + "\"); return false;' " +
 					"popUpGroupAliasForm(0,\"" + groupAlias + "\"); return false;' " +
-					"title='Automatically assign this System Alias to an Active Group.'" +
+					"title='Automatically assign this System Alias to the Active Group.'" +
 					">";
 				str += "Wiz-to-Active</a>";
 
@@ -1223,17 +1321,19 @@
 				str += "</td>";
 
 				//add alias comment
-				str += "<td style='text-align:left; padding: 0 10px 0 10px;' " +
-					"title='For...    " + groupAlias + " <" +
-					groupName + "(" + groupKey + ")>' " +
-					">"
+				str += "<td style='border-left: 2px solid rgb(140, 86, 86); " +
+						"text-align:left; padding: 0 10px 0 10px;' " +
+						"title='For...    " + groupAlias + " <" +
+						groupName + "(" + groupKey + ")>' " +
+						">"
 				str += "<pre style='white-space:nowrap;'>//" + aliasComment + "</pre>";
 				str += "</td>";
 
 				//add group comment
-				str += "<td style='text-align:left; padding: 0 10px 0 10px;' " +
-					"title='For...    " + groupName + "(" + groupKey + ")' " +
-					">"
+				str += "<td style='border-left: 2px solid rgb(140, 86, 86); " +
+						"text-align:left; padding: 0 10px 0 10px;' " +
+						"title='For...    " + groupName + "(" + groupKey + ")' " +
+						">"
 				str += "<pre style='white-space:nowrap;'>//" + groupComment + "</pre>";
 				str += "</td>";
 
@@ -1672,7 +1772,10 @@
 			
 
 			Debug.log("CfgGUI requestHandler tableNames.length " + tableNames.length);
+			
+			str += "<table id='tableViewTable'>";
 			for (var i = 0; i < tableNames.length; ++i) {
+				str += "<tr><td>";
 				tableName = tableNames[i].getAttribute("value");
 
 				backLinkStr = "setupTableViewMode(\\\"anchorTag-" + tableName + "\\\");";
@@ -1697,8 +1800,10 @@
 					str += ((version | 0) == ConfigurationAPI._SCRATCH_VERSION ? _SCRATCH_VIEW_NAME : version);
 					str += "</td>";
 				}
-				str += "</tr></table><br>";
+				str += "</tr></table>";
+				str += "</td></tr>";
 			}
+			str += "</table>";
 			//Debug.log("CfgGUI requestHandler str " + str);
 			el.innerHTML = str;
 
@@ -3445,7 +3550,8 @@
 						"</div>" +
 						"<div class='treeNode-Connection'></div>";
 
-					if (valueType == "FixedChoiceData") {
+					if (valueType == "FixedChoiceData") 
+					{
 						//add CSV choices div
 						treeViewHandlerStr_ +=
 							"<div class='treeNode-FixedChoice-CSV' style='display:none' " +
@@ -3453,13 +3559,15 @@
 							(depth + "-" + uid) + "'>";
 
 						choices = nodes[i].children[1].children; //xml elements
-						for (var j = 0; j < choices.length; ++j) {
+						for (var j = 0; j < choices.length; ++j) 
+						{
 							if (j) treeViewHandlerStr_ += ",";
 							treeViewHandlerStr_ += encodeURIComponent(choices[j].getAttribute("value"));
 						}
 						treeViewHandlerStr_ += "</div>";
 					}
-					else if (valueType == "BitMap") {
+					else if (valueType == "BitMap")
+					{
 						//add bitmap params div
 						treeViewHandlerStr_ +=
 							"<div class='treeNode-BitMap-Params' style='display:none' " +
@@ -4881,7 +4989,7 @@
 			//update version tracking
 			versionTrackingHandler(req);
 
-			_activeConfigGroups = [
+			_activeTableGroups = [
 				DesktopContent.getXMLValue(req, "Context-ActiveGroupName"),
 				DesktopContent.getXMLValue(req, "Context-ActiveGroupKey"),
 				DesktopContent.getXMLValue(req, "Backbone-ActiveGroupName"),
@@ -4892,7 +5000,7 @@
 				DesktopContent.getXMLValue(req, "Configuration-ActiveGroupKey")];
 
 			var activeConfigHeaders = ["Context", "Backbone", "Iterate Group", "Configuration"];
-			Debug.log("activeConfigGroups: " + _activeConfigGroups);
+			Debug.log("activeConfigGroups: " + _activeTableGroups);
 
 			var oldStr = document.getElementById("activeConfig").innerHTML;
 			var str = "";
@@ -4900,32 +5008,39 @@
 
 			str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
 
-			for (var i = 0; i < 1 && i < activeConfigHeaders.length; ++i)
+			for (var i = 0; i < activeConfigHeaders.length; ++i)
 			{
+				if(i == 1 || i == 2) continue; //only context and config
+				
 				str += "<tr><td style='text-align:left'>";
 
 				str += "Active " + activeConfigHeaders[i] + ": ";
 
 				str += "</td><td style='text-align:left; padding-left:20px;'>";
 
-				if (!_activeConfigGroups[i * 2] || _activeConfigGroups[i * 2] == "") 
+				if (!_activeTableGroups[i * 2] || _activeTableGroups[i * 2] == "") 
 				{
 					str += "None";
 					thereIsAnEmpty = true;
 				}
 				else 
 				{
-					str += "<a href='#' onclick='setupSpecificTableGroup(\"" + _activeConfigGroups[i * 2] +
-						"\",\"" + _activeConfigGroups[i * 2 + 1] + "\"); return false;'>";
-					str += _activeConfigGroups[i * 2] + " (" + _activeConfigGroups[i * 2 + 1] + ")</a>";
+					str += "<a href='#' onclick='setupSpecificTableGroup(\"" + _activeTableGroups[i * 2] +
+						"\",\"" + _activeTableGroups[i * 2 + 1] + "\"); return false;'>";
+					str += _activeTableGroups[i * 2] + "</a>(" + _activeTableGroups[i * 2 + 1] + ")";
 				}
 				//str += "<br>";
 
 				str += "</td><td style='text-align: left; padding-left:20px;'>";
-				str += "<a href='#' onclick='setupTableGroupTreeView(\"" +
-					_activeConfigGroups[i * 2] +
-					"\",\"" +
-					_activeConfigGroups[i * 2 + 1] + "\"); return false;'>Tree-view</a>";
+				
+				if(!(!_activeTableGroups[i * 2] || _activeTableGroups[i * 2] == ""))
+					str += "<a href='#' onclick='setupTableGroupTreeView(\"" +
+						_activeTableGroups[i * 2] +
+						"\",\"" +
+						_activeTableGroups[i * 2 + 1] + "\"); return false;' " +
+						"title='Open the tree-view for " + _activeTableGroups[i * 2] + 
+						"(" + _activeTableGroups[i * 2 + 1] + ")'" +
+						">Tree-view</a>";
 
 				str += "</td></tr>";
 			}

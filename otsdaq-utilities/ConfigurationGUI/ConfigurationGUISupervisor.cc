@@ -1235,16 +1235,36 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		std::string                                          timeString;
 		std::pair<std::string /*group name*/, TableGroupKey> theGroup =
-		    theRemoteWebUsers_.getLastConfigGroup(
+		    theRemoteWebUsers_.getLastTableGroup(
 		        gatewaySupervisor, "Configured", timeString);
 		xmlOut.addTextElementToData("LastConfiguredGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastConfiguredGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastConfiguredGroupTime", timeString);
-		theGroup = theRemoteWebUsers_.getLastConfigGroup(
+		theGroup = theRemoteWebUsers_.getLastTableGroup(
 		    gatewaySupervisor, "Started", timeString);
 		xmlOut.addTextElementToData("LastStartedGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastStartedGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastStartedGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup(
+		    gatewaySupervisor, "ActivatedConfig", timeString);
+		xmlOut.addTextElementToData("LastActivatedConfigGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedConfigGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedConfigGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup(
+		    gatewaySupervisor, "ActivatedContext", timeString);
+		xmlOut.addTextElementToData("LastActivatedContextGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedContextGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedContextGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup(
+		    gatewaySupervisor, "ActivatedBackbone", timeString);
+		xmlOut.addTextElementToData("LastActivatedBackboneGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedBackboneGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedBackboneGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup(
+		    gatewaySupervisor, "ActivatedIterator", timeString);
+		xmlOut.addTextElementToData("LastActivatedIteratorGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedIteratorGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedIteratorGroupTime", timeString);
 	}
 	else if(requestType == "savePlanCommandSequence")
 	{
