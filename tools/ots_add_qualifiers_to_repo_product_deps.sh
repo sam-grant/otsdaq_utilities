@@ -119,11 +119,11 @@ function fixTargetRepos
 							FIRST_CHAR=${LINE_QUAL_ARR:0:1}
 							#echo -e "ots_add_qualifiers_to_repo_product_deps.sh [${LINENO}]  \t\t FIRST_CHAR=${FIRST_CHAR}"
 							
-							if [[ $LINE_QUAL_ARR_COUNT == 2 && "${LINE_QUAL_ARR:0:1}" == "e" ]]; then
+							if [[ $LINE_QUAL_ARR_COUNT == 2 && "${LINE_QUAL_ARR[0]:0:1}" == "e" ]]; then
 								NEW_QUAL_LINE="${NEW_QUAL_LINE}${QUAL_PIECES[0]}:${QUAL_PIECES[2]}\t\t" 
-							elif [[ $LINE_QUAL_ARR_COUNT == 3 && "${LINE_QUAL_ARR:0:1}" == "e" ]]; then
+							elif [[ $LINE_QUAL_ARR_COUNT == 3 && "${LINE_QUAL_ARR[0]:0:1}" == "e" && "${LINE_QUAL_ARR[1]:0:1}" == "s" ]]; then
 								NEW_QUAL_LINE="${NEW_QUAL_LINE}${QUAL_PIECES[0]}:${QUAL_PIECES[1]}:${QUAL_PIECES[2]}\t\t" 
-							elif [[ $LINE_QUAL_ARR_COUNT == 4 && "${LINE_QUAL_ARR:0:1}" == "e" ]]; then #like e19:s96:offline:prof
+							elif [[ $LINE_QUAL_ARR_COUNT == 4 && "${LINE_QUAL_ARR[0]:0:1}" == "e" && "${LINE_QUAL_ARR[1]:0:1}" == "s" ]]; then #like e19:s96:offline:prof
 								NEW_QUAL_LINE="${NEW_QUAL_LINE}${QUAL_PIECES[0]}:${QUAL_PIECES[1]}:{LINE_QUAL_ARR[2]}:${QUAL_PIECES[2]}\t\t" 
 							else 
 								#do not know what to do, so take as is
@@ -143,7 +143,7 @@ function fixTargetRepos
 				
 				diff $TMP_OUT_FILE ups/product_deps
 				cp ups/product_deps ups/product_deps.bk
-				cp $TMP_OUT_FILE ups/product_deps
+				mv $TMP_OUT_FILE ups/product_deps
 				
 				cd - &>/dev/null 2>&1 #hide output
 			fi
