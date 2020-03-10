@@ -96,7 +96,7 @@ for p in ${REPO_DIR[@]}; do
 		
 			bp=$(basename $p)
 						
-			echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory found as: $bp"
+			echo -e "quick_ots_install.sh [${LINENO}]  \t Repo directory found as: $bp"
 			
 			cd $p
 			git pull
