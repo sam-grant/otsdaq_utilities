@@ -1,12 +1,12 @@
 #!/bin/bash	
 #
-# This script is expected to be sourced from anywhere after MRB is setup for your ots project.
+# This script is expected to be sourced or executed from anywhere after MRB is setup for your ots project.
 #
 # usage:
-USAGE="source ots_get_and_fix_repo.sh <repo name or srcs/ folder wildcard search> <project name> <folder name for local repo creation (optional if checking out for first time)> \
+USAGE="ots_get_and_fix_repo.sh <repo name or srcs/ folder wildcard search> <project name> <folder name for local repo creation (optional if checking out for first time)> \
 		\n\nots_get_and_fix_repo.sh [${LINENO}]  \t Note: <project name> may be different than repo, because a project can have many repos. \
 		\nots_get_and_fix_repo.sh [${LINENO}]  \t Note: <folder name> is optional name of folder to create in srcs/ \
-		\n\nots_get_and_fix_repo.sh [${LINENO}]  \t e.g: source ots_get_and_fix_repo.sh   components-epics   components   otsdaq_epics \
+		\n\nots_get_and_fix_repo.sh [${LINENO}]  \t e.g: ots_get_and_fix_repo.sh   components-epics   components   otsdaq_epics \
 		\n\n\nots_get_and_fix_repo.sh [${LINENO}]  \t  or... for wildcard search, use '*' or 'otsdaq*' with single quotes, like source ots_get_and_fix_repo.sh '*'\n\n"
 # 	
 # This script attempts to setup fetch and push origin properly, e.g.:
