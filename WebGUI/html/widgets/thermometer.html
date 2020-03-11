@@ -32,7 +32,7 @@
 			var thermometers = [];
 			var containers = [];
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "show_labels": "true"};
+			var parameters_ = {class: "", "show_labels": "true", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
 
 			//init called once body has loaded
 			function init()
@@ -52,9 +52,7 @@
 			{
 				thermometers = [];
 				containers = [];
-//				var olddiv = document.getElementById("display-div");
-//				if (olddiv != null)
-//					document.getElementById("display").innerHTML = "";
+
 
 				var div = document.createElement('div');
 				div.className = "wrapper";
@@ -114,13 +112,16 @@
 			{
 				console.log("Thermometer newValue() reached", pvName, pvValue);
 				window.parent.setWidgetPVinfo(
-									  pvName
+									  window.frameElement.id
+									, pvName
 									, pvValue
 									, pvTime
 									, pvStatus
 									, pvSeverity
 									, parameters_["show_labels"]
 									, containers
+									, parameters_["old_value_foreground_color"]
+									, parameters_["old_value_background_color"]
 									, thermometers[pvName]._svg._groups[0][0].parentElement
 									);
 

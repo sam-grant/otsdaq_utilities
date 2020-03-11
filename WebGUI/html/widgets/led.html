@@ -1,4 +1,3 @@
-
 <!DOCTYPE HTMnL>
 <html lang="en">
 	<head>
@@ -29,7 +28,7 @@
 			var leds = [];
 			var labelContainers = [];
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "show_labels": "false"};
+			var parameters_ = {class: "", "show_labels": "true", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -51,7 +50,7 @@
 			function drawWidget(widget, parameters)
 			{
 				leds = [];
-				containers = [];
+				labelContainers = [];
 				var display = document.getElementById("display");
 				display.innerHTML = "";
 				if (!Object.getOwnPropertyNames(widget.pvList).length)
@@ -84,7 +83,7 @@
 
 			}
 
-			function drawLed(div, pv)
+			function drawLed(div, pv, pvValue, pvTime, pvSeverity)
 			{
 				var canvas = document.getElementById("led-" + pv);
 				if (canvas == null)
@@ -102,7 +101,18 @@
 
 				context.beginPath();
 				context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-				context.fillStyle = 'grey';
+
+				context.fillStyle = 'green';
+				if( pvSeverity == "MAJOR" )
+					context.fillStyle = 'red';
+				if( 
+					   isNaN(pvValue)
+					|| pvSeverity == "INVALID" 
+					|| pvSeverity == undefined
+					|| !window.parent.checkPVTime(window.frameElement.id, pv, pvTime)
+				)
+					context.fillStyle = 'grey';
+
 				context.fill();
 				context.lineWidth = 5;
 				context.strokeStyle = '#003300';
@@ -124,26 +134,25 @@
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("LED newValue() reached", pvName, pvValue);
-				var canvas = document.getElementById('led-' + pvName);
+				//var canvas = document.getElementById('led-' + pvName);
+				var canvas = leds[pvName];
 				canvas.title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+				var actualTime = Math.floor(Date.now())/1000;
 
-//				window.parent.setWidgetPVinfo(
-//									  pvName
-//									, pvValue
-//									, pvTime
-//									, pvStatus
-//									, pvSeverity
-//									, parameters_["show_labels"]
-//									, labelContainers
-//									);
+				window.parent.setWidgetPVinfo(
+									  window.frameElement.id
+									, pvName
+									, pvValue
+									, pvTime
+									, pvStatus
+									, pvSeverity
+									, parameters_["show_labels"]
+									, labelContainers
+									, parameters_["old_value_foreground_color"]
+									, parameters_["old_value_background_color"]
+									);
 
-				var context = canvas.getContext('2d');
-				context.fillStyle = 'green';
-				if( pvSeverity == "MAJOR" )
-					context.fillStyle = 'red';
-				if( isNaN(pvValue) || pvSeverity == "INVALID" )
-					context.fillStyle = 'grey';
-				context.fill();
+				drawLed(labelContainers[pvName], pvName, pvValue, pvTime, pvSeverity);
 			}
 
 			window.onresize = function() {
