@@ -986,7 +986,8 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex)
 									obji);
 							if(targetEl.innerHTML != "")
 							{
-								Debug.log("It's ok, must have just taken a while");
+								Debug.log("histogram" + 
+									obji + " is OK, must have just taken a while");
 								return;
 							}
 							
