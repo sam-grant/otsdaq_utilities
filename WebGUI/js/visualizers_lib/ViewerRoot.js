@@ -973,9 +973,13 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex)
 				if(targetEl.innerHTML == "")
 				{
 					Debug.log("Empty first time handling!");
-					window.setTimeout(function()
+					window.setTimeout(function(e)
 							{
-						Debug.log("Async Empty first time handling!");
+						//return a function, so that the constants are stable
+						return function()
+								{
+						Debug.log("Async Empty first time handling for histogram" + 
+								ViewerRoot.objIndex);
 						try
 						{
 							JSROOT.redraw('histogram'+
@@ -988,7 +992,7 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex)
 									"' failed to draw: " + e);//, Debug.HIGH_PRIORITY); 
 							targetEl.textContent = object.JSON;//JSON.stringify(object); //fill with text
 						}
-							},500/*ms*/); //end asynch 2nd try
+							}},500/*ms*/); //end asynch 2nd try
 				} //end empty first time handling
 			} //end special first time handling
 		}
