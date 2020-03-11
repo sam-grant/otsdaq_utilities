@@ -973,26 +973,39 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex)
 				if(targetEl.innerHTML == "")
 				{
 					Debug.log("Empty first time handling!");
-					window.setTimeout(function(e)
-							{
+					
+					//==============
+					function localMakeAsyncCheckerFunction(obji, type, obj)
+					{
+						Debug.log("Async Empty first time handling for histogram" + 
+								obji + " type=" + type);
 						//return a function, so that the constants are stable
 						return function()
-								{
-						Debug.log("Async Empty first time handling for histogram" + 
-								ViewerRoot.objIndex);
-						try
-						{
-							JSROOT.redraw('histogram'+
-									(ViewerRoot.objIndex),
-									object, "colz"); //last arg, root draw option
-						}
-						catch(e)
-						{
-							Debug.log("ROOT Object type '" + object._typename +
-									"' failed to draw: " + e);//, Debug.HIGH_PRIORITY); 
-							targetEl.textContent = object.JSON;//JSON.stringify(object); //fill with text
-						}
-							}},500/*ms*/); //end asynch 2nd try
+								{							
+							Debug.log("Async Empty first time handling for histogram" + 
+									obji);
+							try
+							{
+								JSROOT.redraw("histogram" +
+										obji,
+										obj, "colz"); //last arg, root draw option
+							}
+							catch(e)
+							{
+								Debug.log("ROOT Object type '" + type +
+										"' failed to draw histogram" +
+										obji + ": " + e);//, Debug.HIGH_PRIORITY); 
+								targetEl.textContent = obj.JSON;//JSON.stringify(object); //fill with text
+							}
+								}
+					} //end localMakeAsyncCheckerFunction()
+					
+					window.setTimeout(localMakeAsyncCheckerFunction(
+							ViewerRoot.objIndex,
+							object._typename,
+							object),
+						500/*ms*/); //end asynch 2nd try
+					
 				} //end empty first time handling
 			} //end special first time handling
 		}
