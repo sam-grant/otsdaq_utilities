@@ -984,6 +984,12 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex)
 								{							
 							Debug.log("Async Empty first time handling for histogram" + 
 									obji);
+							if(targetEl.innerHTML != "")
+							{
+								Debug.log("It's ok, must have just taken a while");
+								return;
+							}
+							
 							try
 							{
 								JSROOT.redraw("histogram" +
