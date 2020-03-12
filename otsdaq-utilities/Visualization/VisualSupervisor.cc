@@ -71,15 +71,21 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	__SUP_COUT__ << "Constructor." << __E__;
 	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
-	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
-	    theConfigurationManager_->getNode(
-	        theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()),
-	    CorePropertySupervisorBase::getSupervisorConfigurationPath(),
-	    CorePropertySupervisorBase::getSupervisorUID());
+	if(!theConfigurationManager_->getNode(
+			CorePropertySupervisorBase::getSupervisorConfigurationPath()).isDisconnected())
+	{
+		theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
+				theConfigurationManager_->getNode(
+						theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()),
+						CorePropertySupervisorBase::getSupervisorConfigurationPath(),
+						CorePropertySupervisorBase::getSupervisorUID());
 
-	CoreSupervisorBase::theStateMachineImplementation_.push_back(theDataManager_);
+		CoreSupervisorBase::theStateMachineImplementation_.push_back(theDataManager_);
 
-	__SUP_COUT__ << "Done instantiating Visual data manager." << __E__;
+		__SUP_COUT__ << "Done instantiating Visual data manager." << __E__;
+	}
+	else
+		__SUP_COUT__ << "No Visual Supervisor configuration link, so skipping Visual data manager instantiation." << __E__;
 
 	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
 
