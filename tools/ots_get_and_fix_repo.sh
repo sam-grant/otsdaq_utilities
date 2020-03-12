@@ -191,8 +191,10 @@ fi
 #echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t REPO_COUNT=$REPO_COUNT"
 
 repoProject=$2
+repoProjectPrepend=$2
 if [ "x$repoProject" == "x" ]; then
 	repoProject=$repo
+	repoProjectPrepend=""
 fi
 
 #######################################################
@@ -200,10 +202,10 @@ fi
 if [ $REPO_COUNT == 0 ]; then 
 
 	echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t $repo not found, assuming checkout is needed!" 
-	
+
 	repoName=$3
 	if [ "x$repoName" == "x" ]; then
-		repoName=${repo//_/-}
+		repoName=${repo//-/_}
 	fi
 	
 	echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t repo project = $repoProject"
@@ -214,7 +216,7 @@ if [ $REPO_COUNT == 0 ]; then
 	echo
 	echo
 	
-	mrb g -d ${repoName} ${repo}%fnal:${repo}%${repoProject}
+	mrb g -d ${repoName} ${repo}%fnal:${repoProjectPrepend}_${repo}%${repoProject}
 	
 	echo
 	echo
