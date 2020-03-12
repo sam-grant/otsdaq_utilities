@@ -216,7 +216,7 @@ if [ $REPO_COUNT == 0 ]; then
 	echo
 	echo
 	
-	mrb g -d ${repoName} ${repo}%fnal:${repoProjectPrepend}_${repo}%${repoProject}
+	mrb g -d ${repoName} ${repo}%fnal:${repoProjectPrepend}-${repo}%${repoProject}
 	
 	echo
 	echo
