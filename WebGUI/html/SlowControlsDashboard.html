@@ -1327,15 +1327,16 @@
 			//=====================================================================================
 			function checkPVTime(id, pvName, pvTime)
 			{
+				id = id.split('-')[1];
 				var actualTime = Math.floor(Date.now())/1000;
-				var time2compare = pvTime*1. + 240.;
+				var time2compare = pvTime*1. + 10.*page_.widgets[id].pvList[pvName]/1000;
 				console.log(
 							  "thermometer date now: "
 							+ actualTime
 							+ " pvtime: "
 							+ pvTime
 							+ " refresh rate: "
-							//+ page_.widgets[id].pvList[pvName]
+							+ page_.widgets[id].pvList[pvName]
 							);
 
 				if ((pvTime !== undefined) && (time2compare > actualTime)) return true;
