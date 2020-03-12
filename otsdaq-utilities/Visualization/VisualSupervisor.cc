@@ -71,8 +71,7 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	__SUP_COUT__ << "Constructor." << __E__;
 	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
-	if(!theConfigurationManager_->getNode(
-			CorePropertySupervisorBase::getSupervisorConfigurationPath()).isDisconnected())
+	if(!CorePropertySupervisorBase::getSupervisorTableNode().isDisconnected())
 	{
 		theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 				theConfigurationManager_->getNode(
