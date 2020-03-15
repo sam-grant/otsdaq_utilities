@@ -61,6 +61,7 @@ function fixTargetRepos
 				
 				cd $p
 				
+				
 				#two step fix:
 				#	1. fix by making fetch http
 				#	2. if origin-ssh, copy to origin (push)
@@ -217,7 +218,7 @@ if [ $REPO_COUNT == 0 ]; then
 	echo
 	
 	mrb g -d ${repoName} ${repo}%fnal:${repoProjectPrepend}-${repo}%${repoProject}
-	
+		
 	echo
 	echo
 	echo -e "ots_get_and_fix_repo.sh [${LINENO}]  "
