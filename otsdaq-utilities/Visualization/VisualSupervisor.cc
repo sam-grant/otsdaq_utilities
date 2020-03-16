@@ -66,15 +66,26 @@ XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
 
 //==============================================================================
 VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
-    : CoreSupervisorBase(stub), theDataManager_(0), loadedRunNumber_(-1)
+    : CoreSupervisorBase(stub), theDataManager_(nullptr), loadedRunNumber_(-1)
 {
 	__SUP_COUT__ << "Constructor." << __E__;
 	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
+	__COUTV__(theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName());
+	__COUTV__(theConfigurationManager_->getNode(
+			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()).getValueAsString());
 
-	if(!theConfigurationManager_->getNode(
+	__COUTV__(CorePropertySupervisorBase::getSupervisorConfigurationPath());
+
+
+	ConfigurationTree appLink = theConfigurationManager_->getNode(
 			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()).getNode(
-					CorePropertySupervisorBase::getSupervisorConfigurationPath()).isDisconnected())
+					CorePropertySupervisorBase::getSupervisorConfigurationPath());
+
+	__COUTV__(appLink.getValueAsString());
+
+
+	if(!appLink.isDisconnected())
 	{
 		theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 				theConfigurationManager_->getNode(
@@ -180,6 +191,12 @@ void VisualSupervisor::request(const std::string&               requestType,
 		try
 		{
 			// TODO -- add timestamp, so we know if data is new
+
+			if(theDataManager_ == nullptr)
+			{
+				__SS__ << "No data manager instantiated." << __E__;
+				__SS_THROW__;
+			}
 			__SUP_COUT__ << "Getting Raw data and converting to binary string" << __E__;
 			xmlOut.addBinaryStringToData("rawData", theDataManager_->getRawData());
 			__SUP_COUT__ << __E__;
@@ -372,7 +389,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 			if(path == "/")
 			{
 				////STDLINE(string("--> LIVEDQM_DIR          : ")+LIVEDQM_DIR,"") ;
-				if(theDataManager_->getLiveDQMHistos() != 0)
+				if(theDataManager_ != nullptr &&
+						theDataManager_->getLiveDQMHistos() != 0)
 					xmlOut.addTextElementToData("dir",
 					                            LIVEDQM_DIR + ".root");  // add to xml
 
@@ -504,7 +522,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 		}
 		else
 		{
-			if(theDataManager_->getLiveDQMHistos() != nullptr)
+			if(theDataManager_ != nullptr &&
+					theDataManager_->getLiveDQMHistos() != nullptr)
 			{
 				__SUP_COUT__ << "Attempting to get LIVE ROOT object." << __E__;
 				__SUP_COUTV__(rootDirectoryName);
@@ -693,7 +712,9 @@ void VisualSupervisor::request(const std::string&               requestType,
 			{
 				// Clone tobject to avoid conflict when it is filled by other
 				// threads
-				if(theDataManager_->getLiveDQMHistos() != nullptr && LDQM_pos == 0)
+				if(theDataManager_ != nullptr &&
+						theDataManager_->getLiveDQMHistos() != nullptr &&
+						LDQM_pos == 0)
 				{
 					std::unique_lock<std::mutex> lock(
 					    static_cast<DQMHistosConsumerBase*>(
@@ -787,6 +808,12 @@ void VisualSupervisor::request(const std::string&               requestType,
 	    requestType ==
 	    "getEvents")  //################################################################################################################
 	{
+		if(theDataManager_ == nullptr)
+		{
+			__SS__ << "No Data Manager instantiated." << __E__;
+			__SS_THROW__;
+		}
+
 		int Run = atoi(cgiIn("run").c_str());
 
 		__SUP_COUT__ << "getEvents for run " << Run << __E__;
@@ -847,6 +874,12 @@ void VisualSupervisor::request(const std::string&               requestType,
 	    "getGeometry")  //################################################################################################################
 	{
 		__SUP_COUT__ << "getGeometry" << __E__;
+
+		if(theDataManager_ == nullptr)
+		{
+			__SS__ << "No Data Manager instantiated." << __E__;
+			__SS_THROW__;
+		}
 
 		// FIXME -- this crashes when the file doesn't exist!
 		theDataManager_->load("Run1684.geo", "Geometry");
