@@ -71,7 +71,10 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	__SUP_COUT__ << "Constructor." << __E__;
 	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
-	if(!CorePropertySupervisorBase::getSupervisorTableNode().isDisconnected())
+
+	if(!theConfigurationManager_->getNode(
+			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()).getNode(
+					CorePropertySupervisorBase::getSupervisorConfigurationPath()).isDisconnected())
 	{
 		theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 				theConfigurationManager_->getNode(
