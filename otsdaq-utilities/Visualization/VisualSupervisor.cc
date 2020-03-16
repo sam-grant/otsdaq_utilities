@@ -98,6 +98,20 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 {
 	__SUP_COUT__ << "Configuring..." << __E__;
 
+	{ //do like start of CoreSupervisorBase::transitionConfiguring
+		// activate the configuration tree (the first iteration)
+		if(RunControlStateMachine::getIterationIndex() == 0 && RunControlStateMachine::getSubIterationIndex() == 0)
+		{
+			std::pair<std::string /*group name*/, TableGroupKey> theGroup(
+					SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationTableGroupName"),
+					TableGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationTableGroupKey")));
+
+			__SUP_COUT__ << "Configuration table group name: " << theGroup.first << " key: " << theGroup.second << __E__;
+
+			theConfigurationManager_->loadTableGroup(theGroup.first, theGroup.second, true /*doActivate*/);
+		}
+	} //end start like CoreSupervisorBase::transitionConfiguring
+
 	__COUTV__(theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName());
 	__COUTV__(theConfigurationManager_->getNode(
 			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()).getValueAsString());
@@ -127,8 +141,8 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 	else
 		__SUP_COUT__ << "No Visual Supervisor configuration link, so skipping Visual data manager instantiation." << __E__;
 
-
-	CoreSupervisorBase::transitionConfiguring(e);
+	//just handle FSMs
+	CoreSupervisorBase::transitionConfiguringFSMs();
 
 	__SUP_COUT__ << "Configured." << __E__;
 } //end transitionConfiguring()
