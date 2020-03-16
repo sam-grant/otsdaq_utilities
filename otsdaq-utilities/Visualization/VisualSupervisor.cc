@@ -753,6 +753,27 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 			if(tobject != nullptr)  // turns out was a root object path
 			{
+				//ignore lock, because Lore says only crashed with Canvas
+				
+				//FIXME -- check this new histo and gDirectory->Get for memory leak!
+				bool doJSONobject = false;
+				TH1F* h8 = nullptr;
+				std::string tmpClassName =  tobject->ClassName();
+				if(tmpClassName.find("TBranch") != std::string::npos)
+				{
+					__COUT__ << "Attempting to plot '" << tobject->ClassName() << "' type." << __E__;
+					
+					h8=new TH1F();
+					TTree * t3 = ((TBranch*)tobject)->GetTree();
+					//__COUT__ << "Attempting to plot '" << t3 << "' type." << __E__;
+					//__COUT__ << "JSON=" << TBufferJSON::ConvertToJSON(h8).Data() << __E__;
+					t3->Draw("Value>>h8","", "goff");					
+					tobject = gDirectory->Get("h8");
+					
+					__COUT__ << "Attempting to plot '" << tobject->ClassName() << "' type." << __E__;
+					doJSONobject = true;
+				}
+				
 				// Clone tobject to avoid conflict when it is filled by other
 				// threads
 				if(theDataManager_ != nullptr &&
@@ -770,17 +791,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 					tobjectClone = tobject->Clone();
 				}
 				
-//				std::string tmpClassName =  tobjectClone->ClassName();
-//				if(tmpClassName.find("TBranch") != std::string::npos)
-//				{
-//					__COUT__ << "Attempting to plot '" << tobject->ClassName() << "' type." << __E__;
-//					TObject* tobjectClone2 = (TLeaf*)tobjectClone->Draw("Value");
-//					if(tobjectClone2)
-//					{
-//						delete tobjectClone;
-//						tobjectClone = tobjectClone2;//->Draw();
-//					}
-//				}
+				
 
 				TString     json = TBufferJSON::ConvertToJSON(tobjectClone);
 				TBufferFile tBuffer(TBuffer::kWrite);
@@ -792,12 +803,14 @@ void VisualSupervisor::request(const std::string&               requestType,
 				__SUP_COUT__ << "Returning object '" << tobjectClone->GetName()
 				             << "' of class '" << tobjectClone->ClassName() << __E__;
 
-				xmlOut.addTextElementToData("rootType", tobjectClone->ClassName());
+				xmlOut.addTextElementToData("rootType", doJSONobject?"JSON":tobjectClone->ClassName());
 				xmlOut.addTextElementToData("rootData", hexString);
 				xmlOut.addTextElementToData("rootJSON", json.Data());
 
 				if(tobjectClone != nullptr)
 					delete tobjectClone;
+				if(h8 != nullptr)
+					delete h8;
 			}
 			else
 				__SUP_COUT_ERR__ << "Failed to access:-" << rootDirectoryName << "-"

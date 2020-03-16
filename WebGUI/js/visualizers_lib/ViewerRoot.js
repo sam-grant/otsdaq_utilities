@@ -963,6 +963,10 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex)
 		var targetEl = document.getElementById("histogram" + ViewerRoot.objIndex);
 		try
 		{			
+			
+			if(rootType == "JSON")
+				throw "Doing JSON only";
+				
 			var isFirstTime = targetEl.innerHTML == ""; //if empty, assume it is first time
 			JSROOT.redraw('histogram'+
 					(ViewerRoot.objIndex),
