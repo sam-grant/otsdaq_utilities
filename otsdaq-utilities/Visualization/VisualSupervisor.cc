@@ -71,6 +71,33 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	__SUP_COUT__ << "Constructor." << __E__;
 	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
+	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
+
+	__SUP_COUT__ << "Constructed." << __E__;
+}
+
+//==============================================================================
+VisualSupervisor::~VisualSupervisor(void)
+{
+	__SUP_COUT__ << "Destructor." << __E__;
+	destroy();
+	__SUP_COUT__ << "Destructed." << __E__;
+}
+
+//==============================================================================
+void VisualSupervisor::destroy(void)
+{
+	__SUP_COUT__ << "Destroying..." << __E__;
+
+	DataManagerSingleton::deleteInstance(CorePropertySupervisorBase::getSupervisorUID());
+	theStateMachineImplementation_.pop_back();
+}
+
+//==============================================================================
+void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)
+{
+	__SUP_COUT__ << "Configuring..." << __E__;
+
 	__COUTV__(theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName());
 	__COUTV__(theConfigurationManager_->getNode(
 			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()).getValueAsString());
@@ -100,27 +127,23 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	else
 		__SUP_COUT__ << "No Visual Supervisor configuration link, so skipping Visual data manager instantiation." << __E__;
 
-	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
 
-	__SUP_COUT__ << "Constructed." << __E__;
-}
+	CoreSupervisorBase::transitionConfiguring(e);
+
+	__SUP_COUT__ << "Configured." << __E__;
+} //end transitionConfiguring()
 
 //==============================================================================
-VisualSupervisor::~VisualSupervisor(void)
+void VisualSupervisor::transitionHalting(toolbox::Event::Reference e)
 {
-	__SUP_COUT__ << "Destructor." << __E__;
+	__SUP_COUT__ << "Halting..." << __E__;
+
+	CoreSupervisorBase::transitionHalting(e);
 	destroy();
-	__SUP_COUT__ << "Destructed." << __E__;
-}
 
-//==============================================================================
-void VisualSupervisor::destroy(void)
-{
-	__SUP_COUT__ << "Destroying..." << __E__;
+	__SUP_COUT__ << "Halted." << __E__;
+} //end transitionHalting()
 
-	DataManagerSingleton::deleteInstance(CorePropertySupervisorBase::getSupervisorUID());
-	theStateMachineImplementation_.pop_back();
-}
 //==============================================================================
 // setSupervisorPropertyDefaults
 //		override to set defaults for supervisor property values (before user settings
