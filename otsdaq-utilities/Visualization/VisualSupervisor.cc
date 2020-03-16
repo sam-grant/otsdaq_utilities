@@ -631,7 +631,9 @@ void VisualSupervisor::request(const std::string&               requestType,
 			__SUP_COUTV__(tobject->ClassName());
 
 			if(std::string(tobject->ClassName()) == "TTree" ||
-			   std::string(tobject->ClassName()) == "TBranchElement")
+			   std::string(tobject->ClassName()).find("TBranch") != std::string::npos || // == "TBranchElement" ||
+			   std::string(tobject->ClassName()).find("TDirectory") != 
+			   	std::string::npos)
 			{
 				// continue traversing name split
 				do
@@ -647,9 +649,13 @@ void VisualSupervisor::request(const std::string&               requestType,
 					if(std::string(tobject->ClassName()) == "TTree")
 						tobject = (TObject*)((TTree*)tobject)
 						              ->GetBranch(splitTTreePath[spliti].c_str());
-					else if(std::string(tobject->ClassName()) == "TBranchElement")
+					else if(std::string(tobject->ClassName()).find("TBranch") != std::string::npos)
 						tobject = (TObject*)((TBranchElement*)tobject)
 						              ->FindBranch(splitTTreePath[spliti].c_str());
+					else if(std::string(tobject->ClassName()).find("TDirectory") != std::string::npos)
+						tobject = (TObject*)((TDirectoryFile*)tobject)
+						              ->Get(splitTTreePath[spliti].c_str());
+					
 					++spliti;  // search for next non-empty
 				} while(tobject);
 
@@ -670,7 +676,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 				if(std::string(tobject->ClassName()) == "TTree")
 					objects = ((TTree*)tobject)->GetListOfBranches();
-				else if(std::string(tobject->ClassName()) == "TBranchElement")
+				else if(std::string(tobject->ClassName()).find("TBranch") != std::string::npos)//== "TBranchElement")
 					objects = ((TBranchElement*)tobject)->GetListOfBranches();
 
 				if(objects != nullptr && !objects->IsEmpty())
@@ -691,7 +697,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 						__SUP_COUT__ << "Child class Name: " << obj->IsA()->GetName()
 						             << " " << name << __E__;
 
-						if(std::string(obj->IsA()->GetName()) == "TBranchElement")
+						if(std::string(obj->IsA()->GetName()).find("TBranch") != std::string::npos)// == "TBranchElement")
 						{
 							// decide if leave based on children branches
 							__SUP_COUT__
@@ -720,7 +726,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 					return;
 				}  // done handling TTree branches
 			}      // end TTree and branch handling
-			else if(spliti + 1 < splitTTreePath.size())
+			else if(spliti < splitTTreePath.size())
 			{
 				__COUTV__(rootDirectoryName);
 				// if more name to mystery object (likely TDirectoryFile), then attempt to
@@ -763,6 +769,18 @@ void VisualSupervisor::request(const std::string&               requestType,
 				{
 					tobjectClone = tobject->Clone();
 				}
+				
+//				std::string tmpClassName =  tobjectClone->ClassName();
+//				if(tmpClassName.find("TBranch") != std::string::npos)
+//				{
+//					__COUT__ << "Attempting to plot '" << tobject->ClassName() << "' type." << __E__;
+//					TObject* tobjectClone2 = (TLeaf*)tobjectClone->Draw("Value");
+//					if(tobjectClone2)
+//					{
+//						delete tobjectClone;
+//						tobjectClone = tobjectClone2;//->Draw();
+//					}
+//				}
 
 				TString     json = TBufferJSON::ConvertToJSON(tobjectClone);
 				TBufferFile tBuffer(TBuffer::kWrite);
@@ -806,7 +824,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 					    (std::string(obj->IsA()->GetName()).find("Directory") !=
 					         std::string::npos ||
 					     std::string(obj->IsA()->GetName()) == "TTree" ||
-					     std::string(obj->IsA()->GetName()) == "TBranchElement")
+					     std::string(obj->IsA()->GetName()).find("TBranch") != std::string::npos)// == "TBranchElement")
 					        ? "dir"
 					        : "file",
 					    obj->GetName());
@@ -828,7 +846,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 					    (std::string(key->GetClassName()).find("Directory") !=
 					         std::string::npos ||
 					     std::string(key->GetClassName()) == "TTree" ||
-					     std::string(key->GetClassName()) == "TBranchElement")
+					     std::string(key->GetClassName()).find("TBranch") != std::string::npos)// == "TBranchElement")
 					        ? "dir"
 					        : "file",
 					    key->GetName());

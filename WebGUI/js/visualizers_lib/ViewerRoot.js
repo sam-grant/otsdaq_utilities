@@ -984,12 +984,12 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex)
 								{							
 							Debug.log("Async Empty first time handling for histogram" + 
 									obji);
-//							if(targetEl.innerHTML != "")
-//							{
-//								Debug.log("histogram" + 
-//									obji + " is OK, must have just taken a while");
-//								return;
-//							}
+							if(targetEl.innerHTML != "")
+							{
+								Debug.log("histogram" + 
+									obji + " is OK, must have just taken a while");
+								return;
+							}
 							
 							try
 							{
