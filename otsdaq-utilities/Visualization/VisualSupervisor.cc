@@ -75,11 +75,11 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	__COUTV__(theConfigurationManager_->getNode(
 			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()).getValueAsString());
 
-	__COUTV__(CorePropertySupervisorBase::getSupervisorConfigurationPath());
+	__COUTV__("/" + theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() + CorePropertySupervisorBase::getSupervisorConfigurationPath());
 
 
-	ConfigurationTree appLink = theConfigurationManager_->getNode(
-			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()).getNode(
+	ConfigurationTree appLink = theConfigurationManager_->getNode("/" +
+			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() +
 					CorePropertySupervisorBase::getSupervisorConfigurationPath());
 
 	__COUTV__(appLink.getValueAsString());
