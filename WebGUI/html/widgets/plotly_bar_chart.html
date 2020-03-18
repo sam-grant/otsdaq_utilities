@@ -89,7 +89,7 @@
 				drawGraph(pvName, pvStatus, pvSeverity);
 
 				var display = document.getElementById('display');
-				display.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+				if (pv_settings_.length) display.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
 			}
 
 			function newGraph()
@@ -168,8 +168,8 @@
 					//Plotly.deleteTraces(plot, i);
 					i++;
 				}
-				if(ntraces.length) Plotly.deleteTraces(plot, ntraces);
-				Plotly.addTraces(plot, traces);
+				if (ntraces.length) Plotly.deleteTraces(plot, ntraces);
+				if (traces.length) Plotly.addTraces(plot, traces);
 				//Plotly.extendTraces(plot, { x: plotData[pvName].time, y: plotData[pvName+1].value }, [PVList[pvName]]);
 				console.log("drawGraph() reached, pv: " + pvName);
 			}

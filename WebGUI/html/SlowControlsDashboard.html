@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE HTML>
 <html lang="en">
 	<head>
@@ -94,7 +91,6 @@
 			//	checkIfMoreRowsNeeded(inputEl)
 			//	setWidgetDisplayName(widget, displayName)
 			//	showeditWidgetAttributesPopupBody(body)
-			//	clearBlock(el)
 			//	toggleGrid(on)
 			//	setBackgroundColor(color)
 			//	setGridColor(color, on)
@@ -474,86 +470,28 @@
 				}
 			} //end pvListReqHandler()
 
-
-			//=====================================================================================
-			function loadPageReqHandler(req)
-			{
-				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
-
-				for (var widget in page_.widgets)
-				{
-					delete page_.widgets[widget].el;
-					delete page_.widgets[widget];
-					var widgetCover = document.getElementById(widget + "-cover");
-					mainBlock_.el.removeChild(widgetCover.parentNode);
-				}
-
-				clearBlock(mainBlock_.el);
-				page_.widgets = {};
-
-				if(!fileBlock_.isHidden)
-					toggleFileMenu();
-
-				var time = decodeURIComponent(DesktopContent.getXMLValue(req, "Time"));
-				var notes = decodeURIComponent(DesktopContent.getXMLValue(req, "Notes"));
-				var page = decodeURIComponent(DesktopContent.getXMLValue(req, "Page"));
-
-				if(notes == "[\"Not Found\"]")
-				{
-					Debug.log("Page failed to load page(" + decodeURIComponent(page) + ") on server!",
-					Debug.HIGH_PRIORITY);
-					return;
-				}
-
-				if(page.length > 0)
-					page_ = JSON.parse(page);
-
-				Debug.log(time);
-				Debug.log(notes);
-				Debug.log(page);
-				console.log(page_);
-
-				for (var widgetId in page_.widgets)
-				{
-					console.log("Load widget from file: " + 
-							widgetId, + " object:" + page_.widgets[widgetId]);
-					
-					drawWidget(
-							widgetId, 
-							undefined /*no new type*/, 
-							undefined /*no new x*/, 
-							undefined /*no new y*/, 
-							undefined /*no new w*/, 
-							undefined /*no new h*/, 
-							true /*hideFrame*/);
-				}
-
-				//updateRefreshInterval();
-				dragAndDrawWidgetType_ = undefined;
-				drawingSelectionRectangle_ = false;
-
-				toggleEditMode();
-				redrawWindow();
-			} //end loadPageReqHandler()
-
-
 			//=====================================================================================
 			var PHOEBUS_MAP = {"textupdate": 0, "table": 1, "meter": 2, "stripchart": 3, "thermometer": 4, "siren": 5, "label": 6, "led": 7, "picture": 8, "root": 9};
 			function loadPhoebusPageReqHandler(req)
 			{
 				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
 
+			
+				//=============================
+				//delete all widget HTML objects by removing all containers
+				// do not do mainBlock_.el.innerHTML = ""; //clear
+				//	because there are other objects like PVmenu and ContextMenu
+				function localDeleteAllWidgetHTML()
+				{
+					var widgetContainerEls = document.getElementsByClassName("widgetContainerDiv");
+					console.log("Removing widget containers",widgetContainerEls);
+					while((widgetContainerEls = 
+						document.getElementsByClassName("widgetContainerDiv")) &&
+						widgetContainerEls.length)
+						widgetContainerEls[0].parentNode.removeChild(widgetContainerEls[0]);
+				} //end localDeleteAllWidgetHTML()
+				localDeleteAllWidgetHTML();
 				
-//				for (var widget in page_.widgets)
-//				{
-//					delete page_.widgets[widget].el;
-//					delete page_.widgets[widget];
-//					var widgetCover = document.getElementById(widget + "-cover");
-//					mainBlock_.el.removeChild(widgetCover.parentNode);
-//				}
-//
-//				clearBlock(mainBlock_.el);
-				mainBlock_.el.innerHTML = ""; //clear 
 				page_.widgets = {}; //clear
 
 				if(!fileBlock_.isHidden)
@@ -1733,6 +1671,7 @@
 					widgetObject.el.id = "widget-" + id;
 
 					containerDiv = document.createElement("div");
+					containerDiv.className = "widgetContainerDiv";
 					containerDiv.id = "widget-" + id + "-container";
 					containerDiv.style["background-color"] = "rgba(0,0,0,0.2)";
 
@@ -2558,19 +2497,6 @@
 			} //end showeditWidgetAttributesPopupBody()
 
 
-//			//=====================================================================================
-//			function clearBlock(el)
-//			{
-//				for(var child = 0; child < el.childNodes.length; child++)
-//				{
-//					if(child.id == "contextMenuDiv"){}
-//					else if(child.id == "selectionRectangle"){}
-//					else 
-//					{
-//						el.removeChild(el.childNodes[child]);
-//					}
-//				}	
-//			} //end clearBlock()
 
 
 			//=====================================================================================
