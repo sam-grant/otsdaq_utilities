@@ -67,6 +67,13 @@ void ConfigurationGUISupervisor::init(void)
 	try
 	{
 		testXDAQContext();  // test context group activation
+		XDAQ_CONST_CALL xdaq::ApplicationDescriptor* gatewaySupervisor =
+				allSupervisorInfo_.isWizardMode() ? allSupervisorInfo_.getWizardDescriptor()
+						: allSupervisorInfo_.getGatewayDescriptor();
+
+		//theRemoteWebUsers_.sendSystemMessage(gatewaySupervisor,"*","My Subject","This is my body",true);
+
+		__SUP_COUT__ << "Done with test context." << __E__;
 	}
 	catch(...)
 	{
@@ -75,7 +82,7 @@ void ConfigurationGUISupervisor::init(void)
 		              << "Check the active context group from within Wizard Mode."
 		              << __E__;
 	}
-}
+} //end init()
 
 //==============================================================================
 void ConfigurationGUISupervisor::destroy(void)
