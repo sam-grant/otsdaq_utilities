@@ -74,7 +74,7 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
 
 	__SUP_COUT__ << "Constructed." << __E__;
-}
+} //end constructor
 
 //==============================================================================
 VisualSupervisor::~VisualSupervisor(void)
@@ -82,7 +82,7 @@ VisualSupervisor::~VisualSupervisor(void)
 	__SUP_COUT__ << "Destructor." << __E__;
 	destroy();
 	__SUP_COUT__ << "Destructed." << __E__;
-}
+} //end destructor
 
 //==============================================================================
 void VisualSupervisor::destroy(void)
@@ -90,8 +90,16 @@ void VisualSupervisor::destroy(void)
 	__SUP_COUT__ << "Destroying..." << __E__;
 
 	DataManagerSingleton::deleteInstance(CorePropertySupervisorBase::getSupervisorUID());
-	theStateMachineImplementation_.pop_back();
-}
+	if(theStateMachineImplementation_.size() > 1)
+	{
+		__SS__ << "Not expecting more than one visual data manager!" << __E__;
+		__SS_THROW__;
+	}
+	if(theStateMachineImplementation_.size())
+		theStateMachineImplementation_.pop_back();
+	else
+		__COUT_WARN__ << "No visual data manager was pushed." << __E__;
+} //end destroy()
 
 //==============================================================================
 void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)

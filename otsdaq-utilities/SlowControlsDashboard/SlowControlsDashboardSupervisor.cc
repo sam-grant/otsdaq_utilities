@@ -267,6 +267,7 @@ void SlowControlsDashboardSupervisor::request(const std::string& requestType,
 	}
 
 	pluginBusyMutex_.unlock();
+	__SUP_COUT__ << __E__;
 }  // end request()
 
 //==============================================================================
