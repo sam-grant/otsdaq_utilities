@@ -504,7 +504,8 @@ Desktop.createDesktop = function(security) {
 	var _lastSystemMessage = ""; //prevent repeats
 	//_handleSystemMessages ~~~
 	//	handles request returns periodically (ever _SYS_MSG_MAX_COUNT times through _checkMailboxes)
-	var _handleSystemMessages = function(req) {
+	var _handleSystemMessages = function(req) 
+	{
 		//Debug.log("Desktop _handleSystemMessages " + req.responseText,Debug.LOW_PRIORITY);
 		
 		_sysMsgCounter = 0; //reset system message counter to setup next request
@@ -555,7 +556,12 @@ Desktop.createDesktop = function(security) {
 	    for(var i=0;i<msgArr.length;i+=2)
 	    {
 		    str += "<div style='font-size:12px'>System Message Received at " + Desktop.formatTime(msgArr[i]) + "</div>";
-		    str += "<div>" + msgArr[i+1] + "</div><br>";	
+		    str += "<div>" + 
+		    		//first decode URI, then convert html entities
+		    		decodeURIComponent(msgArr[i+1]).replace(/[\u00A0-\u9999<>\&]/gim, 
+		    				function(i) {
+		    			    	   return '&#'+i.charCodeAt(0)+';';
+		    			    	}) + "</div><br>";	
 		    _lastSystemMessage = msgArr[i] + "|" + msgArr[i+1];
 	    }
 	    

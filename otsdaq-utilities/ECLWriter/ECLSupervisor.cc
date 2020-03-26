@@ -240,7 +240,7 @@ xoap::MessageReference ECLSupervisor::MakeSystemLogbookEntry(xoap::MessageRefere
 	Field_t                field;
 	Form_t::field_sequence fields;
 	std::string            users =
-	    theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor());
+	    theRemoteWebUsers_.getActiveUserList();
 
 	form.name("OTSDAQ System Logbook Entry");
 
@@ -278,7 +278,7 @@ int ECLSupervisor::Write(WriteState state)
 	Field_t                field;
 	Form_t::field_sequence fields;
 	std::string            users =
-	    theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor());
+	    theRemoteWebUsers_.getActiveUserList();
 
 	switch(state)
 	{

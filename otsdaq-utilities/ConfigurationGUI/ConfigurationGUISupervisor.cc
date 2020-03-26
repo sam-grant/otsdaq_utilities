@@ -67,11 +67,9 @@ void ConfigurationGUISupervisor::init(void)
 	try
 	{
 		testXDAQContext();  // test context group activation
-		XDAQ_CONST_CALL xdaq::ApplicationDescriptor* gatewaySupervisor =
-				allSupervisorInfo_.isWizardMode() ? allSupervisorInfo_.getWizardDescriptor()
-						: allSupervisorInfo_.getGatewayDescriptor();
-
-		//theRemoteWebUsers_.sendSystemMessage(gatewaySupervisor,"*","My Subject","This is my body",true);
+		//theRemoteWebUsers_.sendSystemMessage("tracker:10","My Subject","This is my body",false /*doEmail*/);
+		//theRemoteWebUsers_.sendSystemMessage("Ryan","My Subject Dude","This is my body",false /*doEmail*/);
+		//theRemoteWebUsers_.sendSystemMessage("*","My Rad Subject","This is my body",false /*doEmail*/);
 
 		__SUP_COUT__ << "Done with test context." << __E__;
 	}
@@ -1236,39 +1234,30 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getLastTableGroups")
 	{
-		XDAQ_CONST_CALL xdaq::ApplicationDescriptor* gatewaySupervisor =
-		    allSupervisorInfo_.isWizardMode() ? allSupervisorInfo_.getWizardDescriptor()
-		                                      : allSupervisorInfo_.getGatewayDescriptor();
-
 		std::string                                          timeString;
-		std::pair<std::string /*group name*/, TableGroupKey> theGroup =
-		    theRemoteWebUsers_.getLastTableGroup(
-		        gatewaySupervisor, "Configured", timeString);
+		std::pair<std::string /*group name*/, TableGroupKey> theGroup;
+
+		theGroup = theRemoteWebUsers_.getLastTableGroup("Configured", timeString);
 		xmlOut.addTextElementToData("LastConfiguredGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastConfiguredGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastConfiguredGroupTime", timeString);
-		theGroup = theRemoteWebUsers_.getLastTableGroup(
-		    gatewaySupervisor, "Started", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("Started", timeString);
 		xmlOut.addTextElementToData("LastStartedGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastStartedGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastStartedGroupTime", timeString);
-		theGroup = theRemoteWebUsers_.getLastTableGroup(
-		    gatewaySupervisor, "ActivatedConfig", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedConfig", timeString);
 		xmlOut.addTextElementToData("LastActivatedConfigGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastActivatedConfigGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastActivatedConfigGroupTime", timeString);
-		theGroup = theRemoteWebUsers_.getLastTableGroup(
-		    gatewaySupervisor, "ActivatedContext", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedContext", timeString);
 		xmlOut.addTextElementToData("LastActivatedContextGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastActivatedContextGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastActivatedContextGroupTime", timeString);
-		theGroup = theRemoteWebUsers_.getLastTableGroup(
-		    gatewaySupervisor, "ActivatedBackbone", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedBackbone", timeString);
 		xmlOut.addTextElementToData("LastActivatedBackboneGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastActivatedBackboneGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastActivatedBackboneGroupTime", timeString);
-		theGroup = theRemoteWebUsers_.getLastTableGroup(
-		    gatewaySupervisor, "ActivatedIterator", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedIterator", timeString);
 		xmlOut.addTextElementToData("LastActivatedIteratorGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastActivatedIteratorGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastActivatedIteratorGroupTime", timeString);

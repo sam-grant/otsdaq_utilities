@@ -96,13 +96,15 @@ void ChatSupervisor::request(const std::string&               requestType,
 	else if(requestType == "PageUser")
 	{
 		std::string topage = CgiDataUtilities::postData(cgiIn, "topage");
+		unsigned int topageId = CgiDataUtilities::postDataAsInt(cgiIn, "topageId");
 		std::string user   = CgiDataUtilities::postData(cgiIn, "user");
 
 		__COUT__ << "Paging = " << topage.substr(0, 10)
 		         << "... from user = " << user.substr(0, 10) << std::endl;
 
-		theRemoteWebUsers_.sendSystemMessage(allSupervisorInfo_.getGatewayDescriptor(),
-		                                     topage,
+		__COUTV__(topageId);
+
+		theRemoteWebUsers_.sendSystemMessage(topage,
 		                                     user + " is paging you to come chat.");
 	}
 	else
@@ -121,7 +123,7 @@ void ChatSupervisor::escapeChat(std::string& chat)
 	//	for(uint64_t i=0;i<chat.size();++i)
 	//		for(uint64_t j=0;j<chat.size();++j)
 	//		if(chat[i] ==
-}
+} //end escapeChat()
 
 //==============================================================================
 // ChatSupervisor::insertActiveUsers()
@@ -129,8 +131,8 @@ void ChatSupervisor::insertActiveUsers(HttpXmlDocument* xmlOut)
 {
 	xmlOut->addTextElementToData(
 	    "active_users",
-	    theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor()));
-}
+	    theRemoteWebUsers_.getActiveUserList());
+} //end insertActiveUsers()
 
 //==============================================================================
 // ChatSupervisor::insertChatRefresh()
@@ -141,7 +143,7 @@ void ChatSupervisor::insertActiveUsers(HttpXmlDocument* xmlOut)
 //	(note: lastUpdateIndex==0 first time and returns only user list. no chats)
 void ChatSupervisor::insertChatRefresh(HttpXmlDocument* xmlOut,
                                        uint64_t         lastUpdateIndex,
-                                       std::string      user)
+                                       const std::string&      user)
 {
 	newUser(user);
 
@@ -178,12 +180,12 @@ void ChatSupervisor::insertChatRefresh(HttpXmlDocument* xmlOut,
 		sprintf(tempStr, "%lu", ChatHistoryTime_[i]);
 		xmlOut->addTextElementToParent("chat_time", tempStr, "chat_history");
 	}
-}
+} //end insertChatRefresh()
 
 //==============================================================================
 // ChatSupervisor::newUser()
 //	create new user if needed, and increment update
-void ChatSupervisor::newUser(std::string user)
+void ChatSupervisor::newUser(const std::string& user)
 {
 	for(uint64_t i = 0; i < ChatUsers_.size(); ++i)
 		if(ChatUsers_[i] == user)
@@ -198,12 +200,12 @@ void ChatSupervisor::newUser(std::string user)
 	ChatUsersTime_.push_back(time(0));
 	newChat(user + " joined the chat.",
 	        "ots");  // add status message to chat, increment update
-}
+} //end newUser()
 
 //==============================================================================
 // ChatSupervisor::newChat()
 //	create new chat, and increment update
-void ChatSupervisor::newChat(std::string chat, std::string user)
+void ChatSupervisor::newChat(const std::string& chat, const std::string& user)
 {
 	ChatHistoryEntry_.push_back(chat);
 	ChatHistoryAuthor_.push_back(user);

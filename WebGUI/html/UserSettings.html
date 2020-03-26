@@ -197,7 +197,8 @@
 					el.setAttribute("id", "clearDiv");
 					colorDiv.appendChild(el); //new line
 				}
-				
+
+				_triedNewAccount = false;
 				//get current settings from server
 				DesktopContent.XMLHttpRequest("Request?RequestType=getSettings&accounts=1", 
 						"", settingsRequestHandler);				
@@ -846,6 +847,7 @@
 				
 				////////////////////////
 				//send save req
+				_triedNewAccount = false;
 				Debug.log("Settings Save Preferences -- " + data);
 				DesktopContent.XMLHttpRequest("Request?RequestType=setSettings", 
 						data,
@@ -1000,10 +1002,12 @@
 				data += "displayname=" + dnEl.value + "&";
 				data += "permissions=" + pEl.value + "&";				
 					
+				_triedNewAccount = false;
+				
 				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1",
 						data, settingsRequestHandler);
 				
-			}
+			} //end updateAccount()
 
 			//=====================================================================================
 			function deleteAccount(i) 
@@ -1052,6 +1056,9 @@
 				data += "type=deleteAccount&";
 				data += "username=" + _accountsArray[0][_theDeleteIndex].getAttribute('value') + "&";
 				data += "displayname=" + _accountsArray[2][_theDeleteIndex].getAttribute('value') + "&";
+				
+				_triedNewAccount = false;
+				
 				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1",
 						data, settingsRequestHandler);
 			} //end reallyDelete()
@@ -1064,6 +1071,9 @@
 				var data = "";
 				data += "lock=" + (lock?"1":"0") + "&";
 				data += "username=" + _accountsArray[0][i].getAttribute('value');
+
+				_triedNewAccount = false;
+				
 				DesktopContent.XMLHttpRequest("Request?RequestType=setUserWithLock&accounts=1",
 						data, settingsRequestHandler);				
 			} //end lockToUsername()
