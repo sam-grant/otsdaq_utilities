@@ -168,6 +168,8 @@
 			var PAGE_POSITIONS_ = 1000; //number of allowed integer locations (e.g. x,y,w,h for widgets) 
 			var refreshRate_ = 15000; //set default to refresh every 15 seconds (ms)
 			var timerVariable_;
+			var lastAlarmsTimerVariable_;
+			var alarmsLogTimerVariable_;
 			var UID_ = 0;
 			var timeToPoll_ = false;
 			var hiddenWidth_;
@@ -692,6 +694,8 @@
 						}
 					}
 				}
+				
+				timerVariable_ = window.setTimeout(pollServer, refreshRate_);
 			} //end pollServerHandlerFunction()
 
 			//=====================================================================================
@@ -709,7 +713,6 @@
 
 				if(timeToPoll_)
 				{
-					timeToPoll_ = false;
 					pollServer();
 				}
 			} //end generateUIDHandlerFunction()
@@ -783,19 +786,40 @@
 				var id = passParams[0];
 				console.log("lastAlarmsReqHandler() id", id);
 
-				page_.widgets[id].el.contentWindow.tabledata = [];
-				for (var i = jsonArr.length - 1; i >= 0; i--) {
-					var row = JSON.parse(DesktopContent.getXMLValue(jsonArr[i]));
-					page_.widgets[id].el.contentWindow.tabledata.push(row);
-				}
+				if (id != undefined)
+				{
+					page_.widgets[id].el.contentWindow.tabledata = [];
+					for (var i = jsonArr.length - 1; i >= 0; i--) {
+						var row = JSON.parse(DesktopContent.getXMLValue(jsonArr[i]));
+						page_.widgets[id].el.contentWindow.tabledata.push(row);
+					}
 
-				console.log("lastAlarmsReqHandler() last alarms", page_.widgets[id].el.contentWindow.tabledata);
-				if (passParams[1] != undefined)
-					page_.widgets[id].el.contentWindow.newPVTable();
+					console.log("lastAlarmsReqHandler() last alarms", page_.widgets[id].el.contentWindow.tabledata);
+					if (passParams[1] != undefined)
+						page_.widgets[id].el.contentWindow.newPVTable();
+					else
+						page_.widgets[id].el.contentWindow.table.setData(
+							page_.widgets[id].el.contentWindow.tabledata
+						);
+				}
 				else
-					page_.widgets[id].el.contentWindow.table.setData(
-						page_.widgets[id].el.contentWindow.tabledata
-					);
+				{
+					for (var widget in page_.widgets) {
+						if (isEmpty(page_.widgets[widget].pvList))
+						{
+							if (page_.widgets[widget].type == 1)
+							{
+								if (page_.widgets[widget].attributes["getLastAlarms"] == "true")
+								{
+									page_.widgets[widget].el.contentWindow.table.setData(
+										page_.widgets[widget].el.contentWindow.tabledata
+									);
+									lastAlarmsTimerVariable_ = window.setTimeout(getLastAlarms, refreshRate_);
+								}
+							}
+						}
+					}
+				}
 			} //end lastAlarmsReqHandler()
 
 			//=====================================================================================
@@ -803,16 +827,19 @@
 			{
 				var pvList = "";
 
-				id = id.split('-')[1];
+				if (id != undefined)
+				{
+					id = id.split('-')[1];
 
-				if (page_.widgets[id] === undefined) {
-					Debug.log("Illegal widget UID (not found in widget list) received from child widget frame: " +
-						id, Debug.HIGH_PRIORITY);
-					return;
-				}
+					if (page_.widgets[id] === undefined) {
+						Debug.log("Illegal widget UID (not found in widget list) received from child widget frame: " +
+							id, Debug.HIGH_PRIORITY);
+						return;
+					}
 
-				for (var pv in page_.widgets[id].pvList) {
-					pvList += pv + ",";
+					for (var pv in page_.widgets[id].pvList) {
+						pvList += pv + ",";
+					}
 				}
 
 				var passParams = [id, parameters];
@@ -833,22 +860,42 @@
 				var id = passParams[0];
 				console.log("alarmsLogReqHandler() id", id);
 
-				page_.widgets[id].el.contentWindow.tabledata = [];
-				for (var i = jsonArr.length - 1; i >= 0; i--) {
-					var row = JSON.parse(DesktopContent.getXMLValue(jsonArr[i]));
-					page_.widgets[id].el.contentWindow.tabledata.push(row);
-				}
-
-				console.log("alarmsLogReqHandler() alarms log", page_.widgets[id].el.contentWindow.tabledata);
-				if (passParams[1] != undefined)
+				if (id != undefined)
 				{
-					page_.widgets[id].el.contentWindow.newPVTable();
-					page_.widgets[id].el.contentWindow.table.hideColumn("pvDescription");
+					page_.widgets[id].el.contentWindow.tabledata = [];
+					for (var i = jsonArr.length - 1; i >= 0; i--) {
+						var row = JSON.parse(DesktopContent.getXMLValue(jsonArr[i]));
+						page_.widgets[id].el.contentWindow.tabledata.push(row);
+					}
+
+					console.log("alarmsLogReqHandler() alarms log", page_.widgets[id].el.contentWindow.tabledata);
+					if (passParams[1] != undefined)
+					{
+						page_.widgets[id].el.contentWindow.newPVTable();
+						page_.widgets[id].el.contentWindow.table.hideColumn("pvDescription");
+					}
+					else
+						page_.widgets[id].el.contentWindow.table.setData(
+							page_.widgets[id].el.contentWindow.tabledata
+						);
 				}
 				else
-					page_.widgets[id].el.contentWindow.table.setData(
-						page_.widgets[id].el.contentWindow.tabledata
-					);
+				{
+					for (var widget in page_.widgets) {
+						if (isEmpty(page_.widgets[widget].pvList)) {
+							if (page_.widgets[widget].type == 1) {
+								if (page_.widgets[widget].attributes["getAlarmsLog"] == "true")
+								{
+									page_.widgets[widget].el.contentWindow.table.setData(
+										page_.widgets[widget].el.contentWindow.tabledata
+									);
+									alarmsLogTimerVariable_ = window.setTimeout(getAlarmsLog, refreshRate_);
+								}
+							}
+						}
+					}
+				}
+
 			} //end alarmsLogReqHandler()
 
 			//=====================================================================================
@@ -856,16 +903,19 @@
 			{
 				var pvList = "";
 
-				id = id.split('-')[1];
+				if (id != undefined)
+				{
+					id = id.split('-')[1];
 
-				if (page_.widgets[id] === undefined) {
-					Debug.log("Illegal widget UID (not found in widget list) received from child widget frame: " +
-						id, Debug.HIGH_PRIORITY);
-					return;
-				}
+					if (page_.widgets[id] === undefined) {
+						Debug.log("Illegal widget UID (not found in widget list) received from child widget frame: " +
+							id, Debug.HIGH_PRIORITY);
+						return;
+					}
 
-				for (var pv in page_.widgets[id].pvList) {
-					pvList += pv + ",";
+					for (var pv in page_.widgets[id].pvList) {
+						pvList += pv + ",";
+					}
 				}
 
 				var passParams = [id, parameters];
@@ -877,6 +927,12 @@
 					passParams /*parameter*/);
 				console.log("get alarms log for widget! pvList: " + pvList);
 			} //end getAlarmsLog()
+
+			//=====================================================================================
+			function pollAlarmsLog()
+			{
+
+			} //end pollAlarmsLog()
 
 			//=====================================================================================
 			function pollServer()
@@ -2100,7 +2156,11 @@
 						false /*doNoShowLoadingOverlay*/);
 
 					UID_ = 0;
-					window.clearInterval(timerVariable_);
+
+					window.clearTimeout(timerVariable_);
+					window.clearTimeout(lastAlarmsTimerVariable_);
+					window.clearTimeout(alarmsLogTimerVariable_);
+
 					//editButton.classList.add("navigationMenu--Edit");
 					mainBlock_.el.classList.add("editMode");
 					
@@ -2130,18 +2190,36 @@
 					if (page_.widgets != undefined && !isEmpty(page_.widgets))
 					{
 						var pvListSize = 0;
+						var allLastAlarmsSize = 0;
+						var allAlarmsLogSize = 0;
+
 						for (var widget in page_.widgets)
 						{						
 							if (!isEmpty(page_.widgets[widget].pvList))
-								;//Debug.log("You have no PV selection for " + widget + "!", Debug.HIGH_PRIORITY);
-							//else
 								pvListSize ++;
+							else
+								if (page_.widgets[widget].type == 1)
+								{
+									if (page_.widgets[widget].attributes["getLastAlarms"] == "true")
+										allLastAlarmsSize++;
+									if (page_.widgets[widget].attributes["getAlarmsLog"] == "true")
+										allAlarmsLogSize++;
+								}
 						}
+						
 						if (pvListSize > 0)
 						{
 							generateUID();
-							timerVariable_ = setInterval(pollServer, refreshRate_);
+							pollServer();
+							//timerVariable_ = window.setTimeout(pollServer, refreshRate_);
 						}
+
+						if (allLastAlarmsSize > 0)
+							getLastAlarms();
+							//lastAlarmsTimerVariable_ = window.setTimeout(pollLastAlarms, refreshRate_);
+						if (allAlarmsLogSize > 0)
+							getAlarmsLog();
+							//alarmsLogTimerVariable_ = window.setTimeout(pollAlarmsLog, refreshRate_);
 					}
 
 					mainBlock_.el.classList.remove("editMode");

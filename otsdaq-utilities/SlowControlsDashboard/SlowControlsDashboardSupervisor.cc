@@ -34,11 +34,9 @@ SlowControlsDashboardSupervisor::SlowControlsDashboardSupervisor(
 	init();
 
 	{
-		XDAQ_CONST_CALL xdaq::ApplicationDescriptor* gatewaySupervisor =
-				allSupervisorInfo_.isWizardMode() ? allSupervisorInfo_.getWizardDescriptor()
-						: allSupervisorInfo_.getGatewayDescriptor();
-
-		//theRemoteWebUsers_.sendSystemMessage(gatewaySupervisor,"*", "Dashboard Message");
+		
+		//toList can be "*", or "Tracker:10", "Ryan, Antonio"
+		theRemoteWebUsers_.sendSystemMessage("*" /*toList*/, "Subject","Message", false /*doEmail*/);
 	}
 
 	__SUP_COUT__ << "Constructed." << __E__;
