@@ -54,10 +54,12 @@
 			//	pollServerHandlerFunction(req)
 			//	generateUIDHandlerFunction(req)
 			//	settingsReqHandler(req, passParams)
-			//	historyReqHandler(req, passParams)
+			//	pvHistoryReqHandler(req, passParams)
 			//	savePageReqHandler(req)
 			//	createControlsPageHandler(req)
 			//	handlerFunction(req)
+			//	lastAlarmsReqHandler(req, passParams)
+			//	getLastAlarms(id, parameters)
 			//	pollServer()
 			//	generateUID()
 			//	updateRefreshInterval()
@@ -72,7 +74,7 @@
 			//	savePhoebusPageAs()
 			//	setupWidget(id, parameters)
 			//	setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_)
-			//	getHistory(id, parameters)
+			//	getPVHistory(id, parameters)
 			//	addPVToWidget(pv, refreshRate, widgetID, fromAddPV)
 			//	compareAttributes(id, parameters)
 			//	mouseoverEditBlock(e)
@@ -623,19 +625,6 @@
 				console.log(page_.widgets);
 				console.log("loadPhoebusPageReqHandler(): groups");
 				console.log(groups);
-
-//				for (var widget in page_.widgets)
-//				{
-//					console.log(widget + " " + page_.widgets[widget].x + " " + page_.widgets[widget].y + " " + page_.widgets[widget].w + " " + page_.widgets[widget].h);
-//					drawWidget(widget, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].w, page_.widgets[widget].h, true);
-//				}
-
-				//updateRefreshInterval();
-				//dragAndDrawWidgetType_ = undefined;
-				//drawingSelectionRectangle_ = false;
-
-				//toggleEditMode();
-				redrawWindow();
 			} //end loadPhoebusPageReqHandler()
 
 
@@ -744,27 +733,25 @@
 			} //end settingsReqHandler()
 
 			//=====================================================================================
-			function historyReqHandler(req, passParams) 
+			function pvHistoryReqHandler(req, passParams) 
 			{
 				var jsonArr = req.responseXML.getElementsByTagName("JSON");
-				console.log(jsonArr);
+				console.log("pvHistoryReqHandler()", jsonArr);
+
+				var id = passParams[0];
+				var parameters = passParams[1];
+				console.log("id: " + id + " parameter: " + parameters);
 
 				for (var i = jsonArr.length - 1; i >= 0; i--){
 					var history = JSON.parse(DesktopContent.getXMLValue(jsonArr[i]));				
-					var id = passParams[0];
-					var parameters = passParams[1];
-					console.log("id: " + id + " parameter: " + parameters);
 
-					console.log(req);
-					console.log(history);
-					console.log(id);
 					for (var pv in history) {
 						console.log(pv);
 						console.log(history[pv].Timestamp + " " + history[pv].Value);
 						page_.widgets[id].el.contentWindow.drawNewValue(pv, history[pv].Value, history[pv].Timestamp, history[pv].Status, history[pv].Severity);
 					}
 				}
-			} //end historyReqHandler()
+			} //end pvHistoryReqHandler()
 
 			//=====================================================================================
 			function savePageReqHandler(req)
@@ -787,6 +774,109 @@
 				var child2data = DesktopContent.getXMLValue(req,"child2");
 				Debug.log("--child1data:",child1data," --child2data:",child2data);
 			} //end handlerFunction()
+
+			//=====================================================================================
+			function lastAlarmsReqHandler(req, passParams)
+			{
+				var jsonArr = req.responseXML.getElementsByTagName("JSON");
+				//console.log("lastAlarmsReqHandler()", jsonArr);
+				var id = passParams[0];
+				console.log("lastAlarmsReqHandler() id", id);
+
+				page_.widgets[id].el.contentWindow.tabledata = [];
+				for (var i = jsonArr.length - 1; i >= 0; i--) {
+					var row = JSON.parse(DesktopContent.getXMLValue(jsonArr[i]));
+					page_.widgets[id].el.contentWindow.tabledata.push(row);
+				}
+
+				console.log("lastAlarmsReqHandler() last alarms", page_.widgets[id].el.contentWindow.tabledata);
+				if (passParams[1] != undefined)
+					page_.widgets[id].el.contentWindow.newPVTable();
+				else
+					page_.widgets[id].el.contentWindow.table.setData(
+						page_.widgets[id].el.contentWindow.tabledata
+					);
+			} //end lastAlarmsReqHandler()
+
+			//=====================================================================================
+			function getLastAlarms(id, parameters)
+			{
+				var pvList = "";
+
+				id = id.split('-')[1];
+
+				if (page_.widgets[id] === undefined) {
+					Debug.log("Illegal widget UID (not found in widget list) received from child widget frame: " +
+						id, Debug.HIGH_PRIORITY);
+					return;
+				}
+
+				for (var pv in page_.widgets[id].pvList) {
+					pvList += pv + ",";
+				}
+
+				var passParams = [id, parameters];
+				DesktopContent.XMLHttpRequest("Request?RequestType=getLastAlarmsData",
+					//post data 
+					"pvList=" + pvList +
+					"&id=" + id,
+					lastAlarmsReqHandler /*handler*/,
+					passParams /*parameter*/);
+				console.log("get last alarms for widget! pvList: " + pvList);
+			} //end getLastAlarms()
+
+			//=====================================================================================
+			function alarmsLogReqHandler(req, passParams)
+			{
+				var jsonArr = req.responseXML.getElementsByTagName("JSON");
+				//console.log("alarmsLogReqHandler()", jsonArr);
+				var id = passParams[0];
+				console.log("alarmsLogReqHandler() id", id);
+
+				page_.widgets[id].el.contentWindow.tabledata = [];
+				for (var i = jsonArr.length - 1; i >= 0; i--) {
+					var row = JSON.parse(DesktopContent.getXMLValue(jsonArr[i]));
+					page_.widgets[id].el.contentWindow.tabledata.push(row);
+				}
+
+				console.log("alarmsLogReqHandler() alarms log", page_.widgets[id].el.contentWindow.tabledata);
+				if (passParams[1] != undefined)
+				{
+					page_.widgets[id].el.contentWindow.newPVTable();
+					page_.widgets[id].el.contentWindow.table.hideColumn("pvDescription");
+				}
+				else
+					page_.widgets[id].el.contentWindow.table.setData(
+						page_.widgets[id].el.contentWindow.tabledata
+					);
+			} //end alarmsLogReqHandler()
+
+			//=====================================================================================
+			function getAlarmsLog(id, parameters)
+			{
+				var pvList = "";
+
+				id = id.split('-')[1];
+
+				if (page_.widgets[id] === undefined) {
+					Debug.log("Illegal widget UID (not found in widget list) received from child widget frame: " +
+						id, Debug.HIGH_PRIORITY);
+					return;
+				}
+
+				for (var pv in page_.widgets[id].pvList) {
+					pvList += pv + ",";
+				}
+
+				var passParams = [id, parameters];
+				DesktopContent.XMLHttpRequest("Request?RequestType=getAlarmsLogData",
+					//post data 
+					"pvList=" + pvList +
+					"&id=" + id,
+					alarmsLogReqHandler /*handler*/,
+					passParams /*parameter*/);
+				console.log("get alarms log for widget! pvList: " + pvList);
+			} //end getAlarmsLog()
 
 			//=====================================================================================
 			function pollServer()
@@ -1314,7 +1404,7 @@
 			} //end setWidgetPVinfo()
 
 			//=====================================================================================
-			function getHistory(id, parameters)
+			function getPVHistory(id, parameters)
 			{
 				var pvList = "";
 
@@ -1337,10 +1427,10 @@
 									//post data 
 		    						"pvList=" + pvList + 
 									"&id=" + id,
-									historyReqHandler /*handler*/,
+									pvHistoryReqHandler /*handler*/,
 									 passParams /*parameter*/);
 				console.log("get history for widget! pvList: " + pvList);
-			} //end getHistory()
+			} //end getPVHistory()
 
 			//=====================================================================================
 			function addPVToWidget(pv, refreshRate, widgetID, fromAddPV)

@@ -24,7 +24,8 @@
 			//init()
 
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "show_labels": "false"};
+			var parameters_ = {class: "", "show_labels": "false", "getLastAlarms": "false", "getAlarmsLog": "false"};
+			var table;
 
 			//define data sample
 			var tabledata = [];
@@ -36,39 +37,53 @@
 
 			function init()
 			{
-				console.log("init()");
+				console.log("Table: init()");
 				console.log(window.frameElement.id);
-				console.log("Dimensions: " + window.innerWidth + " : " + window.innerHeight);
+				console.log("Table Dimensions: " + window.innerWidth + " : " + window.innerHeight);
 				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
 			{
-				console.log("setupPVs() : " , settings);
+				console.log("Table: setupPVs()" , settings);
 				pv_settings_ = settings;
 			}
 
 			function drawWidget(widget, parameters)
 			{
-				var i = 0;
-				tabledata = []
-				for (pv in widget.pvList)
+				tabledata = [];
+				if (parameters_["getLastAlarms"] == "true")
 				{
-					var row = {
-								  id:i
-								, pvName:pv
-								, pvValue:""
-								, pvStatus:""
-								, pvSeverity:""
-								, pvTime:""
-								, serviceHistory: [pv_settings_[pv]]
-							  };
-
-					tabledata.push(row);
-					i++;
+					console.log("Table: drawWidget() getLastAlarms = ", parameters_["getLastAlarms"]);
+					window.parent.getLastAlarms(window.frameElement.id, getAttributes());
 				}
+				else if (parameters_["getAlarmsLog"] == "true")
+				{
+					console.log("Table: drawWidget() getAlarmsLog = ", parameters_["getAlarmsLog"]);
+					window.parent.getAlarmsLog(window.frameElement.id, getAttributes());
+				}
+				else
+				{
+					var i = 0;
+					for (pv in widget.pvList)
+					{
+						var row = {
+									  id:i
+									, pvName:pv
+									, pvDescription:""
+									, pvValue:""
+									, pvStatus:""
+									, pvSeverity:""
+									, pvTime:""
+									, serviceHistory: [pv_settings_[pv]]
+								  };
 
-				newTable();
+						tabledata.push(row);
+						i++;
+					}
+					newPVTable();
+					table.hideColumn("pvDescription");
+				}
 			}
 
 			function getAttributes()
@@ -79,30 +94,26 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("Table: set parameters()");
+				console.log("Table: setAttributes()");
 				console.log(parameters_);
 			}
 
-			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
-			{
-				console.log("Table: newValue() reached", pvName, pvValue);
-				drawTable(pvName, pvValue, pvStatus, pvSeverity, pvTime);
-			}
-
-			var table;
-			function newTable()
+			function newPVTable()
 			{
 				var minL = 0;
 				var maxL = 100;
 				var unit = "";
 				//create Tabulator on DOM element "display"
 				table = new Tabulator("#display", {
-					height:"100%", // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+					height: window.innerHeight + 1, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
 					data:tabledata, //assign data to table
-					layout:"fitColumns", //fit columns to width of table (optional)
+					//layout:"fitColumns", //fit columns to width of table (optional)
 					//layout:"fitDataFill",
+					//layout:"fitData",
 					//responsiveLayout:"collapse",
-					dataTree:false,
+					//dataTree:false,
+					//virtualDomBuffer: 100,
+				    //virtualDom: false, //disable virtual DOM rendering
 					tooltips:function(cell){
 						//cell - cell component
 						//function should return a string for the tooltip of false to hide the tooltip
@@ -136,8 +147,16 @@
 								//console.log("Alarm Status");console.log(cell);console.log(formatterParams);
 								return cell.getValue();
 							}
+							, frozen: true
 						},
-
+						{
+							  title: "Descr"
+							, field: "pvDescription"
+							, width:50
+							, formatter: function(cell, formatterParams, onRendered){
+								return cell.getValue();
+							}
+						},
 						{
 							  title:"value"
 							, field:"pvValue"
@@ -170,7 +189,8 @@
 							}
 						},
 
-						{	  title:"Alarm Severity"
+						{
+							  title:"Alarm Severity"
 							, field:"pvSeverity"
 							, formatter: function(cell, formatterParams, onRendered){
 								//console.log("Alarm Severity");console.log(cell);console.log(formatterParams);
@@ -179,7 +199,8 @@
 							}
 						},
 
-						{	  title:"Last Update"
+						{
+							  title:"Last Update"
 							, field:"pvTime"
 							, formatter:"datetime"
 							, formatterParams:
@@ -197,10 +218,27 @@
 					},
 				});
 
-				console.log("newTable() reached");
+				console.log("Table: newPVTable() reached");
 			}
 
-			function drawTable(pvName, pvValue, pvStatus, pvSeverity, pvTime)
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+				console.log("Table: drawNewValue() reached", pvName, pvValue);
+				if (parameters_["getLastAlarms"] == "true") {
+					console.log("Table: drawNewValue() getLastAlarms = ", parameters_["getLastAlarms"]);
+					window.parent.getLastAlarms(window.frameElement.id, undefined);
+				}
+				else if (parameters_["getAlarmsLog"] == "true") {
+					console.log("Table: drawNewValue() getAlarmsLog = ", parameters_["getAlarmsLog"]);
+					window.parent.getAlarmsLog(window.frameElement.id, undefined);
+				}
+				else
+				{
+					drawPVTable(pvName, pvValue, pvStatus, pvSeverity, pvTime);
+				}
+			}
+
+			function drawPVTable(pvName, pvValue, pvStatus, pvSeverity, pvTime)
 			{
 				var date = new Date(pvTime*1000);
 
@@ -212,12 +250,13 @@
 				console.log(tabledata);
 				table.setData(tabledata);
 
-				console.log("drawTable() reached, pv: " + pvName);
+				console.log("Table: drawPVTable() reached, pv: " + pvName);
 			}
 
 			window.onresize = function() {
+				table.setHeight(window.innerHeight + 1);
 				table.redraw(true);
-				console.log("window.onresize Table");
+				console.log("Table: window.onresize()");
 			};
 
 		</script>
@@ -225,7 +264,7 @@
 	</head>
 
 	<body onload="Javascript:init()">
-		<div id="display" width="100%" height="100%"></div>
+		<div id="display"></div>
 	</body>
 
 </html>

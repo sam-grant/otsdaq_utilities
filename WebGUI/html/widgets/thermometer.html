@@ -37,14 +37,14 @@
 			//init called once body has loaded
 			function init()
 			{
-				console.log("init()");
+				console.log("Thermometer: init()");
 				console.log(window.frameElement.id)
 				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
 			{
-				console.log("Thermometer setupPVs() : " , settings);
+				console.log("Thermometer: setupPVs()" , settings);
 				pv_settings_ = settings;
 			}
 
@@ -93,7 +93,7 @@
 
 					drawThermometer(pv, divtemp, wdth, hght, 50, min, max);
 				}
-				console.log(document.body);
+				console.log("Thermometer: drawWidget()", document.body);
 			}
 
 			function getAttributes()
@@ -104,13 +104,13 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("thermometer: set parameters()");
+				console.log("Thermometer: setAttributes()");
 				console.log(parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
-				console.log("Thermometer newValue() reached", pvName, pvValue);
+				console.log("Thermometer: drawNewValue() reached", pvName, pvValue);
 				window.parent.setWidgetPVinfo(
 									  window.frameElement.id
 									, pvName
@@ -164,7 +164,7 @@
 
 			function resizeWidget()
 			{
-				console.log("Thermometer() resize");
+				console.log("Thermometer: resizeWidget()");
 			}
 
 			function updateThermometer(name, container, val, min, max)
@@ -184,7 +184,7 @@
 						thermometers[name]._value.max
 					);
 				}
-				console.log("thermometer: window.onresize()");
+				console.log("Thermometer: window.onresize()");
 			};
 
 		</script>
