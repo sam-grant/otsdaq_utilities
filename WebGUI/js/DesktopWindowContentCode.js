@@ -1790,8 +1790,16 @@ DesktopContent.getDefaultDesktopColor = function() {
 //=====================================================================================
 //getUsername ~~
 DesktopContent.getUsername = function() { 
-	var dispName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
-			return dispName.substr(dispName.indexOf(",")+2);	
+	DesktopContent.XMLHttpRequest(
+		"Request?RequestType=GetUserDisplayName",
+		""
+		function(req)
+		{
+			console.log(req);
+		
+		});
+	var dispName = ""; //DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
+	return dispName.substr(dispName.indexOf(",")+2);	
 } //end getUsername()
 
 
