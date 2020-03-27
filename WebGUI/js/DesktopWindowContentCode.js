@@ -1792,7 +1792,7 @@ DesktopContent.getDefaultDesktopColor = function() {
 DesktopContent.getUsername = function() { 
 	DesktopContent.XMLHttpRequest(
 		"Request?RequestType=GetUserDisplayName",
-		""
+		"",
 		function(req)
 		{
 			console.log(req);
