@@ -30,14 +30,9 @@ SlowControlsDashboardSupervisor::SlowControlsDashboardSupervisor(
 	mkdir(((std::string)(PAGES_DIRECTORY)).c_str(), 0755);
 
 	interface_ = NULL;
+	alarmNotifyRefreshRate_ = 60;  // seconds
 
 	init();
-
-	{
-		
-		//toList can be "*", or "Tracker:10", "Ryan, Antonio"
-		theRemoteWebUsers_.sendSystemMessage("*" /*toList*/, "Subject","Message", false /*doEmail*/);
-	}
 
 	__SUP_COUT__ << "Constructed." << __E__;
 }  // end constructor
@@ -115,16 +110,70 @@ void SlowControlsDashboardSupervisor::init(void)
 		    // this guarantees the reading thread can safely access the messages
 		    // std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
 		    // cs->checkSubscriptions(cs);
+		    cs->checkSlowControlsAlarms(cs);
 	    },
 	    this)
-	    .detach();  // thread check clients subscription for all channels
+	    .detach();  // thread check EPICS slow controls alarms
 
 	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << __E__;
 
 	// add interface plugin to state machine list
 	CoreSupervisorBase::theStateMachineImplementation_.push_back(interface_);
-
 }  // end init()
+
+//==============================================================================
+// Manage channel subscriptions to Interface
+void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
+    SlowControlsDashboardSupervisor* cs)
+{
+	while(true)
+	{
+		try
+		{
+			for(const auto& alarm : cs->interface_->checkAlarmNotifications())
+			{
+				if (alarm.size() > 8)
+				{
+					time_t rawtime = (const time_t)(std::stoi(alarm[1]));
+					char*       dt      = ctime(&rawtime);
+					std::string subject = "Slow Contro Alarm Notification";
+					std::string message = "PV: " 		+ alarm[0]	+"\n"
+										+ " at time: "	+ dt		+"\n"
+										+ " value: "	+ alarm[2]	+""
+										+ " stauts: "	+ alarm[3]	+""
+										+ " severity: "	+ alarm[4];
+
+					// __COUT__ 
+					// << "checkSlowControlsAlarms() subject '"	<< subject
+					// << "' message '"		<< message
+					// << "' alarm name '"		<< alarm[5]
+					// << "' notify to '"		<< alarm[8]
+					// << "' at '"				<< alarm[6]
+					// << "' send mail "		<< alarm[7]
+					// << __E__;
+
+					// toList can be "*", or "Tracker:10", "Ryan, Antonio"
+					//theRemoteWebUsers_.sendSystemMessage(
+					//    "*" /*toList*/, "Subject", "Message", false /*doEmail*/);
+					theRemoteWebUsers_.sendSystemMessage(
+							alarm[6], subject, message, alarm[7] == "Yes"? true:false);
+				}
+			}
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+		}
+		catch(...)
+		{
+			__SS__ << "checkSlowControlsAlarms() ERROR While sendin alarm messages"
+			       << __E__;
+		}
+
+		sleep(alarmNotifyRefreshRate_);
+		__COUT__ << "checkSlowControlsAlarms() n. " << cs->interface_->checkAlarmNotifications().size() << __E__;
+	}
+}  // end checkSlowControlsAlarms()
 
 //==============================================================================
 // Manage channel subscriptions to Interface

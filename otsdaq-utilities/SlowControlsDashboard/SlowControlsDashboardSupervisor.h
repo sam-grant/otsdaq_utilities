@@ -19,21 +19,22 @@ class SlowControlsDashboardSupervisor : public CoreSupervisorBase
   public:
 	XDAQ_INSTANTIATOR();
 
-	SlowControlsDashboardSupervisor(xdaq::ApplicationStub* s);
-	virtual ~SlowControlsDashboardSupervisor(void);
+	SlowControlsDashboardSupervisor					(xdaq::ApplicationStub* s);
+	virtual ~SlowControlsDashboardSupervisor		(void);
 
-	void 			init				(void);
-	void 			checkSubscriptions	(SlowControlsDashboardSupervisor* cs);
-	void 			destroy				(void);
+	void 			init							(void);
+	void 			destroy							(void);
+	void 			checkSubscriptions				(SlowControlsDashboardSupervisor* cs);
+	void            checkSlowControlsAlarms			(SlowControlsDashboardSupervisor* cs);
 
-	virtual void	request				(const std::string&               requestType,
-	                     				 cgicc::Cgicc&                    cgiIn,
-	                					 HttpXmlDocument&                 xmlOut,
-	                				     const WebUsers::RequestUserInfo& userInfo) override;
-	virtual void	handleRequest		(const std::string                Command,
-	                          			 HttpXmlDocument&                 xmlOut,
-	                          			 cgicc::Cgicc&                    cgiIn,
-	                       			  	 const WebUsers::RequestUserInfo& userInfo);
+	virtual void	request							(const std::string&               requestType,
+	                     							cgicc::Cgicc&                    cgiIn,
+	                								HttpXmlDocument&                 xmlOut,
+	                				  				const WebUsers::RequestUserInfo& userInfo) override;
+	virtual void	handleRequest					(const std::string                Command,
+	                          			 			HttpXmlDocument&                 xmlOut,
+	                          			 			cgicc::Cgicc&                    cgiIn,
+	                       			  	 			const WebUsers::RequestUserInfo& userInfo);
 
 	virtual void 	setSupervisorPropertyDefaults	(void) override;
 	virtual void 	forceSupervisorPropertyValues	(void) override;  // override to force
@@ -74,20 +75,13 @@ class SlowControlsDashboardSupervisor : public CoreSupervisorBase
 	void			listFiles						(std::string baseDir, bool recursive, std::vector<std::string>* pages);
 
   private:
-	// SlowControlsInterface
-	// AllSupervisorInfo 						allSupervisorInfo_;
-	// EpicsInterface                        * interface_;
-
-	//    ConfigurationManager*          			theConfigurationManager_;
-	//    RemoteWebUsers							theRemoteWebUsers_;
-	//	std::string                             username;
-	std::map<int, std::set<std::string>> channelDependencyLookupMap_;
-	std::map<int, long int>              uidPollTimeMap_;
-	int                                  UID_;
-
+	std::map<int, std::set<std::string>>	channelDependencyLookupMap_;
+	std::map<int, long int>             	uidPollTimeMap_;
+	int                                  	UID_;
+	int										alarmNotifyRefreshRate_;
   public:
-	SlowControlsVInterface* interface_;
-	std::mutex              pluginBusyMutex_;
+	SlowControlsVInterface*					interface_;
+	std::mutex								pluginBusyMutex_;
 };
 }
 
