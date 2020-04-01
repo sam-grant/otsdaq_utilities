@@ -124,7 +124,7 @@ function fixTargetRepos
 							elif [[ $LINE_QUAL_ARR_COUNT == 3 && "${LINE_QUAL_ARR[0]:0:1}" == "e" && "${LINE_QUAL_ARR[1]:0:1}" == "s" ]]; then
 								NEW_QUAL_LINE="${NEW_QUAL_LINE}${QUAL_PIECES[0]}:${QUAL_PIECES[1]}:${QUAL_PIECES[2]}\t\t" 
 							elif [[ $LINE_QUAL_ARR_COUNT == 4 && "${LINE_QUAL_ARR[0]:0:1}" == "e" && "${LINE_QUAL_ARR[1]:0:1}" == "s" ]]; then #like e19:s96:offline:prof
-								NEW_QUAL_LINE="${NEW_QUAL_LINE}${QUAL_PIECES[0]}:${QUAL_PIECES[1]}:{LINE_QUAL_ARR[2]}:${QUAL_PIECES[2]}\t\t" 
+								NEW_QUAL_LINE="${NEW_QUAL_LINE}${QUAL_PIECES[0]}:${QUAL_PIECES[1]}:${LINE_QUAL_ARR[2]}:${QUAL_PIECES[2]}\t\t" 
 							else 
 								#do not know what to do, so take as is
 								NEW_QUAL_LINE="${NEW_QUAL_LINE}${line_arr_piece}\t\t"
