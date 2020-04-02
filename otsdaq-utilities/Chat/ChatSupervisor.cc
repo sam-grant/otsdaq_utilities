@@ -34,13 +34,18 @@ void ChatSupervisor::destroy(void)
 	// called by destructor
 }
 
-//==============================================================================
-void ChatSupervisor::defaultPage(xgi::Input* cgiIn, xgi::Output* out)
-{
-	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
-	        "src='/WebPath/html/Chat.html?urn="
-	     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
-}
+////==============================================================================
+//void ChatSupervisor::defaultPage(xgi::Input* cgiIn, xgi::Output* out)
+//{
+//	out->getHTTPResponseHeader().addHeader("Access-Control-Allow-Origin","http://correlator2.fnal.gov");
+//	out->getHTTPResponseHeader().addHeader("Pragma", "no-cache");
+//
+//
+//
+//	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
+//	        "src='/WebPath/html/Chat.html?urn="
+//	     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
+//} //end defaultPage()
 
 //==============================================================================
 // forceSupervisorPropertyValues
@@ -50,7 +55,7 @@ void ChatSupervisor::forceSupervisorPropertyValues()
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
 	    "RefreshChat");
-}
+} ///end forceSupervisorPropertyValues()
 
 //==============================================================================
 //	request

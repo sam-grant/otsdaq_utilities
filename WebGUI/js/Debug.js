@@ -41,14 +41,18 @@ Debug.LOW_PRIORITY = 100;
 
 //determine if chrome or firefox or other
 //	0:other, 1:chrome, 2:firefox
-Debug.BROWSER_TYPE = 0;
+Debug.BROWSER_TYPE_OTHER 	= 0;
+Debug.BROWSER_TYPE_CHROME 	= 1;
+Debug.BROWSER_TYPE_FIREFOX 	= 2;
+Debug.BROWSER_TYPE = Debug.BROWSER_TYPE_OTHER;
 {
 	var tmp = (new Error).stack; 
 	if(tmp[0] == 'E')
-		Debug.BROWSER_TYPE = 1;
+		Debug.BROWSER_TYPE = Debug.BROWSER_TYPE_CHROME;
 	else if(tmp[0] == '@')
-		Debug.BROWSER_TYPE = 2;
+		Debug.BROWSER_TYPE = Debug.BROWSER_TYPE_FIREFOX;
 }
+console.log("Browser type = ", Debug.BROWSER_TYPE);
 
 
 if (Debug.mode) //IF DEBUG MODE IS ON!
@@ -361,7 +365,10 @@ Debug.errorPop = function(err,severity)
 			el.innerHTML = str;
 			body.appendChild(el); //add element to body of page
 			el.focus();
-			el.onmousemove = function(){				
+			el.onmousemove = function(){		
+				//console.log("mm");
+				DesktopContent.mouseMove(event,true /*onlyDesktopFunction*/); //allow only desktop movement functionality
+				
 				//if doing some resize or movement, then stop blocking event propagation
 				if(Debug._errBoxOffResizeStartY == -1 && 
 						Debug._errBoxOffMoveStartX == -1 && 

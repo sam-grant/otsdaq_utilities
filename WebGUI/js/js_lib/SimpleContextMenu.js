@@ -10,7 +10,7 @@
 //				
 //				<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 //				<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-//				<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+//				<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 //				<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 //
 //		...anywhere inside the <head></head> tag of a window content html page

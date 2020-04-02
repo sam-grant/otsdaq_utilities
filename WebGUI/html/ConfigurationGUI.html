@@ -203,6 +203,7 @@
 
 	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
 
+	
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
 
@@ -210,6 +211,11 @@
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 
 	<script type="text/JavaScript" src="/WebPath/js/RecordWiz_ConfigurationGUI.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/DeleteWiz_ConfigurationGUI.js"></script>
@@ -420,11 +426,6 @@
 	</style>
 
 
-	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
-	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
-	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
-	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 
 	<script>
 
@@ -836,7 +837,8 @@
 					--countDown;
 					if (countDown == 0) {
 						//end blackout
-						DesktopContent._blockSystemCheckMailbox.innerHTML = "";
+						DesktopContent.systemBlackout(false);
+						//DesktopContent._blockSystemCheckMailbox.innerHTML = "";
 						Debug.log("And we are back!<br>If you are switching modes, you will need to manually change the URL in your browser.", Debug.INFO_PRIORITY);
 						setupSystemViewMode();
 						DesktopContent.XMLHttpRequest("Request?" +
@@ -15760,7 +15762,8 @@
 				{
 
 					//start blackout
-					DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
+					DesktopContent.systemBlackout(true);
+					//DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
 					window.setTimeout(localDelayedLaunch, 1000); //gaurantee blackout starts
 					//now in all future requests must ignoreSystemBlock
 
@@ -15793,7 +15796,8 @@
 
 
 					//start blackout
-					DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
+					DesktopContent.systemBlackout(true);
+					//DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
 					window.setTimeout(localDelayedLaunch, 1000); //gaurantee blackout starts
 					//now in all future requests must ignoreSystemBlock
 
@@ -16416,7 +16420,7 @@
 </head>
 
 
-<body onload='Javascript:init();'>
+<body onload='//init() called by DesktopContent.js'>
 
 	<h1>Configuration GUI</h1>
 

@@ -22,7 +22,7 @@
 var CodeEditor = CodeEditor || {}; //define CodeEditor namespace
 
 if (typeof DesktopContent == 'undefined')
-	throw('ERROR: DesktopContent is undefined! Must include DesktopWindowContentCode.js before CodeEditor.js');
+	throw('ERROR: DesktopContent is undefined! Must include DesktopContent.js before CodeEditor.js');
 
 
 CodeEditor.MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
@@ -6710,7 +6710,8 @@ CodeEditor.create = function(standAlone) {
 				"title": "Refresh file \n" + path + "." + extension,
 				"style": "color: rgb(202, 204, 210);" +
 					"padding: 0 5px 0;" +
-					"font-size: 17px;",
+					(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX? //firefox shows circle-arrow character smaller
+							"font-size: 28px;margin-top:-6px;":"font-size: 17px;font-weight:bold;"),
 				"onclick":
 					"event.stopPropagation(); " + 
 					"CodeEditor.editor.openFile(" + forPrimary + 
