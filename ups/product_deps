@@ -1,6 +1,3 @@
-
-
-
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
 parent otsdaq_utilities	v2_05_01_indev
@@ -32,11 +29,19 @@ end_product_list
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
 qualifier    	   otsdaq	 xdaq	    notes
+e19:s96:debug		e19:s96:debug		e19:debug		-std=c++17		
+e19:s96:prof      e19:s96:prof e19:prof  -std=c++17
+e19:s96:py2:prof   e19:s96:py2:prof  e19:prof   -std=c++17
+e19:s96:py2:debug  e19:s96:py2:debug e19:debug  -std=c++17
+
+c7:s96:debug		c7:s96:debug		c7:debug		-std=c++17		
+c7:s96:prof      c7:s96:prof c7:prof  -std=c++17
+c7:s96:py2:prof   c7:s96:py2:prof  c7:prof   -std=c++17
+c7:s96:py2:debug  c7:s96:py2:debug c7:debug  -std=c++17
+
+
 e19:s94:debug		e19:s94:debug		e19:debug		-std=c++17		
-e19:s94:prof		e19:s94:prof		e19:prof		-std=c++17		
-e19:s94:prof       e19:s94:prof  e19:prof   -std=c++17
-e19:s94:prof		e19:s94:prof		e19:prof		-std=c++17		
-e19:s94:debug      e19:s94:debug e19:debug  -std=c++17
+e19:s94:prof      e19:s94:prof e19:prof  -std=c++17
 e19:s94:py2:prof   e19:s94:py2:prof  e19:prof   -std=c++17
 e19:s94:py2:debug  e19:s94:py2:debug e19:debug  -std=c++17
 
