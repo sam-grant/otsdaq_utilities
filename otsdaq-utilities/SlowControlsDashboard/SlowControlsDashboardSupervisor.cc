@@ -136,11 +136,11 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 				{
 					time_t rawtime = (const time_t)(std::stoi(alarm[1]));
 					char*       dt      = ctime(&rawtime);
-					std::string subject = "Slow Contro Alarm Notification";
+					std::string subject = "Slow Control Alarm Notification";
 					std::string message = "PV: " 		+ alarm[0]	+"\n"
 										+ " at time: "	+ dt		+"\n"
 										+ " value: "	+ alarm[2]	+""
-										+ " stauts: "	+ alarm[3]	+""
+										+ " status: "	+ alarm[3]	+""
 										+ " severity: "	+ alarm[4];
 
 					// __COUT__ 
