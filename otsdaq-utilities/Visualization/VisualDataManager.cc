@@ -7,12 +7,14 @@
 #include "otsdaq/DataProcessorPlugins/RawDataVisualizerConsumer.h"
 
 #include <cassert>
+#include <chrono>  // std::chrono::seconds
 #include <iostream>
 #include <sstream>
+#include <thread>  // std::this_thread::sleep_for
 
 using namespace ots;
 
-//========================================================================================================================
+//==============================================================================
 VisualDataManager::VisualDataManager(const ConfigurationTree& theXDAQContextConfigTree,
                                      const std::string&       supervisorConfigurationPath)
     : DataManager(theXDAQContextConfigTree, supervisorConfigurationPath)
@@ -24,30 +26,30 @@ VisualDataManager::VisualDataManager(const ConfigurationTree& theXDAQContextConf
 {
 }
 
-//========================================================================================================================
+//==============================================================================
 VisualDataManager::~VisualDataManager(void) {}
 
-//========================================================================================================================
+//==============================================================================
 void VisualDataManager::configure(void) { DataManager::configure(); }
 
-//========================================================================================================================
+//==============================================================================
 void VisualDataManager::halt(void)
 {
 	theLiveDQMHistos_ = nullptr;
 	DataManager::halt();
 }
 
-//========================================================================================================================
+//==============================================================================
 void VisualDataManager::pause(void)
 {
 	__CFG_COUT__ << "Pausing..." << std::endl;
 	DataManager::pause();
 }
 
-//========================================================================================================================
+//==============================================================================
 void VisualDataManager::resume(void) { DataManager::resume(); }
 
-//========================================================================================================================
+//==============================================================================
 void VisualDataManager::start(std::string runNumber)
 {
 	__CFG_COUT__ << "Start!" << __E__;
@@ -145,14 +147,14 @@ void VisualDataManager::start(std::string runNumber)
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 void VisualDataManager::stop(void)
 {
 	theLiveDQMHistos_ = nullptr;
 	DataManager::stop();
 }
 
-//========================================================================================================================
+//==============================================================================
 void VisualDataManager::load(std::string fileName, std::string type)
 {
 	if(type == "Histograms")
@@ -163,12 +165,12 @@ void VisualDataManager::load(std::string fileName, std::string type)
 	//		theMonicelliGeometryConverter_.loadGeometry(fileName);
 }
 
-//========================================================================================================================
+//==============================================================================
 DQMHistosBase* VisualDataManager::getLiveDQMHistos(void) { return theLiveDQMHistos_; }
 
-//========================================================================================================================
+//==============================================================================
 DQMHistosBase& VisualDataManager::getFileDQMHistos(void) { return theFileDQMHistos_; }
-//========================================================================================================================
+//==============================================================================
 const std::string& VisualDataManager::getRawData(void)
 {
 	//__CFG_COUT__ << __E__;
@@ -176,13 +178,13 @@ const std::string& VisualDataManager::getRawData(void)
 	return theRawDataConsumer_->getLastRawDataBuffer();
 }
 
-////========================================================================================================================
+////==============================================================================
 // const Visual3DEvents& VisualDataManager::getVisual3DEvents(void)
 //{
 //	return theMonicelliEventAnalyzer_.getEvents();
 //}
 //
-////========================================================================================================================
+////==============================================================================
 // const Visual3DGeometry& VisualDataManager::getVisual3DGeometry(void)
 //{
 //	return theMonicelliGeometryConverter_.getGeometry();

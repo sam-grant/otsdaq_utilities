@@ -5,7 +5,7 @@
 # this script attempts to create a new repo directory.. check-in handling is not handled
 
 #first run setup_ots.sh
-# usage: ./create_ots_repo.sh <repo_name>
+# usage: ./ots_create_repo_from_demo.sh <repo_name>
 #
 # use underscores in name
 
@@ -18,7 +18,7 @@ repo=$1
 
 if [ "x$repo" == "x" ];then
   echo "User did not input a repository name. Exiting."
-  echo "usage: ./create_ots_repo.sh <repo_name>"
+  echo "usage: ./ots_create_repo_from_demo.sh <repo_name>"
   exit
 fi
 

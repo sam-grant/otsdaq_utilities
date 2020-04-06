@@ -1,4 +1,5 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD
+HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   	<head>
     	<meta http-equiv="content-type" content="text/html;charset=utf-8">
@@ -9,13 +10,15 @@
 			body
 			{
 			  	font: 10px arial;
+			  	background-color:  rgb(255, 255, 255);
 			}
-
 			.wrapper {
-			  display: grid;
-			  grid-template-columns: repeat(2, 1fr);
-			  grid-gap: 10px;
-			  grid-auto-rows: minmax(100px, auto);
+				display: grid;
+				//grid-template-columns: repeat(2, 1fr);
+				grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
+				grid-gap: 10px;
+				grid-auto-rows: minmax(100px, auto);
+				//grid-auto-columns: 200px 200px;
 			}
 
 		</style>
@@ -24,11 +27,12 @@
 		<script type="text/javascript" src="libraries/gauge.js"></script>
 
 		<script>
-			//functions:			
-			//init()					
+			//functions:
+			//init()
 
 			var gauges = [];
-			var guages_settings = [];
+			var pv_settings_ = [];
+			var parameters_ = {class: "", "show_labels": "true", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -39,50 +43,59 @@
 				console.log("Gauge init()");
 				console.log(window.frameElement.id)
 				console.log("Dimensions: " + window.innerWidth + " : " + window.innerHeight);
-				window.parent.setupWidget(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
 			{
 				console.log("Gauge setupPVs() : " , settings);
-				guages_settings = settings;
+				pv_settings_ = settings;
 			}
 
 			var widget_;
 			var parameters_;
-			function newWidget(widget, parameters) 
+			function drawWidget(widget, parameters) 
 			{
 				widget_ = widget;
 				parameters_ = parameters;
-				var olddiv = document.getElementById("dispaly-div");
-				if (olddiv != null)
-					document.getElementById("display").removeChild(olddiv);
+
+				var display = document.getElementById("display");
+				display.innerHTML = "";
+				if (!Object.getOwnPropertyNames(widget.pvList).length)
+					display.innerHTML = "<center>METER <br/> No associated PVs to display.</center>";
 
 				var div = document.createElement('div');
-				div.className="wrapper";
-				div.id = "dispaly-div";
-				document.getElementById("display").appendChild(div);
+				div.className = "wrapper";
+				div.id = "display-div";
+				display.appendChild(div);
+
 				var pv_number = 0;
-				for(var pv in widget.PVList)
-				{   
+				for(var pv in widget.pvList)
+				{
 					var divtemp = document.createElement('div');
-					divtemp.style.color = "white";
 					divtemp.style.fontSize = "auto";
-					divtemp.innerHTML = "<p id='p-" + pv + "'>" + pv + "</p>";
+					if (parameters_["show_labels"] == "true")
+					{
+						divtemp.innerHTML = "<left id='p-" + pv + "'>" + pv.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...</left>";
+						var max_size = Math.max(window.innerHeight - 50, window.innerWidth - 50) / Object.keys(widget.pvList).length;
+					}
+					else
+					{
+						divtemp.innerHTML = "";
+						var max_size = Math.max(window.innerHeight - 10, window.innerWidth -10) / Object.keys(widget.pvList).length;
+					}
 					divtemp.id = "gauge-div-" + pv_number;
 					divtemp.style.width = "100%";
 					divtemp.style.height = "100%";
+					
 					div.appendChild(divtemp);
 
-					//var max_size = Math.min(window.innerHeight, window.innerWidth) / Math.max(rows, columns);
-					var max_size = Math.min(window.innerHeight - 60, window.innerWidth) / Object.keys(widget.PVList).length;
-
-					var label = guages_settings[pv] !== undefined ? guages_settings[pv].Units : "";
-					var min   = guages_settings[pv] !== undefined ? guages_settings[pv].Lower_Display_Limit !== "DC'd" ? parseInt(guages_settings[pv].Lower_Display_Limit) : 0 : 0;
-					var max   = guages_settings[pv] !== undefined ? guages_settings[pv].Upper_Display_Limit !== "DC'd" ? parseInt(guages_settings[pv].Upper_Display_Limit) : 0 : 0;
+					var label = pv_settings_[pv] !== undefined ? pv_settings_[pv].Units : "";
+					var min   = pv_settings_[pv] !== undefined ? pv_settings_[pv].Lower_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pv].Lower_Display_Limit) : 0 : 0;
+					var max   = pv_settings_[pv] !== undefined ? pv_settings_[pv].Upper_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pv].Upper_Display_Limit) : 0 : 0;
 					max = max == "DC'd" || max <= min ? 100 : max;
 
-					console.log("Gauge pv: " + guages_settings[pv]);
+					console.log("Gauge pv: " + pv_settings_[pv]);
 					console.log("Gauge: " + pv + "(" + pv_number + ") : " + label +"," + min +"," + max + ".");
 					console.log("Gauge: " + pv + "(" + pv_number + ") : " + parameters["label_" + pv_number] + "," + parameters["min_" + pv_number] + "," + parameters["max_" + pv_number] + ".");
 
@@ -92,79 +105,55 @@
 				console.log(document.body);
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
-				parameters = [];
-
-				for(var i = 0; i < 15; i++)
-				{
-					parameters["label_" + i] = "";
-					parameters["min_" + i]   = "";
-					parameters["max_" + i]   = "";
-				}
-				console.log(parameters);
-				return parameters;
+				return parameters_;
 			}
 
-			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log("Gauge: setAttributes()");
+				console.log(parameters_);
+			}
+
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				console.log("Gauge newValue() reached", pvName, pvValue);
-				var pv="p-" + pvName;
-				document.getElementById(pv).innerHTML = pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity;
-				gauges[pvName].redraw(pvValue);
+				var pv = "p-" + pvName;
+				var actualTime = Math.floor(Date.now())/1000;
 
-//				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
-//				document.getElementById(pvName).title = pvName + ":" + pvTime;
-//				document.getElementById(pvName).parentElement.style.border = pvName + ":" + pvTime;
-//				document.getElementById(pvName).parentElement.style["background-color"] = "transparent";
-//				if(pvSeverity == "NO_ALARM")
-//				{
-//					document.getElementById(pvName).parentElement.style.color = "green"
-//				}
-//				else if(pvSeverity == "MINOR")
-//				{
-//					document.getElementById(pvName).parentElement.style.color = "yellow"
-//				}else if(pvSeverity == "MAJOR")
-//				{
-//					document.getElementById(pvName).parentElement.style.color = "red"
-//				}else if(pvSeverity == "INVALID")
-//				{
-//					document.getElementById(pvName).parentElement.style.color = "DimGray";
-//				}
-//				else if(pvSeverity == "DC")
-//				{
-//					document.getElementById(pvName).parentElement.style.color = "Light Grey";
-//				}
-//				
-//				if(pvStatus == "NO_ALARM")
-//				{
-//					document.getElementById(pvName).parentElement.style.border = "thin dotted green";
-//				}
-//				else if(pvStatus == "HIHI")
-//				{
-//					document.getElementById(pvName).parentElement.style.border = "thick solid red"
-//				}else if(pvStatus == "LOLO")
-//				{
-//					document.getElementById(pvName).parentElement.style.border = "thick solid MediumSlateBlue";
-//				}else if(pvStatus == "HIGH")
-//				{
-//					document.getElementById(pvName).parentElement.style.border = "thin dotted red";
-//				}else if(pvStatus == "LOW")
-//				{
-//					document.getElementById(pvName).parentElement.style.border = "thing dotted blue";
-//				}else if(pvStatus == "DC")
-//				{
-//					document.getElementById(pvName).parentElement.style["background-color"] = "Gainsboro";
-//				}else if(pvStatus == "UDF")
-//				{
-//					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
-//				}
+				if (parameters_["show_labels"] == "true")
+				{
+					if(pvSeverity == "MAJOR" )
+						document.getElementById(pv).innerHTML = "<left style = 'color: red'>" + pvName.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</left>";
+					else if(pvSeverity == "MINOR")
+						document.getElementById(pv).innerHTML = "<left style = 'color: orange'>" + pvName.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</left>";
+					else
+						if (window.parent.checkPVTime(window.frameElement.id, pvName, pvTime))
+							document.getElementById(pv).innerHTML = "<left style = 'color: green'>" + pvName.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</left>";
+						else
+							document.getElementById(pv).innerHTML = "<left style = 'color: " + parameters_["old_value_foreground_color"] + "'>"
+															+ pvName.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />")
+															//+ "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity
+															+ "<br>NOT UPDATED FOR MORE THAN " + parseInt((actualTime - pvTime*1.)/60) + " MINUTES</left>";
+				}
+
+				gauges[pvName].redraw(pvValue);
+				gauges[pvName].body[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+
+				console.log("thermometer date now: " + actualTime + " pvtime: " + pvTime + " refresh rate: 10 sec");
+				if (gauges[pvName].body[0][0].parentElement !== null)
+					if (window.parent.checkPVTime(window.frameElement.id, pvName, pvTime))
+						gauges[pvName].body[0][0].parentElement.style.backgroundColor = 'white';
+					else
+						gauges[pvName].body[0][0].parentElement.style.backgroundColor = parameters_["old_value_background_color"];
+				else
+					console.log("setWidgetPVinfo(): Error widgetElement = null");
 			}
-			//End Template
 
 			function createGauge(name, container, label, min, max, size)
 			{
-
 				var config = 
 				{
 					size: undefined != size ? size : 120,
@@ -182,41 +171,10 @@
 				gauges[name].render();
 			}
 
-			function createGauges()
-			{
-				createGauge("memory", "Memory");
-				createGauge("cpu", "CPU");
-				createGauge("network", "Network");
-			}
-
-			function updateGauges()
-			{
-				for (var key in gauges)
-				{
-					var value = getRandomValue(gauges[key]);
-					gauges[key].redraw(value);
-				}
-			}
-
-			function getRandomValue(gauge)
-			{
-				var overflow = 0; //10;
-				return gauge.config.min - overflow + (gauge.config.max - gauge.config.min + overflow*2) * Math.random();
-			}
-
-			function initialize()
-			{
-				createGauges();
-				//setInterval(updateGauges, 5000);
-			}
-
 			window.onresize = function() {
 				for(var name in gauges)
 				{
-					gauges[name].config.size = Math.min(window.innerHeight - 60, window.innerWidth) / Object.keys(gauges).length | 0;
-					gauges[name].configure(gauges[name].config);
-					//gauges[name].redraw(50);
-					newWidget(widget_, parameters_);
+					drawWidget(widget_, parameters_);
 				}
 				console.log("gauge: window.onresize()");
 			};
@@ -227,6 +185,7 @@
 
 	<body onload="Javascript:init()">
 		<div id="display" width="100%" height="100%">
+		</div>
 	</body>
 
 </html>

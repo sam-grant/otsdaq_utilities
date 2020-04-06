@@ -137,9 +137,11 @@ Ext.onReady(function()
  var mdi_               = ""                                                                      ;
  var treeDisplayField_  = "fDisplayName"                                                          ;
  var doReset_           = true                                                                    ;
- var _cookieCodeMailbox = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
- var _cookieCode        = _cookieCodeMailbox.innerHTML                                            ;
+ var _cookieCodeMailbox = 0; //RAR must get from desktop messages now to survive cross-origin browser restrictions//self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
+ var _cookieCode        = 0; //RAR must get from desktop messages now to survive cross-origin browser restrictions //_cookieCodeMailbox.innerHTML                                            ;
  var _theWindow         = self                                                                    ;
+ 
+ //NOTE: RAR must get _requestURL from desktop messages now to survive cross-origin browser restrictions
  var _requestURL        = self.parent.window.location.origin                                     +
                           "/urn:xdaq-application:lid="                                           +
                           getLocalURN(0,"urn")                                                   +

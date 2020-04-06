@@ -4,7 +4,8 @@
 		<title>Text</title>
 		<style type="text/css">			
 			body {
-				background-color: rgb(41,46,55);
+				//background-color: rgb(41,46,55);
+				background-color: rgb(250,250,250);
 			}
 			a{
 				color: green;
@@ -21,27 +22,22 @@
 				margin: auto;
 				padding: auto;
 			}
-			
+
 			.title-card {
 				overflow: hidden;
 				text-align:right;
 			}
-									
-		</style>
-		
 
-		
+		</style>
+
 		<script>		
-			
-			
-		
-			//functions:			
-				//init()					
-				
-								
+
+			//functions:
+				//init()
+
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
-			
+
 			//init called once body has loaded
 			function init()
 			{
@@ -49,12 +45,12 @@
 				console.log(window.frameElement.id)
 				window.parent.setupWidget(window.frameElement.id, getParameters());
 			}
-			
+
 			function setupPVs(settings)
 			{
 				console.log("setupPVs() : " , settings);
 			}
-			
+
 			function newWidget(widget, parameters) 
 			{			
 				var table = document.createElement('table');
@@ -67,10 +63,10 @@
 				{
 					counter++;
 				}
-				
+
 				var rows = Math.round(Math.sqrt(counter));
 				var columns = Math.ceil(counter / rows);
-				
+
 				for(var col = 1; col <= columns; col++)
 				{
 					var tr = document.createElement('tr');
@@ -89,26 +85,24 @@
 				document.getElementById("display").innerHTML = "";
 				document.getElementById("display").appendChild(table);
 
-
 				//console.log("newWidget() called *************************************");
 				if(counter > 1){counter = 2;}
 				console.log("counter" + counter);
 				for(var pv in widget.PVList)
 				{
-					
 					var a = document.createElement('a');
 					a.id = pv;
 					a.innerHTML = "N/A";
 					a.style.width = "100%";
 					a.style.height = "60%";
-					
+
 					var a_title = document.createElement('a');
 					a_title.id = pv + "-title";
 					a_title.classList.add("title-card");
 					a_title.innerHTML = pv + "\n";
 					a_title.style.width = "50px";
 					a_title.style.height = "40%";
-					
+
 //					document.getElementById("display").appendChild(a);	
 //					a = document.getElementById(pv);
 //					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
@@ -124,10 +118,9 @@
 //					console.log(counter);
 //					console.log(columns);
 //					console.log(rows);
-
 				}
 			}
-			
+
 			function getParameters()
 			{
 				paramters = {
@@ -141,9 +134,13 @@
 				return paramters;
 			}
 
+			function setParameters(attributes)
+			{
+				
+			}
+
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
-
 				/*if(document.getElementById(pvName) == null)
 				{
 					var div = document.createElement('div');
@@ -153,7 +150,7 @@
 					document.getElementById("display").appendChild(div);
 				}*/
 				console.log("newValue() reached", pvName, pvValue);
-				
+
 				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
 				document.getElementById(pvName).title = pvName + ":" + pvTime;
 				document.getElementById(pvName).parentElement.style.border = pvName + ":" + pvTime;
@@ -176,7 +173,7 @@
 				{
 					document.getElementById(pvName).parentElement.style.color = "Light Grey";
 				}
-				
+
 				if(pvStatus == "NO_ALARM")
 				{
 					document.getElementById(pvName).parentElement.style.border = "thin dotted green";
@@ -200,21 +197,17 @@
 				{
 					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
 				}
-				
 			}
 
 		</script>
 		
 	</head>
-	
-	
-	<body onload='Javascript:init();'>	
-			
-	<div id="display" width="100%" height="100%">
 
+	<body onload='//init() called by DesktopContent.js'>
+
+	<div id="display" width="100%" height="100%">
 	</div>
-				
-		
+
 	</body>
-	
+
 </html>

@@ -22,7 +22,7 @@
 var CodeEditor = CodeEditor || {}; //define CodeEditor namespace
 
 if (typeof DesktopContent == 'undefined')
-	throw('ERROR: DesktopContent is undefined! Must include DesktopWindowContentCode.js before CodeEditor.js');
+	throw('ERROR: DesktopContent is undefined! Must include DesktopContent.js before CodeEditor.js');
 
 
 CodeEditor.MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
@@ -67,8 +67,10 @@ function htmlClearDiv()
 //define scrollIntoViewIfNeeded for Firefox
 // NOTE: Chrome broke this functionality in Version 76.0.3809.100 (Official Build) (64-bit)
 //	so just always redefine this behavior.
-if (1 || !Element.prototype.scrollIntoViewIfNeeded) {
-	Element.prototype.scrollIntoViewIfNeeded = function (centerIfNeeded) {
+if (1 || !Element.prototype.scrollIntoViewIfNeeded) 
+{
+	Element.prototype.scrollIntoViewIfNeeded = function (centerIfNeeded) 
+	{
 		centerIfNeeded = arguments.length === 0 ? true : !!centerIfNeeded;
 
 		var parent = this.parentNode,
@@ -83,17 +85,20 @@ if (1 || !Element.prototype.scrollIntoViewIfNeeded) {
 				overRight = (this.offsetLeft + tdParent.offsetLeft + this.clientWidth - parentBorderLeftWidth) > (editorParent.scrollLeft + editorParent.clientWidth), // (parent.scrollLeft + parent.clientWidth),// (this.offsetLeft - parent.offsetLeft + this.clientWidth - parentBorderLeftWidth) > (parent.scrollLeft + editorParent.clientWidth - tdParent.offsetLeft), // (parent.scrollLeft + parent.clientWidth),
 				alignWithTop = overTop && !overBottom;
 
-		if ((overTop || overBottom) && centerIfNeeded) {
+		if ((overTop || overBottom) && centerIfNeeded) 
+		{
 			editorParent.scrollTop = this.offsetTop - tdParent.offsetTop - editorParent.clientHeight / 2 - parentBorderTopWidth + this.clientHeight / 2;
 			//parent.scrollTop = this.offsetTop - parent.offsetTop - parent.clientHeight / 2 - parentBorderTopWidth + this.clientHeight / 2;
 		}
 
-		if ((overLeft || overRight) && centerIfNeeded) {
+		if ((overLeft || overRight) && centerIfNeeded) 
+		{
 			editorParent.scrollLeft = this.offsetLeft + tdParent.offsetLeft - editorParent.clientWidth / 2 - parentBorderLeftWidth + this.clientWidth / 2; 
 			//parent.scrollLeft = this.offsetLeft - parent.offsetLeft  - parent.clientWidth / 2 - parentBorderLeftWidth + this.clientWidth / 2;
 		}
 
-		if ((overTop || overBottom || overLeft || overRight) && !centerIfNeeded) {
+		if ((overTop || overBottom || overLeft || overRight) && !centerIfNeeded) 
+		{
 			this.scrollIntoView(alignWithTop);
 		}
 	};
@@ -198,7 +203,7 @@ appMode = "Code Editor";
 CodeEditor.showTooltip = function(alwaysShow)
 {
 	DesktopContent.tooltip(
-		(alwaysShow ? "ALWAYS" : appMode), windowTooltip); 
+		(alwaysShow? "ALWAYS" : appMode), windowTooltip); 
 	
 	DesktopContent.setWindowTooltip(windowTooltip);
 } //end showTooltip()
@@ -210,10 +215,12 @@ CodeEditor.showTooltip = function(alwaysShow)
 //call create to create instance of a SmartLaunch
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-CodeEditor.create = function() {
+CodeEditor.create = function(standAlone) {
 	
-	
-	
+	//STAND ALONE mode allows for single upload/download file features only
+	//	no directory notion.
+	console.log("standAlone",standAlone);
+	var _STAND_ALONE = standAlone;
 	
 	//outline:			
 	//
@@ -332,7 +339,7 @@ CodeEditor.create = function() {
 	Debug.log("CodeEditor.editor constructed");
 	
 	// start "public" members
-	this.lastFileNameHistorySelectIndex = -1;
+	//this.lastFileNameHistorySelectIndex = -1; //now unused (?)
 	this.findAndReplaceFind = ["",""];	 //save find & replace state
 	this.findAndReplaceReplace = ["",""]; //save find & replace state
 	this.findAndReplaceScope = [0,0]; //save find & replace state
@@ -407,7 +414,7 @@ CodeEditor.create = function() {
 		}
 
 
-		CodeEditor.showTooltip();
+		CodeEditor.showTooltip(_STAND_ALONE);
 		
 		//proceed
 		
@@ -420,7 +427,25 @@ CodeEditor.create = function() {
 			_needEventListeners = false;
 		}
 		
-		
+		//stop here if standalone with no server
+		if(_STAND_ALONE) 
+		{
+			
+			//set directory situation after CodeEditor has been fully instantiated
+			window.setTimeout(
+					function()
+					{
+				//at this point, CodeEditor is intantiated
+				Debug.log("CodeEditor stand alone setup...");
+				CodeEditor.editor.toggleDirectoryNav(true /*forPrimary*/,false /*value*/);
+				
+				//open upload window to get the ball rolling
+				CodeEditor.editor.upload(true /*forPrimary*/); 
+					}, 100);
+			
+			
+			return; 
+		}
 
 		DesktopContent.XMLHttpRequest("Request?RequestType=" + _requestPreamble +
 				"codeEditor" + 
@@ -429,13 +454,37 @@ CodeEditor.create = function() {
 				function(req, reqParam, errStr)
 				{	
 			console.log("getAllowedExtensions",req,errStr);
-
+			
 			if(!_READ_ONLY && !req)
 			{
-				Debug.log("Assuming invalid permissions! Reverting to read-only mode.", Debug.HIGH_PRIORITY);
+				if(DesktopContent._sequence)
+					Debug.log("Assuming invalid permissions (remember the wiz mode sequence access code must be at least 8 characters to allow write access)!\n\nReverting to read-only mode.", Debug.WARN_PRIORITY);
+				else
+					Debug.log("Assuming invalid permissions (remember only named users can have write access, not the anonymous admin user)!\n\nReverting to read-only mode.", Debug.WARN_PRIORITY);
 				_READ_ONLY = true;
 				init();
 				return;
+			}			
+
+			if(errStr && errStr != "")
+				Debug.log(errStr,Debug.HIGH_PRIORITY);
+			
+			if(!req) //request failed
+			{
+				Debug.log("Does the Code Editor Supervisor exist? You must connect the web editor to a valid Code Editor Supervisor application (please check your Configuration Tree and then restart ots).",Debug.HIGH_PRIORITY);				
+				return;
+			}
+			else //check for error
+			{
+				if(!errStr || errStr == "")
+					errStr = DesktopContent.getXMLValue(req,"Error");
+				
+				if(errStr && errStr != "")
+				{
+					Debug.log(errStr,Debug.HIGH_PRIORITY);
+					Debug.log("Does the Code Editor Supervisor exist? You must connect the web editor to a valid Code Editor Supervisor application (please check your Configuration Tree and then restart ots).",Debug.HIGH_PRIORITY);
+					return;
+				}
 			}
 			
 			_ALLOWED_FILE_EXTENSIONS = DesktopContent.getXMLValue(req,"AllowedExtensions");
@@ -587,7 +636,9 @@ CodeEditor.create = function() {
 						{
 							"id":"directoryNavToggle",
 							"class":"controlsButton",
-							"style":"float:left;",
+							"style":"float:left;" + 
+							(_STAND_ALONE ?
+									"display:none":""),
 							"onclick":"CodeEditor.editor.toggleDirectoryNav(" + forPrimary + ");",
 							"title": "Open a file... (Ctrl + D)",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
@@ -606,27 +657,16 @@ CodeEditor.create = function() {
 					str += "</div>"; //close directoryNavToggle
 					
 					//save
-					if (_requestPreamble == "readOnly"){
-
-						str += htmlOpen("div",
-							{
-								"id":"saveFile",
-								"class":"controlsButton",
-								"style": "float:left; display:none;",
-								"onclick":"CodeEditor.editor.saveFile(" + forPrimary + ");",
-								"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
-							},"" /*innerHTML*/, 0 /*doCloseTag*/);
-					}
-					else{
-						str += htmlOpen("div",
-							{
-								"id": "saveFile",
-								"class": "controlsButton",
-								"style": "float:left;",
-								"onclick": "CodeEditor.editor.saveFile(" + forPrimary + ");",
-								"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
-							}, "" /*innerHTML*/, 0 /*doCloseTag*/);
-					}
+					str += htmlOpen("div",
+						{
+							"id": "saveFile",
+							"class": "controlsButton",
+							"style": "float:left;" + 
+							((_STAND_ALONE || _READ_ONLY)?
+									"display:none":""),
+							"onclick": "CodeEditor.editor.saveFile(" + forPrimary + ");",
+							"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
+						}, "" /*innerHTML*/, 0 /*doCloseTag*/);
 					{
 						str += htmlOpen("div",
 							{
@@ -643,7 +683,7 @@ CodeEditor.create = function() {
 								"id":"saveFileMainBottom",
 								
 							},"" /*innerHTML*/, 1 /*doCloseTag*/);
-					} //end directoryNavToggle
+					} //end save content
 					str += "</div>"; //close saveFile
 					
 				} //end locals controlsPane
@@ -694,26 +734,17 @@ CodeEditor.create = function() {
 				str += "</div>"; //close viewToggle
 				
 				//incremental compile
-			if (_requestPreamble == "readOnly") {
-				str += htmlOpen("div",
-					{
-						"id":"incrementalBuild",
-						"class":"controlsButton",
-						"style":"float:right; display: none;",
-						"onclick":"CodeEditor.editor.build(0 /*cleanBuild*/);",
-						"title":"Incremental Build... (Ctrl + B)",
-					},"" /*innerHTML*/, 0 /*doCloseTag*/);
-				}
-			else {
+			
 				str += htmlOpen("div",
 					{
 						"id": "incrementalBuild",
 						"class": "controlsButton",
-						"style": "float:right",
+						"style": "float:right;" + 
+						((_STAND_ALONE || _READ_ONLY)?
+								"display:none":""),
 						"onclick": "CodeEditor.editor.build(0 /*cleanBuild*/);",
 						"title": "Incremental Build... (Ctrl + B)",
-					}, "" /*innerHTML*/, 0 /*doCloseTag*/);
-			}
+					}, "" /*innerHTML*/, 0 /*doCloseTag*/);			
 				{
 					
 					str += htmlOpen("div",
@@ -724,26 +755,16 @@ CodeEditor.create = function() {
 				str += "</div>"; //close incrementalBuild
 				
 				//clean compile
-			if (_requestPreamble == "readOnly") {
-				str += htmlOpen("div",
-					{
-						"id":"cleanBuild",
-						"class":"controlsButton",
-						"style":"float:right; display: none;",
-						"onclick":"CodeEditor.editor.build(1 /*cleanBuild*/);",
-						"title":"Clean Build... (Ctrl + N)",
-					},"" /*innerHTML*/, 0 /*doCloseTag*/);
-				}
-			else {
 				str += htmlOpen("div",
 					{
 						"id": "cleanBuild",
 						"class": "controlsButton",
-						"style": "float:right",
+						"style": "float:right;" + 
+						((_STAND_ALONE || _READ_ONLY)?
+								"display:none":""),
 						"onclick": "CodeEditor.editor.build(1 /*cleanBuild*/);",
 						"title": "Clean Build... (Ctrl + N)",
-					}, "" /*innerHTML*/, 0 /*doCloseTag*/);
-			}
+					}, "" /*innerHTML*/, 0 /*doCloseTag*/);			
 				{
 					
 					str += htmlOpen("div",
@@ -903,6 +924,20 @@ CodeEditor.create = function() {
 					CodeEditor.editor.startUpdateHandling(forPrimary);
 					
 				}); //end addEventListener
+			
+			_eel[i].addEventListener('paste', 
+					function(e)
+					{
+				Debug.log("paste handler() for editor" + forPrimary);
+				var paste = (e.clipboardData || window.clipboardData).getData('text');
+				
+				var selection = window.getSelection();
+				if (!selection.rangeCount) return false;
+				selection.deleteFromDocument();
+				selection.getRangeAt(0).insertNode(document.createTextNode(paste));
+
+				e.preventDefault();
+					});  //end addEventListener
 			
 			//add click handler to track active pane
 			box = document.getElementById("editorPane" + i);
@@ -1790,9 +1825,10 @@ CodeEditor.create = function() {
 			altExtensions.push("cc");
 			altPaths.push(relatedPath+"_processor");
 			altExtensions.push("cc");
-			altPaths.push(relatedPath+"_controls");
+			altPaths.push(relatedPath+"_slowcontrols");
 			altExtensions.push("cc");
 			altPaths.push(relatedPath+"_table");
+			altExtensions.push("cc");
 			
 			altPaths.push(relatedPath);
 			altExtensions.push("cpp");
@@ -1817,7 +1853,7 @@ CodeEditor.create = function() {
 			else if(relatedPath.indexOf("Producer") >= 0)
 				relatedPath += "_processor";			
 			else if(relatedPath.indexOf("Controls") >= 0)
-				relatedPath += "_controls";			
+				relatedPath += "_slowcontrols";			
 			else if(relatedPath.indexOf("Table") >= 0)
 				relatedPath += "_table";				
 			
@@ -1867,8 +1903,8 @@ CodeEditor.create = function() {
 			if((i = relatedPath.indexOf("_processor")) > 0 &&
 					i == relatedPath.length-("_processor").length)
 				relatedPath = relatedPath.substr(0,i); //remove processor
-			if((i = relatedPath.indexOf("_controls")) > 0 &&
-					i == relatedPath.length-("_controls").length)
+			if((i = relatedPath.indexOf("_slowcontrols")) > 0 &&
+					i == relatedPath.length-("_slowcontrols").length)
 				relatedPath = relatedPath.substr(0,i); //remove controls
 			if((i = relatedPath.indexOf("_table")) > 0 &&
 					i == relatedPath.length-("_table").length)
@@ -2338,22 +2374,32 @@ CodeEditor.create = function() {
 					{
 						//add an element to scroll into view and then remove it
 						var val = secondEl.textContent;					
-						var newNode1 = document.createTextNode(
-								val.substr(0,cursor.endPos)); //pre-special text
-						
-						el.insertBefore(newNode1,secondEl);
-						
-						var newNode = document.createElement("label");
-						newNode.textContent = val[cursor.endPos]; //special text
-						el.insertBefore(newNode,secondEl);
-						
-						secondEl.textContent = val.substr(cursor.endPos+1); //post-special text
-						
-						newNode.scrollIntoViewIfNeeded();							
-						
-						el.removeChild(newNode);
-						el.removeChild(newNode1);
-						secondEl.textContent = val;						
+						if(cursor.endPos < val.length)
+						{	
+							var newNode1 = document.createTextNode(
+									val.substr(0,cursor.endPos)); //pre-special text							
+							el.insertBefore(newNode1,secondEl);
+							
+							var newNode = document.createElement("label");							
+							newNode.textContent = val[cursor.endPos]; //special text
+							el.insertBefore(newNode,secondEl);
+							
+							if(cursor.endPos+1 < val.length)
+								secondEl.textContent = val.substr(cursor.endPos+1); //post-special text
+							else
+								secondEl.textContent = "";
+							
+							newNode.scrollIntoViewIfNeeded(); //target the middle special text
+							
+							el.removeChild(newNode);
+							el.removeChild(newNode1);
+							secondEl.textContent = val;		
+						}
+						else //if is the end of the first element, focus on next element
+						{							
+							el.childNodes[cursor.endNodeIndex+1].scrollIntoViewIfNeeded();
+						}
+																
 					}
 					catch(e)
 					{
@@ -2606,6 +2652,7 @@ CodeEditor.create = function() {
 			"#undef" 				: _DECORATION_RED,
 			"#include" 				: _DECORATION_RED,
 			"#ifndef" 				: _DECORATION_RED,
+			"#if"	 				: _DECORATION_RED,
 			"#else" 				: _DECORATION_RED,
 			"#endif" 				: _DECORATION_RED,
 			"using"					: _DECORATION_RED,
@@ -2626,6 +2673,8 @@ CodeEditor.create = function() {
 			"uint32_t" 				: _DECORATION_RED,
 			"uint16_t" 				: _DECORATION_RED,
 			"uint8_t" 				: _DECORATION_RED,
+			"size_t" 				: _DECORATION_RED,
+			"time_t" 				: _DECORATION_RED,
 			"long"	 				: _DECORATION_RED,
 			"float"	 				: _DECORATION_RED,
 			"double" 				: _DECORATION_RED,
@@ -2644,14 +2693,20 @@ CodeEditor.create = function() {
 			"this"					: _DECORATION_RED,
 			"true"					: _DECORATION_RED,
 			"false"					: _DECORATION_RED,
+			"auto"					: _DECORATION_RED,
 			
-			//"std::" 				: _DECORATION_BLACK,
+			"fstream"				: _DECORATION_GREEN,
+			"sstream"				: _DECORATION_GREEN,
+			"istream"				: _DECORATION_GREEN,
+			"ostream"				: _DECORATION_GREEN,
 			
 			"std"					: _DECORATION_GREEN,
-			"ots"					: _DECORATION_GREEN,	
+			"ots"					: _DECORATION_GREEN,
+			"ConfigurationTree"		: _DECORATION_GREEN,		
 			"string" 				: _DECORATION_GREEN,
 			"set" 					: _DECORATION_GREEN,
 			"vector"				: _DECORATION_GREEN,
+			"array"					: _DECORATION_GREEN,
 			"pair"					: _DECORATION_GREEN,
 			"get" 					: _DECORATION_GREEN,
 			"map" 					: _DECORATION_GREEN,
@@ -2756,14 +2811,28 @@ CodeEditor.create = function() {
 		var decor, fontWeight;
 		var specialString;
 		var commentString = "#";
+		//var blockCommentStartString,blockCommentEndString; //TODO
+		
 		if(_fileExtension[forPrimary][0] == 'c' || 
 				_fileExtension[forPrimary][0] == 'C' ||
 				_fileExtension[forPrimary][0] == 'h' ||
 				_fileExtension[forPrimary][0] == 'j' ||
 				_fileExtension[forPrimary] == "icc")
+		{
 			commentString = "//"; //comment string
+			//blockCommentStartString = "/*"; //TODO
+			//blockCommentEndString = "*/"; //TODO
+		}
+		
+//		if(_fileExtension[forPrimary].length > 2 &&
+//				_fileExtension[forPrimary].substr(0,3) == "htm")
+//		{
+//			blockCommentStartString = "<!--"; //TODO
+//			blockCommentEndString = "-->";		//TODO	
+//		}
+		
 			
-			var fileDecorType = "txt";
+		var fileDecorType = "txt";
 		if(	_fileExtension[forPrimary] == "html" ||
 				_fileExtension[forPrimary] == "js")
 			fileDecorType = "js"; //js style
@@ -2817,17 +2886,16 @@ CodeEditor.create = function() {
 				var str = newNode.textContent;	
 				str = str.substr(str.lastIndexOf('.')+1);
 				
-				
-				if(str.length > 0 && str.length <= 4 && 
-						(
-								str[0] == 'c' || 
-								str[0] == 'C' ||
-								str[0] == 'h' ||
-								str == "txt" || 
-								str == "py" ||
-								str == "sh" ||
-								str[0] == "j"
-						))
+				//note that trailing " or ' is still there
+				if(str.length > 0 && str.length <= 4 && (
+						str[0] == 'c' || 
+						str[0] == 'C' ||
+						str[0] == 'h' ||
+						str.substr(0,3) == "txt" || 
+						str.substr(0,2) == "py" ||
+						str.substr(0,2) == "sh" ||
+						str[0] == "j"
+				))
 				{
 					Debug.log("is quote " + str);
 				
@@ -2880,7 +2948,7 @@ CodeEditor.create = function() {
 						{
 							//look-up first entry
 							var i = nameArr[0].indexOf('-');
-							if(i > 0)
+							if(i > 0) //change -'s to _
 							{
 								var repo = "";
 								if(nameArr[0] != "otsdaq-core")
@@ -2891,13 +2959,10 @@ CodeEditor.create = function() {
 								else
 									nameArr[0] = "otsdaq";
 								
-								name = "/" + nameArr[0] + "/" + name;									
+																	
 							}
-							else
-							{
-								Debug.log("Confused by name array, error! name = " + name);
-								return;
-							}
+							//add repo name first
+							name = "/" + nameArr[0] + "/" + name;								
 						}
 						
 						
@@ -3063,7 +3128,7 @@ CodeEditor.create = function() {
 							(val[0] != commentString[0] || //break up comment if there is a new line
 								val.indexOf('\n') >= 0)	&& 
 							val[0] != '"') || 
-						//or if cursor is close
+						//or if cursor is nearby
 						(n+1 >= cursor.startNodeIndex && n-1 <= cursor.endNodeIndex))
 				{
 					//Debug.log("val lost " + val);
@@ -4008,7 +4073,7 @@ CodeEditor.create = function() {
 		var endi;
 		var strLength;
 		var str;
-		var endPi, startCi;
+		var endPi, startCi, lastWhiteSpacei;
 		var newLinei;
 		var localNewLineCount;
 		
@@ -4029,14 +4094,38 @@ CodeEditor.create = function() {
 		if(isCcSource) indicator = "::";
 		if(isJsSource) indicator = "function";
 		
+		var inComment = false; //ignore indicator in comment
+		var inBlockComment = false; //ignore indicator in comment
+		
 		for(i=0;i<elTextObj.text.length;++i)
 		{
 			if(elTextObj.text[i] == '\n') 
 			{
 				++newLineCount;
 				indicatorIndex = 0; //reset
+				inComment = false; //reset 
 				continue;
 			}
+			else if(inBlockComment && i+1 < elTextObj.text.length &&
+					elTextObj.text[i] == '*' && 
+					elTextObj.text[i+1] == '/') 
+				inBlockComment = false;
+			else if(inComment || inBlockComment) continue;
+			else if(i+1 < elTextObj.text.length)
+			{
+				if(elTextObj.text[i] == '/' && 
+						elTextObj.text[i+1] == '*') 
+				{
+					inBlockComment = true;
+					continue;
+				}
+				else if(elTextObj.text[i] == '/' && 
+						elTextObj.text[i+1] == '/') 
+				{
+					inComment = true;
+					continue;
+				}
+			} //end comment handling
 			
 			//find indicators
 			if(elTextObj.text[i] == indicator[indicatorIndex])
@@ -4059,6 +4148,11 @@ CodeEditor.create = function() {
 						outline.push([newLineCount+1,
 								str + 
 								"()"]);						
+					}
+					else
+					{
+						inComment = false;
+						inBlockComment = false;
 					}
 				}
 			}
@@ -4156,6 +4250,7 @@ CodeEditor.create = function() {
 			endi = -1;
 			startCi = -1;
 			endPi = -1;
+			lastWhiteSpacei = -1;
 			
 			//do this:
 			//			endi = elTextObj.text.indexOf('(',starti+3);
@@ -4164,15 +4259,62 @@ CodeEditor.create = function() {
 			
 			for(j=i+2;j<elTextObj.text.length;++j)
 			{
+				if(inComment && elTextObj.text[j] == '\n') 
+					inComment = false; //reset 
+				else if(inBlockComment && j+1 < elTextObj.text.length &&
+						elTextObj.text[j] == '*' && 
+						elTextObj.text[j+1] == '/') 
+					inBlockComment = false;
+				else if(inComment || inBlockComment) continue;
+				else if(j+1 < elTextObj.text.length)
+				{
+					if(elTextObj.text[j] == '/' && 
+							elTextObj.text[j+1] == '*') 
+					{
+						inBlockComment = true;
+						continue;
+					}
+					else if(elTextObj.text[j] == '/' && 
+							elTextObj.text[j+1] == '/') 
+					{
+						inComment = true;
+						continue;
+					}
+				} //end comment handling
+
 				if(elTextObj.text[j] == ';' || //any semi-colon is a deal killer
 						elTextObj.text[j] == '+' || //or non-function name characters
 						elTextObj.text[j] == '"' ||
-						elTextObj.text[j] == "'") 					
+						elTextObj.text[j] == "'" || 
+						elTextObj.text[j] == "!" ||
+						elTextObj.text[j] == "|") 					
 					return undefined;
+				
+				
+				
 				if(endi < 0) //first find end of name
 				{
 					if(elTextObj.text[j] == '(')
 						endi = j++; //found end of name, and skip ahead
+					else
+					{
+						if(elTextObj.text[j] == ')') 
+							return undefined; //found wrong direction brace
+						
+						//if space, then moveup start index
+						if(elTextObj.text[j] == ' ' || 
+								elTextObj.text[j] == '\t' ||
+								elTextObj.text[j] == '\n')
+							lastWhiteSpacei = j;
+						else if(lastWhiteSpacei != -1 &&
+								elTextObj.text[j] == ':')
+						{
+							//then found a white space after indicator
+							// then another indicator started, so give up
+							return undefined;
+						}
+							
+					}
 				}
 				else if(startCi < 0)
 				{
@@ -4294,6 +4436,7 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//keyDownHandler ~~
 	var TABKEY = 9;	
+	var SPACEKEY = 32;	
 	this.keyDownHandler = function(e,forPrimary,shortcutsOnly)
 	{
 		forPrimary = forPrimary?1:0;
@@ -4898,7 +5041,7 @@ CodeEditor.create = function() {
 		{			
 			if(keyCode == 83) 		// S for file save
 			{
-				if (_requestPreamble !== "readOnly") {
+				if (!_STAND_ALONE && !_READ_ONLY) {
 					CodeEditor.editor.saveFile(forPrimary,true /*quiet*/);
 					e.preventDefault();
 					return;
@@ -4906,13 +5049,15 @@ CodeEditor.create = function() {
 			}
 			else if(keyCode == 68) 	// D for directory toggle
 			{
-				CodeEditor.editor.toggleDirectoryNav(forPrimary);
-				e.preventDefault();
-				return;
+				if (!_STAND_ALONE) {
+					CodeEditor.editor.toggleDirectoryNav(forPrimary);
+					e.preventDefault();
+					return;
+				}
 			}
 			else if(keyCode == 66) 	// B for incremental build
 			{
-				if (_requestPreamble !== "readOnly") {
+				if (!_STAND_ALONE && !_READ_ONLY) {
 					CodeEditor.editor.build();
 					e.preventDefault();
 					return;
@@ -4932,7 +5077,7 @@ CodeEditor.create = function() {
 			}
 			else if(keyCode == 78) 	// N for clean build
 			{
-				if (_requestPreamble !== "readOnly") {
+				if (!_STAND_ALONE && !_READ_ONLY) {
 					CodeEditor.editor.build(true /*clean*/);
 					e.preventDefault();
 					return;
@@ -5025,7 +5170,9 @@ CodeEditor.create = function() {
 		
 		
 		
-		if(keyCode == TABKEY || rectangularTAB ||
+		if(keyCode == TABKEY ||
+				(cursorSelection && keyCode == SPACEKEY) ||
+				rectangularTAB ||
 				blockCOMMENT)
 		{					
 			_fileWasModified[forPrimary] = true;
@@ -5143,7 +5290,11 @@ CodeEditor.create = function() {
 						val = node.textContent; //.nodeValue; //.wholeText
 						
 						for(i=(n==cursor.startNodeIndex?cursor.startPos:
-									0);i<val.length;++i)
+									0);
+								i<
+								(n==cursor.endNodeIndex?cursor.endPos:
+										val.length);
+								++i)
 						{
 							//console.log(xcnt," vs ",x,val[i]);
 							if(val[i] == '\n')
@@ -5162,12 +5313,14 @@ CodeEditor.create = function() {
 									{
 										val = val.substr(0,i-1) + val.substr(i);
 										node.textContent = val;
+										if(n == cursor.endNodeIndex) --cursor.endPos;
 									}
 								}
 								else //add leading tab
 								{
 									val = val.substr(0,i) + "\t" + val.substr(i);
 									node.textContent = val;
+									if(n == cursor.endNodeIndex) ++cursor.endPos;
 								}
 								
 							}
@@ -5188,34 +5341,7 @@ CodeEditor.create = function() {
 					
 					//need to set cursor
 					CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
-					//					try
-					//					{
-					//						var range = document.createRange();
-					////						range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-					////						range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
-					//						var firstEl = el.childNodes[cursor.startNodeIndex];
-					//						if(firstEl.firstChild)
-					//							firstEl = firstEl.firstChild;
-					//
-					//						var secondEl = el.childNodes[cursor.endNodeIndex];
-					//						if(secondEl.firstChild)
-					//							secondEl = secondEl.firstChild;
-					//
-					//						range.setStart(firstEl,
-					//								cursor.startPos);
-					//						range.setEnd(secondEl,
-					//								cursor.endPos);
-					//
-					//						var selection = window.getSelection();
-					//						selection.removeAllRanges();
-					//						selection.addRange(range);
-					//					}
-					//					catch(err)
-					//					{
-					//						console.log(err);
-					//						return;
-					//					}
-					
+										
 					return;
 				} //end rectangular TAB handling
 				
@@ -5232,7 +5358,7 @@ CodeEditor.create = function() {
 				//reverse-find new line
 				var node,val;
 				var found = false;	
-				var specialStr = '\t';
+				var specialStr = keyCode == SPACEKEY?' ':'\t';
 				if(blockCOMMENT)
 				{
 					if(_fileExtension[forPrimary][0] == 'c' || 
@@ -5400,7 +5526,19 @@ CodeEditor.create = function() {
 							} //end delete leading tab
 							else //add leading tab
 							{
-								val = val.substr(0,i+1) + specialStr + val.substr(i+1);
+								if(specialStr == ' ') //handle white-space appending special string
+								{
+									//add safter white space
+									var ii = i+1;
+									while(ii < val.length && 
+											(val[ii] == ' ' || val[ii] == '\t' || val[ii] == '\n'))
+										++ii;									
+									val = val.substr(0,ii) + specialStr + val.substr(ii);
+									prevCharIsNewLine = (val[ii] == '\n');
+									i = ii+1;
+								}
+								else //handle line-leading special string 
+									val = val.substr(0,i+1) + specialStr + val.substr(i+1);
 								node.textContent = val;
 							}
 							
@@ -5433,35 +5571,7 @@ CodeEditor.create = function() {
 				} //end node loop
 				
 				//need to set cursor
-				CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
-				//				try
-				//				{
-				//					var range = document.createRange();
-				////					range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-				////					range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
-				//
-				//					var firstEl = el.childNodes[cursor.startNodeIndex];
-				//					if(firstEl.firstChild)
-				//						firstEl = firstEl.firstChild;
-				//
-				//					var secondEl = el.childNodes[cursor.endNodeIndex];
-				//					if(secondEl.firstChild)
-				//						secondEl = secondEl.firstChild;
-				//
-				//					range.setStart(firstEl,
-				//							cursor.startPos);
-				//					range.setEnd(secondEl,
-				//							cursor.endPos);
-				//
-				//					var selection = window.getSelection();
-				//					selection.removeAllRanges();
-				//					selection.addRange(range);
-				//				}
-				//				catch(err)
-				//				{
-				//					console.log(err);
-				//					return false;
-				//				}
+				CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);				
 			}
 			else if(!blockCOMMENT) //not tabbing a selection, just add or delete single tab in place
 			{	
@@ -5803,10 +5913,10 @@ CodeEditor.create = function() {
 					"onchange":
 					"CodeEditor.editor.handleFileNameHistorySelect(" + 
 					forPrimary + ");",
-						"onclick":"CodeEditor.editor.stopUpdateHandling(event);",
-						"onfocus":"CodeEditor.editor.lastFileNameHistorySelectIndex = this.value;" +
-						"this.value = -1;", //force action even if same selected
-						"onblur":"this.value = CodeEditor.editor.lastFileNameHistorySelectIndex;",
+					"onclick":"CodeEditor.editor.stopUpdateHandling(event);",
+					//"onfocus":"CodeEditor.editor.lastFileNameHistorySelectIndex = this.value;" +
+					//"this.value = -1;", //force action even if same selected
+					//"onblur":"this.value = CodeEditor.editor.lastFileNameHistorySelectIndex;",
 						
 				},0 /*innerHTML*/, false /*doCloseTag*/);
 			
@@ -6474,26 +6584,16 @@ CodeEditor.create = function() {
 			},0 /*innerHTML*/, false /*doCloseTag*/);
 		str += "<center>";
 		
-		//add rename button		
-		if (_requestPreamble == "readOnly") {
+		
 		str += htmlOpen("div", //this is place holder, that keeps height spacing
-			{
-				"class":"fileButtonContainer",
-					"style":"width: 48px;",
-				"id":"fileButtonContainer" + forPrimary,
-				
-			},0 /*innerHTML*/, false /*doCloseTag*/);	
-		}	
-		else{
-			str += htmlOpen("div", //this is place holder, that keeps height spacing
 				{
-					
-					"style": "width: 148px;",
-					"class": "fileButtonContainer",
-					"id": "fileButtonContainer" + forPrimary,
+
+						"style": "width: 172px;", //_READ_ONLY make different width
+						"class": "fileButtonContainer",
+						"id": "fileButtonContainer" + forPrimary,
 
 				}, 0 /*innerHTML*/, false /*doCloseTag*/);	
-		}
+
 		str += htmlOpen("div", //this is el that gets hide/show toggle
 			{
 				"class":"fileButtonContainerShowHide",
@@ -6504,17 +6604,20 @@ CodeEditor.create = function() {
 				",1 /*doNotStartTimer*/);",
 				
 			},0 /*innerHTML*/, false /*doCloseTag*/);	
-		if (_requestPreamble !== "readOnly") {		
+		
+		//add rename button		
+		if (!_READ_ONLY)
+		{		
 			str += htmlOpen("div", 
-				{
-					"class":"fileButton",
-					"id":"fileRenameButton" + forPrimary,
-					"title": "Change the filename\n" + path + "." + extension,
-					"onclick":
-					"event.stopPropagation(); " + 
-					"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
-				},0 /*innerHTML*/, true /*doCloseTag*/);
-			}
+					{
+							"class":"fileButton",
+							"id":"fileRenameButton" + forPrimary,
+							"title": "Change the filename\n" + path + "." + extension,
+							"onclick":
+							"event.stopPropagation(); " + 
+							"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
+					},0 /*innerHTML*/, true /*doCloseTag*/);
+		}
 		str += htmlOpen("div", 
 			{
 				"class":"fileButton",
@@ -6529,7 +6632,7 @@ CodeEditor.create = function() {
 			"<div class='fileDownloadButtonBorderChild' style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid rgb(202, 204, 210);'></div>" +
 			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 2px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
 			/*innerHTML*/, true /*doCloseTag*/);
-		if (_requestPreamble !== "readOnly") {	
+		if (!_READ_ONLY) {	
 			str += htmlOpen("div", 
 				{
 					"class":"fileButton",
@@ -6546,7 +6649,7 @@ CodeEditor.create = function() {
 			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 3px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
 			/*innerHTML*/, true /*doCloseTag*/);
 		}
-		if (_requestPreamble !== "readOnly") {	
+		if (!_READ_ONLY) {	
 			str += htmlOpen("div",
 				{
 					"class":"fileButton fileUndoButton",
@@ -6592,12 +6695,31 @@ CodeEditor.create = function() {
 					"font-size: 17px;" +
 					"font-weight: bold;",
 				"onclick":
-				"event.stopPropagation(); " + 
-				"CodeEditor.editor.openRelatedFile(" + forPrimary + 
-					", true /*inOtherPane*/);",
+					"event.stopPropagation(); " + 
+					"CodeEditor.editor.openRelatedFile(" + forPrimary + 
+						", true /*inOtherPane*/);",
 			},
 			//make redo arrow
 			":"
+			/*innerHTML*/, true /*doCloseTag*/);
+		
+		str += htmlOpen("div",
+			{
+				"class":"fileButton refreshFileButton",
+				"id":"refreshFileButton" + forPrimary,
+				"title": "Refresh file \n" + path + "." + extension,
+				"style": "color: rgb(202, 204, 210);" +
+					"padding: 0 5px 0;" +
+					(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX? //firefox shows circle-arrow character smaller
+							"font-size: 28px;margin-top:-6px;":"font-size: 17px;font-weight:bold;"),
+				"onclick":
+					"event.stopPropagation(); " + 
+					"CodeEditor.editor.openFile(" + forPrimary + 
+						",\"" + path + "\",\"" +
+						extension + "\", true /*doConfirm*/);",
+			},
+			//make refresh circle arrow
+			"&#8635;"
 			/*innerHTML*/, true /*doCloseTag*/);
 		
 		
@@ -7087,6 +7209,13 @@ CodeEditor.create = function() {
 				_fileUploadString = this.result;
 				Debug.log("_fileUploadString = " + _fileUploadString);							
 				document.getElementById('popUpDialog-submitButton').disabled = false;
+				
+				if(_STAND_ALONE)
+				{
+					var i=file.name.lastIndexOf('.');
+					_filePath[forPrimary] = file.name.substr(0,i);
+					_fileExtension[forPrimary] = file.name.substr(i+1);
+				}
 			}
 			reader.readAsText(file);
 		}, false);
@@ -7115,7 +7244,7 @@ CodeEditor.create = function() {
 				//	with spaces		
 				_fileUploadString = _fileUploadString.replace(new RegExp(
 						String.fromCharCode(160),'g'),' ');
-				_fileUploadString = "hi";
+				
 				var el = _eel[forPrimary];
 				el.textContent = _fileUploadString;
 				CodeEditor.editor.displayFileHeader(forPrimary);

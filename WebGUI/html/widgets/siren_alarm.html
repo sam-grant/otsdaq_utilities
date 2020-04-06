@@ -1,0 +1,154 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>Siren Alarm</title>
+		<style type="text/css">	
+			body {
+				font: 10px arial;
+				background-color: rgb(255, 255, 255);
+				//margin: 0px !important;
+			}
+
+			button {
+			    display: inline-block;
+			    width: auto;
+			    height: auto;
+			    padding: 0;
+			    margin: 0;
+			    vertical-align: top;
+			    font-size: 10px;
+			    font-weight:bold;
+			}
+
+		</style>
+
+		<script>
+
+			var _chatSound;
+			var _SOUND_PATH = "/WebPath/sounds/siren-noise.wav";
+			var _soundsEnabled = true;
+
+			//functions:
+			//init()
+
+			var pv_settings_ = [];
+			var parameters_ = {class: "", "show_labels": "true"};
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			//init called once body has loaded
+			function init()
+			{
+				console.log("init()");
+				console.log(window.frameElement.id);
+				_chatSound = new Audio(_SOUND_PATH);
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
+			}
+
+			function setupPVs(settings)
+			{
+				console.log("setupPVs() : " , settings);
+				pv_settings_ = settings;
+			}
+
+			function drawWidget(widget, parameters)
+			{
+				drawSirenAlarm();
+				console.log(document.body);
+			}
+
+			function getAttributes()
+			{
+				return parameters_;
+			}
+
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log("Siren: set parameters()");
+				console.log(parameters_);
+			}
+
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+				console.log("SireneAlarm newValue() reached", pvName, pvValue);
+				if(pvSeverity == "MAJOR" )
+				{
+					document.getElementById("alarm-text").innerHTML = "<center style = 'color: red'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					document.getElementById("alarm-image").src = "./red_siren.png";
+				}
+				else if(pvSeverity == "MINOR")
+				{
+					if(_soundsEnabled) _chatSound.play();
+					document.getElementById("alarm-text").innerHTML = "<center style = 'color: orange'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					document.getElementById("alarm-image").src = "./yellow_siren.png";
+				}
+				else if(pvSeverity == "INVALID")
+				{
+					document.getElementById("alarm-text").innerHTML = "<center style = 'color: blue'>" + pvName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "<br />") + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
+					document.getElementById("alarm-image").src = "./blue_siren.png";
+				}
+				else
+				{
+					document.getElementById("alarm-text").innerHTML ="";
+					document.getElementById("alarm-image").src = "./green_siren.png";
+				}
+				document.getElementById("alarm-image").title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+			}
+
+			function drawSirenAlarm()
+			{
+				var image = document.getElementById("alarm-image");
+				image.src 	 = "./green_siren.png";
+				image.height = window.innerHeight - 60;
+				image.width  = window.innerWidth - 60;
+
+				var button = document.getElementById("alarm-button");
+				button.innerHTML = "SOUND ENABLED";
+				button.style.color = "green";
+			}
+
+			window.onresize = function() {
+				document.getElementById("alarm-image").height = window.innerHeight - 60;
+				document.getElementById("alarm-image").width  = window.innerWidth - 60;
+
+				console.log("SireneAlarm: window.onresize()");
+			};
+
+			function alarmSounds()
+			{
+				console.log("silenceAlarmSounds()");
+				var button = document.getElementById("alarm-button");
+				if (_soundsEnabled){
+					_soundsEnabled = false;
+					button.innerHTML = "SOUND DISABLED";
+					button.style.color = "red";
+				}
+				else
+				{
+					_soundsEnabled = true;
+					button.innerHTML = "SOUND ENABLED";
+					button.style.color = "green";
+				}
+				//setTimeout(enableAlarmSounds,300000);
+				
+			}
+
+		</script>
+
+</head>
+
+	<body onload='//init() called by DesktopContent.js'>
+
+	<div id="display">
+		<center>
+			<span id="alarm-text"></span>
+			<img id="alarm-image" style = "background-color: white"></img>
+			<button id="alarm-button" onclick="alarmSounds()">SOUND ALARM</button>
+		</center>
+	</div>
+
+	</body>
+
+</html>

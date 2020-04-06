@@ -1,146 +1,136 @@
 <!DOCTYPE HTML>
-<html lang="en"> 
+<html lang="en">
 	<head>
-		<title>Text</title>
-		<style type="text/css">			
+		<title>Thermometer</title>
+		<style type="text/css">
+
 			body {
 				font: 10px arial;
-				//background-color: rgb(41,46,55);
-				//margin: 0px !important;
+				background-color:  rgb(255, 255, 255);
 			}
-
 			.wrapper {
-			  display: grid;
-			  grid-template-columns: repeat(2, 1fr);
-			  //grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
-			  grid-gap: 10px;
-			  grid-auto-rows: minmax(100px, auto);
-			  //grid-auto-columns: 200px 200px;
+				display: grid;
+			 	//grid-template-columns: repeat(2, 1fr);
+				grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
+				grid-gap: 0px;
+				grid-auto-rows: minmax(100px, auto);
+				//grid-auto-columns: 200px 200px;
 			}
 
-			div{
-				//display: flex;
-	    		//white-space: nowrap;
-    			//text-overflow: ellipsis;
-			    //display: block;
-    			//overflow: hidden
-    			//resize: both;
-				//overflow: auto;
-			}
-
-			table{
-				//table-layout: auto
-				//border-spacing: 0px !important;
-			}
-
-			tr {
-				//margin: auto;
-				//padding: auto;
-			}
-			#td{
-				//writing-mode: vertical-lr;
-				//transform: rotate(90deg);
-				//text-align: left;
-				//vertical-align: bottom;
-				//font-size: 100%;
-				//color: white;
-				//height: 1px;
-				//width: 1px;
-				//float: left;
-			}
 		</style>
 
 		<script src="https://d3js.org/d3.v5.min.js"></script>
-		<script type="text/javascript" src="libraries/thermometer.js"></script>
-
-		<script>		
+		<script type="text/javascript" src="/WebPath/html/widgets/libraries/thermometer.js"></script>
+		<script>
 
 			//functions:
 			//init()
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
-			var rows = 1;
-			var columns = 1;
+
 			var thermometers = [];
 			var containers = [];
+			var pv_settings_ = [];
+			var parameters_ = {class: "", "show_labels": "true", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
 
 			//init called once body has loaded
 			function init()
 			{
-				console.log("init()");
+				console.log("Thermometer: init()");
 				console.log(window.frameElement.id)
-				window.parent.setupWidget(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
 			{
-				console.log("setupPVs() : " , settings);
+				console.log("Thermometer: setupPVs()" , settings);
+				pv_settings_ = settings;
 			}
 
-			var counter;
-			function newWidget(widget, parameters)
+			function drawWidget(widget, parameters)
 			{
-				var olddiv = document.getElementById("dispaly-div");
-				if (olddiv != null)
-					document.getElementById("display").removeChild(olddiv);
+				thermometers = [];
+				containers = [];
+
 
 				var div = document.createElement('div');
-				div.className="wrapper";
-				div.id = "dispaly-div";
-				document.getElementById("display").appendChild(div);
+				div.className = "wrapper";
+				div.id = "display-div";
+				var display = document.getElementById("display");
+				display.innerHTML = "";
+				if (!Object.getOwnPropertyNames(widget.pvList).length)
+					display.innerHTML = "<center>THERMOMETER: <br/> No associated PVs to display.</center>";
+				display.appendChild(div);
 
-				for(var pv in widget.PVList)
+				for(var pv in widget.pvList)
 				{
-					var divtemp = document.createElement('div');
-					divtemp.style.color = "white";
+					var divtemp = document.getElementById('label-div-' + pv)
+					if (divtemp == null)
+					{
+						divtemp = document.createElement('div');
+						divtemp.id = "label-div-" + pv;
+					}
+					//divtemp.style.color = "white";
 					//divtemp.style.fontSize = "auto"; //"3vw";
-					divtemp.innerHTML = "<center>" + pv;// + "</center>";
-					//divtemp.style.width = "100%";
-					//divtemp.style.height = "100%";
+					if (parameters_["show_labels"] == "true")
+						divtemp.innerHTML = "<center>" + pv.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...";
+					else
+						divtemp.innerHTML = "WAITING FOR A NEW PV VALUE...";
+
 					div.appendChild(divtemp);
 					containers[pv] = divtemp;
 
-					var wdth = (parseInt(window.innerWidth) - 16) / Object.keys(widget.PVList).length | 0;
-					var hght = (parseInt(window.innerHeight) - 56) / Object.keys(widget.PVList).length | 0;
+					var wdth = (parseInt(window.innerWidth) - 16) / Object.keys(widget.pvList).length | 0;
+					var hght = (parseInt(window.innerHeight) - 56);
 
 					if(wdth < 100) wdth = 100;
 					if(hght < 100) hght = 100;
 
-					drawThermometer(pv, divtemp, wdth, hght, 50, 0, 100);
+					var min   = pv_settings_[pv] !== undefined ? pv_settings_[pv].Lower_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pv].Lower_Display_Limit) : 0 : 0;
+					var max   = pv_settings_[pv] !== undefined ? pv_settings_[pv].Upper_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pv].Upper_Display_Limit) : 0 : 0;
+					max = max == "DC'd" || max <= min ? 100 : max;
+
+					drawThermometer(pv, divtemp, wdth, hght, 50, min, max);
 				}
-				console.log(document.body);
+				console.log("Thermometer: drawWidget()", document.body);
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
-				parameters = {
-//							"param1": "",
-//							"param2": "",
-//							"param3": "",
-//							"param4": "",
-//							"param5": "",
-//							"param6": "",
-//							"param7": ""
-							};
-				return parameters;
+				return parameters_;
 			}
 
-			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			function setAttributes(attributes)
 			{
-				console.log("Termometer newValue() reached", pvName, pvValue);
-				//updateThermometer(pvName, containers[pvName], pvValue, (pvValue * 0.5), (pvValue * 1.5));
-				containers[pvName].innerHTML = "<center>" +pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity;// + "</center>";
+				parameters_ = attributes;
+				console.log("Thermometer: setAttributes()");
+				console.log(parameters_);
+			}
 
-				//thermometers[pvName].setCurrentValue(pvValue);
-				//thermometers[pvName].setMinValue((pvValue * 0.5));
-				//thermometers[pvName].setMaxValue((pvValue * 1.5));
-				thermometers[pvName].render(
-					containers[pvName],
-					pvValue,
-					(pvValue * 0.5),
-					(pvValue * 1.5)
-				);
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+				console.log("Thermometer: drawNewValue() reached", pvName, pvValue);
+				window.parent.setWidgetPVinfo(
+									  window.frameElement.id
+									, pvName
+									, pvValue
+									, pvTime
+									, pvStatus
+									, pvSeverity
+									, parameters_["show_labels"]
+									, containers
+									, parameters_["old_value_foreground_color"]
+									, parameters_["old_value_background_color"]
+									, thermometers[pvName]._svg._groups[0][0].parentElement
+									);
+
+				var min   = pv_settings_[pvName] !== undefined ? pv_settings_[pvName].Lower_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pvName].Lower_Display_Limit) : 0 : 0;
+				var max   = pv_settings_[pvName] !== undefined ? pv_settings_[pvName].Upper_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pvName].Upper_Display_Limit) : 0 : 0;
+				max = max == "DC'd" || max <= min ? 100 : max;
+
+				thermometers[pvName].render(containers[pvName],	pvValue, min, max);
+				thermometers[pvName]._svg._groups[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
 			}
 
 			function drawThermometer(name, container, wdth, hght, val, min, max)
@@ -174,7 +164,7 @@
 
 			function resizeWidget()
 			{
-				console.log("Thermometer() resize");
+				console.log("Thermometer: resizeWidget()");
 			}
 
 			function updateThermometer(name, container, val, min, max)
@@ -186,7 +176,7 @@
 				for(var name in thermometers)
 				{
 					thermometers[name]._config.width = (parseInt(window.innerWidth) - 16) / Object.keys(thermometers).length | 0;
-					thermometers[name]._config.height = (parseInt(window.innerHeight) - 56) / Object.keys(thermometers).length | 0;
+					thermometers[name]._config.height = (parseInt(window.innerHeight) - 56);
 					thermometers[name].render(
 						containers[name],
 						thermometers[name]._value.current,
@@ -194,17 +184,17 @@
 						thermometers[name]._value.max
 					);
 				}
-				console.log("thermometer: window.onresize()");
+				console.log("Thermometer: window.onresize()");
 			};
 
 		</script>
 
 </head>
 
-	<body onload='Javascript:init();'>	
+	<body onload='//init() called by DesktopContent.js'>	
+		<div id="display" width="100%" height="100%">
 
-	<div id="display"></div>
-
+		</div>
 	</body>
 
 </html>

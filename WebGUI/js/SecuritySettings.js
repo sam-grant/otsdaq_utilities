@@ -325,7 +325,7 @@ function editSecurityHandler(req)
 			req.responseText.indexOf("Error") >= 0)
 	{
 		Debug.log("Action Failed. Invalid Verify Code!", Debug.HIGH_PRIORITY);
-		selectedSecurityChoice_ = "";
+		selectedSecurityChoice_ = "NoSecurity"; //default to NoSecurity
 		showVisualSelection();
 		return;
 	}

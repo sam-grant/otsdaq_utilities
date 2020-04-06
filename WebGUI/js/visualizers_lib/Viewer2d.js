@@ -342,7 +342,7 @@ Viewer2d.createHud = function() {
 	str += "</div></center>";
 	
 	//add run controls
-	if(DesktopContent._needToLoginMailbox) //only add if successful login
+	if(DesktopContent._theDesktopWindow) //only add if successful login
 	{
 		str += "<div id='Viewer2d-hudRunNumberControls'>Run #: " +
 				"<input id='Viewer2d-hudRunNumberControls-textInput' oninput='Viewer2d.hud.handleRunChange();' type='text' value='40' > ";

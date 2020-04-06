@@ -10,7 +10,7 @@
 //				
 //				<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 //				<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-//				<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+//				<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 //				<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 //
 //		...anywhere inside the <head></head> tag of a window content html page
@@ -65,7 +65,8 @@ SimpleContextMenu._styleEl = 0;
 //SimpleContextMenu.createMenu
 // 	if from event, for left and top use, e.g event.pageX-1,event.pageY-1
 SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
-		popupID,topLeftX,topLeftY, primaryColor, secondaryColor, useDefaultHighlightColors)	{
+		popupID,topLeftX,topLeftY, primaryColor, secondaryColor, useDefaultHighlightColors)	
+{
 
 	//	Debug.log("Creating SimpleContextMenu...");
 	//	Debug.log("menuItems=" + menuItems);
@@ -179,7 +180,7 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 	el.style.display = "block";
 	
 	SimpleContextMenu._popUpEl = el;	
-}
+} //end createMenu()
 
 //=====================================================================================
 //SimpleContextMenu.createMenuCallAsString
@@ -224,28 +225,39 @@ SimpleContextMenu.createMenuCallAsString = function(menuItems,menuItemHandlers,
 			"\", " + (useDefaultHighlightColors?1:0) + ");";					
 	
 	return str;
-}
+} //end createMenuCallAsString()
+
+SimpleContextMenu._removePopupTimer = 0;
 
 //=====================================================================================
 //SimpleContextMenu.mouseMoveHandler
 //	subscribe the mouse move handler to DesktopContent.mouseMoveSubscriber
 //	OR if (typeof DesktopContent == 'undefined' then subscribe to Desktop
-SimpleContextMenu.mouseMoveHandler = function(e) {
-	
+SimpleContextMenu.mouseMoveHandler = function(e) 
+{
 	//Debug.log("moving " + e.pageX + "-" + e.pageY);
-	if(SimpleContextMenu._popUpEl) //delete popup
+	if(SimpleContextMenu._popUpEl && !SimpleContextMenu._removePopupTimer) //delete popup
 	{
-		Debug.log("Removing SimpleContextMenu");
-		SimpleContextMenu._popUpEl.parentNode.removeChild(SimpleContextMenu._popUpEl);
-		SimpleContextMenu._popUpEl = 0;
-	
-		if(SimpleContextMenu._styleEl)
-		{
-			SimpleContextMenu._styleEl.parentNode.removeChild(SimpleContextMenu._styleEl);
-			SimpleContextMenu._styleEl = 0;
-		}
+		Debug.log("Starting timer to remove SimpleContextMenu");
+		SimpleContextMenu._removePopupTimer = window.setTimeout(
+				function() 
+				{
+			SimpleContextMenu._removePopupTimer = 0; //clear timer variable
+			
+			Debug.log("Removing SimpleContextMenu");
+			SimpleContextMenu._popUpEl.parentNode.removeChild(SimpleContextMenu._popUpEl);
+			SimpleContextMenu._popUpEl = 0;
+
+			if(SimpleContextMenu._styleEl)
+			{
+				SimpleContextMenu._styleEl.parentNode.removeChild(SimpleContextMenu._styleEl);
+				SimpleContextMenu._styleEl = 0;
+			}
+				},  //end mouse move remove popup handler
+				1000 /*in milliseconds*/);
 	}
-}
+	else if(!SimpleContextMenu._popUpEl) SimpleContextMenu._removePopupTimer = 0; //clear if popup gone
+} //end mouseMoveHandler
 //subscribe the mouse move handler (if desktop content or part of actual desktop)
 if(typeof DesktopContent == 'undefined')
 	Desktop.mouseMoveSubscriber(SimpleContextMenu.mouseMoveHandler);
@@ -254,7 +266,8 @@ else
 
 
 //=====================================================================================
-SimpleContextMenu.callMenuItemHandler = function(event,index) {
+SimpleContextMenu.callMenuItemHandler = function(event,index) 
+{
 	var handler = SimpleContextMenu._menuItemHandlers[index];
 	
 	Debug.log("Removing SimpleContextMenu");
@@ -283,12 +296,20 @@ SimpleContextMenu.callMenuItemHandler = function(event,index) {
 		handler(event, index);
 		return false;		
 	}
-}
+} //end callMenuItemHandler()
 
 //=====================================================================================
 //SimpleContextMenu.handleMouseOverMenuItem
-SimpleContextMenu.handleMouseOverMenuItem = function(event,index) {
+SimpleContextMenu.handleMouseOverMenuItem = function(event,index) 
+{
 	event.cancelBubble = true;
+	
+	//kill the popup removal, if user still interested
+	if(SimpleContextMenu._removePopupTimer) 
+	{
+		window.clearTimeout(SimpleContextMenu._removePopupTimer);
+		SimpleContextMenu._removePopupTimer = 0;
+	}
 	
 	//Debug.log(index);
 	//set colors properly for mouse over
@@ -308,7 +329,7 @@ SimpleContextMenu.handleMouseOverMenuItem = function(event,index) {
 			el.style.color = 			SimpleContextMenu._secondaryColor;
 		}		
 	}	
-}
+} //end handleMouseOverMenuItem
 
 
 

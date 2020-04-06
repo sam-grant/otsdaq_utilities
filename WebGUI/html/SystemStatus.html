@@ -2,62 +2,72 @@
 <html lang="en">
 <head>
 	<title>Supervisor</title>
-	<!-- make a css file for SystemStatus.html -->
+	<!-- css style files -->
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/SystemStatus.css">
 
 	<!-- Javascript files -->
 	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
-	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/SystemStatus.js"></script>
 
 </head>
 
 
-<body onload='SystemStatus:init();'>
+<body onload='//SystemStatus:init() called by DesktopContent.js;'>
 
-	<div id="mainContent">
-		<h1 style="text-align:center">Overall System Status</h1>
 
-		<div id='filterDiv'>
+		<!-- Header ------------------>
+		<div id='headerDiv' style="">
+			<h1 style="text-align:center">Application Status</h1>
+
+			<div id='lastUpdateTimeDiv'></div>
+
+			<div id='toggleFiltersLinkDiv'>
+				<a onclick='toggleFilters();' title='Toggle App Filters Side Pane' id='toggleFiltersLink'>Hide Filters</a>		 
+			</div>
+			
+		</div>
+
+		<div id='clearDiv'></div>
+
+		<!-- Filters ------------------>
+		<div id='filtersDiv'>
 			<h2 style="margin-left:10px">Filters</h2>
 
-			<button class="collapsible">Context
+			<!-- Context Filter List ------------------>
+			<button class="collapsible">Parent Context Name
 				<span class="helptext">Click to expand</span>
 			</button>
 			<div class="filterList" id="contextFilter">
 				<ul id="contextUl">
-					<li>
-						<input type="checkbox" id="selectAllContext" class="selectAll">
-						Select All
-					</li>
 				</ul>
 			</div>
-			<button class="collapsible" >Class
+
+			<!-- Class Filter List ------------------>
+			<button class="collapsible" >App Type
 				<span class="helptext">Click to expand</span>
 			</button>
 			<div class="filterList" id="classFilter">
 				<ul id="classUl">
-					<li>
-						<input type="checkbox" id="selectAllClass" class="selectAll">
-						Select All
-					</li>
 				</ul>
 			</div>
-			<button class="collapsible">Context Address
+		
+			<!-- Hostname Filter List ------------------>		
+			<button class="collapsible">App Hostname
 				<span class="helptext">Click to expand</span>
 			</button>
-			<div class="filterList">
+			<div class="filterList"  id="hostnameFilter">
+				<ul id="hostUl">
+				</ul>
 			</div>
-
-			<!-- <div id="buttons">
-				<button id="filterButton" type="button" onclick="SystemStatus:filter()">Filter</button>
-			</div> -->
+	
 			
 		</div>
-	
-		<div id='statusDiv'></div>
-	</div>
+
+		<!-- App Status ------------------>
+		<div id='appStatusDiv'></div>
+		
 
 </body>
 

@@ -36,7 +36,7 @@ xdaq::Application* ConfigurationGUISupervisor::instantiate(xdaq::ApplicationStub
 	return new ConfigurationGUISupervisor(stub);
 }
 
-//========================================================================================================================
+//==============================================================================
 // new user gets a table mgr assigned
 // user can fill any of the tables (fill from version or init empty), which becomes the
 // active view for that table
@@ -54,10 +54,10 @@ ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* st
 	__SUP_COUT__ << "Constructor complete." << __E__;
 }  // end constructor()
 
-//========================================================================================================================
+//==============================================================================
 ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void) { destroy(); }
 
-//========================================================================================================================
+//==============================================================================
 void ConfigurationGUISupervisor::init(void)
 {
 	__SUP_COUT__ << "Initializing..." << __E__;
@@ -67,6 +67,11 @@ void ConfigurationGUISupervisor::init(void)
 	try
 	{
 		testXDAQContext();  // test context group activation
+		//theRemoteWebUsers_.sendSystemMessage("tracker:10","My Subject","This is my body",false /*doEmail*/);
+		//theRemoteWebUsers_.sendSystemMessage("Ryan","My Subject Dude","This is my body",false /*doEmail*/);
+		//theRemoteWebUsers_.sendSystemMessage("*","My Rad Subject","This is my body",false /*doEmail*/);
+
+		__SUP_COUT__ << "Done with test context." << __E__;
 	}
 	catch(...)
 	{
@@ -75,9 +80,9 @@ void ConfigurationGUISupervisor::init(void)
 		              << "Check the active context group from within Wizard Mode."
 		              << __E__;
 	}
-}
+} //end init()
 
-//========================================================================================================================
+//==============================================================================
 void ConfigurationGUISupervisor::destroy(void)
 {
 	// called by destructor
@@ -97,7 +102,7 @@ void ConfigurationGUISupervisor::destroy(void)
 		delete ConfigurationInterface::getInstance(true);
 }
 
-//========================================================================================================================
+//==============================================================================
 void ConfigurationGUISupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 {
 	cgicc::Cgicc cgiIn(in);
@@ -117,7 +122,7 @@ void ConfigurationGUISupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 		     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
 }
 
-//========================================================================================================================
+//==============================================================================
 // When overriding, setup default property values here
 // called by CoreSupervisorBase constructor
 void ConfigurationGUISupervisor::setSupervisorPropertyDefaults(void)
@@ -131,20 +136,20 @@ void ConfigurationGUISupervisor::setSupervisorPropertyDefaults(void)
 	    "*");  // all
 }
 
-//========================================================================================================================
+//==============================================================================
 // forceSupervisorPropertyValues
 //		override to force supervisor property values (and ignore user settings)
 void ConfigurationGUISupervisor::forceSupervisorPropertyValues()
 {
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
-	    "");  // none
+	    "getActiveTableGroups");  // none
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.CheckUserLockRequestTypes,
 	    "*");  // all
 }
 
-//========================================================================================================================
+//==============================================================================
 void ConfigurationGUISupervisor::request(const std::string&               requestType,
                                          cgicc::Cgicc&                    cgiIn,
                                          HttpXmlDocument&                 xmlOut,
@@ -730,7 +735,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			else
 				cfgMgr->clearCachedVersions(tableName);
 
-			cfgMgr->getAllTableInfo(true /*refresh*/);
+			// Force manual reload... not cfgMgr->getAllTableInfo(true /*refresh*/);
 		}
 		catch(std::runtime_error& e)
 		{
@@ -1229,22 +1234,33 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getLastTableGroups")
 	{
-		XDAQ_CONST_CALL xdaq::ApplicationDescriptor* gatewaySupervisor =
-		    allSupervisorInfo_.isWizardMode() ? allSupervisorInfo_.getWizardDescriptor()
-		                                      : allSupervisorInfo_.getGatewayDescriptor();
-
 		std::string                                          timeString;
-		std::pair<std::string /*group name*/, TableGroupKey> theGroup =
-		    theRemoteWebUsers_.getLastConfigGroup(
-		        gatewaySupervisor, "Configured", timeString);
+		std::pair<std::string /*group name*/, TableGroupKey> theGroup;
+
+		theGroup = theRemoteWebUsers_.getLastTableGroup("Configured", timeString);
 		xmlOut.addTextElementToData("LastConfiguredGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastConfiguredGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastConfiguredGroupTime", timeString);
-		theGroup = theRemoteWebUsers_.getLastConfigGroup(
-		    gatewaySupervisor, "Started", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("Started", timeString);
 		xmlOut.addTextElementToData("LastStartedGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastStartedGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastStartedGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedConfig", timeString);
+		xmlOut.addTextElementToData("LastActivatedConfigGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedConfigGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedConfigGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedContext", timeString);
+		xmlOut.addTextElementToData("LastActivatedContextGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedContextGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedContextGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedBackbone", timeString);
+		xmlOut.addTextElementToData("LastActivatedBackboneGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedBackboneGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedBackboneGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedIterator", timeString);
+		xmlOut.addTextElementToData("LastActivatedIteratorGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedIteratorGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedIteratorGroupTime", timeString);
 	}
 	else if(requestType == "savePlanCommandSequence")
 	{
@@ -1364,7 +1380,7 @@ catch(...)
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleGetAffectedGroupsXML
 //	checks which of the active groups are affected
 //		by the tables changing in the modified tables list.
@@ -1579,7 +1595,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error getting affected groups! ");
 }
 
-//========================================================================================================================
+//==============================================================================
 // setupActiveTables
 //	setup active tables based on input group and modified tables
 //
@@ -1677,14 +1693,29 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 	std::map<std::string, TableVersion> allActivePairs = cfgMgr->getActiveVersions();
 	xmlOut.addTextElementToData("DefaultNoLink",
 	                            TableViewColumnInfo::DATATYPE_LINK_DEFAULT);
-	for(auto& activePair : allActivePairs)
+
+	// construct specially ordered table name set
+	std::set<std::string, StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
+	for(const auto& tablePair : allActivePairs)
+		orderedTableSet.emplace(tablePair.first);
+
+	std::map<std::string, TableInfo>::const_iterator tableInfoIt;
+	for(auto& orderedTableName : orderedTableSet)
 	{
+		tableInfoIt = allTableInfo.find(orderedTableName);
+		if(tableInfoIt == allTableInfo.end())
+		{
+			__SS__ << "Impossible missing table in map '" << orderedTableName << "'"
+			       << __E__;
+			__SS_THROW__;
+		}
+
 		if(outputActiveTables)
-			xmlOut.addTextElementToData("ActiveTableName", activePair.first);
+			xmlOut.addTextElementToData("ActiveTableName", orderedTableName);
 
 		// check if name is in modifiedTables
 		// if so, activate the temporary version
-		if((modifiedTablesMapIt = modifiedTablesMap.find(activePair.first)) !=
+		if((modifiedTablesMapIt = modifiedTablesMap.find(orderedTableName)) !=
 		   modifiedTablesMap.end())
 		{
 			__SUP_COUT__ << "Found modified table " << (*modifiedTablesMapIt).first
@@ -1692,16 +1723,15 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 
 			try
 			{
-				allTableInfo.at(activePair.first)
-				    .tablePtr_->setActiveView((*modifiedTablesMapIt).second);
+				tableInfoIt->second.tablePtr_->setActiveView(
+				    (*modifiedTablesMapIt).second);
 			}
 			catch(...)
 			{
-				__SUP_SS__
-				    << "Modified table version v" << (*modifiedTablesMapIt).second
-				    << " failed. Reverting to v"
-				    << allTableInfo.at(activePair.first).tablePtr_->getView().getVersion()
-				    << "." << __E__;
+				__SUP_SS__ << "Modified table version v" << (*modifiedTablesMapIt).second
+				           << " failed. Reverting to v"
+				           << tableInfoIt->second.tablePtr_->getView().getVersion() << "."
+				           << __E__;
 				__SUP_COUT_WARN__ << "Warning detected!\n\n " << ss.str() << __E__;
 				xmlOut.addTextElementToData(
 				    "Warning",
@@ -1711,21 +1741,19 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 
 		if(outputActiveTables)
 		{
-			xmlOut.addTextElementToData("ActiveTableVersion",
-			                            allTableInfo.at(activePair.first)
-			                                .tablePtr_->getView()
-			                                .getVersion()
-			                                .toString());
+			xmlOut.addTextElementToData(
+			    "ActiveTableVersion",
+			    tableInfoIt->second.tablePtr_->getView().getVersion().toString());
 			xmlOut.addTextElementToData(
 			    "ActiveTableComment",
-			    allTableInfo.at(activePair.first).tablePtr_->getView().getComment());
+			    tableInfoIt->second.tablePtr_->getView().getComment());
 		}
 
 		//__SUP_COUT__ << "Active table = " <<
 		//		activePair.first << "-v" <<
 		//		allTableInfo.at(activePair.first).tablePtr_->getView().getVersion() <<
 		//__E__;
-	}
+	}  // end ordered table loop
 }  // end setupActiveTablesXML()
 catch(std::runtime_error& e)
 {
@@ -1742,7 +1770,7 @@ catch(...)
 	throw;  // throw to get info from special errors at a parent level
 }  // end setupActiveTablesXML() throw
 
-//========================================================================================================================
+//==============================================================================
 // handleFillCreateTreeNodeRecordsXML
 //	Creates the records in the appropriate table
 //		and creates a temporary version.
@@ -1898,7 +1926,7 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleFillModifiedTablesXML
 //	fills <modified tables> as used by ConfigurationAPI
 void ConfigurationGUISupervisor::handleFillModifiedTablesXML(
@@ -1933,7 +1961,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleFillDeleteTreeNodeRecordsXML
 //	Deletes the records in the appropriate table
 //		and creates a temporary version.
@@ -2049,7 +2077,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 	}
 }  // end handleFillDeleteTreeNodeRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleFillRenameTreeNodeRecordsXML
 //	Rename the records in the appropriate table
 //		and creates a temporary version.
@@ -2168,7 +2196,7 @@ void ConfigurationGUISupervisor::handleFillRenameTreeNodeRecordsXML(
 	}
 }  // end handleFillRenameTreeNodeRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleFillCopyTreeNodeRecordsXML
 //	Copies the records in the appropriate table
 //		and creates a temporary version.
@@ -2284,7 +2312,7 @@ void ConfigurationGUISupervisor::handleFillCopyTreeNodeRecordsXML(
 	}
 }  // end handleFillCopyTreeNodeRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleFillSetTreeNodeFieldValuesXML
 //	writes for each record, the field/value pairs to the appropriate table
 //		and creates a temporary version.
@@ -2486,7 +2514,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleFillGetTreeNodeFieldValuesXML
 //	returns for each record, xml list of field/value pairs
 //		field := relative-path
@@ -2580,7 +2608,7 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleFillTreeNodeCommonFieldsXML
 //	returns xml list of common fields among records
 //		field := relative-path
@@ -2742,7 +2770,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleFillUniqueFieldValuesForRecordsXML
 //	returns xml list of unique values for each fields among records
 //		field := relative-path
@@ -2908,7 +2936,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 	}
 }  // end handleFillUniqueFieldValuesForRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleFillTreeViewXML
 //	returns xml tree from path for given depth
 //
@@ -3214,7 +3242,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 	}
 }  // end recursiveTreeToXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleGetLinkToChoicesXML
 //	return all possible choices for link
 //		linkIdType = "UID" or "GroupID"
@@ -3330,7 +3358,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleMergeGroupsXML
 void ConfigurationGUISupervisor::handleMergeGroupsXML(
     HttpXmlDocument&        xmlOut,
@@ -3644,7 +3672,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleSavePlanCommandSequenceXML
 void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
     HttpXmlDocument&        xmlOut,
@@ -4178,7 +4206,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }  // end handleSavePlanCommandSequenceXML
 
-//========================================================================================================================
+//==============================================================================
 // handleSaveTreeNodeEditXML
 //	Changes the value specified by UID/Column
 //	 in the specified version of the table.
@@ -4688,7 +4716,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", ss.str());
 }
 
-//========================================================================================================================
+//==============================================================================
 // handleGetTableXML
 //
 //	if INVALID or version does not exists, default to mock-up
@@ -4976,6 +5004,8 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		xmlOut.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
 	}
 
+	const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
+
 	if(accumulatedErrors != "")  // add accumulated errors to xmlOut
 	{
 		__SUP_SS__ << (std::string("Column errors were allowed for this request, so "
@@ -4987,14 +5017,13 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	}
 	else if(!version.isTemporaryVersion() &&  // not temporary (these are not filled from
 	                                          // interface source)
-	        (cfgViewPtr->getDataColumnSize() != cfgViewPtr->getNumberOfColumns() ||
+	        (srcColNames.size() != cfgViewPtr->getNumberOfColumns() ||
 	         cfgViewPtr->getSourceColumnMismatch() !=
 	             0))  // check for column size mismatch
 	{
 		__SUP_SS__ << "\n\nThere were warnings found when loading the table " << tableName
 		           << ":v" << version << ". Please see the details below:\n\n"
-		           << "The source column size was found to be "
-		           << cfgViewPtr->getDataColumnSize()
+		           << "The source column size was found to be " << srcColNames.size()
 		           << ", and the current number of columns for this table is "
 		           << cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of "
 		           << cfgViewPtr->getSourceColumnMismatch()
@@ -5002,7 +5031,6 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		           << cfgViewPtr->getSourceColumnMissing() << " table entries missing in "
 		           << cfgViewPtr->getNumberOfRows() << " row(s) of data." << __E__;
 
-		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
 		ss << "\n\nSource column names in ALPHABETICAL order were as follows:\n";
 		char        index       = 'a';
 		std::string preIndexStr = "";
@@ -5052,7 +5080,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error getting view! ");
 }
 
-//========================================================================================================================
+//==============================================================================
 //	refreshUserSession
 //		Finds/creates the active user session based on username&  actionSessionIndex
 //
@@ -5073,9 +5101,9 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
-	__SUP_COUT__ << "Using Config Session " << mapKey
-	             << " ... Total Session Count: " << userConfigurationManagers_.size()
-	             << __E__;
+	//	__SUP_COUT__ << "Using Config Session " << mapKey
+	//	             << " ... Total Session Count: " << userConfigurationManagers_.size()
+	//	             << __E__;
 
 	time_t now = time(0);
 
@@ -5140,7 +5168,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	return userConfigurationManagers_[mapKey];
 }
 
-//========================================================================================================================
+//==============================================================================
 //	handleDeleteTableInfoXML
 //
 //		return nothing except Error in xmlOut
@@ -5171,7 +5199,7 @@ void ConfigurationGUISupervisor::handleDeleteTableInfoXML(HttpXmlDocument&      
 	cfgMgr->getAllTableInfo(true);
 }  // end handleDeleteTableInfoXML()
 
-//========================================================================================================================
+//==============================================================================
 //	handleSaveTableInfoXML
 //
 //		write new info file for tableName based CSV column info
@@ -5381,7 +5409,7 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 	}
 }  // end handleSaveTableInfoXML()
 
-//========================================================================================================================
+//==============================================================================
 //	handleSetGroupAliasInBackboneXML
 //		open current backbone
 //		modify GroupAliases
@@ -5553,7 +5581,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error saving new Group Alias view! ");
 }
 
-//========================================================================================================================
+//==============================================================================
 //	handleSetVersionAliasInBackboneXML
 //		open current backbone
 //		modify VersionAliases
@@ -5730,7 +5758,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error saving new Version Alias view! ");
 }  // end handleSetVersionAliasInBackboneXML() catch
 
-//========================================================================================================================
+//==============================================================================
 //	handleAliasGroupMembersInBackboneXML
 //		open current backbone
 //		modify VersionAliases
@@ -5924,7 +5952,7 @@ catch(...)
 	xmlOut.addTextElementToData("Error", "Error saving new Version Alias view! ");
 }  // end handleAliasGroupMembersInBackboneXML() catch
 
-//========================================================================================================================
+//==============================================================================
 //	handleGroupAliasesXML
 //
 //		return aliases and backbone groupAlias table version
@@ -6004,7 +6032,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 	}
 }  // end handleGroupAliasesXML
 
-//========================================================================================================================
+//==============================================================================
 //	handleTableVersionAliasesXML
 //
 //		return version aliases and backbone versionAliases table version
@@ -6056,7 +6084,7 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument&       
 	}
 }  // end handleVersionAliasesXML()
 
-//========================================================================================================================
+//==============================================================================
 //	handleGetTableGroupTypeXML
 //
 //		return this information based on member table list
@@ -6115,7 +6143,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupTypeXML(
 	}
 }
 
-//========================================================================================================================
+//==============================================================================
 //	handleTableGroupsXML
 //
 //		if returnMembers then
@@ -6318,7 +6346,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 	}      // end primary group loop
 }  // end handleTableGroupsXML()
 
-//========================================================================================================================
+//==============================================================================
 //	handleTablesXML
 //
 //		return this information
@@ -6336,11 +6364,17 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 {
 	xercesc::DOMElement* parentEl;
 
+	__COUTV__(allowIllegalColumns);
 	std::string                             accumulatedErrors = "";
 	const std::map<std::string, TableInfo>& allTableInfo      = cfgMgr->getAllTableInfo(
-        allowIllegalColumns,
-        allowIllegalColumns ? &accumulatedErrors
-                            : 0);  // if allowIllegalColumns, then also refresh
+        true,                 // always refresh!!  allowIllegalColumns /*refresh*/,
+        &accumulatedErrors);  // if allowIllegalColumns, then also refresh
+
+	// construct specially ordered table name set
+	std::set<std::string, StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
+	for(const auto& tablePair : allTableInfo)
+		orderedTableSet.emplace(tablePair.first);
+
 	std::map<std::string, TableInfo>::const_iterator it = allTableInfo.begin();
 
 	__SUP_COUT__ << "# of tables found: " << allTableInfo.size() << __E__;
@@ -6350,8 +6384,18 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 
 	__SUP_COUT__ << "# of tables w/aliases: " << versionAliases.size() << __E__;
 
-	while(it != allTableInfo.end())
+	for(const auto& orderedTableName : orderedTableSet)  // while(it !=
+	                                                     // allTableInfo.end())
 	{
+		std::map<std::string, TableInfo>::const_iterator it =
+		    allTableInfo.find(orderedTableName);
+		if(it == allTableInfo.end())
+		{
+			__SS__ << "Impossible missing table in map '" << orderedTableName << "'"
+			       << __E__;
+			__SS_THROW__;
+		}
+
 		// for each table name
 		// get existing version keys
 
@@ -6394,17 +6438,17 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 			if(!version.isScratchVersion())
 				xmlOut.addTextElementToParent("Version", version.toString(), parentEl);
 
-		++it;
-	}
+		//++it;
+	}  // end table loop
 
 	if(accumulatedErrors != "")
 		xmlOut.addTextElementToData(
-		    "Error",
+		    "Warning",
 		    std::string("Column errors were allowed for this request, ") +
 		        "but please note the following errors:\n" + accumulatedErrors);
 }  // end handleTablesXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleGetArtdaqNodeRecordsXML
 //	get artdaq nodes for active groups
 //
@@ -6536,7 +6580,7 @@ void ConfigurationGUISupervisor::handleGetArtdaqNodeRecordsXML(
 
 }  // end handleGetArtdaqNodeRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleSaveArtdaqNodeRecordsXML
 //	save artdaq nodes into active groups
 //
@@ -6654,7 +6698,7 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeRecordsXML(
 	__SUP_COUT__ << "Done saving artdaq nodes." << __E__;
 }  // end handleSaveArtdaqNodeRecordsXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleLoadArtdaqNodeLayoutXML
 //	load artdaq configuration GUI layout for group/key
 //
@@ -6734,7 +6778,7 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 
 }  // end handleLoadArtdaqNodeLayoutXML()
 
-//========================================================================================================================
+//==============================================================================
 // handleSaveArtdaqNodeLayoutXML
 //	save artdaq configuration GUI layout for group/key
 //
@@ -6802,7 +6846,7 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
 
 }  // end handleSaveArtdaqNodeLayoutXML()
 
-//========================================================================================================================
+//==============================================================================
 //	testXDAQContext
 //		test activation of context group
 void ConfigurationGUISupervisor::testXDAQContext()

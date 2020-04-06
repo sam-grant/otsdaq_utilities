@@ -8,19 +8,24 @@
 
 		    body {
 			  font: 10px sans-serif;
-			  background: rgba(255, 255, 255, 1);
+			  background: rgba(250, 255, 255, 1);
 			  margin: 0px !important;
 			}
 
 		</style>
-			<script type="text/javascript" src="libraries/plotly-1.27.1.min.js"></script>
-			//<script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+		<script type="text/javascript" src="libraries/plotly-1.27.1.min.js"></script>
+		<!-- <script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
+
 		<script>
 			//functions:			
 			//init()					
 
 			var pv_settings_ = [];
-			//var plot;
+			var timeData = {};
+			var valueData = {};
+			var PVList = {};
+			var parameters_ = {class: "", "show_labels": "false"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -32,8 +37,8 @@
 				console.log("init()");
 				console.log(window.frameElement.id);
 				console.log("Dimensions: " + window.innerWidth + " : " + window.innerHeight);
-				window.parent.setupWidget(window.frameElement.id, getParameters());
-				window.parent.getHistory(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
+				window.parent.getPVHistory(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
@@ -42,57 +47,131 @@
 				pv_settings_ = settings;
 			}
 
-			function newWidget(widget, parameters)
+			function drawWidget(widget, parameters)
 			{
-				drawGraph();
+				var i = 0;
+				PVList = {};
+				for (pv in widget.pvList)
+				{
+					timeData[pv] = [];
+					valueData[pv] = [];
+					PVList[pv] = i;
+					i++;
+				}
+				newGraph();
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
-				parameters = {};
-
-				return parameters;
+				return parameters_;
 			}
 
-			var timeData = [];
-			var valueData = [];
-			var plotData = {};
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log("Table: set parameters()");
+				console.log(parameters_);
+			}
 
-			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
 				var date = new Date(pvTime*1000);
-				if (timeData.length)
-					if (date <= timeData[timeData.length-1]) { console.log("return"); return;}
+				if (timeData[pvName] !== undefined && timeData[pvName].length)
+					if (date <= timeData[pvName][timeData.length-1]) { console.log("return"); return;}
 
-				timeData.push(date);
-				valueData.push(pvValue);
-				plotData["time"] = timeData;
-				plotData["value"] = valueData;
+				if (timeData[pvName] !== undefined) timeData[pvName].push(date);
+				if (valueData[pvName] !== undefined) valueData[pvName].push(pvValue);
 
-				console.log("newValue() reached", pvName, pvValue);
-				console.log(plotData);
+				console.log("Strip Chart newValue() reached", pvName, pvValue);
+				console.log(timeData);
+				console.log(valueData);				
 
 				drawGraph(pvName, pvStatus, pvSeverity);
+
+				var display = document.getElementById('display');
+				if (pv_settings_.length) display.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+			}
+
+			function newGraph()
+			{
+				var plot = document.getElementById("display");
+				var plotColor = "black";
+
+				var traces = [];
+				for (pv in PVList)
+				{
+					traces.push({ y: [],  type: 'scatter', mode: 'lines' });
+				}
+
+				Plotly.newPlot("display"
+			    , traces
+			    , {
+					  xaxis: { title: 'time', 'titlefont': { size: 10 }, showticklabels: true },
+					  yaxis: { title: 'amplitude', titlefont: { size: 10 }, zeroline: true }
+					, margin: { l:45, r: 10, b: 70, t: 20 }
+					
+					//, showlegend: true
+					, legend: {
+								  x: 0
+							//  , y: -150
+							  	, "orientation": "h"
+								, font: {
+     								family: 'sans-serif'
+      							  , size: 8
+ 							      , color: '#000'
+    							}
+								, bgcolor: 'rgba(0,0,0,0)'
+							 }
+	    		}, {responsive: true});
+
+	    		Plotly.relayout(plot, { width: window.innerWidth, height: window.innerHeight });
+				
+				console.log("newGraph() reached");
 			}
 
 			function drawGraph(pvName, pvStatus, pvSeverity)
 			{
 				var plot = document.getElementById("display");
-			    Plotly.newPlot("display", [
-			    { y: [],  type: 'scatter', mode: 'lines' }
-			    ], {
-			        title: pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity,
-			        titlefont: { size: 12 },
-			        xaxis: { title: 'time', 'titlefont': { size: 10 }, showticklabels: true },
-			        yaxis: { title: 'amplitude', titlefont: { size: 10 }, zeroline: true }
-					,margin: { l:45, r: 10, b: 60, t: 20 }
-					,legend: {x: 0, y: 1}
-	    		}, {responsive: true});
+				var plotColor = "black";
+				if(pvSeverity == "MAJOR" )
+					plotColor = "red";
+				else if(pvSeverity == "MINOR")
+					plotColor = "orange";
+				else
+					plotColor = "green";
 
-	    		Plotly.relayout(plot, { width: window.innerWidth, height: window.innerHeight });
-				Plotly.addTraces(plot, [{ x: plotData.time, y: plotData.value, mode: 'lines', name: pvName }]);
+				if (Object.getOwnPropertyNames(PVList).length == 1)
+				Plotly.relayout(plot, {
+	    			  width: window.innerWidth
+		    		, height: window.innerHeight
+					, title: pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity
+					, titlefont: { size: 12, color: plotColor }
+				});
 
-				console.log("DrawGraph pv: " + pvName);
+				var ntraces = [];
+				var traces = [];
+				var i = 0;
+
+				for (pv in PVList)
+				{
+					ntraces.push(i);
+
+					var xval = [];
+					var yval = [];
+					if (timeData[pv] !== undefined && valueData[pv] !== undefined)
+					{
+						var xval = timeData[pv];
+						var yval = valueData[pv];
+					}
+					var trace = { x: xval, y: yval, mode: 'lines', name: pv };
+					traces.push(trace);
+					//Plotly.deleteTraces(plot, i);
+					i++;
+				}
+				if (ntraces.length) Plotly.deleteTraces(plot, ntraces);
+				if (traces.length) Plotly.addTraces(plot, traces);
+				//Plotly.extendTraces(plot, { x: plotData[pvName].time, y: plotData[pvName+1].value }, [PVList[pvName]]);
+				console.log("drawGraph() reached, pv: " + pvName);
 			}
 
 			window.onresize = function() {

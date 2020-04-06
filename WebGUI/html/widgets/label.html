@@ -1,0 +1,91 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>Label</title>
+		<style type="text/css">	
+			body {
+				font: 10px arial;
+				background-color: rgba(255, 255, 255, 1);
+				width: 30;
+				height: 30;
+				//margin: 0px !important;
+			}
+
+			div {
+				font-size: 14px;
+			}
+		</style>
+
+		<script src="https://d3js.org/d3.v5.min.js"></script>
+
+		<script>
+
+			var parameters_ = [];
+			//functions:
+			//init()
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			//init called once body has loaded
+			function init()
+			{
+				console.log("Label init()");
+				console.log(window.frameElement.id);
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
+			}
+
+			function setupPVs(settings)	{}
+
+			function drawWidget(widget, parameters)
+			{
+				setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
+			}
+
+			function getAttributes()
+			{
+				parameters_["class"] = "";
+				parameters_["border"] = "true";
+				parameters_["text"] = "";
+				parameters_["text_position"] = "left";
+				parameters_["font"] = "";
+				parameters_["foreground_color"] = "";
+				return parameters_;
+			}
+
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log(parameters_);
+				if (parameters_["border"]=="true")
+					document.getElementById("display").style.border = "1px solid #000";
+				else
+					document.getElementById("display").style.border = "";
+
+				document.getElementById("display").innerHTML = parameters_["text"];
+			        document.getElementById("display").style.textAlign = parameters_["text_position"];
+			}
+
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}
+
+			window.parent.document.getElementById("editWidgetAttributesPopup-container").onclick = function()
+			{
+				console.log("attribute menu onclick. label widgets parameters: " + window.parent.page_.widgets[window.frameElement.id.split('-')[1]].attributes["label"]);
+			};
+
+			window.onresize = function() {
+				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("display").style.height = (parseInt(window.innerHeight) - 16) + "px";
+			}
+
+		</script>
+
+</head>
+
+	<body onload='//init() called by DesktopContent.js'>
+
+	<div id="display"></div>
+
+	</body>
+
+</html>

@@ -8,7 +8,7 @@
 				
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 		
 
 		<style type="text/css">		
@@ -272,7 +272,7 @@
 			var _displayName;
 			
 			var _consoleHistoryFields = ["chat_entry","chat_author","chat_time"];
-			var _CONSOLE_HISTORY_MAX_LENGTH = 100000;
+			var _CONSOLE_HISTORY_MAX_LENGTH = 500000;
 						
 			var _chatUsersTitle = "<div class='userTitle'>Chatting:</div>";
 			var _activeUsersTitle = "<div class='userTitle'>Logged In:</div>";
@@ -332,8 +332,10 @@
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
+			//=====================================================================================
 			//init called once body has loaded
-			function init() {
+			function init() 
+			{
 				
 				var styleEl = document.getElementsByTagName('style')[0];
 				var str = styleEl.innerHTML;
@@ -390,6 +392,7 @@
 						handleLoadUserPreferences);
 			}
 
+			//=====================================================================================
 			//toggleNoWrap ~
 			// 	toggle no wrap on/off. Use e to determine if function call came from checkbox or link	
 			//	Note: when from checkbox, event gives stale value.
@@ -442,6 +445,7 @@
 				}
 			}
 			
+			//=====================================================================================
 			//toggleHideLineNumber ~
 			// 	toggle hide line numbers on/off. Use e to determine if function call came from checkbox or link	
 			//	Note: when from checkbox, event gives stale value.
@@ -493,6 +497,7 @@
 				}
 			}
 			
+			//=====================================================================================
 			//toggleCompactView ~
 			// 	toggle compact view on/off. Use e to determine if function call came from checkbox or link	
 			//	Note: when from checkbox, event gives stale value.
@@ -546,14 +551,15 @@
 
 			}
 			
+			//=====================================================================================
 			//redrawConsoleWindow ~
 			// 	refreshes chat window, called when window is resized
-			function redrawConsoleWindow(showSideBar) {			
-
-			    Debug.log("Chat redrawChat to " + window.innerWidth + " - " + window.innerHeight);
-			    
+			function redrawConsoleWindow(showSideBar) 
+			{						    
 			    var w = window.innerWidth;
 			    var h = window.innerHeight;
+			    
+			    Debug.log("Chat redrawChat to " + w + " - " + h);
 			    			     
 			    if(showSideBar !== undefined) //take input setting if one
 			    	_displaySidePane = showSideBar;
@@ -592,6 +598,7 @@
 					_historyEl.scrollTop = _historyEl.scrollHeight;
 			}		
 			
+			//=====================================================================================
 			//convertForClient ~
 			//	replace html/xhtml reserved characters with equivalent for client display.
 			//	reserved: ", ', &, <, >, newline, space
@@ -625,6 +632,7 @@
 			    
 			 }
 			
+			//=====================================================================================
 			//toggleSideBar ~
 			// 	send chat to server
 			function toggleSideBar() {	
@@ -633,6 +641,7 @@
 				saveUserPreferences(undefined,_displaySidePane);
 			}
 			
+			//=====================================================================================
 			//getConsoleUpdates ~
 			// 	get chat updates from server
 			//	if _lastUpdateIndex doesn't match server, server will give all new info since
@@ -651,6 +660,7 @@
 										true /*doNotShowLoadingOverlay*/);
 			}			
 			
+			//=====================================================================================
 			//handleRefreshConsole ~
 			// 	handle server response, even on error
 			var _localRefreshTimeout = _REFRESH_INTERVAL;
@@ -755,6 +765,7 @@
 				updateFilterBoxes();
 			}
 			
+			//=====================================================================================
 			//updateSideBarCounts ~
 			function updateSideBarCounts() //must be called after console history update
 			{
@@ -787,6 +798,7 @@
 				el.innerHTML = str;
 			}
 			
+			//=====================================================================================
 			//updateFilterBoxes ~
 			function updateFilterBoxes()
 			{
@@ -821,6 +833,7 @@
 				MultiSelectBox.initMySelectBoxes();	            
 			}
 
+			//=====================================================================================
 			//filterSelectionHandler ~
 			//	parameter is selected element
 			function filterSelectionHandler(el) {
@@ -879,6 +892,7 @@
 				document.getElementsByTagName('head')[0].appendChild(_filterStyleEl[field]);
 	        }
 			
+			//=====================================================================================
 			//clearFilterControls ~
 			function clearFilterControls(field)
 			{
@@ -896,6 +910,7 @@
 				}
 			}
 			
+			//=====================================================================================
 			//updateConsoleHistory ~
 			// 	add console history from _consoleMessageArray
 			function updateConsoleHistory() {
@@ -974,12 +989,14 @@
 					_historyEl.scrollTop = _historyEl.scrollHeight;
 			}
 			
+			//=====================================================================================
 			//clearConsoleMessages ~
 			function clearConsoleMessages() {
 				_consoleEl.innerHTML = "";
 			}
 			
 		
+			//=====================================================================================
 			//formatTime ~
 			function formatTime(t) {
 				var date = new Date(t * 1000);
@@ -988,6 +1005,7 @@
 				return date.getHours() + ":" + mm + ":" + ss;
 			}
 			
+			//=====================================================================================
 			//getColorForLevel ~
 			//	generate color based on user index in user list
 			function getColorForLevel(lvl) {
@@ -1024,6 +1042,7 @@
 				}	
 			}
 
+			//=====================================================================================
 			//toggleColorScheme ~
 			//	cycle through an array of [background,foreground] schemes
 			function toggleColorScheme() {
@@ -1031,6 +1050,7 @@
 				saveUserPreferences(_chosenColorScheme);
 			}
 
+			//=====================================================================================
 			//saveUserPreferences ~
 			//	save user preferences to server
 			function saveUserPreferences(colorIndex,showSideBar,noWrap,messageOnly,hideLineNumers) {
@@ -1055,7 +1075,8 @@
 														"&messageOnly=" + (messageOnly?1:0) +
 														"&hideLineNumers=" + (hideLineNumers?1:0));
 			}
-						
+					
+			//=====================================================================================
 			//handleLoadUserPreferences(req) ~
 			function handleLoadUserPreferences(req) {
 								
@@ -1074,7 +1095,7 @@
 				toggleHideLineNumber(0,(DesktopContent.getXMLValue(req,"hideLineNumers")|0)?true:false);
 			}
 			
-			
+			//=====================================================================================
 			//setupColorScheme(i) ~
 			function setupColorScheme(i) {
 				_chosenColorScheme = (i|0) % _colorSchemes.length;
@@ -1084,7 +1105,7 @@
 			    _historyContainerEl.style.color = _colorSchemes[_chosenColorScheme][1];				
 			}
 			
-			
+			//=====================================================================================
 			//toggleFilterControls ~
 			//	show/hide filter selection
 			function toggleFilterControls() {
@@ -1099,6 +1120,7 @@
 	            updateFilterBoxes(); //update multi select box
 			}
 			
+			//=====================================================================================
 			//togglePauseControls ~
 			function togglePauseControls() {
 
@@ -1116,7 +1138,7 @@
 				el.innerHTML = pause?"Resume":"Pause";				
 			}
 
-
+			//=====================================================================================
 			//handleUserScroll ~
 			//	identify when user wants to keep up with live chats
 			function handleUserScroll(e) {							    
@@ -1126,6 +1148,7 @@
 				DesktopContent.handleScroll(e);
 			}
 			
+			//=====================================================================================
 			//handleUserInputScroll ~
 			//	identify when user used mouse and wants to keep up with live chats
 			function handleUserInputScroll(mouseEvent) {
@@ -1134,6 +1157,7 @@
 				DesktopContent.handleScroll(mouseEvent);
 			}
 
+			//=====================================================================================
 			//handleMouseMoveScroll ~
 			//	identify when user released the mouse, to be considerd by scroll handler
 			function handleMouseMoveScroll(mouseEvent) {
@@ -1141,7 +1165,6 @@
 					_userMouseInput = false;
 			}
 			
-
 			//=====================================================================================
 			function downloadMessages() 
 			{				
@@ -1173,7 +1196,7 @@
 	</head>
 	
 	
-	<body onload='Javascript:init();'>			
+	<body onload='//init() called by DesktopContent.js'>			
 
 
 		<div id='downloadIconDiv' onmouseup='downloadMessages()' title='Download console messages to text file.' style='float: left; margin: -1px 10px 0px 10px; cursor: pointer;'>			

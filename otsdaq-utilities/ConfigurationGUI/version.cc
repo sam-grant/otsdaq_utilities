@@ -5,7 +5,7 @@
 
 GETPACKAGEINFO(ConfigurationGUI)
 
-//========================================================================================================================
+//==============================================================================
 void ConfigurationGUI::checkPackageDependencies()
 {
 	CHECKDEPENDENCY(config);
@@ -13,7 +13,7 @@ void ConfigurationGUI::checkPackageDependencies()
 	CHECKDEPENDENCY(xdaq);
 }
 
-//========================================================================================================================
+//==============================================================================
 std::set<std::string, std::less<std::string> > ConfigurationGUI::getPackageDependencies()
 {
 	std::set<std::string, std::less<std::string> > dependencies;

@@ -10,7 +10,7 @@
 //				
 //				<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 //				<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-//				<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+//				<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 //				<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfiguraitonAPI.js"></script>
 //				<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
 //
@@ -5480,7 +5480,7 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 		}			
 		else if(type == "value-groupid")
 		{					
-			el.appendChild(document.createTextNode(newValue));
+			el.appendChild(document.createTextNode(decodeURIComponent(newValue)));
 		}
 		else	//unrecognized type!?
 		{
@@ -5557,7 +5557,7 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 		Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
 		editCellCancel(); return;
 	}
-}
+} //end handleEditableFieldEditOK()
 
 
 //=====================================================================================

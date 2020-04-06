@@ -1,0 +1,270 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  	<head>
+    	<meta http-equiv="content-type" content="text/html;charset=utf-8">
+    	<title>Table</title>
+
+		<style>
+
+		    body {
+			  font: 10px sans-serif;
+			  background: rgba(250, 255, 255, 1);
+			  margin: 0px !important;
+			}
+
+		</style>
+
+		<link href="libraries/tabulator-master/dist/css/tabulator.min.css" rel="stylesheet">
+		<script type="text/javascript" src="libraries/tabulator-master/dist/js/moment.js"></script>
+		<script type="text/javascript" src="libraries/tabulator-master/dist/js/tabulator.min.js"></script>
+
+		<script>
+			//functions:
+			//init()
+
+			var pv_settings_ = [];
+			var parameters_ = {class: "", "show_labels": "false", "getLastAlarms": "false", "getAlarmsLog": "false"};
+			var table;
+
+			//define data sample
+			var tabledata = [];
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			//init called once body has loaded
+
+			function init()
+			{
+				console.log("Table: init()");
+				console.log(window.frameElement.id);
+				console.log("Table Dimensions: " + window.innerWidth + " : " + window.innerHeight);
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
+			}
+
+			function setupPVs(settings)
+			{
+				console.log("Table: setupPVs()" , settings);
+				pv_settings_ = settings;
+			}
+
+			function drawWidget(widget, parameters)
+			{
+				tabledata = [];
+				if (parameters_["getLastAlarms"] == "true")
+				{
+					console.log("Table: drawWidget() getLastAlarms = ", parameters_["getLastAlarms"]);
+					window.parent.getLastAlarms(window.frameElement.id, getAttributes());
+				}
+				else if (parameters_["getAlarmsLog"] == "true")
+				{
+					console.log("Table: drawWidget() getAlarmsLog = ", parameters_["getAlarmsLog"]);
+					window.parent.getAlarmsLog(window.frameElement.id, getAttributes());
+				}
+				else
+				{
+					var i = 0;
+					for (pv in widget.pvList)
+					{
+						var row = {
+									  id:i
+									, pvName:pv
+									, pvDescription:""
+									, pvValue:""
+									, pvStatus:""
+									, pvSeverity:""
+									, pvTime:""
+									, serviceHistory: [pv_settings_[pv]]
+								  };
+
+						tabledata.push(row);
+						i++;
+					}
+					newPVTable();
+					table.hideColumn("pvDescription");
+				}
+			}
+
+			function getAttributes()
+			{
+				return parameters_;
+			}
+
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log("Table: setAttributes()");
+				console.log(parameters_);
+			}
+
+			function newPVTable()
+			{
+				var minL = 0;
+				var maxL = 100;
+				var unit = "";
+				//create Tabulator on DOM element "display"
+				table = new Tabulator("#display", {
+					height: window.innerHeight + 1, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+					data:tabledata, //assign data to table
+					//layout:"fitColumns", //fit columns to width of table (optional)
+					//layout:"fitDataFill",
+					//layout:"fitData",
+					//responsiveLayout:"collapse",
+					//dataTree:false,
+					//virtualDomBuffer: 100,
+				    //virtualDom: false, //disable virtual DOM rendering
+					tooltips:function(cell){
+						//cell - cell component
+						//function should return a string for the tooltip of false to hide the tooltip
+						var data = cell.getRow().getData();
+						if (pv_settings_[data.pvName] !== undefined){
+							var pv_settings =
+										  	  data.pvName + ":\n"
+										  	+ "Lower Warning Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Lower_Warning_Limit).toExponential(2) + "\n"
+										  	+ "Upper Warning Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Upper_Warning_Limit).toExponential(2) + "\n"
+										  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[data.pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+										  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[data.pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+										  	+ "Lower Control Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Lower_Control_Limit).toExponential(2) + "\n"
+										  	+ "Upper Control Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Upper_Control_Limit).toExponential(2) + "\n"
+										  	+ "Lower Display Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Lower_Display_Limit).toExponential(2) + "\n"
+										  	+ "Upper Display Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Upper_Display_Limit).toExponential(2) + "\n";
+							return pv_settings;
+						}
+						return false;
+					},
+
+					rowFormatter:function(row){
+						//data: row.getData().serviceHistory;
+					},
+
+					columns:[ //Define Table Columns
+						{
+						 	  title:"PV Name"
+							, field:"pvName"
+							, width:150
+							, formatter: function(cell, formatterParams, onRendered){
+								//console.log("Alarm Status");console.log(cell);console.log(formatterParams);
+								return cell.getValue();
+							}
+							, frozen: true
+						},
+						{
+							  title: "Descr"
+							, field: "pvDescription"
+							, width:50
+							, formatter: function(cell, formatterParams, onRendered){
+								return cell.getValue();
+							}
+						},
+						{
+							  title:"value"
+							, field:"pvValue"
+							, align:"left"
+							, formatter:"progress"
+							, formatterParams: function(cell){
+								var data = cell.getRow().getData();
+								if (pv_settings_[data.pvName] !== undefined){
+									minL = pv_settings_[data.pvName].Lower_Warning_Limit;
+									maxL = pv_settings_[data.pvName].Upper_Warning_Limit;
+									unit = pv_settings_[data.pvName].Units;
+								}
+			 					console.log("rowFormatter Data: " + data.pvName + " unit " + unit + " min " + minL + " max " + maxL);
+								return {
+									  legend: cell.getValue() + " " + unit
+									, min: minL
+									, max: maxL
+									, color:["green", "green", "green", "red"]
+								}
+							}
+						},
+
+						{
+							  title:"Alarm Status"
+							, field:"pvStatus"
+							, formatter: function(cell, formatterParams, onRendered){
+								//console.log("Alarm Status");console.log(cell);console.log(formatterParams);
+								cell.getElement().style.color = (cell.getValue() !== "" && cell.getValue() !== "NO_ALARM") ? "red" : "green";
+								return "" + cell.getValue() + "";
+							}
+						},
+
+						{
+							  title:"Alarm Severity"
+							, field:"pvSeverity"
+							, formatter: function(cell, formatterParams, onRendered){
+								//console.log("Alarm Severity");console.log(cell);console.log(formatterParams);
+								cell.getElement().style.color = (cell.getValue() !== "" && cell.getValue() !== "NO_ALARM") ? "red" : "green";
+								return "" + cell.getValue() + "";
+							}
+						},
+
+						{
+							  title:"Last Update"
+							, field:"pvTime"
+							, formatter:"datetime"
+							, formatterParams:
+							{
+//								  inputFormat:"YYYY-MM-DD hh:mm:ss"
+								  outputFormat:"MM/DD/YY hh:mm:ss"
+								, invalidPlaceholder:"(invalid date)"
+							}
+							, sorter:"date"
+							, align:"center"
+						}
+					],
+					rowClick:function(e, row){ //trigger an alert message when the row is clicked
+						console.log("Row " + row.getData().id + " Clicked!!!!");
+					},
+				});
+
+				console.log("Table: newPVTable() reached");
+			}
+
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+				console.log("Table: drawNewValue() reached", pvName, pvValue);
+				if (parameters_["getLastAlarms"] == "true") {
+					console.log("Table: drawNewValue() getLastAlarms = ", parameters_["getLastAlarms"]);
+					window.parent.getLastAlarms(window.frameElement.id, undefined);
+				}
+				else if (parameters_["getAlarmsLog"] == "true") {
+					console.log("Table: drawNewValue() getAlarmsLog = ", parameters_["getAlarmsLog"]);
+					window.parent.getAlarmsLog(window.frameElement.id, undefined);
+				}
+				else
+				{
+					drawPVTable(pvName, pvValue, pvStatus, pvSeverity, pvTime);
+				}
+			}
+
+			function drawPVTable(pvName, pvValue, pvStatus, pvSeverity, pvTime)
+			{
+				var date = new Date(pvTime*1000);
+
+				var index = tabledata.findIndex(function (name){return name.pvName == pvName});
+				tabledata[index].pvValue = pvValue;
+				tabledata[index].pvStatus = pvStatus;
+				tabledata[index].pvSeverity = pvSeverity;
+				tabledata[index].pvTime = date;
+				console.log(tabledata);
+				table.setData(tabledata);
+
+				console.log("Table: drawPVTable() reached, pv: " + pvName);
+			}
+
+			window.onresize = function() {
+				table.setHeight(window.innerHeight + 1);
+				table.redraw(true);
+				console.log("Table: window.onresize()");
+			};
+
+		</script>
+
+	</head>
+
+	<body onload="Javascript:init()">
+		<div id="display"></div>
+	</body>
+
+</html>

@@ -205,7 +205,7 @@
 		.fileUndoButton {
 			margin-top: 3px;
 		}
-		.fileUndoButton:hover, .openRelatedFileButton:hover{
+		.fileUndoButton:hover, .openRelatedFileButton:hover, .refreshFileButton:hover{
 			color: 		red !important;			
 		}	
 		

@@ -41,14 +41,18 @@ Debug.LOW_PRIORITY = 100;
 
 //determine if chrome or firefox or other
 //	0:other, 1:chrome, 2:firefox
-Debug.BROWSER_TYPE = 0;
+Debug.BROWSER_TYPE_OTHER 	= 0;
+Debug.BROWSER_TYPE_CHROME 	= 1;
+Debug.BROWSER_TYPE_FIREFOX 	= 2;
+Debug.BROWSER_TYPE = Debug.BROWSER_TYPE_OTHER;
 {
 	var tmp = (new Error).stack; 
 	if(tmp[0] == 'E')
-		Debug.BROWSER_TYPE = 1;
+		Debug.BROWSER_TYPE = Debug.BROWSER_TYPE_CHROME;
 	else if(tmp[0] == '@')
-		Debug.BROWSER_TYPE = 2;
+		Debug.BROWSER_TYPE = Debug.BROWSER_TYPE_FIREFOX;
 }
+console.log("Browser type = ", Debug.BROWSER_TYPE);
 
 
 if (Debug.mode) //IF DEBUG MODE IS ON!
@@ -253,16 +257,34 @@ Debug._errBoxOffY = 0;
 Debug._errBoxOffW = 0;
 Debug._errBoxOffH = 0;
 
+
+Debug._ERR_TRUNCATION_LENGTH = 10000;
+
 //=====================================================================================
+//Note: effectively doing this: str.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+//	...but str.replace() was really slowing down everything on big strings
 Debug.errorPopConditionString = function(str) {
-	return str.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
-}
+	var rstr = "";
+	
+	for(var i=0;i<str.length && i<Debug._ERR_TRUNCATION_LENGTH; ++i)
+		if(str[i] == '\n')
+			rstr += "<br>";
+		else if(str[i] == '\t')
+			rstr += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+		else
+			rstr += str[i];
+	if(str.length > Debug._ERR_TRUNCATION_LENGTH)
+		rstr += "...&lt;&lt;&lt; MESSAGE TRUNCATED &gt;&gt;&gt;";
+	
+	return rstr; 
+} //end errorPopConditionString()
 
 //=====================================================================================
 //Show the error string err in the error popup on the window
 // create error div if not yet created
-Debug.errorPop = function(err,severity) {
-				
+Debug.errorPop = function(err,severity) 
+{
+			
 	var errBoxAlpha = "1.0";
 	
 	//check if Debug._errBox has been set
@@ -286,12 +308,12 @@ Debug.errorPop = function(err,severity) {
 			el.style.display = "none";
 			var str = "<a class='" + 
 				Debug._errBoxId + 
-				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmouseup='event.stopPropagation();' onmousedown='event.stopPropagation();'>Close Errors</a>";
+				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmousemove='event.stopPropagation();'  onmouseup='event.stopPropagation();' onmousedown='event.stopPropagation();'>Close Errors</a>";
 			str = 
 					"<div class='" + 
 					Debug._errBoxId + 
 					"-moveBar' style='" +
-					"position:absolute;width:100%;height:15px;top:0;left:0;background-color:rgb(128, 128, 128);cursor:move;" +
+					"position:absolute;width:100%;height:15px;top:0;left:0;background-color:rgb(191, 191, 191);cursor:move;" +
 					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
 					"' " +
 					"onmousedown='javascript:Debug.handleErrorMoveStart(event);event.stopPropagation();' " +
@@ -318,7 +340,7 @@ Debug.errorPop = function(err,severity) {
 
 			str += "<div class='" + Debug._errBoxId + "-resizeBarLeft' " +
 					"style='" +
-					"background-color:rgb(128, 128, 128);position:absolute;width:15px;height:15px;top:-1000px;left:0;cursor:nesw-resize;" +
+					"background-color:rgb(191, 191, 191);position:absolute;width:15px;height:15px;top:-1000px;left:0;cursor:nesw-resize;" +
 					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
 					"' " +
 					"onmousedown='javascript:Debug.handleErrorResizeStart(event,1,1);event.stopPropagation();' " +
@@ -334,7 +356,7 @@ Debug.errorPop = function(err,severity) {
 					"></div>";
 			str += "<div class='" + Debug._errBoxId + "-resizeBarRight' " +
 					"style='" +
-					"background-color:rgb(128, 128, 128);position:absolute;width:15px;height:15px;top:-1000px;left:0;cursor:nwse-resize;" +
+					"background-color:rgb(191, 191, 191);position:absolute;width:15px;height:15px;top:-1000px;left:0;cursor:nwse-resize;" +
 					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
 					"' " +
 					"onmousedown='javascript:Debug.handleErrorResizeStart(event,1);event.stopPropagation();' " +
@@ -343,13 +365,22 @@ Debug.errorPop = function(err,severity) {
 			el.innerHTML = str;
 			body.appendChild(el); //add element to body of page
 			el.focus();
+			el.onmousemove = function(){		
+				//console.log("mm");
+				DesktopContent.mouseMove(event,true /*onlyDesktopFunction*/); //allow only desktop movement functionality
+				
+				//if doing some resize or movement, then stop blocking event propagation
+				if(Debug._errBoxOffResizeStartY == -1 && 
+						Debug._errBoxOffMoveStartX == -1 && 
+						Debug._errBoxOffResizeStartX == -1)
+					event.stopPropagation();
+			}
+			el.onmousedown = function(){console.log("debug down"); event.stopPropagation();}
+			el.onmouseup = function(){console.log("debug up"); event.stopPropagation();}
 			
 			/////////////
 			function localDebugKeyDownListener(e)
 			{
-				
-				
-				
 				//Debug.log("Debug keydown c=" + keyCode + " " + c + " shift=" + e.shiftKey + 
 				//		" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
 				
@@ -487,7 +518,11 @@ Debug.errorPop = function(err,severity) {
 			}
 
 			document.getElementsByTagName('head')[0].appendChild(style);
-			
+
+			window.removeEventListener("resize",localResize);
+			window.removeEventListener("scroll",localScroll);
+			window.removeEventListener("mouseup",Debug.handleErrorMoveStop);
+			window.removeEventListener("mousemove",Debug.handleErrorMove);
 			window.addEventListener("resize",localResize);
 			window.addEventListener("scroll",localScroll);
 			window.addEventListener("mouseup",Debug.handleErrorMoveStop);
@@ -587,19 +622,21 @@ Debug.errorPop = function(err,severity) {
 		Debug._errBox.style.backgroundColor = "rgba(153,0,51, " + errBoxAlpha + ")";
 	}
 	els[1].innerHTML = el.innerHTML;	
-}
+} //end errorPop()
 
 Debug._errBoxLastContent = "";
 //=====================================================================================
 //Close the error popup on the window
-Debug.closeErrorPop = function() {
+Debug.closeErrorPop = function() 
+{
 	document.getElementById(Debug._errBoxId).style.display = "none";
 	Debug._errBoxLastContent = document.getElementById(Debug._errBoxId + "-err").innerHTML;
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = ""; //clear string
 }
 //=====================================================================================
 //Bring the error popup back
-Debug.bringBackErrorPop = function() {
+Debug.bringBackErrorPop = function() 
+{
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = Debug._errBoxLastContent; //bring back string
 	document.getElementById(Debug._errBoxId).style.display = "block";
 }
@@ -610,14 +647,16 @@ Debug._errBoxOffMoveStartY;
 Debug._errBoxOffResizeStartX = -1;
 Debug._errBoxOffResizeStartY = -1;
 //=====================================================================================
-Debug.handleErrorMoveStart = function(e) {
+Debug.handleErrorMoveStart = function(e) 
+{
 	Debug.log("Move Start");
 	Debug._errBoxOffMoveStartX = e.screenX - Debug._errBoxOffX;
 	Debug._errBoxOffMoveStartY = e.screenY - Debug._errBoxOffY;
 }
 
 //=====================================================================================
-Debug.handleErrorResizeStart = function(e,resizeW,moveLeft) {
+Debug.handleErrorResizeStart = function(e,resizeW,moveLeft) 
+{
 	Debug.log("Resize Start");
 	Debug._errBoxOffResizeStartY = e.screenY - Debug._errBoxOffH;
 	if(moveLeft)
@@ -628,12 +667,11 @@ Debug.handleErrorResizeStart = function(e,resizeW,moveLeft) {
 	else if(resizeW)
 		Debug._errBoxOffResizeStartX = e.screenX - Debug._errBoxOffW;
 	
-}
+} //end handleErrorResizeStart()
 
 //=====================================================================================
-Debug.handleErrorMoveStop = function(e) {
-
-	
+Debug.handleErrorMoveStop = function(e) 
+{	
 	if(Debug._errBoxOffResizeStartY != -1) //resize stop
 	{
 		Debug.log("Resize Stop");		
@@ -661,13 +699,13 @@ Debug.handleErrorMoveStop = function(e) {
 		Debug._errBoxOffY = e.screenY - Debug._errBoxOffMoveStartY;
 		Debug._errBoxOffMoveStartX = -1; //done with move
 		Debug.handleErrorResize();
-	}
+	}		
 		
-		
-}
+} //end handleErrorMoveStop()
 
 //=====================================================================================
 Debug.handleErrorMove = function(e) {
+	//console.log("moving",e);
 	
 	if(Debug._errBoxOffMoveStartX == -1 &&
 			Debug._errBoxOffResizeStartY == -1) return; //do nothing, not moving
@@ -703,10 +741,11 @@ Debug.handleErrorMove = function(e) {
 		Debug.handleErrorResize();
 	}
 		
-}
+} //end handleErrorMove()
 
 //=====================================================================================
-Debug.handleErrorResize = function() {
+Debug.handleErrorResize = function() 
+{
 
 	
 	var offX = document.documentElement.scrollLeft || document.body.scrollLeft || 0;
@@ -777,7 +816,7 @@ Debug.handleErrorResize = function() {
 
 	el = document.getElementsByClassName(Debug._errBoxId + "-err")[0];
 	el.style.height = (h-115) + "px";
-}
+} //end handleErrorResize()
 
 
 //=====================================================================================

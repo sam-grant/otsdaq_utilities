@@ -5,7 +5,7 @@
 
 GETPACKAGEINFO(Console)
 
-//========================================================================================================================
+//==============================================================================
 void Console::checkPackageDependencies()
 {
 	CHECKDEPENDENCY(config);
@@ -13,7 +13,7 @@ void Console::checkPackageDependencies()
 	CHECKDEPENDENCY(xdaq);
 }
 
-//========================================================================================================================
+//==============================================================================
 std::set<std::string, std::less<std::string> > Console::getPackageDependencies()
 {
 	std::set<std::string, std::less<std::string> > dependencies;

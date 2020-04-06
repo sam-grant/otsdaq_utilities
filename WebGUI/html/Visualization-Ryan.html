@@ -54,7 +54,7 @@
 		
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 
 		
 		<link   rel="stylesheet" type="text/css" href="/WebPath/css/ViewerRoot.css" />
@@ -80,9 +80,11 @@
 				
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
-			
-			//init called once body has loaded
-			function init() {			
+
+			//=====================================================================================
+			//init called once body has loaded by DesktopContent
+			function init() 
+			{			
 				dropDownDiv = document.getElementById('dropDownMouseOverArea');
 				dropDownDiv.onmouseover = mouseOverDropDown;
 				dropDownDiv.onmouseout = mouseOutDropDown;
@@ -91,15 +93,17 @@
 				animationTargetTop = 15 - dropDownDiv.offsetHeight;
 				window.setTimeout(animateDropDown,30);
 				
-				if(0 //hide from everyone until 2D and 3D are revived
-						|| !DesktopContent._needToLoginMailbox) dropDownDiv.style.display = 'none'; //hide from public users				
+				if(1 //hide from everyone until 2D and 3D are revived
+						|| !DesktopContent._theDesktopWindow) dropDownDiv.style.display = 'none'; //hide from public users				
 
 
 				//Viewer2d.launch();//
 				ViewerRoot.launch();
-			}	
-			
-			function mouseOverDropDown() {
+			} //end init()
+
+			//=====================================================================================
+			function mouseOverDropDown() 
+			{
 				if(isDropDownAnimating) return; //do nothing if animating currently
 								
 				if(!isDropDownDown) //start animation
@@ -111,7 +115,9 @@
 				}					
 			}
 
-			function mouseOutDropDown(event) {
+			//=====================================================================================
+			function mouseOutDropDown(event) 
+			{
 				if(isDropDownAnimating) return; //do nothing if animating currently
 				
 				if(event)
@@ -176,7 +182,7 @@
 		</script>
 	</head>
 	
-	<body onload='Javascript:init();'>	
+	<body onload='//init() called by DesktopContent.js'>	
 
 		<div id='omni'>
 			<center>

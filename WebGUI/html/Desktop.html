@@ -26,7 +26,7 @@
 
 
 		<!-- adding DesktopWindowContentCode for tooltip functionality -->
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script> 
+		<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script> 
 
 		<script type="text/JavaScript" src="/WebPath/js/DesktopDashboard.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindow.js"></script>
@@ -34,17 +34,19 @@
 		<script type="text/JavaScript" src="/WebPath/js/DesktopLogin.js"></script>
 
 		<script>
-			var params = (window.location.search.substr(1)).split('&');
-			var urnLid = params[0].split('=')[1];
-			var securityType = params[1].split('=')[1];
+			var params_ = (window.location.search.substr(1)).split('&');
+			var urnLid_ = params_[0].split('=')[1];
+			var securityType_ = params_[1].split('=')[1];
+			var serverOrigin_ = window.location.origin;
 			
-			Debug.log("securityType: " +  securityType);
-			Debug.log("Application URN-LID #" + urnLid);
+			Debug.log("securityType: " +  securityType_);
+			Debug.log("Gateway Application URN-LID #" + urnLid_);
+			Debug.log("Gateway Supervisor Application Origin = " + serverOrigin_);
 
 			//=====================================================================================
 			function init() 
 			{					
-				Desktop.init(securityType);				
+				Desktop.init(securityType_);				
 			}						
             
         </script>

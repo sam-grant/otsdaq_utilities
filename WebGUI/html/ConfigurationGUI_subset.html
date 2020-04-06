@@ -155,7 +155,7 @@
 	
 	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 	
@@ -1646,6 +1646,11 @@
 			else //prompt was cancelled
 				return;
 
+			//unselect current record selections, so new record will be selected in aftermath
+			var el = document.getElementById("recordMultiSelect");
+			MultiSelectBox.setSelectionElementByIndex(el,-1 /*all*/,false /*selected*/);
+													
+			
 			ConfigurationAPI.addSubsetRecords(_subsetBasePath,newRowUID,
 					/////////////////////
 					function(modifiedTables) //start addSubsetRecords handler
@@ -1750,6 +1755,7 @@
 							Debug.INFO_PRIORITY);
 
 					_modifiedTables = undefined; //clear after save
+					_selectedRecords = newRowUID; //select new record after init
 					
 					//runFilter(); //updates records and fields, and applies filter
 					initSubsetGlobalData();
@@ -1964,7 +1970,7 @@
 </head>
 	
 
-<body onload='Javascript:init();'>	
+<body onload='//init() called by DesktopContent.js'>	
 		
 	<!-- body content populated by javascript paint(), etc. -->
 

@@ -3,19 +3,21 @@
 //	Created Jan, 2013
 //	by Ryan Rivera ((rrivera at fnal.gov))
 //
-//	DesktopWindowContentCode.js
+//	DesktopContent.js
 //
 //  Requirements: 
 //   1. paste the following: 
 //				
 //				<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 //				<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-//				<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+//				<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 //
 //		...anywhere inside the <head></head> tag of a window content html page
 //	 2. for proper functionality certain handlers are used:
 //   		cannot overwrite handlers for window: onfocus, onscroll, onblur, onmousemove
 //			(if you must overwrite, try to call the DesktopContent handlers from your handlers)
+//
+//	 3. When all functionality is available init() be called in your page, if defined.
 //
 //	Recommendations:
 //	 1. use Debug to output status and errors, e.g.:
@@ -114,9 +116,9 @@
 var DesktopContent = DesktopContent || {}; //define Desktop namespace
 
 if (typeof Debug == 'undefined') 
-	alert('ERROR: Debug is undefined! Must include Debug.js before DesktopWindowContentCode.js');
+	alert('ERROR: Debug is undefined! Must include Debug.js before DesktopContent.js');
 if (typeof Globals == 'undefined') 
-	alert('ERROR: Globals is undefined! Must include Globals.js before DesktopWindowContentCode.js');
+	alert('ERROR: Globals is undefined! Must include Globals.js before DesktopContent.js');
 
 
 //"public" function list: 
@@ -127,6 +129,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getXMLAttributeValue(req, name, attribute)
 //	DesktopContent.getXMLChildren(req, nodeName)
 //	DesktopContent.getXMLRequestErrors(req)
+//	DesktopContent.systemBlackout(doBlackout)
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth, cancelFunc)
 //	DesktopContent.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	DesktopContent.tooltip(uid,tip)
@@ -159,18 +162,28 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.handleBlur(e)
 //	DesktopContent.handleScroll(e)
 //	DesktopContent.mouseMove(mouseEvent)
-//	DesktopContent.checkCookieCodeRace()
+//////	DesktopContent.checkCookieCodeRace()
 //	DesktopContent.clearPopUpVerification(func)
 //	DesktopContent.parseColor(colorStr)
 //	DesktopContent.tooltipSetAlwaysShow(srcFunc,srcFile,srcId,neverShow,temporarySilence)
 //	DesktopContent.tooltipConditionString(str);
 
+DesktopContent._theWindowId = -1;
+
 DesktopContent._isFocused = false;
-DesktopContent._theWindow = 0;
-DesktopContent._myDesktopFrame = 0;
-DesktopContent._zMailbox = 0;
-DesktopContent._mouseOverXmailbox = 0;
-DesktopContent._mouseOverYmailbox = 0;
+DesktopContent._theWindow;
+DesktopContent._theDesktopWindow; 
+//DesktopContent._myDesktopFrame ;
+
+
+
+
+
+
+//DesktopContent._zMailbox = 0;
+//DesktopContent._mouseOverXmailbox;
+//DesktopContent._mouseOverYmailbox;
+DesktopContent._updateMouseOverMailboxTimer = 0;
 DesktopContent._windowMouseX = -1;
 DesktopContent._windowMouseY = -1;
 
@@ -181,95 +194,257 @@ DesktopContent._localUrnLid = 0;
 
 DesktopContent._cookieCodeMailbox = 0;
 DesktopContent._updateTimeMailbox = 0;
-DesktopContent._needToLoginMailbox = 0;
-DesktopContent._openWindowMailbox = 0;
-DesktopContent._blockSystemCheckMailbox = 0;
-
 DesktopContent._lastCookieCode = 0;
 DesktopContent._lastCookieTime = 0;
+DesktopContent._updateCookieCodeTimer = 0;
 
+DesktopContent._needToLoginMailbox = false;
+//DesktopContent._openWindowMailbox = 0;
+DesktopContent._blockSystemCheckMailbox = false;
+DesktopContent._windowColorPostbox;
+DesktopContent._dashboardColorPostbox;
+DesktopContent._desktopColor;
 
 DesktopContent._verifyPopUp = 0;
 DesktopContent._verifyPopUpId = "DesktopContent-verifyPopUp";
 
-DesktopContent._windowColorPostbox = 0;
-DesktopContent._dashboardColorPostbox = 0;
-DesktopContent._desktopColor = 0;
 
 DesktopContent._sequence = 0;
 
 DesktopContent._mouseMoveSubscribers = [];
-
+DesktopContent._pageInitCalled = false;
 
 //=====================================================================================
 //initialize content's place in the world
 // caution when using "window" anywhere outside this function because
 //  desktop window can be at different levels depending on page depth (page may be inside frame)
 // use instead DesktopContent._theWindow
-DesktopContent.init = function() {
-	
-	if(typeof Desktop !== 'undefined') return; //skip if Desktop exists (only using for tooltip
-	
+DesktopContent.init = function() 
+{	
+	if(typeof Desktop !== 'undefined') return; //skip if Desktop exists (only using for tooltip), DesktopContent._theWindow will be undefined
+		
 	var tmpCnt = 0;
 	DesktopContent._theWindow = self;
 	while(tmpCnt++ < 5 && DesktopContent._theWindow &&  //while can not find the top window frame in the desktop
 			DesktopContent._theWindow.window.name.search("DesktopWindowFrame") < 0)
 		DesktopContent._theWindow = DesktopContent._theWindow.parent;
-	DesktopContent._theWindow = DesktopContent._theWindow.window;
-
-	DesktopContent._myDesktopFrame        = DesktopContent._theWindow.parent.document.getElementById(DesktopContent._theWindow.name);
-	DesktopContent._zMailbox              = DesktopContent._theWindow.parent.document.getElementById("Desktop-windowZmailbox");
-	DesktopContent._mouseOverXmailbox     = DesktopContent._theWindow.parent.document.getElementById("Desktop-mouseOverXmailbox");
-	DesktopContent._mouseOverYmailbox     = DesktopContent._theWindow.parent.document.getElementById("Desktop-mouseOverYmailbox");
-
-	DesktopContent._cookieCodeMailbox     = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-cookieCodeMailbox");
-	DesktopContent._updateTimeMailbox     = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-updateTimeMailbox");
-	DesktopContent._needToLoginMailbox    = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-needToLoginMailbox");
-	DesktopContent._openWindowMailbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-openWindowMailbox");
-	DesktopContent._blockSystemCheckMailbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-blockSystemCheckMailbox");
 	
-	DesktopContent._windowColorPostbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-windowColorPostbox");
-	DesktopContent._dashboardColorPostbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-dashboardColorPostbox");
+	DesktopContent._theWindow 				= DesktopContent._theWindow.window;
+	DesktopContent._theDesktopWindow 		= DesktopContent._theWindow.parent.window;
+	//DesktopContent._myDesktopFrame        	= DesktopContent._theWindow.parent.document.getElementById(DesktopContent._theWindow.name);
 	
-	if(DesktopContent._theWindow.parent.document.body)
-		DesktopContent._desktopColor 		  = DesktopContent._theWindow.parent.document.body.style.backgroundColor;
-
+	
+//	try
+//	{
+//	---	DesktopContent._myDesktopFrame        = DesktopContent._theWindow.parent.document.getElementById(DesktopContent._theWindow.name);
+//	---	DesktopContent._zMailbox              = DesktopContent._theWindow.parent.document.getElementById("Desktop-windowZmailbox");
+//	---	DesktopContent._mouseOverXmailbox     = DesktopContent._theWindow.parent.document.getElementById("Desktop-mouseOverXmailbox");
+//	---	DesktopContent._mouseOverYmailbox     = DesktopContent._theWindow.parent.document.getElementById("Desktop-mouseOverYmailbox");
+//
+//		DesktopContent._cookieCodeMailbox     = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-cookieCodeMailbox");
+//		DesktopContent._updateTimeMailbox     = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-updateTimeMailbox");
+//		DesktopContent._needToLoginMailbox    = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-needToLoginMailbox");
+//		DesktopContent._openWindowMailbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-openWindowMailbox");
+//		DesktopContent._blockSystemCheckMailbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-blockSystemCheckMailbox");
+//
+//		DesktopContent._windowColorPostbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-windowColorPostbox");
+//		DesktopContent._dashboardColorPostbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-dashboardColorPostbox");
+//
+//
+//		if(DesktopContent._theWindow.parent.document.body)
+//			DesktopContent._desktopColor 		  = DesktopContent._theWindow.parent.document.body.style.backgroundColor;
+//	}
+//	catch(e)
+//	{
+//		Debug.log("Ignoring window mailbox error during init(): " + e);
+//	}
+	
 	window.onfocus = DesktopContent.handleFocus;
 	window.onmousedown = DesktopContent.handleFocus;
 	window.onscroll = DesktopContent.handleScroll;
 	window.onblur = DesktopContent.handleBlur;	
 	window.onmousemove = DesktopContent.mouseMove; //setup mouse move handler
-	window.focus();	//before this fix, full screen in new tab would not give window focus
-
-	Debug.log("Window URL " + window.location.href);
+	window.focus();
+	DesktopContent._theWindow.focus();	//before this fix, full screen in new tab would not give window focus
 	
-	DesktopContent._serverUrnLid = DesktopContent.getDesktopWindowParameter(0,"urn");//((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
-	if(typeof DesktopContent._serverUrnLid == 'undefined')
-		Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
-	Debug.log("Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
-	DesktopContent._serverOrigin = DesktopContent._theWindow.parent.window.location.origin;
-	Debug.log("Supervisor Application Origin = " + DesktopContent._serverOrigin);
-		
+
+//	try
+//	{
+//		DesktopContent._serverUrnLid = DesktopContent.getDesktopWindowParameter(0,"urn");//((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
+//		if(typeof DesktopContent._serverUrnLid == 'undefined')
+//			Debug.log("ERROR -- Gateway Supervisor Application URN-LID not found!"); //,Debug.HIGH_PRIORITY);
+//		Debug.log("Gateway Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
+//		DesktopContent._serverOrigin = DesktopContent._theWindow.parent.window.location.origin;
+//		Debug.log("Gateway Supervisor Application Origin = " + DesktopContent._serverOrigin);
+//	}
+//	catch(e)
+//	{
+//		Debug.log("Ignoring Gateway extract error during init(): " + e);
+//
+//		DesktopContent._serverUrnLid = 200;
+//		DesktopContent._serverOrigin = "http://correlator2.fnal.gov:2015";
+//		
+//		
+//	}
+	
+
+	//can always get local server info from URL
+	Debug.log("Window URL " + window.location.href);
 	DesktopContent._localUrnLid = DesktopContent.getParameter(0,"urn");
 	if(typeof DesktopContent._localUrnLid == 'undefined')
 		DesktopContent._localUrnLid = 0;
-	Debug.log("Local Application URN-LID #" + DesktopContent._localUrnLid);
 	DesktopContent._localOrigin = window.location.origin;
+	
+	Debug.log("Local Application URN-LID #" + DesktopContent._localUrnLid);
 	Debug.log("Local Application Origin = " + DesktopContent._localOrigin);
 
 	//get Wizard sequence (if in Wizard mode)
-	DesktopContent._sequence = DesktopContent.getDesktopParameter(0,"code");
-	if(!DesktopContent._sequence || DesktopContent._sequence == "")
+	try
+	{
+		DesktopContent._sequence = DesktopContent.getDesktopParameter(0,"code");
+		if(!DesktopContent._sequence || DesktopContent._sequence == "")
+			DesktopContent._sequence = 0; //normal desktop mode
+		else
+			Debug.log("In Wizard Mode with Sequence=" + DesktopContent._sequence);
+	}
+	catch(e)
+	{
+		Debug.log("Could not find wiz mode sequence. Assuming normal mode.");
 		DesktopContent._sequence = 0; //normal desktop mode
-	else
-		Debug.log("In Wizard Mode with Sequence=" + DesktopContent._sequence);
-}
+	}
+	
 
+	//	DesktopContent._theWindow.parent.window.postMessage(
+	//			{
+	//			"req":		"getsome"
+	//			}, "*");
+
+	//create message request listener for messages from desktop, to overcome same-origin policy
+	//The first message is initiated by the Desktop once the window frame has been loaded.
+	DesktopContent._theWindow.addEventListener('message', event => {
+
+		console.log("Child event.data",event.data); 
+
+
+		if(!event.data.windowId)
+		{
+			Debug.log("Illegal message received!");
+			return;
+		}
+
+		if(!event.data.request)
+		{
+			if(DesktopContent._pageInitCalled) return;
+			DesktopContent._pageInitCalled = true;
+			
+			Debug.log("First message from Gateway Desktop received!");
+
+			DesktopContent._theWindowId		= event.data.windowId;					
+			DesktopContent._serverUrnLid 	= event.data.gatewayURN;
+			DesktopContent._serverOrigin 	= event.data.gatewayOrigin;	
+
+			DesktopContent._dashboardColorPostbox	= event.data.dashboardColor;
+			DesktopContent._desktopColor			= event.data.desktopColor;
+			DesktopContent._windowColorPostbox		= event.data.windowFrameColor;
+			
+			
+			if(event.data.cookieCode)
+			{
+				DesktopContent._cookieCodeMailbox = event.data.cookieCode;
+				
+				//========
+				function localUpdateCookieCode() 
+				{
+					window.clearTimeout(DesktopContent._updateCookieCodeTimer);
+					
+					Debug.log("localUpdateCookieCode");
+					var deltaTime = parseInt((new Date()).getTime()) - //in ms
+							parseInt(DesktopContent._updateTimeMailbox);
+					if(deltaTime > 30)						
+					{			
+						Debug.log("Requesting updated cooking code from desktop");
+
+						DesktopContent._theDesktopWindow.postMessage(
+								{
+							"windowId":			DesktopContent._theWindowId,
+							"request":  		"getCookieCode"
+								},"*");
+					}
+					else
+						Debug.log("No need to update deltaTime=" + deltaTime);
+					
+					DesktopContent._updateCookieCodeTimer = window.setTimeout(
+							localUpdateCookieCode,30*1000 /*ms*/);
+				} //end localUpdateCookieCode()
+				
+				//from now on check for a new cookie code every 30 seconds
+				localUpdateCookieCode(); 
+			}
+			else if(!DesktopContent._sequence)
+				Debug.log("No cookie code and no sequence!");
+
+			Debug.log("The Desktop Window ID = " + DesktopContent._theWindowId);
+			Debug.log("Gateway Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
+			Debug.log("Gateway Supervisor Application Origin = " + DesktopContent._serverOrigin);
+
+			if(init)
+			{
+				Debug.log("Calling page init!");
+				init(); //call pages init!
+			}
+
+			//			DesktopContent._theWindow.parent.window.postMessage(
+			//					{
+			//				"windowId":	(event.data.windowId|0),
+			//				"req":		"childWindowRequest"
+			//					}, "*");
+		}
+		else
+		{
+			
+			Debug.log("Request or Response!");
+			
+			if(DesktopContent._theWindowId != event.data.windowId)
+			{
+				Debug.log("Impossible desktop message violation! Notify admins.", Debug.HIGH_PRIORITY);
+				return;				
+			}
+			
+			switch(event.data.request)
+			{
+			case "getCookieCode" + "Response":
+				DesktopContent._cookieCodeMailbox = event.data.cookieCode;
+				console.log("getCookieCode" + "Response");
+				break;
+			case "loginNotify":
+				DesktopContent._needToLoginMailbox = false;
+				console.log("loginNotify",DesktopContent._needToLoginMailbox);
+				break;
+			case "startNeedingMouseXY":
+				DesktopContent._desktopNeedsMouseXY = true;
+				console.log("_desktopNeedsMouseXY", DesktopContent._desktopNeedsMouseXY);
+				break;
+			case "stopNeedingMouseXY":
+				DesktopContent._desktopNeedsMouseXY = false;
+				console.log("_desktopNeedsMouseXY", DesktopContent._desktopNeedsMouseXY);
+				break;
+			default:
+				Debug.log("Illegal response received from Desktop! Notify admins", Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+		}
+	}); 
+	
+} //end DesktopContent.init()
+
+//=====================================================================================
 //DesktopContent.getParameter ~
 //	returns the value of the url GET parameter specified by index
 //	if using name, then (mostly) ignore index
 //	Note: in normal mode the first two params are only separated by = (no &'s) for historical reasons
-DesktopContent.getParameter = function(index,name) {	
+DesktopContent.getParameter = function(index,name) 
+{	
 	// Debug.log(window.location)
 	var params = (window.location.search.substr(1)).split('&');
 	var spliti, vs;
@@ -294,12 +469,15 @@ DesktopContent.getParameter = function(index,name) {
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return decodeURIComponent(vs[1]); //return value
-}
+} //end DesktopContent.getParameter()
 
+//=====================================================================================
 //DesktopContent.getDesktopParameter ~
 //	returns the value of the url GET parameter specified by index of the Desktop url
 //	if using name, then (mostly) ignore index
-DesktopContent.getDesktopParameter = function(index, name) {	
+DesktopContent.getDesktopParameter = function(index, name) 
+{	
+	try{
 	// Debug.log(window.location)
 	
 	var win = DesktopContent._theWindow;
@@ -328,12 +506,20 @@ DesktopContent.getDesktopParameter = function(index, name) {
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return decodeURIComponent(vs[1]); //return value
-}
+	}
+	catch(e)
+	{
+		Debug.log("Ignoring get desktop parameter error :" + e);
+		return;
+	}
+} //end DesktopContent.getDesktopParameter()
 
+//=====================================================================================
 //DesktopContent.getDesktopWindowParameter ~
 //	returns the value of the url GET parameter specified by index of the Window frame url
 //	if using name, then (mostly) ignore index
-DesktopContent.getDesktopWindowParameter = function(index, name) {	
+DesktopContent.getDesktopWindowParameter = function(index, name)
+{	
 	// Debug.log(window.location)	
 	
 	var win = DesktopContent._theWindow;
@@ -368,52 +554,91 @@ DesktopContent.getDesktopWindowParameter = function(index, name) {
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return decodeURIComponent(vs[1]); //return value
-}
+} //end DesktopContent.getDesktopWindowParameter()
 
+//=====================================================================================
 //DesktopContent.handleFocus ~
-DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, increment by 1 and set parent's z-index	
+DesktopContent.handleFocus = function(e) 
+{	//access z-index mailbox on desktop, increment by 1 and set parent's z-index	
 
-	if(!DesktopContent._myDesktopFrame) return; //only happen if not part of desktop
+	if(DesktopContent._theWindowId < 0) return; //only happen if not part of desktop, or before init
 
-	//Debug.log("Focus DesktopContent._isFocused " + DesktopContent._isFocused);
+	Debug.log("Focus DesktopContent._isFocused " + DesktopContent._isFocused);	
+	DesktopContent._isFocused = true;
 	
-	//commented below because, at times, desktop window movement led to wrong focus assumptions 
-	//if(DesktopContent._isFocused ) {Debug.log("already"); return; }//only focus when unfocused
-	DesktopContent._isFocused = true;					
-	DesktopContent._myDesktopFrame.parentNode.parentNode.style.zIndex = DesktopContent._zMailbox.innerHTML;
-	DesktopContent._zMailbox.innerHTML = parseInt(DesktopContent._zMailbox.innerHTML) + 1;
+	//make this window the desktop foreground window
+	DesktopContent._theDesktopWindow.postMessage(
+			{
+		"windowId":			DesktopContent._theWindowId,
+		"request":  		"makeForeWindow"
+			},"*");	
+	
+//	DesktopContent._myDesktopFrame.parentNode.parentNode.style.zIndex = DesktopContent._zMailbox.innerHTML;
+//	DesktopContent._zMailbox.innerHTML = parseInt(DesktopContent._zMailbox.innerHTML) + 1;
 	return true;
 }
-DesktopContent.handleBlur = function(e) {	
-	//Debug.log("Blur DesktopContent._isFocused " + DesktopContent._isFocused);
+DesktopContent.handleBlur = function(e) 
+{	
+	Debug.log("Blur DesktopContent._isFocused " + DesktopContent._isFocused);
 	DesktopContent._isFocused = false;
 }
-DesktopContent.handleScroll = function(e) {		
-	//Debug.log("Scroll DesktopContent._isFocused" + DesktopContent._isFocused);
+DesktopContent.handleScroll = function(e) 
+{		
+	Debug.log("Scroll DesktopContent._isFocused" + DesktopContent._isFocused);
 	window.focus();	
 }
-DesktopContent.mouseMove = function(mouseEvent) {	
-	//Debug.log("Move DesktopContent._isFocused" + DesktopContent._isFocused);
+DesktopContent.mouseMove = function(mouseEvent,onlyDesktopFunction) 
+{	
+	//console.log("desktop move",DesktopContent._mouseMoveSubscribers.length);
+	//Debug.log("Move DesktopContent._isFocused=" + DesktopContent._isFocused);
 	
 	//call each subscriber
-	for(var i=0; i<DesktopContent._mouseMoveSubscribers.length; ++i)
+	for(var i=0; !onlyDesktopFunction && i<DesktopContent._mouseMoveSubscribers.length; ++i)
 		DesktopContent._mouseMoveSubscribers[i](mouseEvent); 
-	
-	if(!DesktopContent._myDesktopFrame) return; //only happens if not part of desktop
-
+			
+	if(!DesktopContent._theWindow) return; //only happens if not part of desktop
+		
 	DesktopContent._windowMouseX = parseInt(mouseEvent.clientX);
 	DesktopContent._windowMouseY = parseInt(mouseEvent.clientY);
+	
+	if(DesktopContent._desktopNeedsMouseXY)
+		localUpdateMouseOverMailbox();
+	
+//	window.clearTimeout(DesktopContent._updateMouseOverMailboxTimer);
+//	DesktopContent._updateMouseOverMailboxTimer = //avoid updating mailbox too often
+//			window.setTimeout(localUpdateMouseOverMailbox,500);
+	return;
+	
+	//==================
+	//This is used by desktop for resizing the Dashboard and other Windows
+	//	while mouse is in this window
+	function localUpdateMouseOverMailbox()
+	{
+		console.log("Update desktop mouse");//,DesktopContent._mouseOverXmailbox,DesktopContent._mouseOverYmailbox);
+		
+		DesktopContent._theDesktopWindow.postMessage(
+							{
+			"windowId":			DesktopContent._theWindowId,
+			"request":  		"updateMouseoverXY",
+			"x":  				DesktopContent._windowMouseX,
+			"y":				DesktopContent._windowMouseY
+							},"*");
+		
+		
+//		DesktopContent._mouseOverXmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetLeft) +
+//				parseInt(DesktopContent._myDesktopFrame.offsetLeft) + DesktopContent._windowMouseX;
+//		DesktopContent._mouseOverYmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetTop) + 
+//				parseInt(DesktopContent._myDesktopFrame.offsetTop) + DesktopContent._windowMouseY;
+	} //end localUpdateMouseOverMailbox()
+	
+		
+} //end DesktopContent.mouseMove()
 
-	//add window frame position(absolute) + iframe position within window + mouse position within iframe
-	DesktopContent._mouseOverXmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetLeft) +
-			parseInt(DesktopContent._myDesktopFrame.offsetLeft) + DesktopContent._windowMouseX;
-	DesktopContent._mouseOverYmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetTop) + 
-			parseInt(DesktopContent._myDesktopFrame.offsetTop) + DesktopContent._windowMouseY;	
-}
-
-DesktopContent.mouseMoveSubscriber = function(newHandler) {
+//=====================================================================================
+DesktopContent.mouseMoveSubscriber = function(newHandler) 
+{
 	DesktopContent._mouseMoveSubscribers.push(newHandler);
-}
+} //end DesktopContent.mouseMoveSubscriber()
 	
 
 DesktopContent.init(); //initialize handlers
@@ -439,7 +664,8 @@ DesktopContent._loadBoxRequestStack = 0; //load box is not removed until back to
 //DesktopContent.showLoading
 //	Pass nextFunction to launch something immediately after showing load box
 //	with hideLoading() called after the function
-DesktopContent.showLoading = function(nextFunction)	{
+DesktopContent.showLoading = function(nextFunction)
+{
 	
 	localDoIt();
 	if(nextFunction)
@@ -580,28 +806,10 @@ DesktopContent.showLoading = function(nextFunction)	{
 } //end showLoading()
 //=====================================================================================
 DesktopContent._loadBoxHideTimer = 0;
-DesktopContent.hideLoading = function()	{
-	
-//	if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
-//		return;
-	
-	//hide in a little bit, to provide more continuity to 
-	//	back to back loading box requests
-//	window.clearInterval(DesktopContent._loadBoxHideTimer);
-//	DesktopContent._loadBoxHideTimer = window.setTimeout(
-//			localHideLoadBox, 300);
-	
-	
-	
-//	/////////////////////////
-//	function localHideLoadBox()
-//	{
-//		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
-//		Debug.log("DesktopContent.hideLoading");
-//		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
-//	} //end localHideLoadBox
-
+DesktopContent.hideLoading = function()	
+{
 	window.setTimeout(localHideLoadBox, 300);
+	
 	/////////////////////////
 	function localHideLoadBox()
 	{
@@ -662,16 +870,18 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	catch(e) {} //ignore error
 			
 	
-	if((!ignoreSystemBlock && DesktopContent._blockSystemCheckMailbox &&  //we expect the system to be down during system block
-			DesktopContent._blockSystemCheckMailbox.innerHTML != "") ||
-			(DesktopContent._needToLoginMailbox &&
-					DesktopContent._needToLoginMailbox.innerHTML == "1"))		
+	
+	if((!ignoreSystemBlock && DesktopContent._blockSystemCheckMailbox) //we expect the system to be down during system block  
+			|| DesktopContent._needToLoginMailbox)		
 	{
 		//check if already marked the mailbox.. and do nothing because we know something is wrong
 		
 		errStr = "The system appears to be down.";
 		errStr += " (Try reconnecting/reloading the page, or alert ots admins if problem persists.)";
-		Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
+		
+		if(!callHandlerOnErr)
+			Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
+		
 		req = 0; //force to 0 to indicate error
 		var found = false;
 		if(DesktopContent._arrayOfFailedHandlers.length < 2) //only give pop up behavior for first 2 failures (then go quiet)
@@ -680,7 +890,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				if(DesktopContent._arrayOfFailedHandlers[rh] == returnHandler) 
 				{
 					errStr = "Blocking multiple error responses to same handler. \nRecurring error should be handled by returnHandler: " + returnHandler;
-					Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
+					
+					if(!callHandlerOnErr)
+						Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
+					
 					found = true; break;
 				}
 		}
@@ -691,10 +904,12 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			found = true;
 		}
 
-		if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
+		if(!found && !callHandlerOnErr)
+			DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 
 		//only call return handler once
-		if(returnHandler && !found && callHandlerOnErr) returnHandler(req, reqParam, errStr); 
+		if(returnHandler && !found && callHandlerOnErr) 
+			returnHandler(req, reqParam, errStr); 
 		return;
 	}
 
@@ -781,11 +996,17 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				{
 					errStr = "Login has expired.";
 
-					if((ignoreSystemBlock || (DesktopContent._blockSystemCheckMailbox && 
-							DesktopContent._blockSystemCheckMailbox.innerHTML == "")) && //make sure system is alive
-							DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
-						DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure                        
-					//return;
+					if(ignoreSystemBlock || !DesktopContent._blockSystemCheckMailbox) //make sure system is alive
+					{
+						DesktopContent._needToLoginMailbox = true; //force to login screen on server failure 
+						if(DesktopContent._theDesktopWindow)
+							DesktopContent._theDesktopWindow.postMessage(
+									{
+								"windowId":			DesktopContent._theWindowId,
+								"request":  		"needToLogin"
+									},"*");
+						//return;
+					}
 				}
 				else if(req.responseText == Globals.REQ_LOCK_REQUIRED_RESPONSE) 
 				{
@@ -807,23 +1028,48 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 						{ //clear req, server failed
 							errStr = "Request Failed - Missing Cookie in Response.";
 
-							if((ignoreSystemBlock || (DesktopContent._blockSystemCheckMailbox && 
-									DesktopContent._blockSystemCheckMailbox.innerHTML == "")) && //make sure system is alive
-									DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
-								DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure                        
+							if(ignoreSystemBlock || !DesktopContent._blockSystemCheckMailbox)  //make sure system is alive
+							{
+								DesktopContent._needToLoginMailbox = true; //force to login screen on server failure 
+								if(DesktopContent._theDesktopWindow)
+									DesktopContent._theDesktopWindow.postMessage(
+											{
+									"windowId":			DesktopContent._theWindowId,
+									"request":  		"needToLogin"
+											},"*");								
+							}
 
 						}
 						else if(DesktopContent._lastCookieCode != "AllowNoUser")
-						{ //check if should update cc mailbox
+						{ 
+							//update local cookieCode and post update to desktop
+							Debug.log("Updating cookie code.");
 
-							//check twice to handle race conditions with other content code
-							if(parseInt(DesktopContent._updateTimeMailbox.innerHTML) < DesktopContent._lastCookieTime) //then current code is newer
-							{
-								DesktopContent._updateTimeMailbox.innerHTML = DesktopContent._lastCookieTime;
-								DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent._lastCookieCode;
-
-								setTimeout(DesktopContent.checkCookieCodeRace, Math.random()*1000|0+500); //random wait (500-1500ms) before checking if race conditions occured
+							var deltaTime = DesktopContent._lastCookieTime - DesktopContent._updateTimeMailbox;							
+							DesktopContent._cookieCodeMailbox = DesktopContent._lastCookieCode;
+							
+							if(DesktopContent._theDesktopWindow && deltaTime > 5*1000 /*ms*/)
+							{	
+								Debug.log("Posting cookie code to desktop.");
+								
+								DesktopContent._updateTimeMailbox = DesktopContent._lastCookieTime;
+								DesktopContent._theDesktopWindow.postMessage(
+										{
+									"windowId":			DesktopContent._theWindowId,
+									"request":  		"updateCookieCode",
+									"cookieCode":		DesktopContent._cookieCodeMailbox,
+									"cookieCodeTime":	DesktopContent._updateTimeMailbox									
+										},"*");
 							}
+
+//							//check twice to handle race conditions with other content code
+//							if(DesktopContent._updateTimeMailbox && parseInt(DesktopContent._updateTimeMailbox.innerHTML) < DesktopContent._lastCookieTime) //then current code is newer
+//							{
+//								DesktopContent._updateTimeMailbox.innerHTML = DesktopContent._lastCookieTime;
+//								 = ;
+//
+//								//setTimeout(DesktopContent.checkCookieCodeRace, Math.random()*1000|0+500); //random wait (500-1500ms) before checking if race conditions occured
+//							}
 						}
 					}
 				}
@@ -841,13 +1087,11 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			else //bad address response
 			{
 
-				errStr = "Request Failed (code: " + req.status + ") - Bad Address:\n" + requestURL;
-
-				if((ignoreSystemBlock || (DesktopContent._blockSystemCheckMailbox && 
-						DesktopContent._blockSystemCheckMailbox.innerHTML == "")) && //make sure system is alive
-						DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
-					DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
-
+				errStr = "Request Failed (code: " + req.status + 
+						") - Bad Address: " + origin + "?urn=" + urn + 
+						"\n" + requestURL;
+				Debug.log(errStr,Debug.HIGH_PRIORITY);
+				
 				//handle multiple failed handlers
 				var found = false;
 				if(DesktopContent._arrayOfFailedHandlers.length < 2) //only give pop up behavior for first 2 failures (then go quiet)
@@ -855,18 +1099,17 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 					for(var rh in DesktopContent._arrayOfFailedHandlers)
 						if(DesktopContent._arrayOfFailedHandlers[rh] == returnHandler) 
 						{
-							errStr = "Blocking multiple error responses to same handle. \nPoor error handling (Developer should fix) by returnHandler: " + returnHandler;
+							errStr = "Blocking multiple error responses to same handler. \nDoes target exist? Here is the (would be) returnHandler: \n\n" + returnHandler;
 							Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
 							found = true; break;
 						}
 				}
 				else 
 				{
-					errStr = "Quiet Mode. Blocking multiple error responses to ALL handles. \nPoor error handling (Developer should fix) by returnHandler: " + returnHandler;
+					errStr = "Quiet Mode. Blocking multiple error responses to ALL handlers. \nDoes target exist? Here is the (would be) returnHandler: \n\n " + returnHandler;
 					Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
 					found = true;
 				}
-
 				if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 				if(found) return; //do not call handler for failed server for user code multiple times..
 			}
@@ -924,10 +1167,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 
 	var reqData;
 	if(!sequence)
-	{        
-		if(!DesktopContent._cookieCodeMailbox) //attempt to fix (e.g. for Desktop)
-			DesktopContent._cookieCodeMailbox = document.getElementById("DesktopContent-cookieCodeMailbox");
-		var cc = DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
+	{   
+		//if(!DesktopContent._cookieCodeMailbox) //attempt to fix (e.g. for Desktop)
+		//	DesktopContent._cookieCodeMailbox = document.getElementById("DesktopContent-cookieCodeMailbox");
+		var cc = DesktopContent._cookieCodeMailbox;//DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
 		reqData = "CookieCode="+cc+((data===undefined)?"":("&"+data));
 	}
 	else
@@ -956,18 +1199,18 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");		
 	req.send(reqData);	
 } // end XMLHttpRequest()
-
-//check cookie code race conditions
-DesktopContent.checkCookieCodeRace = function() {
-	//Debug.log("Checking cookie race conditions");
-	if(parseInt(DesktopContent._updateTimeMailbox.innerHTML) < DesktopContent._lastCookieTime) //then current code is newer
-	{
-		Debug.log("Cookie race occured!");
-
-		DesktopContent._updateTimeMailbox.innerHTML = DesktopContent._lastCookieTime;
-		DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent._lastCookieCode;
-	}
-}
+//
+////check cookie code race conditions
+//DesktopContent.checkCookieCodeRace = function() {
+//	//Debug.log("Checking cookie race conditions");
+//	if(parseInt(DesktopContent._updateTimeMailbox.innerHTML) < DesktopContent._lastCookieTime) //then current code is newer
+//	{
+//		Debug.log("Cookie race occured!");
+//
+//		DesktopContent._updateTimeMailbox.innerHTML = DesktopContent._lastCookieTime;
+//		DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent._lastCookieCode;
+//	}
+//}
 
 //=====================================================================================
 //returns an array of error strings from xml request response
@@ -1032,7 +1275,12 @@ DesktopContent.getXMLNode = function(req, name) {
 	{
 		//find DATA
 		var i;
-		els = req.getElementsByTagName(name);//req.responseXML.childNodes[0].childNodes;
+		try
+		{
+			els = req.getElementsByTagName(name);//req.responseXML.childNodes[0].childNodes;
+		}
+		catch(e) {return undefined;}
+		
 		if(els.length)
 			return els[0];
 		//reverted to former way
@@ -1079,12 +1327,12 @@ DesktopContent.tooltipConditionString = function(str) {
 //			add checkbox to never show again
 // id of "ALWAYS".. disables never show handling (no checkboxes)
 //
-DesktopContent.tooltip = function(id,tip) {
+DesktopContent.tooltip = function(id,tip,alwaysShow) {
 
-	if(typeof Desktop !== 'undefined') //This call is from Desktop page.. so can use it
+	if(typeof Desktop !== 'undefined') //This call is from Desktop page.. so can use the urnLid_ & serverOrigin_
 	{
-		DesktopContent._serverUrnLid = urnLid;
-		DesktopContent._serverOrigin = "";
+		DesktopContent._serverUrnLid = urnLid_;
+		DesktopContent._serverOrigin = serverOrigin_;
 		
 		DesktopContent._sequence = DesktopContent.getDesktopParameter(0,"code");
 		if(!DesktopContent._sequence || DesktopContent._sequence == "")
@@ -1130,16 +1378,31 @@ DesktopContent.tooltip = function(id,tip) {
 				(oldId[i] >= 'A' && oldId[i] <= 'Z') ||
 				(oldId[i] >= '0' && oldId[i] <= '9'))
 			id += oldId[i];
+	
 
-	DesktopContent.XMLHttpRequest(
+	if(alwaysShow || id == "ALWAYS") //no need to check
+		localFinishTooltip();
+	else	
+		DesktopContent.XMLHttpRequest(
 			"TooltipRequest?RequestType=check" + 
 			"&srcFunc=" + srcFunc +
 			"&srcFile=" + srcFile +
 			"&srcId=" + id
-			,""
-			, function(req) {
+			,"" //post data
+			,localFinishTooltip //handler
+			,0,0,0,true,true); //show loading, and target supervisor
+	
+	
+	return;
+	
+	//:::::::::::::::::::::::::::::::::::::::::
+	//popupResize ~~
+	function localFinishTooltip(req)
+	{
 
-		var showTooltip = DesktopContent.getXMLValue(req,"ShowTooltip");
+		var showTooltip = !req || 
+				DesktopContent.getXMLValue(req,"ShowTooltip");	
+		
 		//Debug.log("showTooltip: " + showTooltip);
 		
 		if(showTooltip|0)
@@ -1241,8 +1504,9 @@ DesktopContent.tooltip = function(id,tip) {
 			Debug.log("srcStackString " + srcStackString);
 			Debug.log(str,Debug.TIP_PRIORITY);
 		}
-	},0,0,0,true,true); //show loading, and target supervisor
 	
+	} //end localFinishTooltip()
+
 } //end tooltip()
 
 //=====================================================================================
@@ -1703,7 +1967,7 @@ DesktopContent.getDefaultWindowColor = function() {
 		return "rgb(178,210,240)";
 	}
 
-	wrgba = DesktopContent._windowColorPostbox.innerHTML.split("(")[1].split(")")[0].split(",");
+	wrgba = DesktopContent._windowColorPostbox.split("(")[1].split(")")[0].split(",");
 	drgb = DesktopContent._desktopColor.split("(")[1].split(")")[0].split(",");
 	for(var i in drgb)
 		drgb[i] = (drgb[i]*(1-wrgba[3]) + wrgba[i]*wrgba[3])|0; //floor of blend
@@ -1712,7 +1976,7 @@ DesktopContent.getDefaultWindowColor = function() {
 
 //=====================================================================================
 //get color scheme ~~
-DesktopContent.getDefaultDashboardColor = function() { return DesktopContent.parseColor(DesktopContent._dashboardColorPostbox.innerHTML); }
+DesktopContent.getDefaultDashboardColor = function() { return DesktopContent.parseColor(DesktopContent._dashboardColorPostbox); }//DesktopContent.parseColor(DesktopContent._dashboardColorPostbox.innerHTML); }
 DesktopContent.getDefaultDesktopColor = function() { 
 	if(!DesktopContent._desktopColor)
 	{
@@ -1720,14 +1984,24 @@ DesktopContent.getDefaultDesktopColor = function() {
 		Debug.log("Color post boxes not setup! So giving default.",Debug.MED_PRIORITY);
 		return "rgb(15,34,105)";
 	}
+	Debug.log("Returning desktop color");
 	return DesktopContent._desktopColor;
 } //end getDefaultDesktopColor()
 
 //=====================================================================================
 //getUsername ~~
 DesktopContent.getUsername = function() { 
-	var dispName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
-			return dispName.substr(dispName.indexOf(",")+2);	
+				
+	DesktopContent.XMLHttpRequest(
+		"Request?RequestType=GetUserDisplayName",
+		"",
+		function(req)
+		{
+			console.log(req);
+		
+		});
+	var dispName = ""; //DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
+	return dispName.substr(dispName.indexOf(",")+2);	
 } //end getUsername()
 
 
@@ -1742,93 +2016,108 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 	Debug.log("subname= " + subname);
 	Debug.log("unique= " + unique);
 	
-	//extract params from DesktopContent._openWindowMailbox
-	//get parameters
-	var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
+	//launch request to desktop
+	DesktopContent._theDesktopWindow.postMessage(
+			{
+		"windowId":			DesktopContent._theWindowId,
+		"request":  		"openNewWindow",
+		"windowName":  		name,
+		"windowSubname":  	subname,
+		"windowUnique":  	unique,
+		"windowPath":  		windowPath
+			},"*");
 	
-
-	var tryAgainCount = 0;
-
+	if(completeHandler)
+		completeHandler(); //call parameter handler
+	return; 
 	
-	if(paramsStr != "") //then wait
-	{
-		Debug.log("Window creation is busy, trying again soon!");
-		
-		++tryAgainCount;
-
-		if(tryAgainCount > 50)
-		{
-			Debug.log("It looks like the window failed to open. Perhaps the Desktop is disconnected from the server; " +
-					"please reconnect and try again.", Debug.WARN_PRIORITY);
-			return;
-		}
-
-		setTimeout(function(){ DesktopContent.openNewWindow(windowPath); }, 100);
-		return;
-	}
-
-	//free to attempt to open window!
-	var str = "requestingWindowId=" + DesktopContent._myDesktopFrame.id.split('-')[1];
-	str += "&windowName=" + name;
-	str += "&windowSubname=" + subname;
-	str += "&windowUnique=" + unique;
-	str += "&windowPath=" + windowPath;
-	DesktopContent._openWindowMailbox.innerHTML = str;
-
-	Debug.log("Waiting for complete...");
-	
-	tryAgainCount = 0;
-	var timeoutHandler = function() { 
-		Debug.log("Checking for complete...");
-		
-		++tryAgainCount;
-		
-		if(tryAgainCount > 50)
-		{
-			Debug.log("It looks like the window failed to open. Perhaps the Desktop is disconnected from the server; " +
-					"please reconnect and try again.", Debug.WARN_PRIORITY);
-			return;
-		}
-		
-		//extract params from DesktopContent._openWindowMailbox
-		//get parameters
-		var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
-		var spliti = paramsStr.indexOf('&amp;');
-		params = [paramsStr.substr(0,spliti),paramsStr.substr(spliti+5)];
-		var varPair;
-		var requestingWindowId = "", done = "";
-		for(var i=0;i<params.length;++i)
-		{
-			spliti = params[i].indexOf('=');
-			varPair = [params[i].substr(0,spliti),params[i].substr(spliti+1)];	    		
-			if(varPair[0] 		== "requestingWindowId")
-				requestingWindowId 	= varPair[1];
-			else if(varPair[0] 	== "done")
-				done 				= varPair[1];	 
-		}
-
-		if(paramsStr = "" || (requestingWindowId != "" && done != ""))
-		{
-			//assume done!
-			Debug.log("requestingWindowId=" + requestingWindowId);
-			Debug.log("done=" + done);
-			if(requestingWindowId != DesktopContent._myDesktopFrame.id.split('-')[1])
-				Debug.log("There was a mismatch in window id!",Debug.MED_PRIORITY);
-
-			//clear mailbox 
-			DesktopContent._openWindowMailbox.innerHTML = "";
-
-			if(completeHandler)
-				completeHandler(); //call parameter handler
-			return;
-		}
-		else //try again
-			setTimeout(timeoutHandler, 100); //try again
-
-	};	//end setTimeout handler
-	
-	setTimeout(timeoutHandler,
-			100); //end setTimeout
+//	//extract params from DesktopContent._openWindowMailbox
+//	//get parameters
+//	var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
+//	
+//
+//	var tryAgainCount = 0;
+//
+//	
+//	if(paramsStr != "") //then wait
+//	{
+//		Debug.log("Window creation is busy, trying again soon!");
+//		
+//		++tryAgainCount;
+//
+//		if(tryAgainCount > 50)
+//		{
+//			Debug.log("It looks like the window failed to open. Perhaps the Desktop is disconnected from the server; " +
+//					"please reconnect and try again.", Debug.WARN_PRIORITY);
+//			return;
+//		}
+//
+//		setTimeout(function(){ DesktopContent.openNewWindow(windowPath); }, 100);
+//		return;
+//	}
+//
+//	//free to attempt to open window!
+//	var str = "requestingWindowId=" + DesktopContent._myDesktopFrame.id.split('-')[1];
+//	str += "&windowName=" + name;
+//	str += "&windowSubname=" + subname;
+//	str += "&windowUnique=" + unique;
+//	str += "&windowPath=" + windowPath;
+//	DesktopContent._openWindowMailbox.innerHTML = str;
+//
+//	Debug.log("Waiting for complete...");
+//	
+//	tryAgainCount = 0;
+//	var timeoutHandler = function() { 
+//		Debug.log("Checking for complete...");
+//		
+//		++tryAgainCount;
+//		
+//		if(tryAgainCount > 50)
+//		{
+//			Debug.log("It looks like the window failed to open. Perhaps the Desktop is disconnected from the server; " +
+//					"please reconnect and try again.", Debug.WARN_PRIORITY);
+//			return;
+//		}
+//		
+//		//extract params from DesktopContent._openWindowMailbox
+//		//get parameters
+//		var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
+//		var spliti = paramsStr.indexOf('&amp;');
+//		params = [paramsStr.substr(0,spliti),paramsStr.substr(spliti+5)];
+//		var varPair;
+//		var requestingWindowId = "", done = "";
+//		for(var i=0;i<params.length;++i)
+//		{
+//			spliti = params[i].indexOf('=');
+//			varPair = [params[i].substr(0,spliti),params[i].substr(spliti+1)];	    		
+//			if(varPair[0] 		== "requestingWindowId")
+//				requestingWindowId 	= varPair[1];
+//			else if(varPair[0] 	== "done")
+//				done 				= varPair[1];	 
+//		}
+//
+//		if(paramsStr = "" || (requestingWindowId != "" && done != ""))
+//		{
+//			//assume done!
+//			Debug.log("requestingWindowId=" + requestingWindowId);
+//			Debug.log("done=" + done);
+//			if(requestingWindowId != DesktopContent._myDesktopFrame.id.split('-')[1])
+//				Debug.log("There was a mismatch in window id!",Debug.MED_PRIORITY);
+//
+//			//clear mailbox 
+//			DesktopContent._openWindowMailbox.innerHTML = "";
+//
+//			if(completeHandler)
+//				completeHandler(); //call parameter handler
+//			return;
+//		}
+//		else //try again
+//			setTimeout(timeoutHandler, 100); //try again
+//
+//	};	//end setTimeout handler
+//	
+//	setTimeout(timeoutHandler,
+//			100); //end setTimeout
 
 } // end openNewWindow
 
@@ -1839,7 +2128,115 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 //	
 // Note: to open a window just using the Desktop icon name, leave subname and unique undefined
 //	window path can optionially be used to send the window additional parameters, or left undefined.
-DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {	
+DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) 
+{		
+	
+	if(windowPath !== undefined)
+	{
+		//remove leading ? because Desktop.js handling expects no leading ?
+		if(windowPath[0] == '?')
+			windowPath = windowPath.substr(1);
+			
+		//for windowPath, need to check lid=## is terminated with /
+		// check from = that there is nothing but numbers	
+		try
+		{
+			var i = windowPath.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
+			var isAllNumbers = true;
+			for(i;i<windowPath.length;++i)
+			{
+				//Debug.log(windowPath[i]);
+	
+				if(windowPath[i] < "0" || windowPath[i] > "9")
+				{
+					isAllNumbers = false;
+					break;
+				}				
+			}
+			if(isAllNumbers)
+				windowPath += "/";		
+		}
+		catch(e)
+		{
+			Debug.log("An error occurred while trying to open the window. " +
+					"The window path seems to be invalid:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e, Debug.HIGH_PRIORITY);
+			return;
+		}
+	}
+	Debug.log("DesktopWindow= " + windowPath);
+
+	Debug.log("name= " + name);
+	Debug.log("subname= " + subname);
+	Debug.log("unique= " + unique);
+
+	//var search = DesktopContent._theWindow.parent.parent.window.location.search;
+	url = DesktopContent._serverOrigin +
+			"/urn:xdaq-application:lid="+DesktopContent._serverUrnLid+"/";//DesktopContent._theWindow.parent.parent.window.location.pathname;
+	
+	
+	
+	var str = "requestingWindowId=" + DesktopContent._theWindowId;//DesktopContent._myDesktopFrame.id.split('-')[1];
+	str += "&windowName=" + name;
+	str += "&windowSubname=" + subname;
+	str += "&windowUnique=" + unique;
+	str += "&windowPath=" + windowPath;
+	
+
+	if(DesktopContent._sequence)
+		url += "Verify?code=" + DesktopContent._sequence + "&" + str;
+	else
+		url += "?" + str;
+		
+	//if there is no search, need to check lid=## is terminated with /
+	// check from = that there is nothing but numbers
+	
+//	if(search == "") 
+//	{
+//		var i = url.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
+//		var isAllNumbers = true;
+//		for(i;i<url.length;++i)
+//		{
+//			Debug.log(url[i]);
+//			
+//			if(url[i] < "0" || url[i] > "9")
+//			{
+//				isAllNumbers = false;
+//				break;
+//			}				
+//		}
+//		if(isAllNumbers)
+//			url += "/";
+//		url += "?" + str;
+//	}
+//	else
+//	{		
+//		//remove, possibly recursive, former new windows through url
+//		var i = search.indexOf("requestingWindowId");		
+//		if(i >= 0)
+//			search = search.substr(0,i);
+//		
+//		//replace sequence with updated sequence
+//		if(search.substr(0,6) == "?code=") 
+//		{
+//			i = search.substr('&');
+//			search = "?code=" + DesktopContent._sequence + 
+//					(i>0?search.substr(i):"");
+//		}
+//		
+//		//only add & if there are other parameters
+//		if(search.length && search[search.length-1] != '?'
+//				&& search[search.length-1] != '&')
+//			search += '&';
+//		url += search + str;
+//	}
+	
+	Debug.log("DesktopContent.openNewBrowserTab= " + url);
+	//DesktopContent.openNewBrowserTab= /urn:xdaq-application:lid=200/?requestingWindowId=1002&windowName=ARTDAQ Config&windowSubname=&windowUnique=false&windowPath=/WebPath/html/ConfigurationGUI_artdaq.html?urn=281
+	window.open(url,'_blank');	
+
+	
+	return;
+	
 	
 	if(windowPath !== undefined)
 	{
@@ -1882,7 +2279,7 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	var search = DesktopContent._theWindow.parent.parent.window.location.search;
 	url = DesktopContent._theWindow.parent.parent.window.location.pathname;
 		
-	var str = "requestingWindowId=" + DesktopContent._myDesktopFrame.id.split('-')[1];
+	var str = "requestingWindowId=" + DesktopContent._theWindowId;//DesktopContent._myDesktopFrame.id.split('-')[1];
 	str += "&windowName=" + name;
 	str += "&windowSubname=" + subname;
 	str += "&windowUnique=" + unique;
@@ -1910,11 +2307,20 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		url += "?" + str;
 	}
 	else
-	{
+	{		
 		//remove, possibly recursive, former new windows through url
 		var i = search.indexOf("requestingWindowId");		
 		if(i >= 0)
 			search = search.substr(0,i);
+		
+		//replace sequence with updated sequence
+		if(search.substr(0,6) == "?code=") 
+		{
+			i = search.substr('&');
+			search = "?code=" + DesktopContent._sequence + 
+					(i>0?search.substr(i):"");
+		}
+		
 		//only add & if there are other parameters
 		if(search.length && search[search.length-1] != '?'
 				&& search[search.length-1] != '&')
@@ -1923,7 +2329,7 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	}
 	
 	Debug.log("DesktopContent.openNewBrowserTab= " + url);
-	
+	//DesktopContent.openNewBrowserTab= /urn:xdaq-application:lid=200/?requestingWindowId=1002&windowName=ARTDAQ Config&windowSubname=&windowUnique=false&windowPath=/WebPath/html/ConfigurationGUI_artdaq.html?urn=281
 	window.open(url,'_blank');	
 } // end openNewBrowserTab()
 
@@ -1938,14 +2344,17 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 		imageURL, windowContentURL, linkedApp, parameters) {
 
 	var iconParameters = "";
-	if(parameters && parameters.length && (typeof parameters === "string"))
-		iconParameters = parameters; //just take string, if not object
-	else //take parameters from object
-		for(var i in parametersObject)
-		{
-			iconParameters += encodeURIComponent(i) + "=" + 
-					encodeURIComponent(iconParameters[i]) + "&";
-		}
+	if(parameters && parameters.length)
+	{
+		if(typeof parameters === "string")
+			iconParameters = parameters; //just take string, if not object
+		else //take parameters from object
+			for(var i in parametersObject)
+			{
+				iconParameters += encodeURIComponent(i) + "=" + 
+						encodeURIComponent(iconParameters[i]) + "&";
+			}
+	}
 	
 	Debug.log("iconParameters = " + iconParameters);
 	
@@ -1991,12 +2400,19 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 			activateSystemConfigHandler(req);
 		}
 		
-		if(DesktopContent._blockSystemCheckMailbox &&
-				DesktopContent._blockSystemCheckMailbox.innerHTML == "")
-		{
-			//inform Desktop.js to refresh icons (handled by _checkMailboxes())
-			DesktopContent._blockSystemCheckMailbox.innerHTML = "RefreshIcons";
-		}
+//		if(!DesktopContent._blockSystemCheckMailbox &&
+//				DesktopContent._blockSystemCheckMailbox.innerHTML == "")
+//		{
+//			//inform Desktop.js to refresh icons (handled by _checkMailboxes())
+//			DesktopContent._blockSystemCheckMailbox.innerHTML = "RefreshIcons";
+//		}
+
+		//inform Desktop.js to refresh icons (handled by _checkMailboxes())
+		DesktopContent._theDesktopWindow.postMessage(
+				{
+			"windowId":			DesktopContent._theWindowId,
+			"request":  		"refreshIcons"
+				},"*");
 
 			}, //end request handler
 			0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
@@ -2005,6 +2421,19 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 
 } //end addDesktopIcon()
 
+//=====================================================================================
+DesktopContent.systemBlackout = function(doBlackout)
+{
+	Debug.log("systemBlackout =" + doBlackout);
+	//inform Desktop.js to refresh icons (handled by _checkMailboxes())
+	DesktopContent._theDesktopWindow.postMessage(
+			{
+		"windowId":			DesktopContent._theWindowId,
+		"request":  		(doBlackout?"startSystemBlackout":"stopSystemBlackout")
+			},"*");
+} //end systemBlackout()
+
+//=====================================================================================
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window
 DesktopContent.getDesktopWindowTitle = function() 
