@@ -14,6 +14,8 @@ cet_make(LIBRARY_NAME SlowControlsDashboard
 		 FiniteStateMachine
 		 CoreSupervisors
          Macros
+		 WebUsersUtilities
+		 otsdaq_TablePlugins_XDAQContextTable_table
 	     ${MF_MESSAGELOGGER}
 	     ${MF_UTILITIES}
 		 ${Boost_REGEX_LIBRARY}

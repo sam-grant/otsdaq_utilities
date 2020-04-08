@@ -41,8 +41,6 @@
 //#define __PRINTF__ if(0) printf
 //#define __COUT__  if(0) cout
 
-using namespace std;
-
 int main(int argc, char** argv)
 {
 	__COUT__ << "Starting doxygen main.html editor..." << __E__;

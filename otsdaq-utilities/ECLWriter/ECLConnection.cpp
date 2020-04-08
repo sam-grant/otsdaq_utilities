@@ -84,7 +84,7 @@ bool ECLConnection::Get(std::string s, std::string& response)
 	return true;
 }
 
-bool ECLConnection::Search(std::string s) { return false; }
+bool ECLConnection::Search(std::string /*s*/) { return false; }
 
 std::string ECLConnection::MakeSaltString()
 {

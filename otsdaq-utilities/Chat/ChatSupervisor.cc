@@ -64,7 +64,7 @@ void ChatSupervisor::forceSupervisorPropertyValues()
 void ChatSupervisor::request(const std::string&               requestType,
                              cgicc::Cgicc&                    cgiIn,
                              HttpXmlDocument&                 xmlOut,
-                             const WebUsers::RequestUserInfo& userInfo)
+                             const WebUsers::RequestUserInfo& /*userInfo*/)
 {
 	//__COUT__ << "requestType: " << requestType << std::endl;
 
@@ -121,7 +121,7 @@ void ChatSupervisor::request(const std::string&               requestType,
 // ChatSupervisor::escapeChat()
 //	replace html/xhtml reserved characters with equivalent.
 //	reserved: ", ', &, <, >
-void ChatSupervisor::escapeChat(std::string& chat)
+void ChatSupervisor::escapeChat(std::string& /*chat*/)
 {
 	//	char reserved[] = {'"','\'','&','<','>'};
 	// std::string replace[] = {"&#34;","&#39;","&#38;","&#60;","&#62;"};

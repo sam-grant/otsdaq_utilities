@@ -66,8 +66,8 @@ class VisualSupervisor : public CoreSupervisorBase
 	// fsm)
 	// ;
 
-	virtual void 			transitionConfiguring 			(toolbox::Event::Reference e);
-	virtual void 			transitionHalting 				(toolbox::Event::Reference e);
+	virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) override;
+	virtual void 			transitionHalting 				(toolbox::Event::Reference e) override;
 	// virtual void 			transitionInitializing (toolbox::Event::Reference e) ;
 	//    virtual void 			transitionPausing     			(toolbox::Event::Reference
 	//    e) ; virtual void 			transitionResuming (toolbox::Event::Reference e) ;

@@ -102,7 +102,7 @@ void VisualSupervisor::destroy(void)
 } //end destroy()
 
 //==============================================================================
-void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)
+void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference /*e*/)
 {
 	__SUP_COUT__ << "Configuring..." << __E__;
 
@@ -226,7 +226,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 	//        //TProfile* profile  = theDataManager_->getFileDQMHistos().getProfile();
 	//
 	//    }
-	stringstream ss;
+	std::stringstream ss;
 	//         ss << "Request type: |" << requestType << "|";
 	//         //STDLINE(ss.str(),"") ;
 	if(requestType ==
@@ -393,8 +393,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 		                                             // Ryan's purposes but required by
 		                                             // Extjs
 
-		////STDLINE(string("rootpath                 : ")+rootpath,"") ;
-		////STDLINE(string("path                     : ")+    path,"") ;
+		////STDLINE(std::string("rootpath                 : ")+rootpath,"") ;
+		////STDLINE(std::string("path                     : ")+    path,"") ;
 
 		// return 1 if user has access to admin controls, else 0
 		char permStr[10];
@@ -404,8 +404,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 		            CoreSupervisorBase::getSupervisorPropertyUserPermissionsThreshold(
 		                "rootAdminControls"));
 		xmlOut.addTextElementToData("permissions", permStr);  // add permissions
-		////STDLINE(string("permStr                  : ")+permStr,"") ;
-		////STDLINE(string("PRE_MADE_ROOT_CFG_DIR    : ")+PRE_MADE_ROOT_CFG_DIR,"") ;
+		////STDLINE(std::string("permStr                  : ")+permStr,"") ;
+		////STDLINE(std::string("PRE_MADE_ROOT_CFG_DIR    : ")+PRE_MADE_ROOT_CFG_DIR,"") ;
 
 		std::string dirpath = rootpath + path;
 		if(path == "/" + PRE_MADE_ROOT_CFG_DIR + "/")
@@ -416,7 +416,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 			dirpath = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" +
 			          path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2);
 
-		////STDLINE(string("dirpath                  : ")+ dirpath,"") ;
+		////STDLINE(std::string("dirpath                  : ")+ dirpath,"") ;
 		__SUP_COUT__ << "full path: " << dirpath << __E__;
 
 		DIR*           pDIR;
@@ -433,14 +433,14 @@ void VisualSupervisor::request(const std::string&               requestType,
 			// there
 			if(path == "/")
 			{
-				////STDLINE(string("--> LIVEDQM_DIR          : ")+LIVEDQM_DIR,"") ;
+				////STDLINE(std::string("--> LIVEDQM_DIR          : ")+LIVEDQM_DIR,"") ;
 				if(theDataManager_ != nullptr &&
 						theDataManager_->getLiveDQMHistos() != 0)
 					xmlOut.addTextElementToData("dir",
 					                            LIVEDQM_DIR + ".root");  // add to xml
 
 				// check for ROOT_DISPLAY_CONFIG_PATH
-				////STDLINE(string("ROOT_DISPLAY_CONFIG_PATH :
+				////STDLINE(std::string("ROOT_DISPLAY_CONFIG_PATH :
 				///")+ROOT_DISPLAY_CONFIG_PATH,"") ;
 				DIR* pRtDIR  = opendir(ROOT_DISPLAY_CONFIG_PATH);
 				bool recheck = false;
@@ -458,14 +458,14 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 				if(!recheck || (pRtDIR = opendir(ROOT_DISPLAY_CONFIG_PATH)))
 				{
-					////STDLINE(string("--> PRE_MADE_ROOT_CFG_DIR: ")+LIVEDQM_DIR,"") ;
+					////STDLINE(std::string("--> PRE_MADE_ROOT_CFG_DIR: ")+LIVEDQM_DIR,"") ;
 					xmlOut.addTextElementToData("dir",
 					                            PRE_MADE_ROOT_CFG_DIR);  // add to xml
 					if(recheck)
 						closedir(pRtDIR);
 				}
 			}
-			////STDLINE(string("Opening ")+ dirpath,"") ;
+			////STDLINE(std::string("Opening ")+ dirpath,"") ;
 			while((entry = readdir(pDIR)))
 			{
 				//__SUP_COUT__ << int(entry->d_type) << " " << entry->d_name << "\n" <<
@@ -485,7 +485,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 					if(entry->d_type == 0)
 					{
 						// unknown type .. determine if directory
-						////STDLINE(string("Opening ")+dirpath+entry->d_name,"") ;
+						////STDLINE(std::string("Opening ")+dirpath+entry->d_name,"") ;
 						DIR* pTmpDIR = opendir((dirpath + entry->d_name).c_str());
 						if(pTmpDIR)
 						{
@@ -505,7 +505,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 						isDir = true;  // flag directory types
 
 					// ss.str("") ; ss << "Adding " << entry->d_name << " to xmlOut" ;
-					////STDLINE(string("--> entry->d_name        : ")+entry->d_name,"") ;
+					////STDLINE(std::string("--> entry->d_name        : ")+entry->d_name,"") ;
 					xmlOut.addTextElementToData(
 					    isDir ? "dir" : (isNotRtCfg ? "dir" : "file"), entry->d_name);
 				}
@@ -900,9 +900,9 @@ void VisualSupervisor::request(const std::string&               requestType,
 			loadedRunNumber_ = Run;
 		}
 
-		DOMElement* eventsParent = xmlOut.addTextElementToData("events", "");
-		DOMElement* eventParent;
-		char        str[40];
+		/*DOMElement* eventsParent =*/ xmlOut.addTextElementToData("events", "");
+		//DOMElement* eventParent;
+		//char        str[40];
 
 		//		const Visual3DEvents& events = theDataManager_->getVisual3DEvents();
 		//		__SUP_COUT__ << "Preparing hits xml" << __E__;
@@ -962,7 +962,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 		__SUP_COUT__ << "getGeometry" << __E__;
 
-		DOMElement* geometryParent = xmlOut.addTextElementToData("geometry", "");
+		/*DOMElement* geometryParent =*/ xmlOut.addTextElementToData("geometry", "");
 		//		const Visual3DShapes& shapes =
 		// theDataManager_->getVisual3DGeometry().getShapes();
 		//
@@ -1139,14 +1139,14 @@ void VisualSupervisor::request(const std::string&               requestType,
 		fRootPath            = boost::regex_replace(fRootPath, re, "/");
 		std::string fullPath = fSystemPath + fRootPath;
 		//  fFoldersPath_ = "pippo" ;
-		STDLINE(string("Begin: fSystemPath  = ") + fSystemPath, ACWhite);
-		STDLINE(string("Begin: fRootPath    = ") + fRootPath, ACWhite);
-		STDLINE(string("Begin: fullPath     = ") + fullPath, ACWhite);
-		//  STDLINE(string("Begin: fFoldersPath = ")+fFoldersPath_,ACCyan ) ;
+		STDLINE(std::string("Begin: fSystemPath  = ") + fSystemPath, ACWhite);
+		STDLINE(std::string("Begin: fRootPath    = ") + fRootPath, ACWhite);
+		STDLINE(std::string("Begin: fullPath     = ") + fullPath, ACWhite);
+		//  STDLINE(std::string("Begin: fFoldersPath = ")+fFoldersPath_,ACCyan ) ;
 
 		xmlOut.setRootPath(fRootPath);
 		xmlOut.makeDirectoryBinaryTree(fSystemPath, fRootPath, 0, NULL);
-		std::ostringstream* out;
+		std::ostringstream* out = new std::ostringstream();
 		xmlOut.outputXmlDocument((std::ostringstream*)out, true);
 	}
 	else if(

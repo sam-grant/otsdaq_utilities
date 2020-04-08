@@ -175,7 +175,7 @@ void LogbookSupervisor::destroy(void)
 }
 
 //==============================================================================
-void LogbookSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
+void LogbookSupervisor::defaultPage(xgi::Input* /*in*/, xgi::Output* out)
 {
 	__COUT__ << " active experiment " << activeExperiment_ << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
@@ -437,7 +437,7 @@ void LogbookSupervisor::request(const std::string&               requestType,
 void LogbookSupervisor::nonXmlRequest(const std::string&               requestType,
                                       cgicc::Cgicc&                    cgiIn,
                                       std::ostream&                    out,
-                                      const WebUsers::RequestUserInfo& userInfo)
+                                      const WebUsers::RequestUserInfo& /*userInfo*/)
 {
 	// Commands
 	//	LogImage
@@ -1265,7 +1265,7 @@ void LogbookSupervisor::savePostPreview(std::string&                        subj
 //          delete directory
 void LogbookSupervisor::movePreviewEntry(std::string      previewNumber,
                                          bool             approve,
-                                         HttpXmlDocument* xmlOut)
+                                         HttpXmlDocument* /*xmlOut*/)
 {
 	__COUT__ << "previewNumber " << previewNumber
 	         << (approve ? " Accepted" : " Cancelled") << std::endl;
@@ -1367,7 +1367,7 @@ std::string LogbookSupervisor::validateUploadFileType(const std::string fileType
 //	escapeLogbookEntry
 //      replace html/xhtml reserved characters with equivalent.
 //      reserved: ", ', &, <, >, \n, double-space
-void LogbookSupervisor::escapeLogbookEntry(std::string& entry)
+void LogbookSupervisor::escapeLogbookEntry(std::string& /*entry*/)
 {
 	// NOTE: should already be taken care of by web gui javascript! do we care to check?
 }

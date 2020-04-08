@@ -409,7 +409,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		    1 == CgiDataUtilities::getDataAsInt(cgiIn, "reloadActiveGroups");  // from GET
 
 		__SUP_COUT__ << "reloadActive: " << reloadActive << __E__;
-		bool wasError = false;
+		//bool wasError = false;
 		if(reloadActive)
 		{
 			try
@@ -423,14 +423,14 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 				           << __E__;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
 				xmlOut.addTextElementToData("Error", ss.str());
-				wasError = true;
+				//wasError = true;
 			}
 			catch(...)
 			{
 				__SUP_SS__ << ("Error loading active groups!\n\n") << __E__;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
 				xmlOut.addTextElementToData("Error", ss.str());
-				wasError = true;
+				//wasError = true;
 			}
 		}
 
@@ -1830,7 +1830,7 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(
 		{
 			std::istringstream f(recordList);
 			std::string        recordUID;
-			unsigned int       i;
+			//unsigned int       i;
 
 			while(getline(f, recordUID, ','))  // for each record
 			{
@@ -2017,7 +2017,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 		{
 			std::istringstream f(recordList);
 			std::string        recordUID;
-			unsigned int       i;
+			//unsigned int       i;
 
 			while(getline(f, recordUID, ','))  // for each record
 			{
@@ -2412,7 +2412,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(
 
 				//__SUP_COUT__ << "recordUID " <<	recordUID << __E__;
 
-				xercesc::DOMElement* parentEl =
+				/*xercesc::DOMElement* parentEl =*/
 				    xmlOut.addTextElementToData("fieldValues", recordUID);
 
 				// for each field, set value
@@ -6375,7 +6375,7 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 	for(const auto& tablePair : allTableInfo)
 		orderedTableSet.emplace(tablePair.first);
 
-	std::map<std::string, TableInfo>::const_iterator it = allTableInfo.begin();
+	//std::map<std::string, TableInfo>::const_iterator it = allTableInfo.begin();
 
 	__SUP_COUT__ << "# of tables found: " << allTableInfo.size() << __E__;
 
@@ -6786,7 +6786,7 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 //	configGroupName (full name with key)
 //
 void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
-    HttpXmlDocument&        xmlOut,
+    HttpXmlDocument&        /*xmlOut*/,
     ConfigurationManagerRW* cfgMgr,
     const std::string&      layoutString,
     const std::string&      contextGroupName,

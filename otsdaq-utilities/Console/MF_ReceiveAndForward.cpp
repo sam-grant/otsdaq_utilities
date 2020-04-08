@@ -38,8 +38,6 @@
 #include <unistd.h>
 #include <iostream>
 
-using namespace std;
-
 #define MAXBUFLEN 5000
 
 #define __MF_SUBJECT__ "mfReceiveAndForward"
@@ -86,10 +84,10 @@ int makeSocket(const char* ip, int port, struct addrinfo*& p)
 	int                     sockfd;
 	struct addrinfo         hints, *servinfo;
 	int                     rv;
-	int                     numbytes;
-	struct sockaddr_storage their_addr;
-	socklen_t               addr_len;
-	char                    s[INET6_ADDRSTRLEN];
+	//int                     numbytes;
+	//struct sockaddr_storage their_addr;
+	//socklen_t               addr_len;
+	//char                    s[INET6_ADDRSTRLEN];
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family   = AF_UNSPEC;
@@ -185,7 +183,7 @@ int main(int argc, char** argv)
 	struct sockaddr_storage their_addr;
 	char                    buff[MAXBUFLEN];
 	socklen_t               addr_len;
-	char                    s[INET6_ADDRSTRLEN];
+	//char                    s[INET6_ADDRSTRLEN];
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family   = AF_UNSPEC;  // set to AF_INET to force IPv4
@@ -208,7 +206,7 @@ int main(int argc, char** argv)
 			continue;
 		}
 
-		if(bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+		if(bind(sockfd, p->ai_addr, p->ai_addrlen) < 0 )
 		{
 			close(sockfd);
 			__COUT__ << "listener: bind.\n\n" << __E__;
@@ -233,15 +231,15 @@ int main(int argc, char** argv)
 	//////////////////////////////////////////////////////////////////////
 
 	// hardware "registers"
-	uint64_t data_gen_cnt  = 0;
-	uint64_t data_gen_rate = 1 << 16;
-	uint8_t  dataEnabled   = 0;
+	//uint64_t data_gen_cnt  = 0;
+	//uint64_t data_gen_rate = 1 << 16;
+	//uint8_t  dataEnabled   = 0;
 
-	const unsigned int RX_ADDR_OFFSET = 2;
-	const unsigned int RX_DATA_OFFSET = 10;
-	const unsigned int TX_DATA_OFFSET = 2;
+	//const unsigned int RX_ADDR_OFFSET = 2;
+	//const unsigned int RX_DATA_OFFSET = 10;
+	//const unsigned int TX_DATA_OFFSET = 2;
 
-	unsigned int packetSz;
+	//unsigned int packetSz;
 	unsigned int pingCounter = 0;
 
 	// for timeout/select
@@ -252,7 +250,7 @@ int main(int argc, char** argv)
 	FD_ZERO(&masterfds);
 	FD_SET(sockfd, &masterfds);
 
-	time_t count = 0;
+	//time_t count = 0;
 
 	int       mf_p, mf_i, mf_j;  // for extracting message
 	const int MF_POS_OF_TYPE = 5;
