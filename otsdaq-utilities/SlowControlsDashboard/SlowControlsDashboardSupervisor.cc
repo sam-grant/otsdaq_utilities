@@ -423,7 +423,7 @@ void SlowControlsDashboardSupervisor::handleRequest(
 }  // end handleRequest()
 
 //==============================================================================
-void SlowControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
+void SlowControlsDashboardSupervisor::Poll(cgicc::Cgicc&    /*cgiIn*/,
                                            HttpXmlDocument& xmlOut,
                                            std::string      UID)
 {
@@ -612,7 +612,7 @@ void SlowControlsDashboardSupervisor::GetLastAlarmsData(cgicc::Cgicc&    cgiIn,
 
 	// create lambda function to fill JSONMessage
 	std::function<void(HttpXmlDocument&, std::vector<std::vector<std::string>>&)>
-	    jsonFiller = [this](HttpXmlDocument&                       xmlOut,
+	    jsonFiller = [](HttpXmlDocument&                       xmlOut,
 	                        std::vector<std::vector<std::string>>& alarms) {
 		    if(alarms.size())
 			    for(auto& alarmRow : alarms)
@@ -672,7 +672,7 @@ void SlowControlsDashboardSupervisor::GetAlarmsLogData(cgicc::Cgicc&    cgiIn,
 
 	// create lambda function to fill JSONMessage
 	std::function<void(HttpXmlDocument&, std::vector<std::vector<std::string>>&)>
-	    jsonFiller = [this](HttpXmlDocument&                       xmlOut,
+	    jsonFiller = [](HttpXmlDocument&                       xmlOut,
 	                        std::vector<std::vector<std::string>>& alarmsLog) {
 			if (alarmsLog.size())
 				for(auto& alarmRow : alarmsLog)
@@ -718,15 +718,15 @@ void SlowControlsDashboardSupervisor::GetAlarmsLogData(cgicc::Cgicc&    cgiIn,
 //==============================================================================
 void
 SlowControlsDashboardSupervisor::GetUserPermissions(
-	cgicc::Cgicc & cgiIn,
-	HttpXmlDocument & xmlOut,
-	const WebUsers::RequestUserInfo& userInfo)
+	cgicc::Cgicc & /*cgiIn*/,
+	HttpXmlDocument & /*xmlOut*/,
+	const WebUsers::RequestUserInfo& /*userInfo*/)
 {
 	return;
 }
 
 //==============================================================================
-void SlowControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
+void SlowControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    /*cgiIn*/,
                                                   HttpXmlDocument& xmlOut,
                                                   std::string      channelList)
 {
@@ -752,7 +752,7 @@ void SlowControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
 }  // end GenerateUID()
 
 //==============================================================================
-void SlowControlsDashboardSupervisor::GetList(cgicc::Cgicc&    cgiIn,
+void SlowControlsDashboardSupervisor::GetList(cgicc::Cgicc&    /*cgiIn*/,
                                               HttpXmlDocument& xmlOut)
 {
 	if(interface_ != NULL)
@@ -773,7 +773,7 @@ void SlowControlsDashboardSupervisor::GetList(cgicc::Cgicc&    cgiIn,
 }  // end GetList()
 
 //==============================================================================
-void SlowControlsDashboardSupervisor::GetPages(cgicc::Cgicc&    cgiIn,
+void SlowControlsDashboardSupervisor::GetPages(cgicc::Cgicc&    /*cgiIn*/,
                                                HttpXmlDocument& xmlOut)
 {
 	std::vector<std::string> pages;
@@ -804,10 +804,10 @@ void SlowControlsDashboardSupervisor::GetPages(cgicc::Cgicc&    cgiIn,
 }  // end GetPages()
 
 //==============================================================================
-void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc&                    cgiIn,
+void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc&                    /*cgiIn*/,
                                                HttpXmlDocument&                 xmlOut,
                                                std::string                      page,
-                                               const WebUsers::RequestUserInfo& userInfo)
+                                               const WebUsers::RequestUserInfo& /*userInfo*/)
 {
 	page = StringMacros::decodeURIComponent(page);
 
@@ -892,10 +892,10 @@ void SlowControlsDashboardSupervisor::loadPage(cgicc::Cgicc&                    
 }  // end loadPage()
 
 void SlowControlsDashboardSupervisor::loadPhoebusPage(
-    cgicc::Cgicc&                    cgiIn,
+    cgicc::Cgicc&                    /*cgiIn*/,
     HttpXmlDocument&                 xmlOut,
     std::string                      page,
-    const WebUsers::RequestUserInfo& userInfo)
+    const WebUsers::RequestUserInfo& /*userInfo*/)
 {
 	page = StringMacros::decodeURIComponent(page);
 
@@ -958,8 +958,8 @@ void SlowControlsDashboardSupervisor::loadPhoebusPage(
 //==============================================================================
 void SlowControlsDashboardSupervisor::SaveControlsPage(
     cgicc::Cgicc&                    cgiIn,
-    HttpXmlDocument&                 xmlOut,
-    const WebUsers::RequestUserInfo& userInfo)
+    HttpXmlDocument&                 /*xmlOut*/,
+    const WebUsers::RequestUserInfo& /*userInfo*/)
 {
 	__SUP_COUT__ << "ControlsDashboard wants to create a Controls Page!" << __E__;
 
@@ -1021,8 +1021,8 @@ void SlowControlsDashboardSupervisor::SaveControlsPage(
 //==============================================================================
 void SlowControlsDashboardSupervisor::SavePhoebusControlsPage(
     cgicc::Cgicc&                    cgiIn,
-    HttpXmlDocument&                 xmlOut,
-    const WebUsers::RequestUserInfo& userInfo)
+    HttpXmlDocument&                 /*xmlOut*/,
+    const WebUsers::RequestUserInfo& /*userInfo*/)
 {
 	__SUP_COUT__ << "ControlsDashboard wants to create a Controls Page!" << __E__;
 
@@ -1075,14 +1075,14 @@ void SlowControlsDashboardSupervisor::SavePhoebusControlsPage(
 }
 
 //==============================================================================
-void SlowControlsDashboardSupervisor::Subscribe(cgicc::Cgicc&    cgiIn,
-                                                HttpXmlDocument& xmlOut)
+void SlowControlsDashboardSupervisor::Subscribe(cgicc::Cgicc&    /*cgiIn*/,
+                                                HttpXmlDocument& /*xmlOut*/)
 {
 }
 
 //==============================================================================
-void SlowControlsDashboardSupervisor::Unsubscribe(cgicc::Cgicc&    cgiIn,
-                                                  HttpXmlDocument& xmlOut)
+void SlowControlsDashboardSupervisor::Unsubscribe(cgicc::Cgicc&    /*cgiIn*/,
+                                                  HttpXmlDocument& /*xmlOut*/)
 {
 }
 

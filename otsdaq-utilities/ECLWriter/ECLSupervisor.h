@@ -5,14 +5,26 @@
 #include "otsdaq/SOAPUtilities/SOAPMessenger.h"
 #include "otsdaq/WebUsersUtilities/RemoteWebUsers.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#if __GNUC__ >= 8
+#pragma GCC diagnostic ignored "-Wcatch-value"
+#endif
+
 #include <xdaq/Application.h>
-#include <xgi/Method.h>
+#pragma GCC diagnostic pop
 #include "otsdaq/Macros/XDAQApplicationMacros.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#include <xgi/Method.h>  //for cgicc::Cgicc
 #include <cgicc/HTMLClasses.h>
 #include <cgicc/HTMLDoctype.h>
 #include <cgicc/HTTPCookie.h>
 #include <cgicc/HTTPHeader.h>
+#pragma GCC diagnostic pop
 
 #include <chrono>
 #include <map>

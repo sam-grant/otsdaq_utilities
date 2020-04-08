@@ -45,6 +45,7 @@ cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx
 	artdaq-core_Utilities
 	${XDAQ_BASIC_LIB_LIST}
 	#XmlUtilities
+	Macros
 	CoreSupervisors
 		 SupervisorInfo
 		 WebUsersUtilities

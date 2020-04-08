@@ -1830,7 +1830,7 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(
 		{
 			std::istringstream f(recordList);
 			std::string        recordUID;
-			unsigned int       i;
+			//unsigned int       i;
 
 			while(getline(f, recordUID, ','))  // for each record
 			{
@@ -2017,7 +2017,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 		{
 			std::istringstream f(recordList);
 			std::string        recordUID;
-			unsigned int       i;
+			//unsigned int       i;
 
 			while(getline(f, recordUID, ','))  // for each record
 			{
@@ -2412,7 +2412,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(
 
 				//__SUP_COUT__ << "recordUID " <<	recordUID << __E__;
 
-				xercesc::DOMElement* parentEl =
+				/*xercesc::DOMElement* parentEl =*/
 				    xmlOut.addTextElementToData("fieldValues", recordUID);
 
 				// for each field, set value
@@ -6375,7 +6375,7 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 	for(const auto& tablePair : allTableInfo)
 		orderedTableSet.emplace(tablePair.first);
 
-	std::map<std::string, TableInfo>::const_iterator it = allTableInfo.begin();
+	//std::map<std::string, TableInfo>::const_iterator it = allTableInfo.begin();
 
 	__SUP_COUT__ << "# of tables found: " << allTableInfo.size() << __E__;
 
@@ -6786,7 +6786,7 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 //	configGroupName (full name with key)
 //
 void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
-    HttpXmlDocument&        xmlOut,
+    HttpXmlDocument&        /*xmlOut*/,
     ConfigurationManagerRW* cfgMgr,
     const std::string&      layoutString,
     const std::string&      contextGroupName,

@@ -76,7 +76,7 @@ void MacroMakerSupervisor::init(void)
 	// called by constructor
 
 	// MacroMaker should consider all FE compatible types..
-	allFESupervisorInfo_ = allSupervisorInfo_.getAllFETypeSupervisorInfo();
+	allFESupervisorInfo_ = SupervisorInfoMap( allSupervisorInfo_.getAllFETypeSupervisorInfo() );
 
 }  // end init()
 
@@ -824,7 +824,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 }  // end getFEList()
 
 //==============================================================================
-void MacroMakerSupervisor::writeData(HttpXmlDocument&   xmldoc,
+void MacroMakerSupervisor::writeData(HttpXmlDocument&   /*xmldoc*/,
                                      cgicc::Cgicc&      cgi,
                                      const std::string& username)
 {
@@ -1037,7 +1037,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument&   xmldoc,
 }
 
 //==============================================================================
-void MacroMakerSupervisor::createMacro(HttpXmlDocument&   xmldoc,
+void MacroMakerSupervisor::createMacro(HttpXmlDocument&   /*xmldoc*/,
                                        cgicc::Cgicc&      cgi,
                                        const std::string& username)
 {
@@ -1841,7 +1841,7 @@ void MacroMakerSupervisor::createCode(std::ostream&                   out,
                                       std::set<std::string>*          inArgNames,
                                       std::set<std::string>*          outArgNames)
 {
-	int                                 numOfHexBytes;
+	//int                                 numOfHexBytes;
 	std::set<std::string /*argInName*/> argInHasBeenInitializedSet;
 	bool                                addressIsVariable, dataIsVariable;
 
