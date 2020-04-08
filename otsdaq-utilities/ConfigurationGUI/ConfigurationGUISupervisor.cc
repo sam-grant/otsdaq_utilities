@@ -409,7 +409,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		    1 == CgiDataUtilities::getDataAsInt(cgiIn, "reloadActiveGroups");  // from GET
 
 		__SUP_COUT__ << "reloadActive: " << reloadActive << __E__;
-		bool wasError = false;
+		//bool wasError = false;
 		if(reloadActive)
 		{
 			try
@@ -423,14 +423,14 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 				           << __E__;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
 				xmlOut.addTextElementToData("Error", ss.str());
-				wasError = true;
+				//wasError = true;
 			}
 			catch(...)
 			{
 				__SUP_SS__ << ("Error loading active groups!\n\n") << __E__;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
 				xmlOut.addTextElementToData("Error", ss.str());
-				wasError = true;
+				//wasError = true;
 			}
 		}
 

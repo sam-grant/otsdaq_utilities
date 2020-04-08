@@ -134,7 +134,7 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 			{
 				if (alarm.size() > 8)
 				{
-					time_t rawtime = (const time_t)(std::stoi(alarm[1]));
+					time_t rawtime = static_cast<time_t>(std::stoi(alarm[1]));
 					char*       dt      = ctime(&rawtime);
 					std::string subject = "Slow Control Alarm Notification";
 					std::string message = "PV: " 		+ alarm[0]	+"\n"
