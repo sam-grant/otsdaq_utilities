@@ -87,6 +87,10 @@ for qual in ${qualarray[@]};do
 			squal=s94
 			artver=v3_04_00
 			;;
+        s96)
+            squal=s96
+            artver=v3_05_00
+            ;;
         nodb)
             build_db=0
             ;;
@@ -155,9 +159,9 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} otsdaq-${version} ${squal}-${basequal} ${build_type}
+#./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
+#./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal} ${build_type}
+#./pullProducts ${blddir} ${flvr} otsdaq-${version} ${squal}-${basequal} ${build_type}
 # remove any artdaq_demo entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/otsdaq ] || [ -d ${blddir}/otsdaq_utilities ] || [ -d ${blddir}/otsdaq_components ]; then
   echo "Removing ${blddir}/otsdaq*"
