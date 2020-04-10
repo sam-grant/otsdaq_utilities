@@ -1824,7 +1824,7 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(
 		bool firstSave = true;
 
 		// save current version
-		TableView backupView;
+		TableView backupView(targetNode.getTableName());
 
 		// extract record list
 		{
