@@ -78,7 +78,9 @@ class SlowControlsDashboardSupervisor : public CoreSupervisorBase
 	std::map<int, std::set<std::string>>	channelDependencyLookupMap_;
 	std::map<int, long int>             	uidPollTimeMap_;
 	int                                  	UID_;
-	int										alarmNotifyRefreshRate_;
+	int                                     alarmNotifyRefreshRate_;
+	std::mutex                              alarmCheckThreadErrorMutex_;
+	std::string								alarmCheckThreadError_;
   public:
 	SlowControlsVInterface*					interface_;
 	std::mutex								pluginBusyMutex_;

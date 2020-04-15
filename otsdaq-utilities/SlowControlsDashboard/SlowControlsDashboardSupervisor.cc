@@ -126,24 +126,28 @@ void SlowControlsDashboardSupervisor::init(void)
 void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
     SlowControlsDashboardSupervisor* cs)
 {
+	{
+		std::lock_guard<std::mutex> lock(cs->alarmCheckThreadErrorMutex_);
+		cs->alarmCheckThreadError_ = "";
+	}
+
 	while(true)
 	{
 		try
 		{
 			for(const auto& alarm : cs->interface_->checkAlarmNotifications())
 			{
-				if (alarm.size() > 8)
+				if(alarm.size() > 8)
 				{
-					time_t rawtime = static_cast<time_t>(std::stoi(alarm[1]));
+					time_t      rawtime = static_cast<time_t>(std::stoi(alarm[1]));
 					char*       dt      = ctime(&rawtime);
 					std::string subject = "Slow Control Alarm Notification";
-					std::string message = "PV: " 		+ alarm[0]	+"\n"
-										+ " at time: "	+ dt		+"\n"
-										+ " value: "	+ alarm[2]	+""
-										+ " status: "	+ alarm[3]	+""
-										+ " severity: "	+ alarm[4];
+					std::string message =
+						"PV: " + alarm[0] + "\n" + " at time: " + dt + "\n" +
+						" value: " + alarm[2] + "" + " status: " + alarm[3] + "" +
+						" severity: " + alarm[4];
 
-					// __COUT__ 
+					// __COUT__
 					// << "checkSlowControlsAlarms() subject '"	<< subject
 					// << "' message '"		<< message
 					// << "' alarm name '"		<< alarm[5]
@@ -153,25 +157,39 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 					// << __E__;
 
 					// toList can be "*", or "Tracker:10", "Ryan, Antonio"
-					//theRemoteWebUsers_.sendSystemMessage(
+					// theRemoteWebUsers_.sendSystemMessage(
 					//    "*" /*toList*/, "Subject", "Message", false /*doEmail*/);
 					theRemoteWebUsers_.sendSystemMessage(
-							alarm[6], subject, message, alarm[7] == "Yes"? true:false);
+						alarm[6], subject, message, alarm[7] == "Yes" ? true : false);
 				}
 			}
 		}
+		catch(const std::runtime_error& e)
+		{
+			__SS__ << e.what() << '\n';
+			std::lock_guard<std::mutex> lock(cs->alarmCheckThreadErrorMutex_);
+			cs->alarmCheckThreadError_ = ss.str();
+			__COUT_ERR__ << ss.str();
+		}
 		catch(const std::exception& e)
 		{
-			std::cerr << e.what() << '\n';
+			__SS__ << e.what() << '\n';
+			std::lock_guard<std::mutex> lock(cs->alarmCheckThreadErrorMutex_);
+			cs->alarmCheckThreadError_ = ss.str();
+			__COUT_ERR__ << ss.str();
 		}
 		catch(...)
 		{
 			__SS__ << "checkSlowControlsAlarms() ERROR While sendin alarm messages"
 			       << __E__;
+			std::lock_guard<std::mutex> lock(cs->alarmCheckThreadErrorMutex_);
+			cs->alarmCheckThreadError_ = ss.str();
+			__COUT_ERR__ << ss.str();
 		}
 
 		sleep(alarmNotifyRefreshRate_);
-		__COUT__ << "checkSlowControlsAlarms() n. " << cs->interface_->checkAlarmNotifications().size() << __E__;
+		__COUT__ << "checkSlowControlsAlarms() n. "
+					<< cs->interface_->checkAlarmNotifications().size() << __E__;
 	}
 }  // end checkSlowControlsAlarms()
 
@@ -195,21 +213,9 @@ void SlowControlsDashboardSupervisor::checkSubscriptions(
 		{
 			for(auto channel : mapReference->second)
 			{
-				int refreshRate = 1;  // seconds
-				if(channel.find(":") != channel.size() - 1)
-				{
-					try
-					{
-						refreshRate = stoi(channel.substr(channel.find(":") + 1)) / 1000.;
-						channelRefreshRates.push_back(refreshRate);
-					}
-					catch(const std::exception& e)
-					{
-						continue;
-					}
-				}
+				int refreshRate = 15;  // seconds
+				channelRefreshRates.push_back(refreshRate);
 
-				channel = channel.substr(0, channel.find(":"));
 				__COUT__ << "THREAD actual time: " << std::time(NULL)
 				         << "; uidPollTimeMap + 10 * refreshTime: "
 				         << cs->uidPollTimeMap_.at(mapReference->first) + 10 * refreshRate
@@ -441,7 +447,7 @@ void SlowControlsDashboardSupervisor::Poll(cgicc::Cgicc&    /*cgiIn*/,
 
 		for(auto channel : mapReference->second)
 		{
-			channel = channel.substr(0, channel.find(":"));
+			//channel = channel.substr(0, channel.find(":"));
 
 			__SUP_COUT__ << channel << __E__;
 
