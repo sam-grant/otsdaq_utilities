@@ -461,15 +461,18 @@
 				var pvListJSON;
 
 				//if invalid JSON return
+				//jsonStr.replace(/\"/g,"");
 				try {pvListJSON = JSON.parse(jsonStr); }
 				catch(e){console.log("Invalid JSON!"); return;}
 
 				console.log(pvListJSON);
 				for (var x in pvListJSON)
 				{
-					pvList_[pvListJSON[x].substring(0,pvListJSON[x].indexOf(":"))] = pvListJSON[x].substring(pvListJSON[x].indexOf(":")+1,pvListJSON[x].length);
+					//pvList_[pvListJSON[x].substring(0,pvListJSON[x].indexOf(":"))] = pvListJSON[x].substring(pvListJSON[x].indexOf(":")+1,pvListJSON[x].length);
+					pvList_[pvListJSON[x]] = refreshRate_;
 					var option = document.createElement("option");
-					option.value = pvListJSON[x].substring(0,pvListJSON[x].indexOf(":"));
+					//option.value = pvListJSON[x].substring(0,pvListJSON[x].indexOf(":"));
+					option.value = pvListJSON[x];
 					datalist.appendChild(option);
 				}
 			} //end pvListReqHandler()
@@ -966,8 +969,8 @@
 
 					for(var pv in page_.widgets[widget].pvList)
 					{
-						pvList += pv + ":"  + 
-							page_.widgets[widget].pvList.valueOf()[pv] + ",";
+						//pvList += pv + ":"  + page_.widgets[widget].pvList.valueOf()[pv] + ",";
+						pvList += pv + ",";
 					}
 				}
 
