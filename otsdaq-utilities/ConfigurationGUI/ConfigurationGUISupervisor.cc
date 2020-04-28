@@ -1566,6 +1566,21 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 			}
 		}
 
+		if(group.first == ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION)
+		{
+			__SUP_COUT__ << "Considering mockup tables for Configuration Group..." << __E__;
+			for(auto& table : modifiedTablesMap)
+			{
+				if(table.second.isMockupVersion() && memberMap.find(table.first) == memberMap.end())
+				{
+					__SUP_COUT__ << "Found mockup table '" <<
+							table.first << "' for Configuration Group." << __E__;
+					memberMap[table.first] = table.second;
+					affected               = true;
+				}
+			}
+		}
+
 		if(affected)
 		{
 			parentEl = xmlOut.addTextElementToData("AffectedActiveGroup", "");
@@ -4254,7 +4269,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 	{
 		__SUP_SS__ << "Target table version (" << version
 		           << ") is not the currently active version (" << table->getViewVersion()
-		           << ". Try refreshing the tree." << __E__;
+		           << "). Try refreshing the tree." << __E__;
 		__SS_THROW__;
 	}
 
@@ -4526,9 +4541,29 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 
 				if(version != table->getViewVersion())
 				{
-					__SUP_SS__ << "Target table version (" << version
+					__SUP_SS__;
+					if(version.isMockupVersion())
+						ss << "Target table '" << newTable
+							<< "' is likely not a member of the current table group "
+							<< "since the mock-up version was not successfully loaded. "
+							<< "\n\n" <<
+							//same as ConfigurationGUI.html L:9833
+							(std::string("") + "To add a table to a group, click the group name to go to the " +
+							"group view, then click 'Add/Remove/Modify Member Tables.' You " +
+							"can then add or remove tables and save the new group." +
+							"\n\n" +
+							"OR!!! Click the following button to add the table '" + newTable +
+							"' to the currently active Configuration Group: " +
+							"<input type='button' style='color:black !important;' " +
+							"title='Click to add table to the active Configuration Group' " +
+							"onclick='addTableToConfigurationGroup(\"" +
+							newTable + "\"); Debug.closeErrorPop();event.stopPropagation();' value='Add Table'>" +
+							"</input>")
+						           << __E__;
+					else
+						ss << "Target table version (" << version
 					           << ") is not the currently active version ("
-					           << table->getViewVersion() << ". Try refreshing the tree."
+					           << table->getViewVersion() << "). Try refreshing the tree."
 					           << __E__;
 					__SS_THROW__;
 				}

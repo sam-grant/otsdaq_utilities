@@ -4487,6 +4487,8 @@
 
 				var groupTypes = ["Context","Configuration"];
 				var stepString;
+				
+				str += "<b><u>Load Groups</u></b><br><br>";
 
 				for(var g=0;g<groupTypes.length;++g)
 				{
@@ -4494,7 +4496,7 @@
 							groupTypes[g] + "-";
 
 					str += "Choose a '" + groupTypes[g] +
-							"' group to activate (either a System Alias or specific group):";
+							"' group to activate<br>(either a System Alias or specific group):";
 
 					str += htmlClearDiv();
 

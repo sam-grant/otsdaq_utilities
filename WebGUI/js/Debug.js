@@ -9,8 +9,13 @@
 // 		should use Debug.log(str,num[optional, default=0]). Where str is the string to print to console and
 // 		num is the priority number 0 being highest.
 //
-//	Debug.log() will print to console if Debug.mode = 1 and if num < Debug.level
-//	Debug.logv(var) will decorate a variable and print to console with Debug.log()
+//	Debug.log(args) 		will print to console if Debug.mode = 1 and if num < Debug.level
+//	Debug.logv({var}) 		will decorate a variable and print to console with Debug.log()
+//
+//	Debug.err(args) 		will colorize console and Error popup
+//	Debug.warn(args) 		will colorize console and Warning popup
+//	Debug.info(args) 		will colorize console and Info popup
+//	Debug.med(args) 		will colorize console but no popup
 //
 //	Note: An error pop up box will occur so that users see Debug.HIGH_PRIORITY log messages.
 //	Note: A warning pop up box will occur so that users see Debug.WARN_PRIORITY log messages.
@@ -31,12 +36,12 @@ Debug.lastLogger = "";
 Debug.prependMessage = ""; //use to have a message always show up before log messages
 
 //setup default priorities
-Debug.HIGH_PRIORITY = 0;
-Debug.WARN_PRIORITY = 1;
-Debug.INFO_PRIORITY = 2;
-Debug.TIP_PRIORITY = 3;
-Debug.MED_PRIORITY = 50;
-Debug.LOW_PRIORITY = 100;
+Debug.HIGH_PRIORITY = {"DEBUG_PRIORITY":0};
+Debug.WARN_PRIORITY = {"DEBUG_PRIORITY":1}; //1;
+Debug.INFO_PRIORITY = {"DEBUG_PRIORITY":2}; //2;
+Debug.TIP_PRIORITY = {"DEBUG_PRIORITY":3}; //3;
+Debug.MED_PRIORITY = {"DEBUG_PRIORITY":50};// 50;
+Debug.LOW_PRIORITY = {"DEBUG_PRIORITY":100}; //100;
 
 
 //determine if chrome or firefox or other
@@ -83,6 +88,91 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 		Debug.FontComfortaaLight = new FontFace('Comfortaa-Light', 'url(/WebPath/fonts/comfortaa/Comfortaa-Light.ttf)');
 		document.fonts.add(Debug.FontComfortaaLight);
 	} catch(e){console.log("Ignoring font errors: " + e);}
+
+	//========================
+	//special quick decoration for a variable
+	//	Note: must call with brackets e.g. Debug.logv({firstInit_});
+	Debug.logv = varObj => 
+		{
+			var keys = Object.keys(varObj);
+			Debug.log(keys[0] + " \t= ",varObj[keys[0]]);
+		}; //end Debug.logv()
+	//========================
+	//special hot functions to priorities
+	Debug.presetPriority = Debug.LOW_PRIORITY.DEBUG_PRIORITY; //pre-set input priority
+	Debug.err = function() { //colorize console and popup
+		Debug.presetPriority = Debug.HIGH_PRIORITY.DEBUG_PRIORITY;
+		if(Debug.BROWSER_TYPE == 1) //chrome
+		{
+			Debug.lastLogger = (new Error).stack.split("\n")[2];						
+			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
+			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+					Debug.lastLogger.length-1);
+		}
+		else if(Debug.BROWSER_TYPE == 2) //firefox
+		{
+			Debug.lastLogger = (new Error).stack.split("\n")[1];						
+			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf('@'));
+			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+1,
+					Debug.lastLogger.length);
+		}
+		Debug.log.apply(null,arguments); //use apply to keep args consistent
+	}
+	Debug.warn = function() { //colorize console and popup
+		Debug.presetPriority = Debug.WARN_PRIORITY.DEBUG_PRIORITY;
+		if(Debug.BROWSER_TYPE == 1) //chrome
+		{
+			Debug.lastLogger = (new Error).stack.split("\n")[2];						
+			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
+			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+					Debug.lastLogger.length-1);
+		}
+		else if(Debug.BROWSER_TYPE == 2) //firefox
+		{
+			Debug.lastLogger = (new Error).stack.split("\n")[1];						
+			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf('@'));
+			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+1,
+					Debug.lastLogger.length);
+		}
+		Debug.log.apply(null,arguments); //use apply to keep args consistent
+	}
+	Debug.info = function() { //colorize console and popup
+		Debug.presetPriority = Debug.INFO_PRIORITY.DEBUG_PRIORITY;
+		if(Debug.BROWSER_TYPE == 1) //chrome
+		{
+			Debug.lastLogger = (new Error).stack.split("\n")[2];						
+			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
+			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+					Debug.lastLogger.length-1);
+		}
+		else if(Debug.BROWSER_TYPE == 2) //firefox
+		{
+			Debug.lastLogger = (new Error).stack.split("\n")[1];						
+			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf('@'));
+			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+1,
+					Debug.lastLogger.length);
+		}
+		Debug.log.apply(null,arguments); //use apply to keep args consistent
+	} 
+	Debug.med = function() { //colorize console but no popup
+		Debug.presetPriority = Debug.MED_PRIORITY.DEBUG_PRIORITY;
+		if(Debug.BROWSER_TYPE == 1) //chrome
+		{
+			Debug.lastLogger = (new Error).stack.split("\n")[2];						
+			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
+			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+					Debug.lastLogger.length-1);
+		}
+		else if(Debug.BROWSER_TYPE == 2) //firefox
+		{
+			Debug.lastLogger = (new Error).stack.split("\n")[1];						
+			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf('@'));
+			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+1,
+					Debug.lastLogger.length);
+		}
+		Debug.log.apply(null,arguments); //use apply to keep args consistent
+	} //end special hot functions
+	//========================
 	
 	
 	if (Debug.simple)
@@ -92,29 +182,53 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 	}
 	else
 	{
+		
+		//========================
 		//For fancy priority management use this:
-		Debug.log = function(str,num) { 		
-				//make num optional and default to lowest priority
-				if(num === undefined) num = Debug.LOW_PRIORITY;
+		Debug.log = function()//str,num) 
+		{ 		
+			//make num optional and default to lowest priority
+			var num = Debug.presetPriority;
+			var argsInStr = arguments.length;
+			if(arguments.length > 1 && 
+					arguments[arguments.length-1] !== undefined &&
+					arguments[arguments.length-1].DEBUG_PRIORITY !== undefined)
+			{
+				num = arguments[arguments.length-1].DEBUG_PRIORITY;
+				--argsInStr;
+			}
+			Debug.presetPriority = Debug.LOW_PRIORITY.DEBUG_PRIORITY; //reset preset
+			
+			var str = ""; //build from arguments
+			var useStrOnly = false;
+			//just do normal color if one argument string
+			if(argsInStr == 1 && typeof(arguments[0]) == "string")
+				useStrOnly = true;
+			
+			for(var i=0;i<argsInStr;++i)
+				str += arguments[i] + ' ';
+
+			//add call out labels to file [line] text blobs
+			var returnStr;
+
+			if(num < 4) //modify string for popup
+				returnStr = localCallOutDebugLocales(str);
+			if(returnStr)
+				str = returnStr;
+
+
+			if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
+			if(Debug.mode && num <= Debug.level)
+			{				
+				str = Debug.prependMessage + str; //add prepend message
+
+				var type = num < 4?
+						(num==0?"High":(num==1?"Warn":(num==2?"Info":"Tip")))
+						:(num<99?"Med":"Low");
 				
-				//add call out labels to file [line] text blobs
-				var returnStr;
-				
-				if(num < 4) //modify string for popup
-					returnStr = localCallOutDebugLocales(str);
-				if(returnStr)
-					str = returnStr;
-				
-				
-				if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
-				if(Debug.mode && num <= Debug.level)
-				{				
-					str = Debug.prependMessage + str; //add prepend message
-					
-					var type = num < 4?
-							(num==0?"High":(num==1?"Warn":(num==2?"Info":"Tip")))
-							:(num<99?"Med":"Low");
-					
+				//if not pre-poulated, get caller info
+				if(!Debug.lastLogger || Debug.lastLogger.length == 0)
+				{
 					if(Debug.BROWSER_TYPE == 1) //chrome
 					{
 						Debug.lastLogger = (new Error).stack.split("\n")[2];						
@@ -129,116 +243,145 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 						Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+1,
 								Debug.lastLogger.length);
 					}
-					
-					var source = window.location.href;
-					source = source.substr(source.lastIndexOf('/'));
-					source = source.substr(0,source.indexOf('?'));
-					console.log("%c" + type + "-Priority" +  
-							 ":\t " + Debug.lastLog + " from " + source + ":\n" +
-							 Debug.lastLogger + "::\t" + str,							 
-							 num == 0?"color:#F30;"	//chrome/firefox allow css styling
-									 :(num == 1?"color:#F70" //warn
-											 :(num < 99?"color:#092":"color:#333"))); 
-					Debug.lastLog = str;
-					
-					if(num < 4) //show all high priorities as popup!
-						Debug.errorPop(str,num);
 				}
-				
-				/////////////////////////////////
-				//localCallOutDebugLocales ~~
-				//	add call out labels to file [line] text blobs
-				//	returns undefined if no change
-				function localCallOutDebugLocales(str)
-				{
-					var i = 0;
-					var j,k,l;
-					var returnStr;
-					try
-					{
-						while((j = str.indexOf('[',i)) > 0 && (k = str.indexOf(']',i)) > 0)
-						{
-							if(j < 4)
-							{
-								i = k+1;
-								continue; //skip, too soon to be valid
-							}
-							
-							//found new possible call out 
-							//console.log(str.substr(j,k-j+1));
 
-							if(!returnStr) //check if need to define for the first time
-								returnStr = "";
-							
-							//look for icc, .cc and .h 
-							if((str[j-3] == '.' && str[j-2] == 'h') || 
-									((str[j-4] == '.' || str[j-4] == 'i') &&
-											str[j-3] == 'c' && str[j-2] == 'c'))
-							{
-								//find beginning of blob (first non-file/c++ character)
-								for(l = j-3; l >= i; --l)
-									if(!((str[l] >= 'a' && str[l] <= 'z') ||  
-											(str[l] >= 'A' && str[l] <= 'Z') ||
-											(str[l] >= '0' && str[l] <= '9') ||
-											(str[l] == '.') ||
-											(str[l] == '_') ||
-											(str[l] == '-') ||
-											(str[l] == '/') ||
-											(str[l] == ':')))								
-										break; //found beginning (-1)
-								
-								++l; //increment to first character of blob
-											
-																
-								//previous chunk								
-								returnStr += str.substr(i,l-i);
-								
-								//add label
-								returnStr += "<br><label class='" + 
-										Debug._errBoxId + "-localCallOut'>";								
-								
-								//add callout
-								returnStr += str.substr(l,k+1-l);
-								
-								//add end label
-								returnStr += "</label><br>";
-								
-								//skip any tabs and new lines (so that the next content is right below line #)
-								while(k+1 < str.length && 
-										(str[k+1] == '\n' || str[k+1] == '\t')) ++k;								
-								
-							}
-							else //not a call out so grab previous chunk
-								returnStr += str.substr(i,k+1-i);
-							
-							i = k+1;						
-						}
-					}
-					catch(e)
-					{
-						return undefined; //give up on errors
-					}
+				var source = window.location.href;
+				source = source.substr(source.lastIndexOf('/'));
+				source = source.substr(0,source.indexOf('?'));
+				
+				if(useStrOnly)
+					console.log("%c" + type + "-Priority" +  
+							":\t " + Debug.lastLog + " from " + source + ":\n" +
+							Debug.lastLogger + "::\t" + str,							 
+							num == 0?"color:#F30;"	//chrome/firefox allow css styling
+									:(num == 1?"color:#F70" //warn
+											:(num < 99?"color:#092":"color:#333")));
+				else
+				{
+					var consoleArguments = [];
+					consoleArguments.push("%c" + type + "-Priority" +  
+						":\t " + Debug.lastLog + " from " + source + ":\n" +
+						Debug.lastLogger + "::\t");					
+					consoleArguments.push(num == 0?"color:#F30;"	//chrome/firefox allow css styling
+							:(num == 1?"color:#F70" //warn
+									:(num < 99?"color:#092":"color:#333"))); 
+
+					for(var i=0;i<argsInStr;++i)			 
+						consoleArguments.push(arguments[i]);
 					
-					
-					if(returnStr) //finish last chunk
-						returnStr += str.substr(i);	
-					
-					
-					return returnStr; //if untouched, undefined return
+					//pass arguments using special apply for arg consistency
+					console.log.apply(null,consoleArguments);
 				}
+//					console.log("%c" + type + "-Priority" +  
+//						":\t " + Debug.lastLog + " from " + source + ":\n" +
+//						Debug.lastLogger + "::\t",							 
+//						num == 0?"color:#F30;"	//chrome/firefox allow css styling
+//								:(num == 1?"color:#F70" //warn
+//										:(num < 99?"color:#092":"color:#333")),
+//										 arguments); 
+				Debug.lastLog = str;
+				Debug.lastLogger = ""; //clear for next
+
+				if(num < 4) //show all high priorities as popup!
+					Debug.errorPop(str,num);
 			}
-	}
-	
-	//special quick decoration for a variable
-	//FIXME -- logv doesnt work because of varToString
-	//Debug.logv = function(v,num) { Debug.log(varToString({v}) + ": " + v,	num); }
+
+			/////////////////////////////////
+			//localCallOutDebugLocales ~~
+			//	add call out labels to file [line] text blobs
+			//	returns undefined if no change
+			function localCallOutDebugLocales(str)
+			{
+				var i = 0;
+				var j,k,l;
+				var returnStr;
+				try
+				{
+					while((j = str.indexOf('[',i)) > 0 && (k = str.indexOf(']',i)) > 0)
+					{
+						if(j < 4)
+						{
+							i = k+1;
+							continue; //skip, too soon to be valid
+						}
+
+						//found new possible call out 
+						//console.log(str.substr(j,k-j+1));
+
+						if(!returnStr) //check if need to define for the first time
+							returnStr = "";
+
+						//look for icc, .cc and .h 
+						if((str[j-3] == '.' && str[j-2] == 'h') || 
+								((str[j-4] == '.' || str[j-4] == 'i') &&
+										str[j-3] == 'c' && str[j-2] == 'c'))
+						{
+							//find beginning of blob (first non-file/c++ character)
+							for(l = j-3; l >= i; --l)
+								if(!((str[l] >= 'a' && str[l] <= 'z') ||  
+										(str[l] >= 'A' && str[l] <= 'Z') ||
+										(str[l] >= '0' && str[l] <= '9') ||
+										(str[l] == '.') ||
+										(str[l] == '_') ||
+										(str[l] == '-') ||
+										(str[l] == '/') ||
+										(str[l] == ':')))								
+									break; //found beginning (-1)
+
+							++l; //increment to first character of blob
+
+
+							//previous chunk								
+							returnStr += str.substr(i,l-i);
+
+							//add label
+							returnStr += "<br><label class='" + 
+									Debug._errBoxId + "-localCallOut'>";								
+
+							//add callout
+							returnStr += str.substr(l,k+1-l);
+
+							//add end label
+							returnStr += "</label><br>";
+
+							//skip any tabs and new lines (so that the next content is right below line #)
+							while(k+1 < str.length && 
+									(str[k+1] == '\n' || str[k+1] == '\t')) ++k;								
+
+						}
+						else //not a call out so grab previous chunk
+							returnStr += str.substr(i,k+1-i);
+
+						i = k+1;						
+					}
+				}
+				catch(e)
+				{
+					return undefined; //give up on errors
+				}
+
+
+				if(returnStr) //finish last chunk
+					returnStr += str.substr(i);	
+
+
+				return returnStr; //if untouched, undefined return
+			}
+		}; //end Debug.log()
+	} //end Debug normal
+
 }
 else	//IF DEBUG MODE IS OFF!
 {	//do nothing with log functions
 	console.log = function(){};
-	Debug.log = function(){};
-	Debug.logv = function(){};
+	Debug.log 	= function(){};
+	Debug.logv 	= function(){};
+	Debug.err 	= function(){};
+	Debug.warn 	= function(){};
+	Debug.info 	= function(){};
+	Debug.med 	= function(){};
 }
+
 
 // living and breathing examples:
 Debug.log("Debug mode is on at level: " + Debug.level);
@@ -298,7 +441,7 @@ Debug.errorPop = function(err,severity)
 			if(!body) //maybe page not loaded yet.. so wait to report
 			{
 				//try again in 1 second
-				window.setTimeout(function() { Debug.errorPop(err,severity)}, 1000);
+				window.setTimeout(function() { Debug.errorPop(err,{"DEBUG_PRIORITY":severity})}, 1000);
 				return;
 			}
 			
@@ -546,7 +689,7 @@ Debug.errorPop = function(err,severity)
 	tstr = tstr.substring(0,tstr.lastIndexOf(' ')) + //convert AM/PM to am/pm with no space
 			(tstr[tstr.length-2]=='A'?"am":"pm");
 	
-	if(severity == Debug.TIP_PRIORITY) //put oldest at top so it reads like a document
+	if(severity == Debug.TIP_PRIORITY.DEBUG_PRIORITY) //put oldest at top so it reads like a document
 		str = str + 
 			(wasAlreadyContent?"<br>...<br>":"") +
 			"<label style='color:white;font-size:16px;'>" + 
@@ -557,8 +700,8 @@ Debug.errorPop = function(err,severity)
 		str = "<label style='color:white;font-size:16px;'>" + 
 		    d.toLocaleDateString() +
 		    " " + tstr + " " +
-		    (severity == Debug.INFO_PRIORITY ? '(Info)':'')+
-		    (severity == Debug.WARN_PRIORITY ? '(Warning)':'') +
+		    (severity == Debug.INFO_PRIORITY.DEBUG_PRIORITY ? '(Info)':'')+
+		    (severity == Debug.WARN_PRIORITY.DEBUG_PRIORITY ? '(Warning)':'') +
 		    ":</label><br>" +
 		    Debug.errorPopConditionString(err) + 
 		    (wasAlreadyContent?"<br>...<br>":"") +
@@ -590,7 +733,7 @@ Debug.errorPop = function(err,severity)
 	el = els[0];
 	switch(severity)
 	{
-	case Debug.TIP_PRIORITY:
+	case Debug.TIP_PRIORITY.DEBUG_PRIORITY:
 		//don't change color or header for info, if there are still errors displayed
 	if(wasAlreadyContent && 
 			(el.innerHTML == "Close Errors" ||
@@ -600,7 +743,7 @@ Debug.errorPop = function(err,severity)
 		el.innerHTML = "Close Tooltip";		
 		Debug._errBox.style.backgroundColor = "rgba(0, 49, 99, " + errBoxAlpha + ")";//"rgba(0, 79, 160, " + errBoxAlpha + ")";	
 		break;
-	case Debug.INFO_PRIORITY:
+	case Debug.INFO_PRIORITY.DEBUG_PRIORITY:
 		//don't change color or header for info, if there are still errors displayed
 		if(wasAlreadyContent && 
 				(el.innerHTML == "Close Errors" ||
@@ -609,7 +752,7 @@ Debug.errorPop = function(err,severity)
 		el.innerHTML = "Close Info";		
 		Debug._errBox.style.backgroundColor = "rgba(0,153,51, " + errBoxAlpha + ")";
 		break;
-	case Debug.WARN_PRIORITY:
+	case Debug.WARN_PRIORITY.DEBUG_PRIORITY:
 		//don't change color or header for info, if there are still errors displayed
 		if(wasAlreadyContent && 
 				el.innerHTML == "Close Errors")

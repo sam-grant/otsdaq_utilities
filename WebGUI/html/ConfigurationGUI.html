@@ -45,14 +45,18 @@
 		//tree-view focused =========
 		//setupTableGroupTreeView(tableGroupName,tableGroupKey,backLinkStr)
 		//treeViewHandler(req,parentId,errStr)
+		//doCaptureTreeViewExpand()
+		//doRestoreNextTreeViewExpand()
 		//recursiveDrawTree(parent,depth,path,parentIdString)
 		//getTreeViewTableStrings(tableLinkName,isLink,linkId,childLinkIndex,isGroupLink)
+		//hardRefreshTreeView()
 		//refreshTreeView();
 		//applyTreeFilter(filter,reapplyFilter,infoWasToggled)
 		//toggleTreeChildren(depth,uid,setVal)
 		//expandTreeChildrenDepth()
 		//hideTreeChildrenDepth()
 		//createTreeViewMenu(event)
+		//addTableToConfigurationGroup(tableName)
 
 		//handleTreeNodeClick(depth,uid,editClick,type)			
 		//treeHasChanged(reset)
@@ -95,6 +99,7 @@
 		//popUpFilterTreeForm()
 		//popUpGroupViewAliasForm(groupName,groupKey)
 		//popUpGroupViewAliasFormSubmit(groupName,groupKey)
+		//popUpSaveTreeForm()
 
 		//handleGroupCommentToggle(groupName,setHideVal)
 		//handlePopUpHeightToggle(h,gh)
@@ -546,6 +551,7 @@
 		var treeNodeUID_;		//incrementing unique id for nodes
 		var treeMemberNames_, treeMemberVersions_, treeMemberComments_;
 		var treeViewBackLinkStr_;
+		var treeViewExpandedCapture_; //object to capture and load from on refresh
 		var treeGroupName_, treeGroupKey_;
 		var treeViewHideStatus_ = true;
 		var treeFilterApplied_ = false;
@@ -572,14 +578,45 @@
 
 		var firstInit_ = true;
 		var systemViewPreventInfiniteLoop_ = false;
-		
+
+														  
 		//==============================================================================				
 		//init called once body has loaded
 		function init()
 		{
 
 			Debug.log("CfgGUI init ");
+			Debug.logv({firstInit_});
+			
 
+//			ConfigurationAPI.getActiveGroups(function(activeGroups)
+//					{
+//				Debug.logv({activeGroups});		
+//				
+//				var tableName = "ARTDAQParamTable";
+//				if(!activeGroups.Configuration || 
+//						!activeGroups.Configuration.groupName || 
+//						!activeGroups.Configuration.groupKey || 
+//						activeGroups.Configuration.groupName.length < 2 || 
+//						(activeGroups.Configuration.groupKey|0) < 0)
+//					{
+//						Debug.err("Could not find an active Configuration group to which to add table '" + 
+//								tableName + ".'");
+//						return;
+//					}
+//				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTableGroup" +
+//								"&groupName=" + activeGroups.Configuration.groupName +
+//								"&groupKey=" + activeGroups.Configuration.groupKey,
+//								"", function(req)
+//								{
+//					
+//					
+//								}); //end getSpecificTableGroup call
+//				
+//					}); //end ConfigurationAPI.getActiveGroups() call
+//			
+//			return;
+			
 			var windowTooltip = "Welcome to the Configuration GUI. Here you can manipulate every configuration " +
 				"parameter in your entire <i>otsdaq</i> system. \n\n" +
 				"The organization of the Configuration GUI is as follows:\n" +
@@ -1776,7 +1813,8 @@
 			Debug.log("CfgGUI requestHandler tableNames.length " + tableNames.length);
 			
 			str += "<table id='tableViewTable'>";
-			for (var i = 0; i < tableNames.length; ++i) {
+			for (var i = 0; i < tableNames.length; ++i) 
+			{
 				str += "<tr><td>";
 				tableName = tableNames[i].getAttribute("value");
 
@@ -3278,6 +3316,15 @@
 
 			el.innerHTML = treeViewHandlerStr_;
 
+			//addTableToConfigurationGroup("ARTDAQParamT"); //for Debuggin!!!
+			if(treeViewExpandedCapture_ && treeViewExpandedCapture_.length)
+			{
+				Debug.log("Nodes to expand from treeViewExpandedCapture_",treeViewExpandedCapture_);
+				
+				doRestoreNextTreeViewExpand();
+				return;
+			}
+			
 			//save the full string for posterity (and for back links)
 			treeViewHandlerStr_ = document.getElementById("display").innerHTML;
 
@@ -3323,7 +3370,6 @@
 				if (parentIsEmpty)
 					localHandleEmptyParent();
 			}
-
 
 			//===========
 			//localHandleEmptyParent ~~
@@ -3482,8 +3528,87 @@
 
 
 			} //end localHandleEmptyParent
-
+			
 		} //end treeViewHandler()
+		//==============================================================================
+		//doCaptureTreeViewExpand ~		
+		function doCaptureTreeViewExpand() 
+		{
+			//capture expanded children status
+			Debug.log("doCaptureTreeViewExpand()");
+			var allNodes = document.getElementsByClassName("treeNode-Expander");
+			treeViewExpandedCapture_ = [];
+			for (var i = 0; i < allNodes.length; ++i)
+			{
+				//skip hidden nodes in search
+				if (allNodes[i].offsetParent === null) continue;
+
+				var params = allNodes[i].onmouseup.toString().split("(")[2].split(")")[0].split(",");
+
+				var idString = params[0] + "-" + params[1];
+				var el = document.getElementById("treeNode-ChildrenOf-" + idString);
+				if(el && el.style.display == "block")
+				{
+					treeViewExpandedCapture_.push([
+							document.getElementById("treeNode-path-" + idString).innerText,
+							document.getElementById("treeNode-Value-" + idString).innerText
+							 ]);
+					Debug.log("Found shown ",
+							treeViewExpandedCapture_[treeViewExpandedCapture_.length-1]);
+				}
+
+			}//end node capture expanded loop
+
+		} //end doCaptureTreeViewExpand()
+				
+		//==============================================================================
+		//doRestoreNext ~		
+		function doRestoreNextTreeViewExpand() 
+		{
+			//expand them in order	
+
+			if(treeViewExpandedCapture_.length) //trigger chain reaction
+			{
+				Debug.log("Try ",treeViewExpandedCapture_[0]);
+				//find matching path
+
+				var allNodes = document.getElementsByClassName("treeNode-Expander");
+				for (var i = 0; i < allNodes.length; ++i)
+				{
+					//skip hidden nodes in search
+					if (allNodes[i].offsetParent === null) continue;
+					var params = allNodes[i].onmouseup.toString().split("(")[2].split(")")[0].split(",");
+
+					var idString = params[0] + "-" + params[1];
+					if(document.getElementById("treeNode-path-" + idString).innerText ==
+							treeViewExpandedCapture_[0][0] &&
+							document.getElementById("treeNode-Value-" + idString).innerText ==
+									treeViewExpandedCapture_[0][1])
+					{
+
+						try 
+						{
+							toggleTreeChildren(
+									params[0] | 0, 		//make integer
+									params[1] | 0,
+									true,
+									true /*doNext*/);
+						}
+						catch(e){break;} //ignore error
+						
+						Debug.log("Completed ",treeViewExpandedCapture_[0]);
+						treeViewExpandedCapture_.splice(0,1);
+						return;
+					}
+				}
+
+				//if here, can not find current node.. so remove and proceed
+				Debug.log("Not found ",treeViewExpandedCapture_[0]);
+				treeViewExpandedCapture_.splice(0,1);
+				doRestoreNextTreeViewExpand();
+			}
+
+		} //end doRestoreNextTreeViewExpand()
 
 		//==============================================================================
 		//recursiveDrawTree ~		
@@ -4775,8 +4900,11 @@
 		//		- true = show, false = hide, undefined = toggle
 		//
 		// return true if action taken, else false
-		function toggleTreeChildren(depth, uid, setVal) 
+		//
+		// if doNext, then always call treeViewHandler()
+		function toggleTreeChildren(depth, uid, setVal, doNext) 
 		{
+			if(doNext) Debug.log("Do Next",depth,uid,setVal,_mouseIsSelecting);
 			if (_mouseIsSelecting) return;
 
 			var setValUsed = (setVal !== undefined);
@@ -4793,7 +4921,7 @@
 			var tableGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
 			var str = el.innerHTML;
 
-			if (str != "") //if children already exist, then toggle display
+			if (!doNext && str != "") //if children already exist, then toggle display
 			{
 				var toggleEl = document.getElementById("treeNode-toggle-" + idString);
 				var doShow = false;
@@ -4803,11 +4931,12 @@
 					doShow = true;
 
 				if (doShow) //if not shown, show and "-"
-				{
+				{					
 					if (el.style.display == "block") return false; //already was shown
 					el.style.display = "block";
 					toggleEl.style.backgroundImage =
 						"url(/WebPath/images/windowContentImages/ConfigurationGUI-hideTree.png)";
+					
 					return true;
 				}
 				else //else shown, so hide and "+"
@@ -4835,7 +4964,9 @@
 						modifiedTables += treeMemberVersions_[j];
 					}
 
-
+				if(doNext)
+					Debug.log("Do Next",idString);
+				
 				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" +
 					"&tableGroup=" + tableGroupEls[0].innerHTML +
 					"&tableGroupKey=" + tableGroupEls[1].innerHTML +
@@ -4846,7 +4977,7 @@
 					treeViewHandler,
 					idString,
 					0, true); //progressHandler, callHandlerOnErr 
-				return true;
+				return true; //do not do localReturn!, the request handles it
 			}
 			return false;
 		} //end toggleTreeChildren()
@@ -8582,12 +8713,13 @@
 			//	- checkbox to bump version of modified active groups
 			//	- checkbox to assign system alias to bumped active group 
 
+			//if there are new tables added they should be in as "mockup" version -1
 
 			var modTblCount = 0;
 			var modTblStr = "";
-			var modifiedTables = ""; //csv table, temporay version,...
+			var modifiedTables = ""; //csv table, temporary version,...
 			for (var j = 0; j < treeMemberNames_.length; ++j)
-				if ((treeMemberVersions_[j] | 0) < -1)
+				if ((treeMemberVersions_[j] | 0) <= -1) //allow new tables' mockup version to be added
 				{
 					if (modTblCount++)
 						modTblStr += ",";
@@ -8598,6 +8730,7 @@
 					modifiedTables += treeMemberNames_[j];
 					modifiedTables += ",";
 					modifiedTables += treeMemberVersions_[j];
+										
 				}
 
 			if (modTblCount == 0) 
@@ -8605,7 +8738,6 @@
 				Debug.log("No modified tables found. Nothing to save.", Debug.WARN_PRIORITY);
 				return;
 			}
-
 
 			var str = "<a id='" +
 				"popUpDialog" +
@@ -8924,7 +9056,7 @@
 			//		save new version
 			//		update tree member table version based on result
 			for (var j = 0; j < treeMemberNames_.length; ++j)
-				if ((treeMemberVersions_[j] | 0) < -1) //for each modified table
+				if ((treeMemberVersions_[j] | 0) <= -1) //for each modified and mockup table
 				{
 					var reqStr = "Request?RequestType=saveSpecificTable" +
 						"&dataOffset=0&chunkSize=0" +
@@ -9814,7 +9946,8 @@
 					var tableVersion = -1;
 					var tableIndex = -1;
 					for (var j = 0; j < treeMemberNames_.length; ++j)
-						if (treeEditingTargetTable_ == treeMemberNames_[j])
+						if (treeEditingTargetTable_ == treeMemberNames_[j] &&
+								(treeMemberVersions_[j] | 0) != -1) //make sure not mockup version
 						{
 							tableVersion = treeMemberVersions_[j];
 							tableIndex = j;
@@ -9822,14 +9955,25 @@
 						}
 					if (tableIndex == -1) 
 					{
-						Debug.log("Invalid tree member table targeted, could not find able '" +
+						Debug.err("Invalid tree member table targeted, could not find able '" +
 							treeEditingTargetTable_ + "' in the list of tree tables. " +
 							"Perhaps the tree needs to be refreshed? " +
 							"Or the table needs to be added to one of the active groups?" +
 							"\n\n" +
+							//Important! same as ConfigurationGUISupervisor.cc L:4559
+							//Important! similar to ConfigurationGUI.html: tableLinkTooltip(): L:11860
+							// CHANGES MUST BE PROPAGATED
 							"To add a table to a group, click the group name to go to the " +
 							"group view, then click 'Add/Remove/Modify Member Tables.' You " +
-							"can then add or remove tables and save the new group.", Debug.HIGH_PRIORITY);
+							"can then add or remove tables and save the new group." +
+							"\n\n" +
+							"OR!!! Click the following button to add the table '" + treeEditingTargetTable_ +
+							"' to the Configuration Group: " +
+							"<input type='button' style='color:black !important;' " +
+							"title='Click to add table to the active Configuration Group' " +
+							"onclick='addTableToConfigurationGroup(\"" +
+							treeEditingTargetTable_ + "\"); Debug.closeErrorPop();event.stopPropagation(); ' value='Add Table'>" +
+							"</input>");
 						return;
 					}
 
@@ -9923,12 +10067,12 @@
 								{
 									//treeViewHideStatus_ = false;
 									//refreshTreeView();
-									DesktopContent.tooltip("Tree View Hide Status=False", "The tree-view menu option 'Hide Status=False' " +
+									DesktopContent.tooltip("Tree View Hide Nodes w/Status=False", "The tree-view menu option 'Hide Nodes w/Status=False' " +
 										" is currently hiding records with Status fields evaluating to " +
 										" false. If you do not see your new record, this may be why; click the tree-view menu " +
 										"in the top-left and select '" +
 										"<a href='#' onclick='treeViewHideStatus_=false;refreshTreeView();'>" +
-										"Show Status=False" +
+										"Show Nodes w/Status=False" +
 										"</a>" +
 										".'");
 								}
@@ -10272,7 +10416,7 @@
 			}
 			catch (e) 
 			{
-				Debug.log("Error occured during editCellOK - attempting to recover. Error: " + e);
+				Debug.med("Error occured during editCellOK - attempting to recover. Error: ", e);
 				editCellCancel();
 			}
 		} //end editTreeNodeOK()
@@ -10518,15 +10662,29 @@
 		//	redraw tree completely from server request
 		function hardRefreshTreeView() 
 		{
+			Debug.log("hardRefreshTreeView()");
+			
 			treeViewHandlerStr_ = "";
-			setupTableGroupTreeView(treeGroupName_, treeGroupKey_);
+			
+			//capture expanded children status
+			doCaptureTreeViewExpand(); 
+			
+			setupTableGroupTreeView(treeGroupName_, treeGroupKey_);			
+			
 		} //end hardRefreshTreeView()
 
 		//==============================================================================
 		//refreshTreeView ~~
-		//	reduce tree back to only root children
+		//	reduce tree back to only root children so that the value are reloaded
+		//	but do not reload tables from server in case there are temporary versions
+		//	Also, capture expanded nodes for returned expansion
 		function refreshTreeView()
 		{
+			//capture expanded children status
+			Debug.log("refreshTreeView()");
+			
+			doCaptureTreeViewExpand();			
+			
 			var els = document.getElementsByClassName("treeNode-Value-nodeEditType-table");
 			var idString;
 
@@ -10543,7 +10701,10 @@
 
 			//reset editing cell, since it was destroyed
 			_editingCell = false;
-			_editingCellEl = 0;
+			_editingCellEl = 0;			
+
+			doRestoreNextTreeViewExpand(); //launch restore expands
+			
 		} //end refreshTreeView()
 
 		//==============================================================================
@@ -11665,6 +11826,27 @@
 		//tableLinkTooltip
 		function tableLinkTooltip(prependString) 
 		{
+			//get all tables to give option to add table now.			
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=getTables", "",
+				function(req)
+				{
+
+			var tableNames = req.responseXML.getElementsByTagName("TableName");
+			var selectStr = "";
+			
+			selectStr += "<select id='tableLinkTooltipTableSelect' " +
+					"style='width:300px; color:black !important;' " +
+					">";
+
+			for (var i = 0; i < tableNames.length; ++i) 
+			{
+				tableName = tableNames[i].getAttribute("value");
+				selectStr += "<option value='" + tableName + "'>" +
+						tableName + "</option>";				
+			}
+			selectStr += "</select>";
+			
 			DesktopContent.tooltip("FAQ: Where is the Table I want to link to?!",
 				prependString + " " +
 				"Were you looking for a table name that was NOT in the drop-down list?\n\n" +
@@ -11672,8 +11854,24 @@
 				"tables are available to be linked to. If you do not see the table " +
 				"name you are looking for, it is probably because that table is not a member " +
 				"of the currently active group. To resolve this issue, you must go to the group view and edit " +
-				"the group to include the new table as a member.");
-		}
+				"the group to include the new table as a member." + 
+				//Important! similar to ConfigurationGUISupervisor.cc L:4559
+				//Important! similar to ConfigurationGUI.html: editTreeNodeOK(): L:9972
+				// CHANGES MUST BE PROPAGATED
+				"\n\n" +
+				"OR!!! Select the missing table and add it now" +
+				" to the Configuration Group: " +
+				selectStr + " " +
+				"<input type='button' style='color:black !important;' " +
+				"title='Click to add table to the active Configuration Group' " +
+				"onclick='addTableToConfigurationGroup(" +
+				"document.getElementById(\"tableLinkTooltipTableSelect\").value); " +
+				" Debug.closeErrorPop();event.stopPropagation(); ' value='Add Table'>" +
+				"</input>");
+			
+				}); //end getTables request
+			
+		} //end tableLinkTooltip()
 
 		//==============================================================================
 		//editCellCancel
@@ -15828,8 +16026,8 @@
 					"Hide Group Details" :
 					"Show Group Details",
 				treeViewHideStatus_ ?
-					"Show Status=False" :
-					"Hide Status=False",
+					"Show Nodes w/Status=False" :
+					"Hide Nodes w/Status=False",
 				treeFilterApplied_ ?
 					"Clear Tree View Filter" :
 					"Filter Tree View Values",
@@ -15874,6 +16072,25 @@
 			);
 		} //end createTreeViewMenu()
 
+		//==============================================================================
+		//addTableToConfigurationGroup ~~
+		function addTableToConfigurationGroup(tableName) 
+		{
+			Debug.log("addTableToConfigurationGroup",tableName);
+
+			editCellCancel();
+			
+			//Steps:
+			//	1. save current tree changes using popUpSaveTreeForm() with new table added
+			//		a. when done, treeHasChanged(reset) which does not change the current tree drawing
+			
+			treeMemberNames_.push(tableName);
+			treeMemberVersions_.push(-1);
+			treeMemberComments_.push("Added to group through Configuration Tree");
+			popUpSaveTreeForm();
+
+		} //end addTableToConfigurationGroup()
+		
 		//==============================================================================
 		//getTableViewColTypes ~~
 		//	returns column types for each column and specially indicates the columns 
@@ -16422,7 +16639,7 @@
 
 <body onload='//init() called by DesktopContent.js'>
 
-	<h1>Configuration GUI</h1>
+	<h1>Configuration Editor</h1>
 
 	<div style='width:550px'>
 

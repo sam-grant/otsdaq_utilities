@@ -511,7 +511,7 @@ else {
         	else //chrome
         	{
 				_fullScreenRefreshBtn.innerHTML = 
-						"<div style='font-size:20px; margin: -4px 0 0 2px; font-weight: bold;' title='Click to reload the desktop and all windows'>↻</div>";        	
+						"<div style='font-size: 18px; margin: -1px 0 0 2px; font-weight: 300;' title='Click to reload the desktop and all windows'>↻</div>";        	
 				_fullScreenRefreshBtn.style.height = "16px";
 				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
         	}

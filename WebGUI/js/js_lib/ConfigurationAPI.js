@@ -2570,7 +2570,7 @@ ConfigurationAPI.getGroupTypeMemberNames = function(groupType,responseHandler)
 			0,0,true  //reqParam, progressHandler, callHandlerOnErr
 	); //end request
 	
-}
+} //end getGroupTypeMemberNames()
 
 
 //=====================================================================================

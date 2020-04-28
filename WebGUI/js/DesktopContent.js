@@ -406,7 +406,7 @@ DesktopContent.init = function()
 			
 			if(DesktopContent._theWindowId != event.data.windowId)
 			{
-				Debug.log("Impossible desktop message violation! Notify admins.", Debug.HIGH_PRIORITY);
+				Debug.med("Impossible desktop message violation! Notify admins. May happen if users click around during window refresh?");
 				return;				
 			}
 			
