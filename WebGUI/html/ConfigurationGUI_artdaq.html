@@ -3253,7 +3253,7 @@
 
 												//continue recursion, parameters actually do not matter
 												handler( //localGetLinkId's handler calls localRecursiveUniqueLinkCheck()
-														valueArr[0], 
+														fieldRetObj[1].fieldColumnType.split('-')[1], 
 														valueArr[1]);
 
 													} //end initArtdaqNodes done handler
@@ -4502,11 +4502,11 @@
 
 					str += "<center><br>";
 					str += "Current active '" + groupTypes[g] +
-							"' group: <b>" + 
+							"' group: <label style='color:red;font-weight:bold;'>" + 
 							_systemGroups.activeGroups[groupTypes[g]].groupName + 
 							"(" + 
 							_systemGroups.activeGroups[groupTypes[g]].groupKey +
-							")</b>";
+							")</label>";
 					str += htmlClearDiv();
 					str += "<br><table style='margin-bottom: 10px;'>";
 					if(_systemGroups.aliases[groupTypes[g]] &&
@@ -4543,6 +4543,7 @@
 						str += "<tr><td colspan='2'>No system aliases of type Context found.</td></tr>";
 
 					var groupNames = Object.keys(_systemGroups.groups[groupTypes[g]]);
+					var selectedGroupName = 0; //for which keys to show
 					if(groupNames.length)
 					{
 						str += "<tr><td><b>Group Names:</b></td><td>";
@@ -4556,8 +4557,11 @@
 							{
 								str += htmlOpen("option",
 										{		
+								"selected": (groupNames[i] ==
+										_systemGroups.activeGroups[groupTypes[g]].groupName && (selectedGroupName = i))
 										},
 										groupNames[i] /*innerHTML*/, true /*closeTag*/);
+
 							}
 							str += "</select>"; //end group name dropdown
 
@@ -4577,13 +4581,13 @@
 									});
 
 							for(var i=0;i<_systemGroups.groups[groupTypes[g]]
-															   [groupNames[0]].keys.length;++i)
+															   [groupNames[selectedGroupName]].keys.length;++i)
 							{
 								str += htmlOpen("option",
 										{		
 										},
 										_systemGroups.groups[groupTypes[g]]
-															 [groupNames[0]].keys[i] /*innerHTML*/, true /*closeTag*/);
+															 [groupNames[selectedGroupName]].keys[i] /*innerHTML*/, true /*closeTag*/);
 							}
 							str += "</select>"; //end group keys dropdown
 							str += htmlOpen("input",

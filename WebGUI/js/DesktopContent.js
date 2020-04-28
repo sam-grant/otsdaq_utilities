@@ -681,7 +681,7 @@ DesktopContent.showLoading = function(nextFunction)
 	/////////////
 	function localDoIt()
 	{
-		Debug.log("DesktopContent.showLoading " + DesktopContent._loadBoxRequestStack);
+		//Debug.log("DesktopContent.showLoading " + DesktopContent._loadBoxRequestStack);
 
 		if(DesktopContent._loadBoxRequestStack++) //box should still be open, add to stack
 			return;

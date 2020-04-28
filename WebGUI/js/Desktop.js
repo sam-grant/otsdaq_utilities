@@ -740,7 +740,7 @@ Desktop.createDesktop = function(security) {
 	//	handle bringing window to front
 	this.setForeWindow = function(win)
 	{
-		console.log("setForeWindow",win?win.getWindowId():-1);
+		//console.log("setForeWindow",win?win.getWindowId():-1);
 		
 		//resort by z and renumber - windows with Z out of range of array are due to iframe onFocus solution			
         var tmp;
@@ -1417,7 +1417,7 @@ Desktop.createDesktop = function(security) {
 			console.log("updateMouseoverXY",_mouseOverXmailbox,_mouseOverYmailbox);
 			break;
 		case "makeForeWindow":
-			console.log("makeForeWindow",event.data.windowId);
+			//console.log("makeForeWindow",event.data.windowId);
 			Desktop.desktop.setForeWindow(this.getWindowById(event.data.windowId|0));			
 			break;
 		case "openNewWindow":

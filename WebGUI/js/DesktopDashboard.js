@@ -71,7 +71,7 @@ else {
 				((_urlHashVal | 0)*_defaultWindowDashboardWidth/1000):
 				_defaultWindowDashboardWidth;        
         var _displayWindowDashboard = //default window dashboard view
-        		_urlHashVal? (_urlHashVal?1:0):1; 
+        		(_urlHashVal === undefined)?1:(_urlHashVal?1:0); 
         
         var _windowDashboard,_topBar,_showDesktopBtn,_fullScreenBtn,_fullScreenRefreshBtn;
         

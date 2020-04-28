@@ -422,12 +422,17 @@ MultiSelectBox.initMySelectBoxes = function(clearPreviousSelections)
 		if (!MultiSelectBox.mySelects_[id] ||
 				MultiSelectBox.mySelects_[id].length > options.length)
 		{//if first time drawing select box OR size was reduced
-			MultiSelectBox.mySelects_[id]=[];
+			if(!MultiSelectBox.mySelects_[id] || clearPreviousSelections)
+				MultiSelectBox.mySelects_[id]=[];
 			for (var opt=0; opt<options.length; opt++)
 			{
-				MultiSelectBox.mySelects_[id].push(0);
+				if(clearPreviousSelections || opt >= MultiSelectBox.mySelects_.length)
+					MultiSelectBox.mySelects_[id].push(0);
 				options[opt].setAttribute("unselectable","on");//make not selectable for ie<10
 			}
+			//remove any extras
+			while(MultiSelectBox.mySelects_[id].length > options.length)
+				MultiSelectBox.mySelects_[id].splice(options.length,1);
 		}
 		else
 		{ 	//if repaint: set highlighted options
