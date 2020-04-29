@@ -7730,7 +7730,8 @@
 						{
 							Debug.log(err, Debug.HIGH_PRIORITY);
 
-							Debug.log("There were errors loading the mockup version.\n\n" +
+							Debug.log("There were errors loading the mockup version of '" +
+									linkInfo.pairColTable + "'.\n\n" +
 								"Please see the detailed Errors below:", Debug.HIGH_PRIORITY);
 
 							//try to power through
@@ -7738,20 +7739,22 @@
 
 						var warns = DesktopContent.getXMLValue(req, "TableWarnings");
 						if (warns)
-							Debug.log("There were warnings found when loading this table " +
-								"(you can treat them as informational):\n\n" +
+							Debug.log("There were warnings found when loading table " +	 '" +
+									linkInfo.pairColTable + 
+									"' (you can treat them as informational):\n\n" +
 								warns, Debug.WARN_PRIORITY);
 
 						var colTypeEls = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
 						var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
 
-						var colTypeSplit = colType.split('-')[1];
-						Debug.log("Looking for groupID column in linked to table matching " + colTypeSplit);
+						var childLinkIndex = colType.split('-')[1];
+						Debug.log("Looking for groupID column in linked to table matching " + 
+								childLinkIndex);
 
 						var groupIdCol = -1;
 						var groupIdField;
 						for (var i = 0; i < colTypeEls.length; ++i)
-							if (colTypeEls[i].getAttribute("value").split('-')[1] == colTypeSplit)
+							if (colTypeEls[i].getAttribute("value").split('-')[1] == childLinkIndex)
 							{
 								groupIdField = colHdrs[i].getAttribute("value");
 								Debug.log("Found link groupid col " + i + " - " + groupIdField);
@@ -8719,7 +8722,7 @@
 			var modTblStr = "";
 			var modifiedTables = ""; //csv table, temporary version,...
 			for (var j = 0; j < treeMemberNames_.length; ++j)
-				if ((treeMemberVersions_[j] | 0) <= -1) //allow new tables' mockup version to be added
+				if ((treeMemberVersions_[j] | 0) < 0) //allow new tables' mockup version to be added
 				{
 					if (modTblCount++)
 						modTblStr += ",";
@@ -9056,7 +9059,7 @@
 			//		save new version
 			//		update tree member table version based on result
 			for (var j = 0; j < treeMemberNames_.length; ++j)
-				if ((treeMemberVersions_[j] | 0) <= -1) //for each modified and mockup table
+				if ((treeMemberVersions_[j] | 0) < 0) //for each modified and mockup table
 				{
 					var reqStr = "Request?RequestType=saveSpecificTable" +
 						"&dataOffset=0&chunkSize=0" +

@@ -238,13 +238,13 @@ SimpleContextMenu.mouseMoveHandler = function(e)
 	//Debug.log("moving " + e.pageX + "-" + e.pageY);
 	if(SimpleContextMenu._popUpEl && !SimpleContextMenu._removePopupTimer) //delete popup
 	{
-		Debug.log("Starting timer to remove SimpleContextMenu");
+		//Debug.log("Starting timer to remove SimpleContextMenu");
 		SimpleContextMenu._removePopupTimer = window.setTimeout(
 				function() 
 				{
 			SimpleContextMenu._removePopupTimer = 0; //clear timer variable
 			
-			Debug.log("Removing SimpleContextMenu");
+			//Debug.log("Removing SimpleContextMenu");
 			SimpleContextMenu._popUpEl.parentNode.removeChild(SimpleContextMenu._popUpEl);
 			SimpleContextMenu._popUpEl = 0;
 

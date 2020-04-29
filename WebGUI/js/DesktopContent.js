@@ -579,12 +579,12 @@ DesktopContent.handleFocus = function(e)
 }
 DesktopContent.handleBlur = function(e) 
 {	
-	Debug.log("Blur DesktopContent._isFocused " + DesktopContent._isFocused);
+	//Debug.log("Blur DesktopContent._isFocused " + DesktopContent._isFocused);
 	DesktopContent._isFocused = false;
 }
 DesktopContent.handleScroll = function(e) 
 {		
-	Debug.log("Scroll DesktopContent._isFocused" + DesktopContent._isFocused);
+	//Debug.log("Scroll DesktopContent._isFocused" + DesktopContent._isFocused);
 	window.focus();	
 }
 DesktopContent.mouseMove = function(mouseEvent,onlyDesktopFunction) 
