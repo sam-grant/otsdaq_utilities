@@ -34,12 +34,12 @@
 
 // use this for normal printouts
 #define __PRINTF__ printf
-#define __COUT__ cout << __FILENAME__ << std::dec << " [" << __LINE__ << "]\t"
+#define __COUT__ std::cout << __FILENAME__ << std::dec << " [" << __LINE__ << "]\t"
 #define __E__ std::endl
 
 // and use this to suppress
 //#define __PRINTF__ if(0) printf
-//#define __COUT__  if(0) cout
+//#define __COUT__  if(0) std::cout
 
 int main(int argc, char** argv)
 {
@@ -52,9 +52,9 @@ int main(int argc, char** argv)
 		         << __E__;
 		return 0;
 	}
-	string mainfn    = argv[1];
-	string injectfn  = argv[2];
-	string inject2fn = argv[3];
+	std::string mainfn    = argv[1];
+	std::string injectfn  = argv[2];
+	std::string inject2fn = argv[3];
 	__COUT__ << "main.html destination full path: " << mainfn << __E__;
 	__COUT__ << "main.html source full path: " << mainfn + ".bk" << __E__;
 	__COUT__ << "inject.html source full path: " << injectfn << __E__;

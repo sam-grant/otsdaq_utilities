@@ -68,10 +68,13 @@ echo -e "OnlineDoc [${LINENO}]  \t Transferring to location otsdaq.fnal.gov${SCP
 
 if [ $DO_MRBZ == 1 ]; then
 	echo -e "OnlineDoc [${LINENO}]  \t Cleaning all so that doxygen will run... mrb z..."
+	export OTS_DOXY="DOIT" #enable doxygen in CMakelists
 	source setup_ots.sh
 	mrb z
 	source mrbSetEnv
 	mrb b
+	unset OTS_DOXY #enable doxygen for future builds
+	source mrbSetEnv
 fi
 
 #exit #for debugging
