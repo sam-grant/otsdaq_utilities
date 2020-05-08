@@ -313,17 +313,120 @@ DesktopContent.init = function()
 		DesktopContent._sequence = 0; //normal desktop mode
 	}
 	
+	
 
-	//	DesktopContent._theWindow.parent.window.postMessage(
-	//			{
-	//			"req":		"getsome"
-	//			}, "*");
+	//create message request listener for messages from desktop, to overcome same-origin policy
+	//The first message is initiated by the Desktop once the window frame has been loaded.
+	window.addEventListener('message', event => {
 
+		console.log(window.location.href,
+			"Child event.data",event.data); 
+
+
+		if(!event.data.windowId)
+		{
+			Debug.log("Illegal message received!");
+			return;
+		}
+		
+		if(event.data.request == "getRequestLIDInfo")
+		{			
+			
+			Debug.log("Received info request from child page");
+			event.source.postMessage(
+				{			
+					
+				"windowId":		"unknown",	
+				"request":		"giveRequestLIDInfo",
+				"cookieCode":	DesktopContent._cookieCodeMailbox,
+				"localURN": 	DesktopContent._localUrnLid,
+				"gatewayURN" :	DesktopContent._serverUrnLid,
+				"gatewayOrigin":DesktopContent._serverOrigin
+				}, "*");
+			return;
+		}
+		else if(event.data.request == "getParentCookieCode")
+		{			
+			
+			Debug.log("Received info request from child page");
+			event.source.postMessage(
+				{			
+					
+				"windowId":		"unknown",	
+				"request":		"giveParentCookieCode",
+				"cookieCode":	DesktopContent._cookieCodeMailbox
+				}, "*");
+			return;
+		}
+		else if(event.data.request == "giveParentCookieCode")
+		{		
+			Debug.log("Received cookie response from parent page");
+			DesktopContent._cookieCodeMailbox = event.data.cookieCode;		
+		}	
+		else if(event.data.request == "giveRequestLIDInfo")
+		{			
+			
+			Debug.log("Received info response from parent page");
+			DesktopContent._localUrnLid = event.data.localURN;
+			DesktopContent._serverUrnLid = event.data.gatewayURN;
+			DesktopContent._serverOrigin = event.data.gatewayOrigin;
+			DesktopContent._cookieCodeMailbox = event.data.cookieCode;
+			
+			Debug.log("The Desktop Window ID = " + DesktopContent._theWindowId);
+			Debug.log("Gateway Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
+			Debug.log("Gateway Supervisor Application Origin = " + DesktopContent._serverOrigin);
+
+			if(event.data.cookieCode)
+			{
+				DesktopContent._cookieCodeMailbox = event.data.cookieCode;
+				
+				//========
+				function localUpdateCookieCode() 
+				{
+					window.clearTimeout(DesktopContent._updateCookieCodeTimer);
+					
+					Debug.log("localUpdateCookieCode");
+					var deltaTime = parseInt((new Date()).getTime()) - //in ms
+							parseInt(DesktopContent._updateTimeMailbox);
+					if(deltaTime > 30)						
+					{			
+						Debug.log("Requesting updated cooking code from desktop");
+
+						DesktopContent._theWindow.postMessage(
+								{
+							"windowId":			"unknown",
+							"request":  		"getParentCookieCode"
+								},"*");
+					}
+					else
+						Debug.log("No need to update deltaTime=" + deltaTime);
+					
+					DesktopContent._updateCookieCodeTimer = window.setTimeout(
+							localUpdateCookieCode,30*1000 /*ms*/);
+				} //end localUpdateCookieCode()
+				
+				//from now on check for a new cookie code every 30 seconds
+				localUpdateCookieCode(); 
+			}
+			else if(!DesktopContent._sequence)
+				Debug.log("No cookie code and no sequence!");
+				
+			if(init)
+			{
+				Debug.log("Calling page init!");
+				init(); //call pages init!
+			}
+			return;
+		}
+	});  //end parent/child desktop window handler
+	
+	
 	//create message request listener for messages from desktop, to overcome same-origin policy
 	//The first message is initiated by the Desktop once the window frame has been loaded.
 	DesktopContent._theWindow.addEventListener('message', event => {
 
-		console.log("Child event.data",event.data); 
+		console.log(window.location.href,
+			"Desktop Window event.data",event.data); 
 
 
 		if(!event.data.windowId)
@@ -434,7 +537,17 @@ DesktopContent.init = function()
 			}
 			
 		}
-	}); 
+	});  //end normal Desktop Window handler
+	
+	if(DesktopContent._localUrnLid == 0)
+	{
+		Debug.log("Attempting to ask parent for local and gateway info");
+		DesktopContent._theWindow.postMessage(
+				{					
+				"windowId" :	"unknown",
+				"request":		"getRequestLIDInfo"
+				}, "*");
+	}
 	
 } //end DesktopContent.init()
 

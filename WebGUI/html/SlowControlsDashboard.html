@@ -106,7 +106,6 @@
 			//	isEmpty(obj)
 
 
-
 			//top-level scope (global) variables:
 
 			var page_ = page_ || {}; 	//define the page object if needed
@@ -157,14 +156,14 @@
 			//		* Update widget drawing based on new value (and append to history if needed)
 			//
 			//====================== end high-level behavior description
-			
+
 			var windowWidth_, windowHeight_;
 
 			var pvList_ = {};
 			var elPointer_ = {};
 			var pagesList_ = [];
 			var mainBlock_ = {name:"", isHidden:false, el:""}; // = ["mainBlock", false ];
-			
+
 			var PAGE_POSITIONS_ = 1000; //number of allowed integer locations (e.g. x,y,w,h for widgets) 
 			var refreshRate_ = 15000; //set default to refresh every 15 seconds (ms)
 			var timerVariable_;
@@ -177,21 +176,21 @@
 			var mailbox_;
 			var ADMIN_PERMISSION_THRESHOLD = 255;
 			var userPermission = 10;
-			
+
 			//==== BEGIN file pane:
 			var fileBlock_ = {name:"", isHidden:false, el:"", savePopup:""}; // = ["fileBlock", false ];
 
 			var FILE_BLOCK_WIDTH = 300;
 			//==== END file pane
-			
-			
+
+
 			//==== BEGIN edit pane:
 			var editBlock_ = {name:"", isHidden:true, el:""}; // = [false ];
-			
+
 			var EDIT_BLOCK_PEEK_HEIGHT = 40;
 			var EDIT_BLOCK_HEIGHT = 300;
 			//==== END edit pane
-			
+
 
 			//==== BEGIN Context Menu
 			var menuState_ = 0;
@@ -220,20 +219,20 @@
 			var drawingSelectionRectangle_ = false;
 			var dragAndDrawTargetEl_ = undefined;			
 			var dragAndDrawWidgetType_ = undefined;
-			
+
 			var resizeLockout_ = false;
 			var resizeWidgetId_ = "";
 			var resizeFrom_ = "";
 			var saveCursorType_;
-			
+
 			var dragLockout_ = false;
 			var targetElement_ = undefined;
 			//==== END Drag and Resize
-			
+
 			var cutWidget_;
 			var cutWidgetId_;
 
-			
+
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 
@@ -242,13 +241,12 @@
 			//init called once body has loaded
 			function init() 
 			{
-
 				Debug.log("init() was called");
 
 				window.onkeyup = handleKeys;
 				window.onkeydown = makeHandlerWithID(true/*isKeyDown*/,handleKeys);
 				window.onresize = handleResize;
-				
+
 				var parameterPageName = DesktopContent.getParameter(0,"page_name");				
 
 				Debug.log("Parameter filename: " + parameterPageName);
@@ -271,7 +269,7 @@
 				elPointer_["addPVMenuDiv"] = document.getElementById("addPVMenuDiv");
 				elPointer_["editWidgetAttributesPopup-body-pvlist"] = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				elPointer_["editWidgetAttributesPopup-body-attributes"] = document.getElementById("editWidgetAttributesPopup-body-attributes");
-			
+
 				menuDiv_ = document.getElementById("contextMenuDiv");
 				menu_= document.getElementById("contextMenu");
 				mailbox_ = document.getElementById("mailbox");
@@ -322,7 +320,7 @@
 				editBlock_.el.innerHTML = "";
 				editBlock_.el.style.border = "0";
 				editBlock_.el.appendChild(editFrame);
-				
+
 				editBlock_.el.addEventListener("mouseover", mouseoverEditBlock, true);
 				editBlock_.el.addEventListener("mouseleave", mouseoutEditBlock, true);
 
@@ -333,7 +331,7 @@
 				console.log(("-" + fileBlock_.el.style.width));
 				fileBlock_.el.style.left = "-4000px"; //hack because the file tree page probably didnt load by now
 				editBlock_.el.style.bottom = "-4000px"; //hack because the edit page probably didnt load by now
-				
+
 				nav_ = document.getElementById("navigationMenu");
 				nav_.classList.add("navigationMenu--active");
 				//END JS Style
@@ -346,7 +344,7 @@
 				document.body.addEventListener("mousemove", handleMouseMove);
 
                 handleResize(); //redraw window for first time
-                
+
 				if(parameterPageName == undefined)
 			    {
                     toggleEditMode();
@@ -358,6 +356,7 @@
                 	loadPhoebusPage(parameterPageName);
                 }
 			} //end init()
+
 
 			//=====================================================================================
 			//indicate that login should be kept alive
@@ -374,6 +373,7 @@
 						0 /*callHandlerOnErr*/, 
 						true /*doNoShowLoadingOverlay*/);	
 			} //end indicateUserActivityToServer()
+
 
 			//=====================================================================================
 			function checkMailbox()
@@ -477,13 +477,13 @@
 				}
 			} //end pvListReqHandler()
 
+
 			//=====================================================================================
 			var PHOEBUS_MAP = {"textupdate": 0, "table": 1, "meter": 2, "stripchart": 3, "thermometer": 4, "siren": 5, "label": 6, "led": 7, "picture": 8, "root": 9};
 			function loadPhoebusPageReqHandler(req)
 			{
 				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
 
-			
 				//=============================
 				//delete all widget HTML objects by removing all containers
 				// do not do mainBlock_.el.innerHTML = ""; //clear
@@ -498,7 +498,7 @@
 						widgetContainerEls[0].parentNode.removeChild(widgetContainerEls[0]);
 				} //end localDeleteAllWidgetHTML()
 				localDeleteAllWidgetHTML();
-				
+
 				page_.widgets = {}; //clear
 
 				if(!fileBlock_.isHidden)
@@ -521,7 +521,7 @@
 					var type = PHOEBUS_MAP[ widgets[i].attributes["type"].nodeValue ];
 					var group = -1;
 					if (widgets[i].attributes["ots_group"] !== undefined) group = widgets[i].attributes["ots_group"].nodeValue;
-					
+
 					var displayName = widgets[i].getElementsByTagName("name")[0];
 					var x = widgets[i].getElementsByTagName("x")[0];
 					var y = widgets[i].getElementsByTagName("y")[0];
@@ -583,7 +583,6 @@
 
 					console.log("Drawing and creating widget",i,widgetObject);
 
-						
 					widgetObject.loaded = true;
 					widgetObject.el = undefined;
 
@@ -612,7 +611,6 @@
 						page_.widgets[i] = widgetObject;
 
 					drawWidget(i);
-
 
 				} //end widget extraction loop
 
@@ -643,7 +641,7 @@
 					Debug.log("Ingoring pool response in edit mode");	
 					return;
 				}
-				
+
  				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
 				jsonStr = jsonStr.replace(/\s/g, ''); //hack for removing whitespace 
     			if(!jsonStr || jsonStr == "") 
@@ -697,9 +695,10 @@
 						}
 					}
 				}
-				
+
 				timerVariable_ = window.setTimeout(pollServer, refreshRate_);
 			} //end pollServerHandlerFunction()
+
 
 			//=====================================================================================
 			function generateUIDHandlerFunction(req)
@@ -720,6 +719,7 @@
 				}
 			} //end generateUIDHandlerFunction()
 
+
 			//=====================================================================================
 			function settingsReqHandler(req, passParams)
 			{
@@ -737,6 +737,7 @@
 				page_.widgets[id].el.contentWindow.drawWidget(page_.widgets[id], attributes);
 
 			} //end settingsReqHandler()
+
 
 			//=====================================================================================
 			function pvHistoryReqHandler(req, passParams) 
@@ -759,12 +760,14 @@
 				}
 			} //end pvHistoryReqHandler()
 
+
 			//=====================================================================================
 			function savePageReqHandler(req)
 			{
 				var response = req.responseText;
 				Debug.log(response);
 			} //end savePageReqHandler()
+
 
 			//=====================================================================================
 			function createControlsPageHandler(req)
@@ -773,6 +776,7 @@
 				Debug.log("Your page was succesfully saved!",Debug.INFO_PRIORITY);		
 			} //end createControlsPageHandler()
 
+
 			//=====================================================================================
 			function handlerFunction(req) 
 			{
@@ -780,6 +784,7 @@
 				var child2data = DesktopContent.getXMLValue(req,"child2");
 				Debug.log("--child1data:",child1data," --child2data:",child2data);
 			} //end handlerFunction()
+
 
 			//=====================================================================================
 			function lastAlarmsReqHandler(req, passParams)
@@ -825,6 +830,7 @@
 				}
 			} //end lastAlarmsReqHandler()
 
+
 			//=====================================================================================
 			function getLastAlarms(id, parameters)
 			{
@@ -854,6 +860,7 @@
 					passParams /*parameter*/);
 				console.log("get last alarms for widget! pvList: " + pvList);
 			} //end getLastAlarms()
+
 
 			//=====================================================================================
 			function alarmsLogReqHandler(req, passParams)
@@ -901,6 +908,7 @@
 
 			} //end alarmsLogReqHandler()
 
+
 			//=====================================================================================
 			function getAlarmsLog(id, parameters)
 			{
@@ -931,11 +939,13 @@
 				console.log("get alarms log for widget! pvList: " + pvList);
 			} //end getAlarmsLog()
 
+
 			//=====================================================================================
 			function pollAlarmsLog()
 			{
 
 			} //end pollAlarmsLog()
+
 
 			//=====================================================================================
 			function pollServer()
@@ -956,6 +966,7 @@
 						true /*doNoShowLoadingOverlay*/);	
 				}
 			} //end pollServer()
+
 
 			//=====================================================================================
 			function generateUID()
@@ -984,6 +995,7 @@
 					generateUIDHandlerFunction);//, undefined, undefined, "sequence");
 			} //end generateUID()
 
+
 			//=====================================================================================
 			function updateRefreshInterval()
 			{
@@ -992,17 +1004,20 @@
 				timerVariable_ = setInterval(pollServer, refreshRate_);
 			} //end updateRefreshInterval()
 
+
 			//=====================================================================================
 			function loadPage(page)
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=loadPage&Page=" + page, "", loadPageReqHandler);//, undefined, undefined, "sequence");
 			} //end loadPage()
 
+
 			//=====================================================================================
 			function loadPhoebusPage(page)
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=loadPhoebusPage&Page=" + page, "", loadPhoebusPageReqHandler);//, undefined, undefined, "sequence");
 			} //end loadPhoebusPage()
+
 
 			//=====================================================================================
 			function loadPageNewWindow(fullPathToPage)
@@ -1013,6 +1028,7 @@
 				DesktopContent.openNewWindow("Controls Dashboard", "", newWindowStr, false /*unique*/);
 			} //end loadPageNewWindow()
 
+
 			//=====================================================================================
 			function loadPageNewBrowserTab(fullPathToPage)
 			{
@@ -1021,6 +1037,7 @@
 
 				DesktopContent.openNewBrowserTab("Controls Dashboard","", newWindowStr ,false /*unique*/);
 			} //end loadPageNewBrowserTab()
+
 
 			//=====================================================================================
 			//CreateDesktopIcon page loader~~
@@ -1039,6 +1056,7 @@
 					);
 			} //end CreateDesktopIcon
 
+
 			//=====================================================================================
 			function savePage() 
 			{
@@ -1055,6 +1073,7 @@
     			}
 			} //end savePage()
 
+
 			//=====================================================================================
 			function hidePopupSaveControlsPage()
 			{
@@ -1064,6 +1083,7 @@
 	            document.getElementById("controlsPageNotes").value="";
 		        Debug.log("Controls Page successfully saved!");
 			} //end hidePopupSaveControlsPage()
+
 
 			//=====================================================================================
 			function savePageAs()
@@ -1129,6 +1149,7 @@
 	        		}
     			}
 			} //end savePageAs()
+
 
 			//=====================================================================================
 			function savePhoebusPageAs()
@@ -1343,6 +1364,7 @@
     			}
 			} //end savePhoebusPageAs()
 
+
 			//=====================================================================================
 			//	expecting id as 'widget-#' ..and this function extracts the 
 			//	widget UID as integer #
@@ -1350,7 +1372,7 @@
 			{
 				console.log("setting up widget! " + id);
 				id = id.split('-')[1];
-				
+
 				if(page_.widgets[id] === undefined)
 				{
 					Debug.log("Illegal widget UID (not found in widget list) received from child widget frame: " + 
@@ -1359,14 +1381,8 @@
 				}
 
 				page_.widgets[id].loaded = true;
-				//if(page_.widgets[id].attributes === undefined)
-				//{
-				//	page_.widgets[id].attributes = parameters;
-				//}
-				//else
-				//{
-					compareAttributes(id, parameters);
-				//}
+
+				compareAttributes(id, parameters);
 
 				//now page_.widgets[id].attributes is merged
 				console.log("page_.widgets[id].attributes", page_.widgets[id].attributes);
@@ -1388,6 +1404,7 @@
 							passParams /*parameter*/);
 
 			} //end setupWidget()
+
 
 			//=====================================================================================
 			function setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_)
@@ -1411,6 +1428,7 @@
 			  	return toolTip;
 			} //end setWidgetToolTip()
 
+
 			//=====================================================================================
 			function checkPVTime(id, pvName, pvTime)
 			{
@@ -1429,6 +1447,7 @@
 				if ((pvTime !== undefined) && (time2compare > actualTime)) return true;
 				return false;
 			} //end checkPVTime()
+
 
 			//=====================================================================================
 			function setWidgetPVinfo(id, pvName, pvValue, pvTime, pvStatus, pvSeverity, showLabel, containers, foregroundColor, bkgColor, widgetElement)
@@ -1462,6 +1481,7 @@
 					console.log("setWidgetPVinfo(): widgetElement is null or not defined!");
 			} //end setWidgetPVinfo()
 
+
 			//=====================================================================================
 			function getPVHistory(id, parameters)
 			{
@@ -1491,27 +1511,20 @@
 				console.log("get history for widget! pvList: " + pvList);
 			} //end getPVHistory()
 
+
 			//=====================================================================================
 			function addPVToWidget(pv, refreshRate, widgetID, fromAddPV)
 			{
 				if(fromAddPV){toggleAddPV();}
 				page_.widgets[widgetID].pvList[pv] = refreshRate;
 				page_.widgets[widgetID].el.contentWindow.init();
-				//newWidget_ = true;
 			} //end addPVToWidget()
+
 
 			//=====================================================================================
 			function compareAttributes(id, parameters)
 			{
 				var actionRequired = false;
-
-				for(var attribute = 0; attribute < Object.keys(page_.widgets[id].attributes).length; attribute++)
-				{
-					if(Object.keys(parameters).indexOf(Object.keys(page_.widgets[id].attributes)[attribute]) == -1)
-					{
-						//Debug.log("Attribute [" + Object.keys(page_.widgets[id].attributes)[attribute] + "] for " + page_.widgets[id].displayName + " is no longer required. No action required.", Debug.HIGH_PRIORITY);
-					}
-				}
 
 				var attributesNew = {};
 
@@ -1533,10 +1546,10 @@
 						//Debug.log("Attribute [" + Object.keys(parameters)[attribute] + "] for " + page_.widgets[id].displayName + " is now a required attribute. Action Required.", Debug.HIGH_PRIORITY);
 					}
 				}
+
 				page_.widgets[id].attributes = attributesNew;
-				//if(actionRequired)
-					//document.getElementById(id).className = "action-required";
 			} //end compareAttributes()
+
 
 			//=====================================================================================
 			//This function is called by edit pane code when
@@ -1546,21 +1559,22 @@
 				Debug.log("parent level setupForDrawSelectionRectangle " + id);
 
 				indicateUserActivityToServer();		
-				
+
 				if(id === undefined)
 				{
 					//treat as clearing drag and draw type mode
-					mainBlock_.el.style.cursor = "default"; 
+					mainBlock_.el.style.cursor = "default";
 					dragAndDrawWidgetType_ = undefined;
 				}
 				else //drag-and-draw type was selected
 				{
 					//crosshair primary indicator to user that draw and drag is active
-					mainBlock_.el.style.cursor = "crosshair";								
+					mainBlock_.el.style.cursor = "crosshair";
 					dragAndDrawWidgetType_ = id|0; //force integer type id
 				}
-				
+
 			} //end setupForDrawSelectionRectangle()
+
 
 			//=====================================================================================
 			function drawSelectionRectangle(event)
@@ -1619,6 +1633,7 @@
 				selectionRectangle.style.display = "block";
 			} //end drawSelectionRectangle()
 
+
 			//=====================================================================================
 			function redrawSelectionRectangle(event) 
 			{
@@ -1641,19 +1656,17 @@
 					y = event.clientY;
 					h *= -1;
 				}
-					
 
 				drawAndDragBox.style.left = x + "px";
 				drawAndDragBox.style.top = y + "px";	
-				
+
 				if(widgetLibrary.dimensions[type] && 
 						widgetLibrary.dimensions[type]["Y"] && 
 						widgetLibrary.dimensions[type]["X"])
 				{ //if forced aspect ratio, then maintain aspect ratio
-					
+
 					var aspect_ratio = parseFloat(widgetLibrary.dimensions[type]["X"]) /
 							parseFloat(widgetLibrary.dimensions[type]["Y"]);
-
 
 					if((h > widgetLibrary.dimensions[type]["Y"]) ||
 							(w > widgetLibrary.dimensions[type]["X"]))
@@ -1679,22 +1692,22 @@
 				}
 			} //end redrawSelectionRectangle()
 
+
 			//=====================================================================================
 			function stopDragAndDrawRectangle(event) 
 			{
 				var type = dragAndDrawWidgetType_;
 				Debug.log("stopDragAndDrawRectangle() " + type);
-				
+
 				var drawAndDragBox = document.getElementById("selectionRectangle");
-			
 
 				//console.log((event.clientX - xPos_));
 				//console.log(drawAndDragBox.style.width);
-				
+
 				var x,y,w,h;
 				x = drawAndDragBox.offsetLeft;
 				y = drawAndDragBox.offsetTop;
-				
+
 				//if widget attribute Scale is set to false, then always a fixed size
 				if(widgetLibrary.dimensions[type] &&
 						widgetLibrary.dimensions[type]["Scale"] && 
@@ -1708,9 +1721,9 @@
 					w = drawAndDragBox.offsetWidth;
 					h = drawAndDragBox.offsetHeight;
 				}
-					
+
 				drawWidget(undefined /*need widget uid assigned*/,
-						type,  
+						type,
 						x,y,w,h);
 
 				//clear globals back to not drawing mode
@@ -1720,6 +1733,7 @@
 				dragAndDrawWidgetType_ = undefined;
 				editBlock_.el.firstChild.contentWindow.selectWidgetTile(); //unselect in edit block
 			} //end stopDragAndDrawRectangle()
+
 
 			//================================================================================
 			//draws widget based on id
@@ -1731,7 +1745,7 @@
 			{			
 				//console.log("drawWidget() id=",id,
 				//		" type=",type);
-				
+
 				var OUTLINE_OFFSET = 15;
 				
 				var containerDiv;
@@ -1746,7 +1760,7 @@
 				var resizeDivTopRight;
 				var resizeDivBottomRight;
 				var resizeDivBottomLeft;
-				
+
 				var editIcon, otherEditIcon;
 
 				//Steps:
@@ -1754,46 +1768,42 @@
 				//		* if missing, add to object
 				//	- check page for widget elements
 				//		* if missing, add to page
-			
+
 				if(page_ === undefined)
 				{
 					Debug.log("Impossible page object missing! Notify admins", Debug.HIGH_PRIORITY);
 					return;
 				}
-				
+
 				if(page_.widgets == undefined)
 				{
 					page_.widgets = {};
 				}
-				
+
 				var widgetObject;
-				
+
 				if(id === undefined || page_.widgets[id] === undefined)
 				{					
 					Debug.log("Creating new widget object..");
-					
+
 					//start at number of widgets, and then keep adding 1 until no record found in 
 					id = Object.keys(page_.widgets).length;
 					while(page_.widgets[id] !== undefined)
 						++id;
 					Debug.log("Found new available widget ID = " + id);
-										
+
 					page_.widgets[id] = {}; //start new widget object
 					widgetObject = page_.widgets[id];
-					
+
 					widgetObject.pvList 		= {};
 					widgetObject.attributes 	= {};
 					widgetObject.displayName 	= "widget-" + id;
 					widgetObject.loaded 		= false;
 					//attempt to get element, ok if undefined (will be created)
-					widgetObject.el				= document.getElementById("widget-" + id); 
+					widgetObject.el				= document.getElementById("widget-" + id);
 				} //end new widget object handling
 				else
 					widgetObject = page_.widgets[id];
-				
-				//console.log("Starting widget object with ID=",id, +
-				//			" object:",widgetObject);
-				
 				
 				{ //filling widget object with new parameters				
 
@@ -1810,11 +1820,11 @@
 					if(type !== undefined)
 						widgetObject.type 	= type | 0; //force integer type
 				} //end filling widget object with new parameters
-																
+
 				if(!widgetObject.el)
 				{
 					Debug.log("Creating widget elements for widget" + id);
-					
+
 					widgetObject.el = document.createElement("iframe");
 					widgetObject.el.scrolling="No";	
 					widgetObject.el.id = "widget-" + id;
@@ -1838,17 +1848,17 @@
 						resizeDivTop.className = "resizeWidgetCoverTop";
 						resizeDivTop.id = "widget-" + id + "-resize-cover-north";
 						resizeDivTop.style.cursor = "ns-resize";
-	
+
 						resizeDivLeft = document.createElement("div");
 						resizeDivLeft.className = "resizeWidgetCoverLeft";
 						resizeDivLeft.id = "widget-" + id + "-resize-cover-west";
 						resizeDivLeft.style.cursor = "ew-resize";
-	
+
 						resizeDivRight = document.createElement("div");
 						resizeDivRight.className = "resizeWidgetCoverRight";
 						resizeDivRight.id = "widget-" + id + "-resize-cover-east";
 						resizeDivRight.style.cursor = "ew-resize";
-	
+
 						resizeDivBottom = document.createElement("div");
 						resizeDivBottom.className = "resizeWidgetCoverBottom";
 						resizeDivBottom.id = "widget-" + id + "-resize-cover-south";
@@ -1860,23 +1870,23 @@
 						resizeDivTopLeft.className = "resizeWidgetCoverTopLeft";
 						resizeDivTopLeft.id = "widget-" + id + "-resize-cover-northwest";
 						resizeDivTopLeft.style.cursor = "nwse-resize";
-	
+
 						resizeDivTopRight = document.createElement("div");
 						resizeDivTopRight.className = "resizeWidgetCoverTopRight";
 						resizeDivTopRight.id = "widget-" + id + "-resize-cover-northeast";
 						resizeDivTopRight.style.cursor = "nesw-resize";
-	
+
 						resizeDivBottomRight = document.createElement("div");
 						resizeDivBottomRight.className = "resizeWidgetCoverBottomRight";
 						resizeDivBottomRight.id = "widget-" + id + "-resize-cover-southeast";
 						resizeDivBottomRight.style.cursor = "nwse-resize";
-	
+
 						resizeDivBottomLeft = document.createElement("div");
 						resizeDivBottomLeft.className = "resizeWidgetCoverBottomLeft";
 						resizeDivBottomLeft.id = "widget-" + id + "-resize-cover-southwest";
 						resizeDivBottomLeft.style.cursor = "nesw-resize";
 					} //end resize corners
-					
+
 					editIcon = document.createElement("div");
 					editIcon.className = "widgetEditIcon";
 					editIcon.id = "widget-" + id + "-editIcon";
@@ -1885,7 +1895,7 @@
 					editIcon.onmouseup = makeHandlerWithID(id,
 							toggleContextMenu);
 					editIcon.onmousedown = function(e){e.stopPropagation();}
-					
+
 					otherEditIcon = document.createElement("div");
 					otherEditIcon.className = "widgetEditIcon widgetOtherEditIcon";
 					otherEditIcon.id = "widget-" + id + "-otherEditIcon";
@@ -1895,8 +1905,6 @@
 							toggleContextMenu);
 					otherEditIcon.onmousedown = function(e){e.stopPropagation();}					
 
-					//widgetCover.addEventListener("dblclick", 
-					//		makeHandlerWithID(id,		toggleContextMenu));
 					widgetCover.addEventListener("mousedown", 
 							makeHandlerWithID(id,		startWidgetDrag));
 					widgetCover.addEventListener("mouseup", 
@@ -1923,17 +1931,17 @@
 							makeHandlerWithID(id,		endWidgetDragAndResize));
 					resizeDivLeft.addEventListener("mouseup", 
 							makeHandlerWithID(id,		endWidgetDragAndResize));
-					resizeDivRight.addEventListener("mouseup",  
+					resizeDivRight.addEventListener("mouseup",
 							makeHandlerWithID(id,		endWidgetDragAndResize));
 					resizeDivBottom.addEventListener("mouseup", 
 							makeHandlerWithID(id,		endWidgetDragAndResize));
-					resizeDivTopLeft.addEventListener("mouseup",  
+					resizeDivTopLeft.addEventListener("mouseup",
 							makeHandlerWithID(id,		endWidgetDragAndResize));
-					resizeDivTopRight.addEventListener("mouseup",  
+					resizeDivTopRight.addEventListener("mouseup",
 							makeHandlerWithID(id,		endWidgetDragAndResize));
-					resizeDivBottomRight.addEventListener("mouseup",  
+					resizeDivBottomRight.addEventListener("mouseup",
 							makeHandlerWithID(id,		endWidgetDragAndResize));
-					resizeDivBottomLeft.addEventListener("mouseup",  
+					resizeDivBottomLeft.addEventListener("mouseup",
 							makeHandlerWithID(id,		endWidgetDragAndResize));
 
 					resizeDiv.appendChild(resizeDivTop);
@@ -1955,10 +1963,9 @@
 
 					containerDiv.appendChild(resizeDiv);
 					containerDiv.appendChild(widgetCover);
-					
+
 					containerDiv.appendChild(widgetObject.el);
-					
-					
+
 					mainBlock_.el.appendChild(containerDiv);
 				}
 				else //iframe and elements already exist
@@ -1968,9 +1975,9 @@
 
 					editIcon 				= document.getElementById("widget-" + id + "-editIcon");
 					otherEditIcon 				= document.getElementById("widget-" + id + "-otherEditIcon");					
-					
+
 					resizeDiv 				= document.getElementById("widget-" + id + "-resize-cover");
-					
+
 					//Sides for resize
 					resizeDivTop 			= document.getElementById("widget-" + id + "-resize-cover-north");
 					resizeDivLeft 			= document.getElementById("widget-" + id + "-resize-cover-west");
@@ -1982,7 +1989,6 @@
 					resizeDivTopRight 		= document.getElementById("widget-" + id + "-resize-cover-northeast");
 					resizeDivBottomRight 	= document.getElementById("widget-" + id + "-resize-cover-southeast");
 					resizeDivBottomLeft 	= document.getElementById("widget-" + id + "-resize-cover-southwest");
-					
 				}
 
 				//now type object has been updated, now apply sizes in pixel units
@@ -1991,7 +1997,7 @@
 				var w = toPageXCoordinate(widgetObject.w); //get "pixel units"
 				var h = toPageYCoordinate(widgetObject.h); //get "pixel units"
 				var z = 50;
-				
+
 				containerDiv.style.width = w + "px";
 				containerDiv.style.height = h + "px";
 				containerDiv.style.position = "absolute";
@@ -2071,18 +2077,16 @@
 				resizeDivBottomLeft.style.left = "0px";
 				resizeDivBottomLeft.style.bottom = "0px";
 				resizeDivBottomLeft.style.zIndex = z-1;
-				
 
 				editIcon.style.position = "absolute";
 				editIcon.style.right = 0 + "px";
 				editIcon.style.top = h + "px";
 				editIcon.style.zIndex = z-1;
-				
+
 				otherEditIcon.style.position = "absolute";
 				otherEditIcon.style.left = 0 + "px";
 				otherEditIcon.style.top = 0 + "px";
 				otherEditIcon.style.zIndex = z-1;
-				
 
 				if(!hideFrame)
 				{
@@ -2096,7 +2100,8 @@
 				setEditModeWidgetTarget(widgetObject.el);
 				widgetObject.el.style.display = hideFrame?"none":"block";
 			} //end drawWidget()
-			
+
+
 			//================================================================================
 			//widget x,y,w,h represented as "per thousand" scaled coordinates
 			//	(PAGE_POSITIONS_ positions, integer representation)
@@ -2109,7 +2114,8 @@
 			function toScaledYCoordinate(y)
 			{ return (PAGE_POSITIONS_ * y / windowHeight_) 	| 0; }
 			//end page and scaled coordinate conversion
-			
+
+
 			//=====================================================================================
 			function mouseoverEditBlock(e)
 			{
@@ -2117,16 +2123,16 @@
 				editBlock_.el.style.marginBottom = (
 						EDIT_BLOCK_HEIGHT
 						- EDIT_BLOCK_PEEK_HEIGHT) + "px";
-				
 			} // end mouseoverEditBlock()
+
 
 			//=====================================================================================
 			function mouseoutEditBlock(e)
 			{
 				Debug.log("mouseoutEditBlock()");
 				editBlock_.el.style.marginBottom = 0 + "px";
-				
 			} //end mouseoutEditBlock()
+
 
 			//================================================================================
 			function toggleEditMode()
@@ -2135,7 +2141,7 @@
 
 				mouseoutEditBlock();
 				//mouseoverEditBlock();
-				
+
 				var covers = document.getElementsByClassName("widgetCover");
 			    var resize_covers = document.getElementsByClassName("resizeWidgetCover");
 				var editButton = document.getElementById("menuli2");
@@ -2166,16 +2172,16 @@
 
 					//editButton.classList.add("navigationMenu--Edit");
 					mainBlock_.el.classList.add("editMode");
-					
+
 					for(widgetId in page_.widgets)
 						drawWidget(widgetId);		
-						
+
 					for(var i = 0;i<covers.length;++i)
 						covers[i].style.display = "block";
-					
+
 					for(var i = 0;i<resize_covers.length;++i)
 						resize_covers[i].style.display = "block";//	resize_covers[i].style["z-index"] = "8";
-											
+
 					toggleGrid(true);
 					if (editBlock_.el.firstChild.contentWindow.document.getElementById("gridCheckbox") != null)
 						editBlock_.el.firstChild.contentWindow.document.getElementById("gridCheckbox").checked = true
@@ -2209,7 +2215,7 @@
 										allAlarmsLogSize++;
 								}
 						}
-						
+
 						if (pvListSize > 0)
 						{
 							generateUID();
@@ -2227,11 +2233,10 @@
 
 					mainBlock_.el.classList.remove("editMode");
 					//editButton.classList.remove("navigationMenu--Edit");
-					
 
 					for(var i = 0;i<covers.length;++i)
 						covers[i].style.display = "none";
-					
+
 					for(var i = 0;i<resize_covers.length;++i)
 						resize_covers[i].style.display = "none";
 
@@ -2259,30 +2264,30 @@
 			function toggleContextMenu(e, id)
 			{
 				if(e) e.stopPropagation();
-				
+
 				console.log("toggle toggleContextMenu id=",id);
-				
+
 				toggleContextMenuOff(); //hide first, so menu always comes up
 				if(menuState_ !== 1)
 				{
 					menuState_ = 1; //set state
-					
+
 					//hide lower Edit pane
-					mouseoutEditBlock(e); 
-					 
+					mouseoutEditBlock(e);
+
 					var w = DesktopContent.getWindowWidth();
 					var h = DesktopContent.getWindowHeight();
-					
+
 					var x = e.clientX;
 					var y = e.clientY;
-					
+
 					//prevent context menu from being offscreen
 					// context menu seems to be 320 x 300
 					if(x + 320 > w)
 						x = w - 320;
 					if(y + 280 > h - EDIT_BLOCK_PEEK_HEIGHT)
 						y = h - EDIT_BLOCK_PEEK_HEIGHT - 280;
-					
+
 					menu_.style.left = x + "px";
 					menu_.style.top = y + "px";
 					menu_.setAttribute("widgetID", id);
@@ -2324,7 +2329,7 @@
 			function toggleAddPV()
 			{
 				console.log(menu_.getAttribute("widgetID"));
-				
+
 				if(elPointer_["addPVMenuDiv"].style.display == "none")
 				{
 					toggleContextMenuOff();
@@ -2344,17 +2349,16 @@
 			function toggleFileMenu()
 			{
 				Debug.log("Toggle File Pane");
-				
+
 				var mainBlockContainer = document.getElementById("mainBlockContainer");
 				var cover = document.getElementById("grayOutCoverDiv");
 				cover.style.width = mainBlockContainer.offsetWidth + "px";
 				cover.style.height = mainBlockContainer.offsetHeight + "px";
-				
+
 				//file toggle movement approach is always leave left
 				//	the same, and change margin-left 
 				//	(style transition speed on margin-left property for graceful movement)
 				fileBlock_.el.style.left = (- FILE_BLOCK_WIDTH) + "px";
-				
 
 				if(fileBlock_.isHidden)
 				{
@@ -2365,26 +2369,23 @@
 					fileBlock_.el.style.width = FILE_BLOCK_WIDTH + "px";
 
 					cover.style.display = "block";
-					
-					//editBlock_.isHidden = true;
-					//editBlock_.el.style.display = "none";
-					
+
 					nav_.classList.remove("navigationMenu--active");
 					nav_.style.display = "none";
 				}
 				else
 				{
 					console.log("Hiding file pane!");
-					
+
 					fileBlock_.isHidden = true;
 					fileBlock_.el.style.marginLeft = -50 + "px";
 
 					cover.style.display = "none";
-					
+
 					//mainBlock_.el.style.display = "block";
-					
+
 					//editBlock_.el.style.display = "block";
-					
+
 					nav_.classList.add("navigationMenu--active");
 					nav_.style.display = "block";
 				}
@@ -2585,11 +2586,6 @@
 						Debug.log("There are errors when calling drawWidget() of target widget: " + e,
 							Debug.WARN_PRIORITY);
 					}
-
-//					if(actionRequired)
-//						document.getElementById(menu_.getAttribute("widgetID")).className = "action-required";
-//					else
-//						document.getElementById(menu_.getAttribute("widgetID")).className = "";
 				}
 			} //end editWidgetAttributesSave()
 
@@ -2668,8 +2664,6 @@
 			} //end showeditWidgetAttributesPopupBody()
 
 
-
-
 			//=====================================================================================
 			function toggleGrid(on)
 			{
@@ -2699,18 +2693,19 @@
 				gridColor_ = color;
 				toggleGrid(on);
 			} //end setGridColor()
-			
+
+
 			//=====================================================================================
 			function handleKeys(e,isKeyDown)
 			{	
 				var id;
-				
+
 				if(e.shiftKey)
 				{
 					if(isKeyDown) return; //ignore shift keys down (only up)
 
 					var ARROW_SPEED = 30;
-					
+
 					switch(e.keyCode)
 					{
 					case 88: 	//X (cut)
@@ -2759,7 +2754,7 @@
 				else //no shift key
 				{
 					if(!isKeyDown) return; //ignore on key up side
-					
+
 					var ARROW_SPEED = 1;
 					switch(e.keyCode)
 					{
@@ -2772,7 +2767,7 @@
 					case 40: 	//down arrow (move widget)
 						id = localGetWidgetId();
 				    	console.log(isKeyDown,"down move widget",id);
-				    	page_.widgets[id].y += ARROW_SPEED;
+						page_.widgets[id].y += ARROW_SPEED;
 				    	drawWidget(id);
 				    	break;
 					case 37: 	//left arrow (move widget)
@@ -2783,17 +2778,16 @@
 				    	break;
 					case 39: 	//right arrow (move widget)
 						id = localGetWidgetId();
-				    	console.log(isKeyDown,"right move widget",id);
-				    	page_.widgets[id].x += ARROW_SPEED;
-				    	drawWidget(id);
-				    	break;
+						console.log(isKeyDown,"right move widget",id);
+						page_.widgets[id].x += ARROW_SPEED;
+						drawWidget(id);
+						break;
 					default:;
 					}
 				} //end no shift key key handling
-				
-				
+
 				return;
-				
+
 				//===============
 				function localGetWidgetId()
 				{
@@ -2814,6 +2808,7 @@
 				} //end localGetWidgetId
 			} //end handleKeys()
 
+
 			//=====================================================================================
 			function deleteWidget()
 			{
@@ -2823,8 +2818,7 @@
 					return;
 				}
 				var id = targetElement_.id.split('-')[1]|0;
-				
-										
+
 				if(page_.widgets[id] && page_.widgets[id].el)
 				{					
 					page_.widgets[id].el.parentNode.removeChild(page_.widgets[id].el);
@@ -2832,16 +2826,17 @@
 				}
 				if(page_.widgets[id])
 					delete page_.widgets[id];
-				
+
 				var widgetContainer = document.getElementById("widget-" + id + 
 					"-container");
 				if(widgetContainer)
 					widgetContainer.parentNode.removeChild(widgetContainer);
 				else
 					Debug.log("Could not find widget container to remove");
-				
+
 				toggleContextMenuOff();
 			} //end deleteWidget()
+
 
 			//=====================================================================================
 			function cutWidget(widgetCover)
@@ -2859,13 +2854,14 @@
 				mainBlock_.el.removeChild(widgetCover.parentNode);
 			} //end cutWidget()
 
+
 			//=====================================================================================
 			function pasteWidget()
 			{
 				//Steps:
 				//	- when cut, the widget is assumed deleted
 				//	so must create a new widget object for paste
-				
+
 				drawWidget(
 						undefined /*create new id*/,
 						cutWidget_.type,
@@ -2874,22 +2870,23 @@
 						toPageXCoordinate(cutWidget_.w),
 						toPageYCoordinate(cutWidget_.h)
 						);
-				
+
 			} //end pasteWidget()
+
 
 			//=====================================================================================
 			function setEditModeWidgetTarget(target)
 			{				
 				if(targetElement_ == target) return; //already the target
-				
+
 				//unselect previous target, and select parameter target
-				
+
 				if(targetElement_ && targetElement_.parentNode)
 				{
 					var els = targetElement_.parentNode.getElementsByTagName("iframe");
 					if(els.length)
 						els[0].style.display = "block";
-					
+
 					els = targetElement_.parentNode.getElementsByTagName("resizeWidgetCover");
 					if(els.length)
 						els[0].style.display = "none";			
@@ -2901,50 +2898,50 @@
 					var els = targetElement_.parentNode.getElementsByTagName("iframe");
 					if(els.length)
 						els[0].style.display = "none";
-					
+
 					els = targetElement_.parentNode.getElementsByTagName("resizeWidgetCover");
 					if(els.length)
 						els[0].style.display = "block";					
 				}	
-				
 			} //end setEditModeWidgetTarget()
+
 
 			//=====================================================================================
 			function startWidgetDrag(e,id)
 			{
 				if(e) e.stopPropagation();
-				
+
 				if(editBlock_.isHidden) 
 				{
 					Debug.log("Ignoring widget drag when not edit mode.");
 					return; //ignore drag during edit mode
 				}
-								
+
 				//validate target
 				if(e.target.className.indexOf("widgetCover") < 0)
-				{ 	
+				{
 					Debug.log("Unknown drag target?! Notify admins id=" + id,
 							Debug.HIGH_PRIORITY);
 					return;
 				}	
 				//else dragging a widget			
-				
+
 				Debug.log("startWidgetDrag() id=" + id);		
 
 				resizeWidgetId_ = id;	
 				dragLockout_ = true; //indicate dragging	
-				
+
 				redrawTargetWidget(e, 
 						false /*doNotRestorePosition*/, 
 						true /*isFirstTime*/); //redraw for first time
-
 			} //end startWidgetDrag()
+
 
 			//=====================================================================================
 			function startWidgetResize(e,id)
 			{
 				if(e) e.stopPropagation();
-				
+
 				//verify known target
 				if(e.target.className.indexOf("resizeWidgetCover") < 0)
 				{
@@ -2955,19 +2952,19 @@
 				//else valid target
 
 				Debug.log("startWidgetResize() id=" + id);
-				
+
 				indicateUserActivityToServer();						
 
 				resizeWidgetId_ = id;	
 				resizeLockout_ = true;				
 				resizeFrom_ = e.target.id.substring(
 						e.target.id.indexOf("resize-cover") + ("resize-cover").length + 1);
-				
+
 				redrawTargetWidget(e, 
 						false /*doNotRestorePosition*/, 
 						true /*isFirstTime*/); //redraw for first time
-
 			} //end startWidgetResize()
+
 
 			//=====================================================================================
 			//Note: one mouseup handler must be the end all
@@ -2981,7 +2978,6 @@
 				{
 					Debug.log("Unknown drag/resize end target. Ignoring drag/resize end.");
 					return;
-					
 				}
 				if(!dragAndDrawTargetEl_)
 				{
@@ -2991,20 +2987,20 @@
 				}
 
 				Debug.log("endWidgetDragAndResize() " + id);	
-				
+
 				//restore cursor
 				dragAndDrawTargetEl_.style.cursor = saveCursorType_;
-				
+
 				//redraw target widget one more time and keep final position 
-				redrawTargetWidget(e, true /*doNotRestorePosition*/); 												
-				
+				redrawTargetWidget(e, true /*doNotRestorePosition*/);
+
 				resizeFrom_ = undefined;
 				resizeWidgetId_ = undefined;
 				resizeLockout_ = false;
 				dragLockout_ = false;
 				dragAndDrawTargetEl_ = undefined;
-				
 			} //end endWidgetDragAndResize()
+
 
 			//=====================================================================================
 			//redrawTargetWidget ~~
@@ -3021,11 +3017,10 @@
 					//save current cursor and set to grabbing cursor
 					saveCursorType_ = dragAndDrawTargetEl_.style.cursor;
 					dragAndDrawTargetEl_.style.cursor = "grabbing";
-						
+
 					xPos_ = e.clientX;
-					yPos_ = e.clientY;			
-						
-					
+					yPos_ = e.clientY;
+
 					if(resizeLockout_)
 						Debug.log("Resizing from " + resizeFrom_);
 					else if(dragLockout_)
@@ -3037,13 +3032,12 @@
 						return;
 					}
 				} //end first time handling
-				
+
 				if(page_.widgets[resizeWidgetId_] === undefined)
 				{
 					Debug.log("Resize/translate widget target not found " + resizeWidgetId_);
 					return; //skip resize/translate if widget does not exist
 				}
-				
 
 				//save and restore starting x,y,w,h while user playing with size
 				// on end resize/translate position will be finalized
@@ -3051,7 +3045,7 @@
 								page_.widgets[resizeWidgetId_].y,
 								page_.widgets[resizeWidgetId_].w,
 								page_.widgets[resizeWidgetId_].h];
-				
+
 				var newx = toPageXCoordinate(page_.widgets[resizeWidgetId_].x);
 				var newy = toPageYCoordinate(page_.widgets[resizeWidgetId_].y);
 				var neww = toPageXCoordinate(page_.widgets[resizeWidgetId_].w);
@@ -3059,7 +3053,7 @@
 
 				var deltaX = e.clientX - xPos_;
 				var deltaY = e.clientY - yPos_;
-				
+
 				if(resizeLockout_)
 				{
 					//for resizing widget
@@ -3123,7 +3117,7 @@
 							neww -= deltaX;
 						}						
 					}				
-			
+
 				} //end resize handling
 				else if(dragLockout_)
 				{	//for dragging a widget									
@@ -3136,11 +3130,7 @@
 							Debug.HIGH_PRIORITY);
 					return;
 				}
-				
-				//console.log("resize/translate() resizeFrom_=",
-				//		resizeFrom_,"delta-x,y,w,h",deltaX,deltaY,deltaW,deltaH);
-				
-				
+
 				drawWidget(
 						resizeWidgetId_,
 						undefined /*type not changed*/,
@@ -3158,8 +3148,8 @@
 					page_.widgets[resizeWidgetId_].w = saveSize[2];
 					page_.widgets[resizeWidgetId_].h = saveSize[3];
 				}				
-				
 			} //end redrawTargetWidget()
+
 
 			//=====================================================================================
 			function handleMouseDown(e)
@@ -3171,7 +3161,6 @@
 					Debug.log("handleMouseDown " + dragAndDrawWidgetType_ );	
 					drawSelectionRectangle(e);
 				}
-				
 			} //end handleMouseDown()
 
 
@@ -3179,8 +3168,7 @@
 			function handleMouseUp(e)
 			{	
 				Debug.log("handleMouseUp()");
-				
-				
+
 				if(drawingSelectionRectangle_)
 				{
 					Debug.log("handleMouseUp finish widget draw type=" + 
@@ -3203,14 +3191,14 @@
 					toggleContextMenuOff(e); //close widget context menu
 					setEditModeWidgetTarget(/*no target*/);
 				}
-				
+
 			} //end handleMouseUp()
+
 
 			//=====================================================================================
 			function handleMouseMove(e)
 			{
 				//Debug.log("handleMouseMove");
-				
 				if(drawingSelectionRectangle_)
 				{ //drag and draw
 					//console.log("handleMouseMove", dragAndDrawWidgetType_);
@@ -3229,6 +3217,7 @@
 				}
 			} //end handleMouseMove()
 
+
 			//=====================================================================================
 			function handleResize(e) 
 			{
@@ -3237,13 +3226,14 @@
 				
 				console.log("handleResize()","windowWidth_",windowWidth_,
 						"windowHeight_",windowHeight_);
-				
+
 				for(widgetId in page_.widgets)
 					drawWidget(widgetId);
-				
+
 				setEditModeWidgetTarget(/*no target*/);
 				redrawWindow();
 			}; //end handleResize()
+
 
 			//=====================================================================================
 			function redrawWindow(event, hover) 
@@ -3253,7 +3243,7 @@
 
 				var _MARGIN = 10;
 				var _TOPMARGIN = 40;
-				
+
 				var maxWidth = windowWidth_;
 				var maxHeight = windowHeight_ - (1 * _MARGIN);
 				var marginLeft = 0;
@@ -3317,7 +3307,6 @@
 				{
 					navBar.style.display = "block";
 				}
-
 			} //end redrawWindow()
 
 
@@ -3341,6 +3330,7 @@
 						rateField.value = 10;
 			} //end setRefreshRate()
 
+
 			//=====================================================================================
 			function isEmpty(obj)
 			{
@@ -3354,16 +3344,16 @@
 		<div id="navigationBarDiv">	
 	    	  <nav>
 		    <ul id="navigationMenu">
-		      <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File Manager</a></li>		      
-		      <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">Edit Mode</a></li>		      
+		      <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File Manager</a></li>
+		      <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">Edit Mode</a></li>
 		    </ul>
 	          </nav>
 		</div>
-		
+
 		<div class='mainBlock' 	id='fileBlock'  ></div>
-		
+
 		<div id="grayOutCoverDiv"></div>
-		
+
 		<div id="mainBlockContainer" height="auto" width="auto">
 			<div class='mainBlock '	id='mainBlock' > <!-- onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)"> -->
 				<div id="contextMenuDiv">
@@ -3427,7 +3417,7 @@
 				<!--div class="cover"     id='editCoverDiv' onclick=toggleEditMode(true)></div-->
 				<div class='mainBlock' id='editBlock' ></div>
 			</div>
-			
+
 			<div id="popupSaveControlsPage" class="popup"
 				onmouseup="event.stopPropagation();"
 				onmousedown="event.stopPropagation();">

@@ -4,7 +4,7 @@
 		<title>Controls Dashboard Editor</title>
 
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/SlowControlsDashboard.css">
-
+	
 		<style type="text/css">			
 			body {
 				background-color: 		#838383;
@@ -22,7 +22,7 @@
 			h2 {
 				margin: 				0px;
 			}
-			
+
 			input {
 				cursor: 				pointer;
 			}
@@ -50,13 +50,13 @@
 				position:				absolute;
 				overflow: 				hidden;
 			}
-			
+
 			#widgetTilesContainer {
 				position: 				absolute;
 				overflow-x:				hidden;
 				overflow-y:				auto;
 			}
-			
+
 			.tile {
 				background-color: 		#b2b2b2;
 				border: 				2px solid rgba(0,0,0,0);
@@ -144,12 +144,11 @@
 				outline: 				none;
 				color: 					black;
 			}
-		
-			.titleDiv {
-                                
+
+			.titleDiv {     
                 background-color: 		white;
             }
-            
+
 			#editorPanelTitle {
 				color: 					#d3d3d3;
                 font-family: 			"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; 
@@ -162,7 +161,7 @@
     			font-weight: 			normal;
     			padding-left: 			2px;
         	}
-        	
+
         	.mainBlock div {
 				color: 					#d3d3d3;
         		font-family: 			"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
@@ -185,7 +184,7 @@
 			#widgetSearch.focus {
 				border-bottom: 			2px solid #969696;
 			}
-			
+
 			#divider {
 				border-left: 			2px solid #575757;
 			}
@@ -389,7 +388,7 @@
 		<script>	
 
 			//functions:
-			//	initEdit()
+			//	init()
 			//	redrawWindow()
 			//	drawIcons(indexReferenceArray)
 			//	setupForDrawSelectionRectangle(tileNumber)
@@ -401,9 +400,9 @@
 			//	setGridColor(color)
 			//	resetToDefault()
 			//	rgbToHex(rgb)
-			
+
 			var _codeEditorAppId = 0; //to open code editor
-		
+
 			//widget tile container parameters:
 			var draw_ = {
 					"titleText_H"			: 40,
@@ -413,35 +412,32 @@
 					"SETTINGS_W"			: 220, //color, grid etc settings on right
 					"MARGIN"				: 5,
 			};
-			
+
 			var widgetKeys_; //keys of existing widgets (from parent dashboard at init time)
-			
+
 			//main html elements:
 			var widgetTilesEl_;
 			var dividerEl_;
 			var userSettingsEl_;
 			var widgetFilterContainerEl_;
-			
+
 			//configurable settings
 			var defaultGridColor_;
 			var defaultBackgroundColor_;
 			var lastTileNumber_;
-			
-			
+
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 
 			//=====================================================================================						
 			//init called once body has loaded
-			function initEdit() 
-			{			
-
+			function init() 
+			{
 				var w = window.innerWidth;
 				var h = window.innerHeight;
-				
 
-				Debug.log("EditPane initEdit() was called w,h: " + 
+				Debug.log("EditPane init() was called w,h: " + 
 						w + " - " + h);
 
 				//fill in CodeEditor appId
@@ -450,20 +446,19 @@
 						"", //end post data, 
 						function(req) 
 						{			
-					_codeEditorAppId = DesktopContent.getXMLValue(req,"id") | 0;
-					Debug.log("_codeEditorAppId " + _codeEditorAppId);
+							_codeEditorAppId = DesktopContent.getXMLValue(req,"id") | 0;
+							Debug.log("_codeEditorAppId " + _codeEditorAppId);
 						}, //end handler
 						0, 0, true,//reqParam, progressHandler, callHandlerOnErr, 
 						false,//doNotShowLoadingOverlay,
 						true //targetSupervisor
 						);
-						
-				
+
 				widgetTilesEl_ 				= document.getElementById("widgetTilesContainer");
 				dividerEl_ 					= document.getElementById("divider");
 				userSettingsEl_ 			= document.getElementById("userSettingsContainer");
 				widgetFilterContainerEl_ 	= document.getElementById("widgetFilterContainer");
-				
+
 				//determine row and col draw_.TILE_SIZE of widget library
 				widgetKeys_ = Object.keys(widgetLibrary.typeToSrc);
 
@@ -471,7 +466,6 @@
 				console.log("draw_", draw_);
 				console.log("widgetLibrary", widgetLibrary);
 
-				
 				var backgroundColorPicker = document.getElementById("backgroundColorPicker");
 				defaultBackgroundColor_ = parent.mainBlock_.el.style["background-color"];
 				backgroundColorPicker.value = rgbToHex(defaultBackgroundColor_);
@@ -484,12 +478,11 @@
 				gridColorPicker.title = "Set the color of the grid lines.";
 				backgroundColorPicker.title = "Set the background color.";
 				document.getElementById("gridCheckbox").title = "Toggle the grid lines on/off.";				
-				document.getElementById("resetGrid").title = "Reset the grid to default values.";  
-
+				document.getElementById("resetGrid").title = "Reset the grid to default values.";
 
 				window.onresize = redrawWindow;
 				redrawWindow();
-				
+
 				//commented is equivalent to undefined (but keep for search example)
 //				var allIcons = [];			
 //				for(var i = 0; i < widgetKeys_.length; i++)
@@ -498,7 +491,6 @@
 //				drawIcons(allIcons);				
 				//FIXME!!!!
 				drawIcons();
-
 
 //				var filter = document.getElementById("widgetFilter");
 //				var option = document.createElement("option");
@@ -517,25 +509,23 @@
 //						filter.appendChild(option);
 //					}
 //				}
-
-
-			} //end initEdit()			
+			} //end initEdit()
 
 			//=====================================================================================
 			function redrawWindow() 
 			{
 				var w = window.innerWidth;
 				var h = window.innerHeight;
-				
+
 				Debug.log("EditPane redrawWindow() to " + 
 						w + " - " + h);
 
 				draw_.widgetTileContainer_W = (w - draw_.SETTINGS_W - 
 						4*draw_.MARGIN) |0;
 				draw_.widgetTileContainer_H = (h * 0.75) |0;
-				
+
 				console.log("draw_", draw_);
-				
+
 				//--------------
 				//position widget tile container
 				widgetTilesEl_.style.left = "0px";
@@ -543,13 +533,11 @@
 				widgetTilesEl_.style.height = draw_.widgetTileContainer_H + "px";
 				widgetTilesEl_.style.width = draw_.widgetTileContainer_W + "px";
 
-								
 				//--------------
 				//position divider
 				dividerEl_.style.left = draw_.widgetTileContainer_W + "px";
 				dividerEl_.style.top = (((h - draw_.widgetTileContainer_H)/2)|0) + "px";
 				dividerEl_.style.height = draw_.widgetTileContainer_H + "px";
-
 
 				//--------------
 				//position settings container
@@ -561,11 +549,8 @@
 				//position widget filter container
 				//				widgetFilterContainer.style.width = window.innerWidth + "px";
 				//				widgetFilterContainer.style.height = (window.innerHeight * 0.1) + "px";
-				widgetFilterContainerEl_.style.top  = draw_.titleText_H + "px"; 
+				widgetFilterContainerEl_.style.top = draw_.titleText_H + "px"; 
 				widgetFilterContainerEl_.left = "0px";
-
-
-				
 
 				//				var searchFields = document.getElementById("searchFields");
 				//				searchFields.style.width  = ((w * 0.6)|0) + "px";
@@ -605,14 +590,13 @@
 			function drawIcons(indexReferenceArray)
 			{
 				console.log("drawIcons()",indexReferenceArray);
-				
+
 				widgetTilesEl_.innerHTML = ""; //clear all existing widget icons
-								
+
 				var positionIndex = 0;
-				
+
 				if(indexReferenceArray === undefined) //do all widgets
 				{
-					
 					for(var i=0;i<widgetKeys_.length;++i)
 						 localDrawIcon(widgetKeys_[i],positionIndex++);
 					localDrawIcon(-1,positionIndex++); //always add code editor widget at end
@@ -622,9 +606,9 @@
 					for(var i=0;i<indexReferenceArray.length;++i)
 						localDrawIcon(indexReferenceArray[i],positionIndex++);
 				}
-								
+
 				return;
-				
+
 				//==============
 				//	draw icon for widget index i in keys of widgetLibrary.typeToSrc
 				function localDrawIcon(i,positionIndex)
@@ -633,28 +617,28 @@
 
 					var name = "";
 					var type = "";
-					
+
 					if(parent.widgetLibrary.typeToName[i] !== undefined)
 						name = parent.widgetLibrary.typeToName[i];
 					else
 						name = parent.widgetLibrary.typeToSrc[i];
-					
+
 					if(parent.widgetLibrary.typeToName[i] !== undefined)
 						type = parent.widgetLibrary.typeToPurpose[i];
 					else
 						type = "Undefined";
-					
+
 					//console.log("localDrawIcon() i,positionIndex,name,type:",
 					//		i,positionIndex,name,type);
 
 					tile.title = "Name: " + name + "\nType: " + type;
-					
+
 					tile.id = "tiles-" + i;
 					tile.className = "tile";
 					tile.style.width = draw_.TILE_SIZE + "px";
 					tile.style.height = draw_.TILE_SIZE + "px";
 					tile.setAttribute("widgetID", positionIndex);
-					
+
 					var tileIMG = document.createElement("img");
 					if(parent.widgetLibrary.typeToImgSrc[i] !== undefined)
 						tileIMG.src = "widgets/" + parent.widgetLibrary.typeToImgSrc[i];
@@ -663,7 +647,7 @@
 
 					tileIMG.style.width = tile.style.width;
 					tileIMG.style.height = "100%";
-					
+
 					if(i == -1) //handle code editor icon
 					{	
 						tile.title = "Not finding what you're looking for? \nLaunch the Code Editor to make changes to the Widget Library, including making your own widget!";
@@ -682,24 +666,22 @@
 					}
 					else
 						tileIMG.onclick = setupForDrawSelectionRectangle(i); 
-					
+
 					tile.appendChild(tileIMG);
 					widgetTilesEl_.appendChild(tile);				
 
 				} //end localDrawIcon
-				
-				
+
 			} //end drawIcons()
-			
+
 			//=====================================================================================
 			function setupForDrawSelectionRectangle(tileNumber)
 			{							
 				return function(){
-					
 					Debug.log("setupForDrawSelectionRectangle() handler " + tileNumber);
-														
+
 					selectWidgetTile(tileNumber);					
-					
+
 					parent.setupForDrawSelectionRectangle(lastTileNumber_);
 				};
 			} //end setupForDrawSelectionRectangle()
@@ -708,7 +690,7 @@
 			function selectWidgetTile(tileNumber)
 			{							
 				Debug.log("selectWidgetTile() " + tileNumber);
-				
+
 				var el;
 				if(lastTileNumber_ !== undefined) //revert border
 				{
@@ -721,8 +703,7 @@
 						tileNumber === undefined) 
 					lastTileNumber_ = undefined; //treat as unselecting
 				else
-					lastTileNumber_  = tileNumber|0;
-
+					lastTileNumber_ = tileNumber|0;
 
 				if(lastTileNumber_ !== undefined)
 				{
@@ -731,15 +712,15 @@
 					el.style.backgroundColor = "white";
 				}
 			} //end selectWidgetTile()
-			
+
 			//=====================================================================================
 			function searchWidgets(searchField)
 			{
 				Debug.log("searchWidgets() " + searchField);
-				
+
 				var keyword = searchField.value;
 				var foundResult = [];
-				
+
 				for(var i = 0; i < widgetKeys_.length; i++)
 				{
 					console.log(i + " : " + parent.widgetLibrary.typeToName + " : " + keyword);
@@ -749,9 +730,9 @@
 					else if(parent.widgetLibrary.typeToSrc[i] != undefined)
 						parent.widgetLibrary.typeToSrc[i].indexOf(keyword) != -1 ? foundResult.push(i) : console.log();
 				}
-				
+
 				console.log(foundResult);
-				
+
 				drawIcons(foundResult);
 			} //end searchWidgets()
 
@@ -759,7 +740,7 @@
 			function filterWidgets(filterField)
 			{
 				Debug.log("filterWidgets() " + filterField);
-				
+
 				var keyword = filterField.value;
 				var foundResult = [];
 				console.log(keyword);
@@ -774,9 +755,9 @@
 						if(typeof parent.widgetLibrary.typeToPurpose[i] != 'undefined')
 							parent.widgetLibrary.typeToPurpose[i].indexOf(keyword) != -1 ? foundResult.push(i) : console.log();
 				}
-				
+
 				console.log(foundResult);
-				
+
 				drawIcons(foundResult);
 			} //end filterWidgets()		
 
@@ -784,7 +765,7 @@
 			function toggleGrid(checkbox)
 			{
 				Debug.log("toggleGrid() " + checkbox.checked);
-								
+
 				parent.toggleGrid(checkbox.checked);
 			} //end toggleGrid()
 
@@ -792,7 +773,7 @@
 			function setBackgroundColor(color)
 			{
 				Debug.log("setBackgroundColor() " + color.value);
-								
+		
 				parent.setBackgroundColor(color.value);
 			} //end setBackgroundColor()
 
@@ -800,7 +781,7 @@
 			function setGridColor(color)
 			{
 				Debug.log("setGridColor() " + color.value);
-								
+
 				parent.setGridColor(color.value, 
 						document.getElementById("gridCheckbox").checked);
 			} //end setGridColor()
@@ -814,10 +795,10 @@
 				document.getElementById("gridCheckbox").checked = true;
 				parent.setGridColor(defaultGridColor_, true);
 				parent.setBackgroundColor(defaultBackgroundColor_);
-				
+
 				var backgroundColorPicker = document.getElementById("backgroundColorPicker");
 				backgroundColorPicker.value = rgbToHex(defaultBackgroundColor_);
-				
+
 				var gridColorPicker = document.getElementById("gridColorPicker");
 				gridColorPicker.value = rgbToHex(defaultGridColor_);
 			} //end resetToDefault()
@@ -838,15 +819,15 @@
 
 	</head>
 
-	<body onload='Javascript:initEdit();'>
+	<body > <!--onload='DesktopContent.init()'-->
 
 		<div id="titleDiv" class="mainBlock">
 			<h2 id="editorPanelTitle">Editor Panel</h2>
 		</div>
-		
+
 		<div class='mainBlock' id='widgetFilterContainer'>
 			<div>Choose your widgets:</div>
-			<div id="searchFields" class="absolute"  style='display:none'>
+			<div id="searchFields" class="absolute" style='display:none'>
 				<input id="widgetSearch" type="text" class="focus" onchange="searchWidgets(this)"></input>
 				<select id="widgetFilter" class="absolute" onchange="filterWidgets(this)"></select>
 			</div>

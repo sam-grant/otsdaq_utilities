@@ -28,7 +28,7 @@
 			//init called once body has loaded
 			function init()
 			{
-				console.log("Label init()");
+				console.log("Picture init()");
 				console.log(window.frameElement.id);
 				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			}
@@ -50,7 +50,7 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log(parameters_);
+				console.log("Picture setAttributes()", parameters_);
 
 				document.getElementById("display").innerHTML = "<img id='img1' src='" + parameters_["file"] + "' title='" + parameters_["file"] + "'></img>";
 				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
@@ -73,7 +73,7 @@
 
 </head>
 
-	<body onload='//init() called by DesktopContent.js'>
+	<body onload="Javascript:init()">
 
 	<div id="display"></div>
 
