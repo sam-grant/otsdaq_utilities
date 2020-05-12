@@ -11,7 +11,8 @@
 		//functions:	=============================		
 		//init()
 		//niceName(str)									//removes "Table" from name
-
+		//encodeHTML(s)
+		
 		//setupSystemViewMode(anchorTarget)							//gets table groups aliases
 		//groupAliasesRequestHandler(req,anchorTarget)		 
 
@@ -736,6 +737,17 @@
 			var i = str.lastIndexOf("Table");
 			return str.substr(0, (i > 1 && str[i + 13] != 's') ? i : str.length);
 		} //end niceName()
+		
+		//==============================================================================	
+		//encodeHTML ~~
+		function encodeHTML(s)
+		{
+			Debug.log("encodeHTML()",s);
+			var el = document.createElement("div");
+			el.innerText = el.textContent = s;
+			s = el.innerHTML;
+			return s.replace(/'/g, '&apos;');
+		} //end encodeHTML()
 
 		//==============================================================================	
 		//setupSystemViewMode ~
@@ -2458,7 +2470,7 @@
 			_tableDefaultRowValues = [];
 			var defaultRowValues = req.responseXML.getElementsByTagName("DefaultRowValue");
 			for (var i = 0; i < defaultRowValues.length; ++i)
-				_tableDefaultRowValues.push(defaultRowValues[i].getAttribute("value"));
+				_tableDefaultRowValues.push(decodeURIComponent(defaultRowValues[i].getAttribute("value")));
 
 			//reset globals
 
@@ -6686,7 +6698,7 @@
 				var str = "";
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" +
 					(el.offsetWidth > 150 ? el.offsetWidth : 150) + "px; height:" + (el.offsetHeight > 20 ? el.offsetHeight : 20) + "px' value='";
-				str += initVal;
+				str += encodeHTML(initVal);
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 					"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting); event.stopPropagation();' " +
 					">";
@@ -6712,7 +6724,7 @@
 				str += "<td>";
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" +
 					(el.offsetWidth > 150 ? el.offsetWidth : 150) + "px; height:" + (el.offsetHeight > 20 ? el.offsetHeight : 20) + "px' value='";
-				str += _editingCellElOldValue;
+				str += encodeHTML(_editingCellElOldValue);
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 					"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting); event.stopPropagation();' " +
 					">";
@@ -6959,7 +6971,7 @@
 						ow = 150;
 					str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" +
 						(ow) + "px; height:" + (el.offsetHeight > 20 ? el.offsetHeight : 20) + "px' value='";
-					str += _editingCellElOldValue;
+					str += encodeHTML(_editingCellElOldValue);
 					str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);event.stopPropagation();' " +
 						"onclick='event.stopPropagation();'" +
@@ -8133,7 +8145,7 @@
 			{
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" +
 					((el.offsetWidth > 150 ? el.offsetWidth : 150) - 6) + "px; height:" + (el.offsetHeight - 8) + "px' value='";
-				str += _editingCellElOldValue.replace(/'/g, "&apos;"); //replace single quotes since within html
+				str += encodeHTML(_editingCellElOldValue); //replace single quotes since within html
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 					"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
 					">";
@@ -8149,7 +8161,7 @@
 				{
 					str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" +
 						((el.offsetWidth > 150 ? el.offsetWidth : 150) - 6) + "px; height:" + (el.offsetHeight - 8) + "px' value='";
-					str += _editingCellElOldValue.replace(/'/g, "&apos;"); //replace single quotes since within html
+					str += encodeHTML(_editingCellElOldValue); //replace single quotes since within html
 					str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
 						">";
@@ -12776,7 +12788,7 @@
 			str += "Please enter the filter (* may be used) to select which values are " +
 				"shown in the tree:<br><br>";
 			str += "<input type='text' id='popUpDialog-filter' value='" +
-				defaultFilter + "'></input>";
+					encodeHTML(defaultFilter) + "'></input>";
 			str += "</div><br><br>";
 
 			var onmouseupJS = "";
@@ -16152,7 +16164,7 @@
 		//	must exactly match the data table section of specificTableRequestHandler()
 		function createTableViewOutputStr(cols, colTypes, transposeOutput, colsIsArray) 
 		{
-			var boolTypeTrues = ["On", "True", "Yes"];
+			var boolTypeTrues = ["1", "On", "True", "Yes"];
 			var tdStyle;
 			var str = "";
 			var val, titleVal;

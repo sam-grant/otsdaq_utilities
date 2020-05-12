@@ -411,11 +411,19 @@ DesktopContent.init = function()
 			else if(!DesktopContent._sequence)
 				Debug.log("No cookie code and no sequence!");
 				
-			if(init)
+			try
 			{
-				Debug.log("Calling page init!");
-				init(); //call pages init!
+				if(init)
+				{
+					Debug.log("Calling page init!");
+					init(); //call page's init!
+				}
 			}
+			catch(e)
+			{
+				Debug.log("Ignoring missing init():",e);
+			}
+			
 			return;
 		}
 	});  //end parent/child desktop window handler
@@ -1193,8 +1201,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 //						"\n(It also could mean 'potential security risk' like a cross-domain request) ",Debug.HIGH_PRIORITY);
 				errStr = "Request was interrupted (Status=0). " + 
 						"Likely this means the server crashed (or the desktop window making the request was closed), " +
-						" in the middle of a request. " +
-						"\n(It also could mean 'potential security risk' like a cross-domain request) ";
+						" in the middle of a request.";
 				//return;
 			}
 			else //bad address response

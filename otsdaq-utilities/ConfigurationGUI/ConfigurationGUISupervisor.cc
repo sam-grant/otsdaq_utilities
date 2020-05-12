@@ -4969,6 +4969,10 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		xmlOut.addTextElementToParent(
 		    "ColumnDataType", colInfo[i].getDataType(), parentEl);
 
+		//NOTE!! ColumnDefaultValue defaults may be unique to this version of the table, whereas DefaultRowValue are the defaults for the mockup
+		xmlOut.addTextElementToParent(
+		    "ColumnDefaultValue", colInfo[i].getDefaultValue(), parentEl);
+
 		choicesParentEl = xmlOut.addTextElementToParent("ColumnChoices", "", parentEl);
 		// add data choices if necessary
 		if(colInfo[i].getType() == TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
@@ -5029,7 +5033,8 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	                            std::to_string(cfgViewPtr->getLastAccessTime()));
 
 	// add to xml the default row values
-	std::vector<std::string> defaultRowValues = cfgViewPtr->getDefaultRowValues();
+	//NOTE!! ColumnDefaultValue defaults may be unique to this version of the table, whereas DefaultRowValue are the defaults for the mockup
+	std::vector<std::string> defaultRowValues = table->getMockupViewP()->getDefaultRowValues();
 	// don't give author and time.. force default author, let JS fill time
 	for(unsigned int c = 0; c < defaultRowValues.size() - 2; ++c)
 	{
@@ -5295,15 +5300,16 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 	      << "\" Type=\"File,Database,DatabaseTest\" Description=\"" << tableDescription
 	      << "\">\n";
 
-	// each column is represented by 3 fields
-	//	- type, name, dataType
+	// each column is represented by 4 fields
+	//	- type, name, dataType, defaultValue
+
 	int i = 0;                  // use to parse data std::string
 	int j = data.find(',', i);  // find next field delimiter
 	int k = data.find(';', i);  // find next col delimiter
 
 	std::istringstream columnChoicesISS(columnChoicesCSV);
 	std::string        columnChoicesString;
-	std::string        columnType;
+	std::string        columnType, columnDataType, columnDefaultValue;
 
 	while(k != (int)(std::string::npos))
 	{
@@ -5335,10 +5341,25 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 
 		i = j + 1;
 		j = data.find(',', i);  // find next field delimiter
+		columnDataType = data.substr(i, j - i);
 
 		// data type
 		outss << "\" \t	DataType=\"";
-		outss << data.substr(i, k - i);
+		outss << columnDataType;
+
+		i = j + 1;
+		j = data.find(',', i);  // find next field delimiter
+		columnDefaultValue = data.substr(i, k - i);
+
+		// default value (Note: check by decoding URI because..
+		//	which characters are encoded is not exact match to browser)
+		if(StringMacros::decodeURIComponent(columnDefaultValue) !=
+				TableViewColumnInfo::getDefaultDefaultValue(columnType,columnDataType))
+		{
+			__SUP_COUT__ << "FOUND user spec'd default value = " << columnDefaultValue << __E__;
+			outss << "\" \t	DefaultValue=\"";
+			outss << columnDefaultValue;
+		}
 
 		// fixed data choices for TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA
 		getline(columnChoicesISS, columnChoicesString, ';');

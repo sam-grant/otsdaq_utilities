@@ -174,6 +174,9 @@ function getAppsArray()
 {
 	return new Promise(function(resolve, reject)
 			{
+
+	    var pingTime = parseInt((new Date()).getTime()); //in ms
+	    
 		DesktopContent.XMLHttpRequest("Request?RequestType=getAppStatus", "", 
 				function (req,param,err) 
 				{
@@ -295,6 +298,14 @@ function getAppsArray()
 			//return _allAppsArray;
 			resolve(_allAppsArray);
 			
+        	
+        	_arrayOnDisplayTable = setIntersection(_allAppsArray, _arrayOnDisplayTable); 
+        	
+
+        	ping_ = parseInt((new Date()).getTime()) - pingTime; //in ms
+        	while((""+ping_).length < 3) ping_ = "0" + ping_;
+        	displayTable(_arrayOnDisplayTable);	
+        	
             // update the _allAppsArray variable with repeated calls to server
             if(_updateAppsTimeout) window.clearTimeout(_updateAppsTimeout);
             _updateAppsTimeout = window.setTimeout(updateAppsArray, 1000 /*ms*/);
@@ -311,11 +322,10 @@ function getAppsArray()
 // this function updates the _allAppsArray by making repeated requests to the server 
 // at specific time intervals. The function is called by setTimeout()
 // because setInterval() can get unwieldy.
+var ping_ = 0;
 function updateAppsArray() 
-{
+{    
 	getAppsArray();
-	_arrayOnDisplayTable = setIntersection(_allAppsArray, _arrayOnDisplayTable); 
-	displayTable(_arrayOnDisplayTable);	
 }; // end of updateAppsArray()
 
 //=====================================================================================
@@ -339,7 +349,10 @@ function displayTable(appsArray)
     table.border = "0";
 
     //Get the count of columns.
-    var columnNames = ["App Name", "Status", "Progress", "Detail", "Last Update", "App Type", "App URL", "App ID", "Parent Context Name"];
+    var columnNames = ["App Name", "Status", "Progress", "Detail",
+					   //add white space so changing ping has less update effect
+					   "&nbsp;&nbsp;Last Update&nbsp;&nbsp;", 
+					   "App Type", "App URL", "App ID", "Parent Context Name"];
     var columnKeys = ["name", "status", "progress", "detail", "stale", "class", "url", "id", "context" ];
     var columnCount = columnNames.length;
 
@@ -366,12 +379,18 @@ function displayTable(appsArray)
             
             if(columnKeys[j] == "stale")
             {
+            	cell.style.fontSize = "12px";
+            	            	
             	var staleString = "";
             	var staleSeconds = appsArray[i][columnKeys[j]] | 0;
             	if(appsArray[i].time == "0")
             		staleString = "No status";
+            	else if(staleSeconds < 1)
+            		staleString = "0." + ping_ + " seconds ago";
+            	else if(staleSeconds < 2)
+            		staleString = "1." + ping_ + " seconds ago";            		
             	else if(staleSeconds < 10)
-            		staleString = "Seconds ago";
+            		staleString = staleSeconds + " seconds ago";
             	else if(staleSeconds < 60)
             		staleString = "One minute ago";
             	else if(staleSeconds < 40*60)
