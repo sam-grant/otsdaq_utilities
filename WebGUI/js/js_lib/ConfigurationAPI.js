@@ -78,6 +78,7 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.extractActiveGroups(req)
 //	ConfigurationAPI.incrementName(name)
 //	ConfigurationAPI.createNewRecordName(startingName,existingArr)
+//	ConfigurationAPI.encodeHTML(s)
 
 
 //"public" members:
@@ -4945,7 +4946,6 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 
 					var allowFixedChoiceArbitraryEdit = false;
 					var optionCount = -1;
-					optionIndex = 0; //default to default
 					
 					str += "<div onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
 							"onmouseup='event.stopPropagation();' " +
@@ -4993,7 +4993,8 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 										true:false;
 						Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);						
 					}
-						
+
+					optionIndex = -1;
 					for(var i=0;i<choices.length;++i)
 					{	
 						if(i == 0 && isChildLinkFixedChoice && !allowFixedChoiceArbitraryEdit)  
@@ -5019,12 +5020,25 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 												
 						
 						str += "<option>";
-						str += decodeURIComponent(choices[i]);	//can display however
+						str += ConfigurationAPI.encodeHTML(decodeURIComponent(choices[i]));	//can display however
 						str += "</option>";
 						if(decodeURIComponent(choices[i]) 
 								== ConfigurationAPI.editableFieldEditingOldValue_)
 							optionIndex = optionCount; //save selected index
-					}				
+					}		//if not found, add current tmp value (probably user created recently)
+					if(optionIndex == -1)
+					{ 
+						if(allowFixedChoiceArbitraryEdit && 
+								ConfigurationAPI.editableFieldEditingOldValue_.length)
+						{
+							str += "<option>";
+							str += ConfigurationAPI.encodeHTML(ConfigurationAPI.editableFieldEditingOldValue_); //can display however
+							str += "</option>";
+							optionIndex = optionCount+1; //last index
+						}
+						else 
+							optionIndex = 0; //default to default
+					}		
 					str += "</select>";	
 					
 					if(allowFixedChoiceArbitraryEdit)
@@ -5267,6 +5281,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 									"margin:-2px -2px -2px -1px; height:" + 
 									(el.offsetHeight+6) + "px'>";
 									
+							optionIndex = -1;
 							for (var i = 0; i < records.length; ++i)
 							{
 								str += "<option value='" + records[i]
@@ -5278,15 +5293,20 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 									optionIndex = i; //get starting sel index
 							}
 							//if not found, add current tmp value (probably user created recently)
-							if(optionIndex == -1 && 
-									ConfigurationAPI.editableFieldEditingOldValue_.length)
-							{
-								str += "<option value='" + encodeURIComponent(
-										ConfigurationAPI.editableFieldEditingOldValue_)
-									+ "'>";
-								str += encodeURIComponent(ConfigurationAPI.editableFieldEditingOldValue_); //can display however
-								str += "</option>";
-								optionIndex = records.length;
+							if(optionIndex == -1)
+							{ 
+								if(true /*arbitrary edit*/ &&
+										ConfigurationAPI.editableFieldEditingOldValue_.length)
+								{
+									str += "<option value='" + ConfigurationAPI.encodeHTML(
+											ConfigurationAPI.editableFieldEditingOldValue_)
+										+ "'>";
+									str += ConfigurationAPI.encodeHTML(ConfigurationAPI.editableFieldEditingOldValue_); //can display however
+									str += "</option>";
+									optionIndex = records.length;
+								}
+								else 
+									optionIndex = 0; //default to default
 							}
 							str += "</select>";
 
@@ -5456,6 +5476,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 									"float:left;" +
 									"margin:-2px -2px -2px -1px; height:" + 
 									(el.offsetHeight+6) + "px'>";
+							optionIndex = -1;
 							for (var i = 0; i < groupIds.length; ++i)
 							{
 								str += "<option value='" + groupIds[i]
@@ -5467,15 +5488,20 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 									optionIndex = i; //get starting sel index
 							}
 							//if not found, add current tmp value (probably user created recently)
-							if(optionIndex == -1 && 
-									ConfigurationAPI.editableFieldEditingOldValue_.length)
+							if(optionIndex == -1)
 							{
-								str += "<option value='" + encodeURIComponent(
-										ConfigurationAPI.editableFieldEditingOldValue_)
-													+ "'>";
-								str += encodeURIComponent(ConfigurationAPI.editableFieldEditingOldValue_); //can display however
-								str += "</option>";
-								optionIndex = groupIds.length;
+								if(true /*arbitrary edit*/ &&
+										ConfigurationAPI.editableFieldEditingOldValue_.length)
+								{
+									str += "<option value='" + ConfigurationAPI.encodeHTML(
+											ConfigurationAPI.editableFieldEditingOldValue_)
+															+ "'>";
+									str += ConfigurationAPI.encodeHTML(ConfigurationAPI.editableFieldEditingOldValue_); //can display however
+									str += "</option>";
+									optionIndex = groupIds.length;
+								}
+								else
+									optionIndex = 0; //default to default
 							}
 							str += "</select>";
 
@@ -5559,6 +5585,17 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 	}
 
 } //end handleEditableFieldClick()
+
+//=====================================================================================//==============================================================================
+//encodeHTML ~~
+ConfigurationAPI.encodeHTML = function(s)
+{
+	Debug.log("encodeHTML()",s);
+	var el = document.createElement("div");
+	el.innerText = el.textContent = s;
+	s = el.innerHTML;
+	return s.replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+} //end encodeHTML()
 
 //=====================================================================================
 //getSelectedEditableFieldIndex ~~

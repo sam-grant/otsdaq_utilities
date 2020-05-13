@@ -6588,7 +6588,7 @@
 			var selArr = MultiSelectBox.getSelectionArray(sel);
 			//			MultiSelectBox.dbg("ms Chosen element index:",i,
 			//					"=", selArr[i],
-			//					" value:",sel.innerHTML);
+			//					" value:",sel.innerText);
 			//			for(var s in selArr)
 			//				MultiSelectBox.dbg("ms selected [" + s + "]: ",
 			//						selArr[s]);
@@ -6847,6 +6847,7 @@
 						idString);
 					var choices = vel.textContent.split(',');
 					var choice;
+					optionIndex = -1;
 					for (var i = 0; i < choices.length; ++i)
 					{
 						choice = decodeURIComponent(choices[i]);
@@ -6870,11 +6871,24 @@
 							++optionCount; //count as an option in dropdown
 
 						str += "<option>";
-						str += choice;	//can display however
+						str += ConfigurationAPI.encodeHTML(choice);	//can display however
 						str += "</option>";
 						if (choice == _editingCellElOldValue)
 							optionIndex = optionCount; //save selected index
 					}
+					if(optionIndex == -1)
+					{ 
+						if(allowFixedChoiceArbitraryEdit && 
+								_editingCellElOldValue.length)
+						{
+							str += "<option>";
+							str += ConfigurationAPI.encodeHTML(_editingCellElOldValue); //can display however
+							str += "</option>";
+							optionIndex = optionCount+1; //last index
+						}
+						else 
+							optionIndex = 0; //default to default
+					}		
 					str += "</select>";
 
 					if (allowFixedChoiceArbitraryEdit) 
@@ -7204,7 +7218,7 @@
 							"style='" +
 							"height:" + (29) + "px'>";
 						var linkToChoice;
-						var linkToOptionIndex = 0; //default to first
+						var linkToOptionIndex = -1; //init
 						for (var i = 0; i < linkToChoices.length; ++i) 
 						{
 							linkToChoice = DesktopContent.getXMLValue(linkToChoices[i]);
@@ -7214,6 +7228,21 @@
 							if (linkToChoice == selectLinkId)
 								linkToOptionIndex = i; //get starting sel index
 						}
+						if(linkToOptionIndex == -1)
+						{ 
+							if(true /*allowFixedChoiceArbitraryEdit*/ && 
+									selectLinkId.length)
+							{
+								str += "<option value='" + 
+										ConfigurationAPI.encodeHTML(selectLinkId)
+														+ "'>";
+								str += ConfigurationAPI.encodeHTML(selectLinkId); //can display however
+								str += "</option>";
+								linkToOptionIndex = linkToChoices.length; //last index
+							}
+							else 
+								linkToOptionIndex = 0; //default to default
+						}		
 						str += "</select>";
 
 						str += "<input type='text' " +
@@ -7666,6 +7695,7 @@
 							//"style='margin:-4px -2px -4px 1px;
 							"width:" +
 							(el.offsetWidth - 6) + "px; height:" + (el.offsetHeight - 8) + "px'>";
+						optionIndex = -1;
 						for (var i = 0; i < records.length; ++i)
 						{
 							str += "<option value='" + records[i]
@@ -7676,6 +7706,21 @@
 								== _editingCellElOldValue)
 								optionIndex = i; //get starting sel index
 						}
+						if(optionIndex == -1)
+						{ 
+							if(true /*allowFixedChoiceArbitraryEdit*/ && 
+									_editingCellElOldValue.length)
+							{
+								str += "<option value='" + 
+										ConfigurationAPI.encodeHTML(_editingCellElOldValue)
+										+ "'>";
+								str += ConfigurationAPI.encodeHTML(_editingCellElOldValue); //can display however
+								str += "</option>";
+								optionIndex = records.length; //last index
+							}
+							else 
+								optionIndex = 0; //default to default
+						}	
 						str += "</select>";
 
 						//add arbitrary edit
@@ -7831,6 +7876,8 @@
 								//"style='margin:-4px -2px -4px 1px;
 								"width:" +
 								(el.offsetWidth - 6) + "px; height:" + (el.offsetHeight - 8) + "px'>";
+							
+							optionIndex = -1;
 							for (var i = 0; i < groupIds.length; ++i)
 							{
 								str += "<option value='" + groupIds[i]
@@ -7841,6 +7888,21 @@
 									== _editingCellElOldValue)
 									optionIndex = i; //get starting sel index
 							}
+							if(optionIndex == -1)
+							{ 
+								if(true /*allowFixedChoiceArbitraryEdit*/ && 
+										_editingCellElOldValue.length)
+								{
+									str += "<option value='" + 
+											ConfigurationAPI.encodeHTML(_editingCellElOldValue)
+															+ "'>";
+									str += ConfigurationAPI.encodeHTML(_editingCellElOldValue); //can display however
+									str += "</option>";
+									optionIndex = groupIds.length; //last index
+								}
+								else 
+									optionIndex = 0; //default to default
+							}		
 							str += "</select>";
 
 							//add arbitrary edit
@@ -7920,6 +7982,7 @@
 				else
 					choices = _tableFixedChoiceData[c];
 
+				optionIndex = -1;
 				for (var i = useAllTables ? 0 : 1; i < choices.length; ++i)
 				{
 					str += "<option value='" + choices[i]
@@ -7930,7 +7993,21 @@
 						== _editingCellElOldValue)
 						optionIndex = i - (useAllTables ? 0 : 1); //get starting sel index
 				}
-
+				if(optionIndex == -1)
+				{ 
+					if(true /*allowFixedChoiceArbitraryEdit*/ && 
+							_editingCellElOldValue.length)
+					{
+						str += "<option value='" + 
+								ConfigurationAPI.encodeHTML(_editingCellElOldValue)
+								+ "'>";
+						str += ConfigurationAPI.encodeHTML(_editingCellElOldValue); //can display however
+						str += "</option>";
+						optionIndex = choices.length - (useAllTables ? 0 : 1); //last index
+					}
+					else 
+						optionIndex = 0; //default to default
+				}	
 				str += "</select>";
 
 				//add arbitrary edit
@@ -7976,11 +8053,12 @@
 			}
 			else if (colType == "FixedChoiceData") 
 			{
-				optionIndex = 0; //default to default
+				optionIndex = -1; //init
 
 				var allowFixedChoiceArbitraryEdit = false;
 
-				if (_tableFixedChoiceData[c] !== undefined)
+				if (_tableFixedChoiceData[c] !== undefined && 
+						_tableFixedChoiceData[c].length)
 				{
 					var optionCount = 0;
 					for (var i = 0; i < _tableFixedChoiceData[c].length; ++i) 
@@ -8031,23 +8109,40 @@
 						else
 							++optionCount; //count as an option in dropdown
 
-
-
-
-
-
 						str += "<option>";
-						str += decodeURIComponent(_tableFixedChoiceData[c][i]);	//can display however
+						str += ConfigurationAPI.encodeHTML(
+								decodeURIComponent(_tableFixedChoiceData[c][i]));	//can display however
 						str += "</option>";
 
 						//check for currently selected value
 						if (decodeURIComponent(_tableFixedChoiceData[c][i])
 							== _editingCellElOldValue)
 							optionIndex = optionCount; //+1 in advance to account for default option
-					}
+					} //end option loop
+					
+					if(optionIndex == -1)
+					{ 
+						if(allowFixedChoiceArbitraryEdit && 
+								_editingCellElOldValue.length)
+						{
+							str += "<option>";
+							str += ConfigurationAPI.encodeHTML(_editingCellElOldValue); //can display however
+							str += "</option>";
+							optionIndex = optionCount+1; //last index
+						}
+						else 
+							optionIndex = 0; //default to default
+					}		
+					str += "</select>";
 				}
+				else  //strange illegal fixed choice? but add div, just in case
+					str += "<div style='" +
+						"white-space:nowrap;" +
+						"margin:0px -2px -4px 1px;width:" +//"margin:-4px -2px -4px 1px;width:" + 						
+						(el.offsetWidth - 6 + (allowFixedChoiceArbitraryEdit ? 50 : 0)) +
+						"px; height:" + (el.offsetHeight - 8) + "px'>";
 
-				str += "</select>";
+				
 
 
 				if (allowFixedChoiceArbitraryEdit) 
