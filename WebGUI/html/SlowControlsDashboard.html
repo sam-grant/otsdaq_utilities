@@ -11,6 +11,10 @@
 		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 
+		<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
 		<script>
 
 			//functions:
@@ -2393,29 +2397,194 @@
 
 
 			//=====================================================================================
-			function editWidgetAttributesOpen()
+			//createTopPaneContent ~~
+			function createTopPaneContent(H, W) 
 			{
-				document.getElementById("editWidgetAttributesPopup-container").style.display = "block";
-				toggleContextMenuOff();
+				var popupBody = document.getElementById("editWidgetAttributesPopup-body-pvlist");
+				popupBody.innerHTML = "";
 
-				//BEGIN HEADER
-				var header = document.getElementById("editWidgetAttributesPopup-header");
-				header.innerHTML = "";
-				var title = document.createElement("input");
-				title.setAttribute("type", "text")
-				title.value = page_.widgets[menu_.getAttribute("widgetID")].displayName;
-				title.onchange = function(){setWidgetDisplayName(menu_.getAttribute("widgetID"), this.value);};
-				title.className = "editableInput";
-				header.appendChild(title);
-				console.log(header.clientHeight);
-				var fontsize = 5;
-				while(fontsize < (0.6 * header.clientHeight))
+				// Make Top pane
+				if (document.getElementById("topPane") != null)
 				{
-					title.style.fontSize = ++fontsize + "px";
+					document.getElementById("selbox-TopPVBox").parentNode.removeChild(document.getElementById("selbox-TopPVBox"));
+					document.getElementById("recordTopMultiSelect").parentNode.removeChild(document.getElementById("recordTopMultiSelect"));
+					document.getElementById("topPane").parentNode.removeChild(document.getElementById("topPane"));
 				}
-				//END HEADER
+				var _topPane = document.createElement("div");
+				_topPane.setAttribute("class", "pane");
+				_topPane.setAttribute("id", "topPane");
 
-				//BEGIN PVTable 
+				var datalist = document.getElementById("pvDatalist");
+				var keys  = [];
+				var types = [];
+				var vals  = [];
+				var noMultiSelect = false; // true or false (false for multiselect functionality)
+
+				for(var pv=0; pv < datalist.options.length; pv++)
+				{
+					keys[pv] = datalist.options[pv].value;
+					vals[pv] = datalist.options[pv].value;
+				}
+
+				Debug.log("keys: ", keys);
+
+				//create multiselect box
+				var el = document.createElement("div");
+				el.setAttribute("class", "recordTopMultiSelect");
+				el.setAttribute("id", "recordTopMultiSelect");
+				el.setAttribute("style", //"height:200px; width:250px;" +
+						//);
+						//"margin-bottom: 0px;" +
+						"margin: -15px 0 -10px 0;" +
+						"height:" + H + "px;" + 
+						"width:" + (W-25) + "px;");
+
+				//write MultiSelectBox to a particular div
+				MultiSelectBox.mySelects_ = {};
+				MultiSelectBox.createSelectBox(el,
+						"TopPVBox",
+						"Chose PV names",
+						vals,keys,types,"",noMultiSelect);
+
+				//MultiSelectBox.initMySelectBoxes();
+				_topPane.appendChild(el);
+
+				var popupBody = document.getElementById("editWidgetAttributesPopup-body-pvlist");
+				popupBody.appendChild(_topPane);
+			}	//end createTopPaneContent()
+
+
+			//=====================================================================================
+			//createAddRemovePVContent ~~
+			function createAddRemovePVContent(W) 
+			{
+				//create add remove buttons
+				var div = document.createElement("div");
+				div.setAttribute("style", //"height:200px; width:250px;" +
+						//);
+						//"margin-bottom: 0px;" +
+						"margin: 10px 0 35px 0;" +
+						"height:" + 20 + "px;" + 
+						"width:" + (W-25) + "px;");
+
+				var add = document.createElement("button");
+				add.innerHTML = "Add";
+				//add.onmousedown = function(e){e.stopPropagation();}
+				//add.onmouseup = function(e)
+				add.onclick = function(e)
+				{
+					//e.stopPropagation();
+					var pvIndexList = MultiSelectBox.getSelectionArray(document.getElementById("recordTopMultiSelect"));
+					console.log("Add PVContent:", pvIndexList);
+
+					var i =0;
+					var selected  = {};
+					for (var pv in pvIndexList)
+					{
+						if(pvIndexList[pv] != 0)
+						{
+							selected[MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordTopMultiSelect"), pv).innerHTML] = i;
+							i++;
+						}
+					}
+					createBottomPaneContent(130, 400, selected);
+				};
+
+				var remove = document.createElement("button");
+				remove.innerHTML = "Remove";
+				remove.onclick = function()
+				{
+					var pvIndexList = MultiSelectBox.getSelectionArray(document.getElementById("recordBottomMultiSelect"));
+					console.log("Remove PVContent:", pvIndexList);
+
+					var i =0;
+					var selected  = {};
+					if (pvIndexList.length==0) return;
+					for (var pv in pvIndexList)
+					{
+						if(pvIndexList[pv] == 0)
+						{
+							selected[MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordBottomMultiSelect"), pv).innerHTML] = i;
+							i++;
+						}
+					}
+					createBottomPaneContent(130, 400, selected);
+				};
+
+				var table = document.createElement("table");
+				table.style.width = "300px";
+				var tr = document.createElement("tr");
+				var td1 = document.createElement("td");
+				td1.style.width = "150px";
+				var td2 = document.createElement("td");
+				td1.appendChild(add);
+				td2.appendChild(remove);
+				tr.appendChild(td1);
+				tr.appendChild(td2);
+				table.appendChild(tr);
+				div.appendChild(table);
+				var popupBody = document.getElementById("editWidgetAttributesPopup-body-pvlist");
+				popupBody.appendChild(div);
+			}	//end createAddRemovePVContent()
+
+
+			//=====================================================================================
+			//createBottomPaneContent ~~
+			function createBottomPaneContent(H, W, pvlist)
+			{
+				var keys  = [];
+				var types = [];
+				var vals  = [];
+				var noMultiSelect = false; // true or false (false for multiselect functionality)
+
+				var i = 0;
+				for(var pv in pvlist)
+				{
+					keys[i] = pv;
+					vals[i] = pv;
+					i++;
+				}
+
+				Debug.log("keys: ", keys);
+
+				// Make Bottom pane
+				if (document.getElementById("bottomPane") != null)
+				{
+					document.getElementById("selbox-BottomPVBox").parentNode.removeChild(document.getElementById("selbox-BottomPVBox"));
+					document.getElementById("recordBottomMultiSelect").parentNode.removeChild(document.getElementById("recordBottomMultiSelect"));
+					document.getElementById("bottomPane").parentNode.removeChild(document.getElementById("bottomPane"));
+				}
+				var _bottomPane = document.createElement("div");
+				_bottomPane.setAttribute("class", "pane");
+				_bottomPane.setAttribute("id", "bottomPane");
+			
+				var el = document.createElement("div");
+				el.setAttribute("class", "recordBottomMultiSelect");
+				el.setAttribute("id", "recordBottomMultiSelect");
+				el.setAttribute("style",
+					"margin: -15px 0 -10px 0;" +
+					"height:" + H + "px;" + 
+					"width:" + (W-25) + "px;");
+
+				//write MultiSelectBox to a particular div
+				MultiSelectBox.createSelectBox(el,
+						"BottomPVBox",
+						"PV names chosen",
+						vals,keys,types,"",noMultiSelect);
+
+				//MultiSelectBox.initMySelectBoxes();
+
+				_bottomPane.appendChild(el);
+				var popupBody = document.getElementById("editWidgetAttributesPopup-body-pvlist");
+				popupBody.appendChild(_bottomPane);
+			}	//end createBottomPaneContent()
+
+
+			//=====================================================================================
+			//createPVTable ~~
+			function createPVTable() 
+			{
+				//BEGIN PVTable
 				var popupBody = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				popupBody.innerHTML = "";
 				var table = document.createElement("table");
@@ -2453,7 +2622,13 @@
 					editWidgetAttributesaddRowPVList("", "", "widgetPVTableBody", "pvDatalist");
 				}
 				//END PVTable
+			}	//end createPVTable()
 
+
+			//=====================================================================================
+			//createPVTable ~~
+			function createAttributesTableTable() 
+			{
 				//BEGIN AttributesTable
 				var attributeBody = elPointer_["editWidgetAttributesPopup-body-attributes"];
 				attributeBody.innerHTML = "";
@@ -2488,7 +2663,38 @@
 					console.log(attribute);
 					editWidgetAttributesaddRowPVList(attribute, page_.widgets[menu_.getAttribute("widgetID")].attributes[attribute], "widgetAttributesTableBody", "");
 				}
-				//END   AttributesTableTable
+				//END AttributesTableTable
+			}	//end createAttributesTableTable()
+
+
+			//=====================================================================================
+			function editWidgetAttributesOpen()
+			{
+				document.getElementById("editWidgetAttributesPopup-container").style.display = "block";
+				toggleContextMenuOff();
+
+				//BEGIN HEADER
+				var header = document.getElementById("editWidgetAttributesPopup-header");
+				header.innerHTML = "";
+				var title = document.createElement("input");
+				title.setAttribute("type", "text")
+				title.value = page_.widgets[menu_.getAttribute("widgetID")].displayName;
+				title.onchange = function(){setWidgetDisplayName(menu_.getAttribute("widgetID"), this.value);};
+				title.className = "editableInput";
+				header.appendChild(title);
+				console.log(header.clientHeight);
+				var fontsize = 5;
+				while(fontsize < (0.6 * header.clientHeight))
+				{
+					title.style.fontSize = ++fontsize + "px";
+				}
+				//END HEADER
+
+				//createPVTable();
+				createTopPaneContent(160, 400);
+				createAddRemovePVContent(180);
+				createBottomPaneContent(130, 400, page_.widgets[menu_.getAttribute("widgetID")].pvList);
+				createAttributesTableTable();
 
 				showeditWidgetAttributesPopupBody("EditPVlist");
 
@@ -2515,77 +2721,109 @@
 			function editWidgetAttributesClose()
 			{
 				document.getElementById("editWidgetAttributesPopup-container").style.display = "none";
-				//if (isEmpty(page_.widgets[menu_.getAttribute("widgetID")].pvList))
-					//Debug.log("You have no PV selection!", Debug.WARN_PRIORITY);
 			} //end editWidgetAttributesClose()
+
+
+			//=====================================================================================
+			function addPVTableToWidget()
+			{
+				page_.widgets[menu_.getAttribute("widgetID")].pvList = {};
+				var table = document.getElementById("widgetPVTable");
+				for(var tr = 0; tr < table.getElementsByTagName("tr").length; tr++)
+				{
+					if(table.getElementsByTagName("tr")[tr].getElementsByTagName("td").length > 0)
+					{
+						var pv = table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0].value;
+						if(pv != "")
+						{
+							console.log(pv);
+							var refreshRate = table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value*1000;
+							console.log("refreshRate (ms): " + refreshRate);
+							if(refreshRate == "")
+								refreshRate = -1;
+
+							page_.widgets[menu_.getAttribute("widgetID")].pvList[pv] = refreshRate;
+							addPVToWidget(pv, refreshRate, menu_.getAttribute("widgetID"));
+						}
+					}
+				}
+			} //end addPVTableToWidget()
+
+
+			//=====================================================================================
+			function addPVPaneToWidget()
+			{
+				page_.widgets[menu_.getAttribute("widgetID")].pvList = {};
+				var pvIndexList = MultiSelectBox.getSelectionArray(document.getElementById("recordBottomMultiSelect"));
+				console.log("addPVPaneToWidget():", MultiSelectBox.getSelectedCount(document.getElementById("recordBottomMultiSelect")));
+
+				var i = 0;
+				var pvName = "";
+				while (MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordBottomMultiSelect"), i))
+				{
+					pvName = MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordBottomMultiSelect"), i).innerHTML;
+					page_.widgets[menu_.getAttribute("widgetID")].pvList[pvName] = refreshRate_;
+					addPVToWidget(pvName, refreshRate_, menu_.getAttribute("widgetID"));
+					i++;
+				}
+			} //end addPVPaneToWidget()
+
+
+			//=====================================================================================
+			function addAttributesListToWidget()
+			{
+				var actionRequired = false;
+				page_.widgets[menu_.getAttribute("widgetID")].attributes = {};
+				var attributesTable = document.getElementById("widgetAttributesTable");
+				console.log(attributesTable);
+				for(var tr = 0; tr < attributesTable.getElementsByTagName("tr").length; tr++)
+				{
+					console.log(tr);
+					if(attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td").length > 0)
+					{
+						var parameter = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0].value;
+						if(parameter != "")
+						{
+							var value = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value;							
+							console.log(" a: " + parameter, value);
+							if(value == 'undefined')
+								actionRequired = true;
+
+							page_.widgets[menu_.getAttribute("widgetID")].attributes[parameter] = value;
+						}
+					}
+				}
+				try
+				{
+					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setAttributes(page_.widgets[menu_.getAttribute("widgetID")].attributes);
+				}
+				catch(e)
+				{
+					Debug.log("There are errors when calling setAttributes() of target widget: " + e,
+						Debug.WARN_PRIORITY);
+				}
+				try
+				{
+					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.drawWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
+				}
+				catch(e)
+				{
+					Debug.log("There are errors when calling drawWidget() of target widget: " + e,
+						Debug.WARN_PRIORITY);
+				}
+			} //end addAttributesListToWidget()
 
 
 			//=====================================================================================
 			function editWidgetAttributesSave()
 			{
 				if(elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display == "table-row"){
-					page_.widgets[menu_.getAttribute("widgetID")].pvList = {};
-					var table = document.getElementById("widgetPVTable");
-					for(var tr = 0; tr < table.getElementsByTagName("tr").length; tr++)
-					{
-						if(table.getElementsByTagName("tr")[tr].getElementsByTagName("td").length > 0)
-						{
-							var pv = table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0].value;
-							if(pv != "")
-							{
-								console.log(pv);
-								var refreshRate = table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value*1000;
-								console.log("refreshRate (ms): " + refreshRate);
-								if(refreshRate == "")
-									refreshRate = -1;
-
-								page_.widgets[menu_.getAttribute("widgetID")].pvList[pv] = refreshRate;
-								addPVToWidget(pv, refreshRate, menu_.getAttribute("widgetID"));
-							}
-						}
-					}
+					//addPVTableToWidget();
+					addPVPaneToWidget();
 				}
 				else if(elPointer_["editWidgetAttributesPopup-body-attributes"].style.display == "table-row")
 				{
-					var actionRequired = false;
-					page_.widgets[menu_.getAttribute("widgetID")].attributes = {};
-					var attributesTable = document.getElementById("widgetAttributesTable");
-					console.log(attributesTable);
-					for(var tr = 0; tr < attributesTable.getElementsByTagName("tr").length; tr++)
-					{
-						console.log(tr);
-						if(attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td").length > 0)
-						{
-							var parameter = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0].value;
-							if(parameter != "")
-							{
-								var value = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value;							
-								console.log(" a: " + parameter, value);
-								if(value == 'undefined')
-									actionRequired = true;
-
-								page_.widgets[menu_.getAttribute("widgetID")].attributes[parameter] = value;
-							}
-						}
-					}
-					try
-					{
-						page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setAttributes(page_.widgets[menu_.getAttribute("widgetID")].attributes);
-					}
-					catch(e)
-					{
-						Debug.log("There are errors when calling setAttributes() of target widget: " + e,
-							Debug.WARN_PRIORITY);
-					}
-					try
-					{
-						page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.drawWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
-					}
-					catch(e)
-					{
-						Debug.log("There are errors when calling drawWidget() of target widget: " + e,
-							Debug.WARN_PRIORITY);
-					}
+					addAttributesListToWidget();
 				}
 			} //end editWidgetAttributesSave()
 
@@ -3444,7 +3682,7 @@
 				<nav id="editWidgetAttributesPopup-menu-nav">
 				  <ul class="menu__items ">
 				<li class="menu__item ">
-				  <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('pvList')">
+				  <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('EditPVlist')">
 					<i class=""></i> Edits PVs
 				  </a>
 				</li>

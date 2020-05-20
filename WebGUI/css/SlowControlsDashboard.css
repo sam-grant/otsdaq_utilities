@@ -4,20 +4,20 @@
 		overflow: 					hidden;
 		transition: 				background-color .25s;
 	}
-	
+
 	* {			
 		-webkit-user-select: 	none; /* prevent highlight selection (does not stop ghost images, must use el.ondragstart = function() {return false;}; */
 		-moz-user-select: 		none;
 		user-select:			none;
 		outline: 				none;  /* to stop firefox selection*/
 	}
-	
+
 	input {	/*normal highlight selecting effects on inputs*/
 		-webkit-user-select: 	auto; 
 		-moz-user-select: 		auto;
 		user-select: 			auto;
 	}
-	
+
 	iframe{
 		padding: 					0;
 		border: 					0;
@@ -40,7 +40,7 @@
 		top: 						0;
 		z-index:					1000;
 	}
-	
+
 	.widgetEditIcon {			
 		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
 		width: 						24px;
@@ -49,13 +49,15 @@
 		margin: 					34px -3px -45px -21px;
 		cursor: 					pointer;
 	}
+
 	.widgetOtherEditIcon {		
 		margin: 					-24px -3px -25px -1px !important;
 	}
+
 	.widgetEditIcon:hover, #preloadImage-treeEditIconHover {
 		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);		
 	}
-	
+
 	.widgetDeleteIcon {			
 		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
 		width: 						16px;
@@ -64,13 +66,14 @@
 		margin: 					34px 0 -55px 1px;
 		cursor: 					pointer;
 	}
+
 	.widgetDeleteIcon:hover, #preloadImage-treeEditTrashIconHover {
 		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 	}
-	
+
 	button {
 		cursor: 					pointer;
-		
+
 		background: 				#2a81d7;
 		background: 				-moz-linear-gradient(0% 100% 90deg, #206bcb, #3e9ee5);
 		background: 				-webkit-gradient(linear, 0% 0%, 0% 100%, from(#3e9ee5), to(#206bcb));
@@ -80,7 +83,7 @@
 		border-left: 				1px solid #165899;
 		-moz-box-shadow:			inset 0 1px 0 0 #62b1e9;
 		-webkit-box-shadow: 		inset 0 1px 0 0 #62b1e9;
-		
+
 		color: 						#fff;
 		font: 						normal 11px/1 "lucida grande", sans-serif;
 		padding: 					5px 5px 7px 5px;
@@ -91,7 +94,7 @@
 		width: 						100%;
 		-webkit-background-clip: 	padding-box;
 	}
-	
+
 	button:hover {
 		background-color: 			#52a8e8;
 		background-image: 			-webkit-gradient(linear, left top, left bottom, color-stop(0%, #52a8e8), color-stop(100%, #377ad0));
@@ -136,7 +139,7 @@
 		cursor: 					not-allowed;
 		text-shadow: 				0 -1px 1px #ebebeb;
 	}
-	
+
 	#mainBlockContainer {
 		z-index: 					4;
 		transition: 				background-color .25s;
@@ -144,7 +147,7 @@
 		top: 						0;
 		left: 						0;
 	}
-	
+
 	#grayOutCoverDiv {
 		z-index: 					149 /*one less than file block*/;
 		transition: 				background-color .25s;
@@ -161,7 +164,7 @@
 									rgb(175,175,175) 0 .2em 1px, /* color border */
 									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
 	}
-	
+
 	#fileBlock {
 		z-index:					150;
 		border: 					0;
@@ -172,20 +175,20 @@
 		background: 				-o-linear-gradient(right, #000000 , #90908a); /* For Opera 11.1 to 12.0 */
 		background: 				-moz-linear-gradient(right, #000000 , #90908a); /* For Firefox 3.6 to 15 */
 		background: 				linear-gradient(to right, #000000 , #90908a); /* Standard syntax */
-		
 
 		box-shadow: 				inset rgba(255,254,255,0.6) 0 0.3em .3em,
 									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
 									rgb(150,150,150) 0 .1em 3px,
 									rgb(175,175,175) 0 .2em 1px, /* color border */
 									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
-	}				
+	}
 
 	#mainBlock {
 		//transition: margin-left 10s;
 		transition: 				left .25s;
 		background-color: 			rgb(255,255,255);
 	}
+
 	.editMode {
 		background-color: 			rgba(255, 59, 48, 0.4);
 	}
@@ -197,7 +200,7 @@
 		-webkit-transition: 		margin-bottom .5s;
 		overflow: 					hidden;
 		z-index:					149;
-		
+
 		box-shadow: 				inset rgba(255,254,255,0.6) 0 0.3em .3em,
 									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
 									rgb(150,150,150) 0 .1em 3px,
@@ -272,8 +275,8 @@
 
 	.popup {
 		font-family: 				"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
-	
-		width:						400px;
+
+		width:						450px;
 		height:						320px;
 		background-color: 			#002540;
 		z-index:					9;
@@ -296,12 +299,15 @@
 	#popupSaveControlsPage h2 {
 		margin-top:					5px;
 	}
+
 	#popupSaveControlsPage p {
 		margin-bottom:				4px;
 	}
+
 	#popupSaveControlsPage button {
 		width:						100px;	
 	}
+
 	#popupSaveControlsPage #makeControlsPagePublic {
 		margin-top:					10px;
 		margin-bottom:				20px;
@@ -313,7 +319,7 @@
 
 	.cursor-grabbing {
 		cursor: 					grabbing !important;
-	}	
+	}
 
 	.action-required {
 		border: 					10px solid rgb(255, 204, 0);
@@ -424,6 +430,7 @@
 		text-decoration: 			none;
 		font-weight: 				bold;
 	}
+
 	.menu__link:hover {
 		color: 						rgba(0, 0, 0, 0.8) !important;
 		background-color: 			#d3d3d3 !important;
@@ -446,7 +453,6 @@
 		color: 						rgba(0,0,0,0.8) !important;
 	}
 
-
 	#navigationBarDiv {
 		top: 						0%;
 		left: 						0%;
@@ -456,68 +462,67 @@
 		padding: 					0px !important;
 		margin: 					0;
 		list-style:					none;
-		font-family: 				"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:13px;   
+		font-family: 				"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:13px;
 		text-shadow: 				0 -1px 3px #202020;
 		top: 						0%;
 		left: 						0%;
 		width:						100%;
-		z-index: 					15;			    
+		z-index: 					15;
 		-moz-border-radius:			4px;
 		-webkit-border-radius:		4px;
 		border-radius:				4px;
 	}
 
 	#navigationMenu li {
-		display:					block; 
-		float:						left; 
-		border-right:				1px solid #5d5d5d; 
-		border-left:				1px solid #929292; 
+		display:					block;
+		float:						left;
+		border-right:				1px solid #5d5d5d;
+		border-left:				1px solid #929292;
 		width: 						30%;
-		height:						5%; 
-		border-bottom:				1px solid #575757; 
+		height:						5%;
+		border-bottom:				1px solid #575757;
 		border-top:					1px solid #797979;
 		padding: 					0px !important;
-		margin: 					0;			 
+		margin: 					0;
 		background-image: 			-webkit-gradient(linear, left bottom, left top, color-stop(0, #787878), color-stop(0.5, #5E5E5E), color-stop(0.51, #707070), color-stop(1, #838383));
 		background-image: 			-moz-linear-gradient(center bottom, #787878 0%, #5E5E5E 50%, #707070 51%, #838383 100%);
-		background-color:			#5f5f5f; 
+		background-color:			#5f5f5f;
 	}
 
 	#navigationMenu li:hover {
 		background-image: 			-webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
 		background-image: 			-moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
-		background-color:			#383838; 
+		background-color:			#383838;
 
 		-moz-box-shadow: 			inset 0 0 5px 5px #535353;
 		-webkit-box-shadow: 		inset 0 0 5px 5px #535353;
 		box-shadow: 				inset 0 0 5px 5px #535353;
 	}
 
-
 	#navigationMenu li:active {
 		background-image: 			-webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
 		background-image: 			-moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
 		background-color:			#383838;
-	
+
 			-moz-box-shadow: 			inset 0 1px 2px 2px #000;
 		-webkit-box-shadow: 		inset 0 1px 2px 2px #000;
 		box-shadow: 				inset 0 1px 2px 2px #000;
 	}
-	
+
 	#navigationMenu li a {
-		color:						white; 
+		color:						white;
 		text-decoration:			none;
-		text-align:					center; 
-		display:					block; 
+		text-align:					center;
+		display:					block;
 		line-height:				34px;
-		outline:					none; 
+		outline:					none;
 	}
-	
+
 	#navigationMenu li:first-child {
 		-moz-border-radius:			4px 0 0 4px;
 		-webkit-border-radius:		4px 0 0 4px;
 		border-radius:				4px 0 0 4px;
-	
+
 		border-left:				none;
 	}
 
@@ -525,7 +530,7 @@
 		-moz-border-radius:			0 4px 4px 0;
 		-webkit-border-radius:		0 4px 4px 0;
 		border-radius:				0 4px 4px 0;
-		border-right:				none;   
+		border-right:				none;
 	}
 	
 	#navigationMenu {
@@ -551,8 +556,6 @@
         box-shadow: 				inset 0 0 5px 5px #535353;
 	}
 
-
-
 	.editWidgetAttributesPopup-container {
 		position: 					absolute;
 		display: 					none;
@@ -572,11 +575,11 @@
  	    animation-duration: 		0.4s;
 	}
 
-	.editWidgetAttributesPopup-container * {			
+	.editWidgetAttributesPopup-container * {	
 		-webkit-user-select: 		none; /* prevent highlight selection (does not stop ghost images, must use el.ondragstart = function() {return false;}; */
 		-moz-user-select: 			none;
 		user-select:				none;
-		outline: 					none;  /* to stop firefox selection*/	
+		outline: 					none;  /* to stop firefox selection*/
 	}
 
 	.editWidgetAttributesPopup-header {
@@ -615,7 +618,6 @@
 		width: 						100%;
 		height:						10%;
 		background-color: 			rgba(48, 45, 45, 0.7);
-
 	}
 
 	.editableInput {
@@ -667,11 +669,12 @@
 
 	tr.widgetPopupTable {
 	    background-color: 			rgba(154,154,154,0.8);
-	}					
+	}
 	
 	tr:nth-child(even).widgetPopupTable {
 	    background-color: 			rgba(198,198,198, 0.8);
 	}
+
 	td.widgetPopupTable {
 	    border: 					1px solid rgba(154,154,154,0.8);
 	}
@@ -718,7 +721,7 @@
 	    }
 	}
 	@-moz-keyframes animatetop {
-		from {  
+		from {
 			top:					-20px;
 			opacity: 				0; 
 		}
@@ -727,12 +730,21 @@
 	    }
 	}
 	@keyframes animatetop {
-		from { 
+		from {
 			top:					-20px;
 			opacity: 				0;
 		}
-	    to   { 
+	    to   {
 	    	opacity: 				1; 
 	    }
 	}
 
+	.pane {
+		background-color : rgba(154,154,154,0.8);
+		box-shadow: 		inset rgba(255,254,255,0.6) 0 0.3em .3em,
+				inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+				rgba(200, 200, 200,0.6) 0 .1em 3px,
+				rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
+				rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+		border-radius: 3px;
+	}
