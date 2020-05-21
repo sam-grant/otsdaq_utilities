@@ -100,6 +100,8 @@
 			//	toggleGrid(on)
 			//	setBackgroundColor(color)
 			//	setGridColor(color, on)
+			//	setGridSnap(snap)
+			//	snapToGrid(value, gridSize)
 			//	handleKeys(event)
 			//	deleteWidget()
 			//	cutWidget(widgetCover)
@@ -205,6 +207,7 @@
 
 			var nav_;
 			var gridColor_;
+			var gridSnap_;
 			var addPVMenuDiv_;
 			var addPVMenu_;
 			var isReadOnly_;
@@ -218,6 +221,7 @@
 			}
 
 			//==== BEGIN Drag and Resize parameters
+			var GRIDSIZE_ = 10;
 			var xPos_;
 			var yPos_;
 			var drawingSelectionRectangle_ = false;
@@ -331,6 +335,7 @@
 				//BEGIN JS Style
 				mainBlock_.el.style["background-color"] = "rgb(255, 255, 255)";
 				gridColor_ = "rgba(128, 128, 128, 0.3)"
+				gridSnap_ = true;
 				toggleGrid(true);
 				console.log(("-" + fileBlock_.el.style.width));
 				fileBlock_.el.style.left = "-4000px"; //hack because the file tree page probably didnt load by now
@@ -1592,13 +1597,14 @@
 				drawingSelectionRectangle_  = true;
 
 				Debug.log("drawSelectionRectangle() " + type);
-
-				xPos_ = event.clientX;
-				yPos_ = event.clientY;
+				var x = snapToGrip(event.clientX, GRIDSIZE_);
+				var y = snapToGrip(event.clientY, GRIDSIZE_);
+				xPos_ = x;
+				yPos_ = y;
 
 				var selectionRectangle = document.getElementById("selectionRectangle");
-				selectionRectangle.style.top = event.clientY + "px";
-				selectionRectangle.style.left = event.clientX + "px";	
+				selectionRectangle.style.top  = y + "px";
+				selectionRectangle.style.left = x + "px";	
 
 				if(widgetLibrary.dimensions[type])
 				{
@@ -1646,18 +1652,20 @@
 
 				var drawAndDragBox = document.getElementById("selectionRectangle");
 
+				var ex = snapToGrip(event.clientX, GRIDSIZE_);;
+				var ey = snapToGrip(event.clientY, GRIDSIZE_);;
 				var x = xPos_;
 				var y = yPos_;
-				var w = (event.clientX - xPos_);
-				var h = (event.clientY - yPos_);
+				var w = (ex - xPos_);
+				var h = (ey - yPos_);
 				if(w < 0)
 				{
-					x = event.clientX;
+					x = ex;
 					w *= -1;
 				}
 				if(h < 0)
 				{
-					y = event.clientY;
+					y = ey;
 					h *= -1;
 				}
 
@@ -1709,8 +1717,8 @@
 				//console.log(drawAndDragBox.style.width);
 
 				var x,y,w,h;
-				x = drawAndDragBox.offsetLeft;
-				y = drawAndDragBox.offsetTop;
+				x = snapToGrip(drawAndDragBox.offsetLeft, GRIDSIZE_);
+				y = snapToGrip(drawAndDragBox.offsetTop, GRIDSIZE_);
 
 				//if widget attribute Scale is set to false, then always a fixed size
 				if(widgetLibrary.dimensions[type] &&
@@ -2908,7 +2916,7 @@
 				if(on)
 				{
 					mainBlock_.el.style["background-image"] = "linear-gradient(to right, " + gridColor_ + " 1px, transparent 1px), linear-gradient(" + gridColor_ + " 1px, transparent 1px)";
-					mainBlock_.el.style["background-size"]  =  "10px 10px";
+					mainBlock_.el.style["background-size"]  =  GRIDSIZE_ + "px " + GRIDSIZE_ + "px";
 				}
 				else
 				{
@@ -2931,6 +2939,25 @@
 				gridColor_ = color;
 				toggleGrid(on);
 			} //end setGridColor()
+
+
+			//=====================================================================================
+			function setGridSnap(snap)
+			{
+				gridSnap_ = snap;
+			} //end setGridSnap()
+
+
+			//=====================================================================================
+			function snapToGrip(val, gridSize)
+			{
+				if(gridSnap_)
+				{
+			    	var snap_candidate = gridSize * Math.round(val/gridSize);
+			    	return snap_candidate;
+				}
+				else return val;
+			} //end snapToGrip()
 
 
 			//=====================================================================================
@@ -3247,6 +3274,9 @@
 			{
 				if(e) e.stopPropagation();
 
+				var ex = snapToGrip(e.clientX, GRIDSIZE_);
+				var ey = snapToGrip(e.clientY, GRIDSIZE_);		
+
 				if(isFirstTime)
 				{
 					indicateUserActivityToServer();	
@@ -3255,9 +3285,9 @@
 					//save current cursor and set to grabbing cursor
 					saveCursorType_ = dragAndDrawTargetEl_.style.cursor;
 					dragAndDrawTargetEl_.style.cursor = "grabbing";
-
-					xPos_ = e.clientX;
-					yPos_ = e.clientY;
+			
+					xPos_ = ex;
+					yPos_ = ey;
 
 					if(resizeLockout_)
 						Debug.log("Resizing from " + resizeFrom_);
@@ -3289,8 +3319,8 @@
 				var neww = toPageXCoordinate(page_.widgets[resizeWidgetId_].w);
 				var newh = toPageYCoordinate(page_.widgets[resizeWidgetId_].h);
 
-				var deltaX = e.clientX - xPos_;
-				var deltaY = e.clientY - yPos_;
+				var deltaX = ex - xPos_;
+				var deltaY = ey - yPos_;
 
 				if(resizeLockout_)
 				{

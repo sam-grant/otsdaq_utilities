@@ -398,6 +398,7 @@
 			//	toggleGrid(checkbox)
 			//	setBackgroundColor(color)
 			//	setGridColor(color)
+			//	setGridSnap(color)
 			//	resetToDefault()
 			//	rgbToHex(rgb)
 
@@ -479,6 +480,7 @@
 				backgroundColorPicker.title = "Set the background color.";
 				document.getElementById("gridCheckbox").title = "Toggle the grid lines on/off.";				
 				document.getElementById("resetGrid").title = "Reset the grid to default values.";
+				document.getElementById("gridSnap").checked = true;
 
 				window.onresize = redrawWindow;
 				redrawWindow();
@@ -787,6 +789,13 @@
 			} //end setGridColor()
 
 			//=====================================================================================
+			function setGridSnap(snap)
+			{
+				Debug.log("setGridSnap() " + snap.checked);
+				parent.setGridSnap(snap.checked);
+			} //end setGridSnap()
+
+			//=====================================================================================
 			function resetToDefault()
 			{
 				Debug.log("resetToDefault()");
@@ -867,6 +876,7 @@
 				<div class="colorPickersDiv" style="margin-top:-10px">
 					<br><input type="color"  id="gridColorPicker"       onchange="setGridColor(this)">Grid Color</input>
 					<br><input type="color"  id="backgroundColorPicker" onchange="setBackgroundColor(this)">Background</input>
+					<br><input type="checkbox"  id="gridSnap" onchange="setGridSnap(this)"> Snap</input>
 					<br><button id="resetGrid" 
 							style="margin-bottom:1px; margin-left:20px; width:100px;"
 							onclick="resetToDefault()">Default Values</button>
