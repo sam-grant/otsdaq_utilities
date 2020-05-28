@@ -9,26 +9,12 @@
 			}
 			.wrapper {
 			  display: grid;
-			  //grid-template-columns: repeat(2, 1fr);
-			  grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
+			  //grid-template-columns: repeat(1, 1fr);
+			  //grid-auto-rows: repaat(2, ifr);
+			  //grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+			  //grid-auto-rows: minmax(200px, auto);
 			  grid-gap: 10px;
-			  grid-auto-rows: minmax(100px, auto);
-			}
-			a{
-				color: blue;
-				height: auto;
-		    	text-align: center;
-				fontSize : 10vw;
-			}
-			div{
-				padding: 2.5px;
-			}
-			table{
-				height:100%;
-			}
-			tr {
-				margin: auto;
-				padding: auto;
+			  color: blue;
 			}
 
 		</style>
@@ -39,9 +25,9 @@
 			//init()
 
 			var pv_settings_ = [];
-			var labelContainers = [];
+			var labels = [];
 			var values = [];
-			var parameters_ = {class: "", "show_labels": "true", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
+			var parameters_ = {class: "", "show_labels": "false", "border": "true", "fontSize": "9vw", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -61,79 +47,50 @@
 			}
 
 			function drawWidget(widget, parameters) 
-			{			
-				var table = document.createElement('table');
-				table.id = "display-table";
-				table.style.height = "100%";
-				table.style.width = "100%";
-
-				var counter = 0;
-				for(var pv in widget.pvList)
-				{
-					counter++;
-				}
-
-				var rows = Math.round(Math.sqrt(counter));
-				var columns = Math.ceil(counter / rows);
-
-				for(var col = 1; col <= columns; col++)
-				{
-					var tr = document.createElement('tr');
-					tr.id = "tr" + col;
-					for(var cell = 1; cell <= rows; cell++)
-					{
-						var td = document.createElement('td');
-						td.id = "td" + col + "-" + cell;
-						tr.appendChild(td);
-					}
-					table.appendChild(tr);
-				}
-
+			{
+				var div = document.createElement('div');
+				div.className = "wrapper";
+				div.id = "display-div";
 				var display = document.getElementById("display");
 				display.innerHTML = "";
 				if (!Object.getOwnPropertyNames(widget.pvList).length)
 					display.innerHTML = "<center>TEXT: No associated PVs to display.</center>";
 
-				display.appendChild(table);
+				display.appendChild(div);
 
-				if(counter > 1){counter = 2;}
-				console.log("counter" + counter);
+				var counter = 0;
 				for(var pv in widget.pvList)
 				{
-					var label = document.createElement('p');
+					var value = document.getElementById(pv);
+					if (value == null)
+					{
+						value = document.createElement('div');
+						value.id = pv;
+						value.title = pv;
 
-					if (parameters_["show_labels"] == "true")
-						label.innerHTML = pv.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...";
-					else
-						label.innerHTML = "";
+						var label = document.createElement('center');
+						var pvValue = document.createElement('center');
+	
+						if (parameters_["show_labels"] == "true")
+							label.innerHTML = pv.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...";
 
-					var labelCenter = document.createElement("center");
-					labelCenter.appendChild(label);
-					labelContainers[pv] = label;
+						if (parameters_["border"]=="true")
+							pvValue.style.border = "1px solid #000";
+						else
+							pvValue.style.border = "";
 
-					var value = document.createElement('a');
-					value.id = pv;
-					value.title = pv;
-					value.innerHTML = "N/A";
-					value.style.width = "100%";
-					value.style.height = "100%";
-					values[pv] = value;
+						value.style.fontSize = parameters_["fontSize"];
 
-					var unit = document.createElement('a');
-					unit.innerHTML = " " + pv_settings_[pv].Units;
-
-					var center = document.createElement("center");
-					center.appendChild(value);
-					center.appendChild(unit);
-
+						var units = pv_settings_[pv] != undefined ? pv_settings_[pv].Units : "";
+						pvValue.innerHTML = "N/A " + units;
+						labels[pv] = label;
+						values[pv] = pvValue;
+						value.appendChild(label);
+						value.appendChild(pvValue);
+						div.appendChild(value);
+						counter++;
+					}
 					console.log(document.body);
-
-					var first = Math.floor(counter/columns);
-					if(first < 1) {first = 1;}				
-					console.log("td" + first + "-" + (counter%rows +1));
-					document.getElementById("td" + first + "-" + (counter%rows +1)).appendChild(labelCenter);
-					document.getElementById("td" + first + "-" + (counter%rows +1)).appendChild(center);
-					counter++;
 				}
 			}
 
@@ -153,7 +110,12 @@
 			{
 				console.log("Text newValue() reached", pvName, pvValue);
 
-				document.getElementById(pvName).innerHTML = (pvValue);
+				var units = pv_settings_[pvName] != undefined ? pv_settings_[pvName].Units : "";
+				values[pvName].innerHTML = pvValue + " " + units;
+
+				if (parameters_["border"]=="true")
+					values[pvName].style.border = "1px solid #000";
+
 				document.getElementById(pvName).parentElement.style["background-color"] = "transparent";
 
 				window.parent.setWidgetPVinfo(
@@ -164,15 +126,14 @@
 									, pvStatus
 									, pvSeverity
 									, parameters_["show_labels"]
-									, labelContainers
+									, labels
 									, parameters_["old_value_foreground_color"]
 									, parameters_["old_value_background_color"]
-									, values[pvName].parentElement.parentElement
+									, "1px solid #000"
+									, values[pvName]
 									);
 
 				document.getElementById(pvName).title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
-				if (parameters_["show_labels"] == "true")
-					labelContainers[pvName].title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
 
 //				if(pvSeverity == "NO_ALARM")
 //				{
@@ -218,13 +179,24 @@
 //				}
 			}
 
+			window.onresize = function() {
+				for(var pv in values)
+				{
+					document.getElementById(pv).style.width = (parseInt(window.innerWidth) - 15) / Object.keys(values).length | 0;
+					document.getElementById(pv).style.height = (parseInt(window.innerHeight) - 20) / Object.keys(values).length | 0;
+				}
+
+				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 15) + "px";
+				document.getElementById("display").style.height = (parseInt(window.innerHeight) - 20) + "px";
+			}
+
 	</script>
 
 	</head>
 
 	<body onload="Javascript:init()">
 
-	<div class="wrapper" id="display" width="100%" height="100%">
+	<div id="display" width="100%" height="100%">
 	</div>
 
 	</body>

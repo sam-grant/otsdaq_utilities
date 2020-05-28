@@ -1459,7 +1459,7 @@
 
 
 			//=====================================================================================
-			function setWidgetPVinfo(id, pvName, pvValue, pvTime, pvStatus, pvSeverity, showLabel, containers, foregroundColor, bkgColor, widgetElement)
+			function setWidgetPVinfo(id, pvName, pvValue, pvTime, pvStatus, pvSeverity, showLabel, containers, foregroundColor, bkgColor, border, widgetElement)
 			{
 				var actualTime = Math.floor(Date.now())/1000;
 				if (containers !== null && containers[pvName] !== null)
@@ -1482,10 +1482,17 @@
 						containers[pvName].innerHTML = "<center>";
 
 				if (widgetElement !== null && widgetElement !== undefined)
+				{
 					if (checkPVTime(id, pvName, pvTime))
 						widgetElement.style.backgroundColor = 'white';
 					else
 						widgetElement.style.backgroundColor = bkgColor;
+					
+					if(pvSeverity == "MAJOR" )
+						widgetElement.style.border = "2px solid red";
+					else
+						widgetElement.style.border = border;
+				}
 				else
 					console.log("setWidgetPVinfo(): widgetElement is null or not defined!");
 			} //end setWidgetPVinfo()
@@ -1918,9 +1925,18 @@
 					otherEditIcon.onmousedown = function(e){e.stopPropagation();}					
 
 					widgetCover.addEventListener("mousedown", 
-							makeHandlerWithID(id,		startWidgetDrag));
+							makeHandlerWithID(id,		handleWidgetCoverMouseDown));//startWidgetDrag));
 					widgetCover.addEventListener("mouseup", 
-							makeHandlerWithID(id,		endWidgetDragAndResize));	
+							makeHandlerWithID(id,		endWidgetDragAndResize));
+					widgetCover.addEventListener("mousemove",
+						function()
+						{
+							if(!drawingSelectionRectangle_ && 
+								dragAndDrawWidgetType_ !== undefined)
+								this.style.cursor = "crosshair";
+							else
+								this.style.cursor = "grab";
+						});
 
 					resizeDivTop.addEventListener("mousedown", 
 							makeHandlerWithID(id,		startWidgetResize));
@@ -2118,13 +2134,13 @@
 			//widget x,y,w,h represented as "per thousand" scaled coordinates
 			//	(PAGE_POSITIONS_ positions, integer representation)
 			function toPageXCoordinate(x)
-			{ return (x * windowWidth_ / PAGE_POSITIONS_) 	| 0; }
+			{ return Math.round(x * windowWidth_ / PAGE_POSITIONS_); }
 			function toPageYCoordinate(y)
-			{ return (y * windowHeight_ / PAGE_POSITIONS_) 	| 0; }
+			{ return Math.round(y * windowHeight_ / PAGE_POSITIONS_); }
 			function toScaledXCoordinate(x)
-			{ return (PAGE_POSITIONS_ * x / windowWidth_) 	| 0; }
+			{ return Math.round(PAGE_POSITIONS_ * x / windowWidth_); }
 			function toScaledYCoordinate(y)
-			{ return (PAGE_POSITIONS_ * y / windowHeight_) 	| 0; }
+			{ return Math.round(PAGE_POSITIONS_ * y / windowHeight_); }
 			//end page and scaled coordinate conversion
 
 
@@ -2274,7 +2290,7 @@
 
 			//=====================================================================================
 			function toggleContextMenu(e, id)
-			{
+			{			
 				if(e) e.stopPropagation();
 
 				console.log("toggle toggleContextMenu id=",id);
@@ -2304,6 +2320,9 @@
 					menu_.style.top = y + "px";
 					menu_.setAttribute("widgetID", id);
 					menu_.classList.add(activeMenu_);
+					
+					//set target element
+					targetElement_ = document.getElementById("widget-" + id);
 				}
 			} //end toggleContextMenu()
 
@@ -2491,7 +2510,7 @@
 					{
 						if(pvIndexList[pv] != 0)
 						{
-							selected[MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordTopMultiSelect"), pv).innerHTML] = i;
+							selected[MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordTopMultiSelect"), pv).innerText] = i;
 							i++;
 						}
 					}
@@ -2512,7 +2531,7 @@
 					{
 						if(pvIndexList[pv] == 0)
 						{
-							selected[MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordBottomMultiSelect"), pv).innerHTML] = i;
+							selected[MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordBottomMultiSelect"), pv).innerText] = i;
 							i++;
 						}
 					}
@@ -3169,8 +3188,21 @@
 						els[0].style.display = "block";					
 				}	
 			} //end setEditModeWidgetTarget()
-
-
+			
+			//=====================================================================================
+			function handleWidgetCoverMouseDown(e,id)
+			{				
+				//allow drawing widget in widget cover
+				if(!drawingSelectionRectangle_ && 
+						dragAndDrawWidgetType_ !== undefined)
+				{
+					Debug.log("handleMouseDown " + dragAndDrawWidgetType_ );	
+					drawSelectionRectangle(e);
+				}
+				else
+					startWidgetDrag(e,id);
+			} //end handleWidgetCoverMouseDown()
+			
 			//=====================================================================================
 			function startWidgetDrag(e,id)
 			{
@@ -3322,6 +3354,14 @@
 				var deltaX = ex - xPos_;
 				var deltaY = ey - yPos_;
 
+				if(gridSnap_)
+				{
+					newx += -newx%GRIDSIZE_;
+					neww += -neww%GRIDSIZE_;
+					newy += -newy%GRIDSIZE_;
+					newh += -newh%GRIDSIZE_;
+				}
+
 				if(resizeLockout_)
 				{
 					//for resizing widget
@@ -3388,7 +3428,7 @@
 
 				} //end resize handling
 				else if(dragLockout_)
-				{	//for dragging a widget									
+				{	//for dragging a widget							
 					newx += deltaX;
 					newy += deltaY;
 				} //end drag handling
