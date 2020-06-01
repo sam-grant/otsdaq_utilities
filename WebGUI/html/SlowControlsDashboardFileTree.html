@@ -81,8 +81,8 @@
 			width: 						inherit;
 		}
 
-		li { 
-			position: 					relative; 
+		li {
+			position: 					relative;
 			margin-left: 				-17px;
 			list-style: 				none;
 			border-left:				1px solid gray;
@@ -102,8 +102,8 @@
 		li.file a:hover {
 			color: 						rgba(0,0,0,0.7);
 		}
-		li.file a[href *= '.page']	{ 
-			background: 				url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat; 
+		li.file a[href *= '.page']	{
+			background: 				url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat;
 		}
 
 		li input
@@ -124,9 +124,9 @@
 			height: 					1em;
 		}
 		li input + ol > li {
-			display: 					none; 
+			display: 					none;
 			margin-left: 				-14px !important;
-			padding-left: 				1px; 
+			padding-left: 				1px;
 		}
 		li label
 		{
@@ -142,18 +142,25 @@
 			padding: 					1.563em 0 0 80px;
 			height: 					auto;
 		}
-		li input:checked + ol > li { 
-			display: 					block; 
+		li input:checked + ol > li
+		{
+			display: 					block;
 			/* margin: 					0 0 0.125em;  2px */
 		}
-		li input:checked + ol > li:last-child {
+		li input:checked + ol > li:last-child
+		{
 			/*margin: 0 0 0.063em;  1px */ 
+		}
+
+		input:focus
+		{
+			background-color: grey;
 		}
 
 		</style>
 
-		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
@@ -187,14 +194,14 @@
 
 			//=====================================================================================						
 			//init called once body has loaded
-			function initFileTree() 
+			function initFileTree()
 			{
 				Debug.log("initFileTree() was called");
 				redrawWindow(); //redraw window for first time
 			} //end initFileTree()
 
 			//=====================================================================================
-			function redrawWindow() 
+			function redrawWindow()
 			{
 				Debug.log("File redrawWindow() to " + window.innerWidth + 
 						" - " + window.innerHeight);
@@ -221,7 +228,13 @@
 					var title = document.createElement("h2");
 
 					title.id = "title";
-					title.innerHTML = "File Manager";
+					title.innerHTML = 
+					  "<div>File Manager"
+					+ "<font style='float:right;'>"
+					+ "<input type='image' onclick='refreshPagesList()' id='refreshImg' title='Refresh Files tree'"
+					+ "src='/WebPath/images/iconImages/icon-rootAutoRefreshOff.png'>"
+					+ "</font></div>";
+
 					document.getElementById("header").innerHTML = "";
 					//title.appendChild(a);
 					document.getElementById("header").appendChild(title);
@@ -245,24 +258,10 @@
 						});
 
 					var saveButton = document.getElementById("saveButton");
-					//var saveAsButton = document.createElement("button");
-					//var closeButton = document.createElement("button");
 
 					saveButton.type = "text";
-					//saveAsButton.type = "text";
-					//closeButton.type = "text";
 
-					//saveButton.innerHTML = "Save";
-					//saveAsButton.innerHTML = "Save As";
-					//closeButton.innerHTML = "Close";
-
-					//closeButton.onclick = function(){close();};
 					saveButton.onclick = function(){save();};
-					//saveAsButton.onclick = function(){saveAs();};
-
-					//document.getElementById("saveli").innerHTML = "";
-					//document.getElementById("saveli").appendChild(saveButton);
-					//document.getElementById("saveli").appendChild(closeButton);
 
 					var fileTreeDiv = document.getElementById("fileTreeDiv");
 					var header = document.getElementById("header");
@@ -273,7 +272,15 @@
 					controlsDiv.style.top = fileTreeDiv.style.top + fileTreeDiv.style.height;
 				}
 			} //end redrawWindow()
-			
+
+			//=====================================================================================
+			function refreshPagesList()
+			{
+				console.log("File Tree: refreshPagesList()");
+				window.parent.refreshPagesList();
+				redrawWindow();
+			} //end refreshPagesList
+
 			//=====================================================================================
 			function isFile(path)
 			{			
@@ -359,7 +366,7 @@
 
 			//=====================================================================================
 			//createFileContextMenu ~~
-			function createFileContextMenu(event, fullPathToPage) 
+			function createFileContextMenu(event, fullPathToPage)
 			{
 				Debug.log("createFileContextMenu()");
 				
@@ -422,7 +429,7 @@
 		<div class='mainBlock' id='fileTreeDiv' width="100%">
 	    <ol class="tree">
 	      <li>
-	      	<label for="pagesFolder">Pages</label> 
+	      	<label for="pagesFolder">Pages</label>
 	      	<ol id="pagesFolder-ol" >
 
 	      	</ol>

@@ -352,7 +352,7 @@
 
 	#contextMenuDiv {
 		position: 					absolute;
-		z-index: 					10;
+		z-index: 					100;
 	}
 
 	#hotkeyMenuDiv {
