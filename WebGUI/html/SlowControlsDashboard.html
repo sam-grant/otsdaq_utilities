@@ -492,7 +492,7 @@
 			var PHOEBUS_MAP = {"textupdate": 0, "table": 1, "meter": 2, "stripchart": 3, "thermometer": 4, "siren": 5, "label": 6, "led": 7, "picture": 8, "root": 9};
 			function loadPhoebusPageReqHandler(req)
 			{
-				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
+				Debug.log("loadPhoebusPageReqHandler() was called. Req: " + req.responseText);
 
 				//=============================
 				//delete all widget HTML objects by removing all containers
@@ -548,7 +548,7 @@
 					if (pv !== undefined)
 					{
 						var pv_refresh = pv.attributes["refresh_rate"];
-						if (pv_refresh !== undefined) widgetObject.pvList[pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[pv.innerHTML] = 10000;
+						if (pv_refresh !== undefined) widgetObject.pvList[pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[pv.innerHTML] = refreshRate_;
 					}
 
 					if (type == 3)
@@ -563,7 +563,7 @@
 								if (y_pv !== undefined)
 								{
 									var pv_refresh = y_pv.attributes["refresh_rate"];
-									if (pv_refresh !== undefined) widgetObject.pvList[y_pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[y_pv.innerHTML] = 10000;
+									if (pv_refresh !== undefined) widgetObject.pvList[y_pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[y_pv.innerHTML] = refreshRate_;
 								}
 							}
 						}
@@ -594,7 +594,6 @@
 					console.log("Drawing and creating widget",i,widgetObject);
 
 					widgetObject.loaded = true;
-					widgetObject.el = undefined;
 
 					if (group !== -1)
 					{
@@ -607,19 +606,23 @@
 							    && groups[j] == group)
 							{
 								if (pv !== undefined) 
-									page_.widgets[j].pvList[pv.innerHTML] = 30000;
+									page_.widgets[j].pvList[pv.innerHTML] = refreshRate_;
 								groups[i] = group;
 							}
 						}
+
 						if (groups[i] == undefined)
 						{
-							page_.widgets[i] = widgetObject;
 							groups[i] = group;
 						}
+						else
+						{
+							continue;
+						}
 					}
-					else
-						page_.widgets[i] = widgetObject;
 
+					page_.widgets[i] = widgetObject;
+					widgetObject.el = undefined;
 					drawWidget(i);
 
 				} //end widget extraction loop
