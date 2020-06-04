@@ -437,7 +437,7 @@ void VisualSupervisor::request(const std::string               & requestType,
 		// return directory structure for requested ROOT path, types are "dir" and "file"
 
                 ss.str("") ; ss << "PID: " << ::getpid() ;
-                STDLINE(ss.str(),ACCyan) ;
+//                STDLINE(ss.str(),ACCyan) ;
 		std::string path     = CgiDataUtilities::postData(cgiIn, "RootPath");
 		boost::regex re1("%2F") ;
 		path = boost::regex_replace(path,re1,"/") ;// Dario: should be transparent for Ryan's purposes but required by Extjs
@@ -446,16 +446,16 @@ void VisualSupervisor::request(const std::string               & requestType,
 		boost::regex re3("%3A") ;
 		path = boost::regex_replace(path,re3,"" ) ;// Dario: should be transparent for Ryan's purposes but required by Extjs
  		ss.str("") ; ss << "path    : " << path ;
- 		STDLINE(ss.str(),ACCyan) ;
+// 		STDLINE(ss.str(),ACCyan) ;
 		std::string fullPath = std::string(__ENV__("ROOT_BROWSER_PATH")) + path;
  		ss.str("") ; ss << "fullPath: " << fullPath ;
- 		STDLINE(ss.str(),"") ;
+// 		STDLINE(ss.str(),"") ;
 
 		//__SUP_COUT__ << "Full path:-" << fullPath << "-" << __E__;
 
 		std::string rootFileName = fullPath.substr(0, fullPath.find(".root") + 5);
  		ss.str("") ; ss << "rootFileName " << rootFileName ;
- 		STDLINE(ss.str(),"") ;
+// 		STDLINE(ss.str(),"") ;
 		std::string rootDirectoryName = rootFileName + ":" +
 				fullPath.substr(
 						fullPath.find(".root") + 5,
@@ -473,7 +473,7 @@ void VisualSupervisor::request(const std::string               & requestType,
 			//__SUP_COUT__ << "Attempting to get LIVE file." << __E__;
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
 			//ss.str("") ; ss << "rootFile " << rootFile->GetName() ;
-			STDLINE(ss.str(),"") ;
+//			STDLINE(ss.str(),"") ;
 			if(!rootFile)
                         {
 //				__SUP_COUT__ << "File was closed." << __E__;
@@ -486,15 +486,15 @@ void VisualSupervisor::request(const std::string               & requestType,
 				STDLINE(ss.str(),"") ;
 			}
 			//ss.str("") ; ss << "rootDirectoryName " << rootDirectoryName ;
-			STDLINE(ss.str(),"") ;
+//			STDLINE(ss.str(),"") ;
 		}
 		else
 		{
 			ss.str("") ; ss << "rootFileName " << rootFileName ;
-			STDLINE(ss.str(),"") ;
+//			STDLINE(ss.str(),"") ;
 			rootFile = TFile::Open(rootFileName.c_str());
 			ss.str("") ; ss << "rootFile " << rootFile->GetName() ;
-			STDLINE(ss.str(),"") ;
+//			STDLINE(ss.str(),"") ;
 		}
 
 //		__SUP_COUT__ << "FileName : " << rootFileName << " Object: " << rootDirectoryName << __E__;
@@ -517,13 +517,13 @@ void VisualSupervisor::request(const std::string               & requestType,
 
 				// failed directory so assume it's file
 				// __SUP_COUT__ << "Getting object name: " << rootDirectoryName << __E__;
- 				ss.str("") ; ss << "rootDirectoryName: |" << rootDirectoryName << "| rootFile->GetName()" << rootFile->GetName() ;
+// 				ss.str("") ; ss << "rootDirectoryName: |" << rootDirectoryName << "| rootFile->GetName()" << rootFile->GetName() ;
  				STDLINE(ss.str(),"") ;
 				// rootFile->ls() ;
 				TObject* histoClone = nullptr;
 				TObject* histo      = (TObject*)rootFile->Get(rootDirectoryName.c_str());
  				ss.str("") ; ss << "histo ptr: |" << histo ;
- 				STDLINE(ss.str(),"") ;
+// 				STDLINE(ss.str(),"") ;
 
 				if(histo != nullptr)  // turns out was a root object path
 				{
@@ -548,7 +548,7 @@ void VisualSupervisor::request(const std::string               & requestType,
 // 					ss.str("") ; ss << "histoClone->ClassName(): " << histoClone->ClassName() ;
 // 					STDLINE(ss.str(),"") ;
  					ss.str("") ; ss << "json.Data(): " <<json.Data() ;
- 					STDLINE(ss.str(),"") ;
+// 					STDLINE(ss.str(),"") ;
 					delete histoClone;
 				}
 				else
