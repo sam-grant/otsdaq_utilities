@@ -14,7 +14,7 @@
 
 #define MACROS_DB_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroData/"
 #define MACROS_HIST_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroHistory/"
-#define MACROS_EXPORT_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroExport/"
+#define MACROS_EXPORT_PATH std::string("/MacroExport/")
 
 #define SEQUENCE_FILE_NAME \
 	std::string(__ENV__("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.dat"
@@ -39,7 +39,7 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 	// make macro directories in case they don't exist
 	mkdir(((std::string)MACROS_DB_PATH).c_str(), 0755);
 	mkdir(((std::string)MACROS_HIST_PATH).c_str(), 0755);
-	mkdir(((std::string)MACROS_EXPORT_PATH).c_str(), 0755);
+	mkdir((__ENV__("SERVICE_DATA_PATH") + MACROS_EXPORT_PATH).c_str(), 0755);
 
 	xoap::bind(this,
 	           &MacroMakerSupervisor::frontEndCommunicationRequest,
@@ -76,7 +76,7 @@ void MacroMakerSupervisor::init(void)
 	// called by constructor
 
 	// MacroMaker should consider all FE compatible types..
-	allFESupervisorInfo_ = allSupervisorInfo_.getAllFETypeSupervisorInfo();
+	allFESupervisorInfo_ = SupervisorInfoMap( allSupervisorInfo_.getAllFETypeSupervisorInfo() );
 
 }  // end init()
 
@@ -492,12 +492,12 @@ void MacroMakerSupervisor::request(const std::string&               requestType,
 		std::string publicPath = (std::string)MACROS_DB_PATH + "publicMacros/";
 		mkdir(publicPath.c_str(), 0755);
 		std::string exportPath =
-		    (std::string)MACROS_EXPORT_PATH + userInfo.username_ + "/";
+		    __ENV__("SERVICE_DATA_PATH") + MACROS_EXPORT_PATH + userInfo.username_ + "/";
 		mkdir(exportPath.c_str(), 0755);
 	}
 	else
 		handleRequest(requestType, xmlOut, cgiIn, userInfo.username_);
-}
+}  // end request()
 catch(const std::runtime_error& e)
 {
 	__SS__ << "Error occurred handling request '" << requestType << "': " << e.what()
@@ -510,7 +510,7 @@ catch(...)
 	__SS__ << "Unknown error occurred handling request '" << requestType << "!'" << __E__;
 	__SUP_COUT__ << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
-}
+}  // end request() error handling
 
 //==============================================================================
 void MacroMakerSupervisor::handleRequest(const std::string  Command,
@@ -824,7 +824,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 }  // end getFEList()
 
 //==============================================================================
-void MacroMakerSupervisor::writeData(HttpXmlDocument&   xmldoc,
+void MacroMakerSupervisor::writeData(HttpXmlDocument&   /*xmldoc*/,
                                      cgicc::Cgicc&      cgi,
                                      const std::string& username)
 {
@@ -1037,7 +1037,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument&   xmldoc,
 }
 
 //==============================================================================
-void MacroMakerSupervisor::createMacro(HttpXmlDocument&   xmldoc,
+void MacroMakerSupervisor::createMacro(HttpXmlDocument&   /*xmldoc*/,
                                        cgicc::Cgicc&      cgi,
                                        const std::string& username)
 {
@@ -1796,7 +1796,8 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
 
 	std::string fileName = macroName + ".cc";
 
-	std::string fullPath = (std::string)MACROS_EXPORT_PATH + username + "/" + fileName;
+	std::string fullPath =
+	    __ENV__("SERVICE_DATA_PATH") + MACROS_EXPORT_PATH + username + "/" + fileName;
 	__SUP_COUT__ << fullPath << __E__;
 	std::ofstream exportFile(fullPath.c_str(), std::ios::trunc);
 	if(exportFile.is_open())
@@ -1823,7 +1824,9 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
 
 		exportFile.close();
 
-		xmldoc.addTextElementToData("ExportFile", fullPath);
+		xmldoc.addTextElementToData(
+		    "ExportFile",
+		    "$USER_DATA/ServiceData/" + MACROS_EXPORT_PATH + username + "/" + fileName);
 	}
 	else
 		__SUP_COUT__ << "Unable to open file" << __E__;
@@ -1838,7 +1841,7 @@ void MacroMakerSupervisor::createCode(std::ostream&                   out,
                                       std::set<std::string>*          inArgNames,
                                       std::set<std::string>*          outArgNames)
 {
-	int                                 numOfHexBytes;
+	//int                                 numOfHexBytes;
 	std::set<std::string /*argInName*/> argInHasBeenInitializedSet;
 	bool                                addressIsVariable, dataIsVariable;
 

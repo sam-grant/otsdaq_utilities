@@ -10,7 +10,7 @@
 //				
 //				<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 //				<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-//				<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+//				<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 //				<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfiguraitonAPI.js"></script>
 //				<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
 //
@@ -66,7 +66,7 @@ if (typeof DesktopContent == 'undefined' &&
 // 	ConfigurationAPI.deleteSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTablesIn,silenceErrors)	
 // 	ConfigurationAPI.renameSubsetRecords(subsetBasePath,recordArr,newRecordArr,responseHandler,modifiedTablesIn,silenceErrors)	
 // 	ConfigurationAPI.copySubsetRecords(subsetBasePath,recordArr,numberOfCopies,responseHandler,modifiedTablesIn,silenceErrors)	
-
+//	ConfigurationAPI.addTableToConfigurationGroup(tableName)
 
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
@@ -78,10 +78,12 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.extractActiveGroups(req)
 //	ConfigurationAPI.incrementName(name)
 //	ConfigurationAPI.createNewRecordName(startingName,existingArr)
+//	ConfigurationAPI.encodeHTML(s)
 
 
 //"public" members:
 ConfigurationAPI._activeGroups = {}; //to fill, call ConfigurationAPI.getActiveGroups() or ConfigurationAPI.extractActiveGroups()
+ConfigurationAPI._activeTables = {}; //to fill, call ConfigurationAPI.getFieldsOfRecords() among others
 
 //"public" constants:
 ConfigurationAPI._DEFAULT_COMMENT = "No comment.";
@@ -690,6 +692,20 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			if(responseHandler) responseHandler(recFields);
 			return;
 		}
+
+		//fill active tables
+		{
+			var tableNames = req.responseXML.getElementsByTagName("ActiveTableName");
+			var tableVersions = req.responseXML.getElementsByTagName("ActiveTableVersion");
+			ConfigurationAPI._activeTables = {};
+			for(var i=0;i<tableNames.length;++i)
+			{
+				ConfigurationAPI._activeTables[DesktopContent.getXMLValue(tableNames[i])] = 
+						DesktopContent.getXMLValue(tableVersions[i]);
+			}
+			Debug.logv("ConfigurationAPI._activeTables =",ConfigurationAPI._activeTables);
+		} //end fill active tables
+		
 		
 		var fields = DesktopContent.getXMLNode(req,"fields");
 		
@@ -930,7 +946,7 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 			}, //handler
 			0, //handler param
 			0,true); //progressHandler, callHandlerOnErr
-}
+} //end getUniqueFieldValuesForRecords()
 
 //=====================================================================================
 //setFieldValuesForRecords ~~
@@ -1582,8 +1598,17 @@ ConfigurationAPI.handlePopUpAliasEditToggle = function(i)
 		tel.style.display = "block";
 		ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
 	}
-}
+} //end handlePopUpAliasEditToggle()
 
+//=====================================================================================
+//saveModifiedTables ~~
+ConfigurationAPI.addTableToConfigurationGroup = function(tableName)
+{
+	Debug.log("addTableToConfigurationGroup",tableName);
+
+	ConfigurationAPI.saveModifiedTables([{"tableName":tableName,"tableVersion":-1}]);
+} //end addTableToConfigurationGroup()
+		
 //=====================================================================================
 //saveModifiedTables ~~
 //	Takes as input an array of modified tables and saves
@@ -2243,7 +2268,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 	//		save new version
 	//		update return object based on result
 	for(var j=0;j<modifiedTables.length;++j)
-		if((modifiedTables[j].tableVersion|0) < -1) //for each modified table
+		if((modifiedTables[j].tableVersion|0) < 0) //for each modified and mockup table
 		{
 			var reqStr = "Request?RequestType=saveSpecificTable" + 
 					"&dataOffset=0&chunkSize=0" +  
@@ -2313,7 +2338,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		//localHandleAffectedGroups();
 		Debug.log("No tables were modified. Should be impossible to get here.", Debug.HIGH_PRIORITY);
 	}
-}
+} //end saveModifiedTables()
 
 
 //=====================================================================================
@@ -2570,7 +2595,7 @@ ConfigurationAPI.getGroupTypeMemberNames = function(groupType,responseHandler)
 			0,0,true  //reqParam, progressHandler, callHandlerOnErr
 	); //end request
 	
-}
+} //end getGroupTypeMemberNames()
 
 
 //=====================================================================================
@@ -4518,7 +4543,7 @@ ConfigurationAPI.setEditableFieldValue = function(fieldObj,value,fieldIndex,dept
 	return ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,
 			depth,nodeName,value,valueType,choices,path,
 			isGroupLink,childLinkIndex,linkId);
-}
+} //end setEditableFieldValue()
 
 //=====================================================================================
 //fillEditableFieldElement ~~
@@ -4694,12 +4719,21 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 					encodeURIComponent(
 							childLinkIndex + "=" +
 							linkId);
+			
+			if(childLinkIndex.split(' ').length >= 2)
+				childLinkIndex = childLinkIndex.split(' ')[1]; //allow for targeting index syntax
+			//add childLinkIndex to be used by getting groupId values in target table
+			str += "<div id='editableFieldNode-ChildLink-groupIndex-" + 
+					(depth + "-" + uid) + "' " +
+					" style='display:none;' >" +
+					childLinkIndex + "</div>";		
 		}
 		else
 		{
 			//for unique link, presect UID record							
 			newWindowStr += "&selectedRecords=" + linkId;							
 		}
+				
 		
 		str += "<div style='float:left; margin-left:9px;' " +
 				" id='editableFieldNode-ChildLink-SubConfigLinkWindow-" +
@@ -4904,12 +4938,14 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 				else if(colType == "FixedChoiceData" || 
 						colType == "ChildLinkFixedChoice")
 				{
+					if(colType == "ChildLinkFixedChoice")
+						type += "-childLink";
+					
 					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
 					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
 
 					var allowFixedChoiceArbitraryEdit = false;
 					var optionCount = -1;
-					optionIndex = 0; //default to default
 					
 					str += "<div onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
 							"onmouseup='event.stopPropagation();' " +
@@ -4957,7 +4993,8 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 										true:false;
 						Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);						
 					}
-						
+
+					optionIndex = -1;
 					for(var i=0;i<choices.length;++i)
 					{	
 						if(i == 0 && isChildLinkFixedChoice && !allowFixedChoiceArbitraryEdit)  
@@ -4983,12 +5020,25 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 												
 						
 						str += "<option>";
-						str += decodeURIComponent(choices[i]);	//can display however
+						str += ConfigurationAPI.encodeHTML(decodeURIComponent(choices[i]));	//can display however
 						str += "</option>";
 						if(decodeURIComponent(choices[i]) 
 								== ConfigurationAPI.editableFieldEditingOldValue_)
 							optionIndex = optionCount; //save selected index
-					}				
+					}		//if not found, add current tmp value (probably user created recently)
+					if(optionIndex == -1)
+					{ 
+						if(allowFixedChoiceArbitraryEdit && 
+								ConfigurationAPI.editableFieldEditingOldValue_.length)
+						{
+							str += "<option>";
+							str += ConfigurationAPI.encodeHTML(ConfigurationAPI.editableFieldEditingOldValue_); //can display however
+							str += "</option>";
+							optionIndex = optionCount+1; //last index
+						}
+						else 
+							optionIndex = 0; //default to default
+					}		
 					str += "</select>";	
 					
 					if(allowFixedChoiceArbitraryEdit)
@@ -5066,54 +5116,433 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 				}
 				else // normal cells, with text input
 				{
-					if(colType == "GroupID") //track type if it is groupid field
-						type += "-groupid";
-					
 					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
 					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
+
+										
+					if(colType == "GroupID") //track type if it is groupid field
+						type += "-groupid";
+					else if(colType == "ChildLinkGroupID" || colType == "ChildLinkUID")
+					{
+						type += "-" + colType;
+						
+						//get unique values of the groupID field, for all records
+						
+						//assume table is in value before this field
+						var tableIdString = depth + "-" + ((uid|0)-1);
+						var tableEl = document.getElementById("editableFieldNode-Value-leafNode-" + 
+								tableIdString);
+						if(tableEl)
+						{
+							//put str now, just to give user visual feedback from click
+							// because loading select box make take a little time
+							ConfigurationAPI.editableFieldEditingCell_ = el;
+							ConfigurationAPI.editableFieldEditingNodeType_ = type;
+							el.innerHTML = str + 
+									localFinishUpTextValueCell(); 
+							if(colType == "ChildLinkUID")
+							{
+								localHandleDropdownForLinkUID(tableEl); //localFinishUpSelectCell() called at completion
+								return;
+							}
+							else
+							{
+								//pass groupID column index to look for in target table
+
+								var indexEl = document.getElementById(
+										"editableFieldNode-ChildLink-groupIndex-" + 
+										tableIdString);
+								if(indexEl)
+								{
+									localHandleDropdownForLinkGroupID(
+											tableEl.innerText,
+											indexEl.innerText); //localFinishUpSelectCell() called at completion
+									return;
+								}
+								else
+									Debug.log("Could not find matching group link index at ",tableIdString);
+							}
+							
+						}
+						else
+							Debug.log("Could not find matching table field at ",tableIdString);
+					}
+					
+					str += localFinishUpTextValueCell();	
+					
+					
+				}
+
+				localFinishUpSelectCell();
+				return;
+
+				
+				///////////// localFinishUpTextValueCell
+				function localFinishUpTextValueCell() 
+				{
+					Debug.log("localFinishUpTextValueCell()");
+					
 					
 					var ow = el.offsetWidth+6;
 					if(ow < 150) //force a minimum input width
 						ow = 150;
-					str += "<input type='text' onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' style='margin:-8px -2px -2px -1px;width:" + 
+					var str = "";
+					str += "<input type='text' onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event);' style='margin:-8px -2px -2px -1px;width:" + 
 							(ow) + "px; height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
 					str += ConfigurationAPI.editableFieldEditingOldValue_;
 					str += "' onmousedown='ConfigurationAPI.editableFieldMouseIsSelecting_ = true; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);' " +
 							"onmouseup='ConfigurationAPI.editableFieldMouseIsSelecting_ = false; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);event.stopPropagation();' " +
 							"onclick='event.stopPropagation();'" +
-							">";					
-				}
+							">";
+					return str;
+				} //end localFinishUpTextValueCell()
 
-
-				str += ConfigurationAPI._OK_CANCEL_DIALOG_STR;	
-
-				el.innerHTML = str;
-				
-				//handle default selection
-				if(colType == "YesNo" || 
-						colType == "TrueFalse" || 
-						colType == "OnOff")  //if column type is boolean, use dropdown
-				{					//select initial value
-					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-					el.getElementsByTagName("select")[0].focus();
-				}
-				else if(colType == "FixedChoiceData" || 
-						colType == "ChildLinkFixedChoice")
+				///////////// localFinishUpSelectCell
+				function localFinishUpSelectCell() 
 				{
-					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-					el.getElementsByTagName("select")[0].focus();	
+					Debug.log("localFinishUpSelectCell()");
 					
-				}
-				else if(colType == "MultilineData")
-					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
-				else 					//select text in new input
-					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
+					str += ConfigurationAPI._OK_CANCEL_DIALOG_STR;	
 
+					el.innerHTML = str;
+
+
+					//handle default selection
+					if(colType == "YesNo" || 
+							colType == "TrueFalse" || 
+							colType == "OnOff")  //if column type is boolean, use dropdown
+					{					//select initial value
+						el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+						el.getElementsByTagName("select")[0].focus();
+					}
+					else if(colType == "FixedChoiceData" || 
+							colType == "ChildLinkFixedChoice" ||
+							colType == "ChildLinkGroupID" || 
+							colType == "ChildLinkUID")
+					{
+						try
+						{
+							el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+							el.getElementsByTagName("select")[0].focus();
+						}
+						catch(e) {
+							//ignore error and assume text box
+							ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
+						}
+
+					}
+					else if(colType == "MultilineData")
+						ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
+					else 					//select text in new input
+						ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
+
+
+					//wrapping up
+					ConfigurationAPI.editableFieldEditingCell_ = el;
+					ConfigurationAPI.editableFieldEditingNodeType_ = type;
+				} //end localFinishUpSelectCell()
 				
-				//wrapping up
-				ConfigurationAPI.editableFieldEditingCell_ = el;
-				ConfigurationAPI.editableFieldEditingNodeType_ = type;
-			}
+				///////////// localHandleDropdownForLinkUID
+				function localHandleDropdownForLinkUID() 
+				{
+					Debug.log("localHandleDropdownForLinkUID()",tableEl.innerText);
+						
+					//get all UIDs
+					ConfigurationAPI.getSubsetRecords(tableEl.innerText,
+						undefined /*filterList*/,
+						function (records) 
+						{
+
+							Debug.logv({records});
+							if(!records || !records.length)
+							{
+								//could not find any records so just show text value
+								Debug.log("Aborting link group ID search.");
+								str += localFinishUpTextValueCell();
+								localFinishUpSelectCell();
+								return;
+							}
+
+							//create dropdown
+							str += "<div onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
+									"onmouseup='event.stopPropagation();' " +
+									"onclick='event.stopPropagation();' " +
+									"style='" +
+									"white-space:nowrap;" +
+									"margin:-3px -2px -2px -1px;" +
+									"height:" + (el.offsetHeight+6) + "px'>";
+
+							str += "<select  onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
+									"id='fixedChoice-editSelectBox' " +
+									"onmouseup='event.stopPropagation();' " +
+									"onclick='event.stopPropagation();' " +
+									"style='" +
+									"float:left;" +
+									"margin:-2px -2px -2px -1px; height:" + 
+									(el.offsetHeight+6) + "px'>";
+									
+							optionIndex = -1;
+							for (var i = 0; i < records.length; ++i)
+							{
+								str += "<option value='" + records[i]
+									+ "'>";
+								str += records[i]; //can display however
+								str += "</option>";
+								if (records[i]
+									== ConfigurationAPI.editableFieldEditingOldValue_)
+									optionIndex = i; //get starting sel index
+							}
+							//if not found, add current tmp value (probably user created recently)
+							if(optionIndex == -1)
+							{ 
+								if(true /*arbitrary edit*/ &&
+										ConfigurationAPI.editableFieldEditingOldValue_.length)
+								{
+									str += "<option value='" + ConfigurationAPI.encodeHTML(
+											ConfigurationAPI.editableFieldEditingOldValue_)
+										+ "'>";
+									str += ConfigurationAPI.encodeHTML(ConfigurationAPI.editableFieldEditingOldValue_); //can display however
+									str += "</option>";
+									optionIndex = records.length;
+								}
+								else 
+									optionIndex = 0; //default to default
+							}
+							str += "</select>";
+
+							//add arbitrary edit
+							if (true) 
+							{
+								var ww = (el.offsetWidth-6);
+								if(ww < 150) ww = 150; 
+								str += "<input type='text' " +
+										"id='fixedChoice-editTextBox' " +
+										"style='display:none;" + 
+										"float:left;" +
+										"margin:-2px 0 -" + (el.offsetHeight+6) + "px 0;" +							
+										"width:" + 
+										ww + "px; height:" + (el.offsetHeight+6) + "px" + 
+										"' " + //end style
+										"></input>";	
+
+								str += "<div style='display:block;" +
+										"margin: -2px 0 -7px 14px;" +
+										"' " + 
+										"class='editableFieldNode-Value-editIcon' id='fixedChoice-editIcon" +
+										"' " +
+										"onclick='ConfigurationAPI.handleEditableFieldFixedChoiceEditToggle();' " +
+										"title='Toggle free-form editing' " +
+										"></div>";
+							}
+
+							str += "</div>";
+
+							//finish up
+							Debug.log("Finishing up select cell handling...");
+							localFinishUpSelectCell();
+						}); //end getSubsetRecords
+
+					//successfully requested records
+					return true;				
+
+				} //end localHandleDropdownForLinkUID()
+				
+				///////////// localHandleDropdownForLinkGroupID
+				function localHandleDropdownForLinkGroupID(targetTable,childLinkIndex)
+				{
+					Debug.log("localHandleDropdownForLinkGroupID()",
+							targetTable,
+							childLinkIndex);
+
+					//ready to get matching groupID field in destination table
+					DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable" +
+							"&dataOffset=0&chunkSize=" + 0 +
+							"&tableName=" + targetTable +
+							"&version=" + "-1", //get mockup 
+							"",
+							function (req)
+							{
+
+						var err = DesktopContent.getXMLValue(req, "Error");
+						if (err) 
+						{
+							Debug.log(err, Debug.HIGH_PRIORITY);
+
+							Debug.log("There were errors loading the mockup version of '" +
+									targetTable + "'.\n\n" +
+									"Please see the detailed Errors below:", Debug.HIGH_PRIORITY);
+
+							//try to power through
+						}
+
+						var warns = DesktopContent.getXMLValue(req, "TableWarnings");
+						if (warns)
+							Debug.log("There were warnings found when loading table '" +
+									targetTable + 
+									"' (you can treat them as informational):\n\n" +
+									warns, Debug.WARN_PRIORITY);
+
+						var colTypeEls = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
+						var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
+
+						Debug.log("Looking for groupID column in linked to table matching " +
+								childLinkIndex);
+
+						var groupIdCol = -1;
+						var groupIdField;
+						for (var i = 0; i < colTypeEls.length; ++i)
+							if (colTypeEls[i].getAttribute("value").split('-')[1] == childLinkIndex)
+							{
+								groupIdField = colHdrs[i].getAttribute("value");
+								Debug.log("Found link groupid col " + i + " - " + groupIdField);
+								groupIdCol = i;
+								break;
+							}
+
+						var groupIds = [];
+						if (groupIdCol == -1)
+						{
+							Debug.log("No matching GroupID column found at linked to table!", Debug.HIGH_PRIORITY);
+						}
+						else 
+						{
+
+							//get unique values of the groupID field, for all records
+							// a la ConfigurationGUI.html:L7868
+							ConfigurationAPI.getSubsetRecords(tableEl.innerText,
+									undefined /*filterList*/,
+									function (records) 
+									{
+
+								Debug.logv({records});
+								if(!records || !records.length)
+								{
+									//could not find any records so just show text value
+									Debug.log("Aborting link group ID search.");
+									str += localFinishUpTextValueCell();
+									localFinishUpSelectCell();
+									return;
+								}
+
+								ConfigurationAPI.getUniqueFieldValuesForRecords(
+										tableEl.innerText,
+										records,
+										groupIdField,
+										function (obj) 
+										{
+									Debug.logv({obj});
+
+									if(!obj || !obj.length)
+									{
+										//could not find any records so just show text value
+										Debug.log("Aborting link group ID search.");
+										str += localFinishUpTextValueCell();
+										localFinishUpSelectCell();
+										return;
+									}
+
+									try 
+									{
+										groupIds = obj[0].fieldUniqueValueArray;
+									}
+									catch (e) 
+									{
+										Debug.log("Caught error: " + e);
+									}
+
+									localFinishGroupIdDropdown();
+
+										}); //end getUniqueFieldValuesForRecords
+									}); //end getSubsetRecords
+						}
+
+						///////////////////// localFinishGroupIdDropdown
+						function localFinishGroupIdDropdown() 
+						{
+							//create dropdown
+							str += "<div onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
+									"onmouseup='event.stopPropagation();' " +
+									"onclick='event.stopPropagation();' " +
+									"style='" +
+									"white-space:nowrap;" +
+									"margin:-3px -2px -2px -1px;" +
+									"height:" + (el.offsetHeight+6) + "px'>";
+
+							str += "<select  onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
+									"id='fixedChoice-editSelectBox' " +
+									"onmouseup='event.stopPropagation();' " +
+									"onclick='event.stopPropagation();' " +
+									"style='" +
+									"float:left;" +
+									"margin:-2px -2px -2px -1px; height:" + 
+									(el.offsetHeight+6) + "px'>";
+							optionIndex = -1;
+							for (var i = 0; i < groupIds.length; ++i)
+							{
+								str += "<option value='" + groupIds[i]
+																	+ "'>";
+								str += groupIds[i]; //can display however
+								str += "</option>";
+								if (groupIds[i]
+											 == ConfigurationAPI.editableFieldEditingOldValue_)
+									optionIndex = i; //get starting sel index
+							}
+							//if not found, add current tmp value (probably user created recently)
+							if(optionIndex == -1)
+							{
+								if(true /*arbitrary edit*/ &&
+										ConfigurationAPI.editableFieldEditingOldValue_.length)
+								{
+									str += "<option value='" + ConfigurationAPI.encodeHTML(
+											ConfigurationAPI.editableFieldEditingOldValue_)
+															+ "'>";
+									str += ConfigurationAPI.encodeHTML(ConfigurationAPI.editableFieldEditingOldValue_); //can display however
+									str += "</option>";
+									optionIndex = groupIds.length;
+								}
+								else
+									optionIndex = 0; //default to default
+							}
+							str += "</select>";
+
+							//add arbitrary edit
+							if (true) 
+							{
+								var ww = (el.offsetWidth-6);
+								if(ww < 150) ww = 150; 
+								str += "<input type='text' " +
+										"id='fixedChoice-editTextBox' " +
+										"style='display:none;" + 
+										"float:left;" +
+										"margin:-2px 0 -" + (el.offsetHeight+6) + "px 0;" +							
+										"width:" + 
+										ww + "px; height:" + (el.offsetHeight+6) + "px" + 
+										"' " + //end style
+										"></input>";	
+
+								str += "<div style='display:block;" +
+										"margin: -2px 0 -7px 14px;" +
+										"' " + 
+										"class='editableFieldNode-Value-editIcon' id='fixedChoice-editIcon" +
+										"' " +
+										"onclick='ConfigurationAPI.handleEditableFieldFixedChoiceEditToggle();' " +
+										"title='Toggle free-form editing' " +
+										"></div>";
+							}
+
+							str += "</div>";
+
+							//finish up
+							Debug.log("Finishing up group-id select cell handling...");
+							localFinishUpSelectCell();
+
+						}	//end localFinishGroupIdDropdown
+							}, //end getSpecificTable request handler
+							0, 0, true  //reqParam, progressHandler, callHandlerOnErr
+					); //end XML Request for getSpecificTable		
+				} //end localHandleDropdownForLinkGroupID()
+						
+			} //end selectThisTreeNode();
 		}
 		else
 		{
@@ -5154,7 +5583,19 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 			return;
 		}
 	}
-}
+
+} //end handleEditableFieldClick()
+
+//=====================================================================================//==============================================================================
+//encodeHTML ~~
+ConfigurationAPI.encodeHTML = function(s)
+{
+	Debug.log("encodeHTML()",s);
+	var el = document.createElement("div");
+	el.innerText = el.textContent = s;
+	s = el.innerHTML;
+	return s.replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+} //end encodeHTML()
 
 //=====================================================================================
 //getSelectedEditableFieldIndex ~~
@@ -5168,7 +5609,7 @@ ConfigurationAPI.getSelectedEditableFieldIndex = function()
 	
 	var idStr = ConfigurationAPI.editableFieldSelectedIdString_;
 	return idStr.split('-')[1]; // depth + "-" + fieldId
-}
+} //end getSelectedEditableFieldIndex()
 
 //=====================================================================================
 //handleEditableFieldHover ~~
@@ -5201,7 +5642,7 @@ ConfigurationAPI.handleEditableFieldHover = function(depth,uid,event)
 	var vel = document.getElementById("editableFieldNode-Value-" + 
 			ConfigurationAPI.editableFieldHoveringIdString_);
 	vel.style.backgroundColor = "rgb(218, 194, 194)";
-}
+} //end handleEditableFieldHover()
 
 //=====================================================================================
 //handleEditableFieldFixedChoiceEditToggle ~~
@@ -5230,7 +5671,7 @@ ConfigurationAPI.handleEditableFieldFixedChoiceEditToggle = function()
 		tel.style.display = "block";
 		ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
 	}
-}
+} //end handleEditableFieldFixedChoiceEditToggle()
 
 //=====================================================================================
 //handleEditableFieldBodyMouseMove ~~
@@ -5253,7 +5694,7 @@ ConfigurationAPI.handleEditableFieldBodyMouseMove = function(e)
 				vel.style.backgroundColor = "transparent";
 		}
 	}
-}
+} //end handleEditableFieldBodyMouseMove()
 
 //=====================================================================================
 //handleEditableFieldKeyDown ~~
@@ -5379,7 +5820,7 @@ ConfigurationAPI.handleEditableFieldKeyDown = function(e,keyEl)
 				sel.onchange();
 		}
 	}
-}
+} //end handleEditableFieldKeyDown()
 
 //=====================================================================================
 //handleEditableFieldEditCancel ~~
@@ -5415,7 +5856,7 @@ ConfigurationAPI.handleEditableFieldEditCancel = function()
 	}
 
 	ConfigurationAPI.editableFieldEditingCell_ = 0;
-}
+} //end handleEditableFieldEditCancel()
 
 //=====================================================================================
 //handleEditableFieldEditOK ~~
@@ -5449,14 +5890,15 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 		
 		
 		if(type == "value" || 
-				type == "value-bitmap")
+				type == "value-bitmap" || 
+				type == "value-groupid" || 
+				type == "value-childLink" || 
+				type == "value-ChildLinkGroupID" || 
+				type == "value-ChildLinkUID")
 		{
-			//if(type == "MultilineData")
-			//MultilineData and normal
-			//normal data
-			//bitmap data (do nothing would be ok, value already set)
-			el.appendChild(document.createTextNode(decodeURIComponent(newValue)));
-			
+			//MultilineData, select, and normal
+			//also bitmap data (do nothing would be ok, value already set)
+			el.appendChild(document.createTextNode(decodeURIComponent(newValue)));			
 		}
 		else if(type == "value-bool")
 		{
@@ -5478,13 +5920,10 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 					"'></div>"; 
 			el.innerHTML = str;
 		}			
-		else if(type == "value-groupid")
-		{					
-			el.appendChild(document.createTextNode(newValue));
-		}
 		else	//unrecognized type!?
 		{
-			Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
+			Debug.err("Unrecognizd tree edit type '" +
+					type + "'! Should be impossible!");
 			ConfigurationAPI.handleEditableFieldEditCancel(); return;
 		}
 		
@@ -5498,7 +5937,10 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 			type == "value" ||
 			type == "value-bool" || 
 			type == "value-bitmap" || 
-			type == "value-groupid")
+			type == "value-groupid" || 
+			type == "value-childLink" || 
+			type == "value-ChildLinkGroupID" || 
+			type == "value-ChildLinkUID")
 						
 	{
 		var newValue;
@@ -5512,7 +5954,7 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 		{
 			newValue = encodeURIComponent(el.textContent);
 		}		
-		else	//value (normal or multiline data)
+		else	//value (normal, select, or multiline data)
 		{
 			var sel;
 			if((sel = el.getElementsByTagName("textarea")).length) //for MultilineData					
@@ -5533,7 +5975,36 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 				newValue = el.getElementsByTagName("input")[0].value;
 			
 			newValue = encodeURIComponent(newValue.trim());
-		}
+			
+			if(type == "value-childLink")
+			{
+				Debug.log("Checking link value against active tables");
+				var found = false;
+				for(var activeTable in ConfigurationAPI._activeTables)
+					if(newValue == activeTable)
+					{
+						found = true; break;
+					}
+				if(!found)
+				{
+					Debug.warn("We noticed the child link target table '" +
+							newValue + "' was not found in the list of active tables. " +
+							"You may be able to ignore this issue, or your table group might fail to activate during State Machine transitions. " +
+							"\n\n" +
+							"To add a table to a group, in the Configuration Editor GUI, go to go to the " +
+							"group view, then click 'Add/Remove/Modify Member Tables.' You " +
+							"can then add or remove tables and save the new group." +
+							"\n\n" +
+							"OR!!! Click the following button to add the table '" + newValue +
+							"' to the Configuration Group: " +
+							"<input type='button' style='color:black !important;' " +
+							"title='Click to add table to the active Configuration Group' " +
+							"onclick='ConfigurationAPI.addTableToConfigurationGroup(\"" +
+							newValue + "\"); Debug.closeErrorPop();event.stopPropagation(); ' value='Add Table'>" +
+							"</input>");
+				}				
+			} //end childLink special handling
+		} //end standard value handling
 		
 		Debug.log("CfgGUI editTreeNodeOK editing " + type + " node = " +
 				newValue);
@@ -5554,10 +6025,11 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 	}
 	else	//unrecognized type!?
 	{
-		Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
-		editCellCancel(); return;
+		Debug.err("Unrecognizd tree edit type '" +
+				type + "'! Should be impossible!");
+		ConfigurationAPI.handleEditableFieldEditCancel(); return;
 	}
-}
+} //end handleEditableFieldEditOK()
 
 
 //=====================================================================================

@@ -1,0 +1,82 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>Picture</title>
+		<style type="text/css">	
+			body {
+				font: 10px arial;
+				background-color: rgba(255, 255, 255, 1);
+				width: 30;
+				height: 30;
+				//margin: 0px !important;
+			}
+
+			div {
+				font-size: 14px;
+			}
+		</style>
+
+		<script>
+
+			var parameters_ = [];
+			//functions:
+			//init()
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			//init called once body has loaded
+			function init()
+			{
+				console.log("Picture init()");
+				console.log(window.frameElement.id);
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
+			}
+
+			function setupPVs(settings)	{}
+
+			function drawWidget(widget, parameters)
+			{
+				setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
+			}
+
+			function getAttributes()
+			{
+				parameters_["class"] = "";
+				parameters_["file"] = "/WebPath/html/widgets/picture-icon.png";
+				return parameters_;
+			}
+
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log("Picture setAttributes()", parameters_);
+
+				document.getElementById("display").innerHTML = "<img id='img1' src='" + parameters_["file"] + "' title='" + parameters_["file"] + "'></img>";
+				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
+			}
+
+			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}
+
+			window.parent.document.getElementById("editWidgetAttributesPopup-container").onclick = function()
+			{
+				console.log("attribute menu onclick. label widgets parameters: " + window.parent.page_.widgets[window.frameElement.id].attributes["label"]);
+			};
+
+			window.onresize = function() {
+				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
+			}
+
+		</script>
+
+</head>
+
+	<body onload="Javascript:init()">
+
+	<div id="display"></div>
+
+	</body>
+
+</html>

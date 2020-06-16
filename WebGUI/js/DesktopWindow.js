@@ -86,10 +86,31 @@ else {
 		}
 		
 		var _handleWindowContentLoading = function() {
+			
+			Debug.log("Server desktop sending first message to window: " + _id);
+			
 			//remove the "Loading" once iframe loades
 			if(_winfrmHolder.childNodes.length > 1) 
 				_winfrmHolder.removeChild(
 						document.getElementById("DesktopWindowFrameLoadingDiv-"+_id));
+
+			//To overcome same-origin policy
+			//The first message is initiated by the Desktop once the window frame has been loaded.
+			//	The window content listener is defined in DesktopContent.js
+			
+			var initObject = {
+					"windowId":			_id,
+					"gatewayURN":  		urnLid_,
+					"gatewayOrigin":  	serverOrigin_,
+					"cookieCode":  		Desktop.desktop.login.getCookieCode(),
+					"dashboardColor": 	Desktop.desktop.dashboard.getDefaultDashboardColor(),
+					"desktopColor": 	document.body.style.backgroundColor,
+					"windowFrameColor": Desktop.desktop.defaultWindowFrameColor					
+			};
+			
+			_winfrm.contentWindow.postMessage(
+					initObject,"*");
+			
 		}
 		//------------------------------------------------------------------
 		//create PUBLIC members functions ----------------------
@@ -124,6 +145,7 @@ else {
 		
 		this.showFrame = function() { _winfrm.style.display = "inline"; }
 		this.hideFrame = function() { _winfrm.style.display = "none"; }
+		this.getFrame = function() { return _winfrm; }
 		
 			//setWindowNameAndSubName() ~~~
 			//	set name and subname
@@ -158,7 +180,7 @@ else {
 			this.windiv.style.left = _x+"px"; 
 		   	this.windiv.style.top = _y+"px";    	
 		   		
-			_refreshHeader();				
+			_refreshHeader();			
 			
 			_winfrm.style.width = (_w-2*_defaultFrameBorder-2)+"px";  //extra 2 for border pixels
 			_winfrm.style.height = (_h-_defaultHeaderHeight-_defaultFrameBorder-2)+"px"; 	//extra 2 for border pixels		  
@@ -305,6 +327,7 @@ else {
 		_winhdr.setAttribute("id", "DesktopWindowHeader-" + _id);	   		
 	   	_winhdr.style.height = _defaultHeaderHeight+"px";
 	   	_winhdr.style.marginLeft = _defaultHeaderLeftMargin+"px";
+	   	_winhdr.style.marginRight = (-100)+"px";
 		_winhdr.style.fontSize = _defaultHeaderFontSize+"px"; 	 		
 	   	this.setWindowNameAndSubName(name, subname); // set name and subname		   	
 	   	this.windiv.appendChild(_winhdr); //add header to window	   	
@@ -313,7 +336,7 @@ else {
 
 
 		var tmpContainer = document.createElement("div");
-		tmpContainer.setAttribute("style", "float:right;white-space:nowrap;");
+		tmpContainer.setAttribute("style", "float:right;white-space:nowrap;height:" + _defaultHeaderHeight + "px;overflow:auto;");
 		var tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopWindowButton");
 		tmpBtn.setAttribute("id", "DesktopWindowButtonRefresh-" + _id);
@@ -325,7 +348,25 @@ else {
 		tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
 		var tmpEl = document.createElement("div");
 		tmpEl.setAttribute("class", "DesktopWindowButtonGraphicRefresh");
-		tmpEl.innerHTML = "↻";
+		if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
+		{
+			//firefox shows circle-arrow character smaller
+			tmpEl.innerHTML = 
+					"<div style='font-size:28px; margin: -4px 0 0 -1px; color:inherit;'  "+
+					"title='Click to refresh onl this window'>↻</div>";        	
+			//_fullScreenRefreshBtn.style.height = "16px";
+			//_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
+		}
+		else //chrome
+		{
+			tmpEl.innerHTML = 
+					"<div style='font-size:16px; margin-left:1px; font-weight: 400; color:inherit;' "+
+					"title='Click to refresh onl this window'>↻</div>";         	
+			//_fullScreenRefreshBtn.style.height = "16px";
+			//_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
+		}
+
+		//tmpEl.innerHTML = "↻";
 		tmpBtn.appendChild(tmpEl);
 		tmpContainer.appendChild(tmpBtn); //add button to window 
 
@@ -406,7 +447,8 @@ else {
 	   	_winfrm = document.createElement("iframe"); 
 		_winfrm.setAttribute("class", "DesktopWindowFrame");
 		_winfrm.setAttribute("id", "DesktopWindowFrame-" + _id);
-		_winfrm.setAttribute("name", "DesktopWindowFrame-" + _id);	   			
+		_winfrm.setAttribute("name", "DesktopWindowFrame-" + _id);
+		_winfrm.setAttribute("allow", "autoplay"); //allow sounds without user clicking page first
 		_winfrm.onload = _handleWindowContentLoading; //event to delete "Loading"
 		_winfrm.setAttribute("src", _url);
 		_winfrmHolder.appendChild(_winfrm); //add frame to holder	 
@@ -424,6 +466,7 @@ else {
 	   	this.windiv.addEventListener('touchstart',Desktop.handleTouchStart);
 	   	this.windiv.addEventListener('touchend',Desktop.handleTouchEnd);
 	   	this.windiv.addEventListener('touchmove',Desktop.handleTouchMove);
+	   	   	
 	   		   	
 		Debug.log("Desktop Window Created",Debug.LOW_PRIORITY);
 	

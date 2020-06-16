@@ -1,0 +1,174 @@
+<!DOCTYPE HTMnL>
+<html lang="en">
+	<head>
+		<title>LED</title>
+		<style type="text/css">	
+
+			body {
+				font: 10px arial;
+				background-color: rgba(255, 255, 255, 1);
+			}
+			.wrapper {
+				display: grid;
+				//grid-template-columns: repeat(2, 1fr);
+				//grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
+				grid-gap: 0px;
+				//flex-direction: row;
+				//grid-auto-rows: minmax(100px, auto);
+				//grid-auto-columns: 200px 200px;
+			}
+
+		</style>
+
+		<script>
+
+			//functions:
+			//init()
+
+			var leds = [];
+			var labelContainers = [];
+			var pv_settings_ = [];
+			var parameters_ = {class: "", "show_labels": "false", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			//init called once body has loaded
+			function init()
+			{
+				console.log("LED init()");
+				console.log(window.frameElement.id);
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
+			}
+
+			function setupPVs(settings)
+			{
+				console.log("LED setupPVs() : " , settings);
+				pv_settings_ = settings;
+			}
+
+			function drawWidget(widget, parameters)
+			{
+				leds = [];
+				labelContainers = [];
+				var display = document.getElementById("display");
+				display.innerHTML = "";
+				if (!Object.getOwnPropertyNames(widget.pvList).length)
+					display.innerHTML = "<center>LED <br/> No associated PVs to display.</center>";
+
+				var div = document.createElement('div');
+				div.className = "wrapper";
+				div.id = "display-div";
+				display.appendChild(div);
+
+				for(var pv in widget.pvList)
+				{
+					var divtemp = document.getElementById('label-div-' + pv)
+					if (divtemp == null)
+					{
+						divtemp = document.createElement('div');
+						divtemp.id = "label-div-" + pv;
+					}
+
+					if (parameters_["show_labels"] == "true")
+						divtemp.innerHTML = "<center>" + pv.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...";
+					else
+						divtemp.innerHTML = "";
+
+					div.appendChild(divtemp);
+					labelContainers[pv] = divtemp;
+
+					drawLed(divtemp, pv);
+				}
+
+			}
+
+			function drawLed(div, pv, pvValue, pvTime, pvSeverity)
+			{
+				var canvas = document.getElementById("led-" + pv);
+				if (canvas == null)
+				{
+					canvas = document.createElement('canvas');
+					canvas.id = "led-" + pv;
+					div.appendChild(canvas);
+					leds[pv] = canvas;
+				}
+				canvas.style.width = Math.min(window.innerWidth, window.innerHeight) - 1 + "px";
+				var context = canvas.getContext('2d');
+				var centerX = canvas.width / 2;
+				var centerY = canvas.height / 2;
+				var radius = Math.min(canvas.width/2 - 10, canvas.height/2 - 10);
+
+				context.beginPath();
+				context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+
+				context.fillStyle = 'green';
+				if( pvSeverity == "MAJOR" )
+					context.fillStyle = 'red';
+				if( 
+					   isNaN(pvValue)
+					|| pvSeverity == "INVALID" 
+					|| pvSeverity == undefined
+					|| !window.parent.checkPVTime(window.frameElement.id, pv, pvTime)
+				)
+					context.fillStyle = 'grey';
+
+				context.fill();
+				context.lineWidth = 5;
+				context.strokeStyle = '#003300';
+				context.stroke();
+			}
+
+			function getAttributes()
+			{
+				return parameters_;
+			}
+
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log("LED: set parameters()");
+				console.log(parameters_);
+			}
+
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+				console.log("LED newValue() reached", pvName, pvValue);
+
+				window.parent.setWidgetPVinfo(
+									  window.frameElement.id
+									, pvName
+									, pvValue
+									, pvTime
+									, pvStatus
+									, pvSeverity
+									, parameters_["show_labels"]
+									, labelContainers
+									, parameters_["old_value_foreground_color"]
+									, parameters_["old_value_background_color"]
+									,""
+									);
+
+				drawLed(labelContainers[pvName], pvName, pvValue, pvTime, pvSeverity);
+				leds[pvName].title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+				if (parameters_["show_labels"] == "true")
+					labelContainers[pvName].title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+			}
+
+			window.onresize = function() {
+				for(var name in leds)
+				{
+					drawLed(labelContainers[name], name);
+				}
+			}
+
+		</script>
+
+</head>
+
+	<body onload="Javascript:init()">
+		<div id="display" width="100%" height="100%">
+		</div>
+	</body>
+
+</html>

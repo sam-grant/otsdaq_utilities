@@ -10,7 +10,7 @@
 //				
 //				<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 //				<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-//				<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+//				<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 //				<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfiguraitonAPI.js"></script>
 //				<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
 //				<script type="text/JavaScript" src="/WebPath/js/js_lib/ArtdaqConfiguraitonAPI.js"></script>
@@ -345,7 +345,7 @@ ARTDAQConfigurationAPI.getArtdaqNodes = function(responseHandler,
 				
 			} //end artdaq Supervisor extraction
 			else
-				Debug.log("No artdaq Supervisor found. You can manually add it to the Configuration Tree, " +
+				Debug.log("No artdaq Supervisor found (or there were more than one conflicting). You can manually setup one artdaq Supervisor in the Configuration Tree, " +
 						"or it will be created for you the first time you save your artdaq node configuration.", Debug.WARN_PRIORITY);
 			
 			Debug.log("Total nodes extracted " +

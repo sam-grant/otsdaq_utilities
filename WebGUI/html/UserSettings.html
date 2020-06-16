@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
 	<head>
-		<title>Supervisor</title>
+		<title>User Settings</title>
 		
 		<!--link href="https://fonts.googleapis.com/css?family=Comfortaa" rel="stylesheet"-->
 		<link href='/WebPath/css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
@@ -10,7 +10,7 @@
 		 
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>	
 		
 		<script>		
 				
@@ -20,6 +20,7 @@
 			var _NUM_USER_LAYOUTS = 5; //changing this number alone should work... but also have to change Desktop (this.defaultLayoutSelect) and DesktopDashboard (_layoutMenuItems) handling!
 			var _NUM_SYS_LAYOUTS = 5;  //changing this number alone should work... but also have to change Desktop (this.defaultLayoutSelect) and DesktopDashboard (_layoutMenuItems) handling!
 			var _NUM_OF_LAYOUT_FIELDS = 8;
+			var _accountFieldNames = ["Username","Email","Name","Permissions","NAC"];
 			var _accountFields = ["username","useremail","display_name","permissions","nac"];
 			var _theDeleteIndex = -1;
 			
@@ -75,12 +76,34 @@
 				//createNewAccount(event)
 				//reallyDelete(event)			//really delete the user accout
 				//lockToUsername(i, lock)
+				//showPermissionsTooltip(alwaysShow)
 				
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
+
+			//=====================================================================================		
 			//init called once body has loaded
-			function init() {									
+			function init()
+			{							
+				//check for wiz mode
+				if(DesktopContent._sequence)
+				{
+					Debug.log("Wiz mode detected!");
+					
+					document.body.innerHTML = "";
+					var str = "<div id='accountsDiv'></div><div id='newAccountFeedbackDiv'></div>";
+					document.body.innerHTML = str;
+
+					//get current settings from server
+					DesktopContent.XMLHttpRequest("Request?RequestType=getSettings&accounts=1", 
+							"", settingsRequestHandler);	
+					return;
+				}
+				//else handle normal mode
+				
+				document.getElementById("omni").style.display = "block";
+				
 				document.body.onmouseup = handleBodyMouseUp;
 				_mailbox  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-updateSettingsMailbox");	
 				_settingsLayoutMailbox  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-settingsLayoutMailbox");	
@@ -127,17 +150,20 @@
 				////////Tooltips/////////
 				DesktopContent.tooltip("User Settings Introduction", windowTooltip);
 				DesktopContent.setWindowTooltip(windowTooltip);
-			}	
-			
+			} //end init()	
+
+			//=====================================================================================
 			//request current settings immediately once page loads
-			function settingsRequest() {							
+			function settingsRequest() 
+			{							
 				 
 				//setup input fields
 				var colorDiv = document.getElementById("colorInputs");
 				var el;
 				var colorNames = ["Desktop","Dashboard","Window"];
 				var colorPrefix = ["r&nbsp;","g&nbsp;","b&nbsp;"];
-				for(var i=0;i<colorNames.length;++i) {
+				for(var i=0;i<colorNames.length;++i) 
+				{
 					
 					el = document.createElement("div");
 					el.setAttribute("id", "Settings-colorText"+i);
@@ -145,7 +171,8 @@
 					el.innerHTML = colorNames[i] + " Color: ";
 					colorDiv.appendChild(el); //add input field name
 					
-					for(var j=0;j<colorPrefix.length;++j) {
+					for(var j=0;j<colorPrefix.length;++j) 
+					{
 						el = document.createElement("div");
 						el.setAttribute("class", "Settings-el");				
 						el.innerHTML = colorPrefix[j];
@@ -170,14 +197,17 @@
 					el.setAttribute("id", "clearDiv");
 					colorDiv.appendChild(el); //new line
 				}
-				
+
+				_triedNewAccount = false;
 				//get current settings from server
 				DesktopContent.XMLHttpRequest("Request?RequestType=getSettings&accounts=1", 
 						"", settingsRequestHandler);				
-			}
-			
+			} //end settingsRequest()
+
+			//=====================================================================================
 			//called to extract color string into form
-			function extractRGBtoForm(clr,i) {				
+			function extractRGBtoForm(clr,i) 
+			{				
 				Debug.log("Settings User Preferences: " + i + " - " + clr, Debug.LOW_PRIORITY);		
 				
 				var el,c;				
@@ -190,7 +220,8 @@
 				 	clr = clr.substr(clr.indexOf(",")+1);
 				}
 			}
-			
+
+			//=====================================================================================
 			//extractLayoutToForm ~~
 			function extractLayoutToForm() 
 			{
@@ -225,10 +256,21 @@
 				
 			} //end extractLayoutToForm()			
 
+			//=====================================================================================
 			//handle request for current settings
-			function settingsRequestHandler(req) {
+			function settingsRequestHandler(req) 
+			{
 
-				Debug.log("settingsRequestHandler " + req.innerHTML);
+				Debug.log("settingsRequestHandler " + req.responseText);
+				
+				if(DesktopContent._sequence)
+				{
+					showPermissionsTooltip();					
+					
+					//handle wiz mode specially
+					extractUserAccounts(req);
+					return;
+				}
 				
 				//extract alert from server
 				var serverAlert = DesktopContent.getXMLValue(req,"server_alert");
@@ -316,10 +358,12 @@
 				
 				//get user accounts
 				extractUserAccounts(req);					
-			}
-			
+			} //end settingsRequestHandler()
+
+			//=====================================================================================
 			//called to extract from form to RGB string
-			function extractUserAccounts(req) {	
+			function extractUserAccounts(req) 
+			{	
 				
 				el = document.getElementById("accountsTableDiv");
 				if(el)
@@ -337,24 +381,36 @@
 					
 					_triedNewAccount = false;
 					el = document.getElementById("newAccountFeedbackDiv");
-					if(el) {
-						if(_accountsArray[0].length != _oldAccountSize)
-							el.innerHTML = "<center  style='padding:5px'><font color='green'>New account added successfully!</font></center>";
-						else
-							el.innerHTML = "<center style='padding:5px'><font color='red'>New account was not created. Did you have at least 4 characters?</font></center>";
+
+					if(_accountsArray[0].length != _oldAccountSize)
+					{
+						var str = "New account added successfully!";
+						Debug.log(str,Debug.INFO_PRIORITY);
+						if(el) el.innerHTML = "<center  style='padding:5px'><font color='green'>" +
+								str + "</font></center>";						
 					}
+					else
+					{
+						var str = "New account was not created. Did you have at least 4 characters in the username?";
+						Debug.log(str,Debug.HIGH_PRIORITY);
+						if(el) el.innerHTML = "<center style='padding:5px'><font color='red'>" +
+								str + "</font></center>";
+					}
+
 				}
 
 				
 				//apply current sort, search and then display					
 				sortAccountsBy(_AccountsLastSort, true); //with true, does not display accounts or increment sort type
 				displayAccounts();
-			}
-			
+			} // end extractUserAccounts()
+
+			//=====================================================================================
 			//applyAccountsSearch ~~
 			//	search through all 3 columns of _AccountsOrderArray
 			// 	and delete entries that do not have needle
-			function applyAccountsSearch(needle) {
+			function applyAccountsSearch(needle) 
+			{
 			
 				Debug.log("Settings applyAccountsSearch " + needle);
 				
@@ -386,18 +442,22 @@
 							_AccountsOrderArray.splice(i--,1); //remove entry at i, and rewind i to look at new i entry							
 						}
 				}	
-			}
-			
-			function setAccountsPage(pg) {
+			} //end applyAccountsSearch()
+
+			//=====================================================================================
+			function setAccountsPage(pg)
+			{
 				_AccountsPageIndex = pg;
 				displayAccounts();
-			}
-			
+			} //end setAccountsPage()
+
+			//=====================================================================================
 			//sortAccountsBy ~~ 
 			//	col is the column to sort on
 			//	_AccountsNextSortArray holds the next sort to do for each column
 			//		For username and display name... sort=0 := alpha, sort=1 := reverse alpha
-			function sortAccountsBy(col,rerunCurrentSort) {
+			function sortAccountsBy(col,rerunCurrentSort) 
+			{
 				if(col < 0 || col > 2) { //validate col
 				
 					//default sort
@@ -452,9 +512,11 @@
 				applyAccountsSearch(_AccountsLastSearch); //apply search string to new entry list
 				
 				if(!rerunCurrentSort) displayAccounts();
-			}
-			
-			function handleSearchKeyUp() {				
+			} //end sortAccountsBy()
+
+			//=====================================================================================
+			function handleSearchKeyUp() 
+			{				
 				
 				el = document.getElementById("accountsTableDiv");
 				if(el && el.innerHTML.indexOf("loaderGif") == -1)
@@ -463,43 +525,46 @@
 				if(_AccountSearchTimer)
 					clearTimeout(_AccountSearchTimer);
 				_AccountSearchTimer = setTimeout(handleTimeoutSearchKeyUp,500);				
-			}
-			
-			function handleTimeoutSearchKeyUp() {			
+			} //end handleSearchKeyUp()
+
+			//=====================================================================================
+			function handleTimeoutSearchKeyUp()
+			{			
 				var el = document.getElementById("accountsSearchBox");				
 				Debug.log("Settings handleTimeoutSearchKeyUp " + el.value);
 				applyAccountsSearch(el.value);
 				displayAccounts();
-			}
-			
-			function launchConfigWizard() {	
-				DesktopContent.XMLHttpRequest("Request?RequestType=launchConfig");	//attempt to launch the config wizard at the server			
-			}
-			
-			function displayAccounts() {		
+			} //end handleTimeoutSearchKeyUp()
+
+			//=====================================================================================
+			function displayAccounts() 
+			{		
 			
 				Debug.log("Settings displayAccounts");
 				
 				var el = document.getElementById("jumpToAccounts");
 				var htmlStr = "";
 				
-				if(_usernameWithLock && _usernameWithLock != "") //insert user with lock if applicable
-					htmlStr += "<div style='color:yellow'>Note: <i>" + _usernameWithLock + "</i> currently has the ots Lock.</div>";
-				
-				if(_accountsArray[0] && _accountsArray[0].length) //If have permissions, add Jump to Link
+				if(el) //in wiz mode, there is now jump link
 				{
-					htmlStr += "<a href='#ACCOUNTS_LABEL' style='color:#880000'>Jump to Accounts Section</a>";	
-					//FIXME for launching Wizard htmlStr += "<a onmouseup='Javascript:launchConfigWizard()' style='color:#880000; float:right;'>Launch Config Wizard</a>";					
-					el.innerHTML = htmlStr;					
+					if(_usernameWithLock && _usernameWithLock != "") //insert user with lock if applicable
+						htmlStr += "<div style='color:yellow; margin-bottom:10px;'>Note: <i>" + _usernameWithLock + "</i> currently has the ots Lock.</div>";
+					
+					if(_accountsArray[0] && _accountsArray[0].length) //If have permissions, add Jump to Link
+					{
+						htmlStr += "<a href='#ACCOUNTS_LABEL' style='color:#880000'>Jump to Accounts Section</a>";	
+						el.innerHTML = htmlStr;					
+					}
+					else
+					{ 	el.innerHTML = htmlStr;	return; } //If do not have permissions
 				}
-				else
-				{ 	el.innerHTML = htmlStr;	return; } //If do not have permissions
 				
 				el = document.getElementById("accountsDiv");
 				
 				htmlStr = "";
-				
-				htmlStr += "<br><hr width='75%'><center><a href='#' style='color:#880000'>Jump to Preferences Section</a></center><h1>Accounts</h1>";
+
+				if(!DesktopContent._sequence) //in normal mode at jump link
+					htmlStr += "<br><hr width='75%'><center><a href='#' style='color:#880000'>Jump to Preferences Section</a></center><h1>Accounts</h1>";
 				
 				htmlStr += "<div id='accountsSearchDiv'>Search: " + 
 					"<input onkeyup='handleSearchKeyUp();' type='text' id='accountsSearchBox' value='" + _AccountsLastSearch + "'></div>";
@@ -510,7 +575,14 @@
 				if(_AccountsPageIndex < 0) _AccountsPageIndex = 0; //don't allow page to be negative, or bad array access happens
 				Debug.log("Settings showing page " + (_AccountsPageIndex+1) + " of " + numOfPages);
 				
-				htmlStr += "<center>"+ _AccountsOrderArray.length + " accounts found (" + _AccountsPageSize + " per page).</center><br>";
+				if(!_accountsArray || !_accountsArray[0])
+				{
+					Debug.log("No user accounts found!", Debug.WARN_PRIORITY);
+					return;
+				}
+				
+				htmlStr += "<center>"+ _AccountsOrderArray.length + " of " +
+						_accountsArray[0].length + " accounts match search.<br>(" + _AccountsPageSize + " per page)</center><br>";
 				htmlStr += "<div id='accountsPageNav'>Navigate: ";
 				htmlStr += "<a onmouseup='setAccountsPage("+ (_AccountsPageIndex-1) + ")'; event.stopPropagation(); return false;'>&nbsp;Prev </a>";				
 				
@@ -524,8 +596,12 @@
 				htmlStr += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				htmlStr += "<a onmouseup='Javascript:setAccountsPage("+ (_AccountsPageIndex+1) + ")';event.stopPropagation(); return false;'> Next&nbsp;</a>";
 				htmlStr += "</div>";
-				
-				htmlStr += "<center><div id='accountsPermNote'>Permissions Note: 0 := Inactive, 10 := Standard User, 100 := Expert, 255 := Super User<br>Tip: Add new group and view existing groups in the permissions box. <br>(e.g. allUsers: 10, newGroup: 150)</div></center>"; 
+								
+				htmlStr += "<center><div id='accountsPermNote'>" +
+						"<a onclick='showPermissionsTooltip(true /*alwaysShow*/);'>" +
+						"Click here for help with Resetting Passwords and User Permissions" +
+						"</a>" + 
+						"</div></center>"; 
 				
 				//////////////////////////////////////////////////////
 				//accounts table
@@ -535,7 +611,7 @@
 					htmlStr += "<td class='accountsHeaderFld'>" + 
 						"<a onmouseup='sortAccountsBy("+ j + ")';event.stopPropagation(); return false;'" +
 						" title='Sort by " + _accountFields[j] + "'>" + 
-						_accountFields[j] + "<a/></td>";
+						_accountFieldNames[j] + "<a/></td>";
 				htmlStr += "<td class='accountsHeaderFld' title='Make Account Changes'>Update</td>" +
 					"<td class='accountsHeaderFld' title='Delete Account'>Remove</td>";
 				htmlStr += "<td class='accountsHeaderFld' title='New Account Code'>NAC</td>" +
@@ -543,9 +619,11 @@
 				htmlStr += "</tr>";
 				
 				var lockModeTmp;
-				for(i=_AccountsPageIndex*_AccountsPageSize;i<_AccountsOrderArray.length && i < _AccountsPageIndex*_AccountsPageSize+_AccountsPageSize;++i) 
+				for(i=_AccountsPageIndex*_AccountsPageSize;i<_AccountsOrderArray.length && 
+					i < _AccountsPageIndex*_AccountsPageSize+_AccountsPageSize;++i) 
 				{								
-                    htmlStr += "<tr><td class='accountsUsername'>" + _accountsArray[0][_AccountsOrderArray[i]].getAttribute('value') + "</td>";
+                    htmlStr += "<tr><td class='accountsUsername'>" + 
+                    		_accountsArray[0][_AccountsOrderArray[i]].getAttribute('value') + "</td>";
                     htmlStr += "<td><input type='text' class='actEmailInput' id='accountsEmail" + _AccountsOrderArray[i] + "' value='" +
                         _accountsArray[1][_AccountsOrderArray[i]].getAttribute('value') + "' " +
                         "onkeydown='return handleEmailInputKeyDown(event);'" +
@@ -588,15 +666,15 @@
 				htmlStr += "<center style='padding-top: 5px;'><input id='theRealDelete' style='display:none; background-color: #EAABAB' type='submit' onmouseup='reallyDelete(event);' value='Really Delete!'></center><br>";
 				//////////////////////////////////////////////////////
 				//add new account option				
-						   htmlStr += "<h3 style='margin-bottom: -15px; margin-top: 10px'>Create New Account:</h3>";		
+				htmlStr += "<h3 style='margin-bottom: -30px; margin-top: 10px;'>Create New Account:</h3>";		
 				htmlStr += "<table><tr>";
 				for(j=0;j<_accountFields.length-1;++j) //omit nac field
-					htmlStr += "<td class='accountsHeaderFld'>" + _accountFields[j] + "</td>";
+					htmlStr += "<td class='accountsHeaderFld'>" + _accountFieldNames[j] + "</td>";
 				htmlStr += "</tr><tr>";
                 htmlStr += "<td><input type='text' id='accountsUsernameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
                 htmlStr += "<td><input type='text' id='accountsEmailNew' value='' onkeydown='return handleEmailInputKeyDown(event)'></td> ";
 				htmlStr += "<td><input type='text' id='accountsDisplayNameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
-				htmlStr += "<td><input type='text' id='accountsDisplayNameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
+				htmlStr += "<td><input type='text' id='accountsPermissionsNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
 				htmlStr += "<td></td><br><br>";
 				htmlStr += "</tr></table>";
 						       htmlStr += "<center><div style='padding-top: 10px'><input id='newacct' type='submit' onmouseup='createNewAccount(event);' value='Create New Account'></div></center>";
@@ -614,11 +692,13 @@
 					_AccountsTriedSearch = false;
 					
 				}				
-			}
+			} //end displayAccounts()
 
+			//=====================================================================================
 			//handleAccountsInputKeyDown ~~ 
 			//	allow alphanumeric character only
-			function handleAccountsInputKeyDown(e) {	
+			function handleAccountsInputKeyDown(e) 
+			{	
 				//Debug.log("Settings handleAccountsInputKeyDown " + e.keyCode);
                 if (e.keyCode == 9) return true;		//if tab focus on next box
                 else if ((!e.shiftKey && (e.keyCode >= 48 && e.keyCode <= 57)) || //accept numbers but not shifted numbers
@@ -633,7 +713,9 @@
 				return false; //to stop tab and enter (and unaccepted chars) from propagating to window
             }
 
-            function handleEmailInputKeyDown(e) {
+			//=====================================================================================
+            function handleEmailInputKeyDown(e)
+            {
                 //Debug.log("Settings handleAccountsInputKeyDown " + e.keyCode);
                 if (e.keyCode == 9) return true;		//if tab focus on next box
                 else if ((e.keyCode >= 48 && e.keyCode <= 57) || //accept numbers and shifted numbers
@@ -648,17 +730,21 @@
 
                 return false; //to stop tab and enter (and unaccepted chars) from propagating to window
             }
-			
-			function handleBodyMouseUp() {	
+
+			//=====================================================================================
+			function handleBodyMouseUp() 
+			{	
 				setLayout(-1); //clear selected layout
 				
 				_theDeleteIndex = -1;
 				var delEl = document.getElementById("theRealDelete");	
 				if(delEl) delEl.style.display = 'none';
 			}
-						
+
+			//=====================================================================================
 			//called to extract from form to RGB string
-			function extractFormToRGB(i) {	
+			function extractFormToRGB(i) 
+			{	
 				var retstr = "rgb" + (i==2?"a":"") + "(";
 				var el;
 				for(var j=0;j<3;++j)
@@ -670,8 +756,10 @@
 				}
 				return retstr;
 			}
-			
-			function checkSettingsMailbox() {
+
+			//=====================================================================================
+			function checkSettingsMailbox() 
+			{
 				Debug.log("Settings checkSettingsMailbox");
 				if(_settingsLayoutMailbox.innerHTML == "") 
 				{ //still dont have layout, try again
@@ -683,7 +771,8 @@
 			}
 			
 			//saveGenPreferences ~~
-			function saveGenPreferences(mouseEvent) {
+			function saveGenPreferences(mouseEvent) 
+			{
 			
 				if(mouseEvent)
 					mouseEvent.stopPropagation(); //do nothing but eat event away from body, so body mouseup doesn't cancel
@@ -704,13 +793,14 @@
 					setServerSettings();
 			} // end saveGenPreferences()
 			
-
+			//=====================================================================================
 			//setServerSettings ~~
 			//	This saves the user pref to server.
 			//	
 			//	Note: this is very similar to what happens in DesktopLogin.js/_updateLayoutTimeoutHandler()
 			//		They should be changed together.
-			function setServerSettings() {
+			function setServerSettings() 
+			{
 				Debug.log("Settings setServerSettings");
 				var data = "";
 				
@@ -757,27 +847,36 @@
 				
 				////////////////////////
 				//send save req
+				_triedNewAccount = false;
 				Debug.log("Settings Save Preferences -- " + data);
 				DesktopContent.XMLHttpRequest("Request?RequestType=setSettings", 
 						data,
 						settingsRequestHandler);
-			}
-			
-			function defaultColors() {
+			} //end setServerSettings()
+
+			//=====================================================================================
+			function defaultColors() 
+			{
 				Debug.log("Settings Default Colors");
-				
-				extractRGBtoForm("rgb(15,34,105)",0);
-				extractRGBtoForm("rgb(60,64,75)",1);
+
+//#define PREF_XML_BGCOLOR_DEFAULT 			"rgb(0,76,151)"     // -background color
+//#define PREF_XML_DBCOLOR_DEFAULT 			"rgb(0,40,85)"      // -dashboard color
+//#define PREF_XML_WINCOLOR_DEFAULT 		"rgba(196,229,255,0.9)"  	// -window color
+				extractRGBtoForm("rgb(0,76,151)",0);
+				extractRGBtoForm("rgb(0,40,85)",1);
 				extractRGBtoForm("rgba(196,229,255,0.9)",2);
-			}
-			
-			function colorEditHandler(e) {			
+			} //end defaultColors()
+
+			//=====================================================================================
+			function colorEditHandler(e) 
+			{			
 				Debug.log("Settings color input handler");				
 				for(var i=0;i<3;++i) //correct field and display result
 					extractRGBtoForm(extractFormToRGB(i),i);
 				return true;
-			}
-			
+			} //end colorEditHandler()
+
+			//=====================================================================================
 			//setLayout ~~
 			function setLayout(i,mouseEvent) 
 			{
@@ -824,7 +923,8 @@
 				if(mouseEvent)
 					mouseEvent.stopPropagation(); //do nothing but eat event away from body, so body mouseup doesn't cancel
 			} // end setLayout()	
-			
+
+			//=====================================================================================
 			//showLayoutText ~~
 			//	layout window fields:
 			//		0: _windows[i].getWindowName() 
@@ -882,8 +982,10 @@
 
 				el.innerHTML = str;
 			} //end showLayoutText()
-			
-			function updateAccount(i) {		
+
+			//=====================================================================================
+			function updateAccount(i) 
+			{		
 				Debug.log("Settings updateAccount-" + i);	
 				
 				var dnEl = document.getElementById("accountsDisplayName"+i);	
@@ -900,26 +1002,32 @@
 				data += "displayname=" + dnEl.value + "&";
 				data += "permissions=" + pEl.value + "&";				
 					
+				_triedNewAccount = false;
+				
 				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1",
 						data, settingsRequestHandler);
 				
-			}
-			
-			function deleteAccount(i) {		
+			} //end updateAccount()
+
+			//=====================================================================================
+			function deleteAccount(i) 
+			{		
 				Debug.log("Settings deleteAccount-" + i);	
 				_theDeleteIndex = i;
 				
 				var delEl = document.getElementById("theRealDelete");	
 				delEl.style.display = 'block';
 				
-			}
-			
-			function createNewAccount(event) {
+			} //end deleteAccount()
+
+			//=====================================================================================
+			function createNewAccount(event) 
+			{
 				if(event) event.stopPropagation();	
 				Debug.log("Settings createNewAccount");
 				
-				var elField = ["username","useremail","displayname"];
-				var elIds = ["accountsUsernameNew","accountsEmailNew","accountsDisplayNameNew"];
+				var elField = ["username","useremail","displayname","permissions"];
+				var elIds = ["accountsUsernameNew","accountsEmailNew","accountsDisplayNameNew","accountsPermissionsNew"];
 				var el;
 				
 				var data = "";
@@ -936,8 +1044,11 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1",
 						data, settingsRequestHandler);
 				
-			}
-			function reallyDelete(event) {	
+			} //end createNewAccount()
+			
+			//=====================================================================================
+			function reallyDelete(event)
+			{	
 				if(event) event.stopPropagation();	
 				Debug.log("Settings Really Deleted! Delete Index: " + _theDeleteIndex);
 				
@@ -945,21 +1056,31 @@
 				data += "type=deleteAccount&";
 				data += "username=" + _accountsArray[0][_theDeleteIndex].getAttribute('value') + "&";
 				data += "displayname=" + _accountsArray[2][_theDeleteIndex].getAttribute('value') + "&";
+				
+				_triedNewAccount = false;
+				
 				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1",
 						data, settingsRequestHandler);
-			}
-			
-			function lockToUsername(i, lock) {
+			} //end reallyDelete()
+
+			//=====================================================================================
+			function lockToUsername(i, lock)
+			{
 				Debug.log("Settings lockToUsername " + _accountsArray[0][i].getAttribute('value') + " lock " + lock);	
 
 				var data = "";
 				data += "lock=" + (lock?"1":"0") + "&";
 				data += "username=" + _accountsArray[0][i].getAttribute('value');
+
+				_triedNewAccount = false;
+				
 				DesktopContent.XMLHttpRequest("Request?RequestType=setUserWithLock&accounts=1",
 						data, settingsRequestHandler);				
-			}
-			
-			function resetUserTooltips() {
+			} //end lockToUsername()
+
+			//=====================================================================================
+			function resetUserTooltips() 
+			{
 				DesktopContent.popUpVerification("Are you sure you want to reset all your " +
 						"Tooltips?<br><br>This will reset the 'never show' property of your " +
 						"Tooltips. It is irreversible, and will result in you seeing all " +
@@ -972,9 +1093,11 @@
 								Debug.INFO_PRIORITY);
 					}, 0, 0, 0, false); //show loading
 				});
-			}
-			
-			function silenceUserTooltips() {
+			} //end resetUserTooltips()
+
+			//=====================================================================================
+			function silenceUserTooltips()
+			{
 				DesktopContent.popUpVerification("Are you sure you want to silence all your " +
 						"Tooltips?<br>",
 						function() {
@@ -985,16 +1108,57 @@
 								Debug.INFO_PRIORITY);
 					}, 0, 0, 0, true); //show loading
 				});
-			}
+			} //end silenceUserTooltips()
 			
-
+			//=====================================================================================
+			function showPermissionsTooltip(alwaysShow)
+			{
+				DesktopContent.tooltip(alwaysShow?"ALWAYS":"Password Reset and User Permissions",
+						(alwaysShow?"<b>Help with Password Reset and User Permissions:</b>\n\n":"") +
+						"First off, to do a <b>password reset</b> for a user, a system admin must toggle the user's " +
+						"<b>permissions string</b>. Setting it to 0, and then back to a valid <b>permissions string</b> should force " +
+						"the user to have to create a new password with a <b>New Account Code</b> (NAC)." +
+						"\n\n" +
+						"Now, for more on permissions..." +
+						"\n\n" +
+						"In <i>otsdaq</i>, a user's <b>permissions string</b> consists of pairs " +
+						"of <b>group names</b> and <b>permission indices</b>; each <b>GROUP:INDEX</b> pair is separated by a comma. " +
+						"\n\n" + 
+						"The syntax looks like this: <b>GROUP:INDEX, GROUP:INDEX, ...</b>" +
+						"\n\n" +
+						"<b>Group names</b> afford flexibility in organizing your users. " +
+						"There is one required <b>group name</b>, &quot;AllUsers.&quot; " +
+						"All other <b>group names</b> can be made up by <i>otsdaq</i> system administrators." +
+						"\n\n" +
+						"For example, imagine a user that needs access to " +
+						"expert Tracker controls, and standard Shifter controls, but no Calorimeter access; such a user's permission string might be as follows: " +
+						"\n\n" +
+						"<TAB><b> AllUsers: 10, Tracker:100, Calorimeter:0 </b></TAB>" +
+						"\n\n" +
+						"The above user, would be a 10 (i.e. <i>standard user</i>) for default requests, " +
+						"a 100 (i.e. <i>expert</i>) for Tracker requests, " +
+						"and 0 (i.e. <i>inactive</i>) for Calorimeter requests." +
+						"\n\n\n" +
+						"The expected interpretation of <b>permission index</b> values are as follows (any number from 0 to 255 is valid): " +
+						"\n\n<INDENT><b>0 := Inactive (reset account password)\n10 := Standard User\n100 := Expert\n255 := Admin" +
+						"</b></INDENT>" +
+						"\n\n" +
+						"On the server side, system administrators must setup <b>Application Supervisor</b> request handling for custom <b>group names</b> to be effective. " +
+						"<b>Application Supervisor properties</b> can be created in the <b>configuration tree</b> to override default request handling settings. " +
+						"<b>Front-End Macros</b> also have a <b>permissions string</b> which must be setup by the plugin creators in the source code." +
+						"");
+				
+			} //end showPermissionsTooltip()
 
 			</script>
 		
 	</head>
 	
 	
-	<body onload='Javascript:init();'>	
+	<body onload='//init() called by DesktopContent.js'>	
+		<div id='omni' style='display:none;'> <!-- hide by default until normal mode handling -->
+		
+		<center>This page consists of a Preferences section and an Accounts section.<br><br></center>
 		
 		<div id='jumpToAccounts'></div>
 		<div id = "header" style = "width:100%"><h1>General Preferences</h1>
@@ -1050,7 +1214,7 @@
 		<div id='newAccountFeedbackDiv'></div>
 				<br><br><br><br>
 			
-
+		</div>
 	</body>
 	
 </html>

@@ -81,7 +81,7 @@ void ECLSupervisor::destroy(void)
 }
 
 //==============================================================================
-void ECLSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
+void ECLSupervisor::defaultPage(xgi::Input* /*in*/, xgi::Output* out)
 
 {
 	//__COUT__ << this->getApplicationContext()->getURL() << __E__;
@@ -92,7 +92,7 @@ void ECLSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 }
 
 //==============================================================================
-void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
+void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference /*e*/)
 
 {
 	// try
@@ -132,7 +132,7 @@ void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 }
 
 //==============================================================================
-void ECLSupervisor::transitionStarting(toolbox::Event::Reference e)
+void ECLSupervisor::transitionStarting(toolbox::Event::Reference /*e*/)
 
 {
 	try
@@ -153,7 +153,7 @@ void ECLSupervisor::transitionStarting(toolbox::Event::Reference e)
 }
 
 //==============================================================================
-void ECLSupervisor::transitionStopping(toolbox::Event::Reference e)
+void ECLSupervisor::transitionStopping(toolbox::Event::Reference /*e*/)
 
 {
 	try
@@ -168,7 +168,7 @@ void ECLSupervisor::transitionStopping(toolbox::Event::Reference e)
 }
 
 //==============================================================================
-void ECLSupervisor::transitionPausing(toolbox::Event::Reference e)
+void ECLSupervisor::transitionPausing(toolbox::Event::Reference /*e*/)
 
 {
 	try
@@ -187,7 +187,7 @@ void ECLSupervisor::transitionPausing(toolbox::Event::Reference e)
 }
 
 //==============================================================================
-void ECLSupervisor::transitionResuming(toolbox::Event::Reference e)
+void ECLSupervisor::transitionResuming(toolbox::Event::Reference /*e*/)
 
 {
 	try
@@ -203,7 +203,7 @@ void ECLSupervisor::transitionResuming(toolbox::Event::Reference e)
 	}
 }
 
-void ECLSupervisor::enteringError(toolbox::Event::Reference e)
+void ECLSupervisor::enteringError(toolbox::Event::Reference /*e*/)
 {
 	try
 	{
@@ -240,7 +240,7 @@ xoap::MessageReference ECLSupervisor::MakeSystemLogbookEntry(xoap::MessageRefere
 	Field_t                field;
 	Form_t::field_sequence fields;
 	std::string            users =
-	    theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor());
+	    theRemoteWebUsers_.getActiveUserList();
 
 	form.name("OTSDAQ System Logbook Entry");
 
@@ -278,7 +278,7 @@ int ECLSupervisor::Write(WriteState state)
 	Field_t                field;
 	Form_t::field_sequence fields;
 	std::string            users =
-	    theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor());
+	    theRemoteWebUsers_.getActiveUserList();
 
 	switch(state)
 	{

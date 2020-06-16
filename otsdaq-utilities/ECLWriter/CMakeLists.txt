@@ -30,7 +30,7 @@ find_package(CURL)
 if(CURL_FOUND)
   include_directories(${CURL_INCLUDE_DIRS})
 #endif(CURL_FOUND)
-cet_make( LIBRARY_NAME ECLWriterCore EXCLUDE ECLSupervisor.cc
+cet_make( LIBRARY_NAME ECLWriterCore EXCLUDE ECLSupervisor.cc ECLTest.cc
 	LIBRARIES
 	artdaq-core_Utilities
         ${XDAQ_XERCES-C}
@@ -39,12 +39,13 @@ cet_make( LIBRARY_NAME ECLWriterCore EXCLUDE ECLSupervisor.cc
     ${CURL_LIBRARIES}
     MF_MessageLogger
 	)
-cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx
+cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx ECLTest.cc
 	LIBRARIES
 	ECLWriterCore
 	artdaq-core_Utilities
 	${XDAQ_BASIC_LIB_LIST}
 	#XmlUtilities
+	Macros
 	CoreSupervisors
 		 SupervisorInfo
 		 WebUsersUtilities
@@ -59,6 +60,7 @@ cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx
     ${CURL_LIBRARIES}
 	)
 
+	cet_make_exec(ECLTest LIBRARIES ECLWriterCore ${Boost_PROGRAM_OPTIONS_LIBRARY})
 endif(CURL_FOUND)
 
 endif(XSD_FOUND)

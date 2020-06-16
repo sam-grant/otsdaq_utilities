@@ -36,7 +36,11 @@ var _OFFSET_Y				= 80;
     // isEquivalent(a, b)
 	// setIntersection(list1, list2)
 
-
+var windowTooltip = "To verify Status Monitoring is enabled, check the Gateway Supervisor parameter that " +
+		"controls it. To check app status, set this field to YES in your Context Group Configuration Tree: \n\n" +
+		"<b>XDAQApplicationTable --> \nGatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>" +
+		"\n\n" +
+		"Remember, to restart ots after a Context group configuration change.";
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,6 +49,10 @@ var _OFFSET_Y				= 80;
 function init() 
 {					
     Debug.log("App status init");
+    
+
+	DesktopContent.setWindowTooltip(windowTooltip);
+    
     
     _statusDivElement = document.getElementById("appStatusDiv");
     _filtersDivElement = document.getElementById("filtersDiv");
@@ -166,6 +174,9 @@ function getAppsArray()
 {
 	return new Promise(function(resolve, reject)
 			{
+
+	    var pingTime = parseInt((new Date()).getTime()); //in ms
+	    
 		DesktopContent.XMLHttpRequest("Request?RequestType=getAppStatus", "", 
 				function (req,param,err) 
 				{
@@ -202,19 +213,26 @@ function getAppsArray()
 					
 				var all0 = true;
 				for(var i=1;i<appTime.length;++i)
-					if(appTime[i].getAttribute("value") != "0")
+				{
+					//Wed Oct 14 05:20:48 1970 CDT
+					var appTimeSplit = appTime[i].getAttribute("value").split(' ');
+					if(appTime[i].getAttribute("value") != "0" &&
+							(appTimeSplit.length > 2 && 
+									(appTimeSplit[appTimeSplit.length-2]|0) != 1970 
+									&& 
+									(appTimeSplit[appTimeSplit.length-2]|0) < 4000
+									) //i.e. real if year is not 0 or -1
+							)
 					{
 						all0 = false;
 						break;
 					}
+				}
 				
 				if(all0)
 				{
 					Debug.log("It appears that active application status monitoring is currently OFF! " +
-							"\n\n\n" +
-							"To verify it is on, check the Gateway Supervisor parameter that " +
-							"controls it. To check app status, set this field to YES in your Context Group Configuration Tree: \n\n" +
-							"<b>GatewaySupervisor (record in XDAQApplicationTable) --> \nLinkToSuperivorTable --> \nEnableApplicationStatusMonitoring</b>",
+							"\n\n\n" + windowTooltip,
 							Debug.HIGH_PRIORITY);
 				}            	
 			}
@@ -237,6 +255,14 @@ function getAppsArray()
 					"url"       :   appUrls[i].getAttribute("value"),
 					"context"   :   appContexts[i].getAttribute("value")
 				});
+				
+				var appTimeSplit = _allAppsArray[_allAppsArray.length-1].time.split(' ');
+				if(!(appTimeSplit.length > 2 && 
+						(appTimeSplit[appTimeSplit.length-2]|0) != 1970 
+						&& 
+						(appTimeSplit[appTimeSplit.length-2]|0) < 4000
+						)) //i.e. real if year is not 0 or -1
+					_allAppsArray[_allAppsArray.length-1].progress = 0;
 
 				// populate the array of classes
 
@@ -272,6 +298,14 @@ function getAppsArray()
 			//return _allAppsArray;
 			resolve(_allAppsArray);
 			
+        	
+        	_arrayOnDisplayTable = setIntersection(_allAppsArray, _arrayOnDisplayTable); 
+        	
+
+        	ping_ = parseInt((new Date()).getTime()) - pingTime; //in ms
+        	while((""+ping_).length < 3) ping_ = "0" + ping_;
+        	displayTable(_arrayOnDisplayTable);	
+        	
             // update the _allAppsArray variable with repeated calls to server
             if(_updateAppsTimeout) window.clearTimeout(_updateAppsTimeout);
             _updateAppsTimeout = window.setTimeout(updateAppsArray, 1000 /*ms*/);
@@ -288,18 +322,16 @@ function getAppsArray()
 // this function updates the _allAppsArray by making repeated requests to the server 
 // at specific time intervals. The function is called by setTimeout()
 // because setInterval() can get unwieldy.
+var ping_ = 0;
 function updateAppsArray() 
-{
+{    
 	getAppsArray();
-	_arrayOnDisplayTable = setIntersection(_allAppsArray, _arrayOnDisplayTable); 
-	displayTable(_arrayOnDisplayTable);	
 }; // end of updateAppsArray()
 
 //=====================================================================================
 // this function displays a table with the app array passed into it
 function displayTable(appsArray)
 {
-
     // clear the appStatusDiv
     var statusDivElement = document.getElementById("appStatusDiv");
     statusDivElement.innerHTML = "";
@@ -317,7 +349,10 @@ function displayTable(appsArray)
     table.border = "0";
 
     //Get the count of columns.
-    var columnNames = ["App Name", "Status", "Progress", "Detail", "Last Update", "App Type", "App URL", "App ID", "Parent Context Name"];
+    var columnNames = ["App Name", "Status", "Progress", "Detail",
+					   //add white space so changing ping has less update effect
+					   "&nbsp;&nbsp;Last Update&nbsp;&nbsp;", 
+					   "App Type", "App URL", "App ID", "Parent Context Name"];
     var columnKeys = ["name", "status", "progress", "detail", "stale", "class", "url", "id", "context" ];
     var columnCount = columnNames.length;
 
@@ -344,12 +379,18 @@ function displayTable(appsArray)
             
             if(columnKeys[j] == "stale")
             {
+            	cell.style.fontSize = "12px";
+            	            	
             	var staleString = "";
             	var staleSeconds = appsArray[i][columnKeys[j]] | 0;
             	if(appsArray[i].time == "0")
             		staleString = "No status";
+            	else if(staleSeconds < 1)
+            		staleString = "0." + ping_ + " seconds ago";
+            	else if(staleSeconds < 2)
+            		staleString = "1." + ping_ + " seconds ago";            		
             	else if(staleSeconds < 10)
-            		staleString = "Seconds ago";
+            		staleString = staleSeconds + " seconds ago";
             	else if(staleSeconds < 60)
             		staleString = "One minute ago";
             	else if(staleSeconds < 40*60)
@@ -415,6 +456,7 @@ function displayTable(appsArray)
                         break;                    	
                     case "Failed":
                     case "Error":
+                    case "Soft-Error":
                     	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(255, 124, 124), rgb(255, 159, 159) 10%, rgb(218, 0, 0) 80%, rgb(144, 1, 1) 100%)";
                     	                    	
                     	cell.style.cursor = "pointer";
@@ -437,10 +479,10 @@ function displayTable(appsArray)
                 
                 cell.innerHTML = statusString;
             }
-//            else if (columnKeys[j] == "detail")
-//            {
-//            	decodeURIComponent
-//        	}
+            else if (columnKeys[j] == "detail")
+            {
+            	cell.innerHTML = decodeURIComponent(appsArray[i][columnKeys[j]]);
+        	}
         	else
             	cell.innerHTML = appsArray[i][columnKeys[j]];
             

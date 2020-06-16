@@ -1,548 +1,750 @@
+
+	body {
+		background-color: 			white;
+		overflow: 					hidden;
+		transition: 				background-color .25s;
+	}
+
+	* {			
+		-webkit-user-select: 	none; /* prevent highlight selection (does not stop ghost images, must use el.ondragstart = function() {return false;}; */
+		-moz-user-select: 		none;
+		user-select:			none;
+		outline: 				none;  /* to stop firefox selection*/
+	}
+
+	input {	/*normal highlight selecting effects on inputs*/
+		-webkit-user-select: 	auto; 
+		-moz-user-select: 		auto;
+		user-select: 			auto;
+	}
+
+	iframe{
+		padding: 					0;
+		border: 					0;
+		frame-border:				0;
+		hspace:						0;
+		vspace:						0;
+		margin:						0;
+
+	}
+
+	#clearDiv {
+		clear: 						both;
+	}
+
+	.preloadImage {			
+		width: 						24px;
+		height: 					20px;
+		position:					absolute;
+		left: 						-100px;
+		top: 						0;
+		z-index:					1000;
+	}
+
+	.widgetEditIcon {			
+		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
+		width: 						24px;
+		height: 					20px;
+		border: 					0;
+		margin: 					34px -3px -45px -21px;
+		cursor: 					pointer;
+	}
+
+	.widgetOtherEditIcon {		
+		margin: 					-24px -3px -25px -1px !important;
+	}
+
+	.widgetEditIcon:hover, #preloadImage-treeEditIconHover {
+		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);		
+	}
+
+	.widgetDeleteIcon {			
+		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+		width: 						16px;
+		height: 					20px;
+		border: 					0;
+		margin: 					34px 0 -55px 1px;
+		cursor: 					pointer;
+	}
+
+	.widgetDeleteIcon:hover, #preloadImage-treeEditTrashIconHover {
+		background-image: 			url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+	}
+
+	button {
+		cursor: 					pointer;
+
+		background: 				#2a81d7;
+		background: 				-moz-linear-gradient(0% 100% 90deg, #206bcb, #3e9ee5);
+		background: 				-webkit-gradient(linear, 0% 0%, 0% 100%, from(#3e9ee5), to(#206bcb));
+		border-top: 				1px solid #2a73a6;
+		border-right: 				1px solid #165899;
+		border-bottom: 				1px solid #07428f;
+		border-left: 				1px solid #165899;
+		-moz-box-shadow:			inset 0 1px 0 0 #62b1e9;
+		-webkit-box-shadow: 		inset 0 1px 0 0 #62b1e9;
+
+		color: 						#fff;
+		font: 						normal 11px/1 "lucida grande", sans-serif;
+		padding: 					5px 5px 7px 5px;
+		margin:						5px;
+		border-radius: 				9px;
+		text-align: 				center;
+		text-shadow: 				0 -1px 1px #1d62ab;
+		width: 						100%;
+		-webkit-background-clip: 	padding-box;
+	}
+
+	button:hover {
+		background-color: 			#52a8e8;
+		background-image: 			-webkit-gradient(linear, left top, left bottom, color-stop(0%, #52a8e8), color-stop(100%, #377ad0));
+		background-image: 			-webkit-linear-gradient(top, #52a8e8, #377ad0);
+		background-image: 			-moz-linear-gradient(top, #52a8e8, #377ad0);
+		background-image: 			linear-gradient(top, #52a8e8, #377ad0);
+		border-top: 				1px solid #4081af;
+		border-right: 				1px solid #2e69a3;
+		border-bottom: 				1px solid #20559a;
+		border-left: 				1px solid #2e69a3;
+		-webkit-box-shadow: 		inset 0 1px 0 0 #72b9eb, 0 1px 2px 0 #b3b3b3;
+		box-shadow: 				inset 0 1px 0 0 #72b9eb, 0 1px 2px 0 #b3b3b3;
+		text-shadow: 				0 -1px 1px #3275bc;
+	}
+
+	button:active {
+		background: 				#3282d3;
+		border: 					1px solid #154c8c;
+		border-bottom: 				1px solid #0e408e;
+		-moz-box-shadow:			inset 0 0 6px 3px #1657b5, 0 1px 0 0 #fff;
+		-webkit-box-shadow: 		inset 0 0 6px 3px #1657b5, 0 1px 0 0 #fff;
+		text-shadow: 				0 -1px 1px #2361a4;
+	}
+
+	button:focus {
+		outline:					0; /*to stop blue active outline*/
+	}
+
+	button[disabled],
+	button[disabled]:hover,
+	button[disabled]:active {
+		background: 				#999;
+		background: 				-webkit-gradient(linear, 0% 0%, 0% 100%, from(#dadada), to(#f3f3f3));
+		border-top: 				1px solid #c5c5c5;
+		border-right: 				1px solid #cecece;
+		border-bottom: 				1px solid #d9d9d9;
+		border-left: 				1px solid #cecece;
+		color: 						#8f8f8f;
+		box-shadow: 				none;
+		-moz-box-shadow: 			none;
+		-webkit-box-shadow: 		none;
+		cursor: 					not-allowed;
+		text-shadow: 				0 -1px 1px #ebebeb;
+	}
+
+	#mainBlockContainer {
+		z-index: 					4;
+		transition: 				background-color .25s;
+		position: 					absolute;
+		top: 						0;
+		left: 						0;
+	}
+
+	#grayOutCoverDiv {
+		z-index: 					149 /*one less than file block*/;
+		transition: 				background-color .25s;
+		position: 					absolute;
+		top: 						0;
+		left: 						0;
+		background:					rgba(87,87,87, 0.6);
+	}
+
+	#fileFrame, #editFrame {
+		box-shadow: 				inset rgba(255,254,255,0.6) 0 0.3em .3em,
+									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+									rgb(150,150,150) 0 .1em 3px,
+									rgb(175,175,175) 0 .2em 1px, /* color border */
+									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+	}
+
+	#fileBlock {
+		z-index:					150;
+		border: 					0;
+		transition: 				margin-left .25s;
+		
+		background: 				#90908a; /* For browsers that do not support gradients */
+		background: 				-webkit-linear-gradient(left, #000000 , #90908a); /* For Safari 5.1 to 6.0 */
+		background: 				-o-linear-gradient(right, #000000 , #90908a); /* For Opera 11.1 to 12.0 */
+		background: 				-moz-linear-gradient(right, #000000 , #90908a); /* For Firefox 3.6 to 15 */
+		background: 				linear-gradient(to right, #000000 , #90908a); /* Standard syntax */
+
+		box-shadow: 				inset rgba(255,254,255,0.6) 0 0.3em .3em,
+									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+									rgb(150,150,150) 0 .1em 3px,
+									rgb(175,175,175) 0 .2em 1px, /* color border */
+									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+	}
+
+	#mainBlock {
+		//transition: margin-left 10s;
+		transition: 				left .25s;
+		background-color: 			rgb(255,255,255);
+	}
+
+	.editMode {
+		background-color: 			rgba(255, 59, 48, 0.4);
+	}
+
+	#editBlock {
+		transition-timing-function: ease-out;
+		transition: 				margin-bottom .5s;
+		-webkit-transition-timing-function: ease-out;
+		-webkit-transition: 		margin-bottom .5s;
+		overflow: 					hidden;
+		z-index:					149;
+
+		box-shadow: 				inset rgba(255,254,255,0.6) 0 0.3em .3em,
+									inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+									rgb(150,150,150) 0 .1em 3px,
+									rgb(175,175,175) 0 .2em 1px, /* color border */
+									rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+	}
+
+	.widgetCover {
+		z-index: 					9;
+		cursor: 					grab;
+	}
+
+	.resizeWidgetCover {
+		outline: 					dashed thin;
+	}
+
+	.resizeWidgetCoverTop {
+		cursor: 					ns-resize !important;
+	}
+
+	.resizeWidgetCoverBottom {
+		cursor: 					ns-resize !important;
+	}
+
+	.resizeWidgetCoverRight {
+		cursor: 					ew-resize !important;
+	}
+
+	.resizeWidgetCoverLeft {
+		cursor: 					ew-resize !important;
+	}
+
+	.resizeWidgetCoverTopLeft {
+		cursor: 					nwse-resize !important;
+	}
+
+	.resizeWidgetCoverTopRight {
+		cursor: 					nesw-resize !important;
+	}
+
+	.resizeWidgetCoverBottomLeft {
+		cursor: 					nesw-resize !important;
+	}
+
+	.resizeWidgetCoverBottomRight {
+		cursor: 					nwse-resize !important;
+	}
+
+	.mainBlock {
+		transition: 				background-color .25s;
+		position:					absolute;
+	}
+
+	.drawAndDragBox-active {
+		display: 					block !important;
+	}
+
+	.drawAndDragBox-select > span {
+		background-color: 			rgba(255, 45, 85, 0.6);
+		border: 					1px solid #b20e8c;
+		width: 						100%;
+		height: 					100%;
+		float: 						left;
+	}
+
+	.drawAndDragBox-select {
+		display: 					none;
+		z-index: 					10;
+		position: 					absolute !important;
+		cursor: 					default !important;
+	}
+
+	.popup {
+		font-family: 				"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
+
+		width:						450px;
+		height:						320px;
+		background-color: 			#002540;
+		z-index:					9;
+		position: 					fixed;
+		top: 						40%;
+		left: 						50%;
+		margin-top: 				-100px;
+		margin-left: 				-200px;
+		opacity:					0.9;
+		border-radius:				5px;
+		padding:					6px;
+		color:						#c4e9f5;
+		border: 					2px solid #c4e9f5;
+	}
+
+	#popupSaveControlsPage {
+		display:					none;
+	}
 	
-			body {
-        		background-color: rgb(255,204,0);
-    	        overflow-x: hidden;
-    	        overflow-y: hidden;
-				transition: background-color .25s;
-			}
-
-			iframe{
-				padding: 0
-				border: 0px 0px 0px 0px;
-				frameBorder=0;
-				hspace=0;
-				vspace=0;
-				marginheight=0;
-				marginwidth=0;
-			}
-
-			#clearDiv {
-				clear: both;
-			}
-
-			#fileBlock {
-				  border: none;
-				  marginheight = 0;
-				  transition: margin-left .25s;
-	    		          //transition: width 0.5s;
-//				  background: red; /* For browsers that do not support gradients */
-//				  background: -webkit-linear-gradient(left, red , yellow); /* For Safari 5.1 to 6.0 */
-//				  background: -o-linear-gradient(right, red, yellow); /* For Opera 11.1 to 12.0 */
-//				  background: -moz-linear-gradient(right, red, yellow); /* For Firefox 3.6 to 15 */
-//				  background: linear-gradient(to right, red , yellow); /* Standard syntax */
-			//}
-			}				
-
-			#mainBlock {
-			    //transition: margin-left 10s;
-			  	transition: left .25s;
-				background-color: rgb(255,255,255);
-			}
-			.editMode {
-				background-color: rgba(255, 59, 48, 0.4);
-			}
-
-			#editBlock {
-				transition-timing-function: ease-out;
-				transition: margin-bottom .5s;
-				-webkit-transition-timing-function: ease-out;
-				-webkit-transition: margin-bottom .5s;
-				overflow: hidden;
-				//background-color: rgb(200,0,0);
-			}
-
-			.widgetCover {
-				z-index: 9;
-				cursor: grab;
-//			  	background-color: rgba(239, 28, 190, 0.6);
-			}
-
-			.resizeWidgetCover {
-				outline: dashed thin;
-			}
-
-			//Sides	
-			.resizeWidgetCoverTop {
-				cursor: ns-resize !important;
-			}
-
-			.resizeWidgetCoverBottom {
-				cursor: ns-resize !important;
-			}
-
-			.resizeWidgetCoverRight {
-				cursor: ew-resize !important;
-			}
-
-			.resizeWidgetCoverLeft {
-				cursor: ew-resize !important;
-			}
-
-			//Corners
-			.resizeWidgetCoverTopLeft {
-				cursor: nwse-resize !important;
-			}
-
-			.resizeWidgetCoverTopRight {
-				cursor: nesw-resize !important;
-			}
-
-			.resizeWidgetCoverBottomLeft {
-				cursor: nesw-resize !important;
-			}
-
-			.resizeWidgetCoverBottomRight {
-				cursor: nwse-resize !important;
-			}
-
-			.mainBlock {
-			    transition: background-color .25s;
-				position:absolute;
-			}
-
-			.ghost-active {
-				display: block !important;
-			}
-
-			.ghost-select > span {
-				background-color: rgba(255, 45, 85, 0.6);
-			  	border: 1px solid #b20e8c;
-			  	width: 100%;
-			  	height: 100%;
-			  	float: left;
-			}
-
-			.ghost-select {
-				display: none;
-			  	z-index: 10;
-				position: absolute !important;
-			  	cursor: default !important;
-			}
-
-			.popup{
-                width:400px;
-                height:320px;
-                background-color: #002540;
-                z-index:9;
-                position: fixed;
-				top: 40%;
-				left: 50%;
-				margin-top: -100px;
-				margin-left: -200px;
-				opacity:0.9;
-				border-radius:5px;
-				padding:6px;
-				color:#c4e9f5;
-				border: 2px solid #c4e9f5;
-        	}
-
-        	#popupSaveControlsPage{
-        	  	display:none;
-       	 	}
-
-			.cursor-default {
-				cursor: default !important;
-			}
-
-			.cursor-grabbing {
-				cursor: grabbing !important;
-			}	
-
-			.cover {
-			    transition: background-color .25s;
-		        z-index: 4;
-				position: absolute;
-			}
-
-			.action-required {
-				border: 10px solid rgb(255, 204, 0);
-			  	box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
-		  		-webkit-box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
-				-moz-box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);				
-			}
-
-			#addPVMenuDiv {
-				margin: auto;
-				position: absolute;
-				display: none;
-				height: auto;
-				width: 28%;
-				top: 30%;
-				left: 36%;
-				z-index: 32;
-
-				box-shadow: 1px 1px 2px #cfcfcf;
-			}
-
-			#addPVMenu {
-				position: relative;
-				top: 0px;
-				left: -1px;
-				height: 100%;
-				width: 100%;
-				background-color: rgba(178,178,178,0.9);
-				border: solid 2px rgba(0,0,0,0.5);
-				border-radius: 1px;
-			}
-
-			#contextMenuDiv {
-				position: absolute;
-				z-index: 10;
-			}
-
-			#hotkeyMenuDiv {
-				z-index: 10;	
-				margin: auto;
-				height: auto;
-				width: auto;
-				position: absolute;
-				top: 0px;
-				left: 0px;
-			   		-webkit-animation-name: animatetop;
-		            -webkit-animation-duration: 0.4s;
-		        	-moz-animation-name: animatetop;
-		        	-moz-animation-duration: 0.4s;
-				animation-name: animatetop;
-		  	    animation-duration: 0.4s;
-			}
-
-			.menu {
-				display: none;
-				position: absolute;
-			  	z-index: 10;
-				background-color: rgba(0, 0, 0, 0.7);
-				padding: 12px 0;
-				width: 240px;
-				border: solid 1px #dfdfdf;
-				box-shadow: 1px 1px 2px #cfcfcf;
-			}
-			.menu--active {
-			  display: block;
-			}
-
-			.menu__items {
-				list-style: none;
-				margin: 0;
-				padding: 0;
-				background-color: transparent !important;
-			}
-
-			.menu__item {
-				display: block;
-				margin-bottom: 4px;
-			}
-
-			.menu__item:last-child {
-				margin-bottom: 0;
-			}
-
-			.menu__link {
-		        display: block;
-		        padding: 4px 12px;
-		        color: #d3d3d3;
-		        text-decoration: none;
-				background-color: transparent;
-			}
-
-			.menu__setting {
-				position:absolute;
-				right: 5px;
-				color: rgb(255, 59, 48);
-				//color: #ff0000;
-				width: 60%;
-				text-align: right;
-			}
-
-			.menu__spacer {
-				width: 35%;
-				height: 100%;
-			}
-
-			.menu__label {
-			    display: block;
-			    padding: 4px 12px;
-				color: rgba(0, 0, 0, 0.8) !important;
-				background-color: #d3d3d3 !important;
-		  	    text-decoration: none;
-				font-weight: bold;
-			}
-			.menu__link:hover {
-				color: rgba(0, 0, 0, 0.8) !important;
-				background-color: #d3d3d3 !important;
-			}
-
-			.menu__button {
-				width: 100%;
-				background-color: rgba(0,0,0,0.6);
-				color: #fff;
-				font: bold "lucida grande", sans-serif;
-				padding: 3px 5px;
-				padding-top: 2.5%;
-				padding-bottom: 2.5%;
-				text-align: center;
-				border:none;
-			}
-
-			.addPVMenuInput {
-				border-bottom: 1px solid rgba(0,0,0,0.5) !important;
-				color: rgba(0,0,0,0.8) !important;
-			}
-
-
-			#navigationBarDiv {
-				top: 0%;
-				left: 0%;
-			}
-
-			#navigationMenu {
-				padding: 0px !important;
-			    margin: 0px;
-				list-style:none;
-			    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:13px;   
-			    text-shadow: 0 -1px 3px #202020;
-				top: 0%;
-				left: 0%;
-			    width:100%;
-				z-index: 15;			    
-			    	-moz-border-radius:4px;
-			        -webkit-border-radius:4px;
-				border-radius:4px;
-			}
-
-			#navigationMenu li {
-			    display:block; 
-				float:left; 
-				border-right:1px solid #5d5d5d; 
-				border-left:1px solid #929292; 
-				width: 30%;
-				height:5%; 
-				border-bottom:1px solid #575757; 
-				border-top:1px solid #797979;
-				padding: 0px !important;
-		        margin: 0px;			 
-		        background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #787878), color-stop(0.5, #5E5E5E), color-stop(0.51, #707070), color-stop(1, #838383));
-		        background-image: -moz-linear-gradient(center bottom, #787878 0%, #5E5E5E 50%, #707070 51%, #838383 100%);
-		        background-color:#5f5f5f; 
-			}
-
-			#navigationMenu li:hover {
-		        background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
-		        background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
-		        background-color:#383838; 
-
-		        -moz-box-shadow: inset 0 0 5px 5px #535353;
-		        -webkit-box-shadow: inset 0 0 5px 5px #535353;
-		        box-shadow: inset 0 0 5px 5px #535353;
-			}
-
-			#navigationMenu li:active {
-		        background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
-		        background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
-		        background-color:#383838;
-
-       		    -moz-box-shadow: inset 0 1px 2px 2px #000;
-		        -webkit-box-shadow: inset 0 1px 2px 2px #000;
-		        box-shadow: inset 0 1px 2px 2px #000;
-			}
-
-			#navigationMenu li a {
-			    color:white; 
-				text-decoration:none;
-				text-align:center; 
-				display:block; 
-				line-height:34px;
-				outline:none; 
-			}
-
-			#navigationMenu li:first-child {
-		        -moz-border-radius:4px 0 0 4px;
-		        -webkit-border-radius:4px 0 0 4px;
-		        border-radius:4px 0 0 4px;
-
-		        border-left:none;
-			}
-
-			#navigationMenu li:last-child {
-		        -moz-border-radius:0 4px 4px 0;
-		        -webkit-border-radius:0 4px 4px 0;
-		        border-radius:0 4px 4px 0;
-		        border-right:none;   
-		        //width:124px;
-			}
-
-			#navigationMenu {
-				position:absolute;
-				left: 4.5%;
-				top: 1%;
-				display: none:
-			}
-
-			.navigationMenu--active {
-				display: block;
-				z-index: 15;
-		        -webkit-animation: showMenu 1s;
-	     	    -moz-animation: showMenu 1s;
-	     	    animation: showMenu 1s;
-			}
-
-			.navigationMenu--Edit {
-                background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #     434343), color-stop(1, #555555));   
-                background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
-                background-color:#383838;
-                -moz-box-shadow: inset 0 0 5px 5px #535353;
-                -webkit-box-shadow: inset 0 0 5px 5px #535353;
-                box-shadow: inset 0 0 5px 5px #535353;
-			}
-
-
-
-			.editWidgetAttributesPopup-container {
-				position: absolute;
-				display: none;
-				z-index: 100;
-				top: 0%;
-				left: 10%;
-				background-color: rgba(0, 0, 0, 0.8);
-				border: 1px solid #888;
-			    width: 80%;
-				height: 80%;	
-			    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
-			      -webkit-animation-name: animatetop;
-		          -webkit-animation-duration: 0.4s;
-		    	  -moz-animation-name: animatetop;
-		    	  -moz-animation-duration: 0.4s;
-				animation-name: animatetop;
-		 	    animation-duration: 0.4s;
-			}
-
-			.editWidgetAttributesPopup-container * {			
-				-webkit-user-select: 	none; /* prevent highlight selection (does not stop ghost images, must use el.ondragstart = function() {return false;}; */
-				-moz-user-select: 		none;
-				user-select:			none;
-				outline: 				none;  /* to stop firefox selection*/	
-			}
-
-			.editWidgetAttributesPopup-header {
-				position: absolute;
-				top: 0%;
-				left: 0%;
-				height: 10%;
-				width: 100%;
-				background-color: rgba(48, 45, 45, 0.7);
-			}
-
-			.editWidgetAttributesPopup-body {
-				background-color: rgba(76, 76, 76, 0.7);
-				position: absolute;
-				top: 10%;
-				left: 20%;
-				height: 80%;
-				width: 80%
-				overflow-y: scroll;
-				overflow-x: hidden;
-			}
-
-			.editWidgetAttributesPopup-menu {
-				background-color: rgba(53, 53, 53, 0.3);
-				position: absolute;
-				top: 10%;
-				left: 0%;
-				height: 80%;
-				width: 20%;
-			}
-
-			.editWidgetAttributesPopup-footer {
-				position: absolute;
-				top: 90%;
-				left: 0%;
-				width: 100%;
-				height:10%;
-				background-color: rgba(48, 45, 45, 0.7);
-
-			}
-
-			.editableInput {
-				text-decoration: none;
-				background-color: transparent;
-				border: none;
-				padding: 0px;
-				margin: 0px;
-				outline: none;
-				color: rgba(211,211,211, 0.8);
-				width: 100%;
-				height: 90%;
-			}
-
-			.editPopupButton {
-				color: #fff;
-				text-shadow: -1px 1px #666666;
-				background-color: #333333;
-				background-image: linear-gradient(top, #808080, #666666);
-				box-shadow: inset 0 0 0 1px #333333;
-				border: none;
-				border-radius: 5px;
-				height: 50%;
-				width: 15%;
-				position:absolute;
-				top: 25%;
-				cursor: pointer;
-			}
-
-			.editPopupButton:hover,
-			.editPopupButton.hover {
-			    box-shadow: inset 0 0 0 1px #262626,0 5px 15px #191919;
-			}
-
-			.editPopupButton:active,
-			.editPopupButton.active {
-			    box-shadow: inset 0 0 0 1px #262626, inset 0 5px 30px #191919;
-			}
-
-			.widgetPopupTable {
-				width: 100%;
-				border-spacing: 0px;
-				border-collapse: collapse;
-			}
-
-			tr.widgetPopupTable {
-				width: 100%;
-			}
-
-			tr.widgetPopupTable {
-			    background-color: rgba(154,154,154,0.8);
-			}					
-			
-			tr:nth-child(even).widgetPopupTable {
-			    background-color: rgba(198,198,198, 0.8);
-			}
-			td.widgetPopupTable {
-			    border: 1px solid rgba(154,154,154,0.8);
-			}
-
-			/* Animations */
-			@-webkit-keyframes animatetop {
-			    from {top: -300px; opacity: 0} 
-			    to {top: 1%; opacity: 1}
-			}
-			@-moz-keyframes animatetop {
-			    from {top: -300px; opacity: 0}
-			    to {top: 1%; opacity: 1}
-			}
-			@keyframes animatetop {
-			    from {top: -300px; opacity: 0}
-			    to {top: 1%; opacity: 1}
-			}
-			/* Fade in animation (Webkit only) */
-			@-webkit-keyframes showMenu {
-			    from { opacity: 0; top:-20px; }
-			    to   { opacity: 1; }
-			}
-			@-moz-keyframes animatetop {
-				from { opacity: 0; top:-20px; }
-			    to   { opacity: 1; }
-			}
-			@keyframes animatetop {
-				from { opacity: 0; top:-20px; }
-			    to   { opacity: 1; }
-			}
-
+	#popupSaveControlsPage h2 {
+		margin-top:					5px;
+	}
+
+	#popupSaveControlsPage p {
+		margin-bottom:				4px;
+	}
+
+	#popupSaveControlsPage button {
+		width:						100px;	
+	}
+
+	#popupSaveControlsPage #makeControlsPagePublic {
+		margin-top:					10px;
+		margin-bottom:				20px;
+	}
+
+	.cursor-default {
+		cursor: 					default !important;
+	}
+
+	.cursor-grabbing {
+		cursor: 					grabbing !important;
+	}
+
+	.action-required {
+		border: 					10px solid rgb(255, 204, 0);
+		box-shadow: 				0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
+		-webkit-box-shadow: 		0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
+		-moz-box-shadow:			0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);				
+	}
+
+	#addPVMenuDiv {
+		margin: 					auto;
+		position: 					absolute;
+		display: 					none;
+		height: 					auto;
+		width: 						28%;
+		top: 						30%;
+		left: 						36%;
+		z-index: 					32;
+	}
+
+	#addPVMenu {
+		position: 					relative;
+		top: 						0px;
+		left: 						-1px;
+		height: 					100%;
+		width: 						100%;
+		background-color: 			rgba(178,178,178,0.9);
+		border: 					solid 2px rgba(0,0,0,0.5);
+		border-radius: 				1px;
+	}
+
+	#contextMenuDiv {
+		position: 					absolute;
+		z-index: 					100;
+	}
+
+	#hotkeyMenuDiv {
+		z-index: 					10;	
+		margin: 					auto;
+		height: 					auto;
+		width: 						auto;
+		position: 					absolute;
+		top: 						0;
+		left: 						0;
+		-webkit-animation-name: 	animatetop;
+		-webkit-animation-duration: 0.4s;
+		-moz-animation-name: 		animatetop;
+		-moz-animation-duration: 	0.4s;
+		animation-name: 			animatetop;
+		animation-duration: 		0.4s;
+	}
+
+	.menu {
+		display: 					none;
+		position: 					absolute;
+		z-index: 					10;
+		background-color: 			rgba(0, 0, 0, 0.7);
+		padding: 					12px 0;
+		width: 						240px;
+		border: 					solid 1px #dfdfdf;
+		box-shadow: 				1px 1px 2px #cfcfcf;
+	}
+	.menu--active {
+		display: 					block;
+	}
+
+	.menu__items {
+		list-style: 				none;
+		margin: 					0;
+		padding: 					0;
+		background-color: 			transparent !important;
+	}
+
+	.menu__item {
+		display: 					block;
+		margin-bottom: 				4px;
+	}
+
+	.menu__item:last-child {
+		margin-bottom: 				0;
+	}
+
+	.menu__link {
+		display: 					block;
+		padding: 					4px 12px;
+		color: 						#d3d3d3;
+		text-decoration: 			none;
+		background-color: 			transparent;
+	}
+
+	.menu__setting {
+		position:					absolute;
+		right: 						5px;
+		color: 						rgb(255, 59, 48);
+		width: 						60%;
+		text-align: 				right;
+	}
+
+	.menu__spacer {
+		width: 						35%;
+		height: 					100%;
+	}
+
+	.menu__label {
+		display: 					block;
+		padding: 					4px 12px;
+		color: 						rgba(0, 0, 0, 0.8) !important;
+		background-color: 			#d3d3d3 !important;
+		text-decoration: 			none;
+		font-weight: 				bold;
+	}
+
+	.menu__link:hover {
+		color: 						rgba(0, 0, 0, 0.8) !important;
+		background-color: 			#d3d3d3 !important;
+	}
+
+	.menu__button {
+		width: 						100%;
+		background-color: 			rgba(0,0,0,0.6);
+		color: 						#fff;
+		font: 						bold "lucida grande", sans-serif;
+		padding: 					3px 5px;
+		padding-top: 				2.5%;
+		padding-bottom: 			2.5%;
+		text-align: 				center;
+		border:						none;
+	}
+
+	.addPVMenuInput {
+		border-bottom: 				1px solid rgba(0,0,0,0.5) !important;
+		color: 						rgba(0,0,0,0.8) !important;
+	}
+
+	#navigationBarDiv {
+		top: 						0%;
+		left: 						0%;
+	}
+
+	#navigationMenu {
+		padding: 					0px !important;
+		margin: 					0;
+		list-style:					none;
+		font-family: 				"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:13px;
+		text-shadow: 				0 -1px 3px #202020;
+		top: 						0%;
+		left: 						0%;
+		width:						100%;
+		z-index: 					15;
+		-moz-border-radius:			4px;
+		-webkit-border-radius:		4px;
+		border-radius:				4px;
+	}
+
+	#navigationMenu li {
+		display:					block;
+		float:						left;
+		border-right:				1px solid #5d5d5d;
+		border-left:				1px solid #929292;
+		width: 						30%;
+		height:						5%;
+		border-bottom:				1px solid #575757;
+		border-top:					1px solid #797979;
+		padding: 					0px !important;
+		margin: 					0;
+		background-image: 			-webkit-gradient(linear, left bottom, left top, color-stop(0, #787878), color-stop(0.5, #5E5E5E), color-stop(0.51, #707070), color-stop(1, #838383));
+		background-image: 			-moz-linear-gradient(center bottom, #787878 0%, #5E5E5E 50%, #707070 51%, #838383 100%);
+		background-color:			#5f5f5f;
+	}
+
+	#navigationMenu li:hover {
+		background-image: 			-webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
+		background-image: 			-moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
+		background-color:			#383838;
+
+		-moz-box-shadow: 			inset 0 0 5px 5px #535353;
+		-webkit-box-shadow: 		inset 0 0 5px 5px #535353;
+		box-shadow: 				inset 0 0 5px 5px #535353;
+	}
+
+	#navigationMenu li:active {
+		background-image: 			-webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
+		background-image: 			-moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
+		background-color:			#383838;
+
+			-moz-box-shadow: 			inset 0 1px 2px 2px #000;
+		-webkit-box-shadow: 		inset 0 1px 2px 2px #000;
+		box-shadow: 				inset 0 1px 2px 2px #000;
+	}
+
+	#navigationMenu li a {
+		color:						white;
+		text-decoration:			none;
+		text-align:					center;
+		display:					block;
+		line-height:				34px;
+		outline:					none;
+	}
+
+	#navigationMenu li:first-child {
+		-moz-border-radius:			4px 0 0 4px;
+		-webkit-border-radius:		4px 0 0 4px;
+		border-radius:				4px 0 0 4px;
+
+		border-left:				none;
+	}
+
+	#navigationMenu li:last-child {
+		-moz-border-radius:			0 4px 4px 0;
+		-webkit-border-radius:		0 4px 4px 0;
+		border-radius:				0 4px 4px 0;
+		border-right:				none;
+	}
+	
+	#navigationMenu {
+		position:					absolute;
+		left: 						4.5%;
+		top: 						1%;
+	}
+	
+	.navigationMenu--active {
+		display: 					block;
+		z-index: 					15;
+		-webkit-animation: 			showMenu 1s;
+		-moz-animation: 			showMenu 1s;
+		animation: 					showMenu 1s;
+	}
+
+	.navigationMenu--Edit {
+        background-image: 			-webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #     434343), color-stop(1, #555555));   
+        background-image: 			-moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
+        background-color:			#383838;
+        -moz-box-shadow: 			inset 0 0 5px 5px #535353;
+        -webkit-box-shadow: 		inset 0 0 5px 5px #535353;
+        box-shadow: 				inset 0 0 5px 5px #535353;
+	}
+
+	.editWidgetAttributesPopup-container {
+		position: 					absolute;
+		display: 					none;
+		z-index: 					100;
+		top: 						0%;
+		left: 						10%;
+		background-color: 			rgba(0, 0, 0, 0.8);
+		border: 					1px solid #888;
+	    width: 						80%;
+		height: 					80%;	
+	    box-shadow: 				0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+		-webkit-animation-name: 	animatetop;
+		-webkit-animation-duration: 0.4s;
+		-moz-animation-name: 		animatetop;
+		-moz-animation-duration: 	0.4s;
+		animation-name: 			animatetop;
+ 	    animation-duration: 		0.4s;
+	}
+
+	.editWidgetAttributesPopup-container * {	
+		-webkit-user-select: 		none; /* prevent highlight selection (does not stop ghost images, must use el.ondragstart = function() {return false;}; */
+		-moz-user-select: 			none;
+		user-select:				none;
+		outline: 					none;  /* to stop firefox selection*/
+	}
+
+	.editWidgetAttributesPopup-header {
+		position: 					absolute;
+		top: 						0%;
+		left: 						0%;
+		height: 					10%;
+		width: 						100%;
+		background-color: 			rgba(48, 45, 45, 0.7);
+	}
+
+	.editWidgetAttributesPopup-body {
+		background-color: 			rgba(76, 76, 76, 0.7);
+		position: 					absolute;
+		top: 						10%;
+		left: 						20%;
+		height: 					80%;
+		width: 						80%;
+		overflow-y: 				scroll;
+		overflow-x: 				hidden;
+	}
+
+	.editWidgetAttributesPopup-menu {
+		background-color: 			rgba(53, 53, 53, 0.3);
+		position: 					absolute;
+		top: 						10%;
+		left: 						0%;
+		height: 					80%;
+		width: 						20%;
+	}
+
+	.editWidgetAttributesPopup-footer {
+		position: 					absolute;
+		top: 						90%;
+		left: 						0%;
+		width: 						100%;
+		height:						10%;
+		background-color: 			rgba(48, 45, 45, 0.7);
+	}
+
+	.editableInput {
+		text-decoration: 			none;
+		background-color: 			transparent;
+		border: 					none;
+		padding: 					0px;
+		margin: 					0px;
+		outline: 					none;
+		color: 						rgba(211,211,211, 0.8);
+		width: 						100%;
+		height: 					90%;
+	}
+
+	.editPopupButton {
+		color: 						#fff;
+		text-shadow: 				-1px 1px #666666;
+		background-color: 			#333333;
+		background-image: 			linear-gradient(top, #808080, #666666);
+		box-shadow: 				inset 0 0 0 1px #333333;
+		border: 					none;
+		border-radius: 				5px;
+		height: 					50%;
+		width: 						15%;
+		position:					absolute;
+		top: 						25%;
+		cursor: 					pointer;
+	}
+
+	.editPopupButton:hover,
+	.editPopupButton.hover {
+	    box-shadow: 				inset 0 0 0 1px #262626,0 5px 15px #191919;
+	}
+
+	.editPopupButton:active,
+	.editPopupButton.active {
+	    box-shadow: 				inset 0 0 0 1px #262626, inset 0 5px 30px #191919;
+	}
+
+	.widgetPopupTable {
+		width: 						100%;
+		border-spacing: 			0px;
+		border-collapse: 			collapse;
+	}
+
+	tr.widgetPopupTable {
+		width: 						100%;
+	}
+
+	tr.widgetPopupTable {
+	    background-color: 			rgba(154,154,154,0.8);
+	}
+	
+	tr:nth-child(even).widgetPopupTable {
+	    background-color: 			rgba(198,198,198, 0.8);
+	}
+
+	td.widgetPopupTable {
+	    border: 					1px solid rgba(154,154,154,0.8);
+	}
+
+	/* Animations */
+	@-webkit-keyframes animatetop {
+	    from {
+	    	top: 					-300px; 
+	    	opacity: 				0;
+	    } 
+	    to {
+	    	top: 					1%; 
+	    	opacity: 				1;
+	    }
+	}
+	@-moz-keyframes animatetop {
+	    from {
+	    	top: 					-300px;
+	    	opacity: 				0;
+	    }
+	    to {
+	    	top: 					1%; 
+	    	opacity: 				1;
+	    }
+	}
+	@keyframes animatetop {
+	    from {
+	    	top: 					-300px;
+	    	opacity: 				0;
+	    }
+	    to {
+	    	top: 					1%;
+	    	opacity:				1;
+	    }
+	}
+	/* Fade in animation (Webkit only) */
+	@-webkit-keyframes showMenu {
+	    from {
+	    	top:					-20px;
+	    	opacity: 				0; 
+	    }
+	    to   { 
+	    	opacity: 				1;
+	    }
+	}
+	@-moz-keyframes animatetop {
+		from {
+			top:					-20px;
+			opacity: 				0; 
+		}
+	    to   { 
+	    	opacity: 				1;
+	    }
+	}
+	@keyframes animatetop {
+		from {
+			top:					-20px;
+			opacity: 				0;
+		}
+	    to   {
+	    	opacity: 				1; 
+	    }
+	}
+
+	.pane {
+		background-color : rgba(154,154,154,0.8);
+		box-shadow: 		inset rgba(255,254,255,0.6) 0 0.3em .3em,
+				inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+				rgba(200, 200, 200,0.6) 0 .1em 3px,
+				rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
+				rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+		border-radius: 3px;
+	}

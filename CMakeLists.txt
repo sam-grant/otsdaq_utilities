@@ -35,7 +35,7 @@ cet_set_compiler_flags(
  VIGILANT
  WERROR
  NO_UNDEFINED
- EXTRA_FLAGS -pedantic -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-maybe-uninitialized -Wno-ignored-qualifiers -Wno-unused-variable
+ EXTRA_FLAGS -pedantic -D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES=1
  )
 
 cet_remove_compiler_flags(-std=c++98)
@@ -50,8 +50,8 @@ find_ups_product( artdaq v0_04_02 )
 find_ups_product( artdaq_core v1_00_00 )
 find_ups_product( artdaq_utilities v1_00_00 )
 find_ups_product( art v1_06_00 )
-find_ups_product( python v2_7_14)
-include_directories($ENV{PYTHON_INCLUDE})
+#find_ups_product( python v2_7_14)
+#include_directories($ENV{PYTHON_INCLUDE})
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )
 find_ups_product( cetlib v1_03_00 )
@@ -91,8 +91,10 @@ add_subdirectory(otsdaq-utilities)
 add_subdirectory(tools)
 
 # Documentation directory (to comment out if not needed DOXYGEN locally)
-#add_subdirectory(doc)
-#add_subdirectory(onlineDoc)
+if( $ENV{OTS_DOXY} MATCHES "DOIT" )
+	add_subdirectory(doc)
+	add_subdirectory(onlineDoc)
+endif()
 
 # UPS Version files
 add_subdirectory(ups)

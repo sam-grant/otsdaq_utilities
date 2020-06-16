@@ -39,6 +39,7 @@
     </xsd:sequence>
     <xsd:attribute name="author" type="xsd:string" use="required"/>
     <xsd:attribute name="category" type="xsd:string" use="required"/>
+    <xsd:attribute name="subject" type="xsd:string" use="optional" />
   </xsd:complexType>
 
 </xsd:schema>

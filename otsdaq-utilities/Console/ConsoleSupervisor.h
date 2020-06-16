@@ -204,7 +204,7 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			return 0;
 		}
 
-		const size_t getCount() const { return countStamp; }
+		size_t getCount() const { return countStamp; }
 
 		// define field structure
 		struct FieldStruct
@@ -248,7 +248,6 @@ class ConsoleSupervisor : public CoreSupervisorBase
 
 	// members for the refresh handler, ConsoleSupervisor::insertMessageRefresh
 	xercesc::DOMElement* refreshParent_;
-	size_t               refreshCurrentLastCount_;
 };
 }  // namespace ots
 

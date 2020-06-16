@@ -274,7 +274,7 @@
 
 <script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
 <script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
-<script type="text/JavaScript"src="/WebPath/js/DesktopWindowContentCode.js"></script>
+<script type="text/JavaScript"src="/WebPath/js/DesktopContent.js"></script>
 <script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 
 <script>		
@@ -383,7 +383,8 @@
             //			display fades in (goto start of gui strategy)			
 			
 			//init called once body has loaded
-			function init() {						
+			function init() 
+			{						
 								
 				_currState = -1;
 				_prevState = -1;
@@ -2509,7 +2510,7 @@
 </head>
 
 
-<body onload='Javascript:init();'>
+<body onload='//init() called by DesktopContent.js'>
 		
 <canvas id="physicsCanvas"></canvas>
 		

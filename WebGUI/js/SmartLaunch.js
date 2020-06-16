@@ -868,7 +868,8 @@ SmartLaunch.create = function() {
 		window.clearTimeout(_getStateTimer);
 		
 		//start blackout
-		DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
+		DesktopContent.systemBlackout(true);
+		//DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
 		window.setTimeout(localDelayedLaunch,1000); //gaurantee blackout starts
 		//now in all future requests must ignoreSystemBlock
 
@@ -897,7 +898,8 @@ SmartLaunch.create = function() {
 						if(countDown == 0)
 						{
 							//end blackout
-							DesktopContent._blockSystemCheckMailbox.innerHTML = "";
+							DesktopContent.systemBlackout(false);
+							//DesktopContent._blockSystemCheckMailbox.innerHTML = "";
 							init();
 							Debug.log("And we are back!",Debug.INFO_PRIORITY);
 							return;

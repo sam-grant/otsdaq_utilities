@@ -354,7 +354,7 @@
 		<link href='/WebPath/css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/js_lib/CalendarPopup.js"></script>
 		
 		<script>		
@@ -677,7 +677,7 @@
                 
                 //add other values to form so they are transmitted with files
                 fd.append("RequestType","PreviewEntry"); 
-                fd.append("CookieCode",DesktopContent._cookieCodeMailbox.innerHTML);
+                fd.append("CookieCode",DesktopContent._cookieCodeMailbox);
                 fd.append("EntryText",convertForServer(newPostText.value)); //add escaped user text
                 fd.append("EntrySubject",convertForServer(newPostSubject.value)); //add escaped user subject
                 xhr.send(fd);
@@ -1239,7 +1239,7 @@
 	</head>
 	
 	
-	<body onload='Javascript:init();'>	
+	<body onload='//init() called by DesktopContent.js'>	
 
 	<center><div class='areaContent' id='currentExperimentHeader'></div></center>
 	<!------------------------------------------------------------------------------>

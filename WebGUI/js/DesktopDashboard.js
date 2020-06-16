@@ -56,17 +56,23 @@ else {
 		
 		//all units in pixels unless otherwise specified
 		
-		var _defaultDashboardHeight = 41;
+		var _defaultDashboardHeight = 38;
 		var _defaultWindowDashboardWidth = 200;
 		var _defaultWindowDashboardMinWidth = 50;
-        
-        var _windowDashboardWidth = _defaultWindowDashboardWidth;
-        
-        Debug.log("window.parent.window.location.hash=" + window.parent.window.location.hash,
+
+        Debug.log("Setup Dashboard based on window.parent.window.location.hash=" + 
+        		window.parent.window.location.hash,
         		Debug.MED_PRIORITY);
+        
+        var _urlHashVal = (window.parent.window.location.hash && window.parent.window.location.hash.length>1)?
+        		(window.parent.window.location.hash.substr(1)|0):
+				undefined;
+        var _windowDashboardWidth = ((_urlHashVal|0) > 1)? 
+				((_urlHashVal | 0)*_defaultWindowDashboardWidth/1000):
+				_defaultWindowDashboardWidth;        
         var _displayWindowDashboard = //default window dashboard view
-        		window.parent.window.location.hash[1]? 
-        				(window.parent.window.location.hash[1] | 0):1; 
+        		(_urlHashVal === undefined)?1:(_urlHashVal?1:0); 
+        
         var _windowDashboard,_topBar,_showDesktopBtn,_fullScreenBtn,_fullScreenRefreshBtn;
         
         var _windowDashboardWindowCSSRule;  //e.g. _var.style.width = "100px"
@@ -94,6 +100,7 @@ else {
 		//------------------------------------------------------------------
 		//create PRIVATE members functions ----------------------
 		//------------------------------------------------------------------
+      	//=====================================================================================
         var _toggleWindowDashboard = function(event,setValue) {        	
         	
         	if(setValue !== undefined)
@@ -101,25 +108,62 @@ else {
         	else //toggle
         		_displayWindowDashboard = !_displayWindowDashboard;
 
-			var newURL = window.parent.window.location.pathname +
-									window.parent.window.location.search +
-									"#"+
-									(_displayWindowDashboard?"1":"0"); 
-			
-			//update browser url so refresh will give same desktop experience
-			if(!Desktop.isWizardMode()) 
-				window.parent.window.history.replaceState('ots', 'ots', newURL);    
-			else
-				window.parent.window.history.replaceState('ots wiz', 'ots wiz', newURL); 
+        	_setDashboardWidth(); //undefined to keep width and save status to URL
+        	
+//			var newURL = window.parent.window.location.pathname +
+//									window.parent.window.location.search +
+//									"#"+
+//									(_displayWindowDashboard?"1":"0"); 
+//			
+//			//update browser url so refresh will give same desktop experience
+//			if(!Desktop.isWizardMode()) 
+//				window.parent.window.history.replaceState('ots', 'ots', newURL);    
+//			else
+//				window.parent.window.history.replaceState('ots wiz', 'ots wiz', newURL); 
 			
             _windowDashboard.style.display = _displayWindowDashboard?"inline":"none";
             Desktop.desktop.redrawDesktop();
-        }
+        } //end _toggleWindowDashboard()
         
-        	//_refreshTitle() ~~~
-			//	private function to refresh title name based on dashboard size
-			// 	clip text if too long
-		var _refreshTitle = function() {
+      	//=====================================================================================
+        // w undefined will leave width unchanged
+        var _setDashboardWidth = function(w) 
+        { 
+        	console.log("_setDashboardWidth",w);       
+        	console.log("_setDashboardWidth _windowDashboardWidth",_windowDashboardWidth);  	
+        	if(w !== undefined)
+        	{
+        		_windowDashboardWidth = w|0;         	
+        	}
+        	//else dont change, but always keep min
+        	
+    		if(_windowDashboardWidth < _defaultWindowDashboardMinWidth)
+    			_windowDashboardWidth = _defaultWindowDashboardMinWidth;   
+        	
+        	//save as integer fraction of 1000 into URL
+        	var newURL = window.parent.window.location.pathname +
+        			window.parent.window.location.search +
+					"#"+
+					(_displayWindowDashboard?
+						((_windowDashboardWidth*1000/_defaultWindowDashboardWidth)|0):
+						"0"); 
+
+        	//update browser url so refresh will give same desktop experience
+        	if(!Desktop.isWizardMode()) 
+        		window.parent.window.history.replaceState('ots', 'ots', newURL);    
+        	else
+        		window.parent.window.history.replaceState('ots wiz', 'ots wiz', newURL); 
+        	
+        	Desktop.desktop.redrawDesktop();
+        	
+        } //end setDashboardWidth()
+
+      	//=====================================================================================
+		//_refreshTitle() ~~~
+		//	private function to refresh title name based on dashboard size
+		// 	clip text if too long
+		var _refreshTitle = function() 
+		{
 		
 			var el,winIndex;
 			var hdrW = _windowDashboardWidth - 14; //2*7px padding
@@ -135,9 +179,11 @@ else {
 				el.innerHTML += "<div class='hiddenDiv' " +  //add hidden window index back in for future use
                     "id='DesktopDashboard-windowDashboard-winIndex"+i+"'>"+ winIndex + "</div>";
             }
-		}
-        
-        var _redrawDashboard = function() {            
+		} //end _refreshTitle()
+
+      	//=====================================================================================
+        var _redrawDashboard = function() 
+        {            
             
             _topBar.style.left = Desktop.desktop.getDesktopX()+"px";
             _topBar.style.top = Desktop.desktop.getDesktopY()+"px";
@@ -151,10 +197,12 @@ else {
             _refreshTitle();
             _windowDashboard.style.height = Desktop.desktop.getDesktopHeight()-(Desktop.desktop.getDesktopY()+_defaultDashboardHeight)+"px";
             
-        }
-        
+        } //end _redrawDashboard()
+
+      	//=====================================================================================
         //get CSS style rule fpr dasboard window boxes
-        var _getDashboardWindowWidthCSSRule = function() {
+        var _getDashboardWindowWidthCSSRule = function() 
+        {
             
 	        var i,j;
 	        for(i=0;i<document.styleSheets.length;++i) {
@@ -371,12 +419,13 @@ else {
 		//------------------------------------------------------------------
         this.getDashboardHeight = function() { return _defaultDashboardHeight;}
         this.getDashboardWidth = function() { return _displayWindowDashboard?_windowDashboardWidth:0;}
-        this.setDashboardWidth = function(w) { if(w > _defaultWindowDashboardMinWidth) _windowDashboardWidth = w; Desktop.desktop.redrawDesktop();}
-    
-        this.toggleWindowDashboard = _toggleWindowDashboard; 
-        this.redrawDashboard = _redrawDashboard;        
-        this.windowDashboardLayoutsDropDown = _windowDashboardLayoutsDropDown;
-        this.windowDashboardOrganize = _windowDashboardOrganize;
+        
+        
+        this.setDashboardWidth 					= _setDashboardWidth;
+        this.toggleWindowDashboard 				= _toggleWindowDashboard; 
+        this.redrawDashboard 					= _redrawDashboard;        
+        this.windowDashboardLayoutsDropDown 	= _windowDashboardLayoutsDropDown;
+        this.windowDashboardOrganize 			= _windowDashboardOrganize;
 
       	//=====================================================================================
         this.updateWindows = function() 
@@ -451,10 +500,22 @@ else {
       	//=====================================================================================
         this.redrawRefreshButton = function() 
         {
-        	_fullScreenRefreshBtn.innerHTML = "<a href='#' style='font-size:16px' title='Click to reload the desktop and all windows'> ↻ </a>";        	
-        	_fullScreenRefreshBtn.style.height = "16px";
-        	_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
-        }
+        	if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
+        	{
+        		//firefox shows circle-arrow character smaller
+				_fullScreenRefreshBtn.innerHTML = 
+						"<div style='font-size:32px;margin-top:-12px;' title='Click to reload the desktop and all windows'>↻</div>";        	
+				_fullScreenRefreshBtn.style.height = "16px";
+				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
+        	}
+        	else //chrome
+        	{
+				_fullScreenRefreshBtn.innerHTML = 
+						"<div style='font-size: 18px; margin: -1px 0 0 2px; font-weight: 300;' title='Click to reload the desktop and all windows'>↻</div>";        	
+				_fullScreenRefreshBtn.style.height = "16px";
+				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
+        	}
+        } //end redrawRefreshButton()
 
       	//=====================================================================================
         this.redrawShowDesktopButton = function()
@@ -476,9 +537,24 @@ else {
             
         	_topBar.style.backgroundColor = _defaultDashboardColor;
         	_windowDashboard.style.backgroundColor = _defaultDashboardColor;
-        }
+        } //end setDefaultDashboardColor()
 
         var _oldUserNameWithLock = "";
+        //=====================================================================================
+        this.doSetUserWithLock = function() 
+		{ 
+        	Debug.log("doSetUserWithLock()");
+        	var user = Desktop.desktop.login.getUsername();
+        	var data = "";
+        	data += "lock=" + ((!_oldUserNameWithLock || _oldUserNameWithLock == "")?"1":"0") + "&";
+        	data += "username=" + user;
+        	
+        	Desktop.XMLHttpRequest(
+        			"Request?RequestType=setUserWithLock&accounts=1",        			
+        			data,
+					Desktop.desktop.dashboard.handleSetUserWithLock);
+
+		} //end doSetUserWithLock()
       	//=====================================================================================
         this.displayUserLock = function(usernameWithLock, el) 
         {      
@@ -490,10 +566,10 @@ else {
         	data += "lock=" + ((!usernameWithLock || usernameWithLock == "")?"1":"0") + "&";
         	data += "username=" + user;
 
-        	var jsReq =   			
-        			"Desktop.XMLHttpRequest(\"" +
-					"Request?RequestType=setUserWithLock&accounts=1\"," +
-					"\"" + data + "\",Desktop.desktop.dashboard.handleSetUserWithLock)";
+        	var jsReq = "Desktop.desktop.dashboard.doSetUserWithLock();";  			
+//        			"Desktop.XMLHttpRequest(\"" +
+//					"Request?RequestType=setUserWithLock&accounts=1\"," +
+//					"\"" + data + "\",Desktop.desktop.dashboard.handleSetUserWithLock)";
 
        		
        		if(_oldUserNameWithLock == usernameWithLock && 

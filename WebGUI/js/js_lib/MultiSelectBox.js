@@ -180,6 +180,16 @@ MultiSelectBox.getSelectionElementByIndex = function(el,i)
 MultiSelectBox.setSelectionElementByIndex = function(el,i,selected)
 {    
 	var name = el.getElementsByClassName("mySelect")[0].id;
+	
+	if(!MultiSelectBox.isSingleSelect_[name] && 
+			i == -1) //apply to all
+	{
+		var size = MultiSelectBox.mySelects_[name].length;
+		for (var opt=0; opt<size; opt++)
+			MultiSelectBox.mySelects_[name][opt] = selected?1:0;
+		return;
+	}
+	
 	if(MultiSelectBox.isSingleSelect_[name] && 
 			selected) //if true, only allow one select at a time, so deselect others
 	{
@@ -412,12 +422,17 @@ MultiSelectBox.initMySelectBoxes = function(clearPreviousSelections)
 		if (!MultiSelectBox.mySelects_[id] ||
 				MultiSelectBox.mySelects_[id].length > options.length)
 		{//if first time drawing select box OR size was reduced
-			MultiSelectBox.mySelects_[id]=[];
+			if(!MultiSelectBox.mySelects_[id] || clearPreviousSelections)
+				MultiSelectBox.mySelects_[id]=[];
 			for (var opt=0; opt<options.length; opt++)
 			{
-				MultiSelectBox.mySelects_[id].push(0);
+				if(clearPreviousSelections || opt >= MultiSelectBox.mySelects_.length)
+					MultiSelectBox.mySelects_[id].push(0);
 				options[opt].setAttribute("unselectable","on");//make not selectable for ie<10
 			}
+			//remove any extras
+			while(MultiSelectBox.mySelects_[id].length > options.length)
+				MultiSelectBox.mySelects_[id].splice(options.length,1);
 		}
 		else
 		{ 	//if repaint: set highlighted options
@@ -595,6 +610,12 @@ MultiSelectBox.performSearchSelect = function(id,el,altstr)
 
 MultiSelectBox.makeSearchBar = function(id)
 {
+	//remove old existing search bars
+	
+	var el;
+	while(el = document.getElementById(id + "search"))
+		el.parentNode.removeChild(el);					
+	
 	var searchBox=document.createElement("input");
 	var onchange='MultiSelectBox.searchSelect("' + id + '",this)';
 	

@@ -3,14 +3,24 @@
 //#include "otsdaq-utilities/Visualization/fileSystemToXML.h"
 //#include "otsdaq/RootUtilities/DQMHistos.h"
 #include "otsdaq/DataManager/DataManagerSingleton.h"
+<<<<<<< HEAD
 #include "otsdaq/RootUtilities/RootFileExplorer.h"
 #include "otsdaq/Macros/BinaryStringMacros.h"
 #include "otsdaq/otsdaq/Macros/MessageTools.h"
 #include <boost/regex.hpp>
+=======
+#include "otsdaq/Macros/BinaryStringMacros.h"
+//#include "otsdaq/otsdaq/Macros/MessageTools.h"
+#include "otsdaq/DataManager/DQMHistosConsumerBase.h"
+//#include <boost/regex.hpp>
+#include "otsdaq/Macros/MessageTools.h"
+#include "otsdaq/RootUtilities/RootFileExplorer.h"
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 
 // ROOT documentation
 // http://root.cern.ch/root/html/index.html 
 
+#include <TBranchElement.h>
 #include <TBuffer.h>
 #include <TBufferJSON.h>
 #include <TCanvas.h>
@@ -25,6 +35,7 @@
 #include <TROOT.h>
 #include <TRegexp.h>
 #include <TString.h>
+#include <TTree.h>
 #include "TBufferFile.h"
 #include "TObject.h"
 
@@ -34,7 +45,11 @@
 #include <xdaq/NamespaceURI.h>
 
 #include <iostream>
+<<<<<<< HEAD
 #include <fstream>
+=======
+#include <mutex>
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 
 #define ROOT_BROWSER_PATH __ENV__("ROOT_BROWSER_PATH")
 #define ROOT_DISPLAY_CONFIG_PATH __ENV__("ROOT_DISPLAY_CONFIG_PATH")
@@ -56,13 +71,23 @@ using namespace ots;
 
 XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
 
+<<<<<<< HEAD
 //========================================================================================================================
 VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 : CoreSupervisorBase(stub), theDataManager_(0), loadedRunNumber_(-1)
+=======
+#undef STDLINE
+#define STDLINE(X, Y) __COUT__ << X
+
+//==============================================================================
+VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
+    : CoreSupervisorBase(stub), theDataManager_(nullptr), loadedRunNumber_(-1)
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 {
 	__SUP_COUT__ << "Constructor." << __E__;
 	INIT_MF("VisualSupervisor");
 
+<<<<<<< HEAD
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 			theConfigurationManager_->getNode(
 					theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()
@@ -74,10 +99,12 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 
 	__SUP_COUT__ << "Done instantiating Visual data manager." << __E__;
 
+=======
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
 
 	__SUP_COUT__ << "Constructed." << __E__;
-}
+} //end constructor
 
 //========================================================================================================================
 VisualSupervisor::~VisualSupervisor(void)
@@ -85,7 +112,7 @@ VisualSupervisor::~VisualSupervisor(void)
 	__SUP_COUT__ << "Destructor." << __E__;
 	destroy();
 	__SUP_COUT__ << "Destructed." << __E__;
-}
+} //end destructor
 
 //========================================================================================================================
 void VisualSupervisor::destroy(void)
@@ -93,9 +120,89 @@ void VisualSupervisor::destroy(void)
 	__SUP_COUT__ << "Destroying..." << __E__;
 
 	DataManagerSingleton::deleteInstance(CorePropertySupervisorBase::getSupervisorUID());
+<<<<<<< HEAD
 	theStateMachineImplementation_.pop_back();
 }
 //========================================================================================================================
+=======
+	if(theStateMachineImplementation_.size() > 1)
+	{
+		__SS__ << "Not expecting more than one visual data manager!" << __E__;
+		__SS_THROW__;
+	}
+	if(theStateMachineImplementation_.size())
+		theStateMachineImplementation_.pop_back();
+	else
+		__COUT_WARN__ << "No visual data manager was pushed." << __E__;
+} //end destroy()
+
+//==============================================================================
+void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference /*e*/)
+{
+	__SUP_COUT__ << "Configuring..." << __E__;
+
+	{ //do like start of CoreSupervisorBase::transitionConfiguring
+		// activate the configuration tree (the first iteration)
+		if(RunControlStateMachine::getIterationIndex() == 0 && RunControlStateMachine::getSubIterationIndex() == 0)
+		{
+			std::pair<std::string /*group name*/, TableGroupKey> theGroup(
+					SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationTableGroupName"),
+					TableGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationTableGroupKey")));
+
+			__SUP_COUT__ << "Configuration table group name: " << theGroup.first << " key: " << theGroup.second << __E__;
+
+			theConfigurationManager_->loadTableGroup(theGroup.first, theGroup.second, true /*doActivate*/);
+		}
+	} //end start like CoreSupervisorBase::transitionConfiguring
+
+	__COUTV__(theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName());
+	__COUTV__(theConfigurationManager_->getNode(
+			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()).getValueAsString());
+
+	__COUTV__("/" + theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() + CorePropertySupervisorBase::getSupervisorConfigurationPath());
+
+
+	ConfigurationTree appLink = theConfigurationManager_->getNode("/" +
+			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() +
+					CorePropertySupervisorBase::getSupervisorConfigurationPath());
+
+	__COUTV__(appLink.getValueAsString());
+
+
+	if(!appLink.isDisconnected())
+	{
+		theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
+				theConfigurationManager_->getNode(
+						theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()),
+						CorePropertySupervisorBase::getSupervisorConfigurationPath(),
+						CorePropertySupervisorBase::getSupervisorUID());
+
+		CoreSupervisorBase::theStateMachineImplementation_.push_back(theDataManager_);
+
+		__SUP_COUT__ << "Done instantiating Visual data manager." << __E__;
+	}
+	else
+		__SUP_COUT__ << "No Visual Supervisor configuration link, so skipping Visual data manager instantiation." << __E__;
+
+	//just handle FSMs
+	CoreSupervisorBase::transitionConfiguringFSMs();
+
+	__SUP_COUT__ << "Configured." << __E__;
+} //end transitionConfiguring()
+
+//==============================================================================
+void VisualSupervisor::transitionHalting(toolbox::Event::Reference e)
+{
+	__SUP_COUT__ << "Halting..." << __E__;
+
+	CoreSupervisorBase::transitionHalting(e);
+	destroy();
+
+	__SUP_COUT__ << "Halted." << __E__;
+} //end transitionHalting()
+
+//==============================================================================
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 // setSupervisorPropertyDefaults
 //		override to set defaults for supervisor property values (before user settings
 // override)
@@ -159,15 +266,29 @@ void VisualSupervisor::request(const std::string               & requestType,
 	//        //TProfile* profile  = theDataManager_->getFileDQMHistos().getProfile();
 	//
 	//    }
+<<<<<<< HEAD
 	stringstream ss;
         ss << "Request type: |" << requestType << "|";
         STDLINE(ss.str(),"") ;
 	if(requestType == "getRawData") //################################################################################################################
+=======
+	std::stringstream ss;
+	//         ss << "Request type: |" << requestType << "|";
+	//         //STDLINE(ss.str(),"") ;
+	if(requestType ==
+	   "getRawData")  //################################################################################################################
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 	{
 		__SUP_COUT__ << __E__;
 		try
 		{
 			// TODO -- add timestamp, so we know if data is new
+
+			if(theDataManager_ == nullptr)
+			{
+				__SS__ << "No data manager instantiated." << __E__;
+				__SS_THROW__;
+			}
 			__SUP_COUT__ << "Getting Raw data and converting to binary string" << __E__;
 			xmlOut.addBinaryStringToData("rawData", theDataManager_->getRawData());
 			__SUP_COUT__ << __E__;
@@ -310,8 +431,8 @@ void VisualSupervisor::request(const std::string               & requestType,
 		boost::regex re("%2F") ;
 		path = boost::regex_replace(path,re,"/") ; // Dario: should be transparent for Ryan's purposes but required by Extjs
 
-		////STDLINE(string("rootpath                 : ")+rootpath,"") ;
-		////STDLINE(string("path                     : ")+    path,"") ;
+		////STDLINE(std::string("rootpath                 : ")+rootpath,"") ;
+		////STDLINE(std::string("path                     : ")+    path,"") ;
 
 		// return 1 if user has access to admin controls, else 0
 		char permStr[10];
@@ -321,8 +442,8 @@ void VisualSupervisor::request(const std::string               & requestType,
 				CoreSupervisorBase::getSupervisorPropertyUserPermissionsThreshold(
 						"rootAdminControls"));
 		xmlOut.addTextElementToData("permissions", permStr);  // add permissions
-		////STDLINE(string("permStr                  : ")+permStr,"") ;
-		////STDLINE(string("PRE_MADE_ROOT_CFG_DIR    : ")+PRE_MADE_ROOT_CFG_DIR,"") ;
+		////STDLINE(std::string("permStr                  : ")+permStr,"") ;
+		////STDLINE(std::string("PRE_MADE_ROOT_CFG_DIR    : ")+PRE_MADE_ROOT_CFG_DIR,"") ;
 
 		std::string dirpath = rootpath + path;
 		if(path == "/" + PRE_MADE_ROOT_CFG_DIR + "/")
@@ -333,7 +454,7 @@ void VisualSupervisor::request(const std::string               & requestType,
 			dirpath = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" +
 			path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2);
 
-		////STDLINE(string("dirpath                  : ")+ dirpath,"") ;
+		////STDLINE(std::string("dirpath                  : ")+ dirpath,"") ;
 		__SUP_COUT__ << "full path: " << dirpath << __E__;
 
 		DIR*           pDIR;
@@ -350,13 +471,19 @@ void VisualSupervisor::request(const std::string               & requestType,
 			// there
 			if(path == "/")
 			{
-				////STDLINE(string("--> LIVEDQM_DIR          : ")+LIVEDQM_DIR,"") ;
-				if(theDataManager_->getLiveDQMHistos() != 0)
+				////STDLINE(std::string("--> LIVEDQM_DIR          : ")+LIVEDQM_DIR,"") ;
+				if(theDataManager_ != nullptr &&
+						theDataManager_->getLiveDQMHistos() != 0)
 					xmlOut.addTextElementToData("dir",
 							LIVEDQM_DIR + ".root");  // add to xml
 
 				// check for ROOT_DISPLAY_CONFIG_PATH
+<<<<<<< HEAD
 				////STDLINE(string("ROOT_DISPLAY_CONFIG_PATH : ")+ROOT_DISPLAY_CONFIG_PATH,"") ;
+=======
+				////STDLINE(std::string("ROOT_DISPLAY_CONFIG_PATH :
+				///")+ROOT_DISPLAY_CONFIG_PATH,"") ;
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 				DIR* pRtDIR  = opendir(ROOT_DISPLAY_CONFIG_PATH);
 				bool recheck = false;
 				if(!pRtDIR)  // if doesn't exist, make it
@@ -373,14 +500,14 @@ void VisualSupervisor::request(const std::string               & requestType,
 
 				if(!recheck || (pRtDIR = opendir(ROOT_DISPLAY_CONFIG_PATH)))
 				{
-					////STDLINE(string("--> PRE_MADE_ROOT_CFG_DIR: ")+LIVEDQM_DIR,"") ;
+					////STDLINE(std::string("--> PRE_MADE_ROOT_CFG_DIR: ")+LIVEDQM_DIR,"") ;
 					xmlOut.addTextElementToData("dir",
 							PRE_MADE_ROOT_CFG_DIR);  // add to xml
 					if(recheck)
 						closedir(pRtDIR);
 				}
 			}
-			////STDLINE(string("Opening ")+ dirpath,"") ;
+			////STDLINE(std::string("Opening ")+ dirpath,"") ;
 			while((entry = readdir(pDIR)))
 			{
 				//__SUP_COUT__ << int(entry->d_type) << " " << entry->d_name << "\n" <<
@@ -400,7 +527,7 @@ void VisualSupervisor::request(const std::string               & requestType,
 					if(entry->d_type == 0)
 					{
 						// unknown type .. determine if directory
-						////STDLINE(string("Opening ")+dirpath+entry->d_name,"") ;
+						////STDLINE(std::string("Opening ")+dirpath+entry->d_name,"") ;
 						DIR* pTmpDIR = opendir((dirpath + entry->d_name).c_str());
 						if(pTmpDIR)
 						{
@@ -419,8 +546,13 @@ void VisualSupervisor::request(const std::string               & requestType,
 					else if(entry->d_type == 4)
 						isDir = true;  // flag directory types
 
+<<<<<<< HEAD
 					//ss.str("") ; ss << "Adding " << entry->d_name << " to xmlOut" ;
 					////STDLINE(string("--> entry->d_name        : ")+entry->d_name,"") ;
+=======
+					// ss.str("") ; ss << "Adding " << entry->d_name << " to xmlOut" ;
+					////STDLINE(std::string("--> entry->d_name        : ")+entry->d_name,"") ;
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 					xmlOut.addTextElementToData(
 							isDir ? "dir" : (isNotRtCfg ? "dir" : "file"), entry->d_name);
 				}
@@ -435,6 +567,7 @@ void VisualSupervisor::request(const std::string               & requestType,
 	else if(requestType == "getRoot") //################################################################################################################
 	{
 		// return directory structure for requested ROOT path, types are "dir" and "file"
+<<<<<<< HEAD
 
                 ss.str("") ; ss << "PID: " << ::getpid() ;
 //                STDLINE(ss.str(),ACCyan) ;
@@ -450,9 +583,26 @@ void VisualSupervisor::request(const std::string               & requestType,
 		std::string fullPath = std::string(__ENV__("ROOT_BROWSER_PATH")) + path;
  		ss.str("") ; ss << "fullPath: " << fullPath ;
 // 		STDLINE(ss.str(),"") ;
+=======
+		std::string  path = CgiDataUtilities::postData(cgiIn, "RootPath");
+		boost::regex re("%2F");
+		path = boost::regex_replace(path, re, "/");  // Dario: should be transparent for
+		// Ryan's purposes but required by
+		// Extjs
+		boost::regex re1("%3A");
+		path = boost::regex_replace(path, re1, "");  // Dario: should be transparent for
+		// Ryan's purposes but required by
+		// Extjs
 
-		//__SUP_COUT__ << "Full path:-" << fullPath << "-" << __E__;
+		ss.str("");
+		ss << "path    : " << path;
+		STDLINE(ss.str(), ACCyan);
+		std::string fullPath = std::string(__ENV__("ROOT_BROWSER_PATH")) + path;
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 
+		__SUP_COUTV__(fullPath);
+
+<<<<<<< HEAD
 		std::string rootFileName = fullPath.substr(0, fullPath.find(".root") + 5);
  		ss.str("") ; ss << "rootFileName " << rootFileName ;
 // 		STDLINE(ss.str(),"") ;
@@ -466,9 +616,26 @@ void VisualSupervisor::request(const std::string               & requestType,
 // 		STDLINE(ss.str(),"") ;
 		std::string::size_type LDQM_pos = path.find("/" + LIVEDQM_DIR + ".root/");
 		TFile * rootFile;
+=======
+		const size_t rootExtensionStart = fullPath.find(".root");
+		const size_t rootExtensionEnd = rootExtensionStart + std::string(".root").size();
 
-		if(theDataManager_->getLiveDQMHistos() != nullptr && LDQM_pos == 0)
+		std::string rootFileName = fullPath.substr(0, rootExtensionEnd);
+
+		__SUP_COUTV__(rootFileName);
+		std::string rootDirectoryName =
+		    rootFileName + ":" +
+		    fullPath.substr(rootExtensionEnd, fullPath.size() - rootExtensionEnd + 1);
+
+		__SUP_COUTV__(rootDirectoryName);
+		std::string::size_type LDQM_pos = path.find("/" + LIVEDQM_DIR + ".root/");
+		__SUP_COUTV__(LDQM_pos);
+		TFile* rootFile = nullptr;
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
+
+		if(LDQM_pos == std::string::npos)  // If it is not from LIVE_DQM
 		{
+<<<<<<< HEAD
 			STDLINE("=========> From LIVE DQM","") ;
 			//__SUP_COUT__ << "Attempting to get LIVE file." << __E__;
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
@@ -564,10 +731,150 @@ void VisualSupervisor::request(const std::string               & requestType,
 				if(LDQM_pos == 0)
 				{
 //				        STDLINE("LDQM_pos == 0",ACGreen) ;
+=======
+			__SUP_COUTV__(rootFileName);
+			rootFile = TFile::Open(rootFileName.c_str());
+
+			if(rootFile == nullptr || !rootFile->IsOpen())
+			{
+				__SUP_SS__ << "Failed to access ROOT file: " << rootFileName << __E__;
+				__SUP_SS_THROW__;
+			}
+		}
+		else
+		{
+			if(theDataManager_ != nullptr &&
+					theDataManager_->getLiveDQMHistos() != nullptr)
+			{
+				__SUP_COUT__ << "Attempting to get LIVE ROOT object." << __E__;
+				__SUP_COUTV__(rootDirectoryName);
+				rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
+				__SUP_COUTV__(rootDirectoryName);
+				rootFile = theDataManager_->getLiveDQMHistos()->getFile();
+
+				__SUP_COUT__ << "LIVE file name: " << rootFile->GetName() << __E__;
+
+				if(rootFile == nullptr || !rootFile->IsOpen())
+				{
+					__SUP_SS__ << "Failed to access LIVE ROOT file: " << rootFileName
+					           << __E__;
+					__SUP_COUT__ << ss.str();
+					xmlOut.addTextElementToData("Warning", ss.str());
+					return;  // do not treat LIVE root file missing as error, .. assume
+					         // just not Running
+				}
+			}
+			else
+			{
+				__SUP_SS__ << "Failed to access LIVE ROOT file: " << rootFileName
+				           << __E__;
+				__SUP_COUT__ << ss.str();
+				xmlOut.addTextElementToData("Warning", ss.str());
+				return;  // do not treat LIVE root file missing as error, .. assume just
+				         // not Running
+			}
+		}
+
+		// at this point initial ROOT object has been successfully opened
+
+		xmlOut.addTextElementToData("path", path);
+
+		TDirectory* directory = rootFile->GetDirectory(rootDirectoryName.c_str());
+		TObject*    tobject   = nullptr;
+
+		if(!directory)  // if not directory yet, peak at object for TTree or
+		                // TBranchElement with children
+		{
+			// if TTree or TBranchElement with children, then treat as a directory
+			// else if TBranchElement without children, then treat as leaf ROOT object
+
+			rootDirectoryName = fullPath.substr(
+			    rootExtensionEnd);  // re-purpose rootDirectoryName as path within TTree
+
+			std::vector<std::string> splitTTreePath =
+			    StringMacros::getVectorFromString(rootDirectoryName, {'/'});
+			__SUP_COUTV__(StringMacros::vectorToString(splitTTreePath));
+
+			unsigned int spliti = 0;
+			while(spliti < splitTTreePath.size() && splitTTreePath[spliti].size() == 0)
+				++spliti;  // search for first non-empty
+
+			if(spliti < splitTTreePath.size())
+			{
+				__SUP_COUTV__(splitTTreePath[spliti]);
+				tobject = (TObject*)rootFile->Get(splitTTreePath[spliti].c_str());
+				++spliti;  // search for next non-empty
+			}
+
+			if(tobject == nullptr)
+			{
+				__SUP_SS__ << "Failed to access ROOT sub path: " << rootDirectoryName
+				           << __E__;
+				__SUP_SS_THROW__;
+			}
+			__SUP_COUTV__(tobject->ClassName());
+
+			if(std::string(tobject->ClassName()) == "TTree" ||
+			   std::string(tobject->ClassName()).find("TBranch") != std::string::npos || // == "TBranchElement" ||
+			   std::string(tobject->ClassName()).find("TDirectory") != 
+			   	std::string::npos)
+			{
+				// continue traversing name split
+				do
+				{
+					while(spliti < splitTTreePath.size() &&
+					      splitTTreePath[spliti].size() == 0)
+						++spliti;  // search for next non-empty
+					if(spliti >= splitTTreePath.size())
+						break;  // reached end of traversal!
+
+					__SUP_COUTV__(splitTTreePath[spliti]);
+					__SUP_COUT__ << "Parent class = " << (tobject->ClassName()) << __E__;
+					if(std::string(tobject->ClassName()) == "TTree")
+						tobject = (TObject*)((TTree*)tobject)
+						              ->GetBranch(splitTTreePath[spliti].c_str());
+					else if(std::string(tobject->ClassName()).find("TBranch") != std::string::npos)
+						tobject = (TObject*)((TBranchElement*)tobject)
+						              ->FindBranch(splitTTreePath[spliti].c_str());
+					else if(std::string(tobject->ClassName()).find("TDirectory") != std::string::npos)
+						tobject = (TObject*)((TDirectoryFile*)tobject)
+						              ->Get(splitTTreePath[spliti].c_str());
+					
+					++spliti;  // search for next non-empty
+				} while(tobject);
+
+				if(tobject == nullptr)
+				{
+					__SUP_SS__ << "Failed to access root sub path: " << rootDirectoryName
+					           << __E__;
+					__SUP_SS_THROW__;
+				}
+
+				__SUP_COUTV__(tobject->ClassName());
+
+				// now at path's target element with tobject
+				//	if no branches, then "file" and tobject stringified
+				//	else "dir"
+
+				TObjArray* objects = nullptr;
+
+				if(std::string(tobject->ClassName()) == "TTree")
+					objects = ((TTree*)tobject)->GetListOfBranches();
+				else if(std::string(tobject->ClassName()).find("TBranch") != std::string::npos)//== "TBranchElement")
+					objects = ((TBranchElement*)tobject)->GetListOfBranches();
+
+				if(objects != nullptr && !objects->IsEmpty())
+				{
+					__SUP_COUT__ << "Handling as TTree/TBranchElement directory" << __E__;
+
+					// treat like a directory, and return branches
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 					TObject* obj;
-					TIter    nextobj(directory->GetList());
+					TIter    nextobj(objects->MakeIterator());
+					TRegexp  re("*", kTRUE);
 					while((obj = (TObject*)nextobj()))
 					{
+<<<<<<< HEAD
 //				                STDLINE(obj->GetName(),ACGreen) ;
 						TString s = obj->GetName();
 						if(s.Index(re) == kNPOS)
@@ -581,10 +888,108 @@ void VisualSupervisor::request(const std::string               & requestType,
 												  obj->GetName());
 						// ss.str("") ; ss << "obj->GetName(): " << obj->GetName() ;
 						// //STDLINE(ss.str(),"") ;
+=======
+						std::string name = obj->GetName();
+						TString     s    = name;
+						if(s.Index(re) == kNPOS)
+							continue;
+
+						__SUP_COUT__ << "Child class Name: " << obj->IsA()->GetName()
+						             << " " << name << __E__;
+
+						if(std::string(obj->IsA()->GetName()).find("TBranch") != std::string::npos)// == "TBranchElement")
+						{
+							// decide if leave based on children branches
+							__SUP_COUT__
+							    << "Child '" << name << "' of type '"
+							    << ((TBranchElement*)obj)->GetTypeName() << "' isLeaf="
+							    << ((TBranchElement*)obj)->GetListOfBranches()->IsEmpty()
+							    << __E__;
+
+							xmlOut.addTextElementToData(
+							    (((TBranchElement*)obj)->GetListOfBranches()->IsEmpty())
+							        ? "file"
+							        : "dir",
+							    name);
+						}
+						else  // handle normal way
+						{
+							xmlOut.addTextElementToData(
+							    (std::string(obj->IsA()->GetName()).find("Directory") !=
+							         std::string::npos ||
+							     std::string(obj->IsA()->GetName()) == "TTree")
+							        ? "dir"
+							        : "file",
+							    name);
+						}
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 					}
+					return;
+				}  // done handling TTree branches
+			}      // end TTree and branch handling
+			else if(spliti < splitTTreePath.size())
+			{
+				__COUTV__(rootDirectoryName);
+				// if more name to mystery object (likely TDirectoryFile), then attempt to
+				// get full subpath
+				tobject = (TObject*)rootFile->Get(rootDirectoryName.c_str());
+			}
+
+			// at this point have tobject to stringify
+		}  // peaking for TTree
+
+		if(directory == nullptr)
+		{
+			__SUP_COUT__ << "This is not a directory!" << __E__;
+
+			if(tobject == nullptr)
+			{
+				__SUP_SS__
+				    << "Something is wrong. Failed to access ROOT TObject at path: "
+				    << fullPath << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			TObject* tobjectClone = nullptr;
+
+			if(tobject != nullptr)  // turns out was a root object path
+			{
+				//ignore lock, because Lore says only crashed with Canvas
+				
+				//FIXME -- check this new histo and gDirectory->Get for memory leak!
+				bool doJSONobject = false;
+				TH1F* h8 = nullptr;
+				std::string tmpClassName =  tobject->ClassName();
+				if(tmpClassName.find("TBranch") != std::string::npos)
+				{
+					__COUT__ << "Attempting to plot '" << tobject->ClassName() << "' type." << __E__;
+					
+					h8=new TH1F();
+					TTree * t3 = ((TBranch*)tobject)->GetTree();
+					//__COUT__ << "Attempting to plot '" << t3 << "' type." << __E__;
+					//__COUT__ << "JSON=" << TBufferJSON::ConvertToJSON(h8).Data() << __E__;
+					t3->Draw("Value>>h8","", "goff");					
+					tobject = gDirectory->Get("h8");
+					
+					__COUT__ << "Attempting to plot '" << tobject->ClassName() << "' type." << __E__;
+					doJSONobject = true;
+				}
+				
+				// Clone tobject to avoid conflict when it is filled by other
+				// threads
+				if(theDataManager_ != nullptr &&
+						theDataManager_->getLiveDQMHistos() != nullptr &&
+						LDQM_pos == 0)
+				{
+					std::unique_lock<std::mutex> lock(
+					    static_cast<DQMHistosConsumerBase*>(
+					        theDataManager_->getLiveDQMHistos())
+					        ->getFillHistoMutex());
+					tobjectClone = tobject->Clone();
 				}
 				else
 				{
+<<<<<<< HEAD
 //				        STDLINE("Looping over keys",ACGreen) ;
 					TKey* key;
 					TIter next(directory->GetListOfKeys());
@@ -604,8 +1009,33 @@ void VisualSupervisor::request(const std::string               & requestType,
 						//ss.str("") ; ss << "key->GetName(): " << key->GetName() ;
 						////STDLINE(ss.str(),"") ;
 					}
+=======
+					tobjectClone = tobject->Clone();
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 				}
+				
+				
+
+				TString     json = TBufferJSON::ConvertToJSON(tobjectClone);
+				TBufferFile tBuffer(TBuffer::kWrite);
+				tobjectClone->Streamer(tBuffer);
+
+				std::string hexString = BinaryStringMacros::binaryStringToHexString(
+				    tBuffer.Buffer(), tBuffer.Length());
+
+				__SUP_COUT__ << "Returning object '" << tobjectClone->GetName()
+				             << "' of class '" << tobjectClone->ClassName() << __E__;
+
+				xmlOut.addTextElementToData("rootType", doJSONobject?"JSON":tobjectClone->ClassName());
+				xmlOut.addTextElementToData("rootData", hexString);
+				xmlOut.addTextElementToData("rootJSON", json.Data());
+
+				if(tobjectClone != nullptr)
+					delete tobjectClone;
+				if(h8 != nullptr)
+					delete h8;
 			}
+<<<<<<< HEAD
 			if(LDQM_pos == std::string::npos)
 				rootFile->Close();
 		}
@@ -613,7 +1043,78 @@ void VisualSupervisor::request(const std::string               & requestType,
 		// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
 	}
 	else if(requestType == "getEvents") //################################################################################################################
+=======
+			else
+				__SUP_COUT_ERR__ << "Failed to access:-" << rootDirectoryName << "-"
+				                 << __E__;
+			STDLINE("Done with it!", ACBlue);
+		}
+		else  // handle as directory
+		{
+			__SUP_COUT__ << "directory found getting the content!" << __E__;
+			STDLINE("Directory found getting the content!", ACGreen);
+			TRegexp re("*", kTRUE);
+			if(LDQM_pos == 0)
+			{
+				TObject* obj;
+				TIter    nextobj(directory->GetList());
+				while((obj = (TObject*)nextobj()))
+				{
+					TString s = obj->GetName();
+					if(s.Index(re) == kNPOS)
+						continue;
+					__SUP_COUT__ << "Class Name: " << obj->IsA()->GetName() << __E__;
+
+					xmlOut.addTextElementToData(
+					    (std::string(obj->IsA()->GetName()).find("Directory") !=
+					         std::string::npos ||
+					     std::string(obj->IsA()->GetName()) == "TTree" ||
+					     std::string(obj->IsA()->GetName()).find("TBranch") != std::string::npos)// == "TBranchElement")
+					        ? "dir"
+					        : "file",
+					    obj->GetName());
+					// ss.str("") ; ss << "obj->GetName(): " << obj->GetName() ;
+					// //STDLINE(ss.str(),"") ;
+				}
+			}
+			else
+			{
+				TKey* key;
+				TIter next(directory->GetListOfKeys());
+				while((key = (TKey*)next()))
+				{
+					TString s = key->GetName();
+					if(s.Index(re) == kNPOS)
+						continue;
+					__SUP_COUT__ << "Class Name: " << key->GetClassName() << __E__;
+					xmlOut.addTextElementToData(
+					    (std::string(key->GetClassName()).find("Directory") !=
+					         std::string::npos ||
+					     std::string(key->GetClassName()) == "TTree" ||
+					     std::string(key->GetClassName()).find("TBranch") != std::string::npos)// == "TBranchElement")
+					        ? "dir"
+					        : "file",
+					    key->GetName());
+					// ss.str("") ; ss << "key->GetName(): " << key->GetName() ;
+					////STDLINE(ss.str(),"") ;
+				}
+			}
+		}
+		if(LDQM_pos == std::string::npos)
+			rootFile->Close();
+
+	}  // end getRoot handling
+	else if(
+	    requestType ==
+	    "getEvents")  //################################################################################################################
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 	{
+		if(theDataManager_ == nullptr)
+		{
+			__SS__ << "No Data Manager instantiated." << __E__;
+			__SS_THROW__;
+		}
+
 		int Run = atoi(cgiIn("run").c_str());
 
 		__SUP_COUT__ << "getEvents for run " << Run << __E__;
@@ -624,9 +1125,9 @@ void VisualSupervisor::request(const std::string               & requestType,
 			loadedRunNumber_ = Run;
 		}
 
-		DOMElement* eventsParent = xmlOut.addTextElementToData("events", "");
-		DOMElement* eventParent;
-		char        str[40];
+		/*DOMElement* eventsParent =*/ xmlOut.addTextElementToData("events", "");
+		//DOMElement* eventParent;
+		//char        str[40];
 
 		//		const Visual3DEvents& events = theDataManager_->getVisual3DEvents();
 		//		__SUP_COUT__ << "Preparing hits xml" << __E__;
@@ -673,12 +1174,18 @@ void VisualSupervisor::request(const std::string               & requestType,
 	{
 		__SUP_COUT__ << "getGeometry" << __E__;
 
+		if(theDataManager_ == nullptr)
+		{
+			__SS__ << "No Data Manager instantiated." << __E__;
+			__SS_THROW__;
+		}
+
 		// FIXME -- this crashes when the file doesn't exist!
 		theDataManager_->load("Run1684.geo", "Geometry");
 
 		__SUP_COUT__ << "getGeometry" << __E__;
 
-		DOMElement* geometryParent = xmlOut.addTextElementToData("geometry", "");
+		/*DOMElement* geometryParent =*/ xmlOut.addTextElementToData("geometry", "");
 		//		const Visual3DShapes& shapes =
 		// theDataManager_->getVisual3DGeometry().getShapes();
 		//
@@ -840,7 +1347,34 @@ void VisualSupervisor::request(const std::string               & requestType,
 
 		//}
 	}
+<<<<<<< HEAD
 	else if(requestType == "getMeDirs") //################################################################################################################
+=======
+	else if(
+	    requestType ==
+	    "getMeDirs")  //################################################################################################################
+	{
+		xmlOut.setDarioStyle(true);  // workaround for XML formatting....
+		std::string  fSystemPath = std::string(ROOT_BROWSER_PATH) + "/";
+		std::string  fRootPath   = CgiDataUtilities::postData(cgiIn, "Path");
+		boost::regex re("%2F");
+		fRootPath            = boost::regex_replace(fRootPath, re, "/");
+		std::string fullPath = fSystemPath + fRootPath;
+		//  fFoldersPath_ = "pippo" ;
+		STDLINE(std::string("Begin: fSystemPath  = ") + fSystemPath, ACWhite);
+		STDLINE(std::string("Begin: fRootPath    = ") + fRootPath, ACWhite);
+		STDLINE(std::string("Begin: fullPath     = ") + fullPath, ACWhite);
+		//  STDLINE(std::string("Begin: fFoldersPath = ")+fFoldersPath_,ACCyan ) ;
+
+		xmlOut.setRootPath(fRootPath);
+		xmlOut.makeDirectoryBinaryTree(fSystemPath, fRootPath, 0, NULL);
+		std::ostringstream* out = new std::ostringstream();
+		xmlOut.outputXmlDocument((std::ostringstream*)out, true);
+	}
+	else if(
+	    requestType ==
+	    "getMeRootFile")  //################################################################################################################
+>>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 	{
          xmlOut.setDarioStyle(true) ; // workaround for XML formatting....
 	 std::string fSystemPath = std::string(ROOT_BROWSER_PATH) + "/";

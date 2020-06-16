@@ -8,7 +8,7 @@
 				
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 		
 
 		<style type="text/css">		
@@ -272,7 +272,7 @@
 			var _displayName;
 			
 			var _consoleHistoryFields = ["chat_entry","chat_author","chat_time"];
-			var _CONSOLE_HISTORY_MAX_LENGTH = 100000;
+			var _CONSOLE_HISTORY_MAX_LENGTH = 500000;
 						
 			var _chatUsersTitle = "<div class='userTitle'>Chatting:</div>";
 			var _activeUsersTitle = "<div class='userTitle'>Logged In:</div>";
@@ -1196,7 +1196,7 @@
 	</head>
 	
 	
-	<body onload='Javascript:init();'>			
+	<body onload='//init() called by DesktopContent.js'>			
 
 
 		<div id='downloadIconDiv' onmouseup='downloadMessages()' title='Download console messages to text file.' style='float: left; margin: -1px 10px 0px 10px; cursor: pointer;'>			

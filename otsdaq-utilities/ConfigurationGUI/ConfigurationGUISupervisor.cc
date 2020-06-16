@@ -67,6 +67,11 @@ void ConfigurationGUISupervisor::init(void)
 	try
 	{
 		testXDAQContext();  // test context group activation
+		//theRemoteWebUsers_.sendSystemMessage("tracker:10","My Subject","This is my body",false /*doEmail*/);
+		//theRemoteWebUsers_.sendSystemMessage("Ryan","My Subject Dude","This is my body",false /*doEmail*/);
+		//theRemoteWebUsers_.sendSystemMessage("*","My Rad Subject","This is my body",false /*doEmail*/);
+
+		__SUP_COUT__ << "Done with test context." << __E__;
 	}
 	catch(...)
 	{
@@ -75,7 +80,7 @@ void ConfigurationGUISupervisor::init(void)
 		              << "Check the active context group from within Wizard Mode."
 		              << __E__;
 	}
-}
+} //end init()
 
 //==============================================================================
 void ConfigurationGUISupervisor::destroy(void)
@@ -138,7 +143,7 @@ void ConfigurationGUISupervisor::forceSupervisorPropertyValues()
 {
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
-	    "");  // none
+	    "getActiveTableGroups");  // none
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.CheckUserLockRequestTypes,
 	    "*");  // all
@@ -404,7 +409,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		    1 == CgiDataUtilities::getDataAsInt(cgiIn, "reloadActiveGroups");  // from GET
 
 		__SUP_COUT__ << "reloadActive: " << reloadActive << __E__;
-		bool wasError = false;
+		//bool wasError = false;
 		if(reloadActive)
 		{
 			try
@@ -418,14 +423,14 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 				           << __E__;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
 				xmlOut.addTextElementToData("Error", ss.str());
-				wasError = true;
+				//wasError = true;
 			}
 			catch(...)
 			{
 				__SUP_SS__ << ("Error loading active groups!\n\n") << __E__;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
 				xmlOut.addTextElementToData("Error", ss.str());
-				wasError = true;
+				//wasError = true;
 			}
 		}
 
@@ -730,7 +735,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			else
 				cfgMgr->clearCachedVersions(tableName);
 
-			cfgMgr->getAllTableInfo(true /*refresh*/);
+			// Force manual reload... not cfgMgr->getAllTableInfo(true /*refresh*/);
 		}
 		catch(std::runtime_error& e)
 		{
@@ -1229,22 +1234,33 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getLastTableGroups")
 	{
-		XDAQ_CONST_CALL xdaq::ApplicationDescriptor* gatewaySupervisor =
-		    allSupervisorInfo_.isWizardMode() ? allSupervisorInfo_.getWizardDescriptor()
-		                                      : allSupervisorInfo_.getGatewayDescriptor();
-
 		std::string                                          timeString;
-		std::pair<std::string /*group name*/, TableGroupKey> theGroup =
-		    theRemoteWebUsers_.getLastConfigGroup(
-		        gatewaySupervisor, "Configured", timeString);
+		std::pair<std::string /*group name*/, TableGroupKey> theGroup;
+
+		theGroup = theRemoteWebUsers_.getLastTableGroup("Configured", timeString);
 		xmlOut.addTextElementToData("LastConfiguredGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastConfiguredGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastConfiguredGroupTime", timeString);
-		theGroup = theRemoteWebUsers_.getLastConfigGroup(
-		    gatewaySupervisor, "Started", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("Started", timeString);
 		xmlOut.addTextElementToData("LastStartedGroupName", theGroup.first);
 		xmlOut.addTextElementToData("LastStartedGroupKey", theGroup.second.toString());
 		xmlOut.addTextElementToData("LastStartedGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedConfig", timeString);
+		xmlOut.addTextElementToData("LastActivatedConfigGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedConfigGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedConfigGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedContext", timeString);
+		xmlOut.addTextElementToData("LastActivatedContextGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedContextGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedContextGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedBackbone", timeString);
+		xmlOut.addTextElementToData("LastActivatedBackboneGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedBackboneGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedBackboneGroupTime", timeString);
+		theGroup = theRemoteWebUsers_.getLastTableGroup("ActivatedIterator", timeString);
+		xmlOut.addTextElementToData("LastActivatedIteratorGroupName", theGroup.first);
+		xmlOut.addTextElementToData("LastActivatedIteratorGroupKey", theGroup.second.toString());
+		xmlOut.addTextElementToData("LastActivatedIteratorGroupTime", timeString);
 	}
 	else if(requestType == "savePlanCommandSequence")
 	{
@@ -1550,6 +1566,21 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 			}
 		}
 
+		if(group.first == ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION)
+		{
+			__SUP_COUT__ << "Considering mockup tables for Configuration Group..." << __E__;
+			for(auto& table : modifiedTablesMap)
+			{
+				if(table.second.isMockupVersion() && memberMap.find(table.first) == memberMap.end())
+				{
+					__SUP_COUT__ << "Found mockup table '" <<
+							table.first << "' for Configuration Group." << __E__;
+					memberMap[table.first] = table.second;
+					affected               = true;
+				}
+			}
+		}
+
 		if(affected)
 		{
 			parentEl = xmlOut.addTextElementToData("AffectedActiveGroup", "");
@@ -1677,14 +1708,29 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 	std::map<std::string, TableVersion> allActivePairs = cfgMgr->getActiveVersions();
 	xmlOut.addTextElementToData("DefaultNoLink",
 	                            TableViewColumnInfo::DATATYPE_LINK_DEFAULT);
-	for(auto& activePair : allActivePairs)
+
+	// construct specially ordered table name set
+	std::set<std::string, StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
+	for(const auto& tablePair : allActivePairs)
+		orderedTableSet.emplace(tablePair.first);
+
+	std::map<std::string, TableInfo>::const_iterator tableInfoIt;
+	for(auto& orderedTableName : orderedTableSet)
 	{
+		tableInfoIt = allTableInfo.find(orderedTableName);
+		if(tableInfoIt == allTableInfo.end())
+		{
+			__SS__ << "Impossible missing table in map '" << orderedTableName << "'"
+			       << __E__;
+			__SS_THROW__;
+		}
+
 		if(outputActiveTables)
-			xmlOut.addTextElementToData("ActiveTableName", activePair.first);
+			xmlOut.addTextElementToData("ActiveTableName", orderedTableName);
 
 		// check if name is in modifiedTables
 		// if so, activate the temporary version
-		if((modifiedTablesMapIt = modifiedTablesMap.find(activePair.first)) !=
+		if((modifiedTablesMapIt = modifiedTablesMap.find(orderedTableName)) !=
 		   modifiedTablesMap.end())
 		{
 			__SUP_COUT__ << "Found modified table " << (*modifiedTablesMapIt).first
@@ -1692,16 +1738,15 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 
 			try
 			{
-				allTableInfo.at(activePair.first)
-				    .tablePtr_->setActiveView((*modifiedTablesMapIt).second);
+				tableInfoIt->second.tablePtr_->setActiveView(
+				    (*modifiedTablesMapIt).second);
 			}
 			catch(...)
 			{
-				__SUP_SS__
-				    << "Modified table version v" << (*modifiedTablesMapIt).second
-				    << " failed. Reverting to v"
-				    << allTableInfo.at(activePair.first).tablePtr_->getView().getVersion()
-				    << "." << __E__;
+				__SUP_SS__ << "Modified table version v" << (*modifiedTablesMapIt).second
+				           << " failed. Reverting to v"
+				           << tableInfoIt->second.tablePtr_->getView().getVersion() << "."
+				           << __E__;
 				__SUP_COUT_WARN__ << "Warning detected!\n\n " << ss.str() << __E__;
 				xmlOut.addTextElementToData(
 				    "Warning",
@@ -1711,21 +1756,19 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 
 		if(outputActiveTables)
 		{
-			xmlOut.addTextElementToData("ActiveTableVersion",
-			                            allTableInfo.at(activePair.first)
-			                                .tablePtr_->getView()
-			                                .getVersion()
-			                                .toString());
+			xmlOut.addTextElementToData(
+			    "ActiveTableVersion",
+			    tableInfoIt->second.tablePtr_->getView().getVersion().toString());
 			xmlOut.addTextElementToData(
 			    "ActiveTableComment",
-			    allTableInfo.at(activePair.first).tablePtr_->getView().getComment());
+			    tableInfoIt->second.tablePtr_->getView().getComment());
 		}
 
 		//__SUP_COUT__ << "Active table = " <<
 		//		activePair.first << "-v" <<
 		//		allTableInfo.at(activePair.first).tablePtr_->getView().getVersion() <<
 		//__E__;
-	}
+	}  // end ordered table loop
 }  // end setupActiveTablesXML()
 catch(std::runtime_error& e)
 {
@@ -1796,13 +1839,13 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(
 		bool firstSave = true;
 
 		// save current version
-		TableView backupView;
+		TableView backupView(targetNode.getTableName());
 
 		// extract record list
 		{
 			std::istringstream f(recordList);
 			std::string        recordUID;
-			unsigned int       i;
+			//unsigned int       i;
 
 			while(getline(f, recordUID, ','))  // for each record
 			{
@@ -1989,7 +2032,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 		{
 			std::istringstream f(recordList);
 			std::string        recordUID;
-			unsigned int       i;
+			//unsigned int       i;
 
 			while(getline(f, recordUID, ','))  // for each record
 			{
@@ -2384,7 +2427,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(
 
 				//__SUP_COUT__ << "recordUID " <<	recordUID << __E__;
 
-				xercesc::DOMElement* parentEl =
+				/*xercesc::DOMElement* parentEl =*/
 				    xmlOut.addTextElementToData("fieldValues", recordUID);
 
 				// for each field, set value
@@ -4226,7 +4269,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 	{
 		__SUP_SS__ << "Target table version (" << version
 		           << ") is not the currently active version (" << table->getViewVersion()
-		           << ". Try refreshing the tree." << __E__;
+		           << "). Try refreshing the tree." << __E__;
 		__SS_THROW__;
 	}
 
@@ -4498,9 +4541,29 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 
 				if(version != table->getViewVersion())
 				{
-					__SUP_SS__ << "Target table version (" << version
+					__SUP_SS__;
+					if(version.isMockupVersion())
+						ss << "Target table '" << newTable
+							<< "' is likely not a member of the current table group "
+							<< "since the mock-up version was not successfully loaded. "
+							<< "\n\n" <<
+							//same as ConfigurationGUI.html L:9833
+							(std::string("") + "To add a table to a group, click the group name to go to the " +
+							"group view, then click 'Add/Remove/Modify Member Tables.' You " +
+							"can then add or remove tables and save the new group." +
+							"\n\n" +
+							"OR!!! Click the following button to add the table '" + newTable +
+							"' to the currently active Configuration Group: " +
+							"<input type='button' style='color:black !important;' " +
+							"title='Click to add table to the active Configuration Group' " +
+							"onclick='addTableToConfigurationGroup(\"" +
+							newTable + "\"); Debug.closeErrorPop();event.stopPropagation();' value='Add Table'>" +
+							"</input>")
+						           << __E__;
+					else
+						ss << "Target table version (" << version
 					           << ") is not the currently active version ("
-					           << table->getViewVersion() << ". Try refreshing the tree."
+					           << table->getViewVersion() << "). Try refreshing the tree."
 					           << __E__;
 					__SS_THROW__;
 				}
@@ -4906,6 +4969,10 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		xmlOut.addTextElementToParent(
 		    "ColumnDataType", colInfo[i].getDataType(), parentEl);
 
+		//NOTE!! ColumnDefaultValue defaults may be unique to this version of the table, whereas DefaultRowValue are the defaults for the mockup
+		xmlOut.addTextElementToParent(
+		    "ColumnDefaultValue", colInfo[i].getDefaultValue(), parentEl);
+
 		choicesParentEl = xmlOut.addTextElementToParent("ColumnChoices", "", parentEl);
 		// add data choices if necessary
 		if(colInfo[i].getType() == TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
@@ -4966,7 +5033,8 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	                            std::to_string(cfgViewPtr->getLastAccessTime()));
 
 	// add to xml the default row values
-	std::vector<std::string> defaultRowValues = cfgViewPtr->getDefaultRowValues();
+	//NOTE!! ColumnDefaultValue defaults may be unique to this version of the table, whereas DefaultRowValue are the defaults for the mockup
+	std::vector<std::string> defaultRowValues = table->getMockupViewP()->getDefaultRowValues();
 	// don't give author and time.. force default author, let JS fill time
 	for(unsigned int c = 0; c < defaultRowValues.size() - 2; ++c)
 	{
@@ -4975,6 +5043,8 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		//				defaultRowValues[c] << __E__;
 		xmlOut.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
 	}
+
+	const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
 
 	if(accumulatedErrors != "")  // add accumulated errors to xmlOut
 	{
@@ -4987,14 +5057,13 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	}
 	else if(!version.isTemporaryVersion() &&  // not temporary (these are not filled from
 	                                          // interface source)
-	        (cfgViewPtr->getDataColumnSize() != cfgViewPtr->getNumberOfColumns() ||
+	        (srcColNames.size() != cfgViewPtr->getNumberOfColumns() ||
 	         cfgViewPtr->getSourceColumnMismatch() !=
 	             0))  // check for column size mismatch
 	{
 		__SUP_SS__ << "\n\nThere were warnings found when loading the table " << tableName
 		           << ":v" << version << ". Please see the details below:\n\n"
-		           << "The source column size was found to be "
-		           << cfgViewPtr->getDataColumnSize()
+		           << "The source column size was found to be " << srcColNames.size()
 		           << ", and the current number of columns for this table is "
 		           << cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of "
 		           << cfgViewPtr->getSourceColumnMismatch()
@@ -5002,7 +5071,6 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		           << cfgViewPtr->getSourceColumnMissing() << " table entries missing in "
 		           << cfgViewPtr->getNumberOfRows() << " row(s) of data." << __E__;
 
-		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
 		ss << "\n\nSource column names in ALPHABETICAL order were as follows:\n";
 		char        index       = 'a';
 		std::string preIndexStr = "";
@@ -5073,9 +5141,9 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
-	__SUP_COUT__ << "Using Config Session " << mapKey
-	             << " ... Total Session Count: " << userConfigurationManagers_.size()
-	             << __E__;
+	//	__SUP_COUT__ << "Using Config Session " << mapKey
+	//	             << " ... Total Session Count: " << userConfigurationManagers_.size()
+	//	             << __E__;
 
 	time_t now = time(0);
 
@@ -5232,15 +5300,16 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 	      << "\" Type=\"File,Database,DatabaseTest\" Description=\"" << tableDescription
 	      << "\">\n";
 
-	// each column is represented by 3 fields
-	//	- type, name, dataType
+	// each column is represented by 4 fields
+	//	- type, name, dataType, defaultValue
+
 	int i = 0;                  // use to parse data std::string
 	int j = data.find(',', i);  // find next field delimiter
 	int k = data.find(';', i);  // find next col delimiter
 
 	std::istringstream columnChoicesISS(columnChoicesCSV);
 	std::string        columnChoicesString;
-	std::string        columnType;
+	std::string        columnType, columnDataType, columnDefaultValue;
 
 	while(k != (int)(std::string::npos))
 	{
@@ -5272,10 +5341,25 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 
 		i = j + 1;
 		j = data.find(',', i);  // find next field delimiter
+		columnDataType = data.substr(i, j - i);
 
 		// data type
 		outss << "\" \t	DataType=\"";
-		outss << data.substr(i, k - i);
+		outss << columnDataType;
+
+		i = j + 1;
+		j = data.find(',', i);  // find next field delimiter
+		columnDefaultValue = data.substr(i, k - i);
+
+		// default value (Note: check by decoding URI because..
+		//	which characters are encoded is not exact match to browser)
+		if(StringMacros::decodeURIComponent(columnDefaultValue) !=
+				TableViewColumnInfo::getDefaultDefaultValue(columnType,columnDataType))
+		{
+			__SUP_COUT__ << "FOUND user spec'd default value = " << columnDefaultValue << __E__;
+			outss << "\" \t	DefaultValue=\"";
+			outss << columnDefaultValue;
+		}
 
 		// fixed data choices for TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA
 		getline(columnChoicesISS, columnChoicesString, ';');
@@ -6336,12 +6420,18 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 {
 	xercesc::DOMElement* parentEl;
 
+	__COUTV__(allowIllegalColumns);
 	std::string                             accumulatedErrors = "";
 	const std::map<std::string, TableInfo>& allTableInfo      = cfgMgr->getAllTableInfo(
-        allowIllegalColumns,
-        allowIllegalColumns ? &accumulatedErrors
-                            : 0);  // if allowIllegalColumns, then also refresh
-	std::map<std::string, TableInfo>::const_iterator it = allTableInfo.begin();
+        true,                 // always refresh!!  allowIllegalColumns /*refresh*/,
+        &accumulatedErrors);  // if allowIllegalColumns, then also refresh
+
+	// construct specially ordered table name set
+	std::set<std::string, StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
+	for(const auto& tablePair : allTableInfo)
+		orderedTableSet.emplace(tablePair.first);
+
+	//std::map<std::string, TableInfo>::const_iterator it = allTableInfo.begin();
 
 	__SUP_COUT__ << "# of tables found: " << allTableInfo.size() << __E__;
 
@@ -6350,8 +6440,18 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 
 	__SUP_COUT__ << "# of tables w/aliases: " << versionAliases.size() << __E__;
 
-	while(it != allTableInfo.end())
+	for(const auto& orderedTableName : orderedTableSet)  // while(it !=
+	                                                     // allTableInfo.end())
 	{
+		std::map<std::string, TableInfo>::const_iterator it =
+		    allTableInfo.find(orderedTableName);
+		if(it == allTableInfo.end())
+		{
+			__SS__ << "Impossible missing table in map '" << orderedTableName << "'"
+			       << __E__;
+			__SS_THROW__;
+		}
+
 		// for each table name
 		// get existing version keys
 
@@ -6394,8 +6494,8 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 			if(!version.isScratchVersion())
 				xmlOut.addTextElementToParent("Version", version.toString(), parentEl);
 
-		++it;
-	}
+		//++it;
+	}  // end table loop
 
 	if(accumulatedErrors != "")
 		xmlOut.addTextElementToData(
@@ -6742,7 +6842,7 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 //	configGroupName (full name with key)
 //
 void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
-    HttpXmlDocument&        xmlOut,
+    HttpXmlDocument&        /*xmlOut*/,
     ConfigurationManagerRW* cfgMgr,
     const std::string&      layoutString,
     const std::string&      contextGroupName,

@@ -27,6 +27,7 @@ IFS=$IFS_save
 basequal=
 squal=
 artver=
+pyflag=
 build_db=1
 
 # Remove shared memory segments which have 0 nattach
@@ -50,6 +51,12 @@ for qual in ${qualarray[@]};do
             ;;
         c7)
             basequal=c7
+            ;;
+        py2)
+            pyflag=py2
+            ;;
+        py3)
+            pyflag=py3
             ;;
         s67)
             squal=s67
@@ -87,6 +94,10 @@ for qual in ${qualarray[@]};do
 			squal=s94
 			artver=v3_04_00
 			;;
+        s96)
+            squal=s96
+            artver=v3_05_00
+            ;;
         nodb)
             build_db=0
             ;;
@@ -102,6 +113,8 @@ fi
 wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/revisions/${version}/raw/ups/product_deps && \
 artdaq_ver=`grep "^artdaq " product_deps|awk '{print $2}'` || \
 $(echo "Unexpected version ${version}" && usage && exit 1)
+
+basequal_dash=$basequal${pyflag:+-${pyflag}}
 
 case ${build_type} in
     debug) ;;
@@ -153,11 +166,7 @@ chmod +x buildFW
 mv ${blddir}/*source* ${srcdir}/
 
 cd ${blddir} || exit 1
-# pulling binaries is allowed to fail
-# we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} otsdaq-${version} ${squal}-${basequal} ${build_type}
+
 # remove any artdaq_demo entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/otsdaq ] || [ -d ${blddir}/otsdaq_utilities ] || [ -d ${blddir}/otsdaq_components ]; then
   echo "Removing ${blddir}/otsdaq*"
@@ -168,7 +177,7 @@ fi
 echo
 echo "begin build"
 echo
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} otsdaq-${version} || \
+./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} otsdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }

@@ -328,11 +328,11 @@ else {
 			document.cookie= _cookieUserStr + "=" + c_value;
 			
 			//Debug.log("set cookie");
-			var ccdiv = document.getElementById("DesktopContent-cookieCodeMailbox");
-            ccdiv.innerHTML = _cookieCode; //place in mailbox for desktop content
-			ccdiv = document.getElementById("DesktopContent-updateTimeMailbox");
-            ccdiv.innerHTML = (new Date()).getTime(); //set last time of cookieCode update
-            _cookieTime = parseInt(ccdiv.innerHTML);
+			//var ccdiv = document.getElementById("DesktopContent-cookieCodeMailbox");
+            //ccdiv.innerHTML = _cookieCode; //place in mailbox for desktop content
+			//ccdiv = document.getElementById("DesktopContent-updateTimeMailbox");
+            //ccdiv.innerHTML = (new Date()).getTime(); //set last time of cookieCode update
+            _cookieTime = (new Date()).getTime();//parseInt(ccdiv.innerHTML);
 		} //end _setCookie()
 
 		//==============================================================================
@@ -524,7 +524,10 @@ else {
 						document.getElementById('loginInput3').value != "")	
 					_keptFeedbackText = "New Account Code (or Username/Password) not valid.";
 				else if(req)
-					_keptFeedbackText = "Username/Password not correct.";
+				{
+					var err = Desktop.getXMLValue(req,"Error");
+					_keptFeedbackText = "Username/Password not correct." + (err?("<br>" + err):"");
+				}
 				else
 					_keptFeedbackText = "ots Server failed.";
 				
@@ -574,8 +577,12 @@ else {
 				_closeLoginPrompt(1); //clear login prompt
 				
 				//Note: only two places where login successful,
-				//	in _handleCookieCheck() and in _handleLoginAttempt()				
+				//	in _handleCookieCheck() and in _handleLoginAttempt()	
+				DesktopContent._cookieCodeMailbox = cookieCode; //init for tooltip call
+				DesktopContent._serverUrnLid = urnLid_;
+				DesktopContent._serverOrigin = serverOrigin_;
 				Desktop.desktopTooltip();
+				
 				_attemptedCookieCheck = false;
 				_killLogoutInfiniteLoop = false;
 				return;
@@ -847,11 +854,11 @@ else {
 		} //end getCookieCode()
 
 		//==============================================================================
-		this.updateCookieFromContent = function(newTime) 
+		this.updateCookieFromContent = function(newCC, newTime) 
 		{
             _cookieTime = newTime; //set immediately so timer doesn't trip same issue
-            var ccdiv = document.getElementById("DesktopContent-cookieCodeMailbox");
-            _setCookie(ccdiv.innerHTML);
+            //var ccdiv = Desktop.desktop.cookieCodeMailbox;//document.getElementById("DesktopContent-cookieCodeMailbox");
+            _setCookie(newCC);
         } //end updateCookieFromContent()
 
 		//==============================================================================

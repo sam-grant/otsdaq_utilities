@@ -7,8 +7,10 @@
 #include "otsdaq/DataProcessorPlugins/RawDataVisualizerConsumer.h"
 
 #include <cassert>
+#include <chrono>  // std::chrono::seconds
 #include <iostream>
 #include <sstream>
+#include <thread>  // std::this_thread::sleep_for
 
 using namespace ots;
 

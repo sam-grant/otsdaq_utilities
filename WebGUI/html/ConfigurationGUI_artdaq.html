@@ -20,7 +20,7 @@
 	
 	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/ARTDAQConfigurationAPI.js"></script>
@@ -172,6 +172,10 @@
 			//getEmptyGridSpot(type)
 			//plusMinusGrid(isPlus,directionIndex)
 			//getNodeFontSize()
+			//getGridX(x)
+			//getGridY(y)
+			//getGridPointXY(xg,yg)
+			//isOverNodeBox(x,y,xg,yg)
 		
 			//handleNodeMouseOver(e)
 			//handleMouseMove(e)
@@ -284,6 +288,7 @@
 			_selectedNodes = {};
 			_subsystems = {};
 			_hostnames = {};
+			_mouseHoverNode = -1; //clear mouse hover
 			
 			//clear all nodes from display
 			{
@@ -1559,6 +1564,7 @@
 			//console.log("box",box);
 			
 			var el = document.getElementById("selectionBoxDiv");
+			
 			el.style.left 	= box[0] + "px";
 			el.style.top 	= box[1] + "px";
 			el.style.width 	= (box[2]-box[0]) + "px";
@@ -1802,6 +1808,7 @@
 			var count = (_nodes[i].nodeCount && _nodes[i].nodeCount > 4)?4:(_nodes[i].nodeCount|0);		
 									
 			el = document.getElementById(nodeid + "-headerText");
+			el.setAttribute("class","node-headerText"); //reset class in case hovering recently
 			el.style.left = ((- (_grid.xstep*1.8-sz)/2 - (count?(count-1)*2:0) - 5)|0) + "px"; //-5 because grid/arrow left is biased to 0 position
 			el.style.fontSize = ((fontSz)|0) + "px";
 			el.style.top = ((-fontSz*3-fontSz/2 - (count?(count-1)*5:0))|0) + "px";
@@ -1912,6 +1919,7 @@
 					!_grid || !_grid.rowColMap)
 				return; //disable while popup or initializing
 				
+		
     		var x = e.clientX;//- this.offsetLeft - _CANVAS_MARGIN - 2;
     		var y = e.clientY;//- this.offsetTop - _CANVAS_MARGIN - 2;
 			
@@ -1989,8 +1997,8 @@
     		} //end handle mousemove mode
 
     		
-			var xg = ((x - _grid.x0 + _grid.xstep/2)/_grid.xstep);
-			var yg = ((y - _grid.y0 + _grid.ystep/2)/_grid.ystep);			
+			var xg = getGridX(x);
+			var yg = getGridY(y);			
 			
 			if(xg < 0) xg = -1; //clip to -1 for +/- icons
 			else xg |= 0;
@@ -2005,15 +2013,10 @@
 					xg < _grid.cols && 
 					yg < _grid.rows)
 			{
-				//if directly over node-box, show grabbable hand
-				var pxy = [ _grid.x0 + xg * _grid.xstep,
-							_grid.y0 + yg * _grid.ystep];
-				var overNodeBox = false;
-				if(x > pxy[0] - _NODE_SIZE/2 && 
-						x < pxy[0] + _NODE_SIZE/2 &&
-						y > pxy[1] - _NODE_SIZE/2 &&
-						y < pxy[1] + _NODE_SIZE/2) 
-					overNodeBox = true;
+				//console.log("Node over " + xg + "," + yg);
+				
+				//if directly over node-box, show grabbable hand				
+				var overNodeBox = isOverNodeBox(x,y,xg,yg);
 
 				if(_grid.rowColMap[xg] !== undefined &&
 					_grid.rowColMap[xg][yg] !== undefined)
@@ -2071,8 +2074,7 @@
 				//if not handled, remove +			
 				_addNodeEl.style.left = "-1000px"; //off screen
 
-				var pxy = [ _grid.x0 + xg * _grid.xstep,
-							_grid.y0 + yg * _grid.ystep];
+				var pxy = getGridPointXY(xg,yg);
 				
 				//add +/- row column icons
 				if(yg == -1 && y < pxy[1] - _NODE_SIZE/2) 
@@ -2117,8 +2119,8 @@
     			case _MMM_ARROW_DRAG:
 
     				//see if node drag ended in valid spot
-    				var xg = ((x - _grid.x0 + _grid.xstep/2)/_grid.xstep)|0;
-    				var yg = ((y - _grid.y0 + _grid.ystep/2)/_grid.ystep)|0;	
+    				var xg = getGridX(x)|0;
+    				var yg = getGridY(y)|0;	
     				
     				if(_grid.rowColMap[xg] === undefined ||
     						_grid.rowColMap[xg][yg] === undefined)
@@ -2150,8 +2152,8 @@
     				_mouseMoveMode = _MMM_NONE;
     				
     				//see if node drag ended in open spot
-    				var xg = ((x - _grid.x0 + _grid.xstep/2)/_grid.xstep);
-    				var yg = ((y - _grid.y0 + _grid.ystep/2)/_grid.ystep);			
+    				var xg = getGridX(x);
+    				var yg = getGridY(y);			
 
     				if(xg < 0) xg = -1; //clip to -1 for +/- icons
     				else xg |= 0;
@@ -2279,39 +2281,36 @@
 		//=====================================================================================
 		//handleMouseDown ~~
 		function handleMouseDown(e) 
-		{	
-			if(_nodes && _mouseHoverNode >= 0 && _mouseHoverNode < _nodes.length)
-			{
-				//check if mouse down is in node header text and ignore
-				var xg = ((e.clientX - _grid.x0 + _grid.xstep/2)/_grid.xstep) |0;
-				var yg = ((e.clientY - _grid.y0 + _grid.ystep/2)/_grid.ystep) |0;
-				yg -= _nodes[_mouseHoverNode].y;
-				xg -= _nodes[_mouseHoverNode].x;
-				if((yg == 0 || yg == -1) && 
-						(xg >= -1 && xg <= 1))
-					return;
-			}
-			
+		{					
 			if(_mouseMoveMode == _MMM_POPUP_DIALOG) return; //ignore!
-				
+
+			console.log("mousedown",_mouseHoverNode);
 			e.stopPropagation();
 
+			
     		var x = e.clientX;
     		var y = e.clientY;
+    		var xg = getGridX(x) | 0;
+    		var yg = getGridY(y) | 0;
     		
-    		//console.log("mousedown x,y",x,y);
+    		var isOverNode = false;
+    		if(_nodes && _mouseHoverNode >= 0 && _mouseHoverNode < _nodes.length &&
+    				xg == _nodes[_mouseHoverNode].x &&
+					yg == _nodes[_mouseHoverNode].y)
+    		{
+    			//check if mouse down is not over node box
+    			if(!isOverNodeBox(x,y,xg,yg))
+    				return;
+    			isOverNode = true;
+    		}
+
+    		console.log("mousedown x,y",x,y);
     		
     		
 			if(_mouseMoveMode == _MMM_NONE && 
 					_mouseHoverNode >= 0) 
 			{ //start node dragging
-				var pxy = [ _grid.x0 + _nodes[_mouseHoverNode].x * _grid.xstep,
-							_grid.y0 + _nodes[_mouseHoverNode].y * _grid.ystep];
-				if(
-						x > pxy[0] - _NODE_SIZE/2 && 
-						x < pxy[0] + _NODE_SIZE/2 &&
-						y > pxy[1] - _NODE_SIZE/2 &&
-						y < pxy[1] + _NODE_SIZE/2) 
+				if(isOverNode) 
 				{
 					//shift key chooses toggling nodes
 					if(e.shiftKey)
@@ -2632,14 +2631,19 @@
 				else if(menuDepth == 1 && menuDepthType == 1 /*DAQ Settings*/)
 				{
 					editTypes.push("DAQ Parameters");
-					editTypes.push("DAQ Metrics");						
+					editTypes.push("DAQ Metrics");					
 				}
 				else if(menuDepth == 1 && menuDepthType == 2 /*ART Settings*/)
-				{
+				{					
+					editTypes.push("ART Top Level");
+					editTypes.push("ART Services Top Level");
+					editTypes.push("ART Services Parameters");
+					editTypes.push("ART Source");			
+					editTypes.push("ART Outputs");
 					editTypes.push("ART Physics Analyzers");
 					editTypes.push("ART Physics Producers");
 					editTypes.push("ART Physics Filters");	
-					editTypes.push("ART Physics Other Parameters");						
+					editTypes.push("ART Physics Other Parameters");			
 				}
 			} //end builder, logger, dispatcher menu
 			
@@ -2854,8 +2858,30 @@
 						"table" : 		ARTDAQConfigurationAPI.DAQ_METRIC_TABLE,
 						"groupLink"	: 	"daqLink/daqMetricsLink"
 					}); //DAQ Metrics 				
+					
 					dt = 2; //ART depth type //----------------
 					doMap[equivalentTypes[t]][d][dt] = []; //menu depth type
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQArtTable",
+						"uniqueLink" : 	"artLink"
+					}); //ART Top Level
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQServicesTable",
+						"uniqueLink" : 	"artLink/servicesLink"
+					}); //ART Services Top Level
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQDaqParameterTable",
+						"groupLink" : 	"artLink/servicesLink/ServicesParametersLink"
+					}); //ART Services Parameters
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQSourceTable",
+						"uniqueLink"	: 	"artLink/sourceLink"
+					}); //ART Source	
+					doMap[equivalentTypes[t]][d][dt].push({
+						"table" : 		"ARTDAQOutputTable",
+						"groupLink"	: 	"artLink/outputsLink"
+					}); //ART Outputs					
+					
 					doMap[equivalentTypes[t]][d][dt].push({
 						"table" : 		"ARTDAQPhysicsAnalyzerTable",
 						"groupLink"	: 	"artLink/physicsLink/analyzersLink"
@@ -2872,6 +2898,7 @@
 						"table" : 		"ARTDAQPhysicsParameterTable",
 						"groupLink"	: 	"physicsOtherParametersLink"
 					}); //ART Physics Other Parameters
+								
 				}
 				//------------ end fill BUILDER,LOGGER,DISPATCHER do map
 
@@ -2879,6 +2906,7 @@
 				{
 					var table;
 					var groupLink;
+					var uniqueLink;
 					
 					if(!menuDepth)
 						--editType; //because first one is always 'Top-level Parameters'
@@ -2888,10 +2916,14 @@
 					
 					//for menuDepth=0, menuDepthType always is 0 (i.e. editType selects)
 					table = doMap[type][menuDepth|0][editType][menuDepthType|0].table;
-					groupLink = doMap[type][menuDepth|0][editType][menuDepthType|0].groupLink;						
-										
+					groupLink = doMap[type][menuDepth|0][editType][menuDepthType|0].groupLink;	
+					uniqueLink = doMap[type][menuDepth|0][editType][menuDepthType|0].uniqueLink;						
+
+					var isGroupLink = groupLink?true:false;
+					var link = groupLink?groupLink:uniqueLink;
+					
 					console.log("type",type,"editType",editType,
-							"table",table,"groupLink",groupLink);
+							"table",table,"groupLink",groupLink,"uniqueLink",uniqueLink);
 					
 					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" +
 							DesktopContent._localUrnLid +
@@ -2912,7 +2944,7 @@
 
 					//Get or make link ID
 					
-					var uniqueLinks = groupLink.split('/');
+					var uniqueLinks = link.split('/');
 					var uniqueLinkDoneCount = 0;
 					var uniqueLinkPath = "";
 					var u = 0;
@@ -2955,11 +2987,11 @@
 					function localHandleLastLinkId()
 					{
 						Debug.log("localHandleLastLinkId()");
-						
-						localGetLinkId(groupLink,
+												
+						localGetLinkId(link,
 								function(childLinkIndex, linkId)
 								{
-							Debug.log(groupLink + 
+							Debug.log(link + 
 									" childLinkIndex = '" +
 									childLinkIndex + "' linkId = '" + 
 									linkId + "'");
@@ -2968,11 +3000,13 @@
 							if(childLinkIndexArr.length > 1) //if there are multiple indices, choose second one as destination child index
 								childLinkIndex = childLinkIndexArr[1];
 
-							//for group link, pre-select GroupID value							
-							newWindowStr += "&selectedGroupIDs=" +
+							if(isGroupLink) //for group link, pre-select GroupID value							
+								newWindowStr += "&selectedGroupIDs=" +
 									encodeURIComponent(
 											childLinkIndex + "=" +
 											linkId);
+							else //for unique link, preselect UID record
+								newWindowStr += "&selectedRecords=" + linkId;
 
 							localLaunchWindow();
 							
@@ -3219,7 +3253,7 @@
 
 												//continue recursion, parameters actually do not matter
 												handler( //localGetLinkId's handler calls localRecursiveUniqueLinkCheck()
-														valueArr[0], 
+														fieldRetObj[1].fieldColumnType.split('-')[1], 
 														valueArr[1]);
 
 													} //end initArtdaqNodes done handler
@@ -4101,7 +4135,7 @@
 		
 			if(!_codeEditorAppId)
 			{
-				Debug.log("No active Code Editor Supervisor found. Can not open files without a Code Editor Supervisor. " + 
+				Debug.log("No active Code Editor Supervisor found. You can not open files without a Code Editor Supervisor. " + 
 						"Please edit the Context group to include a Code Editor Supervisor and relaunch ots.",
 						Debug.HIGH_PRIORITY);
 				return;
@@ -4453,6 +4487,8 @@
 
 				var groupTypes = ["Context","Configuration"];
 				var stepString;
+				
+				str += "<b><u>Load Groups</u></b><br><br>";
 
 				for(var g=0;g<groupTypes.length;++g)
 				{
@@ -4460,17 +4496,17 @@
 							groupTypes[g] + "-";
 
 					str += "Choose a '" + groupTypes[g] +
-							"' group to activate (either a System Alias or specific group):";
+							"' group to activate<br>(either a System Alias or specific group):";
 
 					str += htmlClearDiv();
 
 					str += "<center><br>";
 					str += "Current active '" + groupTypes[g] +
-							"' group: <b>" + 
+							"' group: <label style='color:red;font-weight:bold;'>" + 
 							_systemGroups.activeGroups[groupTypes[g]].groupName + 
 							"(" + 
 							_systemGroups.activeGroups[groupTypes[g]].groupKey +
-							")</b>";
+							")</label>";
 					str += htmlClearDiv();
 					str += "<br><table style='margin-bottom: 10px;'>";
 					if(_systemGroups.aliases[groupTypes[g]] &&
@@ -4507,6 +4543,7 @@
 						str += "<tr><td colspan='2'>No system aliases of type Context found.</td></tr>";
 
 					var groupNames = Object.keys(_systemGroups.groups[groupTypes[g]]);
+					var selectedGroupName = 0; //for which keys to show
 					if(groupNames.length)
 					{
 						str += "<tr><td><b>Group Names:</b></td><td>";
@@ -4520,8 +4557,11 @@
 							{
 								str += htmlOpen("option",
 										{		
+								"selected": (groupNames[i] ==
+										_systemGroups.activeGroups[groupTypes[g]].groupName && (selectedGroupName = i))
 										},
 										groupNames[i] /*innerHTML*/, true /*closeTag*/);
+
 							}
 							str += "</select>"; //end group name dropdown
 
@@ -4541,13 +4581,13 @@
 									});
 
 							for(var i=0;i<_systemGroups.groups[groupTypes[g]]
-															   [groupNames[0]].keys.length;++i)
+															   [groupNames[selectedGroupName]].keys.length;++i)
 							{
 								str += htmlOpen("option",
 										{		
 										},
 										_systemGroups.groups[groupTypes[g]]
-															 [groupNames[0]].keys[i] /*innerHTML*/, true /*closeTag*/);
+															 [groupNames[selectedGroupName]].keys[i] /*innerHTML*/, true /*closeTag*/);
 							}
 							str += "</select>"; //end group keys dropdown
 							str += htmlOpen("input",
@@ -4834,6 +4874,10 @@
 
 				for(var j=0;j<ARTDAQConfigurationAPI.NODE_FULL_TYPE_NAMES.length;++j)
 				{					
+					//skip artdaq Supervisor (handle behind the scenes)
+					if(j == ARTDAQConfigurationAPI.NODE_TYPE_SUPERVISOR)
+						continue;
+					
 					str += "<option >" +	
 							ARTDAQConfigurationAPI.NODE_FULL_TYPE_NAMES[j] + 
 							"</option>";
@@ -5466,11 +5510,44 @@
 			
 		} //end checkForActiveGroupChange()
 		
+		//=====================================================================================
+		//getGridX ~~
+		function getGridX(x)
+		{
+			return ((x - _grid.x0 + _grid.xstep/2)/_grid.xstep);
+		} //end getGridX()
+
+		//=====================================================================================
+		//getGridY ~~
+		function getGridY(y)
+		{
+			return ((y - _grid.y0 + _grid.ystep/2)/_grid.ystep);
+		} //end getGridY()
+
+		//=====================================================================================
+		//getGridPointXY ~~
+		function getGridPointXY(xg,yg)
+		{
+			return [ _grid.x0 + xg * _grid.xstep,
+						_grid.y0 + yg * _grid.ystep];
+		} //end getGridPointXY()
+
+		//=====================================================================================
+		//isOverNodeBox ~~
+		function isOverNodeBox(x,y,xg,yg)
+		{
+			var pxy = getGridPointXY(xg,yg);
+			return (x > pxy[0] - _NODE_SIZE/2 && 
+					x < pxy[0] + _NODE_SIZE/2 &&
+					y > pxy[1] - _NODE_SIZE/2 &&
+					y < pxy[1] + _NODE_SIZE/2);
+		} //end isOverNodeBox()
+		
 		</script>
 </head>
 	
 
-<body onload='Javascript:init();'>	
+<body onload='//init() called by DesktopContent.js'>	
 		
 	<!-- body content populated by javascript paint(), etc. -->
 

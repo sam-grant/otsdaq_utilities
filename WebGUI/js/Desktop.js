@@ -149,9 +149,13 @@ Desktop.createDesktop = function(security) {
 	
 	var _windows = new Array(); //windows are initialized to empty, array represents z-depth also
 	var _desktopElement;
-    var _dashboard, _icons, _windowZmailbox, _mouseOverXmailbox, _mouseOverYmailbox;
-    var _needToLoginMailbox, _updateTimeMailbox, _updateSettingsMailbox, _settingsLayoutMailbox, _openWindowMailbox, _blockSystemCheckMailbox;
-    var _windowColorPostbox;
+    var _dashboard, _icons, _mouseOverXmailbox, _mouseOverYmailbox;
+    //var _needToLoginMailbox;
+    //var _updateTimeMailbox, 
+    var _updateSettingsMailbox, 
+		_settingsLayoutMailbox;//, _openWindowMailbox;
+    //, _blockSystemCheckMailbox;    
+    //var _windowColorPostbox;
     var _MAILBOX_TIMER_PERIOD = 500; //timer period for checking mailbox and system messages: 500 ms
     var _sysMsgId = 0; //running counter to identify system message pop-ups
 	var _SYS_MSG_SOUND_PATH = "/WebPath/sounds/fx-System-Message.wav"; // "http://www.soundjay.com/button/button-2.wav"; //must be .wav for firefox incompatibility	
@@ -176,10 +180,11 @@ Desktop.createDesktop = function(security) {
 	this.checkMailboxTimer;
 	this.serverConnected = true;
 	this.security = security;
+	
+	//this.cookieCodeMailbox = 0;
     
 	this.defaultWindowFrameColor = "rgba(196,229,255,.9)";
-
-	
+		
 	//------------------------------------------------------------------
 	//create PRIVATE members functions ----------------------
 	//------------------------------------------------------------------
@@ -260,160 +265,164 @@ Desktop.createDesktop = function(security) {
     //	check for settings change
 	var _checkMailboxes = function(win) 
 	{		
-		//Debug.log("_checkMailboxes sysMsgCounter=" +_sysMsgCounter);
+		window.clearTimeout(Desktop.desktop.checkMailboxTimer);
+		Desktop.desktop.checkMailboxTimer = window.setTimeout(_checkMailboxes,
+				_MAILBOX_TIMER_PERIOD);
+		
+		//console.log("_checkMailboxes sysMsgCounter=" +_sysMsgCounter);
 		
 		if(_firstCheckOfMailboxes)
 		{
-			Debug.log("First check of mailboxes!");
+			console.log("First check of mailboxes!");
 
-			Debug.log("Checking for any shortcut work from get parameters...",Debug.LOW_PRIORITY);
+			console.log("Checking for any shortcut work from get parameters...");
 			_firstCheckOfMailboxes = false;
 			Desktop.desktop.actOnParameterAction();    //this should be the second running and will always work (first time is at end of Desktop instance creation.. and may fail for opening icon by name)
 			
 		}
 		
-		//windows can request a blackout, to avoid logging out (attempt to stop all other tabs by using browser cookie)
-		if(_blockSystemCheckMailbox.innerHTML == "1")
-		{
-			Desktop.desktop.login.blackout(true); 
-		}
-		else if(_blockSystemCheckMailbox.innerHTML == "RefreshIcons") // windows can request icon refresh (e.g. after changing icons)
-		{
-			_blockSystemCheckMailbox.innerHTML = ""; //clear
-			//reset icons, if permissions undefined, keep permissions from before
-			Desktop.desktop.icons.resetWithPermissions(undefined /*undefined permissions*/, true /*keepSamePermissions*/);
-		}
-		else
-		{
-			Desktop.desktop.login.blackout(false);
-		}
+//		//windows can request a blackout, to avoid logging out (attempt to stop all other tabs by using browser cookie)
+//		if(_blockSystemCheckMailbox.innerHTML == "1")
+//		{
+//			Desktop.desktop.login.blackout(true); 
+//		}
+////		else if(_blockSystemCheckMailbox.innerHTML == "RefreshIcons") // windows can request icon refresh (e.g. after changing icons)
+////		{
+////			_blockSystemCheckMailbox.innerHTML = ""; //clear
+////			//reset icons, if permissions undefined, keep permissions from before
+////			Desktop.desktop.icons.resetWithPermissions(undefined /*undefined permissions*/, true /*keepSamePermissions*/);
+////		}
+//		else
+//		{
+//			Desktop.desktop.login.blackout(false);
+//		}
 
 		
 
-	    //check _openWindowMailbox to see if a window opening is being requested by a Desktop Window
-	    //	From requesting window (check that done=1):
-	    // 		innerHTML = requestingWindowId=<window uid>&windowPath=<window path to open>
-	    //	Response when done:
-	    //		innerHTML = requestingWindowId=<window uid>&done=1
-	    if(_openWindowMailbox.innerHTML != "")
-	    {
-	    	Debug.log("_openWindowMailbox.textContent=" + _openWindowMailbox.textContent);
-	    	
-	    	//get parameters
-	    	var paramsStr = _openWindowMailbox.textContent;
-	    	var params = [];
-	    	var paramCnt = 5 ;
-	    	var spliti, splitiOld = 0; 
-	    	for(var i=0;i<paramCnt;++i)
-	    	{
-	    		if(i == paramCnt-1) //last one take the whole thing (this is path, and could have &'s in it)
-	    		{
-	    			params.push(paramsStr.substr(splitiOld));
-	    			break;
-	    		}
-	    		//for others, handle like normal get param
-	    		spliti = paramsStr.indexOf('&', splitiOld);	    		
-	    		params.push(paramsStr.substr(splitiOld,spliti-splitiOld))
-				splitiOld = spliti+1;
-	    	}
-	    	
-	    	var varPair;
-	    	var requestingWindowId = "", windowPath = "";
-	    	var windowName, windowSubname, windowUnique;
-	    	for(var i=0;i<params.length;++i)
-	    	{
-	    		spliti = params[i].indexOf('=');
-	    		varPair = [params[i].substr(0,spliti),params[i].substr(spliti+1)];	    		
-				if(varPair[0] 		== "requestingWindowId")
-					requestingWindowId 	= varPair[1];
-				else if(varPair[0] 	== "windowPath")
-					windowPath 			= varPair[1];	
-				else if(varPair[0] 	== "windowName")
-					windowName 			= varPair[1];	
-				else if(varPair[0] 	== "windowSubname")
-					windowSubname		= varPair[1];	
-				else if(varPair[0] 	== "windowUnique")
-					windowUnique 		= varPair[1];	 
-	    	}
-	    	if(requestingWindowId != "" && windowPath != "")
-	    	{
-	    		//have work to do!
-	    		// Note: similar to L1000 in actOnParameterAction() 
-	    		Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
-		    	Debug.log("requestingWindowId=" + requestingWindowId);
-		    	Debug.log("windowPath=" + windowPath);
-		    	while(windowPath.length && windowPath[0] == '?') windowPath = windowPath.substr(1); //remove leading ?'s
-		    	Debug.log("modified windowPath=" + windowPath);
-		    	Debug.log("windowName=" + windowName);
-		    	Debug.log("windowSubname=" + windowSubname);
-		    	Debug.log("windowUnique=" + windowUnique);
-
-		    	var newWin;
-		    	
-		    	//if only windowName is defined, then attempt to open the icon on the 
-		    	//	Desktop with that name (this helps resolve supervisor LIDs, etc.)
-		    	if(windowSubname == "undefined" &&
-		    			windowUnique == "undefined") //the string undefined is what comes through
-		    	{
-		    		Debug.log("Opening desktop window... " + windowName);
-
-		    		var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
-		    		console.log("Desktop.desktop.icons.iconNameToPathMap",
-		    				Desktop.desktop.icons.iconNameToPathMap);
-
-		    		if(pathUniquePair ===
-		    				undefined)
-		    		{
-		    			Debug.log("An error occurred opening the window named '" + 
-		    					windowName + "' - it was not found in the Desktop icons. " +
-								"Do you have permissions to access this window? Notify admins if the problem persists.",
-								Debug.HIGH_PRIORITY);
-		    			
-		    			//respond done
-						var str = "requestingWindowId=" + requestingWindowId;
-						str += "&done=1";	
-						_openWindowMailbox.innerHTML = str; //indicate done
-						
-		    			return;
-		    		}
-
-					var pathStr = pathUniquePair[0];
-					
-					if(windowPath != "undefined") //add parameters if defined
-					{
-						Debug.log("Adding parameter path " + windowPath);
-						if(pathStr.indexOf('?') >= 0) //then assume already parameters
-							pathStr += "&";
-						else if(pathStr.length) //then assume need ?
-							pathStr += '?';
-						windowPath = pathStr + windowPath;
-					}
-					else
-						windowPath = pathStr;
-					
-		    		newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
-		    				windowName, 
-							"",
-							windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
-							eval(pathUniquePair[1]));	
-		    	}
-		    	else
-		    	{
-		    		newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
-		    				windowName, 
-							windowSubname,
-							windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
-							eval(windowUnique));			
-		    	}
-
-		    	//delay the setting of the fore window
-				setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
-		    	
-				var str = "requestingWindowId=" + requestingWindowId;
-				str += "&done=1";	
-				_openWindowMailbox.innerHTML = str; //indicate done
-	    	}
-	    }
+//	    //check _openWindowMailbox to see if a window opening is being requested by a Desktop Window
+//	    //	From requesting window (check that done=1):
+//	    // 		innerHTML = requestingWindowId=<window uid>&windowPath=<window path to open>
+//	    //	Response when done:
+//	    //		innerHTML = requestingWindowId=<window uid>&done=1
+//	    if(_openWindowMailbox.innerHTML != "")
+//	    {
+//	    	console.log("_openWindowMailbox.textContent=" + _openWindowMailbox.textContent);
+//	    	
+//	    	//get parameters
+//	    	var paramsStr = _openWindowMailbox.textContent;
+//	    	var params = [];
+//	    	var paramCnt = 5 ;
+//	    	var spliti, splitiOld = 0; 
+//	    	for(var i=0;i<paramCnt;++i)
+//	    	{
+//	    		if(i == paramCnt-1) //last one take the whole thing (this is path, and could have &'s in it)
+//	    		{
+//	    			params.push(paramsStr.substr(splitiOld));
+//	    			break;
+//	    		}
+//	    		//for others, handle like normal get param
+//	    		spliti = paramsStr.indexOf('&', splitiOld);	    		
+//	    		params.push(paramsStr.substr(splitiOld,spliti-splitiOld))
+//				splitiOld = spliti+1;
+//	    	}
+//	    	
+//	    	var varPair;
+//	    	var requestingWindowId = "", windowPath = "";
+//	    	var windowName, windowSubname, windowUnique;
+//	    	for(var i=0;i<params.length;++i)
+//	    	{
+//	    		spliti = params[i].indexOf('=');
+//	    		varPair = [params[i].substr(0,spliti),params[i].substr(spliti+1)];	    		
+//				if(varPair[0] 		== "requestingWindowId")
+//					requestingWindowId 	= varPair[1];
+//				else if(varPair[0] 	== "windowPath")
+//					windowPath 			= varPair[1];	
+//				else if(varPair[0] 	== "windowName")
+//					windowName 			= varPair[1];	
+//				else if(varPair[0] 	== "windowSubname")
+//					windowSubname		= varPair[1];	
+//				else if(varPair[0] 	== "windowUnique")
+//					windowUnique 		= varPair[1];	 
+//	    	}
+//	    	if(requestingWindowId != "" && windowPath != "")
+//	    	{
+//	    		//have work to do!
+//	    		// Note: similar to L1000 in actOnParameterAction() 
+//	    		console.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
+//	    		console.log("requestingWindowId=" + requestingWindowId);
+//	    		console.log("windowPath=" + windowPath);
+//		    	while(windowPath.length && windowPath[0] == '?') windowPath = windowPath.substr(1); //remove leading ?'s
+//		    	console.log("modified windowPath=" + windowPath);
+//		    	console.log("windowName=" + windowName);
+//		    	console.log("windowSubname=" + windowSubname);
+//		    	console.log("windowUnique=" + windowUnique);
+//
+//		    	var newWin;
+//		    	
+//		    	//if only windowName is defined, then attempt to open the icon on the 
+//		    	//	Desktop with that name (this helps resolve supervisor LIDs, etc.)
+//		    	if(windowSubname == "undefined" &&
+//		    			windowUnique == "undefined") //the string undefined is what comes through
+//		    	{
+//		    		console.log("Opening desktop window... " + windowName);
+//
+//		    		var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
+//		    		console.log("Desktop.desktop.icons.iconNameToPathMap",
+//		    				Desktop.desktop.icons.iconNameToPathMap);
+//
+//		    		if(pathUniquePair ===
+//		    				undefined)
+//		    		{
+//		    			Debug.log("An error occurred opening the window named '" + 
+//		    					windowName + "' - it was not found in the Desktop icons. " +
+//								"Do you have permissions to access this window? Notify admins if the problem persists.",
+//								Debug.HIGH_PRIORITY);
+//		    			
+//		    			//respond done
+//						var str = "requestingWindowId=" + requestingWindowId;
+//						str += "&done=1";	
+//						_openWindowMailbox.innerHTML = str; //indicate done
+//						
+//		    			return;
+//		    		}
+//
+//					var pathStr = pathUniquePair[0];
+//					
+//					if(windowPath != "undefined") //add parameters if defined
+//					{
+//						Debug.log("Adding parameter path " + windowPath);
+//						if(pathStr.indexOf('?') >= 0) //then assume already parameters
+//							pathStr += "&";
+//						else if(pathStr.length) //then assume need ?
+//							pathStr += '?';
+//						windowPath = pathStr + windowPath;
+//					}
+//					else
+//						windowPath = pathStr;
+//					
+//		    		newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+//		    				windowName, 
+//							"",
+//							windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
+//							eval(pathUniquePair[1]));	
+//		    	}
+//		    	else
+//		    	{
+//		    		newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+//		    				windowName, 
+//							windowSubname,
+//							windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
+//							eval(windowUnique));			
+//		    	}
+//
+//		    	//delay the setting of the fore window
+//				window.setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
+//		    	
+//				var str = "requestingWindowId=" + requestingWindowId;
+//				str += "&done=1";	
+//				_openWindowMailbox.innerHTML = str; //indicate done
+//	    	}
+//	    }
 		
 	    //==============
 		//other things besides opening windows
@@ -421,39 +430,41 @@ Desktop.createDesktop = function(security) {
 	    
 	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true))
 	    {
-	    	if(_needToLoginMailbox.innerHTML == "1") 
-	    		 _needToLoginMailbox.innerHTML = ""; //reset
+	    	//if(_needToLoginMailbox.innerHTML == "1") 
+	    	//	 _needToLoginMailbox.innerHTML = ""; //reset
 	    	
 	    	return; //don't do things if not logged in
 	    }
-
-	    //	check if a window iFrame has taken focus and tampered with z mailbox. If so 'officially' set to fore window
-		if(_windowZmailbox.innerHTML > _defaultWindowMaxZindex) 
-		{
-			Desktop.desktop.setForeWindow(); //should pass undefined window.. to just relabel Z depth
-			//Desktop.desktop.getForeWindow()			
-			//Debug.log("Desktop Foreground Window Refreshed by Timeout",Debug.LOW_PRIORITY);
-		}
 	    
-	    //check need for login mailbox
-	    if(_needToLoginMailbox.innerHTML == "1") 
-	    {
-	        _needToLoginMailbox.innerHTML = ""; //reset
-	        if(!document.getElementById("Desktop-loginDiv") &&
-	        		!Desktop.desktop.login.isBlackout())
-	        {	
-	        	//only signal logout if login div is gone (login complete)
-				Debug.log("DesktopContent signaled new login needed!",Debug.HIGH_PRIORITY);
-				Desktop.logout();
-	        }
-	        else
-	        	Debug.log("Ignoring desktop content need for login signal due to blackout.");
-		}
 	    
-	    //check if cookie time from content is newer than cookie time in login
-	    if(parseInt(_updateTimeMailbox.innerHTML) > parseInt(Desktop.desktop.login.getCookieTime()))
-	        Desktop.desktop.login.updateCookieFromContent(parseInt(_updateTimeMailbox.innerHTML)); //update based on content value
-	        
+//	    console.log("Checking iFrame z change focus");	    
+//	    //	check if a window iFrame has taken focus and tampered with z mailbox. If so 'officially' set to fore window
+//		if(_windowZmailbox > _defaultWindowMaxZindex) 
+//		{
+//			Desktop.desktop.setForeWindow(); //should pass undefined window.. to just relabel Z depth
+//			//Desktop.desktop.getForeWindow()			
+//			Debug.log("Desktop Foreground Window Refreshed by _checkMailboxes Timeout",Debug.LOW_PRIORITY);
+//		}
+	    
+//	    //check need for login mailbox
+//	    if(_needToLoginMailbox.innerHTML == "1") 
+//	    {
+//	        _needToLoginMailbox.innerHTML = ""; //reset
+//	        if(!document.getElementById("Desktop-loginDiv") &&
+//	        		!Desktop.desktop.login.isBlackout())
+//	        {	
+//	        	//only signal logout if login div is gone (login complete)
+//				Debug.log("DesktopContent signaled new login needed!",Debug.HIGH_PRIORITY);
+//				Desktop.logout();
+//	        }
+//	        else
+//	        	Debug.log("Ignoring desktop content need for login signal due to blackout.");
+//		}
+	    
+//	    //check if cookie time from content is newer than cookie time in login
+//	    if(parseInt(_updateTimeMailbox.innerHTML) > parseInt(Desktop.desktop.login.getCookieTime()))
+//	        Desktop.desktop.login.updateCookieFromContent(parseInt(_updateTimeMailbox.innerHTML)); //update based on content value
+//	        
 	    //check if update settings is necessary
 	    if(_updateSettingsMailbox.innerHTML != "") 
 	    { 
@@ -485,7 +496,7 @@ Desktop.createDesktop = function(security) {
 	    if(_sysMsgCounter == _SYS_MSG_MAX_COUNT)
 	    {  		
 	    	//windows can request a blackout, to avoid logging out 
-	    	if(_blockSystemCheckMailbox.innerHTML == "1" || 
+	    	if(//_blockSystemCheckMailbox.innerHTML == "1" || 
 	    			Desktop.desktop.login.isBlackout())
 	    	{
 	    		Debug.log("System blackout (likely rebooting)...");
@@ -500,7 +511,8 @@ Desktop.createDesktop = function(security) {
 	var _lastSystemMessage = ""; //prevent repeats
 	//_handleSystemMessages ~~~
 	//	handles request returns periodically (ever _SYS_MSG_MAX_COUNT times through _checkMailboxes)
-	var _handleSystemMessages = function(req) {
+	var _handleSystemMessages = function(req) 
+	{
 		//Debug.log("Desktop _handleSystemMessages " + req.responseText,Debug.LOW_PRIORITY);
 		
 		_sysMsgCounter = 0; //reset system message counter to setup next request
@@ -551,7 +563,12 @@ Desktop.createDesktop = function(security) {
 	    for(var i=0;i<msgArr.length;i+=2)
 	    {
 		    str += "<div style='font-size:12px'>System Message Received at " + Desktop.formatTime(msgArr[i]) + "</div>";
-		    str += "<div>" + msgArr[i+1] + "</div><br>";	
+		    str += "<div>" + 
+		    		//first decode URI, then convert html entities
+		    		decodeURIComponent(msgArr[i+1]).replace(/[\u00A0-\u9999<>\&]/gim, 
+		    				function(i) {
+		    			    	   return '&#'+i.charCodeAt(0)+';';
+		    			    	}) + "</div><br>";	
 		    _lastSystemMessage = msgArr[i] + "|" + msgArr[i+1];
 	    }
 	    
@@ -587,9 +604,9 @@ Desktop.createDesktop = function(security) {
     this.getWindowByIndex = function(i) { return _windows[i];}      
 	this.getForeWindow = _getForeWindow;
     this.redrawDesktop = _handleDesktopResize;
-    this.getLastFrameMouseX = function() { return parseInt(_mouseOverXmailbox.innerHTML);} 
-    this.getLastFrameMouseY = function() { return parseInt(_mouseOverYmailbox.innerHTML);} 
-    this.resetFrameMouse = function() { _mouseOverXmailbox.innerHTML = -1;_mouseOverYmailbox.innerHTML = -1;} 
+    this.getLastFrameMouseX = function() { return parseInt(_mouseOverXmailbox);} 
+    this.getLastFrameMouseY = function() { return parseInt(_mouseOverYmailbox);} 
+    this.resetFrameMouse = function() { _mouseOverXmailbox = -1;_mouseOverYmailbox = -1;} 
 	this.getWindowLayoutStr = _getWindowLayoutStr;
 
 	//==============================================================================
@@ -686,7 +703,7 @@ Desktop.createDesktop = function(security) {
     	//usually the foreground happens automatically.. but sometimes
         //	it doesn't (?)
         //... so delay an extra setting of the fore window
-        setTimeout(function()
+        window.setTimeout(function()
         		{ 
         	Desktop.desktop.setForeWindow(newWin); 
         	Debug.log("extraStep=" + extraStep);
@@ -714,7 +731,7 @@ Desktop.createDesktop = function(security) {
 		for(var i=0;i<_windows.length;++i) 
 			if(_windows[i].getWindowId() == id) 
 				return _windows[i];
-		
+		Debug.log("Window id="+id+" not found!",Debug.MED_PRIORITY);
 		return -1;
 	} //end getWindowById()
 
@@ -723,7 +740,8 @@ Desktop.createDesktop = function(security) {
 	//	handle bringing window to front
 	this.setForeWindow = function(win)
 	{
-		//Debug.log("setForeWindow");
+		//console.log("setForeWindow",win?win.getWindowId():-1);
+		
 		//resort by z and renumber - windows with Z out of range of array are due to iframe onFocus solution			
         var tmp;
         for(var i=0;i<_windows.length-1;++i) 
@@ -740,7 +758,7 @@ Desktop.createDesktop = function(security) {
             _windows[i].setWindowZ(i+_defaultWindowMinZindex); //done with new window i
         }
         _windows[_windows.length-1].setWindowZ(_windows.length-1+_defaultWindowMinZindex); // last window still needs z-fixed
-		_windowZmailbox.innerHTML = _defaultWindowMaxZindex;        //reset windowZmailbox for next set of foci
+		//_windowZmailbox = _defaultWindowMaxZindex;        //reset windowZmailbox for next set of foci
 		//at this point windows are in standard Z arrangement
 					
 		//find win in windows array then bring to "top"
@@ -955,7 +973,7 @@ Desktop.createDesktop = function(security) {
 	//	set background color for all windows
 	this.setDefaultWindowColor = function(color) {
 		this.defaultWindowFrameColor = color;
-	    _windowColorPostbox.innerHTML = this.defaultWindowFrameColor; //set to color string
+	    //_windowColorPostbox.innerHTML = this.defaultWindowFrameColor; //set to color string
 		
 		for(var i=0;i<_windows.length;++i)
 			_windows[i].windiv.style.backgroundColor = this.defaultWindowFrameColor;
@@ -1049,8 +1067,8 @@ Desktop.createDesktop = function(security) {
 	{
 		Debug.log("reset desktop()");
         
-		_needToLoginMailbox.innerHTML = ""; //reset mailbox
-		_blockSystemCheckMailbox.innerHTML = ""; //reset mailbox
+		//_needToLoginMailbox.innerHTML = ""; //reset mailbox
+		//_blockSystemCheckMailbox.innerHTML = ""; //reset mailbox
 		_sysMsgCounter = 0; //reset system message counter
 		
 		//update icons based on permissions	(if undefined, keep permissions from before)	
@@ -1067,10 +1085,8 @@ Desktop.createDesktop = function(security) {
 		
 		//re-start timer for checking foreground window changes due to iFrame content code
 		
-		window.clearInterval(Desktop.desktop.checkMailboxTimer);		
+		window.clearTimeout(Desktop.desktop.checkMailboxTimer);		
 		_checkMailboxes();
-		Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,
-				_MAILBOX_TIMER_PERIOD);
 					
 		//setup lock the first time
 		if(Desktop.desktop.login.getCookieCode(true))
@@ -1159,7 +1175,7 @@ Desktop.createDesktop = function(security) {
 		if(requestingWindowId != "" && windowPath != "")
 		{
 			//have work to do!
-			Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
+			//Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
 			Debug.log("requestingWindowId=" + requestingWindowId);
 			Debug.log("windowPath=" + windowPath);
 			if(newWindowOps) newWindowOps = newWindowOps.replace(/%22/g, "\"");			
@@ -1228,7 +1244,7 @@ Desktop.createDesktop = function(security) {
 
 	    			//respond done
 					//clear mailbox string since no window is listening for done when a new desktop begins			
-					_openWindowMailbox.innerHTML = "";//str; //indicate done
+					//_openWindowMailbox.innerHTML = "";//str; //indicate done
 					return;
 				}				
 				var pathStr = pathUniquePair[0];
@@ -1276,13 +1292,13 @@ Desktop.createDesktop = function(security) {
 			
 	    	//delay the setting of the fore window and fullscreen
 			//	so that the window exists before changing it
-			setTimeout(function(){
+			window.setTimeout(function(){
 				Desktop.desktop.setForeWindow(newWin);
 				Desktop.desktop.toggleFullScreen();
 			}, 200);
 
 			//clear mailbox string since no window is listening for done when a new desktop begins			
-			_openWindowMailbox.innerHTML = "";//str; //indicate done
+			//_openWindowMailbox.innerHTML = "";//str; //indicate done
 		}
 	} //end actOnParameterAction()
 	
@@ -1301,52 +1317,53 @@ Desktop.createDesktop = function(security) {
 	window.onresize = _handleDesktopResize;
 	Desktop.desktop = this;
 	
-	//create windowZmailbox for focus switching through iFrame
-    _windowZmailbox = document.createElement("div");
-	_windowZmailbox.setAttribute("id", "Desktop-windowZmailbox");
-	_windowZmailbox.innerHTML = _defaultWindowMaxZindex;
-	_windowZmailbox.style.display = "none";
-    _desktopElement.appendChild(_windowZmailbox);
+//	//create windowZmailbox for focus switching through iFrame
+//    _windowZmailbox = document.createElement("div");
+//	_windowZmailbox.setAttribute("id", "Desktop-windowZmailbox");
+//	_windowZmailbox.innerHTML = _defaultWindowMaxZindex;
+//	_windowZmailbox.style.display = "none";
+//    _desktopElement.appendChild(_windowZmailbox);
     
-	//create mouseOverXmailbox for focus switching through iFrame
-    _mouseOverXmailbox = document.createElement("div");
-	_mouseOverXmailbox.setAttribute("id", "Desktop-mouseOverXmailbox");
-	_mouseOverXmailbox.style.display = "none";
-    _desktopElement.appendChild(_mouseOverXmailbox);
+//	//create mouseOverXmailbox for focus switching through iFrame
+//    _mouseOverXmailbox = document.createElement("div");
+//	_mouseOverXmailbox.setAttribute("id", "Desktop-mouseOverXmailbox");
+//	_mouseOverXmailbox.style.display = "none";
+//    _desktopElement.appendChild(_mouseOverXmailbox);
+//    
+//	//create mouseOverYmailbox for focus switching through iFrame
+//    _mouseOverYmailbox = document.createElement("div");
+//	_mouseOverYmailbox.setAttribute("id", "Desktop-mouseOverYmailbox");
+//	_mouseOverYmailbox.style.display = "none";
+//    _desktopElement.appendChild(_mouseOverYmailbox);
     
-	//create mouseOverYmailbox for focus switching through iFrame
-    _mouseOverYmailbox = document.createElement("div");
-	_mouseOverYmailbox.setAttribute("id", "Desktop-mouseOverYmailbox");
-	_mouseOverYmailbox.style.display = "none";
-    _desktopElement.appendChild(_mouseOverYmailbox);
     this.resetFrameMouse();
     
     //create mailboxes for Window content code
-    var tmpHiddenDiv = document.createElement("div");
-    tmpHiddenDiv.setAttribute("id", "DesktopContent-cookieCodeMailbox");
-    tmpHiddenDiv.style.display = "none";
-    _desktopElement.appendChild(tmpHiddenDiv);
-    _updateTimeMailbox = document.createElement("div");
-    _updateTimeMailbox.setAttribute("id", "DesktopContent-updateTimeMailbox");
-    _updateTimeMailbox.style.display = "none";
-    _desktopElement.appendChild(_updateTimeMailbox);
-    _needToLoginMailbox = document.createElement("div");
-    _needToLoginMailbox.setAttribute("id", "DesktopContent-needToLoginMailbox");
-    _needToLoginMailbox.style.display = "none";
-    _desktopElement.appendChild(_needToLoginMailbox); 
+//    var tmpHiddenDiv = document.createElement("div");
+//    tmpHiddenDiv.setAttribute("id", "DesktopContent-cookieCodeMailbox");
+//    tmpHiddenDiv.style.display = "none";
+//    _desktopElement.appendChild(tmpHiddenDiv);
+//    _updateTimeMailbox = document.createElement("div");
+//    _updateTimeMailbox.setAttribute("id", "DesktopContent-updateTimeMailbox");
+//    _updateTimeMailbox.style.display = "none";
+//    _desktopElement.appendChild(_updateTimeMailbox);
+//    _needToLoginMailbox = document.createElement("div");
+//    _needToLoginMailbox.setAttribute("id", "DesktopContent-needToLoginMailbox");
+//    _needToLoginMailbox.style.display = "none";
+//    _desktopElement.appendChild(_needToLoginMailbox); 
 
-    _blockSystemCheckMailbox = document.createElement("div");
-    _blockSystemCheckMailbox.setAttribute("id", "DesktopContent-blockSystemCheckMailbox");
-    _blockSystemCheckMailbox.style.display = "none";
-    _desktopElement.appendChild(_blockSystemCheckMailbox); 
+//    _blockSystemCheckMailbox = document.createElement("div");
+//    _blockSystemCheckMailbox.setAttribute("id", "DesktopContent-blockSystemCheckMailbox");
+//    _blockSystemCheckMailbox.style.display = "none";
+//    _desktopElement.appendChild(_blockSystemCheckMailbox); 
     
     
     
     //create mailbox for opening windows from Desktop Windows    
-    _openWindowMailbox = document.createElement("div");
-    _openWindowMailbox.setAttribute("id", "DesktopContent-openWindowMailbox");
-    _openWindowMailbox.style.display = "none";
-    _desktopElement.appendChild(_openWindowMailbox);   
+//    _openWindowMailbox = document.createElement("div");
+//    _openWindowMailbox.setAttribute("id", "DesktopContent-openWindowMailbox");
+//    _openWindowMailbox.style.display = "none";
+//    _desktopElement.appendChild(_openWindowMailbox);   
     
     //create mailbox for settings update
     _updateSettingsMailbox = document.createElement("div");
@@ -1361,11 +1378,202 @@ Desktop.createDesktop = function(security) {
     _desktopElement.appendChild(_settingsLayoutMailbox);
     
     //create postbox for chosen color settings
-    _windowColorPostbox = document.createElement("div");
-    _windowColorPostbox.setAttribute("id", "DesktopContent-windowColorPostbox");
-    _windowColorPostbox.style.display = "none";
-    _windowColorPostbox.innerHTML = this.defaultWindowsFrameColor; //init to color string
-    _desktopElement.appendChild(_windowColorPostbox);
+//    _windowColorPostbox = document.createElement("div");
+//    _windowColorPostbox.setAttribute("id", "DesktopContent-windowColorPostbox");
+//    _windowColorPostbox.style.display = "none";
+//    _windowColorPostbox.innerHTML = this.defaultWindowsFrameColor; //init to color string
+//    _desktopElement.appendChild(_windowColorPostbox);
+    
+    
+    //create message request listener from desktop windows, to overcome same-origin policy
+    window.addEventListener('message', event => {
+    	
+    	console.log("Parent event.data",event.data); 
+    	
+		if(event.data.windowId === undefined)
+		{
+			Debug.log("Illegal window  message received! Notify admins", Debug.HIGH_PRIORITY);
+			return;
+		}
+		
+		var responseObject;
+		switch(event.data.request)
+		{
+		case "updateMouseoverXY":
+			//add window frame position(absolute) + iframe position within window + mouse position within iframe
+			var el = document.getElementById("DesktopWindowFrame-" + event.data.windowId);
+			if(el)
+			{
+				_mouseOverXmailbox = parseInt(el.parentNode.parentNode.offsetLeft) +
+						parseInt(el.offsetLeft) + parseInt(event.data.x);
+				_mouseOverYmailbox = parseInt(el.parentNode.parentNode.offsetTop) +
+						parseInt(el.offsetTop) + parseInt(event.data.y);
+			}
+			else
+			{
+				_mouseOverXmailbox = event.data.x|0;
+				_mouseOverYmailbox = event.data.y|0;
+			}
+			console.log("updateMouseoverXY",_mouseOverXmailbox,_mouseOverYmailbox);
+			break;
+		case "makeForeWindow":
+			//console.log("makeForeWindow",event.data.windowId);
+			Desktop.desktop.setForeWindow(this.getWindowById(event.data.windowId|0));			
+			break;
+		case "openNewWindow":
+			console.log("openNewWindow");
+
+	    	var requestingWindowId = 	event.data.windowId|0;
+	    	var windowPath = 			event.data.windowPath;
+	    	var windowName = 			event.data.windowName;
+	    	var windowSubname = 		event.data.windowSubname;
+	    	var windowUnique = 			event.data.windowUnique;
+	    	
+	    	if(windowPath != "")
+	    	{
+	    		//have work to do!
+	    		// Note: similar to L1000 in actOnParameterAction() 
+	    		console.log("requestingWindowId=" + requestingWindowId);
+	    		console.log("windowPath=" + windowPath);
+		    	while(windowPath.length && windowPath[0] == '?') windowPath = windowPath.substr(1); //remove leading ?'s
+		    	console.log("modified windowPath=" + windowPath);
+		    	console.log("windowName=" + windowName);
+		    	console.log("windowSubname=" + windowSubname);
+		    	console.log("windowUnique=" + windowUnique);
+
+		    	var newWin;
+		    	
+		    	//if only windowName is defined, then attempt to open the icon on the 
+		    	//	Desktop with that name (this helps resolve supervisor LIDs, etc.)
+		    	if((windowSubname === undefined || windowSubname == "undefined") &&
+		    			(windowUnique === undefined || windowUnique == "undefined")) //the string undefined is what comes through
+		    	{
+		    		console.log("Opening desktop window... " + windowName);
+
+		    		var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
+		    		console.log("Desktop.desktop.icons.iconNameToPathMap",
+		    				Desktop.desktop.icons.iconNameToPathMap);
+
+		    		if(pathUniquePair ===
+		    				undefined)
+		    		{
+		    			Debug.log("An error occurred opening the window named '" + 
+		    					windowName + "' - it was not found in the Desktop icons. " +
+								"Do you have permissions to access this window? Notify admins if the problem persists.",
+								Debug.HIGH_PRIORITY);
+		    			
+		    			//respond done
+//						var str = "requestingWindowId=" + requestingWindowId;
+//						str += "&done=1";	
+//						_openWindowMailbox.innerHTML = str; //indicate done
+						
+		    			return;
+		    		}
+
+					var pathStr = pathUniquePair[0];
+					
+					if(windowPath != "undefined") //add parameters if defined
+					{
+						Debug.log("Adding parameter path " + windowPath);
+						if(pathStr.indexOf('?') >= 0) //then assume already parameters
+							pathStr += "&";
+						else if(pathStr.length) //then assume need ?
+							pathStr += '?';
+						windowPath = pathStr + windowPath;
+					}
+					else
+						windowPath = pathStr;
+					
+		    		newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+		    				windowName, 
+							"",
+							windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
+							eval(pathUniquePair[1]));	
+		    	}
+		    	else
+		    	{
+		    		newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+		    				windowName, 
+							windowSubname,
+							windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
+							eval(windowUnique));			
+		    	}
+
+		    	//delay the setting of the fore window
+				window.setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
+		    	
+//				var str = "requestingWindowId=" + requestingWindowId;
+//				str += "&done=1";	
+//				_openWindowMailbox.innerHTML = str; //indicate done
+	    	}
+	    
+			break;
+		case "refreshIcons":
+			console.log("refreshIcons");
+			
+			//reset icons, if permissions undefined, keep permissions from before
+			Desktop.desktop.icons.resetWithPermissions(
+					undefined /*undefined permissions*/, true /*keepSamePermissions*/);
+			
+			break;
+		case "startSystemBlackout":
+			console.log("startSystemBlackout");
+			//windows can request a blackout, to avoid logging out (attempt to stop all other tabs by using browser cookie)
+			Desktop.desktop.login.blackout(true); 
+			break;
+		case "stopSystemBlackout":
+			console.log("stopSystemBlackout");
+			Desktop.desktop.login.blackout(false);
+			break;
+		case "getCookieCode":
+			responseObject = {
+				"cookieCode":	Desktop.desktop.login.getCookieCode()
+			};
+			console.log("getCookieCode");
+			break;
+		case "updateCookieCode":			
+			//do ms compare to decide if desktop cookie code should be updated with some throttling
+			var delta = parseInt(event.data.cookieCodeTime) - parseInt(Desktop.desktop.login.getCookieTime());
+
+			console.log("updateCookieCode",delta);
+			if(delta > 5*1000 /*ms*/) //update based on content value
+			{
+				Debug.log("Updating desktop cookie code from content window");
+				Desktop.desktop.login.updateCookieFromContent(
+						event.data.cookieCode,
+						parseInt(event.data.cookieCodeTime)); 
+			}	     
+			break;
+		case "needToLogin":
+			console.log("needToLogin");
+			
+			if(!document.getElementById("Desktop-loginDiv") &&
+					!Desktop.desktop.login.isBlackout())
+			{	
+				//only signal logout if login div is gone (login complete)
+				Debug.log("DesktopContent signaled new login needed!",Debug.HIGH_PRIORITY);
+				Desktop.logout();
+			}
+			else
+				Debug.log("Ignoring desktop content need for login signal due to blackout.");
+			
+			break;
+		default:
+			Debug.log("Illegal window message request received! Notify admins", Debug.HIGH_PRIORITY);
+			return;
+		}	
+		
+		if(responseObject !== undefined) //send response back
+		{
+			//send message to window (add windowId for 'security')
+			responseObject["windowId"] = event.data.windowId;
+			responseObject["request"] = event.data.request + "Response";
+			console.log("responseObject",responseObject);
+			this.getWindowById(event.data.windowId|0).getFrame().contentWindow.postMessage(
+					responseObject,"*");
+			
+		}
+    }); //end Desktop window message listener
     
     
     //add dashboard
@@ -1378,7 +1586,8 @@ Desktop.createDesktop = function(security) {
         
 	_handleDesktopResize();
 
-	this.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD); //start timer for checking foreground window changes due to iFrame content code
+	window.clearTimeout(this.checkMailboxTimer);
+	this.checkMailboxTimer = window.setTimeout(_checkMailboxes,_MAILBOX_TIMER_PERIOD); //start timer for checking foreground window changes due to iFrame content code
 
 	//add login
 	this.login = _login = new Desktop.login(!(this.security == Desktop.SECURITY_TYPE_NONE)); //pass true to enable login
@@ -1526,9 +1735,19 @@ Desktop.handleWindowMouseUp = function(mouseEvent)
 	
 	if(Desktop.foreWinLastMouse[0] != -1) //currently action happening on foreground window
 	{			
-		if(Desktop.stretchAndMoveInterval) {
-			clearInterval(Desktop.stretchAndMoveInterval);	//kill interval iframe mouse watchdog
+		if(Desktop.stretchAndMoveInterval) 
+		{
+			window.clearInterval(Desktop.stretchAndMoveInterval);	//kill interval iframe mouse watchdog
 			Desktop.stretchAndMoveInterval = 0;
+			
+			//stop needing mouse xy from desktop windows
+			var reqObject = {"request":		"stopNeedingMouseXY"};
+        	for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i)
+			{
+        		reqObject["windowId"] = Desktop.desktop.getWindowByIndex(i).getWindowId();        					
+        		Desktop.desktop.getWindowByIndex(i).getFrame().contentWindow.postMessage(
+        				reqObject,"*");
+			}
 		}
 		
 		Desktop.foreWinLastMouse = [-1,-1];	//indicate no movements happening	
@@ -1643,7 +1862,17 @@ Desktop.handleBodyMouseMove = function(mouseEvent)
   		Desktop.foreWinLastMouse = [mouseEvent.clientX,mouseEvent.clientY];				
 			
 		if(Desktop.stretchAndMoveInterval == 0)  //start timer for iframe mouse watchdog
-			Desktop.stretchAndMoveInterval = setInterval( 
+		{
+			//start needing mouse xy from desktop windows
+        	var reqObject = {"request":		"startNeedingMouseXY"};
+        	for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i)
+			{
+        		reqObject["windowId"] = Desktop.desktop.getWindowByIndex(i).getWindowId();        					
+        		Desktop.desktop.getWindowByIndex(i).getFrame().contentWindow.postMessage(
+        				reqObject,"*");
+			}
+        	
+			Desktop.stretchAndMoveInterval = window.setInterval( 
 				function() { //handle dashboard resize remotely through iframe mouse event
 					if(Desktop.desktop.getLastFrameMouseX() == -1) return; //if not in iframe do nothing
 					
@@ -1652,6 +1881,7 @@ Desktop.handleBodyMouseMove = function(mouseEvent)
   					Desktop.foreWinLastMouse = [Desktop.desktop.getLastFrameMouseX(),Desktop.desktop.getLastFrameMouseY()];			
 				}
 				,10);
+		}
 				
 		return true;
 	}
@@ -1662,24 +1892,43 @@ Desktop.handleBodyMouseMove = function(mouseEvent)
 	{		
 		if(mouseEvent.which == 0) //mouse button was released!!
 			return Desktop.handleWindowMouseUp(mouseEvent);	
-			
-		var delta = [mouseEvent.clientX-Desktop.foreWinLastMouse[0], mouseEvent.clientY-Desktop.foreWinLastMouse[1]];	
+		
+		var xy = [mouseEvent.clientX, mouseEvent.clientY];
+		if(xy[0] < Desktop.desktop.getDesktopContentX() + 4)
+			xy[0] = Desktop.desktop.getDesktopContentX() + 4; //get away from shadow
+		if(xy[1] < Desktop.desktop.getDesktopContentY() + 6)
+			xy[1] = Desktop.desktop.getDesktopContentY() + 6; //get away from shadow
+		var delta = [xy[0]-Desktop.foreWinLastMouse[0], xy[1]-Desktop.foreWinLastMouse[1]];	
+		
+		//console.log("MouseXY",mouseEvent.clientX,mouseEvent.clientY);
 		
         Desktop.handleWindowManipulation(delta);
 		
-   		Desktop.foreWinLastMouse = [mouseEvent.clientX,mouseEvent.clientY];
+   		Desktop.foreWinLastMouse = [xy[0],xy[1]];
         
         if(Desktop.stretchAndMoveInterval == 0)  //start timer for iframe mouse watchdog
-			Desktop.stretchAndMoveInterval = setInterval(
-                function() { //handle dashboard resize remotely through iframe mouse event
+        {
+			//start needing mouse xy from desktop windows
+        	var reqObject = {"request":		"startNeedingMouseXY"};
+        	for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i)
+			{
+        		reqObject["windowId"] = Desktop.desktop.getWindowByIndex(i).getWindowId();        					
+        		Desktop.desktop.getWindowByIndex(i).getFrame().contentWindow.postMessage(
+        				reqObject,"*");
+			}
+        	
+			Desktop.stretchAndMoveInterval = window.setInterval(
+                function() 
+				{ //handle dashboard resize remotely through iframe mouse event
                     if(Desktop.desktop.getLastFrameMouseX() == -1) return; //if not in iframe do nothing
-                     
+                    
                     var delta = [Desktop.desktop.getLastFrameMouseX()-Desktop.foreWinLastMouse[0],
                                  Desktop.desktop.getLastFrameMouseY()-Desktop.foreWinLastMouse[1]];
                     Desktop.handleWindowManipulation(delta);
                     Desktop.foreWinLastMouse = [Desktop.desktop.getLastFrameMouseX(),Desktop.desktop.getLastFrameMouseY()];
                 }
                 ,10);
+        }
 	}
 
 	return true;
@@ -1819,7 +2068,8 @@ Desktop.handleFullScreenWindowRefresh = function(mouseEvent)
 		//else cycle through all windows and refresh
 		
 		//determine max window
-		if(Desktop.desktop.getForeWindow().isMaximized())
+		if(Desktop.desktop.getForeWindow() && 
+				Desktop.desktop.getForeWindow().isMaximized())
 		{
 			Debug.log("Refreshing just maximized window...");
 			
@@ -1954,7 +2204,7 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex)
 				{
 					errStr = "Login has expired.";					
 					
-					window.clearInterval(Desktop.desktop.checkMailboxTimer); //stop checking mailbox
+					window.clearTimeout(Desktop.desktop.checkMailboxTimer); //stop checking mailbox
 					Desktop.logout(); 
 					//return;
 				}
@@ -1972,7 +2222,7 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex)
 				}
 
 				errStr = "Request Failed - Bad Address:\n" + requestURL;
-				window.clearInterval(Desktop.desktop.checkMailboxTimer);  //stop checking mailbox
+				window.clearTimeout(Desktop.desktop.checkMailboxTimer);  //stop checking mailbox
 				Desktop.logout();
 			}	        
 
@@ -1996,7 +2246,7 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex)
     
     if(Desktop.desktop.login) //add cookie code if login instance has been created
 	    data = "CookieCode="+Desktop.desktop.login.getCookieCode()+"&"+data;
-    requestURL = "/urn:xdaq-application:lid="+urnLid+"/"+requestURL;
+    requestURL = "/urn:xdaq-application:lid=" + urnLid_ + "/" + requestURL; //urnLid_ is from parent html page
     //Debug.log("Post " + requestURL + "\n\tData: " + data);
 	req.open("POST",requestURL,true);
 	//req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
@@ -2055,7 +2305,7 @@ Desktop.closeSystemMessage  = function(id)
 Desktop.isWizardMode = function() 
 {
 	//return true if in --config desktop mode
-	Debug.log("Desktop Security: " + Desktop.desktop.security);
+	//Debug.log("Desktop Security: " + Desktop.desktop.security);
 	
 	return !(!Desktop.desktop.security || 
     		Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS ||

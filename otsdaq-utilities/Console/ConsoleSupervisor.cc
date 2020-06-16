@@ -303,7 +303,7 @@ catch(...)
 }
 
 //==============================================================================
-void ConsoleSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
+void ConsoleSupervisor::defaultPage(xgi::Input* /*in*/, xgi::Output* out)
 {
 	__SUP_COUT__ << "ApplicationDescriptor LID="
 	             << getApplicationDescriptor()->getLocalId() << std::endl;

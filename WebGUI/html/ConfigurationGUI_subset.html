@@ -155,7 +155,7 @@
 	
 	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 	
@@ -477,6 +477,33 @@
 				MultiSelectBox.setSelectionElementByIndex(el,0,true);
 				MultiSelectBox.initMySelectBoxes(); //update display
 			}
+			else if(loadSelectedRecord) //apply selectRecords
+			{
+				var selectRecords = _selectedRecords.split(',');
+				Debug.log("selectRecords length " + selectRecords.length);
+				var selArr = MultiSelectBox.getSelectionArray(el);
+				if(selectRecords.length && selectRecords[0].length)
+				{
+					for(var j=0;j<selectRecords.length;++j)
+					{
+						//find select UID in multi-select values
+
+						for(var k=0;k<selArr.length;++k)
+						{
+							if(selectRecords[j] ==
+									MultiSelectBox.getSelectionElementByIndex(el,k).innerText)
+							{
+								Debug.log("Found pre-select record " + 
+										selectRecords[j]);
+								MultiSelectBox.setSelectionElementByIndex(el,k,true /*selected*/);								
+							}
+						}
+					} //end record search loop
+				}
+				
+				MultiSelectBox.initMySelectBoxes(); //update display of all multi-select boxes
+									
+			}
 			
 			//get grouping field values
 			//	for record list
@@ -591,15 +618,15 @@
 			if(!_selectedGroupIDs) _selectedGroupIDs = "";
 			if(!_selectedRecords) _selectedRecords = "";
 
-			Debug.log("_subsetBasePath " + _subsetBasePath);
-			Debug.log("_groupingFieldList " + _groupingFieldList);
-			Debug.log("_editableFieldList " + _editableFieldList);
-			Debug.log("_recordPreFilterList " + _recordPreFilterList);
-			Debug.log("_recordsAlias " + _recordsAlias);
+			Debug.logv({_subsetBasePath});
+			Debug.logv({_groupingFieldList});
+			Debug.logv({_editableFieldList});
+			Debug.logv({_recordPreFilterList});
+			Debug.logv({_recordsAlias});
 
-			Debug.log("_selectedGroupFieldValues " + _selectedGroupFieldValues);
-			Debug.log("_selectedGroupIDs " + _selectedGroupIDs);
-			Debug.log("_selectedRecords " + _selectedRecords);
+			Debug.logv({_selectedGroupFieldValues});
+			Debug.logv({_selectedGroupIDs});
+			Debug.logv({_selectedRecords});
 			
 			return true;
 		}	//end extractGETParameters()
@@ -1646,6 +1673,11 @@
 			else //prompt was cancelled
 				return;
 
+			//unselect current record selections, so new record will be selected in aftermath
+			var el = document.getElementById("recordMultiSelect");
+			MultiSelectBox.setSelectionElementByIndex(el,-1 /*all*/,false /*selected*/);
+													
+			
 			ConfigurationAPI.addSubsetRecords(_subsetBasePath,newRowUID,
 					/////////////////////
 					function(modifiedTables) //start addSubsetRecords handler
@@ -1750,6 +1782,7 @@
 							Debug.INFO_PRIORITY);
 
 					_modifiedTables = undefined; //clear after save
+					_selectedRecords = newRowUID; //select new record after init
 					
 					//runFilter(); //updates records and fields, and applies filter
 					initSubsetGlobalData();
@@ -1964,7 +1997,7 @@
 </head>
 	
 
-<body onload='Javascript:init();'>	
+<body onload='//init() called by DesktopContent.js'>	
 		
 	<!-- body content populated by javascript paint(), etc. -->
 

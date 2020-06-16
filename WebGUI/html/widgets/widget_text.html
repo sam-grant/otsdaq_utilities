@@ -3,24 +3,18 @@
 	<head>
 		<title>Text</title>
 		<style type="text/css">			
+
 			body {
-				//background-color: rgb(41,46,55);
-				background-color: rgb(250,250,250);
+				background-color: rgb(255,255,255);
 			}
-			a{
-				color: green;
-				height: auto;
-		    	text-align: center;
-			}
-			div{
-			padding: 2.5px;
-			}
-			table{
-				height:100%;
-			}
-			tr {
-				margin: auto;
-				padding: auto;
+			.wrapper {
+			  display: grid;
+			  //grid-template-columns: repeat(1, 1fr);
+			  //grid-auto-rows: repaat(2, ifr);
+			  //grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+			  //grid-auto-rows: minmax(200px, auto);
+			  grid-gap: 10px;
+			  color: blue;
 			}
 
 		</style>
@@ -28,7 +22,12 @@
 		<script>		
 
 			//functions:
-				//init()
+			//init()
+
+			var pv_settings_ = [];
+			var labels = [];
+			var values = [];
+			var parameters_ = {class: "", "show_labels": "false", "border": "true", "fontSize": "9vw", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -38,159 +37,164 @@
 			{
 				console.log("init()");
 				console.log(window.frameElement.id)
-				window.parent.setupWidget(window.frameElement.id, getParameters());
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
 			{
-				console.log("setupPVs() : " , settings);
+				console.log("Text setupPVs() : " , settings);
+				pv_settings_ = settings;
 			}
 
-			function newWidget(widget, parameters) 
-			{			
-				var table = document.createElement('table');
-				table.id = "display-table";
-				table.style.height = "100%";
-				table.style.width = "100%";
+			function drawWidget(widget, parameters) 
+			{
+				var div = document.createElement('div');
+				div.className = "wrapper";
+				div.id = "display-div";
+				var display = document.getElementById("display");
+				display.innerHTML = "";
+				if (!Object.getOwnPropertyNames(widget.pvList).length)
+					display.innerHTML = "<center>TEXT: No associated PVs to display.</center>";
+
+				display.appendChild(div);
 
 				var counter = 0;
-				for(var pv in widget.PVList)
+				for(var pv in widget.pvList)
 				{
-					counter++;
-				}
-
-				var rows = Math.round(Math.sqrt(counter));
-				var columns = Math.ceil(counter / rows);
-
-				for(var col = 1; col <= columns; col++)
-				{
-					var tr = document.createElement('tr');
-					tr.id = "tr" + col;
-					//tr.style.width = tr.parentElement.innerWidth / columns;
-					for(var cell = 1; cell <= rows; cell++)
+					var value = document.getElementById(pv);
+					if (value == null)
 					{
-						var td = document.createElement('td');
-						td.id = "td" + col + "-" + cell;
-						//td.style.height = td.parentElement.innerHeight / rows;
-						//console.log(td.id);
-						tr.appendChild(td);
+						value = document.createElement('div');
+						value.id = pv;
+						value.title = pv;
+
+						var label = document.createElement('center');
+						var pvValue = document.createElement('center');
+	
+						if (parameters_["show_labels"] == "true")
+							label.innerHTML = pv.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...";
+
+						if (parameters_["border"]=="true")
+							pvValue.style.border = "1px solid #000";
+						else
+							pvValue.style.border = "";
+
+						value.style.fontSize = parameters_["fontSize"];
+
+						var units = pv_settings_[pv] != undefined ? pv_settings_[pv].Units : "";
+						pvValue.innerHTML = "N/A " + units;
+						labels[pv] = label;
+						values[pv] = pvValue;
+						value.appendChild(label);
+						value.appendChild(pvValue);
+						div.appendChild(value);
+						counter++;
 					}
-					table.appendChild(tr);
-				}
-				document.getElementById("display").innerHTML = "";
-				document.getElementById("display").appendChild(table);
-
-				//console.log("newWidget() called *************************************");
-				if(counter > 1){counter = 2;}
-				console.log("counter" + counter);
-				for(var pv in widget.PVList)
-				{
-					var a = document.createElement('a');
-					a.id = pv;
-					a.title = pv;
-					a.innerHTML = "N/A";
-					a.style.width = "100%";
-					a.style.height = "100%";
-//					document.getElementById("display").appendChild(a);	
-//					a = document.getElementById(pv);
-//					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
-					var center = document.createElement("center");
-					center.appendChild(a);
 					console.log(document.body);
-					var first = Math.floor(counter/columns);
-					if(first < 1) {first = 1;}				
-					console.log("td" + first + "-" + (counter%rows +1));
-					document.getElementById("td" + first + "-" + (counter%rows +1)).appendChild(center);
-					counter++;
-//					console.log(counter);
-//					console.log(columns);
-//					console.log(rows);
 				}
 			}
 
-			function getParameters()
+			function getAttributes()
 			{
-				paramters = {
-							"param1": "",
-							"param2": "",
-							"param3": "",
-							"param4": "",
-							"param5": "",
-							"param6": "",
-							"param7": ""};
-				return paramters;
+				return parameters_;
 			}
 
-			function setParameters(attributes)
+			function setAttributes(attributes)
 			{
-				
+				parameters_ = attributes;
+				console.log("text widget: set parameters()");
+				console.log(parameters_);
 			}
 
-			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{
-				/*if(document.getElementById(pvName) == null)
-				{
-					var div = document.createElement('div');
-					var a = document.createElement('a');
-					a.id = pvName;
-					div.appendChild(a);
-					document.getElementById("display").appendChild(div);
-				}*/
-				console.log("newValue() reached", pvName, pvValue);
+				console.log("Text newValue() reached", pvName, pvValue);
 
-				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
-				document.getElementById(pvName).title = pvName + ":" + pvTime;
-				document.getElementById(pvName).parentElement.style.border = pvName + ":" + pvTime;
+				var units = pv_settings_[pvName] != undefined ? pv_settings_[pvName].Units : "";
+				values[pvName].innerHTML = pvValue + " " + units;
+
+				if (parameters_["border"]=="true")
+					values[pvName].style.border = "1px solid #000";
+
 				document.getElementById(pvName).parentElement.style["background-color"] = "transparent";
-				if(pvSeverity == "NO_ALARM")
-				{
-					document.getElementById(pvName).parentElement.style.color = "green"
-				}
-				else if(pvSeverity == "MINOR")
-				{
-					document.getElementById(pvName).parentElement.style.color = "yellow"
-				}else if(pvSeverity == "MAJOR")
-				{
-					document.getElementById(pvName).parentElement.style.color = "red"
-				}else if(pvSeverity == "INVALID")
-				{
-					document.getElementById(pvName).parentElement.style.color = "DimGray";
-				}
-				else if(pvSeverity == "DC")
-				{
-					document.getElementById(pvName).parentElement.style.color = "Light Grey";
-				}
 
-				if(pvStatus == "NO_ALARM")
-				{
-					document.getElementById(pvName).parentElement.style.border = "thin dotted green";
-				}
-				else if(pvStatus == "HIHI")
-				{
-					document.getElementById(pvName).parentElement.style.border = "thick solid red"
-				}else if(pvStatus == "LOLO")
-				{
-					document.getElementById(pvName).parentElement.style.border = "thick solid MediumSlateBlue";
-				}else if(pvStatus == "HIGH")
-				{
-					document.getElementById(pvName).parentElement.style.border = "thin dotted red";
-				}else if(pvStatus == "LOW")
-				{
-					document.getElementById(pvName).parentElement.style.border = "thin dotted blue";
-				}else if(pvStatus == "DC")
-				{
-					document.getElementById(pvName).parentElement.style["background-color"] = "Gainsboro";
-				}else if(pvStatus == "UDF")
-				{
-					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
-				}
+				window.parent.setWidgetPVinfo(
+									  window.frameElement.id
+									, pvName
+									, pvValue
+									, pvTime
+									, pvStatus
+									, pvSeverity
+									, parameters_["show_labels"]
+									, labels
+									, parameters_["old_value_foreground_color"]
+									, parameters_["old_value_background_color"]
+									, "1px solid #000"
+									, values[pvName]
+									);
+
+				document.getElementById(pvName).title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+
+//				if(pvSeverity == "NO_ALARM")
+//				{
+//					document.getElementById(pvName).parentElement.style.color = "green"
+//				}
+//				else if(pvSeverity == "MINOR")
+//				{
+//					document.getElementById(pvName).parentElement.style.color = "yellow"
+//				}else if(pvSeverity == "MAJOR")
+//				{
+//					document.getElementById(pvName).parentElement.style.color = "red"
+//				}else if(pvSeverity == "INVALID")
+//				{
+//					document.getElementById(pvName).parentElement.style.color = "DimGray";
+//				}
+//				else if(pvSeverity == "DC")
+//				{
+//					document.getElementById(pvName).parentElement.style.color = "Light Grey";
+//				}
+//
+//				if(pvStatus == "NO_ALARM")
+//				{
+//					document.getElementById(pvName).parentElement.style.border = "thin dotted green";
+//				}
+//				else if(pvStatus == "HIHI")
+//				{
+//					document.getElementById(pvName).parentElement.style.border = "thick solid red"
+//				}else if(pvStatus == "LOLO")
+//				{
+//					document.getElementById(pvName).parentElement.style.border = "thick solid MediumSlateBlue";
+//				}else if(pvStatus == "HIGH")
+//				{
+//					document.getElementById(pvName).parentElement.style.border = "thin dotted red";
+//				}else if(pvStatus == "LOW")
+//				{
+//					document.getElementById(pvName).parentElement.style.border = "thin dotted blue";
+//				}else if(pvStatus == "DC")
+//				{
+//					document.getElementById(pvName).parentElement.style["background-color"] = "Gainsboro";
+//				}else if(pvStatus == "UDF")
+//				{
+//					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
+//				}
 			}
 
-		</script>
+			window.onresize = function() {
+				for(var pv in values)
+				{
+					document.getElementById(pv).style.width = (parseInt(window.innerWidth) - 15) / Object.keys(values).length | 0;
+					document.getElementById(pv).style.height = (parseInt(window.innerHeight) - 20) / Object.keys(values).length | 0;
+				}
+
+				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 15) + "px";
+				document.getElementById("display").style.height = (parseInt(window.innerHeight) - 20) + "px";
+			}
+
+	</script>
 
 	</head>
 
-	<body onload='Javascript:init();'>
+	<body onload="Javascript:init()">
 
 	<div id="display" width="100%" height="100%">
 	</div>
