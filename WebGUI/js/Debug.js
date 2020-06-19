@@ -243,19 +243,6 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 						Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+1,
 								Debug.lastLogger.length);
 					}
-<<<<<<< HEAD
-					
-					var source = window.location.href;
-					source = source.substr(source.lastIndexOf('/'));
-					source = source.substr(0,source.indexOf('?'));
-/* 					console.log("%c" + type + "-Priority" +  
-							 ":\t " + Debug.lastLog + " from " + source + ":\n" +
-							 Debug.lastLogger + "::\t" + str,							 
-							 num == 0?"color:#F30;"	//chrome/firefox allow css styling
-									 :(num == 1?"color:#F70" //warn
-											 :(num < 99?"color:#092":"color:#333"))); 
- */					Debug.lastLog = str;
-=======
 				}
 
 				var source = window.location.href;
@@ -281,7 +268,6 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 
 					for(var i=0;i<argsInStr;++i)			 
 						consoleArguments.push(arguments[i]);
->>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 					
 					//pass arguments using special apply for arg consistency
 					console.log.apply(null,consoleArguments);

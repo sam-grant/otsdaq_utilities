@@ -71,8 +71,6 @@ function()
  var optionsBodies2D_     = []                                                                      ;
  var optionsBodies3D_     = []                                                                      ;
 
- var _cookieCodeMailbox   = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
- var _cookieCode          = _cookieCodeMailbox.innerHTML                                            ;
  var _theWindow           = self                                                                    ;
  var _requestURL          = self.parent.window.location.origin                                     +
                             "/urn:xdaq-application:lid="                                           +
@@ -162,6 +160,7 @@ function()
   for(var i=0; i< theArray.length; i++)
   {
    var v = theArray[i] ;
+   STDLINE("    v: "+v) ;
    theBody.push(
                 {
                  xtype   : 'checkbox'                          ,
@@ -350,6 +349,7 @@ function()
                                       STDLINE("   --> fParams_.RootPath: "+this.fParams_     [i].RootPath); 
                                      }
                                      STDLINE("   ------------------------------------------------------" );
+                                      
                                     }                                                   
                   } ;                                                                   
 
@@ -774,6 +774,7 @@ function()
                                                                                                    }
                                                                                                   );
                                                                               globalCanvas_.setActiveTab(addIndex)                            ;
+                                                                              STDLINE("Adding new canvas tab")                                ;
                                                                              }
                                                                 }, {
                                                                  xtype     : 'button'                                       ,
@@ -986,12 +987,6 @@ function()
                                                             STDLINE("Resizing "+getCanvasDiv_(currentCanvas_))         ;
                                                             theCanvasModel_.currentWidth  = width                      ;
                                                             theCanvasModel_.currentHeight = height                     ;
-                                                            if( theViewPort_ )
-                                                            {
-                                                             var w = theViewPort_.getWidth()                           ;
-                                                             var h = theViewPort_.getHeight()-100                      ;
-                                                             perWin.resize( w, h )                                     ;
-                                                            }
                                                             changeHistogramPanelSize(
                                                                                      thisPanel                        ,
                                                                                      width                            ,
@@ -999,7 +994,6 @@ function()
                                                                                      "resized"
                                                                                     )                                  ;
                                                             redrawCanvas()                                             ;
-                                                            
                                                            }
                                               }
                              }
@@ -1196,9 +1190,83 @@ function()
  makeInformationPanel() ;
 
  //-----------------------------------------------------------------------------
+ function makeConfigStore()
+ {
+  if( configStore_ ) configStore_.destroy() ;
+  var nc = theCanvasModel_.canvases.length ;
+  configStore_ = Ext.create(
+                            'Ext.data.Store', 
+                            {
+                             storeId:'configDataStore',
+                             fields :['Parameter', 'Component', 'value'],
+                             data   :{
+                                      'items': [
+                                                {'Parameter': 'Number of canvases', "Component":"canvas",  "value": nc  },
+                                                {'Parameter': '# of plots (X)'    , "Component":"canvas",  "value": "1" },
+                                                {'Parameter': '# of plots (Y)'    , "Component":"canvas",  "value": "1" }
+                                               ]
+                                     },
+                             proxy : {
+                                      type  : 'memory',
+                                      reader: {
+                                               type: 'json',
+                                               root: 'items'
+                                              }
+                                     }
+                            }
+                           );
+
+  if( configPanel_ ) configPanel_.destroy() ;
+  configPanel_ = Ext.create(
+                            'Ext.grid.Panel', 
+                            {
+                             title   : 'Current configuration parameters',
+                             store   : Ext.data.StoreManager.lookup('configDataStore'),
+                             columns : [
+                                        { text: 'Parameter', dataIndex: 'Parameter'          },
+                                        { text: 'Component', dataIndex: 'Component', flex: 1 },
+                                        { text: 'value'    , dataIndex: 'value'              }
+                                       ],
+                            }
+                           );
+ }
+ 
+ makeConfigStore() ;
+ 
+ //-----------------------------------------------------------------------------
  function makeConfigWin() 
  {
-  perWin.init(_requestURL, theCanvasModel_, theViewPort_) ;
+  makeConfigStore() ;
+  Ext.getCmp('saveConfig-ID').setDisabled(true);
+  if( theConfigWin_ ) theConfigWin_.destroy() ;
+  theConfigWin_ = Ext.create(
+                             'Ext.window.Window', 
+                             {
+                              title    : 'The configuration manager',
+                              height   : 486                        ,
+                              width    : 606                        ,
+                              //layout   : 'fit'                      ,
+                              margins  : '5 5 5 5'                  ,
+                              padding  : '5 5 5 5'                  ,
+                              items    : [
+                                          {
+                                           xtype  : 'button'            ,
+                                           name   : 'cucu'              ,
+                                           text   : 'Dump configuration',
+                                           pressed: 'true'              ,
+                                          },
+                                          configPanel_
+                                         ],
+                              listeners: {
+                                          beforedestroy: function()
+                                                         {
+                                                          Ext.getCmp('saveConfig-ID').setDisabled(false);
+                                                         }
+                                         }
+                             }
+                            ) ;
+  theConfigWin_.setPosition(0,52) ;
+  theConfigWin_.show()            ;      
  }
  
  //-----------------------------------------------------------------------------
@@ -1230,7 +1298,7 @@ function()
                                                           Ext.getCmp('navigatorDiv').expand()                              ;
                                                           var thisRootPath = record.data.dir                               ;
                                                           var thePad       = theCanvasModel_.getCurrentPadC(currentCanvas_);
-                                                          perWin.destroy()                                             ;
+                                                          if( theConfigWin_ ) theConfigWin_.destroy()                      ;
                                                           theProvenance_.clearAll(currentCanvas_,thePad                   );
                                                           theProvenance_.setRootPath(thisRootPath,
                                                                                      currentCanvas_                       ,
@@ -1340,7 +1408,6 @@ function()
                             }
                            );
   theViewPort_.setPosition(0,0) ;
-  STDLINE(" >>>>>>>>> w: "+theViewPort_.getWidth() + " h: " + theViewPort_.getHeight()) ;
  } ;
  
  //-----------------------------------------------------------------------------
@@ -1468,7 +1535,7 @@ function()
                                                   theProvenance_.dump           ("Item selected",thePad                );      
                                                  } 
                                                  theProvenance_.dumpAll("Selected plot to display") ; 
-//                                                 theCanvasModel_.dumpContent("Clicked on item "+selectedItem_)          ;
+//                                                 theCanvasModel_.dumpContent("Clicked on item "+selectedItem_)                                          ;
                                                  var itemSplit     = item.innerText.split("\n\t\n")                     ;      
                                                  var isLeaf        = itemSplit[1].replace("\n","").replace("\t","")     ;      
                                                  if( isLeaf == "true" ) 
@@ -1526,7 +1593,7 @@ function()
                                                    theAjaxRequest(
                                                                   _requestURL+"RequestType=getRoot",
                                                                   {                                                           
-                                                                   CookieCode: _cookieCode         ,                                  
+                                                                   CookieCode: DesktopContent._cookieCodeMailbox         ,                                  
                                                                    RootPath  : currentRootObject_                                     
                                                                   }                                , 
                                                                   ""                               ,
@@ -1595,7 +1662,7 @@ function()
                                                       read          : 'POST'
                                                      }, 
                                       extraParams  : { 
-                                                      "CookieCode"  : _cookieCode                                          ,
+                                                      "CookieCode"  : DesktopContent._cookieCodeMailbox                                          ,
                                                       "Path"        : path                                                 ,
                                                       "fRootPath"   : theProvenance_.getRootPath   (currentCanvas_, thePad),
                                                       "fFoldersPath": theProvenance_.getFoldersPath(currentCanvas_, thePad),
@@ -1851,7 +1918,7 @@ function()
  theAjaxRequest(
                 _requestURL+"RequestType=getDirectoryContents",
                 {                                                            
-                 CookieCode: _cookieCode,                                   
+                 CookieCode: DesktopContent._cookieCodeMailbox,                                   
                  Path      : "/"                                 
                 }, 
                 "",
