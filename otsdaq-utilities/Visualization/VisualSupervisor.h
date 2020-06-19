@@ -80,9 +80,9 @@ class VisualSupervisor : public CoreSupervisorBase
   private:
 	// void						binaryBufferToHexString		(char *buff, unsigned int len,
 	// std::string& dest);
-
-	VisualDataManager* theDataManager_;
-	unsigned int       loadedRunNumber_;
+        std::stringstream   ss ;
+	VisualDataManager * theDataManager_;
+	unsigned int        loadedRunNumber_;
 };
 }
 
