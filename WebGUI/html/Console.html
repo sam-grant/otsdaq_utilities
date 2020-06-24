@@ -327,7 +327,7 @@
 				_filterStyleEl[_FIELDS_TO_OBSERVE[f]] = 0;
 			}
 					
-			var _showFilterControls = false;
+			var _showFilterControls = true; //opposite will be default
 				
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -390,7 +390,7 @@
 			    //call to setup colorScheme first time
 				DesktopContent.XMLHttpRequest("Request?RequestType=LoadUserPreferences", "",
 						handleLoadUserPreferences);
-			}
+			} //end init()
 
 			//=====================================================================================
 			//toggleNoWrap ~
@@ -728,9 +728,10 @@
 			    //console.log("_localRefreshTimeout",_localRefreshTimeout);
 			}
 
-
+			//=====================================================================================
 			//initSideBar ~
-			function initSideBar() {
+			function initSideBar() 
+			{
 								
 				var str = "";
 				
@@ -763,7 +764,7 @@
 				
 				updateSideBarCounts();
 				updateFilterBoxes();
-			}
+			} //end initSideBar()
 			
 			//=====================================================================================
 			//updateSideBarCounts ~
@@ -1097,7 +1098,8 @@
 			
 			//=====================================================================================
 			//setupColorScheme(i) ~
-			function setupColorScheme(i) {
+			function setupColorScheme(i) 
+			{
 				_chosenColorScheme = (i|0) % _colorSchemes.length;
 				if(_chosenColorScheme < 0) _chosenColorScheme = 0; //mod allows negative.. prevent
 
@@ -1108,7 +1110,8 @@
 			//=====================================================================================
 			//toggleFilterControls ~
 			//	show/hide filter selection
-			function toggleFilterControls() {
+			function toggleFilterControls()
+			{
 				 
 				_showFilterControls = !_showFilterControls; //toggle
 
@@ -1118,11 +1121,21 @@
 				el = document.getElementById('filterContainer');
 	            el.style.display = _showFilterControls?"block":"none";
 	            updateFilterBoxes(); //update multi select box
-			}
+			} //end toggleFilterControls()
 			
 			//=====================================================================================
 			//togglePauseControls ~
-			function togglePauseControls() {
+			function togglePauseControls() 
+			{
+//				pause = true;
+//				DesktopContent.XMLHttpRequest(
+//						"Request?RequestType=GetTraceLevels",
+//						"",
+//						function(req)
+//						{
+//					Debug.log("GetTraceLevels req",req);
+//						});
+//				return;
 
 				var pause = _consoleUpdateTimer?true:false;
 				Debug.log("Need to pause: " + pause);
@@ -1136,7 +1149,7 @@
 
 				var el = document.getElementById("PauseControlsLink");
 				el.innerHTML = pause?"Resume":"Pause";				
-			}
+			} //end togglePauseControls()
 
 			//=====================================================================================
 			//handleUserScroll ~

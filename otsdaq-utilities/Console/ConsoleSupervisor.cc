@@ -57,7 +57,8 @@ ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
 	init();
 
 	__SUP_COUT__ << "Constructor complete." << __E__;
-}
+
+} //end constructor()
 
 //==============================================================================
 ConsoleSupervisor::~ConsoleSupervisor(void) { destroy(); }
@@ -339,6 +340,8 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	// GetConsoleMsgs
 	// SaveUserPreferences
 	// LoadUserPreferences
+	// GetTraceLevels
+	// SetTraceLevels
 
 	// Note: to report to logbook admin status use
 	// xmlOut.addTextElementToData(XML_ADMIN_STATUS,refreshTempStr_);
@@ -458,6 +461,64 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		xmlOut.addTextElementToData("messageOnly", tmpStr);
 		sprintf(tmpStr, "%u", hideLineNumers);
 		xmlOut.addTextElementToData("hideLineNumers", tmpStr);
+	}
+	else if(requestType == "GetTraceLevels")
+	{
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
+
+		SOAPParameters txParameters;  // params for xoap to send
+		txParameters.addParameter("Request", "GetTraceLevels");
+
+		SOAPParameters rxParameters;  // params for xoap to recv
+		rxParameters.addParameter("Command");
+		rxParameters.addParameter("TRACEList");
+
+		std::string traceList = "";
+		auto& allTraceApps = allSupervisorInfo_.getAllTraceControllerSupervisorInfo();
+		for(const auto& appInfo: allTraceApps)
+		{
+			__SUP_COUT__ << "Supervisor LID = " << appInfo.first <<
+					"/" << appInfo.second.getId()
+					             << " name = " << appInfo.second.getName()
+					             << " class = " << appInfo.second.getClass()
+					             << " hostname = " << appInfo.second.getHostname() <<
+								 __E__;
+			try
+			{
+				xoap::MessageReference retMsg =
+						SOAPMessenger::sendWithSOAPReply(appInfo.second.getDescriptor(),
+								"TRACESupervisorRequest",
+								txParameters);
+				SOAPUtilities::receive(retMsg, rxParameters);
+				__SUP_COUT__ << "Received TRACE response: " <<
+						SOAPUtilities::translate(retMsg).getCommand()
+						<< "==>" << SOAPUtilities::translate(retMsg) << __E__;
+
+				if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
+				{
+					__SUP_SS__ << "Unrecognized command received!" << __E__;
+					__SUP_SS_THROW__;
+				}
+			}
+			catch(const xdaq::exception::Exception& e)
+			{
+				__SUP_SS__ << "Error transmitting request to FE Supervisor LID = "
+						<< appInfo.second.getId() << " name = " << appInfo.second.getName()
+						<< ". \n\n"
+						<< e.what() << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			traceList        += rxParameters.getValue("TRACEList");
+
+		} //end app get TRACE loop
+		__SUP_COUT__ << "TRACE List received: \n" << traceList << __E__;
+		xmlOut.addTextElementToData("traceLis", traceList);
+	}
+	else if(requestType == "SetTraceLevels")
+	{
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
+
 	}
 	else
 	{

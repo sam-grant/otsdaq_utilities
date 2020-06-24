@@ -747,6 +747,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 	txParameters.addParameter("Request", "GetInterfaces");
 
 	SOAPParameters rxParameters;  // params for xoap to recv
+	rxParameters.addParameter("Command");
 	rxParameters.addParameter("FEList");
 	rxParameters.addParameter(
 	    "frontEndError");  // if there were errors recorded (during
@@ -780,6 +781,16 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 			                                     "MacroMakerSupervisorRequest",
 			                                     txParameters);
 			SOAPUtilities::receive(retMsg, rxParameters);
+
+			__SUP_COUT__ << "Received MacroMaker response: " <<
+					SOAPUtilities::translate(retMsg).getCommand()
+					<< "==>" << SOAPUtilities::translate(retMsg) << __E__;
+
+			if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
+			{
+				__SUP_SS__ << "Unrecognized command received!" << __E__;
+				__SUP_SS_THROW__;
+			}
 		}
 		catch(const xdaq::exception::Exception& e)
 		{
@@ -1830,7 +1841,7 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument&   xmldoc,
 	}
 	else
 		__SUP_COUT__ << "Unable to open file" << __E__;
-}
+} //end exportMacro()
 
 //==============================================================================
 // createCode
