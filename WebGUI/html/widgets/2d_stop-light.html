@@ -1,0 +1,183 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  	<head>
+    	<meta http-equiv="content-type" content="text/html;charset=utf-8">
+    	<title>2D Stop Light</title>
+
+		<style>
+
+		    body {
+			  font: 10px sans-serif;
+			  background: rgba(250, 255, 255, 1);
+			  margin: 0px !important;
+			}
+
+			table, th, td {
+			  border: 1px solid grey;
+			  border-collapse: collapse;
+			}
+			
+			a {
+			  font-size: 1vw;
+			}
+
+		</style>
+
+		<script>
+			//functions:
+			//init()
+
+			var pv_settings_ = [];
+			var parameters_ = {class: "", "upload file": ""};
+
+			//define data sample
+			//each cell contain
+			//{
+			//  id:counter
+			//  , y:i
+			//  , x:j
+			//  , pvName:pv
+			//  , pvDescription:description
+			//  , pvValue:value
+			//  , pvStatus:status
+			//  , pvSeverity:severity
+			//  , pvTime:time
+			//};
+			var tabledata = [];
+
+			var table;
+			var tds = [];
+			var _xSize;
+			var _ySize;
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			//init called once body has loaded
+
+			function init()
+			{
+				console.log("2d stop light: init()");
+				console.log(window.frameElement.id);
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
+			}
+
+			function setupPVs(settings)
+			{
+				console.log("2d stop light: setupPVs()" , settings);
+				pv_settings_ = settings;
+			}
+
+			function drawWidget(widget, parameters)
+			{
+				newPVTable();
+			}
+
+			function getAttributes()
+			{
+				return parameters_;
+			}
+
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log("2d stop light: setAttributes()");
+				console.log(parameters_);
+			}
+
+			function newPVTable()
+			{
+				console.log("2d stop light: newPVTable() reached");
+
+				//make widget table to show
+				var display = document.getElementById("display");
+				display.innerHTML = "";
+				table = document.createElement('table');
+				table.id = "display-table";
+				table.style.height = window.innerHeight + "px";
+				table.style.width = "100%";
+
+				var i = 0;
+				for(var row = 1; row <= _ySize; row++)
+				{
+					var tr = document.createElement('tr');
+					tr.id = "tr" + row;
+
+					for(var cell = 1; cell <= _xSize; cell++)
+					{
+						var td = document.createElement('td');
+						var center = document.createElement('center');
+						var a = document.createElement('a');
+						td.id = "td" + row + "-" + cell;
+						center.id = "center" + row + "-" + cell;
+						a.id = "a" + row + "-" + cell;
+						tds[i] = td;
+
+						center.appendChild(a);
+						td.appendChild(center);
+						tr.appendChild(td);
+						i++;
+					}
+					table.appendChild(tr);
+				}
+				console.log("2d stop light: newPVTable() tabledata size" , i);
+
+				document.getElementById("display").appendChild(table);
+
+				// fill each cell of table
+				for (cell in tabledata)
+				{
+					if(tds[cell] != undefined)
+					{
+						if (tabledata[cell].pvName == "-1") continue;
+
+						tds[cell].firstElementChild.title = JSON.stringify(tabledata[cell]);
+						//tds[cell].firstElementChild.title = window.parent.setWidgetToolTip(tabledata[cell].pvName, tabledata[cell].pvValue, tabledata[cell].pvTime, pv_settings_);
+						tds[cell].firstElementChild.firstElementChild.innerHTML = "+";//tabledata[cell].pvName;
+
+						//var fullPathToPage = "";
+						//tds[cell].firstElementChild.firstElementChild.href = "javascript:window.parent.loadPageNewWindow(\""+fullPathToPage+"\")";
+
+						var valColor = 0;
+						if (tabledata[cell].pvValue && pv_settings_[tabledata[cell].pvName].Upper_Alarm_Limit)
+							valColor = tabledata[cell].pvValue/pv_settings_[tabledata[cell].pvName].Upper_Alarm_Limit;
+						valColor = valColor >= 0.5 ? valColor : 0.5;
+						if (tabledata[cell].pvStatus == "HIHI")
+							tds[cell].style.backgroundColor = "red";
+						else
+							tds[cell].style.backgroundColor = "rgba(0, 230, 64, " + valColor + ")";
+					}
+				}
+			}
+
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+				console.log("2d stop light: drawNewValue() reached");
+				var cell = tabledata.find(function (element){
+					return element.pvName == pvName;
+				});
+				console.log(cell);
+				if(cell == undefined) return;
+				cell.pvValue = pvValue;
+				cell.pvTime = pvTime;
+				cell.pvStatus = pvStatus;
+				cell.pvSeverity = pvSeverity;
+
+				newPVTable();
+			}
+
+			window.onresize = function() {
+				console.log("2d stop light: window.onresize()");
+				table.style.height = window.innerHeight + "px";
+			};
+
+		</script>
+
+	</head>
+
+	<body onload="Javascript:init()">
+		<div id="display"></div>
+	</body>
+
+</html>
