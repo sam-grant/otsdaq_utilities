@@ -219,7 +219,7 @@ DesktopContent._pageInitCalled = false;
 // caution when using "window" anywhere outside this function because
 //  desktop window can be at different levels depending on page depth (page may be inside frame)
 // use instead DesktopContent._theWindow
-DesktopContent.init = function() 
+DesktopContent.init = function(onloadFunction) 
 {	
 	if(typeof Desktop !== 'undefined') return; //skip if Desktop exists (only using for tooltip), DesktopContent._theWindow will be undefined
 		
@@ -365,6 +365,8 @@ DesktopContent.init = function()
 		}	
 		else if(event.data.request == "giveRequestLIDInfo")
 		{			
+			if(DesktopContent._pageInitCalled || !event.data.gatewayURN) return;
+			DesktopContent._pageInitCalled = true;
 			
 			Debug.log("Received info response from parent page");
 			DesktopContent._localUrnLid = event.data.localURN;
@@ -413,15 +415,23 @@ DesktopContent.init = function()
 				
 			try
 			{
-				if(init)
+				
+				if(onloadFunction)
+				{
+					Debug.log("Calling page body onload!");
+					onloadFunction(); //call page's init!
+				}
+				else if(init)
 				{
 					Debug.log("Calling page init!");
 					init(); //call page's init!
 				}
+				else
+					Debug.log("Ignoring missing init()");
 			}
 			catch(e)
 			{
-				Debug.log("Ignoring missing init():",e);
+				Debug.log("Ignoring error in onload init():",e);
 			}
 			
 			return;
@@ -445,8 +455,6 @@ DesktopContent.init = function()
 
 		if(!event.data.request)
 		{
-			if(DesktopContent._pageInitCalled) return;
-			DesktopContent._pageInitCalled = true;
 			
 			Debug.log("First message from Gateway Desktop received!");
 
@@ -498,10 +506,27 @@ DesktopContent.init = function()
 			Debug.log("Gateway Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
 			Debug.log("Gateway Supervisor Application Origin = " + DesktopContent._serverOrigin);
 
-			if(init)
+			if(DesktopContent._pageInitCalled) return;
+			DesktopContent._pageInitCalled = true;
+			try
 			{
-				Debug.log("Calling page init!");
-				init(); //call pages init!
+				
+				if(onloadFunction)
+				{
+					Debug.log("Calling page body onload!");
+					onloadFunction(); //call page's init!
+				}
+				else if(init)
+				{
+					Debug.log("Calling page init!");
+					init(); //call page's init!
+				}
+				else
+					Debug.log("Ignoring missing init()");
+			}
+			catch(e)
+			{
+				Debug.log("Ignoring error in onload init():",e);
 			}
 
 			//			DesktopContent._theWindow.parent.window.postMessage(
@@ -761,8 +786,20 @@ DesktopContent.mouseMoveSubscriber = function(newHandler)
 	DesktopContent._mouseMoveSubscribers.push(newHandler);
 } //end DesktopContent.mouseMoveSubscriber()
 	
+//
+//if(document.body)
+//{
+//	var onloadFunction = document.body.onload;
+//	document.body.onload = function()
+//	{		
+//		Debug.log("Calling Desktop Content init on body load!",onloadFunction);
+//		DesktopContent.init(onloadFunction);
+//	}
+//}
+//else
+//	DesktopContent.init();
+DesktopContent.init();
 
-DesktopContent.init(); //initialize handlers
 
 
 //=====================================================================================

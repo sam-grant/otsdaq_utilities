@@ -240,6 +240,7 @@
 			var copyWidget_;
 			var cutWidget_;
 			var cutWidgetId_;
+			var _tableUploadStr;
 
 
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -489,7 +490,7 @@
 
 
 			//=====================================================================================
-			var PHOEBUS_MAP = {"textupdate": 0, "table": 1, "meter": 2, "stripchart": 3, "thermometer": 4, "siren": 5, "label": 6, "led": 7, "picture": 8, "root": 9};
+			var PHOEBUS_MAP = {"textupdate": 0, "table": 1, "meter": 2, "stripchart": 3, "thermometer": 4, "siren": 5, "label": 6, "led": 7, "picture": 8, "root": 9, "2dstoplight": 10};
 			function loadPhoebusPageReqHandler(req)
 			{
 				Debug.log("loadPhoebusPageReqHandler() was called. Req: " + req.responseText);
@@ -1789,7 +1790,7 @@
 				//console.log("drawWidget() id=",id,
 				//		" type=",type);
 
-				var OUTLINE_OFFSET = 15;
+				var OUTLINE_OFFSET = 5;
 				
 				var containerDiv;
 				var widgetCover;
@@ -1878,7 +1879,7 @@
 					containerDiv.className = "widgetContainerDiv";
 					containerDiv.id = "widget-" + id + "-container";
 					containerDiv.style["background-color"] = "rgba(0,0,0,0.2)";
-					containerDiv.style.zIndex = "5";
+					containerDiv.style.zIndex = Object.keys(page_.widgets).length;
 
 					widgetCover = document.createElement("div");
 					widgetCover.className = "widgetCover";
@@ -2842,6 +2843,16 @@
 							if(value == 'undefined')
 								actionRequired = true;
 
+							if(parameter == "upload file")
+							{
+								var tdButton = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0];
+								tdButton.setAttribute("type", "button");
+								tdButton.className = "";
+								tdButton.style.width = "100%";
+								tdButton.style.height = "50%";
+								tdButton.onmouseup = function (){popUpUploadCSVTableForm();};
+							}
+
 							page_.widgets[menu_.getAttribute("widgetID")].attributes[parameter] = value;
 						}
 					}
@@ -2890,13 +2901,27 @@
 				var dummyts = document.createElement("td");
 				dummyts.className = "widgetPopupTable";
 				var keyField = document.createElement("input");
-				keyField.setAttribute("type", "text")
-				keyField.className = "editableInput";
-				keyField.style.color = "black";
-				keyField.setAttribute("list", list);
+
+				if(keyParam == "upload file")
+				{
+					keyField.setAttribute("type", "button")
+					keyField.className = "";
+					keyField.style.width = "100%";
+					keyField.style.height = "50%";
+					keyField.onmouseup = function (){popUpUploadCSVTableForm();};
+				}
+				else
+				{
+					keyField.setAttribute("type", "text")
+					keyField.className = "editableInput";
+					keyField.style.color = "black";
+					keyField.setAttribute("list", list);
+				}
+
 				keyField.value = keyParam;
 				keyField.onchange = function(){checkIfMoreRowsNeeded(this); };
 				dummyts.appendChild(keyField);
+
 				var dummyts2 = document.createElement("td");
 				dummyts2.className = "widgetPopupTable";
 				var valueField = document.createElement("input");
@@ -2953,6 +2978,163 @@
 					elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display = "table-row";
 				}
 			} //end showeditWidgetAttributesPopupBody()
+
+
+			//=====================================================================================
+			function popUpUploadCSVTableForm() 
+			{
+				document.getElementById("popupLoadFile").style.display = "block";
+				document.getElementById("popupLoadFile").style["z-index"] = 101;
+				Debug.log("Slow Controls Dashboard: popUpUploadCSVTableForm");
+				_tableUploadStr = ""; //clear previous upload
+
+				var str = "";
+
+				var el = document.getElementById("popUpDialog");
+				if (!el)
+				{
+					el = document.createElement("div");
+					el.setAttribute("id", "popUpDialog");
+				}
+
+				str += "<div id='popUpDialog-div'>";
+
+				str += "<center>Please choose a CSV formatted data file (i.e. commas for columns, and new lines for rows) " +
+					"to upload, and choose whether you want to replace the current " +
+					"data or prepend/append the new data:</center><br><br>";
+
+				str += "<center>";
+
+				str += "<input type='file' id='popUpDialog-fileUpload' " +
+					"accept='.csv' enctype='multipart/form-data' />";
+				str += "<br><br>";
+
+				// done with special handling
+				// continue with pop-up prompt
+				str += "</center></div><br><br>"; //close main popup div
+
+				var onmouseupJS = "";
+
+				onmouseupJS += "uploadTableFromCSV(); closeUploadFilePopup();";
+
+				str += "<center><input id='popUpDialog-submitButton' disabled type='button' onmouseup='" +
+					onmouseupJS + "' " +
+					"value='Upload File' title='" +
+					"Upload the chosen csv file to the current widget lights table." +
+					"'/>";
+				str += "<input id='popUpDialog-closeButton' type='button' onmouseup='" +
+					"closeUploadFilePopup()' value='Cancel'/></center>";
+
+				el.innerHTML = str;
+				document.getElementById("popupLoadFile").appendChild(el); //add element to editWidgetAttributesPopup-file div
+
+				document.getElementById('popUpDialog-fileUpload').addEventListener(
+					'change', function (evt)
+					{
+						var files = evt.target.files;
+						var file = files[0];
+						var reader = new FileReader();
+						reader.onload = 
+							function ()
+							{
+								//store uploaded file and enable button
+								_tableUploadStr = this.result;
+								Debug.log("_tableUploadStr = " + _tableUploadStr);
+								document.getElementById('popUpDialog-submitButton').disabled = false;
+							}
+						reader.readAsText(file);
+					}, false);
+
+			} //end popUpUploadCSVTableForm()
+
+
+			//=====================================================================================
+			function uploadTableFromCSV()
+			{
+				var tabledata = page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.tabledata;
+				tabledata = [];
+
+				var colDel, rowDel = '\n'; //row/record and column/field delimeters
+
+				//auto find record delimeter (finding auto-row delimiter is more complicated if there are options.. to avoid confusion with data)
+				//	take last found, which must always be correct
+				//	because last fields are forced fields (author/time) and 
+				//	do not have special characters.
+
+				for (var i = _tableUploadStr.length-1;i >= 0; --i) 
+				{
+					if (_tableUploadStr[i] == ',')
+					{
+						colDel = ',';
+						break;
+					}
+					else if (_tableUploadStr[i] == ';')
+					{
+						colDel = ';';
+						break;
+					}
+				}
+
+				//find row and col size
+				var srcRows = _tableUploadStr.length? //if no data, make no rows
+						_tableUploadStr.replace(/"([^"]+(?="))"/g, '$1').split(rowDel):[]; 
+				var src = []; //src = [r][c]
+				for (var i = 0; i < srcRows.length; ++i)
+					src.push(srcRows[i].split(colDel));			
+				console.log("src", src);
+
+				var ySize = src.length-1;
+				var xSize = src[0].length;
+
+				// make widget tabledata
+				var counter = 0;
+				for (var i = 0; i < ySize; i++)
+				{
+					for (var j = 0; j < xSize; j++)
+					{
+						//var pv = "x"+j + ",y" + i;
+						var pv = src[i][j];
+						var value = "";
+						var status = "";
+						var severity = "";
+						var time = "";
+
+						//if (pv.includes("x14y2") || pv.includes("x15y2"))
+						//	status = "HIHI";
+
+						var cell = {
+									  id:counter
+									, y:i
+									, x:j
+									, pvName:pv
+									, pvValue:value
+									, pvStatus:status
+									, pvSeverity:severity
+									, pvTime:time
+								  };
+	
+						tabledata.push(cell);
+						counter++;
+					}
+				}
+
+				// set matrix size and data to widget
+				page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow._xSize = xSize;
+				page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow._ySize = ySize;
+				page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.tabledata = tabledata;
+
+				//var pvList = {"x0y34p0c4b2s0h2r0l2":1, "x1y34p0c4b2s0h2r0l1":2, "x2y34p0c4b2s0h2r0l0":3};
+				//elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display == "table-row";
+				//createBottomPaneContent(130, 400, pvList);
+				//elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display == "none";				
+			} //end uploadTableFromCSV()
+
+
+			//=====================================================================================
+			function closeUploadFilePopup()
+			{
+				document.getElementById("popupLoadFile").style.display = "none";
+			} //end closeUploadFilePopup()
 
 
 			//=====================================================================================
@@ -3132,7 +3314,21 @@
 				var widgetContainer = document.getElementById("widget-" + id + 
 					"-container");
 				if(widgetContainer)
-					widgetContainer.style.zIndex++;
+				{
+					var size = Object.keys(page_.widgets).length;
+					widgetContainer.style.zIndex = size;
+
+					for(widget in page_.widgets)
+					{
+						if(widget != id)
+						{
+							var container = document.getElementById("widget-" + widget + 
+								"-container");
+							if(container && container.style.zIndex > 0)
+								container.style.zIndex--;
+						}
+					}
+				}
 				else
 					Debug.log("Could not find widget container to bring to Front");
 
@@ -3154,8 +3350,20 @@
 					"-container");
 				if(widgetContainer)
 				{
-					if(widgetContainer.style.zIndex>0)
-						widgetContainer.style.zIndex--;
+					widgetContainer.style.zIndex = 0;
+
+					var size = Object.keys(page_.widgets).length;
+
+					for(widget in page_.widgets)
+					{
+						if(widget != id)
+						{
+							var container = document.getElementById("widget-" + widget + 
+								"-container");
+							if(container && container.style.zIndex < size)
+								container.style.zIndex++;
+						}
+					}
 				}
 				else
 					Debug.log("Could not find widget container to Send to Back");
@@ -3185,7 +3393,22 @@
 				var widgetContainer = document.getElementById("widget-" + id + 
 					"-container");
 				if(widgetContainer)
+				{
+					var oldZindex = widgetContainer.style.zIndex;
 					widgetContainer.parentNode.removeChild(widgetContainer);
+
+					for(widget in page_.widgets)
+					{
+						var container = document.getElementById("widget-" + widget + 
+							"-container");
+
+						if(widget != id)
+						{
+							if(container && container.style.zIndex > oldZindex && container.style.zIndex > 0)
+								container.style.zIndex--;
+						}
+					}
+				}
 				else
 					Debug.log("Could not find widget container to remove");
 
@@ -3273,8 +3496,34 @@
 
 
 			//=====================================================================================
+			function resizeWidgetToFullPage()
+			{
+				if(!targetElement_)
+				{
+					Debug.log("Ignoring resizeWidgetToFullPage() with no target element");
+					return;
+				}
+				var id = targetElement_.id.split('-')[1]|0;
+
+				if(page_.widgets[id])
+				{
+					drawWidget(
+							id,
+							page_.widgets[id].type,
+							1,
+							50,
+							window.innerWidth-1,
+							window.innerHeight-51
+							);
+				}
+
+				toggleContextMenuOff();
+			} //end resizeWidgetToFullPage()
+
+
+			//=====================================================================================
 			function setEditModeWidgetTarget(target)
-			{				
+			{
 				if(targetElement_ == target) return; //already the target
 
 				//unselect previous target, and select parameter target
@@ -3299,10 +3548,11 @@
 
 					els = targetElement_.parentNode.getElementsByTagName("resizeWidgetCover");
 					if(els.length)
-						els[0].style.display = "block";					
-				}	
+						els[0].style.display = "block";
+				}
 			} //end setEditModeWidgetTarget()
-			
+
+
 			//=====================================================================================
 			function handleWidgetCoverMouseDown(e,id)
 			{
@@ -3316,7 +3566,8 @@
 				else
 					startWidgetDrag(e,id);
 			} //end handleWidgetCoverMouseDown()
-			
+
+
 			//=====================================================================================
 			function startWidgetDrag(e,id)
 			{
@@ -3819,6 +4070,13 @@
 						<li class="menu__item">
 						  <a href="#" class="menu__link" 
 						  	onmousedown="event.stopPropagation();"
+						  	onmouseup="event.stopPropagation(); resizeWidgetToFullPage()">
+							<i class=""></i> Resize Widget to full Page
+						  </a>
+						</li>
+						<li class="menu__item">
+						  <a href="#" class="menu__link" 
+						  	onmousedown="event.stopPropagation();"
 						  	onmouseup="event.stopPropagation(); deleteWidget()">
 							<i class=""></i> Delete Widget
 						  </a>
@@ -3881,6 +4139,9 @@
 				</div>
 			  </div>
 			</div>
+
+			<div class='popup' id='popupLoadFile'></div>
+
 			<div class="editWidgetAttributesPopup-container" id="editWidgetAttributesPopup-container">
 			  <div class="editWidgetAttributesPopup-header" id="editWidgetAttributesPopup-header" ></div>
 			  <div class="editWidgetAttributesPopup-menu"   id="editWidgetAttributesPopup-menu">

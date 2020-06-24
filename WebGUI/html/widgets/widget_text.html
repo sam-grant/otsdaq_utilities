@@ -65,6 +65,7 @@
 					if (value == null)
 					{
 						value = document.createElement('div');
+						value.style.fontSize = parameters_["fontSize"];
 						value.id = pv;
 						value.title = pv;
 
@@ -78,8 +79,6 @@
 							pvValue.style.border = "1px solid #000";
 						else
 							pvValue.style.border = "";
-
-						value.style.fontSize = parameters_["fontSize"];
 
 						var units = pv_settings_[pv] != undefined ? pv_settings_[pv].Units : "";
 						pvValue.innerHTML = "N/A " + units;
