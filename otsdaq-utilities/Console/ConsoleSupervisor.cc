@@ -513,7 +513,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 
 		} //end app get TRACE loop
 		__SUP_COUT__ << "TRACE List received: \n" << traceList << __E__;
-		xmlOut.addTextElementToData("traceLis", traceList);
+		xmlOut.addTextElementToData("traceList", traceList);
 	}
 	else if(requestType == "SetTraceLevels")
 	{

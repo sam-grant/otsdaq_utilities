@@ -709,7 +709,9 @@ DesktopContent.handleFocus = function(e)
 
 	if(DesktopContent._theWindowId < 0) return; //only happen if not part of desktop, or before init
 
-	Debug.log("Focus DesktopContent._isFocused " + DesktopContent._isFocused);	
+	Debug.log("Focus DesktopContent._isFocused ",DesktopContent._isFocused,
+			DesktopContent._theWindowId);	
+	
 	DesktopContent._isFocused = true;
 	
 	//make this window the desktop foreground window
@@ -730,7 +732,7 @@ DesktopContent.handleBlur = function(e)
 }
 DesktopContent.handleScroll = function(e) 
 {		
-	//Debug.log("Scroll DesktopContent._isFocused" + DesktopContent._isFocused);
+	//Debug.log("Scroll DesktopContent.handleScroll", DesktopContent._isFocused);
 	window.focus();	
 }
 DesktopContent.mouseMove = function(mouseEvent,onlyDesktopFunction) 

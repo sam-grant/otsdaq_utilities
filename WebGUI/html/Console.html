@@ -33,7 +33,7 @@
 			}
 			
 			
-			#userLink, #clearConsoleLink, #downloadIconDiv {
+			#userLink, #clearConsoleLink, #downloadIconDiv, #pauseControlsLink {
 				float: right;
 				margin: 2px 2px 2px 20px;
 			}
@@ -144,7 +144,7 @@
 			#usersContainer {
 				position: absolute;
 			
-				padding: 15px 2px 15px 15px;
+				padding: 15px 2px 8px 8px;
 				text-align: left;
 				color: #4D2600;
 			
@@ -193,28 +193,38 @@
 			
 
 			/* ***************** CONTROLS AREA ******************************************/
-			#controlsContainer {
-				position: absolute;
+			#controlsContainer, #advancedContainer {
+				position: 			absolute;
 			
-				padding: 15px 2px 15px 15px;
-				text-align: left;
-				color: #4D2600;
+				padding: 			8px 2px 8px 8px;
+				text-align: 		left;
+				color: 				#4D2600;
 			
 				box-shadow: 		inset rgba(255,254,255,0.6) 0 0.3em .3em,
 						            inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
 						            rgba(200, 200, 200,0.6) 0 .1em 3px,
 						            rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
 						            rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
-				border-radius: 3px;	
+				border-radius: 		3px;	
 				
 			}
 		
-			#PauseControlsLink {
-				margin-left: 40px;
+			#advancedControlsLink {
+				margin-left: 		25px;
 			}
 			
 			.countsTable {
-				font-size: 12px;
+				font-size: 			12px;
+			}
+			
+			#advancedContainer {
+				display:			none;
+				z-index:			1000;
+				padding: 			15px 2px 15px 15px;
+			}
+			
+			#advancedArea {
+				overflow:			auto;
 			}
 		</style>
 				
@@ -258,9 +268,10 @@
 				//togglePauseControls()
 				//clearConsoleMessages()
 				//downloadMessages()
+				//showAdvancedControls()
 			
 			var _linkEl, _consoleEl, _historyEl, _historyContainerEl, _usersEl, _usersContainerEl;
-			var _controlsContainerEl, _controlsEl;
+			var _controlsContainerEl, _controlsEl, _advancedContainerEl, _advancedEl;
 			
 			var _MARGIN = 10;
 			var _INPUT_HEIGHT = 60;
@@ -353,6 +364,11 @@
 				_linkEl = document.getElementById('userLinkText');
 				_controlsContainerEl = document.getElementById('controlsContainer');
 				_controlsEl = document.getElementById('controlsArea');
+				
+				_advancedContainerEl = document.getElementById('advancedContainer');
+				_advancedContainerEl.style.backgroundColor = DesktopContent.getDefaultWindowColor();
+				_advancedEl = document.getElementById('advancedArea');
+				
 		    	_compactViewCheckbox = document.getElementById('compactView');
 		    	_compactViewCheckbox.onmouseup = toggleCompactView;
 		    	_noWrapCheckbox = document.getElementById('noWrapCheckbox');
@@ -396,7 +412,8 @@
 			//toggleNoWrap ~
 			// 	toggle no wrap on/off. Use e to determine if function call came from checkbox or link	
 			//	Note: when from checkbox, event gives stale value.
-			function toggleNoWrap(e, setVal, doNotSave) {	
+			function toggleNoWrap(e, setVal, doNotSave) 
+			{	
 				
 				if(_noWrapCheckbox.disabled) return; //do nothing if disabled
 
@@ -593,6 +610,11 @@
 			    _historyContainerEl.style.top = _MARGIN + _OFFSET_Y + "px";
 			    _historyEl.style.width = (w - _MARGIN - _MARGIN - 2 - 2 - 17) + "px";
 			    _historyEl.style.height = (h - _MARGIN - _MARGIN - 30 - _OFFSET_Y) + "px";
+			    
+			    _advancedContainerEl.style.left = _MARGIN + 2 + "px";
+			    _advancedContainerEl.style.top = _MARGIN + _OFFSET_Y + "px";
+			    _advancedEl.style.width = (w - _MARGIN - _MARGIN - 2 - 2 - 17) + "px";
+			    _advancedEl.style.height = (h - _MARGIN - _MARGIN - 30 - _OFFSET_Y) + "px";
 
 				if(_scrollWithNewChats)
 					_historyEl.scrollTop = _historyEl.scrollHeight;
@@ -602,7 +624,8 @@
 			//convertForClient ~
 			//	replace html/xhtml reserved characters with equivalent for client display.
 			//	reserved: ", ', &, <, >, newline, space
-			function convertForClient(str) {
+			function convertForClient(str) 
+			{
 				
 				//tab &#009; %09 
 					//is 8 spaces on linux console - do the same
@@ -630,23 +653,25 @@
 			         .replace(/%0A%0D/g, "<br>")			//newline
 			         .replace(/%20%20/g, "&nbsp;&nbsp;");	//space
 			    
-			 }
+			 } //end convertForClient()
 			
 			//=====================================================================================
 			//toggleSideBar ~
 			// 	send chat to server
-			function toggleSideBar() {	
+			function toggleSideBar() 
+			{	
 			    redrawConsoleWindow(!_displaySidePane);
 			    Debug.log("Chat toggleSideBar now is " + _displaySidePane);	
 				saveUserPreferences(undefined,_displaySidePane);
-			}
+			} //end toggleSideBar()
 			
 			//=====================================================================================
 			//getConsoleUpdates ~
 			// 	get chat updates from server
 			//	if _lastUpdateIndex doesn't match server, server will give all new info since
 			//	initially _lastUpdateIndex = 0
-			function getConsoleUpdates() {		
+			function getConsoleUpdates()
+			{		
 				
 			    if(_consoleUpdateTimer) //only allow one timer for updates at a time
 			    	clearTimeout(_consoleUpdateTimer);	
@@ -658,13 +683,14 @@
 										0, //progressHandler
 										true /*callHandlerOnErr*/,
 										true /*doNotShowLoadingOverlay*/);
-			}			
+			} //end getConsoleUpdates()		
 			
 			//=====================================================================================
 			//handleRefreshConsole ~
 			// 	handle server response, even on error
 			var _localRefreshTimeout = _REFRESH_INTERVAL;
-			function handleRefreshConsole(req) {
+			function handleRefreshConsole(req) 
+			{
 				
 				if(!req) 
 				{
@@ -726,7 +752,7 @@
 			    document.getElementById("consoleConnectionStatus").style.display = "none"; //hide DISCONNECTED
 			    _consoleUpdateTimer = window.setTimeout(getConsoleUpdates,_localRefreshTimeout); //schedule next update	
 			    //console.log("_localRefreshTimeout",_localRefreshTimeout);
-			}
+			} //end handleRefreshConsole()
 
 			//=====================================================================================
 			//initSideBar ~
@@ -738,9 +764,12 @@
 				str += "<a id='filterControlsLink' class='consoleLink' " +
 						"href='Javascript:toggleFilterControls();' " + 
 						"title='Toggle Filter Controls' >Hide Filters</a>";
-				str += "<a id='PauseControlsLink' class='consoleLink' " +
-						"href='Javascript:togglePauseControls();' " + 
-						"title='Toggle Pause and Resume Updates' >Pause</a>";
+//				str += "<a id='PauseControlsLink' class='consoleLink' " +
+//						"href='Javascript:togglePauseControls();' " + 
+//						"title='Toggle Pause and Resume Updates' >Pause</a>";
+				str += "<a id='advancedControlsLink' class='consoleLink' " +
+						"onclick='showAdvancedControls();' " + 
+						"title='Show advanced controls' >Advanced</a>";
 
 				str += "<div id='filterContainer'>";
 				for(var f in _FIELDS_TO_OBSERVE) //create filter divs for each field's multiselect box
@@ -797,7 +826,7 @@
 					str += "</table>"			
 				}			
 				el.innerHTML = str;
-			}
+			} //end updateSideBarCounts()
 			
 			//=====================================================================================
 			//updateFilterBoxes ~
@@ -832,12 +861,13 @@
 				}
 
 				MultiSelectBox.initMySelectBoxes();	            
-			}
+			} //end updateFilterBoxes()
 
 			//=====================================================================================
 			//filterSelectionHandler ~
 			//	parameter is selected element
-			function filterSelectionHandler(el) {
+			function filterSelectionHandler(el)
+			{
 	            var splits = el.id.split('_');
 	            var i = splits[splits.length-1] | 0;
 	            var selects = MultiSelectBox.mySelects_[el.parentElement.id];
@@ -884,14 +914,17 @@
 				//add style element to HEAD tag
 				_filterStyleEl[field] = document.createElement('style');
 
-				if (_filterStyleEl[field].styleSheet) {
+				if (_filterStyleEl[field].styleSheet) 
+				{
 					_filterStyleEl[field].styleSheet.cssText = css;
-				} else {
+				} 
+				else
+				{
 					_filterStyleEl[field].appendChild(document.createTextNode(css));
 				}
 
 				document.getElementsByTagName('head')[0].appendChild(_filterStyleEl[field]);
-	        }
+	        } //end filterSelectionHandler()
 			
 			//=====================================================================================
 			//clearFilterControls ~
@@ -909,12 +942,13 @@
 					_filterStyleEl[field].parentNode.removeChild(_filterStyleEl[field]);
 					_filterStyleEl[field] = 0;
 				}
-			}
+			} //end clearFilterControls()
 			
 			//=====================================================================================
 			//updateConsoleHistory ~
 			// 	add console history from _consoleMessageArray
-			function updateConsoleHistory() {
+			function updateConsoleHistory() 
+			{
 				
 				if(!_consoleMessageArray || //if _consoleMessageArray incomplete, do nothing (should never happpen?)
 						_consoleMessageArray.length != _consoleMessageFields.length) return;
@@ -988,28 +1022,30 @@
 				
 				if(_scrollWithNewChats)
 					_historyEl.scrollTop = _historyEl.scrollHeight;
-			}
+			} //end updateConsoleHistory()
 			
 			//=====================================================================================
 			//clearConsoleMessages ~
-			function clearConsoleMessages() {
+			function clearConsoleMessages() 
+			{
 				_consoleEl.innerHTML = "";
-			}
-			
+			} //end clearConsoleMessages()			
 		
 			//=====================================================================================
 			//formatTime ~
-			function formatTime(t) {
+			function formatTime(t) 
+			{
 				var date = new Date(t * 1000);
 				var mm = date.getMinutes() < 10?"0"+date.getMinutes():date.getMinutes();
 				var ss = date.getSeconds() < 10?"0"+date.getSeconds():date.getSeconds();				
 				return date.getHours() + ":" + mm + ":" + ss;
-			}
+			} //end formatTime()
 			
 			//=====================================================================================
 			//getColorForLevel ~
 			//	generate color based on user index in user list
-			function getColorForLevel(lvl) {
+			function getColorForLevel(lvl) 
+			{
 				switch(_chosenColorScheme)
 				{
 				default:
@@ -1041,20 +1077,22 @@
 					
 					return "auto";	
 				}	
-			}
+			} //end getColorForLevel()
 
 			//=====================================================================================
 			//toggleColorScheme ~
 			//	cycle through an array of [background,foreground] schemes
-			function toggleColorScheme() {
+			function toggleColorScheme() 
+			{
 				setupColorScheme(_chosenColorScheme + 1);
 				saveUserPreferences(_chosenColorScheme);
-			}
+			} //end toggleColorScheme()
 
 			//=====================================================================================
 			//saveUserPreferences ~
 			//	save user preferences to server
-			function saveUserPreferences(colorIndex,showSideBar,noWrap,messageOnly,hideLineNumers) {
+			function saveUserPreferences(colorIndex,showSideBar,noWrap,messageOnly,hideLineNumers) 
+			{
 				
 				//take new values from inputs if given, otherwise determine current value
 				if(colorIndex === undefined)
@@ -1075,11 +1113,12 @@
 														"&noWrap=" + (noWrap?1:0) +
 														"&messageOnly=" + (messageOnly?1:0) +
 														"&hideLineNumers=" + (hideLineNumers?1:0));
-			}
+			} //end saveUserPreferences()
 					
 			//=====================================================================================
 			//handleLoadUserPreferences(req) ~
-			function handleLoadUserPreferences(req) {
+			function handleLoadUserPreferences(req) 
+			{
 								
 				Debug.log("handleLoadUserPreferences");
 				if(!DesktopContent.getXMLValue(req,"colorIndex") || 
@@ -1094,7 +1133,7 @@
 				toggleNoWrap(0,(DesktopContent.getXMLValue(req,"noWrap")|0)?true:false);
 				toggleCompactView(0,(DesktopContent.getXMLValue(req,"messageOnly")|0)?true:false);
 				toggleHideLineNumber(0,(DesktopContent.getXMLValue(req,"hideLineNumers")|0)?true:false);
-			}
+			} //end handleLoadUserPreferences()
 			
 			//=====================================================================================
 			//setupColorScheme(i) ~
@@ -1105,7 +1144,7 @@
 
 			    _historyContainerEl.style.backgroundColor = _colorSchemes[_chosenColorScheme][0];
 			    _historyContainerEl.style.color = _colorSchemes[_chosenColorScheme][1];				
-			}
+			} //end setupColorScheme()
 			
 			//=====================================================================================
 			//toggleFilterControls ~
@@ -1127,21 +1166,11 @@
 			//togglePauseControls ~
 			function togglePauseControls() 
 			{
-//				pause = true;
-//				DesktopContent.XMLHttpRequest(
-//						"Request?RequestType=GetTraceLevels",
-//						"",
-//						function(req)
-//						{
-//					Debug.log("GetTraceLevels req",req);
-//						});
-//				return;
-
 				var pause = _consoleUpdateTimer?true:false;
 				Debug.log("Need to pause: " + pause);
+				clearTimeout(_consoleUpdateTimer);
 				if(pause)				
 				{
-					clearTimeout(_consoleUpdateTimer);
 					_consoleUpdateTimer = 0;
 				}
 				else
@@ -1154,29 +1183,33 @@
 			//=====================================================================================
 			//handleUserScroll ~
 			//	identify when user wants to keep up with live chats
-			function handleUserScroll(e) {							    
+			function handleUserScroll(e) 
+			{							    
 				if(_userMouseInput) //only mess with scroll if user did something with mouse recently
-					_scrollWithNewChats = (_historyEl.scrollTop >=_historyEl.scrollHeight - _historyEl.offsetHeight - 2);	
-
-				DesktopContent.handleScroll(e);
-			}
+				{
+					_scrollWithNewChats = (_historyEl.scrollTop >=_historyEl.scrollHeight - _historyEl.offsetHeight - 2);
+					DesktopContent.handleScroll(e);
+				}
+			} //end handleUserScroll()
 			
 			//=====================================================================================
 			//handleUserInputScroll ~
 			//	identify when user used mouse and wants to keep up with live chats
-			function handleUserInputScroll(mouseEvent) {
+			function handleUserInputScroll(mouseEvent) 
+			{
 				_userMouseInput = true;
 				
 				DesktopContent.handleScroll(mouseEvent);
-			}
+			} //end handleUserInputScroll()
 
 			//=====================================================================================
 			//handleMouseMoveScroll ~
 			//	identify when user released the mouse, to be considerd by scroll handler
-			function handleMouseMoveScroll(mouseEvent) {
+			function handleMouseMoveScroll(mouseEvent) 
+			{
 				if(_userMouseInput && mouseEvent.which == 0) //mouse button released
 					_userMouseInput = false;
-			}
+			} //end handleMouseMoveScroll()
 			
 			//=====================================================================================
 			function downloadMessages() 
@@ -1202,8 +1235,98 @@
 
 				link.parentNode.removeChild(link);
 				
-			} //end Debug.downloadMessages 
-			
+			} //end downloadMessages()
+
+			//=====================================================================================
+			function showAdvancedControls() 
+			{	
+				if(1) //while debugging
+				{
+					pause = true;
+					clearTimeout(_consoleUpdateTimer);
+					_consoleUpdateTimer = 0;
+				}
+				Debug.log("showAdvancedControls()");
+				
+				_advancedContainerEl.style.display = "block";
+				
+				DesktopContent.XMLHttpRequest(
+						"Request?RequestType=GetTraceLevels",
+						"",
+						function(req)
+						{
+					Debug.log("GetTraceLevels req",req);
+					
+					//Error 0
+					//Warning 1
+					//Info   2
+					//Debug 3
+					//Trace 4
+					//5.. 63 whatever you want
+					
+					/*
+					 * Notes: 
+					 * time delta is useful (maybe colorizing by difference)
+					 *  time delta should ignore messages taht were filtered
+					 *  
+					 *  tshow dump should have delta option
+					 *  and color option of pid and severity
+					 */
+					 
+					
+					//Trigger 
+					/*
+					 * https://cdcvs.fnal.gov/redmine/projects/trace/wiki/TRACE_Users_Guide#Using-Trigger-Mode
+					 * 
+					 * has 3 fields trigIdxCnt, triggered, trigActivePost
+					 * 
+					 * 	trigIdxCnt shows which message cause the trigger..
+					 * 	triggered is 1 if has been triggered
+					 * 	trigActivePost is the number of messages to keep after trigger
+					 * 	
+					 * Can not turn off slow level 0
+					 * 
+					 * Triggering stops the memory after arming and count of post messages.
+					 * 
+					 * Memory mode is tshow
+					 *   tshow | grep ' ' | tdelta
+					 * 
+					 * COUT uses slow
+					 * add script to otsdaq on configure start to reset trace memory and at end keep tshow &> file.tosave
+					 * 
+					 * TRACE is the label that is a "global" mast for triggering
+					 * 
+					 * _TRACE_ is overflow label
+					 */
+					
+					var str = "";
+					var traceList = DesktopContent.getXMLValue(req,"traceList");
+					
+					var hostTraceArr = traceList.split(';');
+					for(var i=0;i<hostTraceArr.length;++i)
+					{
+						var fieldTraceArr = hostTraceArr[i].split(',');
+						if(fieldTraceArr.length < 5 ||
+								(fieldTraceArr.length + 3)%4 != 0)
+						{
+							Debug.log("Skipping incomplete host trace masks:",hostTraceArr[i]);
+						}
+
+						for(var j=1;j<fieldTraceArr.length;j+=4)
+						{
+							str += fieldTraceArr[j+0] + " = " + 
+									fieldTraceArr[j+1] + " " +
+									fieldTraceArr[j+2] + " " +
+									fieldTraceArr[j+3] + "<br>"; 
+						}
+					}
+					
+					_advancedEl.innerHTML = str;
+				
+					
+					
+						}); //end get trace levels request
+			} //end showAdvancedControls()
 		</script>
 		
 	</head>
@@ -1232,6 +1355,10 @@
 
 		<div id='clearConsoleLink'>
 			<a onclick='clearConsoleMessages();' title='Clear Console Messages' class='consoleLink' id='userLinkText'>Clear Console</a>		 
+		</div>
+		
+		<div id='pauseControlsLink'>
+			<a onclick='togglePauseControls();' title='Pause and Resume getting new messages.' class='consoleLink' id='userLinkText'>Pause</a>		 
 		</div>
 		
 						
@@ -1277,6 +1404,12 @@
 						</div>	
 				</div>	
 			</div>
+		</div>
+
+		<div id='advancedContainer'>
+			<div id='advancedArea'>
+				Hello
+			</div>	
 		</div>
 			
 	</body>
