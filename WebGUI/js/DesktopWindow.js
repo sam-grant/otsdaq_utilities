@@ -370,7 +370,7 @@ else {
 		else //chrome
 		{
 			tmpEl.innerHTML = 
-					"<div style='font-size:16px; margin-left:1px; font-weight: 400; color:inherit;' "+
+					"<div style='font-size:21px; margin: -2px 0 0 1px; color:inherit;' "+
 					"title='Click to refresh onl this window'>↻</div>";         	
 			//_fullScreenRefreshBtn.style.height = "16px";
 			//_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";

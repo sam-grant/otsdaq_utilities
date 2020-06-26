@@ -237,12 +237,27 @@
 			    font-size:			14px;
 			    cursor:				pointer;
 			}
-			
+
 			#advancedControlsTable {
+				overflow-x:			auto;
+				overflow-y:			hidden;
+				width:				100%;
 				height:				calc(100% - 10px);
-				overflow:			auto;
+				
 				background-color: 	rgba(0,0,0,0.1);
 				border: 			1px solid rgba(0,0,0,0.2);
+			}
+			#advancedControlsTableHeader {
+				width:				fit-content;
+			}
+			#advancedControlsTableRows {
+				overflow-x:			hidden;
+				overflow-y:			auto;
+				width:				fit-content;
+				height:				calc(100% - 10px);
+			}
+			#advancedControlsTableRows td {
+				white-space:		nowrap;
 			}
 		</style>
 				
@@ -254,7 +269,35 @@
 		<script src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
 		<script>		
-			
+		
+			//=====================================================================================
+			//htmlOpen ~~		
+			//	tab name and attribute/value map object
+			function htmlOpen(tag,attObj,innerHTML,doCloseTag)
+			{
+				var str = "";
+				var attKeys = Object.keys(attObj); 
+				str += "<" + tag + " ";
+				for(var i=0;i<attKeys.length;++i)
+					if(attKeys[i] == "selected") str += (attObj[attKeys[i]]|0)?" selected ":""; //no value
+					else if(attKeys[i] == "checked") str += (attObj[attKeys[i]]|0)?" checked ":""; //no value
+					else if(attKeys[i] == "") continue; //skip empty key
+					else
+						str += " " + attKeys[i] + "='" +
+						attObj[attKeys[i]] + "' ";
+				str += ">";
+				if(innerHTML) str += innerHTML;
+				if(doCloseTag)
+					str += "</" + tag + ">";
+				return str;
+			} // end htmlOpen()
+	
+			//=====================================================================================
+			//htmlClearDiv ~~		
+			function htmlClearDiv()
+			{
+				return "<div id='clearDiv'></div>";
+			} //end htmlClearDiv()
 			
 			//functions:		
 				//init()	
@@ -1398,7 +1441,13 @@
 
 				str += "<div id='advancedControlsCloseButton' onclick='closeAdvancedControls()'>X</div>";
 				
+				
 				str += "<div id='advancedControlsMenu'>";
+				str += htmlOpen("img",
+						{
+							"src" : 	"/WebPath/images/windowContentImages/magnifying-glass.png",
+							"style": 	"margin: -7px 0 -10px 0; width: 30px;",
+						});
 				str += "<input type='text' id='ac_searchBox' />";
 				
 				str += " View: ";
@@ -1411,12 +1460,20 @@
 						">" + options[i] + "</option>";
 				
 				str += "</select>";
-						
-				str += "</div>";
 				
-				str += "<div id='advancedControlsTable'>";
 				
-				str += "</div>";
+				
+				str += "</div>"; //end advancedControlsMenu tag
+				
+
+				str += "<div id='advancedControlsTable'>"; //scroll headers horizontally
+				str += "<div id='advancedControlsTableHeader'>"; //scroll rows vertically
+				
+				str += "</div>"; //end advancedControlsTable tag
+				str += "<div id='advancedControlsTableRows'>"; //scroll rows vertically
+				
+				str += "</div>"; //end advancedControlsTable tag
+				str += "</div>"
 				
 				_advancedEl.innerHTML = str;
 				
@@ -1432,29 +1489,64 @@
 			{	
 				Debug.log("applyAdvancedControlsFilter()");
 			    
+				var COL_NAMES = ["Label","Severity","FullMask","HostPresence"];
+				var COL_DISPLAY_NAMES = ["Label","Severity","Full Mask","Host Presence"];
+				
 				var str = "";
 				str += "<table>";
+				var isFirst = true;
 				for(var label in _traceLabelPresence)
 				{
 					str += "<tr>";
-					str += "<td>";
-					str += label;
-					str += "</td>";
-					str += "<td>";
-					
-					if(_tracePage == 0) //slow
+
+					for(var i=0;i<COL_NAMES.length;++i)
 					{
-						str += 
-								_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S[0] +
-								"-" + 
-								_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S[1];
+						str += "<td" + (isFirst?(" id='ac_first" + 
+								COL_NAMES[i] + "'"):"") + ">";
+								
+						if(i == 0)
+							str += label;
+						else if(i == 1)
+							str += _traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S[1] &
+								0xF;
+						else if(i == 2)
+							str += 
+									_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S[0] +
+									"-" + 
+									_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S[1];
+						else if(i == 3)
+							str += "host";
+						else
+						{
+							Debug.err("Impossible TRACE Column error! Notify admins.");
+							return;
+						}
+						str += "</td>";
 					}
-					str += "</td>";
-					str += "</tr>";					
+					str += "</tr>";			
+					isFirst = false;
 				}
 				str += "</table>";
 				
-				document.getElementById("advancedControlsTable").innerHTML = str;
+				document.getElementById("advancedControlsTableRows").innerHTML = str;
+				
+				str = "";
+				str += "<table>";
+				str += "<tr>";
+				//now get width of columns and apply to header table
+				for(var i=0;i<COL_NAMES.length;++i)
+				{
+					var el = document.getElementById("ac_first" + COL_NAMES[i]);
+					Debug.log("First row-col width ",COL_NAMES[i],
+							el.offsetWidth);
+					//match width of column to fake like same table
+					str += "<th style='width:" + el.offsetWidth + "px;'>";
+					str += COL_DISPLAY_NAMES[i];
+					str += "</th>";
+				}
+				str += "</tr>";		
+				str += "</table>";
+				document.getElementById("advancedControlsTableHeader").innerHTML = str;
 
 			} //end applyAdvancedControlsFilter()
 			
