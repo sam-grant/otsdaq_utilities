@@ -485,7 +485,7 @@ else {
             }      
             
 		   	_refreshTitle();
-        }        
+        } //end updateWindows()        
 
       	//=====================================================================================
         this.redrawFullScreenButton = function() 
@@ -495,7 +495,7 @@ else {
         					Desktop.desktop.getForeWindow().isMaximized())? 
 									"Exit Full Screen":"Full Screen") + "</a>"; 
 
-        }
+        } //end redrawFullScreenButton()
 
       	//=====================================================================================
         this.redrawRefreshButton = function() 

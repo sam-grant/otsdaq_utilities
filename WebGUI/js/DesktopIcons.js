@@ -70,7 +70,7 @@ else {
 		var _openFolderPath = "";
 		var _openFolderElement;
 		
-		var _iconNameToPathMap = {/* "name": [path,unique] */}; //used to open icons programatically
+		var _iconNameToPathMap = undefined; // {/* "name": [path,unique] */} ...used to open icons programatically
 		
 		
 		//------------------------------------------------------------------
@@ -104,7 +104,7 @@ else {
       	//=====================================================================================
       	// this.resetWithPermissions ~~      	
       	this.resetWithPermissions = function(permissions, keepSamePermissions) 
-		{
+		{      		
       		Debug.log("Desktop resetWithPermissions " + permissions +
       				", " + keepSamePermissions,Debug.LOW_PRIORITY);
 
@@ -114,6 +114,7 @@ else {
       			_permissions = permissions;
       		////////////
 
+      		Desktop.desktop.icons.iconNameToPathMap = undefined; //undefined as indication that icons are not setup yet
 
       		if(!Desktop.isWizardMode()) 
       		{ //This is satisfied for  Digest Access Authorization and No Security on OTS
