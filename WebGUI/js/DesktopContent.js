@@ -731,8 +731,9 @@ DesktopContent.handleBlur = function(e)
 	DesktopContent._isFocused = false;
 }
 DesktopContent.handleScroll = function(e) 
-{		
-	//Debug.log("Scroll DesktopContent.handleScroll", DesktopContent._isFocused);
+{
+    
+    //console.log("Scroll DesktopContent.handleScroll", DesktopContent._isFocused, DesktopContent._theWindowId);
 	window.focus();	
 }
 DesktopContent.mouseMove = function(mouseEvent,onlyDesktopFunction) 
