@@ -104,51 +104,44 @@
 					var tr = document.createElement('tr');
 					tr.id = "tr" + row;
 
-					for(var cell = 1; cell <= _xSize; cell++)
+					for (var cell = 1; cell <= _xSize; cell++)
 					{
-						var td = document.createElement('td');
-						var center = document.createElement('center');
-						var a = document.createElement('a');
-						td.id = "td" + row + "-" + cell;
-						center.id = "center" + row + "-" + cell;
-						a.id = "a" + row + "-" + cell;
-						tds[i] = td;
+						i= (row - 1)*_xSize + (cell - 1);
+						var j = 1;
+						if (i > 0  && tabledata[i].pvName != "-1" && tabledata[i-j].pvName == tabledata[i].pvName)
+						{
+							//while (tds[i-j]!=undefined) tds[i-j].colSpan = ++j;
+							if (tds[i-j]) tds[i-j].colSpan = ++j;
+						}
+						else
+						{
+							var td = document.createElement('td');
+							var center = document.createElement('center');
+							var a = document.createElement('a');
+							//td.id = "td" + row + "-" + cell;
+							//center.id = "center" + row + "-" + cell;
+							//a.id = "a" + row + "-" + cell;
+							tds[i] = td;
 
-						center.appendChild(a);
-						td.appendChild(center);
-						tr.appendChild(td);
-						i++;
+							center.appendChild(a);
+							td.appendChild(center);
+							tr.appendChild(td);
+
+							// fill each cell of table
+							if (tabledata[i].pvName != "-1")
+							{
+								tds[i].firstElementChild.firstElementChild.innerHTML = "+";//tabledata[i].pvName;
+								tds[i].style.backgroundColor = "rgba(0, 230, 64, 1)";
+							}
+						}
+
+						//i++;
 					}
 					table.appendChild(tr);
 				}
 				console.log("2d stop light: newPVTable() tabledata size" , i);
 
 				document.getElementById("display").appendChild(table);
-
-				// fill each cell of table
-				for (cell in tabledata)
-				{
-					if(tds[cell] != undefined)
-					{
-						if (tabledata[cell].pvName == "-1") continue;
-
-						tds[cell].firstElementChild.title = JSON.stringify(tabledata[cell]);
-						//tds[cell].firstElementChild.title = window.parent.setWidgetToolTip(tabledata[cell].pvName, tabledata[cell].pvValue, tabledata[cell].pvTime, pv_settings_);
-						tds[cell].firstElementChild.firstElementChild.innerHTML = "+";//tabledata[cell].pvName;
-
-						//var fullPathToPage = "";
-						//tds[cell].firstElementChild.firstElementChild.href = "javascript:window.parent.loadPageNewWindow(\""+fullPathToPage+"\")";
-
-						var valColor = 0;
-						if (tabledata[cell].pvValue && pv_settings_[tabledata[cell].pvName].Upper_Alarm_Limit)
-							valColor = tabledata[cell].pvValue/pv_settings_[tabledata[cell].pvName].Upper_Alarm_Limit;
-						valColor = valColor >= 0.5 ? valColor : 0.5;
-						if (tabledata[cell].pvStatus == "HIHI")
-							tds[cell].style.backgroundColor = "red";
-						else
-							tds[cell].style.backgroundColor = "rgba(0, 230, 64, " + valColor + ")";
-					}
-				}
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
@@ -158,13 +151,48 @@
 					return element.pvName == pvName;
 				});
 				console.log(cell);
-				if(cell == undefined) return;
+				if (cell == undefined) return;
 				cell.pvValue = pvValue;
 				cell.pvTime = pvTime;
 				cell.pvStatus = pvStatus;
 				cell.pvSeverity = pvSeverity;
 
-				newPVTable();
+				refreshPVTableCell(cell.id);
+			}
+
+			function refreshPVTableCell(cell)
+			{
+				if (tds[cell] != undefined)
+				{
+					//if (tabledata[cell].pvName == "-1") continue;
+					tds[cell].firstElementChild.firstElementChild.innerHTML = "+";//tabledata[cell].pvName;
+
+					//tds[cell].firstElementChild.title = JSON.stringify(tabledata[cell]);
+					if (pv_settings_[tabledata[cell].pvName])
+						tds[cell].firstElementChild.title = window.parent.setWidgetToolTip(tabledata[cell].pvName, tabledata[cell].pvValue, tabledata[cell].pvTime, pv_settings_);
+
+					var fullPathToPage = "";
+					tds[cell].firstElementChild.firstElementChild.href = "javascript:window.parent.loadPageNewWindow(\""+fullPathToPage+"\")";
+
+					var valColor = 0;
+					if (tabledata[cell].pvValue && pv_settings_[tabledata[cell].pvName].Upper_Alarm_Limit)
+						valColor = tabledata[cell].pvValue/pv_settings_[tabledata[cell].pvName].Upper_Alarm_Limit;
+					valColor = valColor >= 0.5 ? valColor : 0.5;
+					if (tabledata[cell].pvStatus == "HIHI")
+						tds[cell].style.backgroundColor = "red";
+					else if (tabledata[cell].pvStatus == "HIHI")
+						tds[cell].style.backgroundColor = "red";
+					else if (tabledata[cell].pvStatus == "HI")
+						tds[cell].style.backgroundColor = "yellow";
+					else if (tabledata[cell].pvStatus == "LO")
+						tds[cell].style.backgroundColor = "blue";
+					else if (tabledata[cell].pvStatus == "LOLO")
+						tds[cell].style.backgroundColor = "purple";					
+					else if (!window.parent.checkPVTime(window.frameElement.id, tabledata[cell].pvName, tabledata[cell].pvTime))
+						tds[cell].style.backgroundColor = "grey";
+					else
+						tds[cell].style.backgroundColor = "rgba(0, 230, 64, " + valColor + ")";
+				}
 			}
 
 			window.onresize = function() {

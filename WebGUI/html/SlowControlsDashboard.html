@@ -2797,8 +2797,8 @@
 								refreshRate = -1;
 
 							page_.widgets[menu_.getAttribute("widgetID")].pvList[pv] = refreshRate;
-							addPVToWidget(pv, refreshRate, menu_.getAttribute("widgetID"));
 						}
+						page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.init();
 					}
 				}
 			} //end addPVTableToWidget()
@@ -2817,9 +2817,9 @@
 				{
 					pvName = MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordBottomMultiSelect"), i).innerText;
 					page_.widgets[menu_.getAttribute("widgetID")].pvList[pvName] = refreshRate_;
-					addPVToWidget(pvName, refreshRate_, menu_.getAttribute("widgetID"));
 					i++;
 				}
+				page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.init();
 			} //end addPVPaneToWidget()
 
 
@@ -3081,10 +3081,11 @@
 				var src = []; //src = [r][c]
 				for (var i = 0; i < srcRows.length; ++i)
 					src.push(srcRows[i].split(colDel));			
-				console.log("src", src);
+				console.log("uploadTableFromCSV(): src matrix", src);
 
 				var ySize = src.length-1;
 				var xSize = src[0].length;
+				var pvList = {};
 
 				// make widget tabledata
 				var counter = 0;
@@ -3099,9 +3100,6 @@
 						var severity = "";
 						var time = "";
 
-						//if (pv.includes("x14y2") || pv.includes("x15y2"))
-						//	status = "HIHI";
-
 						var cell = {
 									  id:counter
 									, y:i
@@ -3112,8 +3110,9 @@
 									, pvSeverity:severity
 									, pvTime:time
 								  };
-	
+
 						tabledata.push(cell);
+						if (pv != "-1") pvList[pv] = counter;
 						counter++;
 					}
 				}
@@ -3123,10 +3122,9 @@
 				page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow._ySize = ySize;
 				page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.tabledata = tabledata;
 
-				//var pvList = {"x0y34p0c4b2s0h2r0l2":1, "x1y34p0c4b2s0h2r0l1":2, "x2y34p0c4b2s0h2r0l0":3};
-				//elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display == "table-row";
-				//createBottomPaneContent(130, 400, pvList);
-				//elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display == "none";				
+				createBottomPaneContent(130, 400, pvList);
+				addPVPaneToWidget();
+				console.log("uploadTableFromCSV(): pvList", pvList);
 			} //end uploadTableFromCSV()
 
 
