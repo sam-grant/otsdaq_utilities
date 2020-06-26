@@ -196,7 +196,7 @@
 			#controlsContainer, #advancedContainer {
 				position: 			absolute;
 			
-				padding: 			8px 2px 8px 8px;
+				padding: 			13px 2px 17px 8px;
 				text-align: 		left;
 				color: 				#4D2600;
 			
@@ -221,10 +221,28 @@
 				display:			none;
 				z-index:			1000;
 				padding: 			15px 2px 15px 15px;
+				
 			}
 			
 			#advancedArea {
+				overflow:			none;
+			    font-size:			13px;
+			}
+			
+			#advancedControlsCloseButton {
+				float:				right;
+			    font-family: 		Comfortaa, serif;
+			    font-weight: 		bold;
+			    margin: 			-9px 5px 0 0;
+			    font-size:			14px;
+			    cursor:				pointer;
+			}
+			
+			#advancedControlsTable {
+				height:				calc(100% - 10px);
 				overflow:			auto;
+				background-color: 	rgba(0,0,0,0.1);
+				border: 			1px solid rgba(0,0,0,0.2);
 			}
 		</style>
 				
@@ -268,7 +286,11 @@
 				//togglePauseControls()
 				//clearConsoleMessages()
 				//downloadMessages()
+				
 				//showAdvancedControls()
+				//closeAdvancedControls()
+				//drawAdvancedControls(page)
+				//applyAdvancedControlsFilter()
 			
 			var _linkEl, _consoleEl, _historyEl, _historyContainerEl, _usersEl, _usersContainerEl;
 			var _controlsContainerEl, _controlsEl, _advancedContainerEl, _advancedEl;
@@ -340,6 +362,13 @@
 					
 			var _showFilterControls = true; //opposite will be default
 				
+			var _traceLevels = {}; //map of host: {label: {M:[X,X],S:[X,X],T:[X,X]} }
+			var _traceLabelPresence = {}; //map of label: {host:1}
+			var _traceHostSelect = {mode: 0, hosts: []};  //mode: 0 is require 1 host and set to all,
+			                  	  	  	  	  	  	  	  //mode: 1 is require all hosts and set to all,
+														  //mode: 2 is require 1 host and set to 1 host
+			var _tracePage = undefined;
+			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
@@ -1299,34 +1328,136 @@
 					 * _TRACE_ is overflow label
 					 */
 					
-					var str = "";
 					var traceList = DesktopContent.getXMLValue(req,"traceList");
+					
+					_traceLevels = {}; //clear
+					_traceLabelPresence = {}; //clear
 					
 					var hostTraceArr = traceList.split(';');
 					for(var i=0;i<hostTraceArr.length;++i)
 					{
 						var fieldTraceArr = hostTraceArr[i].split(',');
-						if(fieldTraceArr.length < 5 ||
-								(fieldTraceArr.length + 3)%4 != 0)
+						if(fieldTraceArr.length < 3 ||
+								(fieldTraceArr.length + 1)%2 != 0)
 						{
 							Debug.log("Skipping incomplete host trace masks:",hostTraceArr[i]);
+							continue;
 						}
 
+						Debug.log("Getting TRACE labels for host =",fieldTraceArr[0]);
+						_traceLevels[fieldTraceArr[0]] = {};
 						for(var j=1;j<fieldTraceArr.length;j+=4)
 						{
-							str += fieldTraceArr[j+0] + " = " + 
-									fieldTraceArr[j+1] + " " +
-									fieldTraceArr[j+2] + " " +
-									fieldTraceArr[j+3] + "<br>"; 
+							var maskVals = fieldTraceArr[j+1].split(':');
+							_traceLevels[fieldTraceArr[0]][fieldTraceArr[j+0]] = {
+								"M" : [maskVals[1],maskVals[2]],
+								"S" : [maskVals[4],maskVals[5]],
+								"T" : [maskVals[6],maskVals[7]],
+							};
+							
+							//start object if not present
+							if(!_traceLabelPresence[fieldTraceArr[j+0]])
+								_traceLabelPresence[fieldTraceArr[j+0]] = {};
+							
+							_traceLabelPresence[fieldTraceArr[j+0]][fieldTraceArr[0]] = 1; //include this host
 						}
 					}
-					
-					_advancedEl.innerHTML = str;
+					Debug.log("Trace host map object",_traceLevels);
+					Debug.log("Trace label map object",_traceLabelPresence);
 				
-					
+					drawAdvancedControls(0 /*slow*/);
 					
 						}); //end get trace levels request
 			} //end showAdvancedControls()
+
+			//=====================================================================================
+			//drawAdvancedControls ~
+			//	page is select index 
+			function closeAdvancedControls() 
+			{
+				Debug.log("closeAdvancedControls()");
+
+				_advancedContainerEl.style.display = "none";
+			} //end closeAdvancedControls()
+
+			//=====================================================================================
+			//drawAdvancedControls ~
+			//	page is select index 
+			function drawAdvancedControls(page) 
+			{					
+				Debug.log("drawAdvancedControls()");	    
+				var str = "";
+				
+				//Page is menu at top				
+				//	Search box | View: [Slow/Cout]
+				//	all none  [Get] [Set]  000000000 w slider
+				//  ----------------------------
+				//	table draw to select multiples or click
+				//		shift to add or single subtract
+
+				str += "<div id='advancedControlsCloseButton' onclick='closeAdvancedControls()'>X</div>";
+				
+				str += "<div id='advancedControlsMenu'>";
+				str += "<input type='text' id='ac_searchBox' />";
+				
+				str += " View: ";
+				str += "<select id='ac_viewSelect'>";
+				
+				var options = ["Slow/Cout","Fast/Memory","Triggering","Host Select"];
+				for(var i=0;i<options.length;++i)
+					str += "<option " + 
+						(((!i && !page) || (page == i))?"selected":"") +
+						">" + options[i] + "</option>";
+				
+				str += "</select>";
+						
+				str += "</div>";
+				
+				str += "<div id='advancedControlsTable'>";
+				
+				str += "</div>";
+				
+				_advancedEl.innerHTML = str;
+				
+				_tracePage = page|0;
+				
+				applyAdvancedControlsFilter();
+			} //end drawAdvancedControls()
+			
+
+			//=====================================================================================
+			//applyAdvancedControlsFilter ~
+			function applyAdvancedControlsFilter() 
+			{	
+				Debug.log("applyAdvancedControlsFilter()");
+			    
+				var str = "";
+				str += "<table>";
+				for(var label in _traceLabelPresence)
+				{
+					str += "<tr>";
+					str += "<td>";
+					str += label;
+					str += "</td>";
+					str += "<td>";
+					
+					if(_tracePage == 0) //slow
+					{
+						str += 
+								_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S[0] +
+								"-" + 
+								_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S[1];
+					}
+					str += "</td>";
+					str += "</tr>";					
+				}
+				str += "</table>";
+				
+				document.getElementById("advancedControlsTable").innerHTML = str;
+
+			} //end applyAdvancedControlsFilter()
+			
+			
 		</script>
 		
 	</head>

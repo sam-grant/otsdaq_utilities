@@ -348,7 +348,17 @@ else {
 		tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
 		var tmpEl = document.createElement("div");
 		tmpEl.setAttribute("class", "DesktopWindowButtonGraphicRefresh");
-		if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
+		if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX &&
+				Debug.OS_TYPE == Debug.OS_TYPE_LINUX) //Linux firefox
+		{
+			//firefox linux shows circle-arrow character slightly bigger than other firefox
+			tmpEl.innerHTML = 
+					"<div style='font-size:21px; margin: -1px 0 0 -3px; color:inherit;'  "+
+					"title='Click to refresh onl this window'>↻</div>";        	
+			//_fullScreenRefreshBtn.style.height = "16px";
+			//_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
+		}
+		else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
 		{
 			//firefox shows circle-arrow character smaller
 			tmpEl.innerHTML = 

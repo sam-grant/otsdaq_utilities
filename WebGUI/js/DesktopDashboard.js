@@ -500,7 +500,16 @@ else {
       	//=====================================================================================
         this.redrawRefreshButton = function() 
         {
-        	if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
+        	if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX &&
+        			Debug.OS_TYPE == Debug.OS_TYPE_LINUX) //Linux firefox
+			{
+				//firefox linux shows circle-arrow character slightly bigger than other firefox
+				_fullScreenRefreshBtn.innerHTML = 
+						"<div style='font-size:30px;margin-top:-9px;' title='Click to reload the desktop and all windows'>↻</div>";        	
+				_fullScreenRefreshBtn.style.height = "16px";
+				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
+			}
+        	else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
         	{
         		//firefox shows circle-arrow character smaller
 				_fullScreenRefreshBtn.innerHTML = 
