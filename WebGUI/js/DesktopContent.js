@@ -14,8 +14,8 @@
 //
 //		...anywhere inside the <head></head> tag of a window content html page
 //	 2. for proper functionality certain handlers are used:
-//   		cannot overwrite handlers for window: onfocus, onscroll, onblur, onmousemove
-//			(if you must overwrite, try to call the DesktopContent handlers from your handlers)
+//   		cannot override handlers for window: onfocus, onscroll, onblur, onmousemove
+//			(try applying handlers to your body instead, or if you must override, try to call the DesktopContent handlers from your handlers)
 //
 //	 3. When all functionality is available init() be called in your page, if defined.
 //
