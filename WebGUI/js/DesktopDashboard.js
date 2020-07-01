@@ -485,7 +485,7 @@ else {
             }      
             
 		   	_refreshTitle();
-        }        
+        } //end updateWindows()        
 
       	//=====================================================================================
         this.redrawFullScreenButton = function() 
@@ -495,12 +495,21 @@ else {
         					Desktop.desktop.getForeWindow().isMaximized())? 
 									"Exit Full Screen":"Full Screen") + "</a>"; 
 
-        }
+        } //end redrawFullScreenButton()
 
       	//=====================================================================================
         this.redrawRefreshButton = function() 
         {
-        	if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
+        	if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX &&
+        			Debug.OS_TYPE == Debug.OS_TYPE_LINUX) //Linux firefox
+			{
+				//firefox linux shows circle-arrow character slightly bigger than other firefox
+				_fullScreenRefreshBtn.innerHTML = 
+						"<div style='font-size:30px;margin-top:-9px;' title='Click to reload the desktop and all windows'>↻</div>";        	
+				_fullScreenRefreshBtn.style.height = "16px";
+				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
+			}
+        	else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
         	{
         		//firefox shows circle-arrow character smaller
 				_fullScreenRefreshBtn.innerHTML = 
@@ -511,7 +520,7 @@ else {
         	else //chrome
         	{
 				_fullScreenRefreshBtn.innerHTML = 
-						"<div style='font-size: 18px; margin: -1px 0 0 2px; font-weight: 300;' title='Click to reload the desktop and all windows'>↻</div>";        	
+						"<div style='font-size: 23px; margin: -5px 0 0 2px;' title='Click to reload the desktop and all windows'>↻</div>";        	
 				_fullScreenRefreshBtn.style.height = "16px";
 				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
         	}

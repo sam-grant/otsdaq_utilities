@@ -109,7 +109,7 @@ Desktop.createDesktop = function(security) {
 	//	_getWindowLayoutStr()
 	//	_getForeWindow()
 	//	_closeWindow(win)
-	//	_checkMailboxes(win)
+	//	_checkMailboxes()
 	//	_handleSystemMessages(req)
 	
 	//"private" handlers:
@@ -263,7 +263,7 @@ Desktop.createDesktop = function(security) {
 	//	called periodically (e.g. every _MAILBOX_TIMER_PERIODms)
     //  check div mailboxes that are shared by window content code and take action if necessary
     //	check for settings change
-	var _checkMailboxes = function(win) 
+	var _checkMailboxes = function() 
 	{		
 		window.clearTimeout(Desktop.desktop.checkMailboxTimer);
 		Desktop.desktop.checkMailboxTimer = window.setTimeout(_checkMailboxes,
@@ -274,11 +274,18 @@ Desktop.createDesktop = function(security) {
 		if(_firstCheckOfMailboxes)
 		{
 			console.log("First check of mailboxes!");
-
+			if(Desktop.desktop.icons.iconNameToPathMap === undefined)
+			{
+				console.log("Icons have not been setup yet... need to try again!");
+				window.clearTimeout(Desktop.desktop.checkMailboxTimer);
+				Desktop.desktop.checkMailboxTimer = window.setTimeout(_checkMailboxes,
+								100);
+				return;
+			}
 			console.log("Checking for any shortcut work from get parameters...");
 			_firstCheckOfMailboxes = false;
 			Desktop.desktop.actOnParameterAction();    //this should be the second running and will always work (first time is at end of Desktop instance creation.. and may fail for opening icon by name)
-			
+						
 		}
 		
 //		//windows can request a blackout, to avoid logging out (attempt to stop all other tabs by using browser cookie)

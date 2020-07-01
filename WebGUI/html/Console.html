@@ -196,7 +196,7 @@
 			#controlsContainer, #advancedContainer {
 				position: 			absolute;
 			
-				padding: 			8px 2px 8px 8px;
+				padding: 			13px 2px 17px 8px;
 				text-align: 		left;
 				color: 				#4D2600;
 			
@@ -221,10 +221,110 @@
 				display:			none;
 				z-index:			1000;
 				padding: 			15px 2px 15px 15px;
+				
 			}
 			
 			#advancedArea {
-				overflow:			auto;
+				overflow:			none;
+			    font-size:			13px;
+			}
+
+			#advancedArea table {
+				border-spacing: 0;
+			}
+			
+			#advancedControlsCloseButton {
+				float:				right;
+			    font-family: 		Comfortaa, serif;
+			    font-weight: 		bold;
+			    margin: 			-9px 5px 0 0;
+			    font-size:			12px;
+			    cursor:				pointer;
+			}
+
+			#advancedControlsTable {
+				overflow-x:			auto;
+				overflow-y:			hidden;
+				width:				100%;
+				height:				calc(100% - 10px);
+				
+				background-color: 	rgba(0,0,0,0.1);
+				border: 			1px solid rgba(0,0,0,0.2);
+			}
+			#advancedControlsTableHeader {
+				width:				fit-content;
+				background-color: 	rgba(0,0,0,0.2);
+				height: 			14px;
+				border-bottom: 		1px solid rgba(0,0,0,0.3);
+				margin-bottom: 		1px;
+			}
+			#advancedControlsTableHeader div{				
+				border-left:		1px solid rgba(0,0,0,0.3);
+				border-right:		1px solid rgba(0,0,0,0.3);
+				padding:			0 4px;
+				float:				left;				
+			}
+			#advancedControlsTableRows {
+				overflow-x:			hidden;
+				overflow-y:			auto;
+				width:				fit-content;
+				height:				calc(100% - 20px);
+			}
+			#advancedControlsTableRows td {
+				white-space:		nowrap;
+				border-left:		1px solid rgba(0,0,0,0.3);
+				border-right:		1px solid rgba(0,0,0,0.3);
+				padding:			1px 4px;
+			}
+			#advancedControlsTableRows tr:nth-child(even) {
+				background: 		rgba(255,255,255,0.3);
+			}
+			
+			.ac_bitstring {
+				width: 				256px; /*64*4*/
+			}
+			.ac_maskbit {
+			    width: 				4px;
+			    height: 			10px;
+			    float: 				left;
+			    cursor:				pointer;
+			}
+			.ac_maskbitOFF {
+			    background-color: 	rgb(14, 97, 28);
+			    border-top: 		1px solid #c4cec6;
+			    border-bottom: 		1px solid black;
+			}
+			.ac_maskbitOFF:hover {
+			    background-color: 	rgb(239, 160, 63);				
+			}
+			.ac_maskbitON {
+			    background-color: 	rgb(117, 255, 117);
+			    border-top: 		1px solid white;
+			    border-bottom: 		1px solid green;
+			}
+			.ac_maskbitON:hover {
+			    background-color: 	rgb(255, 26, 26);			
+			}
+			
+			#ac_popupBox {
+				position:			absolute;
+				padding:			4px 0 4px 4px;
+			    background-color: 	rgb(216, 232, 241);
+			    color:				rgb(68, 76, 107);
+			    /*border:				2px solid rgb(185,185,185);*/
+			    border-radius:		2px;
+			    font-size:			11px;
+			    box-shadow: 		1px 1px 5px #666;
+			    width:				232px;
+			}
+			
+			.ac_checkboxSelect {
+			    margin: 			-1px -3px -3px;
+			    cursor:				pointer;
+			}
+			
+			button {
+				cursor:				pointer;
 			}
 		</style>
 				
@@ -236,7 +336,35 @@
 		<script src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
 		<script>		
-			
+		
+			//=====================================================================================
+			//htmlOpen ~~		
+			//	tab name and attribute/value map object
+			function htmlOpen(tag,attObj,innerHTML,doCloseTag)
+			{
+				var str = "";
+				var attKeys = Object.keys(attObj); 
+				str += "<" + tag + " ";
+				for(var i=0;i<attKeys.length;++i)
+					if(attKeys[i] == "selected") str += (attObj[attKeys[i]]|0)?" selected ":""; //no value
+					else if(attKeys[i] == "checked") str += (attObj[attKeys[i]]|0)?" checked ":""; //no value
+					else if(attKeys[i] == "") continue; //skip empty key
+					else
+						str += " " + attKeys[i] + "='" +
+						attObj[attKeys[i]] + "' ";
+				str += ">";
+				if(innerHTML) str += innerHTML;
+				if(doCloseTag)
+					str += "</" + tag + ">";
+				return str;
+			} // end htmlOpen()
+	
+			//=====================================================================================
+			//htmlClearDiv ~~		
+			function htmlClearDiv()
+			{
+				return "<div id='clearDiv'></div>";
+			} //end htmlClearDiv()
 			
 			//functions:		
 				//init()	
@@ -268,7 +396,19 @@
 				//togglePauseControls()
 				//clearConsoleMessages()
 				//downloadMessages()
+				
 				//showAdvancedControls()
+				//closeAdvancedControls()
+				//drawAdvancedControls(page)
+				//applyAdvancedControlsFilter()
+			
+				//createEditableBitMask(val64,label)
+				//handleBitMouseOver(e,label,b) 
+				//handleBitMouseDown(e,label,b)
+				//		//handleBitMouseOut(e,label,b)
+				//handleBitMouseMove(e,label,b) 
+				//handleBitRightClick(e,label,b) 
+				//handleMouseMove(e)
 			
 			var _linkEl, _consoleEl, _historyEl, _historyContainerEl, _usersEl, _usersContainerEl;
 			var _controlsContainerEl, _controlsEl, _advancedContainerEl, _advancedEl;
@@ -340,6 +480,17 @@
 					
 			var _showFilterControls = true; //opposite will be default
 				
+			var _traceLevels = {}; //map of host: {label: {M:[X,X],S:[X,X],T:[X,X]} }
+			var _traceLabelPresence = {}; //map of label: {host:1}
+			var _traceHostSelect = {mode: 0, hosts: []};  //mode: 0 is require 1 host and set to all,
+			                  	  	  	  	  	  	  	  //mode: 1 is require all hosts and set to all,
+														  //mode: 2 is require 1 host and set to 1 host
+			var _traceBIT_STANDARDS = {0: "Error", 1: "Warning", 2: "Info", 3: "Debug"};
+			var _advancedPage = undefined;
+			var _advancedPopup = undefined;
+			var _advancedEditBitMask = [0,0]; //64bits = 2 32-bit numbers
+			var _advancedButtonDown = -1;
+			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
@@ -406,6 +557,13 @@
 			    //call to setup colorScheme first time
 				DesktopContent.XMLHttpRequest("Request?RequestType=LoadUserPreferences", "",
 						handleLoadUserPreferences);
+				
+
+				DesktopContent.mouseMoveSubscriber(handleMouseMove);
+				document.body.oncontextmenu = handleBitRightClick;
+				document.body.onmouseup = handleMouseUp;
+				document.body.onmousedown = handleBitMouseDown;
+				
 			} //end init()
 
 			//=====================================================================================
@@ -1300,34 +1458,486 @@
 					 * _TRACE_ is overflow label
 					 */
 					
-					var str = "";
 					var traceList = DesktopContent.getXMLValue(req,"traceList");
+					
+					_traceLevels = {}; //clear
+					_traceLabelPresence = {}; //clear
 					
 					var hostTraceArr = traceList.split(';');
 					for(var i=0;i<hostTraceArr.length;++i)
 					{
 						var fieldTraceArr = hostTraceArr[i].split(',');
-						if(fieldTraceArr.length < 5 ||
-								(fieldTraceArr.length + 3)%4 != 0)
+						if(fieldTraceArr.length < 3 ||
+								(fieldTraceArr.length + 1)%2 != 0)
 						{
 							Debug.log("Skipping incomplete host trace masks:",hostTraceArr[i]);
+							continue;
 						}
 
+						Debug.log("Getting TRACE labels for host =",fieldTraceArr[0]);
+						_traceLevels[fieldTraceArr[0]] = {};
 						for(var j=1;j<fieldTraceArr.length;j+=4)
 						{
-							str += fieldTraceArr[j+0] + " = " + 
-									fieldTraceArr[j+1] + " " +
-									fieldTraceArr[j+2] + " " +
-									fieldTraceArr[j+3] + "<br>"; 
+							var maskVals = fieldTraceArr[j+1].split(':');
+							_traceLevels[fieldTraceArr[0]][fieldTraceArr[j+0]] = {
+								"M" : [maskVals[1],maskVals[2]],
+								"S" : [maskVals[4],maskVals[5]],
+								"T" : [maskVals[6],maskVals[7]],
+							};
+							
+							//start object if not present
+							if(!_traceLabelPresence[fieldTraceArr[j+0]])
+								_traceLabelPresence[fieldTraceArr[j+0]] = {};
+							
+							_traceLabelPresence[fieldTraceArr[j+0]][fieldTraceArr[0]] = 1; //include this host
 						}
 					}
-					
-					_advancedEl.innerHTML = str;
+					Debug.log("Trace host map object",_traceLevels);
+					Debug.log("Trace label map object",_traceLabelPresence);
 				
-					
+					drawAdvancedControls(0 /*slow*/);
 					
 						}); //end get trace levels request
 			} //end showAdvancedControls()
+
+			//=====================================================================================
+			//drawAdvancedControls ~
+			//	page is select index 
+			function closeAdvancedControls() 
+			{
+				Debug.log("closeAdvancedControls()");
+
+				_advancedContainerEl.style.display = "none";
+			} //end closeAdvancedControls()
+
+			//=====================================================================================
+			//drawAdvancedControls ~
+			//	page is select index 
+			function drawAdvancedControls(page) 
+			{					
+				Debug.log("drawAdvancedControls()");	    
+				var str = "";
+				
+				//Page is menu at top				
+				//	Search box | View: [Slow/Cout]
+				//	all none  [Get] [Set]  000000000 w slider
+				//  ----------------------------
+				//	table draw to select multiples or click
+				//		shift to add or single subtract
+
+				str += "<div id='advancedControlsCloseButton' onclick='closeAdvancedControls()'>X</div>";
+				
+				
+				str += "<div id='advancedControlsMenu'>";
+				str += htmlOpen("img",
+						{
+							"src" : 	"/WebPath/images/windowContentImages/magnifying-glass.png",
+							"style": 	"margin: -7px 0 -10px 0; width: 30px;",
+						});
+				str += "<input type='text' id='ac_searchBox' />";
+				
+				str += " View: ";
+				str += "<select id='ac_viewSelect'>";
+				
+				var options = ["Slow/Cout","Fast/Memory","Triggering","Host Select"];
+				for(var i=0;i<options.length;++i)
+					str += "<option " + 
+						(((!i && !page) || (page == i))?"selected":"") +
+						">" + options[i] + "</option>";
+				
+				str += "</select>";
+				
+				str += htmlClearDiv();
+				
+//				str += htmlOpen("a",
+//						{
+//							"class" : "ac_menuLink" 
+//						},"all",true);
+//
+//				str += htmlOpen("a",
+//						{
+//							"class" : "ac_menuLink" 
+//						},"none",true);
+				
+				str += htmlOpen("button",
+						{
+							"style" : "margin: 0 10px 0 5px;", 
+						},"Set",true);
+				
+				str += htmlOpen("select",
+						{
+							"class" : "ac_menuLink" 
+						});
+				str += "<option selected>Full Mask</option>";
+				str += "<option>Debug Preset</option>";
+				str += "<option>Info Preset</option>";
+				str += "<option>Warning Preset</option>";
+				str += "<option>Error Preset</option>";
+				str += "</select>"; //end set type select
+				
+
+				str += createEditableBitMask(
+						_advancedEditBitMask,
+						undefined);
+				
+				str += "</div>"; //close ac_bitstring
+				
+				str += "</div>"; //end advancedControlsMenu tag
+				
+
+				str += "<div id='advancedControlsTable'>"; //scroll headers horizontally
+				str += "<div id='advancedControlsTableHeader'>"; //scroll rows vertically
+				
+				str += "</div>"; //end advancedControlsTable tag
+				str += "<div id='advancedControlsTableRows'>"; //scroll rows vertically
+				
+				str += "</div>"; //end advancedControlsTable tag
+				str += "</div>";
+
+				str += htmlOpen("div",
+					{
+						"id" : 	"ac_popupBox"
+					});
+				_advancedEl.innerHTML = str;
+				
+				_advancedPage = page|0;
+				_advancedPopup = document.getElementById("ac_popupBox");
+				
+				applyAdvancedControlsFilter();
+			} //end drawAdvancedControls()
+			
+
+			//=====================================================================================
+			//applyAdvancedControlsFilter ~
+			function applyAdvancedControlsFilter() 
+			{	
+				Debug.log("applyAdvancedControlsFilter()");
+			    
+				var COL_NAMES = ["Select","Label","SeverityMask","HostPresence"];
+				var COL_DISPLAY_NAMES = ["<input type='checkbox' class='ac_checkboxSelect' />",
+										 "Label","Severity Mask","Hosts"];
+				
+				var str = "";
+				str += "<table>";
+				var isFirst = true;
+				
+				var labeli = 0;
+				for(var label in _traceLabelPresence)
+				{
+					++labeli;
+					str += "<tr>";
+
+					for(var i=0;i<COL_NAMES.length;++i)
+					{
+						str += "<td" + (isFirst?(" id='ac_first" + 
+								COL_NAMES[i] + "'"):"") + ">";
+								
+						if(i == 1)
+							str += label;
+						else if(i == 0)
+							str += "<input type='checkbox' class='ac_checkboxSelect' />";
+						else if(i == 2)
+						{
+							str += createEditableBitMask(
+								_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S,
+								label);
+						}
+						else if(i == 3)
+						{
+							var keys = Object.keys(_traceLabelPresence[label]);
+							
+							if(keys.length == 1)
+								str += keys[0];
+							else if(keys.length > 1)
+							{
+								var hosts = Object.keys(_traceLevels);
+								
+								if(keys.length == hosts.length)
+									str += "All";
+								else //give a list of hosts
+								{
+									for(var j=0;j<hosts.length;++j)
+										str += (j?';':'') + hosts[j];
+								}
+							}
+							else
+							{
+								Debug.err("Impossible TRACE label:host error! Notify admins.");
+								return;
+							}
+								
+						}
+						else
+						{
+							Debug.err("Impossible TRACE Column error! Notify admins.");
+							return;
+						}
+						str += "</td>";
+					}
+					str += "</tr>";			
+					isFirst = false;
+				}
+				str += "</table>";
+				
+				var el = document.getElementById("advancedControlsTableRows");
+				el.innerHTML = str;
+				var hel = document.getElementById("advancedControlsTableHeader");
+				hel.style.width = el.offsetWidth  + "px";
+				
+				str = "";
+//				str += "<table style='width:" + el.offsetWidth  + "px'>";
+//				str += "<tr>";
+				//now get width of columns and apply to header table
+				for(var i=0;i<COL_NAMES.length;++i)
+				{
+					var el = document.getElementById("ac_first" + COL_NAMES[i]);
+					Debug.log("First row-col width ",COL_NAMES[i],
+							el.offsetWidth);
+					//match width of column to fake like same table
+					//if(i < 2)
+						str += "<div style='width:" + 
+								(el.offsetWidth-10 /*4 padding + 1 border left/right */) +
+								"px;'>";
+					//else 
+					//	str += "<div>";
+					str += COL_DISPLAY_NAMES[i];
+					str += "</div>";
+				}
+				//str += "</tr>";		
+				//str += "</table>";
+
+				hel.innerHTML = str;
+
+			} //end applyAdvancedControlsFilter()
+
+			//=====================================================================================
+			function createEditableBitMask(val64,label)
+			{
+				var str = "";
+				str += "<div class='ac_bitstring' id='ac_bitstring_" + label + "'>";
+				var val = val64[1]|0;
+				for(var j=0;j<32;++j)
+				{
+					//if(j%8 == 0) str += " ";
+					//str += (val >> (31-j))&1;
+
+					str += htmlOpen("div",
+							{
+									"class" : 			"ac_maskbit ac_maskbit" + 
+										(((val >> (j))&1)?"ON":"OFF"),
+									"onmouseover":		"handleBitMouseOver(event," +
+										(label?("\"" + label + "\""):"undefined") + 
+										"," + j + ");",
+									"onmousedown":		"handleBitMouseDown(event," +
+										(label?("\"" + label + "\""):"undefined") + 
+										"," + j + ");",
+									"onmousemove":		"handleBitMouseMove(event," +
+										(label?("\"" + label + "\""):"undefined") + 
+										"," + j + ");",
+//									"oncontextmenu":	"handleBitRightClick(event," +
+//										(label?("\"" + label + "\""):"undefined") + 
+//										"," + j + ");",
+							},"",true);
+
+				}
+				var val = val64[0]|0;
+				for(var j=0;j<32;++j)
+				{
+					str += htmlOpen("div",
+							{
+									"class" : 			"ac_maskbit ac_maskbit" + 
+										(((val >> (j))&1)?"ON":"OFF"),
+									"onmouseover":		"handleBitMouseOver(event," +
+										(label?("\"" + label + "\""):"undefined") + 
+										"," + (32+j) + ");",
+									"onmousedown":		"handleBitMouseDown(event," +
+										(label?("\"" + label + "\""):"undefined") + 
+										"," + (32+j) + ");",
+									"onmousemove":		"handleBitMouseMove(event," +
+										(label?("\"" + label + "\""):"undefined") + 
+										"," + (32+j) + ");",
+//									"oncontextmenu":	"handleBitRightClick(event," +
+//										(label?("\"" + label + "\""):"undefined") + 
+//										"," + (32+j) + ");",
+							},"",true);
+
+				}
+				str += "</div>"; //close ac_bitstring
+				return str;
+			} //end createEditableBitMask()
+			
+			//=====================================================================================
+			function handleBitMouseOver(e,label,b) 
+			{
+				Debug.log("handleBitMouseOver",_advancedButtonDown,label,b);
+								
+				var str = "";
+				str += "Bit-<label style='color:red;font-weight:bold;'>" + b + "</label>";
+				if(_traceBIT_STANDARDS[b] !== undefined)
+					str += ", " + _traceBIT_STANDARDS[b] + ", ";
+				str += " is ";
+
+				
+				if(label === undefined)
+					var val64 = _advancedEditBitMask; 
+				else
+					var val64 = _traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S;
+				
+				if(b < 32)
+				{
+					var val = val64[1]|0;
+					var isOn = (val >> (b))&1;
+				}
+				else
+				{
+					var val = val64[0]|0;
+					var isOn = (val >> (b-32))&1;
+				}
+
+				str += "<label style='color:" + 
+						(isOn?"darkgreen":"darkred") + ";font-weight:bold;'>";
+				str += (isOn?"ON":"OFF"); 
+				str +=  "</label>";
+
+				if(label === undefined)
+					str += " for the editable bit-mask";
+				else
+					str += " for <br/>&apos;" + label + "&apos; ";
+					
+				
+				str += "<br/>Click to turn ON, Right-Click to turn OFF";
+				
+				var el = document.getElementById("advancedControlsTable");
+				var winSz = [el.offsetWidth,el.offsetHeight];
+				//Note: clientX/Y does not move event when scrolled. pageX/Y does
+				//	although, since the body is not being scrolled, both return the same.
+				var popupPos = [e.clientX, e.clientY-20];
+				
+				//				
+				//				str += " w:" + winSz[0] + " h:" + winSz[1];
+				//				str += " px:" + e.pageX + " py:" + e.pageY;
+				//				str += " x:" + e.clientX + " y:" + e.clientY;
+				//				str += " mx:" + popupPos[0] + " my:" + popupPos[1];
+
+				if(popupPos[0] > winSz[0]*2/3)
+					popupPos[0] -= 220;
+				if(popupPos[1] > winSz[1]/2)
+					popupPos[1] -= 100;
+				
+				_advancedPopup.innerHTML = str;
+				_advancedPopup.style.display = "block";
+				_advancedPopup.style.left = popupPos[0] + "px";
+				_advancedPopup.style.top = popupPos[1] + "px";
+			} //end handleBitMouseOver()
+
+			//=====================================================================================
+			function handleBitMouseDown(e,label,b) 
+			{
+				Debug.log("handleBitMouseDown",_advancedButtonDown);
+			
+				if(e)
+				{
+					_advancedButtonDown = e.button;					
+					e.stopPropagation();					
+				}
+				if(b === undefined || _advancedButtonDown < 0) return; //early exit for body handling
+				
+				//now apply mouse value to bit
+				
+
+				if(label === undefined)
+					var val64 = _advancedEditBitMask; 
+				else
+					var val64 = _traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S;
+				
+				if(b < 32)
+				{
+					val64[1] |= 0;
+					
+					if(_advancedButtonDown == 0 /*left-click*/)
+						val64[1] |= (1 << b);
+					else
+						val64[1] &= ~(1 << b); 
+				}
+				else
+				{
+					val64[0] |= 0;
+					if(_advancedButtonDown == 0 /*left-click*/)
+						val64[0] |= (1 << (b-32));
+					else
+						val64[0] &= ~(1 << (b-32));
+				}
+				
+				if(label === undefined)
+				{
+					_advancedEditBitMask = [val64[0],val64[1]];
+					document.getElementById("ac_bitstring_" + label).innerHTML = 
+										createEditableBitMask(
+												_advancedEditBitMask,
+												label);
+
+				}
+				else
+				{
+					_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S = [val64[0],val64[1]];
+
+					document.getElementById("ac_bitstring_" + label).innerHTML = 
+										createEditableBitMask(
+												_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S,
+												label);
+				}				
+					
+			} //end handleBitMouseDown()
+			
+//			//=====================================================================================
+//			function handleBitMouseOut(e,label,b) 
+//			{
+//				Debug.log("handleBitMouseOut",e.button,label,b);
+//			} //end handleBitMouseOut()
+			
+			//=====================================================================================
+			function handleBitMouseMove(e,label,b) 
+			{
+				Debug.log("handleBitMouseMove",_advancedButtonDown,"=",e.button,label,b);
+				e.stopPropagation();
+				
+				//now set bit mask change if mouse button down
+				if(_advancedButtonDown >= 0)
+					handleBitMouseDown(undefined,label,b);
+			} //end handleBitMouseMove()
+			
+			//=====================================================================================
+			function handleBitRightClick(e) 
+			{
+				if(_advancedPopup && _advancedPopup.style.display != "none")
+				{
+					Debug.log("handleBitRightClick",e.button);
+					_advancedContextMenuBlock = false;
+					e.stopPropagation();
+					return false;
+				}
+			} //end handleBitMouseMove()
+			
+			//=====================================================================================
+			function handleMouseMove(e) 
+			{
+				Debug.log("handleMouseMove",_advancedButtonDown,"=",e.button);
+				if(_advancedPopup)				
+				{
+					_advancedPopup.style.display = "none";
+				}
+				
+			} //end handleMouseMove()
+			
+			//=====================================================================================
+			function handleMouseUp(e) 
+			{
+				Debug.log("Body handleMouseUp",_advancedButtonDown,"=",e.button);
+				_advancedButtonDown = -1;
+				
+			} //end handleMouseUp()
+			
+			
 		</script>
 		
 	</head>

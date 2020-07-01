@@ -3042,7 +3042,8 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 
 		//::::::::
 		//localSetBitMap ~~
-		function localSetBitMap(r,c) {			
+		function localSetBitMap(r,c) 
+		{			
 			
 			Debug.log("set r,c " + buttonDown + " @ " + r + "," + c );
 			buttonDown = buttonDown?1:0; //	0=left-click, 1=right-click
@@ -3076,7 +3077,8 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	//localValidateInputs ~~
 	//	returns false if inputs are invalid
 	//	else true.
-	function localValidateInputs() {
+	function localValidateInputs() 
+	{
 
 		//veryify bitmap params is expected size
 		if(bitMapParams.length != 16)
@@ -4306,8 +4308,7 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 	el.style.overflow = "auto";
 	
 	return {"w" : w, "h" : h, "x" : x, "y" : y};
-}
-
+} //end setPopUpPosition()
 
 //=====================================================================================
 //getOnePixelPngData ~~
@@ -4332,8 +4333,7 @@ ConfigurationAPI.getOnePixelPngData = function(rgba)
 	ConfigurationAPI.getOnePixelPngData.ctx.putImageData(
 			ConfigurationAPI.getOnePixelPngData.bmpOverlayData,0,0);
 	return ConfigurationAPI.getOnePixelPngData.canvas.toDataURL();
-}
-
+} //end getOnePixelPngData()
 
 //=====================================================================================
 //createEditableFieldElement ~~
