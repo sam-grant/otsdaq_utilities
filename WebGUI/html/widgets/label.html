@@ -20,7 +20,7 @@
 
 		<script>
 
-			var parameters_ = {class: "", "border": "false", "text": "", "text position": "left", "font": "", "foreground color": "", "background color": "transparent"};
+			var parameters_ = {class: "", "border": "false", "text": "", "text_position": "left", "font": "", "foreground_color": "", "background_color": "transparent"};
 			//functions:
 			//init()
 
@@ -39,7 +39,7 @@
 
 			function drawWidget(widget, parameters)
 			{
-				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background color"];
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
 				setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
 			}
 
@@ -58,7 +58,7 @@
 					document.getElementById("display").style.border = "";
 
 				document.getElementById("display").innerHTML = parameters_["text"];
-			        document.getElementById("display").style.textAlign = parameters_["text position"];
+			        document.getElementById("display").style.textAlign = parameters_["text_position"];
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}

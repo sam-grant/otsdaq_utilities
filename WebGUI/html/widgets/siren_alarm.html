@@ -32,7 +32,7 @@
 			//init()
 
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "show_labels": "true", "background color": "transparent"};
+			var parameters_ = {class: "", "show_labels": "true", "background_color": "transparent"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -54,7 +54,7 @@
 
 			function drawWidget(widget, parameters)
 			{
-				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background color"];
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
 
 				drawSirenAlarm();
 				console.log(document.body);
