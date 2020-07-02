@@ -28,7 +28,7 @@
 			var leds = [];
 			var labelContainers = [];
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "show_labels": "false", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
+			var parameters_ = {class: "", "show_labels": "false", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey", "background color": "transparent"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -51,6 +51,8 @@
 			{
 				leds = [];
 				labelContainers = [];
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background color"];
+
 				var display = document.getElementById("display");
 				display.innerHTML = "";
 				if (!Object.getOwnPropertyNames(widget.pvList).length)

@@ -24,7 +24,7 @@
 			//init()
 
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "show_labels": "false", "getLastAlarms": "false", "getAlarmsLog": "false"};
+			var parameters_ = {class: "", "show_labels": "false", "getLastAlarms": "false", "getAlarmsLog": "false", "background color": "transparent"};
 			var table;
 
 			//define data sample
@@ -51,6 +51,8 @@
 
 			function drawWidget(widget, parameters)
 			{
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background color"];
+
 				tabledata = [];
 				if (parameters_["getLastAlarms"] == "true")
 				{

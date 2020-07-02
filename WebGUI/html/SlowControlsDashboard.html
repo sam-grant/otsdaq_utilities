@@ -2229,7 +2229,10 @@
 					mainBlock_.el.classList.add("editMode");
 
 					for(widgetId in page_.widgets)
-						drawWidget(widgetId);		
+					{
+						page_.widgets[widgetId].el.contentWindow.drawWidget(page_.widgets[widgetId]);
+						drawWidget(widgetId);
+					}
 
 					for(var i = 0;i<covers.length;++i)
 						covers[i].style.display = "block";

@@ -9,12 +9,12 @@
 
 		    body {
 			  font: 10px sans-serif;
-			  background: transparent;!rgba(250, 255, 255, 1);
+			  background: rgba(255, 255, 255, 1);
 			  margin: 0px !important;
 			}
 
 			table, th, td {
-			  border: 1px solid grey;
+			  !border: 0px solid grey;
 			  border-collapse: collapse;
 			}
 			
@@ -29,7 +29,7 @@
 			//init()
 
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "upload file": "", "background color": "transparent"};
+			var parameters_ = {class: "", "upload file": "", "background color": "transparent", "table border": "1px", "table border color": "grey"};
 
 			//define data sample
 			//each cell contain
@@ -72,6 +72,13 @@
 			function drawWidget(widget, parameters)
 			{
 				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background color"];
+
+				var display = document.getElementById("display");
+				display.innerHTML = "";
+				if (!Object.getOwnPropertyNames(widget.pvList).length)
+					display.innerHTML = "<center>2d stop light: <br/> No associated PVs to display.</center>";
+
+				//make widget table to show
 				newPVTable();
 			}
 
@@ -93,11 +100,13 @@
 
 				//make widget table to show
 				var display = document.getElementById("display");
-				display.innerHTML = "";
+
 				table = document.createElement('table');
 				table.id = "display-table";
 				table.style.height = window.innerHeight + "px";
 				table.style.width = "100%";
+				table.border = parameters_["table border"];
+				table.style.borderColor = parameters_["table border color"];
 
 				var i = 0;
 				for(var row = 1; row <= _ySize; row++)
@@ -126,6 +135,8 @@
 						{
 							tds[i].firstElementChild.firstElementChild.innerHTML = "+";//tabledata[i].pvName;
 							tds[i].style.backgroundColor = "rgba(0, 230, 64, 1)";
+							tds[i].style.border = "2px solid grey";
+							tds[i].style.borderColor = parameters_["table border color"];
 						}
 						
 						//remove right border if next cell has the same pvName

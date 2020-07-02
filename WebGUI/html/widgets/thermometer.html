@@ -32,7 +32,7 @@
 			var thermometers = [];
 			var containers = [];
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "show_labels": "false", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
+			var parameters_ = {class: "", "show_labels": "false", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey", "background color": "transparent"};
 
 			//init called once body has loaded
 			function init()
@@ -53,6 +53,7 @@
 				thermometers = [];
 				containers = [];
 
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background color"];
 
 				var div = document.createElement('div');
 				div.className = "wrapper";
