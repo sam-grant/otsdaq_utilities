@@ -24,7 +24,7 @@
 			var pv_settings_ = [];
 			var timeData = {};
 			var valueData = {};
-			var PVList = {};
+			var PVList;
 			var parameters_ = {class: "", "show_labels": "false", "background_color": "transparent"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -49,6 +49,7 @@
 
 			function drawWidget(widget, parameters)
 			{
+				if (parameters) parameters_ = parameters;
 				var i = 0;
 				PVList = {};
 
@@ -70,8 +71,7 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("Table: set parameters()");
-				console.log(parameters_);
+				console.log("Table: set parameters()", parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)

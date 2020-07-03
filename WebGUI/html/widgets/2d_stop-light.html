@@ -29,7 +29,7 @@
 			//init()
 
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "upload_file": "", "background_color": "transparent", "table_border": "1px", "table_border_color": "grey"};
+			var parameters_ = {class: "", "upload_csv_file": "not uploaded", "background_color": "transparent", "table_border": "1px", "table_border_color": "grey"};
 
 			//define data sample
 			//each cell contain
@@ -38,13 +38,12 @@
 			//  , y:i
 			//  , x:j
 			//  , pvName:pv
-			//  , pvDescription:description
 			//  , pvValue:value
 			//  , pvStatus:status
 			//  , pvSeverity:severity
 			//  , pvTime:time
 			//};
-			var tabledata = [];
+			var tabledata;
 
 			var table;
 			var tds = [];
@@ -71,6 +70,7 @@
 
 			function drawWidget(widget, parameters)
 			{
+				if (parameters) parameters_ = parameters;
 				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
 
 				var display = document.getElementById("display");
@@ -131,7 +131,7 @@
 						tr.appendChild(td);
 
 						// fill each cell of table
-						if (tabledata[i].pvName != "-1")
+						if (tabledata[i] && tabledata[i].pvName != "-1")
 						{
 							tds[i].firstElementChild.firstElementChild.innerHTML = "+";//tabledata[i].pvName;
 							tds[i].style.backgroundColor = "rgba(0, 230, 64, 1)";
@@ -140,15 +140,15 @@
 						}
 						
 						//remove right border if next cell has the same pvName
-						if (i > 0  && tabledata[i].pvName != "-1" && tabledata[i+1] && tabledata[i+1].pvName == tabledata[i].pvName)
+						if (i > 0  && tabledata[i] && tabledata[i].pvName != "-1" && tabledata[i+1] && tabledata[i+1].pvName == tabledata[i].pvName)
 						{
-							tds[i].style.borderRight= "hidden";
+							tds[i].style.borderRight = "hidden";
 						}
 
-						//remove bottom border if bottom cell, in next row, as the same pvName
-						if (i > 0  && tabledata[i].pvName != "-1" && tabledata[i+_xSize] && tabledata[i+_xSize].pvName == tabledata[i].pvName)
+						//remove bottom border if bottom cell, in next row, has the same pvName
+						if (i > 0  && tabledata[i] && tabledata[i].pvName != "-1" && tabledata[i+_xSize] && tabledata[i+_xSize].pvName == tabledata[i].pvName)
 						{
-							tds[i].style.borderBottom= "hidden";
+							tds[i].style.borderBottom = "hidden";
 						}
 					}
 					table.appendChild(tr);

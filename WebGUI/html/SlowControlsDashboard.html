@@ -552,7 +552,7 @@
 						if (pv_refresh !== undefined) widgetObject.pvList[pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[pv.innerHTML] = refreshRate_;
 					}
 
-					if (type == 3)
+					if (type == 3) //smartChart
 					{
 						var traces = widgets[i].getElementsByTagName("traces")[0];
 						if (traces !== undefined)
@@ -577,9 +577,13 @@
 					var text_position = widgets[i].getElementsByTagName("text_position")[0];
 					var font = widgets[i].getElementsByTagName("font")[0];
 					var foreground_color = widgets[i].getElementsByTagName("foreground_color")[0];
+					var background_color = widgets[i].getElementsByTagName("background_color")[0];
 					var transparent = widgets[i].getElementsByTagName("transparent")[0];
 					var wrap_words = widgets[i].getElementsByTagName("wrap_words")[0];
-					var file = widgets[i].getElementsByTagName("file")[0];
+					var load_image = widgets[i].getElementsByTagName("load_image")[0];
+					var upload_csv_file = widgets[i].getElementsByTagName("upload_csv_file")[0]; //2dstoplight widget
+					var table_border = widgets[i].getElementsByTagName("table_border")[0]; //2dstoplight widget
+					var table_border_color = widgets[i].getElementsByTagName("table_border_color")[0]; //2dstoplight widget
 
 					//set attributes
 					if (label_class !== undefined) widgetObject.attributes["class"] = label_class.innerHTML;
@@ -588,9 +592,13 @@
 					if (text_position !== undefined) widgetObject.attributes["text_position"] = text_position.innerHTML;
 					if (font !== undefined) widgetObject.attributes["font"] = font.innerHTML;
 					if (foreground_color !== undefined) widgetObject.attributes["foreground_color"] = foreground_color.innerHTML;
+					if (background_color !== undefined) widgetObject.attributes["background_color"] = background_color.innerHTML;
 					if (transparent !== undefined) widgetObject.attributes["transparent"] = transparent.innerHTML;
 					if (wrap_words !== undefined) widgetObject.attributes["wrap_words"] = wrap_words.innerHTML;
-					if (file !== undefined) widgetObject.attributes["file"] = file.innerHTML;
+					if (load_image !== undefined) widgetObject.attributes["load_image"] = load_image.innerHTML;
+					if (upload_csv_file !== undefined) widgetObject.attributes["upload_csv_file"] = upload_csv_file.innerHTML;
+					if (table_border !== undefined) widgetObject.attributes["table_border"] = table_border.innerHTML;
+					if (table_border_color !== undefined) widgetObject.attributes["table_border_color"] = table_border_color.innerHTML;
 
 					console.log("Drawing and creating widget",i,widgetObject);
 
@@ -626,6 +634,33 @@
 					widgetObject.el = undefined;
 					drawWidget(i);
 
+					if (type == 10) //2dstoplights
+					{
+						var xSize = widgets[i].getElementsByTagName("table_xSize")[0];
+						if (xSize)  widgetObject.el.contentWindow._xSize = parseInt(xSize.innerHTML);
+						var ySize = widgets[i].getElementsByTagName("table_ySize")[0];
+						if (ySize)  widgetObject.el.contentWindow._ySize = parseInt(ySize.innerHTML);
+
+						var table = widgets[i].getElementsByTagName("tabledata")[0];
+						if (table)
+						{
+							var data = [];
+							var cells = table.getElementsByTagName("cell");
+							for(j = 0; j < cells.length; ++j)
+							{
+								var cell = {
+											  id: 		cells[j].getElementsByTagName("id")[0].innerHTML
+											, x:		cells[j].getElementsByTagName("x")[0].innerHTML
+											, y: 		cells[j].getElementsByTagName("y")[0].innerHTML
+											, pvName:	cells[j].getElementsByTagName("pvName")[0].innerHTML
+										   };
+								data.push(cell);
+								if (cell.pvName != "-1" &&  cell.pvName != "")
+									widgetObject.pvList[cell.pvName] = refreshRate_;
+							}
+							widgetObject.el.contentWindow.tabledata = data;
+						}
+					}
 				} //end widget extraction loop
 
 				var time =  xml.getElementsByTagName("time");
@@ -1286,10 +1321,94 @@
 								widget.appendChild(traces);
 								display.appendChild(widget);
 							}
+							else if (type =="2dstoplight")
+							{
+								var widget = pageString.createElement("widget");
+								widget.setAttribute("type", type);
+								widget.setAttribute("version",	"2.0.0");
+
+								var name = pageString.createElement("name");
+								var x = pageString.createElement("x");
+								var y = pageString.createElement("y");
+								var width = pageString.createElement("width");
+								var height = pageString.createElement("height");
+								name.innerHTML = page_.widgets[widgetId].displayName;
+								widget.appendChild(name);
+
+								x.innerHTML = page_.widgets[widgetId].x;//toPageXCoordinate(page_.widgets[widgetId].x);//page_.widgets[widgetId].x * windowWidth_ / (PAGE_POSITIONS_) | 0;
+								y.innerHTML = page_.widgets[widgetId].y;//toPageYCoordinate(page_.widgets[widgetId].y);//page_.widgets[widgetId].y * windowHeight_ / (PAGE_POSITIONS_) | 0;
+								width.innerHTML = page_.widgets[widgetId].w;//toPageXCoordinate(page_.widgets[widgetId].w);//page_.widgets[widgetId].w * windowWidth_ / (PAGE_POSITIONS_) | 0;
+								height.innerHTML = page_.widgets[widgetId].h;//toPageYCoordinate(page_.widgets[widgetId].h);//page_.widgets[widgetId].h * windowHeight_ / (PAGE_POSITIONS_) | 0;
+
+								widget.appendChild(x);
+								widget.appendChild(y);
+								widget.appendChild(width);
+								widget.appendChild(height);
+
+								for (var pv_name in page_.widgets[widgetId].pvList)
+								{
+									var pv = pageString.createElement("pv_name");
+									var pv_refresh = page_.widgets[widgetId].pvList[pv_name];
+									pv.setAttribute("refresh_rate", pv_refresh);
+									pv.innerHTML = pv_name;
+									widget.appendChild(pv);
+								}
+
+								//attribute objects
+								for (var attr in page_.widgets[widgetId].attributes)
+								{
+									var attribute = pageString.createElement(attr);
+									attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
+									if (attribute.innerHTML !== "undefined") widget.appendChild(attribute);
+								}
+
+								var table_xSize = pageString.createElement("table_xSize");
+								table_xSize.innerHTML = page_.widgets[widgetId].el.contentWindow._xSize
+								var table_ySize = pageString.createElement("table_ySize");
+								table_ySize.innerHTML = page_.widgets[widgetId].el.contentWindow._ySize;
+
+								var tabledata = pageString.createElement("tabledata");
+								var data = page_.widgets[widgetId].el.contentWindow.tabledata;
+								for (cell in data)
+								{
+									var celldata = pageString.createElement("cell");
+									var id = pageString.createElement("id");
+									id.innerHTML = 	data[cell].id;
+									var x = pageString.createElement("x");
+									x.innerHTML = 	data[cell].x;
+									var y = pageString.createElement("y");
+									y.innerHTML = 	data[cell].y;
+									var pvName = pageString.createElement("pvName");
+									pvName.innerHTML = 	data[cell].pvName;
+									var pvValue = pageString.createElement("pvValue");
+									pvValue.innerHTML = 	data[cell].pvValue;
+									var pvStatus = pageString.createElement("pvStatus");
+									pvStatus.innerHTML = 	data[cell].pvStatus;
+									var pvSeverity = pageString.createElement("pvSeverity");
+									pvSeverity.innerHTML = 	data[cell].pvSeverity;
+									var pvTime = pageString.createElement("pvTime");
+									pvTime.innerHTML = 	data[cell].pvTime;
+
+									celldata.appendChild(id);
+									celldata.appendChild(x);
+									celldata.appendChild(y);
+									celldata.appendChild(pvName);
+									celldata.appendChild(pvValue);
+									celldata.appendChild(pvStatus);
+									celldata.appendChild(pvSeverity);
+									celldata.appendChild(pvTime);
+									tabledata.appendChild(celldata);
+								}
+
+								widget.appendChild(table_xSize);
+								widget.appendChild(table_ySize);
+								widget.appendChild(tabledata);
+								display.appendChild(widget);
+							}
 							else
 							{
-							var counter = 0;
-							for (var pv_name in page_.widgets[widgetId].pvList)
+								var counter = 0;
+								for (var pv_name in page_.widgets[widgetId].pvList)
 								{
 									var widget = pageString.createElement("widget");
 									widget.setAttribute("type", type);
@@ -2846,7 +2965,7 @@
 							if(value == 'undefined')
 								actionRequired = true;
 
-							if(parameter == "upload_file")
+							if(parameter == "upload_csv_file")
 							{
 								var tdButton = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0];
 								tdButton.setAttribute("type", "button");
@@ -2905,7 +3024,7 @@
 				dummyts.className = "widgetPopupTable";
 				var keyField = document.createElement("input");
 
-				if(keyParam == "upload_file")
+				if(keyParam == "upload_csv_file")
 				{
 					keyField.setAttribute("type", "button")
 					keyField.className = "";

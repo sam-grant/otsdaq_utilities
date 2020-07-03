@@ -18,7 +18,7 @@
 
 		<script>
 
-			var parameters_ = [];
+			var parameters_ = {"class": "", "load_image": "/WebPath/html/widgets/picture-icon.png"};
 			//functions:
 			//init()
 
@@ -37,13 +37,15 @@
 
 			function drawWidget(widget, parameters)
 			{
-				setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
+				if (parameters) parameters_ = parameters;
+				//setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
+				document.getElementById("display").innerHTML = "<img id='img1' src='" + parameters_["file"] + "' title='" + parameters_["load_image"] + "'></img>";
+				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
 			}
 
 			function getAttributes()
 			{
-				parameters_["class"] = "";
-				parameters_["file"] = "/WebPath/html/widgets/picture-icon.png";
 				return parameters_;
 			}
 
@@ -51,10 +53,6 @@
 			{
 				parameters_ = attributes;
 				console.log("Picture setAttributes()", parameters_);
-
-				document.getElementById("display").innerHTML = "<img id='img1' src='" + parameters_["file"] + "' title='" + parameters_["file"] + "'></img>";
-				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
 			}
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}

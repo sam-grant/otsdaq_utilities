@@ -51,6 +51,7 @@
 
 			function drawWidget(widget, parameters)
 			{
+				if (parameters) parameters_ = parameters;
 				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
 
 				tabledata = [];
@@ -96,8 +97,7 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("Table: setAttributes()");
-				console.log(parameters_);
+				console.log("Table: setAttributes()", parameters_);
 			}
 
 			function newPVTable()

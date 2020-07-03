@@ -39,8 +39,16 @@
 
 			function drawWidget(widget, parameters)
 			{
+				if (parameters) parameters_ = parameters;
 				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
-				setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
+				//setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
+				if (parameters_["border"]=="true")
+					document.getElementById("display").style.border = "1px solid #000";
+				else
+					document.getElementById("display").style.border = "";
+
+				document.getElementById("display").innerHTML = parameters_["text"];
+			        document.getElementById("display").style.textAlign = parameters_["text_position"];
 			}
 
 			function getAttributes()
@@ -51,14 +59,7 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log(parameters_);
-				if (parameters_["border"]=="true")
-					document.getElementById("display").style.border = "1px solid #000";
-				else
-					document.getElementById("display").style.border = "";
-
-				document.getElementById("display").innerHTML = parameters_["text"];
-			        document.getElementById("display").style.textAlign = parameters_["text_position"];
+				console.log("Label setAttributes()", parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}

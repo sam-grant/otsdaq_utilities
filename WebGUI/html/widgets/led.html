@@ -25,9 +25,9 @@
 			//functions:
 			//init()
 
-			var leds = [];
-			var labelContainers = [];
-			var pv_settings_ = [];
+			var led;
+			var labelContainers;
+			var pv_settings_;
 			var parameters_ = {class: "", "show_labels": "false", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey", "background_color": "transparent"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -51,6 +51,7 @@
 			{
 				leds = [];
 				labelContainers = [];
+				if (parameters) parameters_ = parameters;
 				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
 
 				var display = document.getElementById("display");

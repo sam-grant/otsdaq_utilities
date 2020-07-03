@@ -50,10 +50,11 @@
 
 			function drawWidget(widget, parameters)
 			{
+				if (parameters) parameters_ = parameters;
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
+
 				thermometers = [];
 				containers = [];
-
-				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
 
 				var div = document.createElement('div');
 				div.className = "wrapper";
@@ -105,8 +106,7 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("Thermometer: setAttributes()");
-				console.log(parameters_);
+				console.log("Thermometer: setAttributes()", parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)

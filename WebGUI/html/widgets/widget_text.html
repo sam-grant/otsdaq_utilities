@@ -48,6 +48,7 @@
 
 			function drawWidget(widget, parameters) 
 			{
+				if (parameters) parameters_ = parameters;
 				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
 
 				var div = document.createElement('div');
@@ -103,8 +104,7 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("text widget: set parameters()");
-				console.log(parameters_);
+				console.log("text widget: setAttributes()", parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
