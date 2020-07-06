@@ -2972,7 +2972,20 @@
 								tdButton.className = "";
 								tdButton.style.width = "100%";
 								tdButton.style.height = "50%";
-								tdButton.onmouseup = function (){popUpUploadCSVTableForm();};
+								tdButton.onmouseup = function (){popupUploadCSVTableForm();};
+							}
+							else if(parameter == "export_csv_file")
+							{
+								var tdButton = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0];
+								tdButton.setAttribute("type", "button");
+								tdButton.className = "";
+								tdButton.style.width = "100%";
+								tdButton.style.height = "50%";
+								tdButton.onmouseup = function (){popupExportCSVTableForm()};
+								if (page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.tabledata)
+									tdButton.disabled = false;
+								else
+									tdButton.disabled = true; 
 							}
 
 							page_.widgets[menu_.getAttribute("widgetID")].attributes[parameter] = value;
@@ -3030,7 +3043,19 @@
 					keyField.className = "";
 					keyField.style.width = "100%";
 					keyField.style.height = "50%";
-					keyField.onmouseup = function (){popUpUploadCSVTableForm();};
+					keyField.onmouseup = function (){popupUploadCSVTableForm();};
+				}
+				else if(keyParam == "export_csv_file")
+				{
+					keyField.setAttribute("type", "button")
+					keyField.className = "";
+					keyField.style.width = "100%";
+					keyField.style.height = "50%";
+					keyField.onmouseup = function (){popupExportCSVTableForm()};
+					if (page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.tabledata)
+						keyField.disabled = false;
+					else
+						keyField.disabled = true; 
 				}
 				else
 				{
@@ -3103,11 +3128,11 @@
 
 
 			//=====================================================================================
-			function popUpUploadCSVTableForm() 
+			function popupUploadCSVTableForm() 
 			{
-				document.getElementById("popupLoadFile").style.display = "block";
-				document.getElementById("popupLoadFile").style["z-index"] = 101;
-				Debug.log("Slow Controls Dashboard: popUpUploadCSVTableForm");
+				document.getElementById("popupUploadSaveCsvFile").style.display = "block";
+				document.getElementById("popupUploadSaveCsvFile").style["z-index"] = 101;
+				Debug.log("Slow Controls Dashboard: popupUploadCSVTableForm");
 				_tableUploadStr = ""; //clear previous upload
 
 				var str = "";
@@ -3123,32 +3148,25 @@
 
 				str += "<center>Please choose a CSV formatted data file (i.e. commas for columns, and new lines for rows) " +
 					"to upload, and choose whether you want to replace the current " +
-					"data or prepend/append the new data:</center><br><br>";
+					"data or prepend/append the new data:</center><br>";
 
 				str += "<center>";
 
 				str += "<input type='file' id='popUpDialog-fileUpload' " +
 					"accept='.csv' enctype='multipart/form-data' />";
-				str += "<br><br>";
 
 				// done with special handling
 				// continue with pop-up prompt
 				str += "</center></div><br><br>"; //close main popup div
 
-				var onmouseupJS = "";
-
-				onmouseupJS += "uploadTableFromCSV(); closeUploadFilePopup();";
-
-				str += "<center><input id='popUpDialog-submitButton' disabled type='button' onmouseup='" +
-					onmouseupJS + "' " +
+				str += "<center><input id='popUpDialog-submitButton' disabled type='button'" +
 					"value='Upload File' title='" +
-					"Upload the chosen csv file to the current widget lights table." +
-					"'/>";
+					"Upload the chosen file to the current widget lights table.'/>";
 				str += "<input id='popUpDialog-closeButton' type='button' onmouseup='" +
-					"closeUploadFilePopup()' value='Cancel'/></center>";
+					"closeFilePopup()' value='Cancel'/></center>";
 
 				el.innerHTML = str;
-				document.getElementById("popupLoadFile").appendChild(el); //add element to editWidgetAttributesPopup-file div
+				document.getElementById("popupUploadSaveCsvFile").appendChild(el); //add element to editWidgetAttributesPopup-file div
 
 				document.getElementById('popUpDialog-fileUpload').addEventListener(
 					'change', function (evt)
@@ -3156,22 +3174,103 @@
 						var files = evt.target.files;
 						var file = files[0];
 						var reader = new FileReader();
+						var uploadbutton = document.getElementById('popUpDialog-submitButton');
 						reader.onload = 
 							function ()
 							{
 								//store uploaded file and enable button
 								_tableUploadStr = this.result;
 								Debug.log("_tableUploadStr = " + _tableUploadStr);
-								document.getElementById('popUpDialog-submitButton').disabled = false;
+								uploadbutton.disabled = false;
 							}
 						reader.readAsText(file);
+						var filename = file.name;
+						uploadbutton.title = "Upload the chosen " + filename + " file to the current widget lights table.";
+						uploadbutton.onmouseup = function (){uploadTableFromCSV(filename); closeFilePopup();};
 					}, false);
 
-			} //end popUpUploadCSVTableForm()
+			} //end popupUploadCSVTableForm()
 
 
 			//=====================================================================================
-			function uploadTableFromCSV()
+			function popupExportCSVTableForm() 
+			{
+				console.log("popupExportCSVTableForm()");
+				
+				var popupSave = document.getElementById("popupUploadSaveCsvFile");
+				popupSave.style.display = "block";
+				popupSave.style["z-index"] = 101;
+
+				var str = "";
+
+				var el = document.getElementById("popUpDialog");
+				if (!el)
+				{
+					el = document.createElement("div");
+					el.setAttribute("id", "popUpDialog");
+				}
+
+				str += "<div id='popUpDialog-div'>";
+
+				str += "<center>Please choose where to export data in a CSV formatted data file"
+				str += "Default field delimiters (in Excel and Numbers) vary based " +
+						"on keyboard settings, so please select your field delimiter: <br><br>";
+				str += "<select id='fieldSelect'>";
+
+				str += "<option value= ',' selected>Comma ,</option>";
+				str += "<option value= ';'>Semicolon ;</option>";
+				str += "</select><br><br>";
+
+				str += "<input type='button' id='popUpDialog-fileSave' title='Download file with your chosen delimiter'" +
+					"value='Download file' />   ";
+				str += "<input id='popUpDialog-closeButton' type='button' onmouseup='" +
+					"closeFilePopup()' value='Cancel'/>";
+
+				str += "</center></div>"; //close main popup div
+
+				el.innerHTML = str;
+				popupSave.appendChild(el); //add element to editWidgetAttributesPopup-file div
+
+				document.getElementById('popUpDialog-fileSave').onclick = 
+					function ()
+					{
+						var data = page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.tabledata;
+						var xSize = page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow._xSize;
+						var ySize = page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow._ySize;
+
+						var dataStr = "data:text/csv;charset=utf-8,";
+
+						var rowDel = '\n';
+						var colDel = document.getElementById("fieldSelect").value;
+
+						var i = 0;
+						for(var row = 1; row <= ySize; row++)
+						{
+							for (var cell = 1; cell <= xSize; cell++)
+							{
+								dataStr += encodeURI(data[i].pvName);
+								if (cell < xSize) dataStr += encodeURI(colDel);
+								i++;
+							}
+							dataStr += encodeURI(rowDel);
+						}
+
+						var link = document.createElement("a");
+						link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
+						link.setAttribute("style", "display:none");
+						link.setAttribute("download", "data_download.csv");
+						document.body.appendChild(link); // Required for FF
+
+						link.click(); // This will download the data file with filename *_download.csv
+
+						link.parentNode.removeChild(link);
+					};
+
+			} //end popupExportCSVTableForm()
+
+
+			//=====================================================================================
+			function uploadTableFromCSV(filename)
 			{
 				var tabledata = page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.tabledata;
 				tabledata = [];
@@ -3244,6 +3343,22 @@
 				page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow._ySize = ySize;
 				page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.tabledata = tabledata;
 
+				var attributesTable = document.getElementById("widgetAttributesTable");
+				for(var tr = 0; tr < attributesTable.getElementsByTagName("tr").length; tr++)
+				{
+					if(attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td").length > 0)
+					{
+						var tdButton = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0];
+						var parameter = tdButton.value;
+						if (parameter == "upload_csv_file")
+							attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value = filename + " uploaded";
+						else if(parameter == "export_csv_file")
+						{
+							tdButton.disabled = false;
+						}
+					}
+				}
+
 				createBottomPaneContent(130, 400, pvList);
 				addPVPaneToWidget();
 				console.log("uploadTableFromCSV(): pvList", pvList);
@@ -3251,9 +3366,9 @@
 
 
 			//=====================================================================================
-			function closeUploadFilePopup()
+			function closeFilePopup()
 			{
-				document.getElementById("popupLoadFile").style.display = "none";
+				document.getElementById("popupUploadSaveCsvFile").style.display = "none";
 			} //end closeUploadFilePopup()
 
 
@@ -4260,7 +4375,7 @@
 			  </div>
 			</div>
 
-			<div class='popup' id='popupLoadFile'></div>
+			<div class='popupCsv' id='popupUploadSaveCsvFile'></div>
 
 			<div class="editWidgetAttributesPopup-container" id="editWidgetAttributesPopup-container">
 			  <div class="editWidgetAttributesPopup-header" id="editWidgetAttributesPopup-header" ></div>
