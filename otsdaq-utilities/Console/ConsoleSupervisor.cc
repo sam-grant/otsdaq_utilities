@@ -471,13 +471,14 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 
 		SOAPParameters rxParameters;  // params for xoap to recv
 		rxParameters.addParameter("Command");
+		rxParameters.addParameter("Error");
 		rxParameters.addParameter("TRACEList");
 
 		std::string traceList = "";
 		auto& allTraceApps = allSupervisorInfo_.getAllTraceControllerSupervisorInfo();
 		for(const auto& appInfo: allTraceApps)
 		{
-			__SUP_COUT__ << "Supervisor LID = " << appInfo.first <<
+			__SUP_COUT__ << "Supervisor hostname = " << appInfo.first <<
 					"/" << appInfo.second.getId()
 					             << " name = " << appInfo.second.getName()
 					             << " class = " << appInfo.second.getClass()
@@ -492,11 +493,21 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 				SOAPUtilities::receive(retMsg, rxParameters);
 				__SUP_COUT__ << "Received TRACE response: " <<
 						SOAPUtilities::translate(retMsg).getCommand()
-						<< "==>" << SOAPUtilities::translate(retMsg) << __E__;
+						<< " ==> " << SOAPUtilities::translate(retMsg) << __E__;
 
 				if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
 				{
-					__SUP_SS__ << "Unrecognized command received!" << __E__;
+					__SUP_SS__ << "Unrecognized command at destination Supervisor hostname = " <<
+							appInfo.first <<
+								"/" << appInfo.second.getId()
+					             << " name = " << appInfo.second.getName()
+					             << " class = " << appInfo.second.getClass()
+					             << " hostname = " << appInfo.second.getHostname() << __E__;
+					__SUP_SS_THROW__;
+				}
+				else if(SOAPUtilities::translate(retMsg).getCommand() == "TRACEFault")
+				{
+					__SUP_SS__ << "Error received: " << rxParameters.getValue("Error") << __E__;
 					__SUP_SS_THROW__;
 				}
 			}
@@ -519,6 +530,115 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	{
 		__SUP_COUT__ << "requestType " << requestType << std::endl;
 
+		std::string individualValues    = CgiDataUtilities::postData(cgiIn, "individualValues");
+		std::string hostLabelMap    	= CgiDataUtilities::postData(cgiIn, "hostLabelMap");
+		std::string setMode     		= CgiDataUtilities::postData(cgiIn, "setMode");
+		std::string setValueMSB    		= CgiDataUtilities::postData(cgiIn, "setValueMSB");
+		std::string setValueLSB    		= CgiDataUtilities::postData(cgiIn, "setValueLSB");
+
+		__SUP_COUTV__(individualValues);
+		__SUP_COUTV__(setMode);
+		//set modes: SLOW, FAST, TRIGGER
+		__SUP_COUTV__(setValueMSB);
+		__SUP_COUTV__(setValueLSB);
+
+		std::map<std::string /*host*/, std::string /*labelArr*/ > hostToLabelMap;
+
+		auto& allTraceApps = allSupervisorInfo_.getAllTraceControllerSupervisorInfo();
+
+
+		SOAPParameters rxParameters;  // params for xoap to recv
+		rxParameters.addParameter("Command");
+		rxParameters.addParameter("Error");
+		rxParameters.addParameter("TRACEList");
+
+		std::string modifiedTraceList = "";
+		size_t a;
+		std::string artdaqHostSubstr;
+		StringMacros::getMapFromString(hostLabelMap,hostToLabelMap,{';'},{':'});
+		for(auto& hostLabelsPair:hostToLabelMap)
+		{
+			//identify artdaq hosts to go through ARTDAQ supervisor
+			//	by adding "artdaq.." to hostname artdaq..correlator2.fnal.gov
+			__SUP_COUTV__(hostLabelsPair.first);
+			__SUP_COUTV__(hostLabelsPair.second);
+
+			a = hostLabelsPair.first.find("artdaq..");
+			if(a == 0)
+				artdaqHostSubstr  = hostLabelsPair.first.substr(strlen("artdaq.."));
+			else
+				artdaqHostSubstr  = hostLabelsPair.first;
+
+//			std::vector<std::string /*labels*/> hostLabels;
+//			StringMacros::getVectorFromString(hostLabelsPair.second,hostLabels,{','});
+//			for(const auto& hostLabel:hostLabels)
+//			{
+//				__SUP_COUTV__(hostLabel);
+//			}
+			__SUP_COUTV__(artdaqHostSubstr);
+			for(auto& allTraceApp:allTraceApps)
+				__SUP_COUTV__(allTraceApp.first);
+
+			auto& appInfo = allTraceApps.at(artdaqHostSubstr);
+			__SUP_COUT__ << "Supervisor hostname = " << hostLabelsPair.first <<
+					"/" << appInfo.getId()
+					<< " name = " << appInfo.getName()
+					<< " class = " << appInfo.getClass()
+					<< " hostname = " << appInfo.getHostname() <<
+					__E__;
+			try
+			{
+
+				SOAPParameters txParameters;  // params for xoap to send
+				txParameters.addParameter("Request", "SetTraceLevels");
+				txParameters.addParameter("IndividualValues", individualValues);
+				txParameters.addParameter("Host", hostLabelsPair.first);
+				txParameters.addParameter("SetMode", setMode);
+				txParameters.addParameter("Labels", hostLabelsPair.second);
+				txParameters.addParameter("SetValueMSB", setValueMSB);
+				txParameters.addParameter("SetValueLSB", setValueLSB);
+
+				xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(appInfo.getDescriptor(),
+						"TRACESupervisorRequest",
+						txParameters);
+				SOAPUtilities::receive(retMsg, rxParameters);
+				__SUP_COUT__ << "Received TRACE response: " <<
+						SOAPUtilities::translate(retMsg).getCommand()
+						<< " ==> " << SOAPUtilities::translate(retMsg) << __E__;
+
+				if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
+				{
+					__SUP_SS__ << "Unrecognized command at destination Supervisor hostname = " <<
+							hostLabelsPair.first <<
+							"/" << appInfo.getId()
+							<< " name = " << appInfo.getName()
+							<< " class = " << appInfo.getClass()
+							<< " hostname = " << appInfo.getHostname() <<
+							__E__;
+					__SUP_SS_THROW__;
+				}
+				else if(SOAPUtilities::translate(retMsg).getCommand() == "TRACEFault")
+				{
+					__SUP_SS__ << "Error received: " << rxParameters.getValue("Error") << __E__;
+					__SUP_SS_THROW__;
+				}
+			}
+			catch(const xdaq::exception::Exception& e)
+			{
+				__SUP_SS__ << "Error transmitting request to FE Supervisor LID = "
+						<< appInfo.getId() << " name = " << appInfo.getName()
+						<< ". \n\n"
+						<< e.what() << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			modifiedTraceList        += rxParameters.getValue("TRACEList");
+
+
+		} //end host set TRACE loop
+
+		__SUP_COUT__ << "mod'd TRACE List received: \n" << modifiedTraceList << __E__;
+		xmlOut.addTextElementToData("modTraceList", modifiedTraceList);
 	}
 	else
 	{

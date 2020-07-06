@@ -37,52 +37,53 @@
 				float: right;
 				margin: 2px 2px 2px 20px;
 			}
-			
-			a {
-				text-decoration: none;
-				color: #4D2600;
-				font-weight: 800;
-				cursor: pointer;
+
+			button {
+				cursor:				pointer;
 			}
-			
+			a {
+				text-decoration: 	none;
+				color: 				#4D2600;
+				font-weight: 		800;
+				cursor: 			pointer;
+			}			
 			a:hover {
-				text-decoration: underline;
+				text-decoration: 	underline;
 			}
 						
 			.userTitle {
-				color: #4D2600;
-				font-style: italic;
-				text-decoration: underline;
+				color: 				#4D2600;
+				font-style: 		italic;
+				text-decoration: 	underline;
 			}
 			
 			.consoleLink {
-				font-size: 12px;
-				font-face: arial;	
-				font-weight: 400;	
+				font-size: 			12px;
+				font-face: 			arial;	
+				font-weight: 		400;	
 			}
 			
 			
 			.controlsCheckbox {
-				float : left;
-				margin-left: 0px;
-				/*margin-top: -4px;*/
-				margin-bottom: -10px;
+				float : 			left;
+				margin-left: 		0px;
+				margin-bottom: 		-10px;
 			}
 			
 			.controlsCheckbox div { 
-				float: left;
-				margin: -4px 6px 0 2px;
+				float: 				left;
+				margin: 			-4px 6px 0 2px;
 				
 			}
 			
 			.controlsCheckbox input {
-				float: left;
-				margin: 0 0 0 0;
+				float: 				left;
+				margin: 			0 0 0 0;
 			}
 			
 			#noWrapCheckboxText { /*make sure this checkbox doesnt wrap (haha) to new line*/
-				margin-right: -10px;
-				margin-bottom: 18px; /*push down 2nd row*/
+				margin-right: 		-10px;
+				margin-bottom: 		18px; /*push down 2nd row*/
 			}
 			
 			
@@ -221,7 +222,10 @@
 				display:			none;
 				z-index:			1000;
 				padding: 			15px 2px 15px 15px;
-				
+
+				-webkit-user-select:none; /* to stop text highlights */
+				-moz-user-select: 	none;
+				user-select: 		none;	
 			}
 			
 			#advancedArea {
@@ -245,24 +249,27 @@
 			#advancedControlsTable {
 				overflow-x:			auto;
 				overflow-y:			hidden;
-				width:				100%;
-				height:				calc(100% - 10px);
+				width:				calc(100% + 9px);
+				height:				calc(100% - 53px);
+				margin: 			0 0 0 -12px;
 				
 				background-color: 	rgba(0,0,0,0.1);
 				border: 			1px solid rgba(0,0,0,0.2);
+				border-top: 		2px solid rgba(255,255,255,0.5);
 			}
 			#advancedControlsTableHeader {
 				width:				fit-content;
 				background-color: 	rgba(0,0,0,0.2);
-				height: 			14px;
+				height: 			16px;
 				border-bottom: 		1px solid rgba(0,0,0,0.3);
 				margin-bottom: 		1px;
 			}
 			#advancedControlsTableHeader div{				
 				border-left:		1px solid rgba(0,0,0,0.3);
 				border-right:		1px solid rgba(0,0,0,0.3);
-				padding:			0 4px;
-				float:				left;				
+				padding:			2px 4px 1px;
+				float:				left;	
+				font-weight:		bold;
 			}
 			#advancedControlsTableRows {
 				overflow-x:			hidden;
@@ -274,7 +281,7 @@
 				white-space:		nowrap;
 				border-left:		1px solid rgba(0,0,0,0.3);
 				border-right:		1px solid rgba(0,0,0,0.3);
-				padding:			1px 4px;
+				padding:			2px 4px 0;
 			}
 			#advancedControlsTableRows tr:nth-child(even) {
 				background: 		rgba(255,255,255,0.3);
@@ -298,7 +305,7 @@
 			    background-color: 	rgb(239, 160, 63);				
 			}
 			.ac_maskbitON {
-			    background-color: 	rgb(117, 255, 117);
+			    background-color: 	rgb(102, 255, 51);
 			    border-top: 		1px solid white;
 			    border-bottom: 		1px solid green;
 			}
@@ -315,17 +322,24 @@
 			    border-radius:		2px;
 			    font-size:			11px;
 			    box-shadow: 		1px 1px 5px #666;
-			    width:				232px;
+			    width:				260px;
 			}
 			
 			.ac_checkboxSelect {
 			    margin: 			-1px -3px -3px;
 			    cursor:				pointer;
 			}
+			#advancedControlsTableHeader .ac_checkboxSelect {
+		    	margin: 			-1px -3px -3px;
+		    }
+		    #advancedControlsTableRows .ac_checkboxSelect {
+		    	margin: 			1px -3px -3px;
+		    }			
 			
-			button {
-				cursor:				pointer;
-			}
+			#ac_bitstringEditable {
+				margin: 			4px 0 4px 22px;
+				height: 			12px;
+		    }
 		</style>
 				
 
@@ -398,17 +412,25 @@
 				//downloadMessages()
 				
 				//showAdvancedControls()
+				//handleAdvancedGetTraceLevels(req)
 				//closeAdvancedControls()
+				//handleAdvancedPageSelect(page)
+				//handleAdvancedFilterInput()
 				//drawAdvancedControls(page)
 				//applyAdvancedControlsFilter()
+				//advancedHelperGetHosts(labeli)
+				//advancedSetBitMask()
+				//advancedToggleAllCheckboxes(allChecked)
+				//advancedEditDelaySet()
 			
-				//createEditableBitMask(val64,label)
-				//handleBitMouseOver(e,label,b) 
-				//handleBitMouseDown(e,label,b)
-				//		//handleBitMouseOut(e,label,b)
-				//handleBitMouseMove(e,label,b) 
-				//handleBitRightClick(e,label,b) 
+				//createEditableBitMask(val64,label,inExistingEl,labeli)				
+				//handleBitMouseOver(e,label,b,labeli) 
+				//handleBitMouseDown(e,label,b,labeli)
+				//handleBitMouseUp(e,label,b,labeli)
+				//handleBitMouseMove(e,label,b,labeli) 
+				//handleBitRightClick(e,label,b,labeli) 
 				//handleMouseMove(e)
+				
 			
 			var _linkEl, _consoleEl, _historyEl, _historyContainerEl, _usersEl, _usersContainerEl;
 			var _controlsContainerEl, _controlsEl, _advancedContainerEl, _advancedEl;
@@ -482,14 +504,42 @@
 				
 			var _traceLevels = {}; //map of host: {label: {M:[X,X],S:[X,X],T:[X,X]} }
 			var _traceLabelPresence = {}; //map of label: {host:1}
-			var _traceHostSelect = {mode: 0, hosts: []};  //mode: 0 is require 1 host and set to all,
-			                  	  	  	  	  	  	  	  //mode: 1 is require all hosts and set to all,
-														  //mode: 2 is require 1 host and set to 1 host
+			var _traceHostSelect = {mode: 0, hosts: [], sortBy: _traceHostSelect_SORT_BYCOUNT};   
+														//mode: 0 is require 1 host and set to all,
+			                  	  	  	  	  	  	  	//mode: 1 is require all hosts and set to all,
+														//mode: 2 is require 1 host and set to 1 host
+														//sortBy: controls label order
+			var _traceHostSelect_MODE_ANYLABEL = 0;
+			var _traceHostSelect_MODE_LABELONALL = 1; 
+			var _traceHostSelect_MODE_LABELBYHOST = 2;
+			
+			var _traceHostSelect_SORT_BYCOUNT = 0;
+			var _traceHostSelect_SORT_BYLABEL = 1;
+			var _traceHostSelect_SORT_BYMASK = 2;
+			var _traceHostSelect_SORT_BYHOST = 3;
+			var _traceHostSelect_SORT_BYCOUNT_REV = 4;
+			var _traceHostSelect_SORT_BYLABEL_REV = 5;
+			var _traceHostSelect_SORT_BYMASK_REV = 6;
+			var _traceHostSelect_SORT_BYHOST_REV = 7;			
+			
+			
 			var _traceBIT_STANDARDS = {0: "Error", 1: "Warning", 2: "Info", 3: "Debug"};
-			var _advancedPage = undefined;
+			var _advancedPage_SLOW = 0;
+			var _advancedPage_FAST = 1;
+			var _advancedPage_TRIGGER = 2;
+			var _advancedPage_HOST = 3;
+			var _advancedPage = _advancedPage_SLOW; //default to slow view
 			var _advancedPopup = undefined;
-			var _advancedEditBitMask = [0,0]; //64bits = 2 32-bit numbers
+			var _advancedContextMenuBlock = false;
+			var _advancedEditBitMask = [0/*msb*/,0 /*lsb*/]; //64bits = 2 32-bit numbers
 			var _advancedButtonDown = -1;
+			var _advancedLastBitDown = [-1 /*labeli*/,-1 /*bit*/];
+			
+			var _advancedEditDelaySetTimer = 0;
+			var _advancedEditModifiedLabels = {}; //map of host to labels that have been modified (and the label value)
+
+			var _advancedFilterDelaySetTimer = 0;
+			var _advancedFilterINIT_VAL = "Wildcard(*) filter here.";
 			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -563,7 +613,9 @@
 				document.body.oncontextmenu = handleBitRightClick;
 				document.body.onmouseup = handleMouseUp;
 				document.body.onmousedown = handleBitMouseDown;
-				
+				document.body.onmouseleave = handleMouseUp;
+
+				document.body.style.display = "block";
 			} //end init()
 
 			//=====================================================================================
@@ -618,13 +670,14 @@
 
 					document.getElementsByTagName('head')[0].appendChild(_noWrapStyleEl);
 				}
-			}
+			} //end toggleNoWrap()
 			
 			//=====================================================================================
 			//toggleHideLineNumber ~
 			// 	toggle hide line numbers on/off. Use e to determine if function call came from checkbox or link	
 			//	Note: when from checkbox, event gives stale value.
-			function toggleHideLineNumber(e, setVal, doNotSave) {	
+			function toggleHideLineNumber(e, setVal, doNotSave) 
+			{	
 				
 				if(_hideLineNumbersCheckbox.disabled) return; //do nothing if disabled
 
@@ -670,13 +723,14 @@
 
 					document.getElementsByTagName('head')[0].appendChild(_hideLineStyleEl);
 				}
-			}
+			} //end toggleHideLineNumber()
 			
 			//=====================================================================================
 			//toggleCompactView ~
 			// 	toggle compact view on/off. Use e to determine if function call came from checkbox or link	
 			//	Note: when from checkbox, event gives stale value.
-			function toggleCompactView(e, setVal, doNotSave) {			
+			function toggleCompactView(e, setVal, doNotSave)
+			{			
 				if(_compactViewCheckbox.disabled) return; //do nothing if disabled
 								
 				if(!e) _compactViewCheckbox.checked = !_compactViewCheckbox.checked; //do action if from link
@@ -724,7 +778,7 @@
 					document.getElementsByTagName('head')[0].appendChild(_compactStyleEl);
 				}
 
-			}
+			} //end toggleCompactView()
 			
 			//=====================================================================================
 			//redrawConsoleWindow ~
@@ -733,6 +787,9 @@
 			{						    
 			    var w = window.innerWidth;
 			    var h = window.innerHeight;
+			    
+			    if(w < 540) w = 540;
+			    if(h < 300) h = 300;
 			    
 			    Debug.log("Chat redrawChat to " + w + " - " + h);
 			    			     
@@ -776,7 +833,9 @@
 
 				if(_scrollWithNewChats)
 					_historyEl.scrollTop = _historyEl.scrollHeight;
-			}		
+				
+
+			}	//end redrawConsoleWindow()	
 			
 			//=====================================================================================
 			//convertForClient ~
@@ -922,9 +981,6 @@
 				str += "<a id='filterControlsLink' class='consoleLink' " +
 						"href='Javascript:toggleFilterControls();' " + 
 						"title='Toggle Filter Controls' >Hide Filters</a>";
-//				str += "<a id='PauseControlsLink' class='consoleLink' " +
-//						"href='Javascript:togglePauseControls();' " + 
-//						"title='Toggle Pause and Resume Updates' >Pause</a>";
 				str += "<a id='advancedControlsLink' class='consoleLink' " +
 						"onclick='showAdvancedControls();' " + 
 						"title='Show advanced controls' >Advanced</a>";
@@ -1334,7 +1390,7 @@
 				else
 					_consoleUpdateTimer = window.setTimeout(getConsoleUpdates,_REFRESH_INTERVAL); //schedule next update		
 
-				var el = document.getElementById("PauseControlsLink");
+				var el = document.getElementById("pauseControlsLinkText");
 				el.innerHTML = pause?"Resume":"Pause";				
 			} //end togglePauseControls()
 
@@ -1412,94 +1468,107 @@
 				DesktopContent.XMLHttpRequest(
 						"Request?RequestType=GetTraceLevels",
 						"",
-						function(req)
-						{
-					Debug.log("GetTraceLevels req",req);
-					
-					//Error 0
-					//Warning 1
-					//Info   2
-					//Debug 3
-					//Trace 4
-					//5.. 63 whatever you want
-					
-					/*
-					 * Notes: 
-					 * time delta is useful (maybe colorizing by difference)
-					 *  time delta should ignore messages taht were filtered
-					 *  
-					 *  tshow dump should have delta option
-					 *  and color option of pid and severity
-					 */
-					 
-					
-					//Trigger 
-					/*
-					 * https://cdcvs.fnal.gov/redmine/projects/trace/wiki/TRACE_Users_Guide#Using-Trigger-Mode
-					 * 
-					 * has 3 fields trigIdxCnt, triggered, trigActivePost
-					 * 
-					 * 	trigIdxCnt shows which message cause the trigger..
-					 * 	triggered is 1 if has been triggered
-					 * 	trigActivePost is the number of messages to keep after trigger
-					 * 	
-					 * Can not turn off slow level 0
-					 * 
-					 * Triggering stops the memory after arming and count of post messages.
-					 * 
-					 * Memory mode is tshow
-					 *   tshow | grep ' ' | tdelta
-					 * 
-					 * COUT uses slow
-					 * add script to otsdaq on configure start to reset trace memory and at end keep tshow &> file.tosave
-					 * 
-					 * TRACE is the label that is a "global" mast for triggering
-					 * 
-					 * _TRACE_ is overflow label
-					 */
-					
-					var traceList = DesktopContent.getXMLValue(req,"traceList");
-					
+						handleAdvancedGetTraceLevels); //end get trace levels request
+			} //end showAdvancedControls()
+
+			//=====================================================================================
+			function handleAdvancedGetTraceLevels(req) 
+			{
+				Debug.log("handleAdvancedGetTraceLevels req",req);
+
+				//Error 0
+				//Warning 1
+				//Info   2
+				//Debug 3
+				//Trace 4
+				//5.. 63 whatever you want
+
+				/*
+				 * Notes: 
+				 * time delta is useful (maybe colorizing by difference)
+				 *  time delta should ignore messages taht were filtered
+				 *  
+				 *  tshow dump should have delta option
+				 *  and color option of pid and severity
+				 */
+
+
+				//Trigger 
+				/*
+				 * https://cdcvs.fnal.gov/redmine/projects/trace/wiki/TRACE_Users_Guide#Using-Trigger-Mode
+				 * 
+				 * has 3 fields trigIdxCnt, triggered, trigActivePost
+				 * 
+				 * 	trigIdxCnt shows which message cause the trigger..
+				 * 	triggered is 1 if has been triggered
+				 * 	trigActivePost is the number of messages to keep after trigger
+				 * 	
+				 * Can not turn off slow level 0
+				 * 
+				 * Triggering stops the memory after arming and count of post messages.
+				 * 
+				 * Memory mode is tshow
+				 *   tshow | grep ' ' | tdelta
+				 * 
+				 * COUT uses slow
+				 * add script to otsdaq on configure start to reset trace memory and at end keep tshow &> file.tosave
+				 * 
+				 * TRACE is the label that is a "global" mast for triggering
+				 * 
+				 * _TRACE_ is overflow label
+				 */
+
+				var traceList = DesktopContent.getXMLValue(req,"traceList");
+				var modTraceList = DesktopContent.getXMLValue(req,"modTraceList");
+
+				if(traceList)
+				{
 					_traceLevels = {}; //clear
 					_traceLabelPresence = {}; //clear
-					
 					var hostTraceArr = traceList.split(';');
-					for(var i=0;i<hostTraceArr.length;++i)
-					{
-						var fieldTraceArr = hostTraceArr[i].split(',');
-						if(fieldTraceArr.length < 3 ||
-								(fieldTraceArr.length + 1)%2 != 0)
-						{
-							Debug.log("Skipping incomplete host trace masks:",hostTraceArr[i]);
-							continue;
-						}
+				}
+				else //use modTraceList
+					var hostTraceArr = modTraceList.split(';');
 
-						Debug.log("Getting TRACE labels for host =",fieldTraceArr[0]);
+				for(var i=0;i<hostTraceArr.length;++i)
+				{
+					var fieldTraceArr = hostTraceArr[i].split(',');
+					if(fieldTraceArr.length < 3 ||
+							(fieldTraceArr.length + 1)%2 != 0)
+					{
+						Debug.log("Skipping incomplete host trace masks:",hostTraceArr[i]);
+						continue;
+					}
+
+					Debug.log("Getting TRACE labels for host =",fieldTraceArr[0]);
+					
+					//start object if not present
+					if(!_traceLevels[fieldTraceArr[0]]) 
 						_traceLevels[fieldTraceArr[0]] = {};
-						for(var j=1;j<fieldTraceArr.length;j+=4)
-						{
-							var maskVals = fieldTraceArr[j+1].split(':');
-							_traceLevels[fieldTraceArr[0]][fieldTraceArr[j+0]] = {
+					
+					for(var j=1;j<fieldTraceArr.length;j+=4)
+					{
+						var maskVals = fieldTraceArr[j+1].split(':');
+						_traceLevels[fieldTraceArr[0]][fieldTraceArr[j+0]] = {
 								"M" : [maskVals[1],maskVals[2]],
 								"S" : [maskVals[4],maskVals[5]],
 								"T" : [maskVals[6],maskVals[7]],
-							};
-							
-							//start object if not present
-							if(!_traceLabelPresence[fieldTraceArr[j+0]])
-								_traceLabelPresence[fieldTraceArr[j+0]] = {};
-							
-							_traceLabelPresence[fieldTraceArr[j+0]][fieldTraceArr[0]] = 1; //include this host
-						}
-					}
-					Debug.log("Trace host map object",_traceLevels);
-					Debug.log("Trace label map object",_traceLabelPresence);
-				
-					drawAdvancedControls(0 /*slow*/);
-					
-						}); //end get trace levels request
-			} //end showAdvancedControls()
+						};
 
+						//start object if not present
+						if(!_traceLabelPresence[fieldTraceArr[j+0]])
+							_traceLabelPresence[fieldTraceArr[j+0]] = {};
+
+						_traceLabelPresence[fieldTraceArr[j+0]][fieldTraceArr[0]] = 1; //include this host
+					}
+				}
+				Debug.log("Trace host map object",_traceLevels);
+				Debug.log("Trace label map object",_traceLabelPresence);
+
+				drawAdvancedControls();
+
+			} //end handleAdvancedGetTraceLevels()
+			
 			//=====================================================================================
 			//drawAdvancedControls ~
 			//	page is select index 
@@ -1509,13 +1578,48 @@
 
 				_advancedContainerEl.style.display = "none";
 			} //end closeAdvancedControls()
+			
+			//=====================================================================================
+			//handleAdvancedPageSelect ~
+			function handleAdvancedPageSelect(page) 
+			{
+				Debug.log("handleAdvancedPageSelect()",page);
 
+				if(page != _advancedPage_HOST)
+					drawAdvancedControls(page);
+				
+			} //end handleAdvancedPageSelect()
+			
 			//=====================================================================================
 			//drawAdvancedControls ~
 			//	page is select index 
 			function drawAdvancedControls(page) 
 			{					
-				Debug.log("drawAdvancedControls()");	    
+				Debug.log("drawAdvancedControls() page=",page);
+				
+				var delaySetKeys = Object.keys(_advancedEditModifiedLabels);
+				if(page !== undefined &&
+						(page|0) !== _advancedPage &&
+						delaySetKeys.length)
+				{
+					
+					//if page change and there is a delay set queue, 
+					//	then launch delay set
+					Debug.log("Launch edit queue in response to page change!");
+					advancedEditDelaySet();
+				}
+				
+				if(page === undefined)
+					page = _advancedPage;
+				else
+					_advancedPage = page|0;
+				
+				var filterStr = document.getElementById("ac_searchBox");
+				if(filterStr)
+					filterStr = filterStr.value;
+				else
+					filterStr = _advancedFilterINIT_VAL;
+				
 				var str = "";
 				
 				//Page is menu at top				
@@ -1528,16 +1632,36 @@
 				str += "<div id='advancedControlsCloseButton' onclick='closeAdvancedControls()'>X</div>";
 				
 				
-				str += "<div id='advancedControlsMenu'>";
+				str += "<div id='advancedControlsMenu' oncontextmenu='_advancedContextMenuBlock=true;'>";
 				str += htmlOpen("img",
 						{
 							"src" : 	"/WebPath/images/windowContentImages/magnifying-glass.png",
 							"style": 	"margin: -7px 0 -10px 0; width: 30px;",
 						});
-				str += "<input type='text' id='ac_searchBox' />";
 				
+				str += htmlOpen("input",
+						{
+								"id" 	: 	"ac_searchBox", 
+								"type" 	: 	"text",
+								
+								"autocomplete" : 	"off",
+								"autofill" : 		"off",
+								"autocorrect" :		"off",
+								"autocapitalize": 	"off",
+								"spellcheck":		"false",
+										
+								//allow right-click in text
+								"oncontextmenu" :	"_advancedContextMenuBlock=false; event.stopPropagation();",
+								"onfocus" : 'Debug.log("focus",this.value); ' +
+									'if(this.value == _advancedFilterINIT_VAL) {this.value = ""; this.style.color = "black";} ',
+								"oninput" : "window.clearTimeout(_advancedFilterDelaySetTimer); " +
+									"_advancedFilterDelaySetTimer = window.setTimeout(applyAdvancedControlsFilter,500);",
+								"style"	:	(filterStr == _advancedFilterINIT_VAL?"color:gray;":"color:black"),
+								"value" :	filterStr,
+						},"",true);
+
 				str += " View: ";
-				str += "<select id='ac_viewSelect'>";
+				str += "<select id='ac_viewSelect' onchange='handleAdvancedPageSelect(this.selectedIndex);'>";
 				
 				var options = ["Slow/Cout","Fast/Memory","Triggering","Host Select"];
 				for(var i=0;i<options.length;++i)
@@ -1548,20 +1672,12 @@
 				str += "</select>";
 				
 				str += htmlClearDiv();
-				
-//				str += htmlOpen("a",
-//						{
-//							"class" : "ac_menuLink" 
-//						},"all",true);
-//
-//				str += htmlOpen("a",
-//						{
-//							"class" : "ac_menuLink" 
-//						},"none",true);
-				
+								
 				str += htmlOpen("button",
 						{
-							"style" : "margin: 0 10px 0 5px;", 
+							"style" : 	"margin: 4px 10px 0 5px;", 
+							"title" : 	"Apply the editable bit mask to all checked/selected labels.",
+							"onclick":	"advancedSetBitMask();",
 						},"Set",true);
 				
 				str += htmlOpen("select",
@@ -1574,11 +1690,19 @@
 				str += "<option>Warning Preset</option>";
 				str += "<option>Error Preset</option>";
 				str += "</select>"; //end set type select
-				
 
+				str += htmlOpen("div",
+						{
+							"id"	: 	"ac_selectedCaption",
+							"style" : 	"margin: 0 0 0 5px; display: inline;", 
+							"title" : 	"Click a label to include, and right-click to exclued from the selected labels.",
+						},"No checkboxes selected.",true);
+
+				str += htmlClearDiv();
+				
 				str += createEditableBitMask(
 						_advancedEditBitMask,
-						undefined);
+						undefined /*label*/);
 				
 				str += "</div>"; //close ac_bitstring
 				
@@ -1589,7 +1713,9 @@
 				str += "<div id='advancedControlsTableHeader'>"; //scroll rows vertically
 				
 				str += "</div>"; //end advancedControlsTable tag
-				str += "<div id='advancedControlsTableRows'>"; //scroll rows vertically
+				
+				str += htmlClearDiv();
+				str += "<div id='advancedControlsTableRows' oncontextmenu='_advancedContextMenuBlock=true;'>"; //scroll rows vertically
 				
 				str += "</div>"; //end advancedControlsTable tag
 				str += "</div>";
@@ -1600,12 +1726,10 @@
 					});
 				_advancedEl.innerHTML = str;
 				
-				_advancedPage = page|0;
 				_advancedPopup = document.getElementById("ac_popupBox");
 				
 				applyAdvancedControlsFilter();
-			} //end drawAdvancedControls()
-			
+			} //end drawAdvancedControls()			
 
 			//=====================================================================================
 			//applyAdvancedControlsFilter ~
@@ -1614,7 +1738,8 @@
 				Debug.log("applyAdvancedControlsFilter()");
 			    
 				var COL_NAMES = ["Select","Label","SeverityMask","HostPresence"];
-				var COL_DISPLAY_NAMES = ["<input type='checkbox' class='ac_checkboxSelect' />",
+				var COL_DISPLAY_NAMES = [										 
+										 "<input type='checkbox' class='ac_checkboxSelect' onclick='advancedToggleAllCheckboxes(this.checked);'/>",
 										 "Label","Severity Mask","Hosts"];
 				
 				var str = "";
@@ -1622,166 +1747,494 @@
 				var isFirst = true;
 				
 				var labeli = 0;
-				for(var label in _traceLabelPresence)
-				{
-					++labeli;
-					str += "<tr>";
+				var hosts = Object.keys(_traceLevels);
+				var filterStr = document.getElementById("ac_searchBox").value;
+				if(filterStr == _advancedFilterINIT_VAL)
+					filterStr = "";
+				else
+					filterStr = filterStr.toUpperCase();
+				
+				//apply sorting
+				var sortedLabels = [];// _traceLabelPresence; //default no sort
+				//TODO sort
+				//if(_traceHostSelect.sortBy == _traceHostSelect_SORT_BYCOUNT)
+				//{
+					//for array
+					//sortedLabels.sort(); //default is alpha increasing
+					//to reverse do  sortedLabels.reverse();
+				//}
 
-					for(var i=0;i<COL_NAMES.length;++i)
+				for(var label in _traceLabelPresence)
+				{	
+					sortedLabels.push(label);
+				}
+				//case-insensive sort
+				sortedLabels.sort(function(a, b) 
+						{
+					  var aA = a.toUpperCase(); // ignore upper and lowercase
+					  var bB = b.toUpperCase(); // ignore upper and lowercase
+					  if (aA < bB)
+					    return -1;
+
+					  if (aA > bB)
+					    return 1;
+					  
+					  // names must be equal
+					  return 0;
+						}); //end case-insensive sort function
+				//==========================
+				function localFilterRule(str, rule) 
+				{
+				  var escapeRegex = (str) => str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+				  return new RegExp("^" + rule.split("*").map(escapeRegex).join(".*") + "$").test(str);
+				} //end localFilterRule()
+				
+				//apply host select filter and text matching	
+				for(var a=0;a<sortedLabels.length;++a) //for(var label in _traceLabelPresence)
+				{	
+					var label = sortedLabels[a];
+					var hostPresence = Object.keys(_traceLabelPresence[label]);
+					
+					//if requiring label to be on all hosts and not true, skip
+					if(_traceHostSelect.mode == _traceHostSelect_MODE_LABELONALL &&
+							hostPresence.length != hosts.length)
+						continue;
+					
+					//skip if filter string eliminates
+					if(filterStr != "" && !localFilterRule(label.toUpperCase(),filterStr)) //label.toUpperCase().indexOf(filterStr) < 0)
+						continue;
+					
+					for(var ll=0;
+							//if by host, then create row for each host
+							(_traceHostSelect.mode != _traceHostSelect_MODE_LABELBYHOST && ll == 0) || 
+									ll<hostPresence.length;++ll)	
 					{
-						str += "<td" + (isFirst?(" id='ac_first" + 
-								COL_NAMES[i] + "'"):"") + ">";
-								
-						if(i == 1)
-							str += label;
-						else if(i == 0)
-							str += "<input type='checkbox' class='ac_checkboxSelect' />";
-						else if(i == 2)
+						str += "<tr class='ac_row'>";
+
+						for(var i=0;i<COL_NAMES.length;++i)
 						{
-							str += createEditableBitMask(
-								_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S,
-								label);
-						}
-						else if(i == 3)
-						{
-							var keys = Object.keys(_traceLabelPresence[label]);
-							
-							if(keys.length == 1)
-								str += keys[0];
-							else if(keys.length > 1)
+							str += "<td" + (isFirst?(" id='ac_first" + 
+									COL_NAMES[i] + "'"):"") + ">";
+
+							if(i == 1)
+								str += label;
+							else if(i == 0)
+								str += "<input type='checkbox' class='ac_checkboxSelect' />";
+							else if(i == 2)
 							{
-								var hosts = Object.keys(_traceLevels);
-								
-								if(keys.length == hosts.length)
-									str += "All";
-								else //give a list of hosts
+								if(_advancedPage == _advancedPage_SLOW)
+									var val64 = _traceLevels[hosts[0]][label].S;
+								else if(_advancedPage == _advancedPage_FAST)
+									var val64 = _traceLevels[hosts[0]][label].M;
+								else if(_advancedPage == _advancedPage_TRIGGER)
+									var val64 = _traceLevels[hosts[0]][label].T;
+								else
 								{
-									for(var j=0;j<hosts.length;++j)
-										str += (j?';':'') + hosts[j];
+									Debug.err("Unknown page mode " +
+											_advancedPage + "! Notify admins.");
+									return;
 								}
+
+								str += createEditableBitMask(
+										val64,
+										label, undefined /*inExistingEl*/, labeli);
+							}
+							else if(i == 3)
+							{
+
+								if(hostPresence.length == 1)
+									str += hostPresence[0];
+								else if(hostPresence.length > 1)
+								{									
+									if(hostPresence.length == hosts.length)
+										str += "All";
+									else //give a list of hosts
+									{
+										for(var j=0;j<hosts.length;++j)
+											str += (j?';':'') + hosts[j];
+									}
+								}
+								else
+								{
+									Debug.err("Impossible TRACE label:host error! Notify admins.");
+									return;
+								}
+
 							}
 							else
 							{
-								Debug.err("Impossible TRACE label:host error! Notify admins.");
+								Debug.err("Impossible TRACE Column error! Notify admins.");
 								return;
 							}
-								
+							str += "</td>";
 						}
-						else
-						{
-							Debug.err("Impossible TRACE Column error! Notify admins.");
-							return;
-						}
-						str += "</td>";
-					}
-					str += "</tr>";			
-					isFirst = false;
-				}
+						str += "</tr>";			
+						isFirst = false;
+						++labeli;
+					} //end label by host loop
+				} //end label loop
+				
+				if(!labeli)
+					str += "<tr class='ac_row'><td width='100%'>No Labels matched your selections.</td></tr>";
+				
 				str += "</table>";
 				
 				var el = document.getElementById("advancedControlsTableRows");
 				el.innerHTML = str;
 				var hel = document.getElementById("advancedControlsTableHeader");
-				hel.style.width = el.offsetWidth  + "px";
+				if(!labeli)
+					hel.style.width = "fit-content";
+				else
+					hel.style.width = el.offsetWidth  + "px";
 				
 				str = "";
-//				str += "<table style='width:" + el.offsetWidth  + "px'>";
-//				str += "<tr>";
 				//now get width of columns and apply to header table
 				for(var i=0;i<COL_NAMES.length;++i)
 				{
 					var el = document.getElementById("ac_first" + COL_NAMES[i]);
-					Debug.log("First row-col width ",COL_NAMES[i],
-							el.offsetWidth);
+					var w = el?((el.offsetWidth-10 /*4 padding + 1 border left/right */) +
+							"px"):"fit-content";
+					
+					Debug.log("First row-col width ",COL_NAMES[i],w);
 					//match width of column to fake like same table
-					//if(i < 2)
-						str += "<div style='width:" + 
-								(el.offsetWidth-10 /*4 padding + 1 border left/right */) +
-								"px;'>";
-					//else 
-					//	str += "<div>";
+					
+					str += "<div style='width:" + w + "'>";
+					
 					str += COL_DISPLAY_NAMES[i];
 					str += "</div>";
-				}
-				//str += "</tr>";		
-				//str += "</table>";
+				} //end column headers loop
 
 				hel.innerHTML = str;
 
 			} //end applyAdvancedControlsFilter()
 
 			//=====================================================================================
-			function createEditableBitMask(val64,label)
+			function advancedHelperGetHosts(labeli)
+			{
+				Debug.log("advancedHelperGetHosts()",labeli);
+				
+				var rows = document.getElementsByClassName("ac_row");
+				//hosts is column 3
+				labeli |= 0;
+				Debug.log("Rows",rows.length,"labeli",labeli);
+				if(labeli < 0 || labeli >= rows.length)
+				{
+					Debug.err("Illegal label index " + labeli + " with " +
+							rows.length + " rows! Notify admins.");
+					return undefined;
+				}
+
+				return rows[labeli].children[3].innerText.split(':');
+			} //end advancedHelperGetHosts()
+			
+			//=====================================================================================
+			function advancedSetBitMask()
+			{
+				Debug.log("advancedSetBitMask()",_advancedPage);
+				
+				var modeStr = "";
+				if(_advancedPage == _advancedPage_SLOW)
+					modeStr = "SLOW";
+				else if(_advancedPage == _advancedPage_FAST)
+					modeStr = "FAST";
+				else if(_advancedPage == _advancedPage_TRIGGER)
+					modeStr = "TRIGGER";
+				else
+				{
+					Debug.err("Invalid set mode! Notify admins.");						
+					return;
+				}
+							
+				
+				var rows = document.getElementsByClassName("ac_row");
+				
+				//check for setting ALL labels
+				//	if rows.length matches number of labels in the system, then consider ALL
+				//	else some labels have been filtered
+				var isAllLabels = false;
+				if(rows.length == Object.keys(_traceLabelPresence).length)
+				{
+					Debug.log("is ALL labels!");
+					isAllLabels = true;
+				}
+				
+				//Steps:
+				//	- organize set labels by host
+				//	- map 'All' hosts to all existing in global host map
+				var setObj = {}; //map of host: [label,...]
+				
+				
+				for(var r=0;r<rows.length;++r)
+				{
+					var checked = rows[r].children[0].children[0].checked;
+					if(!checked) 
+					{
+						isAllLabels = false;
+						continue;
+					}
+					
+					var label = rows[r].children[1].innerText;
+					var hosts = rows[r].children[3].innerText.split(':');
+					Debug.log("Row",checked,label,hosts);
+
+					for(var h=0;h<hosts.length;++h)
+					{
+						if(hosts[h].length < 2) continue;
+						
+						if(hosts[h] == "All")
+						{
+							for(var hh in _traceLevels)
+							{
+								if(!setObj[hh])
+									setObj[hh] = [];
+								setObj[hh].push(label);
+							}
+							continue;
+						}
+							
+						if(!_traceLevels[hosts[h]][label])
+						{
+							Debug.err("Host+Label combo is not in Trace levels! Notify admins.");						
+							return;
+						}
+						
+						if(!setObj[hosts[h]])
+							setObj[hosts[h]] = [];
+						setObj[hosts[h]].push(label);
+						
+					} //end host loop					
+				} //end row loop
+				
+				Debug.log("setObj",setObj);
+				
+					
+				var setStr = "";
+				//;host,label,..label;host,label,..label
+				for(var hh in setObj)
+				{
+					setStr += ";" + hh; //add host name
+					if(isAllLabels)
+						setStr += ":ALL"; //ALL is special TRACE interface keyword for the global set
+					else
+					{
+						for(var i=0;i<setObj[hh].length;++i)
+						{
+							setStr += (i?",":":") + setObj[hh][i];
+						} //end label loop
+					} 
+				} //end host loop
+
+				Debug.log("setStr",setStr);				
+
+				DesktopContent.XMLHttpRequest(
+						"Request?RequestType=SetTraceLevels",
+						"hostLabelMap=" + setStr +
+						"&setMode=" + modeStr +
+						"&setValueMSB=" + _advancedEditBitMask[0] +
+						"&setValueLSB=" + _advancedEditBitMask[1],
+						handleAdvancedGetTraceLevels);
+			} //end advancedSetBitMask()
+
+			//=====================================================================================
+			function advancedToggleAllCheckboxes(allChecked)
+			{
+				Debug.log("advancedToggleAllCheckboxes",allChecked);
+
+				var rows = document.getElementsByClassName("ac_row");
+
+				for(var r=0;r<rows.length;++r)
+					rows[r].children[0].children[0].checked = allChecked;
+				
+			} //end advancedToggleAllCheckboxes()
+			
+			//=====================================================================================
+			function advancedEditDelaySet()
+			{
+				Debug.log("advancedEditDelaySet",_advancedEditModifiedLabels);
+
+				//set timer to undefine to indicate writing taking place
+				window.clearTimeout(_advancedEditDelaySetTimer);
+				_advancedEditDelaySetTimer = undefined;
+				
+				var setStr = "";
+				//;host:label,valMSB,valLSB,..label,valMSB,valLSB;host:label,valMSB,valLSB,..label,valMSB,valLSB
+				for(var hh in _advancedEditModifiedLabels)
+				{
+					setStr += ";" + hh; //add host name
+					var i = 0;
+					for(var label in _advancedEditModifiedLabels[hh])
+					{						
+						setStr += (i++?",":":") + label + "," + 
+								_advancedEditModifiedLabels[hh][label][0] /*msb*/ + "," +
+								_advancedEditModifiedLabels[hh][label][1] /*lsb*/;
+					} //end label loop
+				} //end host loop
+
+				Debug.log("setStr",setStr);
+				
+				var modeStr = "";
+				if(_advancedPage == _advancedPage_SLOW)
+					modeStr = "SLOW";
+				else if(_advancedPage == _advancedPage_FAST)
+					modeStr = "FAST";
+				else if(_advancedPage == _advancedPage_TRIGGER)
+					modeStr = "TRIGGER";
+				else
+				{
+					Debug.err("Invalid set mode! Notify admins.");						
+					return;
+				}
+
+				DesktopContent.XMLHttpRequest(
+						"Request?RequestType=SetTraceLevels",						
+						"hostLabelMap=" + setStr +
+						"&individualValues=1" +
+						"&setMode=" + modeStr,
+						handleAdvancedGetTraceLevels);
+				
+				_advancedEditModifiedLabels = {}; //clear
+			} //end advancedEditDelaySet()
+			
+			//=====================================================================================
+			function createEditableBitMask(val64,label,
+					inExistingEl,labeli)
 			{
 				var str = "";
-				str += "<div class='ac_bitstring' id='ac_bitstring_" + label + "'>";
 				var val = val64[1]|0;
+				
+				if(!inExistingEl)
+				{
+					if(label)
+					{
+						if(labeli === undefined)
+						{
+							Debug.err("Notify admins! Impossible label without index",
+									label,labeli);
+							return;
+						}
+						str += "<div class='ac_bitstring' id='ac_bitstring_" + labeli + "'>";
+					}
+					else
+						str += "<div class='ac_bitstring' id='ac_bitstringEditable'>";
+				}
+				
 				for(var j=0;j<32;++j)
 				{
 					//if(j%8 == 0) str += " ";
 					//str += (val >> (31-j))&1;
 
 					str += htmlOpen("div",
-							{
-									"class" : 			"ac_maskbit ac_maskbit" + 
-										(((val >> (j))&1)?"ON":"OFF"),
-									"onmouseover":		"handleBitMouseOver(event," +
-										(label?("\"" + label + "\""):"undefined") + 
-										"," + j + ");",
-									"onmousedown":		"handleBitMouseDown(event," +
-										(label?("\"" + label + "\""):"undefined") + 
-										"," + j + ");",
-									"onmousemove":		"handleBitMouseMove(event," +
-										(label?("\"" + label + "\""):"undefined") + 
-										"," + j + ");",
-//									"oncontextmenu":	"handleBitRightClick(event," +
-//										(label?("\"" + label + "\""):"undefined") + 
-//										"," + j + ");",
-							},"",true);
+						{
+							"class" : 			"ac_maskbit ac_maskbit" + 
+								(((val >> (j))&1)?"ON":"OFF"),
+							"onmouseover":		"handleBitMouseOver(event," +
+								(label?("\"" + label + "\""):"undefined") + 
+								"," + j + "," + 
+								(labeli===undefined?"undefined":(labeli|0)) + ");",
+							"onmousedown":		"handleBitMouseDown(event," +
+								(label?("\"" + label + "\""):"undefined") + 
+								"," + j + "," + 
+								(labeli===undefined?"undefined":(labeli|0)) + ");",
+							"onmouseup":		"handleBitMouseUp(event," +
+								(label?("\"" + label + "\""):"undefined") + 
+								"," + j + "," + 
+								(labeli===undefined?"undefined":(labeli|0)) + ");",
+							"onmousemove":		"handleBitMouseMove(event," +
+								(label?("\"" + label + "\""):"undefined") + 
+								"," + j + "," + 
+								(labeli===undefined?"undefined":(labeli|0)) + ");",
+						},"",true);
 
 				}
 				var val = val64[0]|0;
 				for(var j=0;j<32;++j)
 				{
 					str += htmlOpen("div",
-							{
-									"class" : 			"ac_maskbit ac_maskbit" + 
-										(((val >> (j))&1)?"ON":"OFF"),
-									"onmouseover":		"handleBitMouseOver(event," +
-										(label?("\"" + label + "\""):"undefined") + 
-										"," + (32+j) + ");",
-									"onmousedown":		"handleBitMouseDown(event," +
-										(label?("\"" + label + "\""):"undefined") + 
-										"," + (32+j) + ");",
-									"onmousemove":		"handleBitMouseMove(event," +
-										(label?("\"" + label + "\""):"undefined") + 
-										"," + (32+j) + ");",
-//									"oncontextmenu":	"handleBitRightClick(event," +
-//										(label?("\"" + label + "\""):"undefined") + 
-//										"," + (32+j) + ");",
-							},"",true);
+						{
+							"class" : 			"ac_maskbit ac_maskbit" + 
+								(((val >> (j))&1)?"ON":"OFF"),
+							"onmouseover":		"handleBitMouseOver(event," +
+								(label?("\"" + label + "\""):"undefined") + 
+								"," + (32+j) + "," + 
+								(labeli===undefined?"undefined":(labeli|0)) + ");",
+							"onmousedown":		"handleBitMouseDown(event," +
+								(label?("\"" + label + "\""):"undefined") + 
+								"," + (32+j) + "," + 
+								(labeli===undefined?"undefined":(labeli|0)) + ");",
+							"onmouseup":		"handleBitMouseUp(event," +
+								(label?("\"" + label + "\""):"undefined") + 
+								"," + (32+j) + "," + 
+								(labeli===undefined?"undefined":(labeli|0)) + ");",
+							"onmousemove":		"handleBitMouseMove(event," +
+								(label?("\"" + label + "\""):"undefined") + 
+								"," + (32+j) + "," + 
+								(labeli===undefined?"undefined":(labeli|0)) + ");",
+						},"",true);
 
 				}
-				str += "</div>"; //close ac_bitstring
+				if(!inExistingEl)
+					str += "</div>"; //close ac_bitstring
+				else if(label)
+				{
+					if(labeli === undefined)
+					{
+						Debug.err("Notify admins! Impossible label without index",
+								label,labeli);
+						return;
+					}
+					document.getElementById("ac_bitstring_" + labeli).innerHTML = str;
+				}
+				else
+					document.getElementById("ac_bitstringEditable").innerHTML = str;
+				
 				return str;
 			} //end createEditableBitMask()
 			
 			//=====================================================================================
-			function handleBitMouseOver(e,label,b) 
+			function handleBitMouseOver(e,label,b,labeli) 
 			{
-				Debug.log("handleBitMouseOver",_advancedButtonDown,label,b);
+				Debug.log("handleBitMouseOver",_advancedButtonDown,label,b,"labeli",labeli);
 								
 				var str = "";
-				str += "Bit-<label style='color:red;font-weight:bold;'>" + b + "</label>";
+				str += "Bit-<label style='color:red;font-weight:bold;'>" + b;
 				if(_traceBIT_STANDARDS[b] !== undefined)
-					str += ", " + _traceBIT_STANDARDS[b] + ", ";
+					str += "-" + _traceBIT_STANDARDS[b] + "";
+				
+				str += "</label>";
 				str += " is ";
 
 				
 				if(label === undefined)
 					var val64 = _advancedEditBitMask; 
 				else
-					var val64 = _traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S;
+				{
+					//use labeli to identify the host/label pair to find the value
+					var hosts = advancedHelperGetHosts(labeli);
+					Debug.log("Hosts found",hosts);
+					if(!hosts) 
+						return;		
+					if(!hosts.length || 
+							!_traceLevels[hosts[0]] || 
+							!_traceLevels[hosts[0]][label])
+					{
+						Debug.log("Missing host/label label index ",hosts,label," in _traceLevels", 
+								_traceLevels,"! Notify admins.");
+						Debug.err("Missing host/label label index! Notify admins.");
+						return;
+					}
+					if(_advancedPage == _advancedPage_SLOW)
+						var val64 = _traceLevels[hosts[0]][label].S;
+					else if(_advancedPage == _advancedPage_FAST)
+						var val64 = _traceLevels[hosts[0]][label].M;
+					else if(_advancedPage == _advancedPage_TRIGGER)
+						var val64 = _traceLevels[hosts[0]][label].T;
+					else
+					{
+						Debug.err("Unknown page mode " +
+								_advancedPage + "! Notify admins.");
+						return;
+					}
+				}
 				
 				if(b < 32)
 				{
@@ -1795,7 +2248,7 @@
 				}
 
 				str += "<label style='color:" + 
-						(isOn?"darkgreen":"darkred") + ";font-weight:bold;'>";
+						(isOn?"blue":"darkred") + ";font-weight:bold;'>";
 				str += (isOn?"ON":"OFF"); 
 				str +=  "</label>";
 
@@ -1811,7 +2264,7 @@
 				var winSz = [el.offsetWidth,el.offsetHeight];
 				//Note: clientX/Y does not move event when scrolled. pageX/Y does
 				//	although, since the body is not being scrolled, both return the same.
-				var popupPos = [e.clientX, e.clientY-20];
+				var popupPos = [e.clientX, e.clientY-10];
 				
 				//				
 				//				str += " w:" + winSz[0] + " h:" + winSz[1];
@@ -1822,7 +2275,7 @@
 				if(popupPos[0] > winSz[0]*2/3)
 					popupPos[0] -= 220;
 				if(popupPos[1] > winSz[1]/2)
-					popupPos[1] -= 100;
+					popupPos[1] -= 90;
 				
 				_advancedPopup.innerHTML = str;
 				_advancedPopup.style.display = "block";
@@ -1831,25 +2284,50 @@
 			} //end handleBitMouseOver()
 
 			//=====================================================================================
-			function handleBitMouseDown(e,label,b) 
-			{
-				Debug.log("handleBitMouseDown",_advancedButtonDown);
-			
+			function handleBitMouseDown(e,label,b,labeli) 
+			{			
 				if(e)
 				{
-					_advancedButtonDown = e.button;					
-					e.stopPropagation();					
+					_advancedButtonDown = e.button;		
+					e.stopPropagation();
 				}
+				Debug.log("handleBitMouseDown",_advancedButtonDown,label,b);
 				if(b === undefined || _advancedButtonDown < 0) return; //early exit for body handling
 				
-				//now apply mouse value to bit
+				//now apply mouse value to bit		
 				
 
 				if(label === undefined)
 					var val64 = _advancedEditBitMask; 
 				else
-					var val64 = _traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S;
-				
+				{
+					//use labeli to identify the host/label pair to find the value
+					var hosts = advancedHelperGetHosts(labeli);
+					Debug.log("Hosts found",hosts);
+					if(!hosts) 
+						return;		
+					if(!hosts.length || 
+							!_traceLevels[hosts[0]] || 
+							!_traceLevels[hosts[0]][label])
+					{
+						Debug.err("Missing host/label label index " + labeli + " with " +
+								rows.length + " rows! Notify admins.");
+						return;
+					}
+					if(_advancedPage == _advancedPage_SLOW)
+						var val64 = _traceLevels[hosts[0]][label].S;
+					else if(_advancedPage == _advancedPage_FAST)
+						var val64 = _traceLevels[hosts[0]][label].M;
+					else if(_advancedPage == _advancedPage_TRIGGER)
+						var val64 = _traceLevels[hosts[0]][label].T;
+					else
+					{
+						Debug.err("Unknown page mode " +
+								_advancedPage + "! Notify admins.");
+						return;
+					}
+				}
+									
 				if(b < 32)
 				{
 					val64[1] |= 0;
@@ -1871,45 +2349,212 @@
 				if(label === undefined)
 				{
 					_advancedEditBitMask = [val64[0],val64[1]];
-					document.getElementById("ac_bitstring_" + label).innerHTML = 
-										createEditableBitMask(
-												_advancedEditBitMask,
-												label);
+					createEditableBitMask(
+						_advancedEditBitMask,
+						label, true /*inExistingEl*/, labeli);
 
 				}
 				else
 				{
-					_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S = [val64[0],val64[1]];
+					//apply change to all hosts represented by row
+					for(var h=0;h<hosts.length;++h)
+					{
+						if(hosts[h].length < 2) continue;
 
-					document.getElementById("ac_bitstring_" + label).innerHTML = 
-										createEditableBitMask(
-												_traceLevels[Object.keys(_traceLabelPresence[label])[0]][label].S,
-												label);
+						if(hosts[h] == "All")
+						{
+							for(var hh in _traceLevels)
+							{
+								if(!_traceLevels[hosts[h]][label])
+								{
+									Debug.err("Host+Label combo is not in Trace levels! Notify admins.");						
+									return;
+								}
+								
+								if(_advancedPage == _advancedPage_SLOW)
+									_traceLevels[hh][label].S = [val64[0] /*msb*/,val64[1] /*lsb*/];
+								else if(_advancedPage == _advancedPage_FAST)
+									_traceLevels[hh][label].M = [val64[0] /*msb*/,val64[1] /*lsb*/];
+								else if(_advancedPage == _advancedPage_TRIGGER)
+									_traceLevels[hh][label].T = [val64[0] /*msb*/,val64[1] /*lsb*/];
+
+								//add host/label to modified set
+								if(!_advancedEditModifiedLabels[hh])
+									_advancedEditModifiedLabels[hh] = {};
+								_advancedEditModifiedLabels[hh][label] = [val64[0] /*msb*/,val64[1] /*lsb*/];
+							}
+							continue;
+						}
+
+						if(!_traceLevels[hosts[h]][label])
+						{
+							Debug.err("Host+Label combo is not in Trace levels! Notify admins.");						
+							return;
+						}
+
+						if(_advancedPage == _advancedPage_SLOW)
+							_traceLevels[hosts[h]][label].S = [val64[0] /*msb*/,val64[1] /*lsb*/];
+						else if(_advancedPage == _advancedPage_FAST)
+							_traceLevels[hosts[h]][label].M = [val64[0] /*msb*/,val64[1] /*lsb*/];
+						else if(_advancedPage == _advancedPage_TRIGGER)
+							_traceLevels[hosts[h]][label].T = [val64[0] /*msb*/,val64[1] /*lsb*/];
+
+						//add host/label to modified set			
+						if(!_advancedEditModifiedLabels[hosts[h]])
+							_advancedEditModifiedLabels[hosts[h]] = {};
+						_advancedEditModifiedLabels[hosts[h]][label] = [val64[0] /*msb*/,val64[1] /*lsb*/];
+						
+					} //end host loop
+					
+					//show change in GUI
+
+					createEditableBitMask(
+						[val64[0] /*msb*/,val64[1] /*lsb*/],
+						label, true /*inExistingEl*/, labeli);
+					
+					//reset delay set timer since actively editing
+					window.clearTimeout(_advancedEditDelaySetTimer);
+					_advancedEditDelaySetTimer = window.setTimeout(
+							advancedEditDelaySet, 2000);
+					
+//					//add host/label to modified set
+//					//	Note: undefined timer is used to indicate writing in progress
+//					if(_advancedEditDelaySetTimer !== undefined)
+//					{
+//						window.clearTimeout(_advancedEditDelaySetTimer);
+//						_advancedEditDelaySetTimer = window.setTimeout(
+//								advancedEditDelaySet, 2000);
+//						
+//						var hosts = advancedHelperGetHosts(labeli);
+//						Debug.log("Hosts found",hosts);
+//						if(!hosts) 
+//							return;							
+//						
+//						// _advancedEditModifiedLabels := map of host to {map of label to [msb,lsb]} value
+//						
+//						for(var h=0;h<hosts.length;++h)
+//						{
+//							if(hosts[h].length < 2) continue;
+//
+//							if(hosts[h] == "All")
+//							{
+//								for(var hh in _traceLevels)
+//								{
+//									if(!_advancedEditModifiedLabels[hh])
+//										_advancedEditModifiedLabels[hh] = {};
+//									_advancedEditModifiedLabels[hh][label] = [val64[0] /*msb*/,val64[1] /*lsb*/];
+//								}
+//								continue;
+//							}
+//
+//							if(!_traceLevels[hosts[h]][label])
+//							{
+//								Debug.err("Host+Label combo is not in Trace levels! Notify admins.");						
+//								return;
+//							}
+//
+//							if(!_advancedEditModifiedLabels[hosts[h]])
+//								_advancedEditModifiedLabels[hosts[h]] = {};
+//							_advancedEditModifiedLabels[hosts[h]][label] = [val64[0] /*msb*/,val64[1] /*lsb*/];
+//
+//						} //end host loop		
+//						Debug.log("insert _advancedEditModifiedLabels",_advancedEditModifiedLabels);	
+//						
+//					}
+//					else
+//					{
+//						//Writing still going on, wait to add to delay set queue
+//						Debug.log("Writing still going on, wait to add to delay set queue");
+//						window.setTimeout(
+//								function()
+//								{
+//							Debug.log("Retrying busy manual label edit");
+//							handleBitMouseDown(undefined /*e*/,
+//									label,b,labeli); 
+//								},500);
+//					}
 				}				
 					
 			} //end handleBitMouseDown()
 			
-//			//=====================================================================================
-//			function handleBitMouseOut(e,label,b) 
-//			{
-//				Debug.log("handleBitMouseOut",e.button,label,b);
-//			} //end handleBitMouseOut()
+			//=====================================================================================
+			function handleBitMouseUp(e,label,b,labeli) 
+			{
+				if(!label) return; 
+				
+				Debug.log("handleBitMouseUp",e.button,label,b,labeli);
+				
+				//load the final result into editable mask
+				
+				//use labeli to identify the host/label pair to find the value
+				var hosts = advancedHelperGetHosts(labeli);
+				Debug.log("Hosts found",hosts);
+				if(!hosts) 
+					return;		
+				if(!hosts.length || 
+						!_traceLevels[hosts[0]] || 
+						!_traceLevels[hosts[0]][label])
+				{
+					Debug.err("Missing host/label label index " + labeli + " with " +
+							rows.length + " rows! Notify admins.");
+					return;
+				}
+
+				if(_advancedPage == _advancedPage_SLOW)
+					var val64 = _traceLevels[hosts[0]][label].S;
+				else if(_advancedPage == _advancedPage_FAST)
+					var val64 = _traceLevels[hosts[0]][label].M;
+				else if(_advancedPage == _advancedPage_TRIGGER)
+					var val64 = _traceLevels[hosts[0]][label].T;
+				else
+				{
+					Debug.err("Unknown page mode " +
+							_advancedPage + "! Notify admins.");
+					return;
+				}
+
+				_advancedEditBitMask = [val64[0],val64[1]];
+				createEditableBitMask(
+					_advancedEditBitMask,
+					undefined, true /*inExistingEl*/, labeli);
+			} //end handleBitMouseUp()
 			
 			//=====================================================================================
-			function handleBitMouseMove(e,label,b) 
+			function handleBitMouseMove(e,label,b,labeli) 
 			{
-				Debug.log("handleBitMouseMove",_advancedButtonDown,"=",e.button,label,b);
+				Debug.log("handleBitMouseMove",_advancedButtonDown,"=",e.button,label,b,labeli);
 				e.stopPropagation();
 				
 				//now set bit mask change if mouse button down
 				if(_advancedButtonDown >= 0)
-					handleBitMouseDown(undefined,label,b);
+				{
+					if(_advancedLastBitDown[0] != labeli)
+						_advancedLastBitDown[1] = -1;
+					
+					//smooth out fast mouse moves using last bit set
+					if(_advancedLastBitDown[1] >= 0 &&
+							_advancedLastBitDown[1] > b && _advancedLastBitDown[1] - 5 < b)
+					{
+						for(var i = b; i < _advancedLastBitDown[1]; ++i)
+							handleBitMouseDown(undefined,label,i,labeli);
+					}
+					else if(_advancedLastBitDown[1] >= 0 &&
+							_advancedLastBitDown[1] < b && _advancedLastBitDown[1] + 5 > b)
+					{
+						for(var i = b; i > _advancedLastBitDown[1]; --i)
+							handleBitMouseDown(undefined,label,i,labeli);
+					}
+					else 
+						handleBitMouseDown(undefined,label,b,labeli);
+					_advancedLastBitDown = [labeli,b];
+				}
 			} //end handleBitMouseMove()
 			
 			//=====================================================================================
 			function handleBitRightClick(e) 
 			{
-				if(_advancedPopup && _advancedPopup.style.display != "none")
+				if(_advancedContextMenuBlock || 
+						_advancedPopup && _advancedPopup.style.display != "none")
 				{
 					Debug.log("handleBitRightClick",e.button);
 					_advancedContextMenuBlock = false;
@@ -1926,14 +2571,19 @@
 				{
 					_advancedPopup.style.display = "none";
 				}
+
+				_advancedLastBitDown = [-1 /*labeli*/,-1 /*bit*/];
 				
 			} //end handleMouseMove()
 			
 			//=====================================================================================
 			function handleMouseUp(e) 
 			{
-				Debug.log("Body handleMouseUp",_advancedButtonDown,"=",e.button);
+				Debug.log("Body handleMouseUp and Leave",_advancedButtonDown,"=",e.button);
 				_advancedButtonDown = -1;
+				_advancedLastBitDown = [-1 /*labeli*/,-1 /*bit*/];
+				if(_advancedPopup)		
+					_advancedPopup.style.display = "none";
 				
 			} //end handleMouseUp()
 			
@@ -1943,7 +2593,7 @@
 	</head>
 	
 	
-	<body onload='//init() called by DesktopContent.js'>			
+	<body style='display:none;' onload='//init() called by DesktopContent.js'>			
 
 
 		<div id='downloadIconDiv' onmouseup='downloadMessages()' title='Download console messages to text file.' style='float: left; margin: -1px 10px 0px 10px; cursor: pointer;'>			
@@ -1969,7 +2619,7 @@
 		</div>
 		
 		<div id='pauseControlsLink'>
-			<a onclick='togglePauseControls();' title='Pause and Resume getting new messages.' class='consoleLink' id='userLinkText'>Pause</a>		 
+			<a onclick='togglePauseControls();' title='Pause and Resume getting new messages.' class='consoleLink' id='pauseControlsLinkText'>Pause</a>		 
 		</div>
 		
 						
@@ -2018,8 +2668,7 @@
 		</div>
 
 		<div id='advancedContainer'>
-			<div id='advancedArea'>
-				Hello
+			<div id='advancedArea'>				
 			</div>	
 		</div>
 			
