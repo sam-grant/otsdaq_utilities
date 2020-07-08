@@ -509,6 +509,24 @@ else {
 				_fullScreenRefreshBtn.style.height = "16px";
 				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
 			}
+    		else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX &&
+    				Debug.OS_TYPE == Debug.OS_TYPE_WINDOWS) //Windows firefox
+    		{
+    			//windows shows circle-arrow bigger
+				_fullScreenRefreshBtn.innerHTML = 
+						"<div style='font-size:27px;margin-top:-12px;' title='Click to reload the desktop and all windows'>↻</div>";        	
+				_fullScreenRefreshBtn.style.height = "16px";
+				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
+    		}
+    		else if(Debug.BROWSER_TYPE != Debug.BROWSER_TYPE_FIREFOX &&
+    				Debug.OS_TYPE == Debug.OS_TYPE_WINDOWS) //Windows chrome
+    		{
+    			//windows shows circle-arrow bigger
+				_fullScreenRefreshBtn.innerHTML = 
+						"<div style='font-size: 23px; margin: -3px 0 0 2px;' title='Click to reload the desktop and all windows'>↻</div>";        	
+				_fullScreenRefreshBtn.style.height = "16px";
+				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px"; 
+    		}
         	else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
         	{
         		//firefox shows circle-arrow character smaller
