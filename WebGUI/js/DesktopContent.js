@@ -97,6 +97,7 @@
 //			textColor [optional], borderColor [optional], getUserInput [optional], 
 //			dialogWidth [optional], cancelFunc [optional], yesButtonText [optional])
 //		DesktopContent.tooltip(uid,tip)
+//		DesktopContent.setWindowTooltip(tip)
 //		DesktopContent.getWindowWidth()
 //		DesktopContent.getWindowHeight()
 //		DesktopContent.getWindowScrollLeft()
