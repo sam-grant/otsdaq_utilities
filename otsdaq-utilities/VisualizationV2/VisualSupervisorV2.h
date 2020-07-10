@@ -81,6 +81,7 @@ class VisualSupervisorV2 : public CoreSupervisorBase
 	// void						binaryBufferToHexString		(char *buff, unsigned int len,
 	// std::string& dest);
 
+    std::stringstream   ss ;
 	VisualDataManagerV2* theDataManager_;
 	unsigned int         loadedRunNumber_;
 };
