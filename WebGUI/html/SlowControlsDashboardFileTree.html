@@ -87,6 +87,13 @@
 			list-style: 				none;
 			border-left:				1px solid gray;
 		}
+		
+		ol.tree li li {
+			border-bottom:				1px solid gray;
+		}
+		ol.tree li li li {
+			border-bottom:				0;
+		}
 
 		li.file {
 			margin-left: 				-13px !important;
@@ -377,7 +384,6 @@
 					"Create a desktop icon"
 				];
 				var menuItemHandlers = [
-					//"parent.loadPage(\""+fullPathToPage+"\")",
 					"parent.loadPhoebusPage(\""+fullPathToPage+"\")",
 					"parent.loadPageNewWindow(\""+fullPathToPage+"\")",
 					"parent.loadPageNewBrowserTab(\""+fullPathToPage+"\")",

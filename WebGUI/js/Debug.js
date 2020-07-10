@@ -59,6 +59,22 @@ Debug.BROWSER_TYPE = Debug.BROWSER_TYPE_OTHER;
 }
 console.log("Browser type = ", Debug.BROWSER_TYPE);
 
+//determine if Linux OS or other (Linux Firefox seems to be a bad combo)
+//	0:other, 1:linux
+Debug.OS_TYPE_OTHER 	= 0;
+Debug.OS_TYPE_LINUX 	= 1;
+Debug.OS_TYPE_WINDOWS 	= 2;
+Debug.OS_TYPE = Debug.OS_TYPE_OTHER;
+{
+	var tmp = (navigator && navigator.userAgent)?
+			navigator.userAgent:""; 
+	if(tmp.indexOf("Linux") >= 0)
+		Debug.OS_TYPE = Debug.OS_TYPE_LINUX;
+	else if(tmp.indexOf("Windows") >= 0)
+		Debug.OS_TYPE = Debug.OS_TYPE_WINDOWS;
+}
+console.log("OS type = ", Debug.OS_TYPE);
+
 
 if (Debug.mode) //IF DEBUG MODE IS ON!
 {

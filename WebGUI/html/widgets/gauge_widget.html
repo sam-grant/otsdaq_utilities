@@ -32,7 +32,8 @@ HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 
 			var gauges = [];
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "show_labels": "false", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
+			var parameters_ = {class: "", "show_labels": "false", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey", "background_color": "transparent"};
+			var widget_;
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -52,12 +53,12 @@ HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 				pv_settings_ = settings;
 			}
 
-			var widget_;
-			var parameters_;
 			function drawWidget(widget, parameters) 
 			{
 				widget_ = widget;
-				parameters_ = parameters;
+				if (parameters) parameters_ = parameters;
+
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
 
 				var display = document.getElementById("display");
 				display.innerHTML = "";
@@ -113,8 +114,7 @@ HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("Gauge: setAttributes()");
-				console.log(parameters_);
+				console.log("Gauge: setAttributes()", parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)

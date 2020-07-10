@@ -20,7 +20,7 @@
 
 		<script>
 
-			var parameters_ = [];
+			var parameters_ = {class: "", "border": "false", "text": "", "text_position": "left", "font": "", "foreground_color": "", "background_color": "transparent"};
 			//functions:
 			//init()
 
@@ -39,24 +39,9 @@
 
 			function drawWidget(widget, parameters)
 			{
-				setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
-			}
-
-			function getAttributes()
-			{
-				parameters_["class"] = "";
-				parameters_["border"] = "false";
-				parameters_["text"] = "";
-				parameters_["text_position"] = "left";
-				parameters_["font"] = "";
-				parameters_["foreground_color"] = "";
-				return parameters_;
-			}
-
-			function setAttributes(attributes)
-			{
-				parameters_ = attributes;
-				console.log(parameters_);
+				if (parameters) parameters_ = parameters;
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
+				//setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
 				if (parameters_["border"]=="true")
 					document.getElementById("display").style.border = "1px solid #000";
 				else
@@ -64,6 +49,17 @@
 
 				document.getElementById("display").innerHTML = parameters_["text"];
 			        document.getElementById("display").style.textAlign = parameters_["text_position"];
+			}
+
+			function getAttributes()
+			{
+				return parameters_;
+			}
+
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log("Label setAttributes()", parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}

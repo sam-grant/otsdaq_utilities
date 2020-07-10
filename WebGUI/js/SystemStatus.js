@@ -161,7 +161,8 @@ function getContextNames()
 
 			resolve(_allContextNames);
 		    
-				}); //end request handler
+				}
+				); //end request handler
 
 			}); // end of Promise
 

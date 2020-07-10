@@ -8,7 +8,7 @@
 
 		    body {
 			  font: 10px sans-serif;
-			  background: rgba(250, 255, 255, 1);
+			  !background: rgba(255, 255, 255, 1);
 			  margin: 0px !important;
 			}
 
@@ -24,8 +24,8 @@
 			var pv_settings_ = [];
 			var timeData = {};
 			var valueData = {};
-			var PVList = {};
-			var parameters_ = {class: "", "show_labels": "false"};
+			var PVList;
+			var parameters_ = {class: "", "show_labels": "false", "background_color": "transparent"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -49,8 +49,10 @@
 
 			function drawWidget(widget, parameters)
 			{
+				if (parameters) parameters_ = parameters;
 				var i = 0;
 				PVList = {};
+
 				for (pv in widget.pvList)
 				{
 					timeData[pv] = [];
@@ -69,8 +71,7 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("Table: set parameters()");
-				console.log(parameters_);
+				console.log("Table: set parameters()", parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
@@ -122,6 +123,8 @@
     							}
 								, bgcolor: 'rgba(0,0,0,0)'
 							 }
+					, plot_bgcolor: parameters_["background_color"]
+					, paper_bgcolor: parameters_["background_color"]
 	    		}, {responsive: true});
 
 	    		Plotly.relayout(plot, { width: window.innerWidth, height: window.innerHeight });

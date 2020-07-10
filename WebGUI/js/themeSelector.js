@@ -227,7 +227,7 @@
                                                              ]
                                     }
                                    );
-               toolbar.show();
+               //toolbar.show();
               }, 
               100
              );

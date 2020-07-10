@@ -9,9 +9,11 @@
 
 namespace ots
 {
+
+////// class define
 // ConsoleSupervisor
 //	This class handles the presentation of Message Facility printouts to the web desktop
-// Console
+// 	Console.
 class ConsoleSupervisor : public CoreSupervisorBase
 {
   public:

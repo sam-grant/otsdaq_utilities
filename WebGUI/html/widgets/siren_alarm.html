@@ -31,8 +31,8 @@
 			//functions:
 			//init()
 
-			var pv_settings_ = [];
-			var parameters_ = {class: "", "show_labels": "true"};
+			var pv_settings_;
+			var parameters_ = {class: "", "show_labels": "true", "background_color": "transparent"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -54,6 +54,9 @@
 
 			function drawWidget(widget, parameters)
 			{
+				if (parameters) parameters_ = parameters;
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
+
 				drawSirenAlarm();
 				console.log(document.body);
 			}
@@ -66,8 +69,7 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("Siren: set parameters()");
-				console.log(parameters_);
+				console.log("Siren: setAttributes()", parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)

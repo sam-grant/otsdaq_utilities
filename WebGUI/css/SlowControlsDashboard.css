@@ -313,6 +313,29 @@
 		margin-bottom:				20px;
 	}
 
+	.popupCsv {
+		font-family: 				"Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
+
+		width:						450px;
+		height:						200px;
+		background-color: 			#002540;
+		z-index:					9;
+		position: 					fixed;
+		top: 						40%;
+		left: 						50%;
+		margin-top: 				-100px;
+		margin-left: 				-200px;
+		opacity:					0.9;
+		border-radius:				5px;
+		padding:					6px;
+		color:						#c4e9f5;
+		border: 					2px solid #c4e9f5;
+	}
+
+	#popupUploadSaveCsvFile {
+		display: 					none;
+	}
+
 	.cursor-default {
 		cursor: 					default !important;
 	}
@@ -565,7 +588,7 @@
 		background-color: 			rgba(0, 0, 0, 0.8);
 		border: 					1px solid #888;
 	    width: 						80%;
-		height: 					80%;	
+		height: 					80%;
 	    box-shadow: 				0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
 		-webkit-animation-name: 	animatetop;
 		-webkit-animation-duration: 0.4s;

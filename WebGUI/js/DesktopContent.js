@@ -14,8 +14,8 @@
 //
 //		...anywhere inside the <head></head> tag of a window content html page
 //	 2. for proper functionality certain handlers are used:
-//   		cannot overwrite handlers for window: onfocus, onscroll, onblur, onmousemove
-//			(if you must overwrite, try to call the DesktopContent handlers from your handlers)
+//   		cannot override handlers for window: onfocus, onscroll, onblur, onmousemove
+//			(try applying handlers to your body instead, or if you must override, try to call the DesktopContent handlers from your handlers)
 //
 //	 3. When all functionality is available init() be called in your page, if defined.
 //
@@ -97,6 +97,7 @@
 //			textColor [optional], borderColor [optional], getUserInput [optional], 
 //			dialogWidth [optional], cancelFunc [optional], yesButtonText [optional])
 //		DesktopContent.tooltip(uid,tip)
+//		DesktopContent.setWindowTooltip(tip)
 //		DesktopContent.getWindowWidth()
 //		DesktopContent.getWindowHeight()
 //		DesktopContent.getWindowScrollLeft()
@@ -219,7 +220,7 @@ DesktopContent._pageInitCalled = false;
 // caution when using "window" anywhere outside this function because
 //  desktop window can be at different levels depending on page depth (page may be inside frame)
 // use instead DesktopContent._theWindow
-DesktopContent.init = function() 
+DesktopContent.init = function(onloadFunction) 
 {	
 	if(typeof Desktop !== 'undefined') return; //skip if Desktop exists (only using for tooltip), DesktopContent._theWindow will be undefined
 		
@@ -365,6 +366,8 @@ DesktopContent.init = function()
 		}	
 		else if(event.data.request == "giveRequestLIDInfo")
 		{			
+			if(DesktopContent._pageInitCalled || !event.data.gatewayURN) return;
+			DesktopContent._pageInitCalled = true;
 			
 			Debug.log("Received info response from parent page");
 			DesktopContent._localUrnLid = event.data.localURN;
@@ -413,15 +416,23 @@ DesktopContent.init = function()
 				
 			try
 			{
-				if(init)
+				
+				if(onloadFunction)
+				{
+					Debug.log("Calling page body onload!");
+					onloadFunction(); //call page's init!
+				}
+				else if(init)
 				{
 					Debug.log("Calling page init!");
 					init(); //call page's init!
 				}
+				else
+					Debug.log("Ignoring missing init()");
 			}
 			catch(e)
 			{
-				Debug.log("Ignoring missing init():",e);
+				Debug.log("Ignoring error in onload init():",e);
 			}
 			
 			return;
@@ -445,8 +456,6 @@ DesktopContent.init = function()
 
 		if(!event.data.request)
 		{
-			if(DesktopContent._pageInitCalled) return;
-			DesktopContent._pageInitCalled = true;
 			
 			Debug.log("First message from Gateway Desktop received!");
 
@@ -498,10 +507,27 @@ DesktopContent.init = function()
 			Debug.log("Gateway Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
 			Debug.log("Gateway Supervisor Application Origin = " + DesktopContent._serverOrigin);
 
-			if(init)
+			if(DesktopContent._pageInitCalled) return;
+			DesktopContent._pageInitCalled = true;
+			try
 			{
-				Debug.log("Calling page init!");
-				init(); //call pages init!
+				
+				if(onloadFunction)
+				{
+					Debug.log("Calling page body onload!");
+					onloadFunction(); //call page's init!
+				}
+				else if(init)
+				{
+					Debug.log("Calling page init!");
+					init(); //call page's init!
+				}
+				else
+					Debug.log("Ignoring missing init()");
+			}
+			catch(e)
+			{
+				Debug.log("Ignoring error in onload init():",e);
 			}
 
 			//			DesktopContent._theWindow.parent.window.postMessage(
@@ -684,7 +710,9 @@ DesktopContent.handleFocus = function(e)
 
 	if(DesktopContent._theWindowId < 0) return; //only happen if not part of desktop, or before init
 
-	Debug.log("Focus DesktopContent._isFocused " + DesktopContent._isFocused);	
+	Debug.log("Focus DesktopContent._isFocused ",DesktopContent._isFocused,
+			DesktopContent._theWindowId);	
+	
 	DesktopContent._isFocused = true;
 	
 	//make this window the desktop foreground window
@@ -704,8 +732,9 @@ DesktopContent.handleBlur = function(e)
 	DesktopContent._isFocused = false;
 }
 DesktopContent.handleScroll = function(e) 
-{		
-	//Debug.log("Scroll DesktopContent._isFocused" + DesktopContent._isFocused);
+{
+    
+    //console.log("Scroll DesktopContent.handleScroll", DesktopContent._isFocused, DesktopContent._theWindowId);
 	window.focus();	
 }
 DesktopContent.mouseMove = function(mouseEvent,onlyDesktopFunction) 
@@ -761,8 +790,20 @@ DesktopContent.mouseMoveSubscriber = function(newHandler)
 	DesktopContent._mouseMoveSubscribers.push(newHandler);
 } //end DesktopContent.mouseMoveSubscriber()
 	
+//
+//if(document.body)
+//{
+//	var onloadFunction = document.body.onload;
+//	document.body.onload = function()
+//	{		
+//		Debug.log("Calling Desktop Content init on body load!",onloadFunction);
+//		DesktopContent.init(onloadFunction);
+//	}
+//}
+//else
+//	DesktopContent.init();
+DesktopContent.init();
 
-DesktopContent.init(); //initialize handlers
 
 
 //=====================================================================================

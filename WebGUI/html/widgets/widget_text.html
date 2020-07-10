@@ -27,7 +27,7 @@
 			var pv_settings_ = [];
 			var labels = [];
 			var values = [];
-			var parameters_ = {class: "", "show_labels": "false", "border": "true", "fontSize": "9vw", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey"};
+			var parameters_ = {class: "", "show_labels": "false", "border": "true", "fontSize": "9vw", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey", "background_color": "transparent"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -48,6 +48,9 @@
 
 			function drawWidget(widget, parameters) 
 			{
+				if (parameters) parameters_ = parameters;
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
+
 				var div = document.createElement('div');
 				div.className = "wrapper";
 				div.id = "display-div";
@@ -65,6 +68,7 @@
 					if (value == null)
 					{
 						value = document.createElement('div');
+						value.style.fontSize = parameters_["fontSize"];
 						value.id = pv;
 						value.title = pv;
 
@@ -78,8 +82,6 @@
 							pvValue.style.border = "1px solid #000";
 						else
 							pvValue.style.border = "";
-
-						value.style.fontSize = parameters_["fontSize"];
 
 						var units = pv_settings_[pv] != undefined ? pv_settings_[pv].Units : "";
 						pvValue.innerHTML = "N/A " + units;
@@ -102,8 +104,7 @@
 			function setAttributes(attributes)
 			{
 				parameters_ = attributes;
-				console.log("text widget: set parameters()");
-				console.log(parameters_);
+				console.log("text widget: setAttributes()", parameters_);
 			}
 
 			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
