@@ -710,8 +710,8 @@ DesktopContent.handleFocus = function(e)
 
 	if(DesktopContent._theWindowId < 0) return; //only happen if not part of desktop, or before init
 
-	Debug.log("Focus DesktopContent._isFocused ",DesktopContent._isFocused,
-			DesktopContent._theWindowId);	
+	//Debug.log("Focus DesktopContent._isFocused ",DesktopContent._isFocused,
+	//		DesktopContent._theWindowId);	
 	
 	DesktopContent._isFocused = true;
 	
@@ -843,7 +843,7 @@ DesktopContent.showLoading = function(nextFunction)
 	/////////////
 	function localDoIt()
 	{
-		//Debug.log("DesktopContent.showLoading " + DesktopContent._loadBoxRequestStack);
+	    //Debug.log("DesktopContent.showLoading " + DesktopContent._loadBoxRequestStack);
 
 		if(DesktopContent._loadBoxRequestStack++) //box should still be open, add to stack
 			return;
@@ -960,6 +960,7 @@ DesktopContent.showLoading = function(nextFunction)
 			else
 				loadBoxStr += ".";
 			el.innerHTML = "Loading" + loadBoxStr;
+		    //console.log("loading",loadBoxStr.length);
 		};  //end loadBoxAnimationFunction
 
 		window.clearInterval(DesktopContent._loadBoxTimer);
@@ -970,20 +971,24 @@ DesktopContent.showLoading = function(nextFunction)
 DesktopContent._loadBoxHideTimer = 0;
 DesktopContent.hideLoading = function()	
 {
-	window.setTimeout(localHideLoadBox, 300);
+
+    //console.log("DesktopContent.hideLoading PRE",DesktopContent._loadBoxRequestStack);
+	window.setTimeout(localHideLoadBox, 300);	
 	
 	/////////////////////////
 	function localHideLoadBox()
 	{
-		if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
+	    //console.log("DesktopContent.hideLoading",DesktopContent._loadBoxRequestStack);
+	    if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
 			return;
 		
 		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
-		//Debug.log("DesktopContent.hideLoading");
+	    //console.log("DesktopContent.hideLoading");
 		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
 		
 	} //end localHideLoadBox
-	
+
+
 } //end hideLoading()
 
 //=====================================================================================
@@ -1093,7 +1098,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	
 	//setup response handler
 	req.onreadystatechange = function() {
-		//Debug.log(req.readyState + " " + req.status);
+	    //Debug.log(req.readyState + " " + req.status);
 		if (req.readyState==4) 
 		{  //when readyState=4 return complete, status=200 for success, status=400 for fail
 			window.clearTimeout(timeoutTimer);
@@ -1204,15 +1209,15 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 						}
 						else if(DesktopContent._lastCookieCode != "AllowNoUser")
 						{ 
-							//update local cookieCode and post update to desktop
-							Debug.log("Updating cookie code.");
+						    //update local cookieCode and post update to desktop
+						    //Debug.log("Updating cookie code.");
 
 							var deltaTime = DesktopContent._lastCookieTime - DesktopContent._updateTimeMailbox;							
 							DesktopContent._cookieCodeMailbox = DesktopContent._lastCookieCode;
 							
 							if(DesktopContent._theDesktopWindow && deltaTime > 5*1000 /*ms*/)
 							{	
-								Debug.log("Posting cookie code to desktop.");
+								//Debug.log("Posting cookie code to desktop.");
 								
 								DesktopContent._updateTimeMailbox = DesktopContent._lastCookieTime;
 								DesktopContent._theDesktopWindow.postMessage(
