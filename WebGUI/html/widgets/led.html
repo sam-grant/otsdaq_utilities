@@ -153,9 +153,9 @@
 									);
 
 				drawLed(labelContainers[pvName], pvName, pvValue, pvTime, pvSeverity);
-				leds[pvName].title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+				leds[pvName].title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pv_settings_);
 				if (parameters_["show_labels"] == "true")
-					labelContainers[pvName].title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+					labelContainers[pvName].title =  window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pv_settings_);
 			}
 
 			window.onresize = function() {

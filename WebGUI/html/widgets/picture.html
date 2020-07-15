@@ -18,7 +18,8 @@
 
 		<script>
 
-			var parameters_ = {"class": "", "load_image": "/WebPath/html/widgets/picture-icon.png"};
+			var parameters_ = {"class": "", "upload_image": "picture-icon.png"};
+			var IMAGE_PATH = "/WebPath/UserWebPath/ControlsDashboardData/private/";
 			//functions:
 			//init()
 
@@ -38,8 +39,7 @@
 			function drawWidget(widget, parameters)
 			{
 				if (parameters) parameters_ = parameters;
-				//setAttributes(window.parent.page_.widgets[widget.el.id.split('-')[1]].attributes);
-				document.getElementById("display").innerHTML = "<img id='img1' src='" + parameters_["file"] + "' title='" + parameters_["load_image"] + "'></img>";
+				document.getElementById("display").innerHTML = "<img id='img1' src='" + IMAGE_PATH + parameters_["upload_image"] + "' title='" + parameters_["upload_image"] + "'></img>";
 				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
 				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
 			}
@@ -56,11 +56,6 @@
 			}
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}
-
-			window.parent.document.getElementById("editWidgetAttributesPopup-container").onclick = function()
-			{
-				console.log("attribute menu onclick. label widgets parameters: " + window.parent.page_.widgets[window.frameElement.id].attributes["label"]);
-			};
 
 			window.onresize = function() {
 				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";

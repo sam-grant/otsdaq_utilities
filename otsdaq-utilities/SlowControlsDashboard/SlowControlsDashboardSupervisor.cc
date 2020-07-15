@@ -424,6 +424,10 @@ void SlowControlsDashboardSupervisor::handleRequest(
 		GetAlarmsLogData(cgiIn, xmlOut);
 		xmlOut.addTextElementToData("id", CgiDataUtilities::getData(cgiIn, "id"));
 	}
+	else if(Command == "saveImageFile")
+	{
+		saveImageFile(cgiIn, xmlOut, userInfo);
+	}
 
 	__SUP_COUT__ << "" << __E__;
 }  // end handleRequest()
@@ -1076,6 +1080,53 @@ void SlowControlsDashboardSupervisor::SavePhoebusControlsPage(
 	outputFile.close();
 
 	__SUP_COUT__ << "Finished writing file" << __E__;
+
+	return;
+}
+
+//==============================================================================
+void SlowControlsDashboardSupervisor::saveImageFile(
+    cgicc::Cgicc&                    cgiIn,
+    HttpXmlDocument&                 /*xmlOut*/,
+    const WebUsers::RequestUserInfo& /*userInfo*/)
+{
+	__SUP_COUT__ << "ControlsDashboard wants to save the image file uploaded!" << __E__;
+
+	std::string fileName     	= CgiDataUtilities::postData(cgiIn, "fileName");
+	std::string image           = CgiDataUtilities::postData(cgiIn, "image");
+	std::string isImagePublic 	= CgiDataUtilities::postData(cgiIn, "isPublic");
+
+	__SUP_COUTV__(fileName);
+	__SUP_COUTV__(isImagePublic);
+
+	__SUP_COUTV__(CONTROLS_SUPERVISOR_DATA_PATH);
+
+
+
+	std::string fullPath;
+	if(isImagePublic == "true")
+		fullPath = (std::string)CONTROLS_SUPERVISOR_DATA_PATH + "public/";
+	else
+		fullPath = (std::string)CONTROLS_SUPERVISOR_DATA_PATH + "private/";
+
+	__SUP_COUTV__(fullPath);
+
+	std::string file = fullPath + fileName;
+
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+	             << "Trying to save image in: " << file << __E__;
+
+	// write file
+	std::ofstream outputFile(file, std::ofstream::binary);
+
+	//unsigned char data[] = std::system.Convert.FromBase64String(image);
+
+	if(outputFile.is_open())
+	{
+		outputFile << image;
+		outputFile.close();
+		__SUP_COUT__ << "Finished writing image file" << __E__;
+	}
 
 	return;
 }

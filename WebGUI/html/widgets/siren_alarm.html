@@ -96,7 +96,7 @@
 					document.getElementById("alarm-text").innerHTML ="";
 					document.getElementById("alarm-image").src = "./green_siren.png";
 				}
-				document.getElementById("alarm-image").title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+				document.getElementById("alarm-image").title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pv_settings_);
 			}
 
 			function drawSirenAlarm()

@@ -188,22 +188,33 @@
 
 					//tds[cell].firstElementChild.title = JSON.stringify(tabledata[cell]);
 					if (pv_settings_[tabledata[cell].pvName])
-						tds[cell].firstElementChild.title = window.parent.setWidgetToolTip(tabledata[cell].pvName, tabledata[cell].pvValue, tabledata[cell].pvTime, pv_settings_);
+						tds[cell].firstElementChild.title = 
+											  window.parent.setWidgetToolTip(tabledata[cell].pvName
+											, tabledata[cell].pvValue
+											, tabledata[cell].pvTime
+											, tabledata[cell].pvStatus
+											, tabledata[cell].pvSeverity
+											, pv_settings_);
 
 					var fullPathToPage = "";
 					tds[cell].firstElementChild.firstElementChild.href = "javascript:window.parent.loadPageNewWindow(\""+fullPathToPage+"\")";
 
 					var valColor = 0;
-					if (tabledata[cell].pvValue && pv_settings_[tabledata[cell].pvName].Upper_Alarm_Limit)
-						valColor = tabledata[cell].pvValue/pv_settings_[tabledata[cell].pvName].Upper_Alarm_Limit;
-					valColor = valColor >= 0.5 ? valColor : 0.5;
+					var max = 0;
+					var min =0;
+					if (pv_settings_[tabledata[cell].pvName].Upper_Warning_Limit) max = pv_settings_[tabledata[cell].pvName].Upper_Warning_Limit;
+					if (pv_settings_[tabledata[cell].pvName].Lower_Warning_Limit) min = pv_settings_[tabledata[cell].pvName].Lower_Warning_Limit;
+					if (Math.abs(tabledata[cell].pvValue)
+						&& Math.abs(max)
+						&& Math.abs(min))
+						valColor = (tabledata[cell].pvValue - min)/(max - min);
+
+					valColor = valColor >= 0. ? valColor : 0.;
 					if (tabledata[cell].pvStatus == "HIHI")
 						tds[cell].style.backgroundColor = "red";
-					else if (tabledata[cell].pvStatus == "HIHI")
-						tds[cell].style.backgroundColor = "red";
-					else if (tabledata[cell].pvStatus == "HI")
+					else if (tabledata[cell].pvStatus == "HIGH")
 						tds[cell].style.backgroundColor = "yellow";
-					else if (tabledata[cell].pvStatus == "LO")
+					else if (tabledata[cell].pvStatus == "LOW")
 						tds[cell].style.backgroundColor = "blue";
 					else if (tabledata[cell].pvStatus == "LOLO")
 						tds[cell].style.backgroundColor = "purple";					

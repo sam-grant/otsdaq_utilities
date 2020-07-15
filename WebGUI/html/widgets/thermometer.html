@@ -132,7 +132,7 @@
 				max = max == "DC'd" || max <= min ? 100 : max;
 
 				thermometers[pvName].render(containers[pvName],	pvValue, min, max);
-				thermometers[pvName]._svg._groups[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+				thermometers[pvName]._svg._groups[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pv_settings_);
 			}
 
 			function drawThermometer(name, container, wdth, hght, val, min, max)

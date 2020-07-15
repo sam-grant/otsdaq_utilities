@@ -580,7 +580,7 @@
 					var background_color = widgets[i].getElementsByTagName("background_color")[0];
 					var transparent = widgets[i].getElementsByTagName("transparent")[0];
 					var wrap_words = widgets[i].getElementsByTagName("wrap_words")[0];
-					var load_image = widgets[i].getElementsByTagName("load_image")[0];
+					var upload_image = widgets[i].getElementsByTagName("upload_image")[0];
 					var upload_csv_file = widgets[i].getElementsByTagName("upload_csv_file")[0]; //2dstoplight widget
 					var table_border = widgets[i].getElementsByTagName("table_border")[0]; //2dstoplight widget
 					var table_border_color = widgets[i].getElementsByTagName("table_border_color")[0]; //2dstoplight widget
@@ -595,7 +595,7 @@
 					if (background_color !== undefined) widgetObject.attributes["background_color"] = background_color.innerHTML;
 					if (transparent !== undefined) widgetObject.attributes["transparent"] = transparent.innerHTML;
 					if (wrap_words !== undefined) widgetObject.attributes["wrap_words"] = wrap_words.innerHTML;
-					if (load_image !== undefined) widgetObject.attributes["load_image"] = load_image.innerHTML;
+					if (upload_image !== undefined) widgetObject.attributes["upload_image"] = upload_image.innerHTML;
 					if (upload_csv_file !== undefined) widgetObject.attributes["upload_csv_file"] = upload_csv_file.innerHTML;
 					if (table_border !== undefined) widgetObject.attributes["table_border"] = table_border.innerHTML;
 					if (table_border_color !== undefined) widgetObject.attributes["table_border_color"] = table_border_color.innerHTML;
@@ -1560,16 +1560,20 @@
 
 
 			//=====================================================================================
-			function setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_)
+			function setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pv_settings_)
 			{
 				var toolTip =
 				pvName
-				+ "\nlast value: "
+				+ "\nLast value: "
 				+ pvValue
 				+ " "
 				+ pv_settings_[pvName].Units
-				+ "\ntime: "
+				+ "\nTime: "
 				+ ConfigurationAPI.getDateString(new Date((pvTime | 0) * 1000))
+				+ "\nStatus: "
+				+ pvStatus
+				+ "\nSeverity: "
+				+ pvSeverity
 				+ "\nLower Warning Limit:  " + Number.parseFloat(pv_settings_[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
 			  	+ "Upper Warning Limit:  "   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
 			  	+ "Lower Alarm Limit:    "   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
@@ -1803,8 +1807,8 @@
 
 				var drawAndDragBox = document.getElementById("selectionRectangle");
 
-				var ex = snapToGrip(event.clientX, GRIDSIZE_);;
-				var ey = snapToGrip(event.clientY, GRIDSIZE_);;
+				var ex = snapToGrip(event.clientX, GRIDSIZE_);
+				var ey = snapToGrip(event.clientY, GRIDSIZE_);
 				var x = xPos_;
 				var y = yPos_;
 				var w = (ex - xPos_);
@@ -2818,11 +2822,11 @@
 				var thParameter = document.createElement("th");
 				thParameter.className = "widgetPVTable";
 				thParameter.innerHTML = "Parameter";
-				thParameter.style.width = "40%";
+				//thParameter.style.width = "40%";
 				var thParameterValue = document.createElement("th");
 				thParameterValue.className = "widgetPopupTable";
 				thParameterValue.innerHTML = "Value";
-				thParameterValue.style.width = "60%";
+				//thParameterValue.style.width = "60%";
 				trhead.appendChild(thParameter);
 				trhead.appendChild(thParameterValue);
 				thead.appendChild(trhead);
@@ -2987,6 +2991,15 @@
 								else
 									tdButton.disabled = true; 
 							}
+							else if("upload_image")
+							{
+								var tdButton = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0];
+								tdButton.setAttribute("type", "button");
+								tdButton.className = "";
+								tdButton.style.width = "100%";
+								tdButton.style.height = "50%";
+								tdButton.onmouseup = function (){popupUploadImage();};
+							}
 
 							page_.widgets[menu_.getAttribute("widgetID")].attributes[parameter] = value;
 						}
@@ -3056,6 +3069,14 @@
 						keyField.disabled = false;
 					else
 						keyField.disabled = true; 
+				}
+				else if(keyParam == "upload_image")
+				{
+					keyField.setAttribute("type", "button")
+					keyField.className = "";
+					keyField.style.width = "100%";
+					keyField.style.height = "50%";
+					keyField.onmouseup = function (){popupUploadImage();};
 				}
 				else
 				{
@@ -3188,7 +3209,6 @@
 						uploadbutton.title = "Upload the chosen " + filename + " file to the current widget lights table.";
 						uploadbutton.onmouseup = function (){uploadTableFromCSV(filename); closeFilePopup();};
 					}, false);
-
 			} //end popupUploadCSVTableForm()
 
 
@@ -3366,6 +3386,108 @@
 
 
 			//=====================================================================================
+			function popupUploadImage() 
+			{
+				document.getElementById("popupUploadSaveCsvFile").style.display = "block";
+				document.getElementById("popupUploadSaveCsvFile").style["z-index"] = 101;
+				Debug.log("Slow Controls Dashboard: popupUploadImage");
+
+				var str = "";
+
+				var el = document.getElementById("popUpDialog");
+				if (!el)
+				{
+					el = document.createElement("div");
+					el.setAttribute("id", "popUpDialog");
+				}
+
+				str += "<div id='popUpDialog-div'>";
+
+				str += "<center>Please choose an image file to upload</center><br>";
+
+				str += "<center>";
+
+				str += "<input type='file' id='popUpDialog-imageUpload' " +
+					"accept='.png' enctype='multipart/form-data' />";
+
+				// done with special handling
+				// continue with pop-up prompt
+				str += "</center></div><br><br>"; //close main popup div
+
+				str += "<center><input id='popUpDialog-submitButton' disabled type='button'" +
+					"value='Upload Image' title='" +
+					"Upload the chosen image to the current widget.'/>";
+				str += "<input id='popUpDialog-closeButton' type='button' onmouseup='" +
+					"closeFilePopup()' value='Cancel'/></center>";
+
+				el.innerHTML = str;
+				document.getElementById("popupUploadSaveCsvFile").appendChild(el); //add element to editWidgetAttributesPopup-file div
+
+				document.getElementById('popUpDialog-imageUpload').addEventListener(
+					'change', function (evt)
+					{
+						var files = evt.target.files;
+						var file = files[0];
+						var image;
+						var reader = new FileReader();
+						var uploadbutton = document.getElementById('popUpDialog-submitButton');
+						reader.onload = 
+							function (readerEvt)
+							{
+								//store uploaded file and enable button
+								image = reader.result;
+								//image = readerEvt.target.result.split(',')[1];
+								uploadbutton.disabled = false;
+							}
+						reader.readAsDataURL(file);
+						//reader.readAsArrayBuffer(file);
+						var filename = file.name;
+						uploadbutton.title = "Upload the chosen " + filename + " file to the current widget";
+						uploadbutton.onmouseup = 
+							function (){
+								uploadImage(image, filename);
+								closeFilePopup();
+							};
+					}, false);
+
+			} //end popupUploadImage()
+
+
+			//=====================================================================================
+			function uploadImage(image, filename)
+			{
+				console.log("uploadImage():", image);
+				image = image.replace(/^data:image\/\w+;base64,/, "");
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=saveImageFile",
+							//post data
+							"fileName=" + filename +
+							"&isPublic=false" +
+							"&image=" + image,
+							saveImageFileHandler /*handler*/);
+
+				function saveImageFileHandler(req)
+				{
+					Debug.log("saveImageFileHandler() was called for " + controlsPageName);// Req: " + req.responseText);
+					Debug.log("Your page was succesfully saved!",Debug.INFO_PRIORITY);		
+				} //end saveImageFileHandler()
+
+				var attributesTable = document.getElementById("widgetAttributesTable");
+				var webpath = "";
+				for(var tr = 0; tr < attributesTable.getElementsByTagName("tr").length; tr++)
+				{
+					if(attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td").length > 0)
+					{
+						var tdButton = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0];
+						var parameter = tdButton.value;
+						if (parameter == "upload_image")
+							attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value = webpath + filename;
+					}
+				}
+			}// end uploadImage()
+
+
+			//=====================================================================================
 			function closeFilePopup()
 			{
 				document.getElementById("popupUploadSaveCsvFile").style.display = "none";
@@ -3424,14 +3546,15 @@
 
 			//=====================================================================================
 			function handleKeys(e,isKeyDown)
-			{	
+			{
+				if (targetElement_==undefined) return;
 				var id;
 
 				if(e.shiftKey)
 				{
 					if(isKeyDown) return; //ignore shift keys down (only up)
 
-					var ARROW_SPEED = 30;
+					var ARROW_SPEED; if (gridSnap_) ARROW_SPEED = GRIDSIZE_; else ARROW_SPEED = 30;
 
 					switch(e.keyCode)
 					{
@@ -3482,7 +3605,7 @@
 				{
 					if(!isKeyDown) return; //ignore on key up side
 
-					var ARROW_SPEED = 1;
+					var ARROW_SPEED; if (gridSnap_) ARROW_SPEED = GRIDSIZE_; else ARROW_SPEED = 1;
 					switch(e.keyCode)
 					{
 					case 38: 	//up arrow (move widget)

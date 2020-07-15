@@ -122,11 +122,15 @@
 						var data = cell.getRow().getData();
 						if (pv_settings_[data.pvName] !== undefined){
 							var pv_settings =
-										  	  data.pvName + ":\n"
+										  	  "pvName: "	+ data.pvName		+ "\n"
+											+ "Value: "		+ data.pvValue		+ "\n"
+											+ "Status: "	+ data.pvStatus		+ "\n"
+											+ "Severity: "	+ data.pvSeverity	+ "\n"
+											+ "Time: "		+ data.pvTime		+ "\n"
 										  	+ "Lower Warning Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Lower_Warning_Limit).toExponential(2) + "\n"
 										  	+ "Upper Warning Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Upper_Warning_Limit).toExponential(2) + "\n"
-										  	+ "Lower Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[data.pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
-										  	+ "Upper Alarm Limit:\t\t"   + Number.parseFloat(pv_settings_[data.pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+										  	+ "Lower Alarm Limit:\t\t" + Number.parseFloat(pv_settings_[data.pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+										  	+ "Upper Alarm Limit:\t\t" + Number.parseFloat(pv_settings_[data.pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
 										  	+ "Lower Control Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Lower_Control_Limit).toExponential(2) + "\n"
 										  	+ "Upper Control Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Upper_Control_Limit).toExponential(2) + "\n"
 										  	+ "Lower Display Limit:\t" + Number.parseFloat(pv_settings_[data.pvName].Lower_Display_Limit).toExponential(2) + "\n"

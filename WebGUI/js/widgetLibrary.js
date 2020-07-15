@@ -78,6 +78,11 @@ widgetLibrary.dimensions =		{
 										"X": "300",
 										"Y": "300",
 										"Scale": "True"
+									},
+									"10": {
+										"X": "420",
+										"Y": "350",
+										"Scale": "True"
 									}
 								}
 

@@ -38,7 +38,6 @@
 				console.log(window.frameElement.id);
 				console.log("Dimensions: " + window.innerWidth + " : " + window.innerHeight);
 				window.parent.setupWidget(window.frameElement.id, getAttributes());
-				window.parent.getPVHistory(window.frameElement.id, getAttributes());
 			}
 
 			function setupPVs(settings)
@@ -60,6 +59,8 @@
 					PVList[pv] = i;
 					i++;
 				}
+
+				window.parent.getPVHistory(window.frameElement.id, getAttributes());
 				newGraph();
 			}
 
@@ -90,7 +91,7 @@
 				drawGraph(pvName, pvStatus, pvSeverity);
 
 				var display = document.getElementById('display');
-				if (pv_settings_.length) display.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+				if (pv_settings_.length) display.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pv_settings_);
 			}
 
 			function newGraph()

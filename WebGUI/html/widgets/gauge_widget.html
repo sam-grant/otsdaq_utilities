@@ -98,7 +98,6 @@ HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 
 					console.log("Gauge pv: " + pv_settings_[pv]);
 					console.log("Gauge: " + pv + "(" + pv_number + ") : " + label +"," + min +"," + max + ".");
-					console.log("Gauge: " + pv + "(" + pv_number + ") : " + parameters["label_" + pv_number] + "," + parameters["min_" + pv_number] + "," + parameters["max_" + pv_number] + ".");
 
 					createGauge(pv, divtemp.id, label, min, max, max_size);
 					pv_number++;
@@ -140,7 +139,7 @@ HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 				}
 
 				gauges[pvName].redraw(pvValue);
-				gauges[pvName].body[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_);
+				gauges[pvName].body[0][0].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pv_settings_);
 
 				console.log("thermometer date now: " + actualTime + " pvtime: " + pvTime + " refresh rate: 10 sec");
 				if (gauges[pvName].body[0][0].parentElement !== null)
