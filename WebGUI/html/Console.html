@@ -2279,7 +2279,16 @@
 					return undefined;
 				}
 
-				return rows[labeli].children[3].innerText.split(':');
+				var hostStr = rows[labeli].children[3].innerText;
+				if(hostStr == "All")
+				{
+					var hostArr = [];
+
+					for(var hh in _traceLevels)
+						hostArr.push(hh)
+					return hostArr;
+				}
+				return hostStr.split(';');
 			} //end advancedHelperGetHosts()
 			
 			//=====================================================================================
