@@ -1092,40 +1092,33 @@ void SlowControlsDashboardSupervisor::saveImageFile(
 {
 	__SUP_COUT__ << "ControlsDashboard wants to save the image file uploaded!" << __E__;
 
-	std::string fileName     	= CgiDataUtilities::postData(cgiIn, "fileName");
-	std::string image           = CgiDataUtilities::postData(cgiIn, "image");
-	std::string isImagePublic 	= CgiDataUtilities::postData(cgiIn, "isPublic");
+	std::string 						isImagePublic = cgiIn("isPublic");
+	const std::vector<cgicc::FormFile>& files= cgiIn.getFiles();
+	std::string							filename;
+	std::ofstream						myfile;
+	std::string							fullPath;
 
-	__SUP_COUTV__(fileName);
+	__SUP_COUTV__(files.size());
 	__SUP_COUTV__(isImagePublic);
 
-	__SUP_COUTV__(CONTROLS_SUPERVISOR_DATA_PATH);
-
-
-
-	std::string fullPath;
 	if(isImagePublic == "true")
 		fullPath = (std::string)CONTROLS_SUPERVISOR_DATA_PATH + "public/";
 	else
 		fullPath = (std::string)CONTROLS_SUPERVISOR_DATA_PATH + "private/";
 
-	__SUP_COUTV__(fullPath);
-
-	std::string file = fullPath + fileName;
-
-	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-	             << "Trying to save image in: " << file << __E__;
-
-	// write file
-	std::ofstream outputFile(file, std::ofstream::binary);
-
-	//unsigned char data[] = std::system.Convert.FromBase64String(image);
-
-	if(outputFile.is_open())
+	for(unsigned int i = 0; i < files.size(); ++i)
 	{
-		outputFile << image;
-		outputFile.close();
-		__SUP_COUT__ << "Finished writing image file" << __E__;
+		filename = files[i].getFilename();
+		filename = fullPath + filename;
+		__COUT__ << "file " << i << " - " << filename << std::endl;
+
+		myfile.open(filename.c_str());
+		if(myfile.is_open())
+		{
+			files[i].writeToStream(myfile);
+			myfile.close();
+			__SUP_COUT__ << "Finished writing image file" << __E__;
+		}
 	}
 
 	return;

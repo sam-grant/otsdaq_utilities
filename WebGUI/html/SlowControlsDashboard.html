@@ -1578,10 +1578,10 @@
 			  	+ "Upper Warning Limit:  "   + Number.parseFloat(pv_settings_[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
 			  	+ "Lower Alarm Limit:    "   + Number.parseFloat(pv_settings_[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
 			  	+ "Upper Alarm Limit:    "   + Number.parseFloat(pv_settings_[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
-			  	+ "Lower Control Limit:   "   + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
-			  	+ "Upper Control Limit:   "   + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
-			  	+ "Lower Display Limit:   "   + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
-			  	+ "Upper Display Limit:   "   + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
+			  	+ "Lower Control Limit:   "  + Number.parseFloat(pv_settings_[pvName].Lower_Control_Limit).toExponential(2) + "\n"
+			  	+ "Upper Control Limit:   "  + Number.parseFloat(pv_settings_[pvName].Upper_Control_Limit).toExponential(2) + "\n"
+			  	+ "Lower Display Limit:   "  + Number.parseFloat(pv_settings_[pvName].Lower_Display_Limit).toExponential(2) + "\n"
+			  	+ "Upper Display Limit:   "  + Number.parseFloat(pv_settings_[pvName].Upper_Display_Limit).toExponential(2) + "\n";
 			  	return toolTip;
 			} //end setWidgetToolTip()
 
@@ -2991,7 +2991,7 @@
 								else
 									tdButton.disabled = true; 
 							}
-							else if("upload_image")
+							else if(parameter == "upload_image")
 							{
 								var tdButton = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0];
 								tdButton.setAttribute("type", "button");
@@ -3000,6 +3000,8 @@
 								tdButton.style.height = "50%";
 								tdButton.onmouseup = function (){popupUploadImage();};
 							}
+							else
+								attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0].readOnly = true;
 
 							page_.widgets[menu_.getAttribute("widgetID")].attributes[parameter] = value;
 						}
@@ -3084,6 +3086,8 @@
 					keyField.className = "editableInput";
 					keyField.style.color = "black";
 					keyField.setAttribute("list", list);
+					keyField.onmouseup = function (){};
+					keyField.readOnly = true;
 				}
 
 				keyField.value = keyParam;
@@ -3406,13 +3410,17 @@
 				str += "<center>Please choose an image file to upload</center><br>";
 
 				str += "<center>";
+				str += "<form id='fileForm' enctype='multipart/form-data' method='post' action='Log'>";
 
 				str += "<input type='file' id='popUpDialog-imageUpload' " +
-					"accept='.png' enctype='multipart/form-data' />";
+					"accept='image/*'  />";
 
 				// done with special handling
 				// continue with pop-up prompt
-				str += "</center></div><br><br>"; //close main popup div
+				var MAX = 100;//MB
+				str += "<br><br><div id='checkFileSize'>File upload limit is " + MAX + " MB. </div>";
+
+				str += "</form></center></div><br><br>"; //close main popup div
 
 				str += "<center><input id='popUpDialog-submitButton' disabled type='button'" +
 					"value='Upload Image' title='" +
@@ -3428,49 +3436,76 @@
 					{
 						var files = evt.target.files;
 						var file = files[0];
-						var image;
-						var reader = new FileReader();
-						var uploadbutton = document.getElementById('popUpDialog-submitButton');
-						reader.onload = 
-							function (readerEvt)
+
+						document.getElementById('popUpDialog-submitButton').disabled = true;
+
+						if (file)
+						{
+							if (!file.type.includes("image"))
 							{
-								//store uploaded file and enable button
-								image = reader.result;
-								//image = readerEvt.target.result.split(',')[1];
-								uploadbutton.disabled = false;
+						    	document.getElementById('checkFileSize').innerHTML = "<span style='color:red'>Selected File is not an image<span>";
+								return;
 							}
-						reader.readAsDataURL(file);
-						//reader.readAsArrayBuffer(file);
-						var filename = file.name;
-						uploadbutton.title = "Upload the chosen " + filename + " file to the current widget";
-						uploadbutton.onmouseup = 
-							function (){
-								uploadImage(image, filename);
-								closeFilePopup();
-							};
+
+							checkFileSize(file, MAX);
+						}
 					}, false);
 
 			} //end popupUploadImage()
 
+			//=====================================================================================
+			function checkFileSize(file, maxSize)
+			{
+				var fileSize;
+			    if (file.size > maxSize * 1024 * 1024)
+			    {
+			    	document.getElementById('checkFileSize').innerHTML = "Selected file exceeds file upload limit of " + maxSize + " MB.";
+			    	return;
+			    }
+			    else if (file.size > 1024 * 1024)
+			    	fileSize = (Math.round(file.size * 100 / (1024 * 1024)) / 100).toString() + ' MB';
+			    else	
+			    	fileSize = (Math.round(file.size * 100 / 1024) / 100).toString() + ' KB';
+
+				document.getElementById('checkFileSize').innerHTML = "File upload limit is " + maxSize + " MB. Actual file size is: " + fileSize;
+
+				var uploadbutton = document.getElementById('popUpDialog-submitButton');
+				uploadbutton.disabled = false;
+				uploadbutton.title = "Upload the chosen " + file.name + " file to the current widget";
+				uploadbutton.onmouseup = 
+					function (){
+						uploadImage(file.name, file);
+					};
+			}
 
 			//=====================================================================================
-			function uploadImage(image, filename)
+			function uploadImage(filename, file)
 			{
-				console.log("uploadImage():", image);
-				image = image.replace(/^data:image\/\w+;base64,/, "");
+				Debug.log("uploadImage(): " );
+				var xhr = new XMLHttpRequest();
+				var fd = new FormData(document.getElementById('fileForm'));
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=saveImageFile",
-							//post data
-							"fileName=" + filename +
-							"&isPublic=false" +
-							"&image=" + image,
-							saveImageFileHandler /*handler*/);
+				/* event listeners */
+				xhr.upload.addEventListener("progress", uploadProgress, false);
+				xhr.addEventListener("load", saveImageFileHandler, false);
+				xhr.addEventListener("error", uploadFailed, false);
+				xhr.addEventListener("abort", uploadCanceled, false);
 
+				//saveImageFileHandler()
 				function saveImageFileHandler(req)
 				{
 					Debug.log("saveImageFileHandler() was called for " + controlsPageName);// Req: " + req.responseText);
-					Debug.log("Your page was succesfully saved!",Debug.INFO_PRIORITY);		
+					Debug.log("Your page was succesfully saved!",Debug.INFO_PRIORITY);
 				} //end saveImageFileHandler()
+
+				var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
+				requestURL = "/urn:xdaq-application:lid="+urn+"/Request?RequestType=saveImageFile&CookieCode=" + DesktopContent._cookieCodeMailbox;
+				xhr.open("POST", requestURL);
+
+                //add other values to form so they are transmitted with files
+				fd.append("isPublic", "false");
+				fd.append("image", file);
+				xhr.send(fd);
 
 				var attributesTable = document.getElementById("widgetAttributesTable");
 				var webpath = "";
@@ -3485,6 +3520,41 @@
 					}
 				}
 			}// end uploadImage()
+
+			//=====================================================================================
+			function uploadProgress(evt)
+			{
+				if (evt.lengthComputable) {
+					var percentComplete = Math.round(evt.loaded * 100 / evt.total);
+					document.getElementById('checkFileSize').innerHTML = percentComplete.toString() + '%';
+					Debug.log("Logbook uploadProgress " +  percentComplete.toString() + '%');
+					if (percentComplete.toString() == "100")
+						closeFilePopup();
+				}
+				else {
+					document.getElementById('checkFileSize').innerHTML = 'unable to compute';
+					Debug.log("Image uploadProgress 'unable to compute'");
+				}
+			}// end uploadProgress()
+
+			//=====================================================================================
+			// This event is raised when the server send back a response
+			function uploadComplete(evt)
+			{
+				Debug.log("Logbook uploadComplete " +  evt.target.responseText);
+			}// end uploadComplete()
+
+			//=====================================================================================
+			function uploadFailed(evt)
+			{
+				Debug.log("There was an error attempting to upload the file.");
+			}// end uploadFailed()
+
+			//=====================================================================================
+			function uploadCanceled(evt)
+			{
+				Debug.log("The upload has been canceled by the user or the browser dropped the connection.");
+			}// end uploadCanceled()
 
 
 			//=====================================================================================
