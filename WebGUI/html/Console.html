@@ -2149,15 +2149,15 @@
 							else if(_traceHostSelect.mode != _traceHostSelect_MODE_LABELBYHOST)
 							{
 								//skip if no hosts found		
-								for(var j=0;j<hosts.length;++j)
+								for(var j=0;j<hostPresence.length;++j)
 								{
 									for(var hh=0;hh<_traceHostSelect.hosts.length;++hh)
-										if(hosts[j] == _traceHostSelect.hosts[hh])
+										if(hostPresence[j] == _traceHostSelect.hosts[hh])
 											break;
 									if(hh < _traceHostSelect.hosts.length) //then found a host in filter list
 										break;										
 								}
-								if(j >= host.length) //then no hosts were found
+								if(j >= hostPresence.length) //then no hosts were found
 									continue;
 							}	
 						}
@@ -2176,11 +2176,11 @@
 							else if(i == 2)
 							{
 								if(_advancedPage == _advancedPage_SLOW)
-									var val64 = _traceLevels[hosts[0]][label].S;
+									var val64 = _traceLevels[hostPresence[0]][label].S;
 								else if(_advancedPage == _advancedPage_FAST)
-									var val64 = _traceLevels[hosts[0]][label].M;
+									var val64 = _traceLevels[hostPresence[0]][label].M;
 								else if(_advancedPage == _advancedPage_TRIGGER)
-									var val64 = _traceLevels[hosts[0]][label].T;
+									var val64 = _traceLevels[hostPresence[0]][label].T;
 								else
 								{
 									Debug.err("Unknown page mode " +
@@ -2204,8 +2204,8 @@
 										str += "All";
 									else //give a list of hosts
 									{
-										for(var j=0;j<hosts.length;++j)
-											str += (j?';':'') + hosts[j];
+										for(var j=0;j<hostPresence.length;++j)
+											str += (j?';':'') + hostPresence[j];
 									}
 								}
 								else
