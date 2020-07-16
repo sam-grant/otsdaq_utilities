@@ -520,6 +520,9 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 				__SUP_SS_THROW__;
 			}
 
+			traceList 		  += ";" + appInfo.first; //insert xdaq context version of name
+									//FIXME and create mapp from user's typed in xdaq context name to TRACE hostname resolution
+
 			traceList        += rxParameters.getValue("TRACEList");
 
 		} //end app get TRACE loop
@@ -632,6 +635,9 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 				__SUP_SS_THROW__;
 			}
 
+			modifiedTraceList 		  += ";" + hostLabelsPair.first; //insert xdaq context version of name
+						//FIXME and create mapp from user's typed in xdaq context name to TRACE hostname resolution
+
 			modifiedTraceList        += rxParameters.getValue("TRACEList");
 
 
@@ -697,6 +703,8 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 				__SUP_SS_THROW__;
 			}
 
+			traceTriggerStatus 		  += ";" + appInfo.first; //insert xdaq context version of name
+			//FIXME and create mapp from user's typed in xdaq context name to TRACE hostname resolution
 			traceTriggerStatus        += rxParameters.getValue("TRACETriggerStatus");
 
 		} //end app get TRACE loop
