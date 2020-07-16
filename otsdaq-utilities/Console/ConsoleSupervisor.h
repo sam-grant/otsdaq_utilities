@@ -248,6 +248,8 @@ class ConsoleSupervisor : public CoreSupervisorBase
 	size_t messageCount_;  //"unique" incrementing ID for messages
 	size_t maxMessageCount_;
 
+	std::map<std::string /*TRACE hostname*/,std::string /*xdaq context hostname*/> traceMapToXDAQHostname_;
+
 	// members for the refresh handler, ConsoleSupervisor::insertMessageRefresh
 	xercesc::DOMElement* refreshParent_;
 };

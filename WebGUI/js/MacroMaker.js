@@ -1642,7 +1642,7 @@
 												
 						"<a onclick='DesktopContent.openNewWindow(" +
 						"\"Code Editor\",\".h\"," + 
-						"\"/WebPath/html/CodeEditor.html" + 
+						"\"/WebPath/html/CodeEditor.html?" + 
 						"urn=" + _codeEditorAppId + 
 						"&startFilePrimary=" +
 						headerFile + "\",0 /*unique*/);' " +
@@ -1651,7 +1651,7 @@
 												
 						"<a onclick='DesktopContent.openNewWindow(" +
 						"\"Code Editor\",\".cc\"," + 
-						"\"/WebPath/html/CodeEditor.html" + 
+						"\"/WebPath/html/CodeEditor.html?" + 
 						"urn=" + _codeEditorAppId + 
 						"&startFilePrimary=" +
 						sourceFile + "\",0 /*unique*/);' " +

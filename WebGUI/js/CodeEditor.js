@@ -499,7 +499,7 @@ CodeEditor.create = function(standAlone) {
 					, "" /* data */,
 					function(req)
 					{	
-				var fileSplit; 
+				var filePath, fileExtension; 
 
 				//console.log("getDirectoryContent",req);
 
@@ -508,17 +508,30 @@ CodeEditor.create = function(standAlone) {
 				CodeEditor.editor.handleDirectoryContent(0 /*forPrimary*/, req);
 
 				//decide how to start display(file or directory)
-				fileSplit = [];
+				filePath = "";		
 				if(parameterStartFile[0] && parameterStartFile[0] != "")
-					fileSplit = parameterStartFile[0].split('.');
+				{
+					i = parameterStartFile[0].lastIndexOf('.');
+					filePath = parameterStartFile[0];
+					if(i > 0) //up to extension
+					{
+						//filePath = parameterStartFile[0].substr(0,i);
+						fileExtension = parameterStartFile[0].substr(i+1);
+					}
+					else
+					{
+						//filePath = parameterStartFile[0];
+						fileExtension = "";
+					}
+				}
 
 
 
-				if(fileSplit.length == 2) //show shortcut file
+				if(filePath != "") //show shortcut file
 					CodeEditor.editor.openFile(
 							1 /*forPrimary*/, 
-							fileSplit[0]	/*path*/,
-							fileSplit[1] /*extension*/, 
+							filePath	/*path*/,
+							fileExtension /*extension*/, 
 							false /*doConfirm*/,
 							parameterGotoLine[0 /*primary goto line*/] /*gotoLine*/);
 				else //show base directory nav
@@ -532,15 +545,28 @@ CodeEditor.create = function(standAlone) {
 				}
 
 				//for secondary pane
-				fileSplit = [];
+				filePath = "";		
 				if(parameterStartFile[1] && parameterStartFile[1] != "")
-					fileSplit = parameterStartFile[1].split('.');
+				{
+					i = parameterStartFile[1].lastIndexOf('.');
+					filePath = parameterStartFile[1];
+					if(i > 0) //up to extension
+					{
+						//filePath = parameterStartFile[1].substr(0,i);
+						fileExtension = parameterStartFile[1].substr(i+1);
+					}
+					else
+					{
+						//filePath = parameterStartFile[1];
+						fileExtension = "";
+					}
+				}
 
-				if(fileSplit.length == 2) //show shortcut file
+				if(filePath != "") //show shortcut file
 					CodeEditor.editor.openFile(
 							0 /*forPrimary*/, 
-							fileSplit[0]	/*path*/,
-							fileSplit[1] /*extension*/, 
+							filePath	/*path*/,
+							fileExtension /*extension*/, 
 							false /*doConfirm*/,
 							parameterGotoLine[1 /*secondary goto line*/] /*gotoLine*/);
 				else //show base directory nav				

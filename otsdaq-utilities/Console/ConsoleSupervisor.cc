@@ -23,6 +23,8 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 #define USER_CONSOLE_PREF_PATH \
 	std::string(__ENV__("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
+#define USER_CONSOLE_SNAPSHOT_PATH \
+	std::string(__ENV__("SERVICE_DATA_PATH")) + "/ConsoleSnapshots/"
 #define USERS_PREFERENCES_FILETYPE "pref"
 
 #define QUIET_CFG_FILE                    \
@@ -53,6 +55,7 @@ ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
 
 	// attempt to make directory structure (just in case)
 	mkdir(((std::string)USER_CONSOLE_PREF_PATH).c_str(), 0755);
+	mkdir(((std::string)USER_CONSOLE_SNAPSHOT_PATH).c_str(), 0755);
 
 	init();
 
@@ -342,6 +345,11 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	// LoadUserPreferences
 	// GetTraceLevels
 	// SetTraceLevels
+	// GetTriggerStatus
+	// SetTriggerEnable
+	// ResetTRACE
+	// EnableTRACE
+	// GetTraceSnapshot
 
 	// Note: to report to logbook admin status use
 	// xmlOut.addTextElementToData(XML_ADMIN_STATUS,refreshTempStr_);
@@ -472,7 +480,10 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		SOAPParameters rxParameters;  // params for xoap to recv
 		rxParameters.addParameter("Command");
 		rxParameters.addParameter("Error");
+		rxParameters.addParameter("TRACEHostnameList");
 		rxParameters.addParameter("TRACEList");
+
+		traceMapToXDAQHostname_.clear(); //reset
 
 		std::string traceList = "";
 		auto& allTraceApps = allSupervisorInfo_.getAllTraceControllerSupervisorInfo();
@@ -520,15 +531,24 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 				__SUP_SS_THROW__;
 			}
 
-			traceList 		  += ";" + appInfo.first; //insert xdaq context version of name
-									//FIXME and create mapp from user's typed in xdaq context name to TRACE hostname resolution
+			std::vector<std::string> traceHostnameArr;
+			StringMacros::getVectorFromString(
+					rxParameters.getValue("TRACEHostnameList"),
+					traceHostnameArr,
+					{';'});
+			for(const auto& traceHostname : traceHostnameArr)
+				traceMapToXDAQHostname_[traceHostname] = appInfo.first;
+
+			//traceList 		  += ";" + appInfo.first; //insert xdaq context version of name
+			//						//FIXME and create mapp from user's typed in xdaq context name to TRACE hostname resolution
 
 			traceList        += rxParameters.getValue("TRACEList");
 
 		} //end app get TRACE loop
+		__SUP_COUT__ << "TRACE hostname map received: \n" << StringMacros::mapToString(traceMapToXDAQHostname_) << __E__;
 		__SUP_COUT__ << "TRACE List received: \n" << traceList << __E__;
 		xmlOut.addTextElementToData("traceList", traceList);
-	}
+	} //end GetTraceLevels
 	else if(requestType == "SetTraceLevels")
 	{
 		__SUP_COUT__ << "requestType " << requestType << std::endl;
@@ -556,8 +576,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		rxParameters.addParameter("TRACEList");
 
 		std::string modifiedTraceList = "";
-		size_t a;
-		std::string artdaqHostSubstr;
+		std::string xdaqHostname;
 		StringMacros::getMapFromString(hostLabelMap,hostToLabelMap,{';'},{':'});
 		for(auto& hostLabelsPair:hostToLabelMap)
 		{
@@ -566,25 +585,24 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 			__SUP_COUTV__(hostLabelsPair.first);
 			__SUP_COUTV__(hostLabelsPair.second);
 
-			a = hostLabelsPair.first.find("artdaq..");
-			if(a == 0)
-				artdaqHostSubstr  = hostLabelsPair.first.substr(strlen("artdaq.."));
-			else
-				artdaqHostSubstr  = hostLabelsPair.first;
+			//use map to convert to xdaq host
+			try
+			{
+				xdaqHostname = traceMapToXDAQHostname_.at(hostLabelsPair.first);
+			}
+			catch(...)
+			{
+				__SUP_SS__ << "Could not find the translation from TRACE hostname '" <<
+						hostLabelsPair.first << "' to xdaq Context hostname." << __E__;
+				ss << "Here is the existing map (size=" << traceMapToXDAQHostname_.size() << "): " << StringMacros::mapToString(traceMapToXDAQHostname_) << __E__;
+				__SUP_SS_THROW__;
+			}
 
-//			std::vector<std::string /*labels*/> hostLabels;
-//			StringMacros::getVectorFromString(hostLabelsPair.second,hostLabels,{','});
-//			for(const auto& hostLabel:hostLabels)
-//			{
-//				__SUP_COUTV__(hostLabel);
-//			}
-			__SUP_COUTV__(artdaqHostSubstr);
-			for(auto& allTraceApp:allTraceApps)
-				__SUP_COUTV__(allTraceApp.first);
+			__SUP_COUTV__(xdaqHostname);
 
-			auto& appInfo = allTraceApps.at(artdaqHostSubstr);
+			auto& appInfo = allTraceApps.at(xdaqHostname);
 			__SUP_COUT__ << "Supervisor hostname = " << hostLabelsPair.first <<
-					"/" << appInfo.getId()
+					"/" << xdaqHostname << ":" << appInfo.getId()
 					<< " name = " << appInfo.getName()
 					<< " class = " << appInfo.getClass()
 					<< " hostname = " << appInfo.getHostname() <<
@@ -645,7 +663,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 
 		__SUP_COUT__ << "mod'd TRACE List received: \n" << modifiedTraceList << __E__;
 		xmlOut.addTextElementToData("modTraceList", modifiedTraceList);
-	}
+	} //end SetTraceLevels
 	else if(requestType == "GetTriggerStatus")
 	{
 		__SUP_COUT__ << "requestType " << requestType << std::endl;
@@ -703,14 +721,12 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 				__SUP_SS_THROW__;
 			}
 
-			traceTriggerStatus 		  += ";" + appInfo.first; //insert xdaq context version of name
-			//FIXME and create mapp from user's typed in xdaq context name to TRACE hostname resolution
 			traceTriggerStatus        += rxParameters.getValue("TRACETriggerStatus");
 
 		} //end app get TRACE loop
 		__SUP_COUT__ << "TRACE Trigger Status received: \n" << traceTriggerStatus << __E__;
 		xmlOut.addTextElementToData("traceTriggerStatus", traceTriggerStatus);
-	}
+	} //end GetTriggerStatus
 	else if(requestType == "SetTriggerEnable")
 	{
 		__SUP_COUT__ << "requestType " << requestType << std::endl;
@@ -730,8 +746,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		rxParameters.addParameter("TRACETriggerStatus");
 
 		std::string modifiedTriggerStatus = "";
-		size_t a;
-		std::string artdaqHostSubstr;
+		std::string xdaqHostname;
 		StringMacros::getVectorFromString(hostList,hosts,{';'});
 		for(auto& host:hosts)
 		{
@@ -740,19 +755,24 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 			__SUP_COUTV__(host);
 			if(host.size() < 3) continue; //skip bad hostnames
 
-			a = host.find("artdaq..");
-			if(a == 0)
-				artdaqHostSubstr  = host.substr(strlen("artdaq.."));
-			else
-				artdaqHostSubstr  = host;
+			//use map to convert to xdaq host
+			try
+			{
+				xdaqHostname = traceMapToXDAQHostname_.at(host);
+			}
+			catch(...)
+			{
+				__SUP_SS__ << "Could not find the translation from TRACE hostname '" <<
+						host << "' to xdaq Context hostname." << __E__;
+				ss << "Here is the existing map (size=" << traceMapToXDAQHostname_.size() << "): " << StringMacros::mapToString(traceMapToXDAQHostname_) << __E__;
+				__SUP_SS_THROW__;
+			}
 
-			__SUP_COUTV__(artdaqHostSubstr);
-			for(auto& allTraceApp:allTraceApps)
-				__SUP_COUTV__(allTraceApp.first);
+			__SUP_COUTV__(xdaqHostname);
 
-			auto& appInfo = allTraceApps.at(artdaqHostSubstr);
+			auto& appInfo = allTraceApps.at(xdaqHostname);
 			__SUP_COUT__ << "Supervisor hostname = " << host <<
-					"/" << appInfo.getId()
+					"/" << xdaqHostname << ":" << appInfo.getId()
 					<< " name = " << appInfo.getName()
 					<< " class = " << appInfo.getClass()
 					<< " hostname = " << appInfo.getHostname() <<
@@ -803,7 +823,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 
 		__SUP_COUT__ << "mod'd TRACE Trigger Status received: \n" << modifiedTriggerStatus << __E__;
 		xmlOut.addTextElementToData("modTriggerStatus", modifiedTriggerStatus);
-	}
+	} //end SetTriggerEnable
 	else if(requestType == "ResetTRACE")
 	{
 		__SUP_COUT__ << "requestType " << requestType << std::endl;
@@ -823,8 +843,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		rxParameters.addParameter("TRACETriggerStatus");
 
 		std::string modifiedTriggerStatus = "";
-		size_t a;
-		std::string artdaqHostSubstr;
+		std::string xdaqHostname;
 		StringMacros::getVectorFromString(hostList,hosts,{';'});
 		for(auto& host:hosts)
 		{
@@ -833,19 +852,24 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 			__SUP_COUTV__(host);
 			if(host.size() < 3) continue; //skip bad hostnames
 
-			a = host.find("artdaq..");
-			if(a == 0)
-				artdaqHostSubstr  = host.substr(strlen("artdaq.."));
-			else
-				artdaqHostSubstr  = host;
+			//use map to convert to xdaq host
+			try
+			{
+				xdaqHostname = traceMapToXDAQHostname_.at(host);
+			}
+			catch(...)
+			{
+				__SUP_SS__ << "Could not find the translation from TRACE hostname '" <<
+						host << "' to xdaq Context hostname." << __E__;
+				ss << "Here is the existing map (size=" << traceMapToXDAQHostname_.size() << "): " << StringMacros::mapToString(traceMapToXDAQHostname_) << __E__;
+				__SUP_SS_THROW__;
+			}
 
-			__SUP_COUTV__(artdaqHostSubstr);
-			for(auto& allTraceApp:allTraceApps)
-				__SUP_COUTV__(allTraceApp.first);
+			__SUP_COUTV__(xdaqHostname);
 
-			auto& appInfo = allTraceApps.at(artdaqHostSubstr);
+			auto& appInfo = allTraceApps.at(xdaqHostname);
 			__SUP_COUT__ << "Supervisor hostname = " << host <<
-					"/" << appInfo.getId()
+					"/" << xdaqHostname << ":" << appInfo.getId()
 					<< " name = " << appInfo.getName()
 					<< " class = " << appInfo.getClass()
 					<< " hostname = " << appInfo.getHostname() <<
@@ -896,14 +920,16 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 
 		__SUP_COUT__ << "mod'd TRACE Trigger Status received: \n" << modifiedTriggerStatus << __E__;
 		xmlOut.addTextElementToData("modTriggerStatus", modifiedTriggerStatus);
-	}
-	else if(requestType == "getTraceSnapshot")
+	} //end ResetTRACE
+	else if(requestType == "EnableTRACE")
 	{
 		__SUP_COUT__ << "requestType " << requestType << std::endl;
 
 		std::string hostList    	= CgiDataUtilities::postData(cgiIn, "hostList");
+		std::string enable    		= CgiDataUtilities::postData(cgiIn, "enable");
 
 		__SUP_COUTV__(hostList);
+		__SUP_COUTV__(enable);
 
 		std::vector<std::string /*host*/> hosts;
 
@@ -914,11 +940,9 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		rxParameters.addParameter("Command");
 		rxParameters.addParameter("Error");
 		rxParameters.addParameter("TRACETriggerStatus");
-		rxParameters.addParameter("TRACESnapshot");
 
 		std::string modifiedTriggerStatus = "";
-		size_t a;
-		std::string artdaqHostSubstr;
+		std::string xdaqHostname;
 		StringMacros::getVectorFromString(hostList,hosts,{';'});
 		for(auto& host:hosts)
 		{
@@ -927,19 +951,24 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 			__SUP_COUTV__(host);
 			if(host.size() < 3) continue; //skip bad hostnames
 
-			a = host.find("artdaq..");
-			if(a == 0)
-				artdaqHostSubstr  = host.substr(strlen("artdaq.."));
-			else
-				artdaqHostSubstr  = host;
+			//use map to convert to xdaq host
+			try
+			{
+				xdaqHostname = traceMapToXDAQHostname_.at(host);
+			}
+			catch(...)
+			{
+				__SUP_SS__ << "Could not find the translation from TRACE hostname '" <<
+						host << "' to xdaq Context hostname." << __E__;
+				ss << "Here is the existing map (size=" << traceMapToXDAQHostname_.size() << "): " << StringMacros::mapToString(traceMapToXDAQHostname_) << __E__;
+				__SUP_SS_THROW__;
+			}
 
-			__SUP_COUTV__(artdaqHostSubstr);
-			for(auto& allTraceApp:allTraceApps)
-				__SUP_COUTV__(allTraceApp.first);
+			__SUP_COUTV__(xdaqHostname);
 
-			auto& appInfo = allTraceApps.at(artdaqHostSubstr);
+			auto& appInfo = allTraceApps.at(xdaqHostname);
 			__SUP_COUT__ << "Supervisor hostname = " << host <<
-					"/" << appInfo.getId()
+					"/" << xdaqHostname << ":" << appInfo.getId()
 					<< " name = " << appInfo.getName()
 					<< " class = " << appInfo.getClass()
 					<< " hostname = " << appInfo.getHostname() <<
@@ -948,8 +977,9 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 			{
 
 				SOAPParameters txParameters;  // params for xoap to send
-				txParameters.addParameter("Request", "GetSnapshot");
+				txParameters.addParameter("Request", "EnableTRACE");
 				txParameters.addParameter("Host", host);
+				txParameters.addParameter("SetEnable", enable);
 
 				xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(appInfo.getDescriptor(),
 						"TRACESupervisorRequest",
@@ -986,12 +1016,131 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 			}
 
 			modifiedTriggerStatus        += rxParameters.getValue("TRACETriggerStatus");
-			xmlOut.addTextElementToData("hostSnapshot", rxParameters.getValue("TRACESnapshot"));
 		} //end host set TRACE loop
 
 		__SUP_COUT__ << "mod'd TRACE Trigger Status received: \n" << modifiedTriggerStatus << __E__;
 		xmlOut.addTextElementToData("modTriggerStatus", modifiedTriggerStatus);
-	}
+	} //end EnableTRACE
+	else if(requestType == "GetTraceSnapshot")
+	{
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
+
+		std::string hostList    	= CgiDataUtilities::postData(cgiIn, "hostList");
+
+		__SUP_COUTV__(hostList);
+
+		std::vector<std::string /*host*/> hosts;
+
+		auto& allTraceApps = allSupervisorInfo_.getAllTraceControllerSupervisorInfo();
+
+
+		SOAPParameters rxParameters;  // params for xoap to recv
+		rxParameters.addParameter("Command");
+		rxParameters.addParameter("Error");
+		rxParameters.addParameter("TRACETriggerStatus");
+		rxParameters.addParameter("TRACESnapshot");
+
+		std::string modifiedTriggerStatus = "";
+		std::string xdaqHostname;
+		StringMacros::getVectorFromString(hostList,hosts,{';'});
+		for(auto& host:hosts)
+		{
+			//identify artdaq hosts to go through ARTDAQ supervisor
+			//	by adding "artdaq.." to hostname artdaq..correlator2.fnal.gov
+			__SUP_COUTV__(host);
+			if(host.size() < 3) continue; //skip bad hostnames
+
+			//use map to convert to xdaq host
+			try
+			{
+				xdaqHostname = traceMapToXDAQHostname_.at(host);
+			}
+			catch(...)
+			{
+				__SUP_SS__ << "Could not find the translation from TRACE hostname '" <<
+						host << "' to xdaq Context hostname." << __E__;
+				ss << "Here is the existing map (size=" << traceMapToXDAQHostname_.size() << "): " << StringMacros::mapToString(traceMapToXDAQHostname_) << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			__SUP_COUTV__(xdaqHostname);
+
+			auto& appInfo = allTraceApps.at(xdaqHostname);
+			__SUP_COUT__ << "Supervisor hostname = " << host <<
+					"/" << xdaqHostname << ":" << appInfo.getId()
+					<< " name = " << appInfo.getName()
+					<< " class = " << appInfo.getClass()
+					<< " hostname = " << appInfo.getHostname() <<
+					__E__;
+			try
+			{
+
+				SOAPParameters txParameters;  // params for xoap to send
+				txParameters.addParameter("Request", "GetSnapshot");
+				txParameters.addParameter("Host", host);
+
+				xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(appInfo.getDescriptor(),
+						"TRACESupervisorRequest",
+						txParameters);
+				SOAPUtilities::receive(retMsg, rxParameters);
+				__SUP_COUT__ << "Received TRACE response: " <<
+						SOAPUtilities::translate(retMsg).getCommand() << __E__;
+						//<< " ==> Bytes " << SOAPUtilities::translate(retMsg) << __E__;
+
+				if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
+				{
+					__SUP_SS__ << "Unrecognized command at destination TRACE Supervisor hostname = " <<
+							host <<
+							"/" << appInfo.getId()
+							<< " name = " << appInfo.getName()
+							<< " class = " << appInfo.getClass()
+							<< " hostname = " << appInfo.getHostname() <<
+							__E__;
+					__SUP_SS_THROW__;
+				}
+				else if(SOAPUtilities::translate(retMsg).getCommand() == "TRACEFault")
+				{
+					__SUP_SS__ << "Error received: " << rxParameters.getValue("Error") << __E__;
+					__SUP_SS_THROW__;
+				}
+			}
+			catch(const xdaq::exception::Exception& e)
+			{
+				__SUP_SS__ << "Error transmitting request to TRACE Supervisor LID = "
+						<< appInfo.getId() << " name = " << appInfo.getName()
+						<< ". \n\n"
+						<< e.what() << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			modifiedTriggerStatus        += rxParameters.getValue("TRACETriggerStatus");
+			xmlOut.addTextElementToData("host", host);
+			std::string snapshot = rxParameters.getValue("TRACESnapshot");
+//			if(snapshot.size() > 100000)
+//			{
+//				__SUP_COUT__ << "Truncating snapshot" << __E__;
+//				snapshot.resize(100000);
+//			}
+//			xmlOut.addTextElementToData("hostSnapshot", snapshot);
+
+			{
+				std::string filename = USER_CONSOLE_SNAPSHOT_PATH + "snapshot_" + host + ".txt";
+				__SUP_COUTV__(filename);
+				FILE* fp = fopen(filename.c_str(),"w");
+				if(!fp)
+				{
+					__SUP_SS__ << "Failed to create snapshot file: " << filename << __E__;
+					__SUP_SS_THROW__;
+				}
+
+				fprintf(fp,"%s",snapshot.c_str());
+				fclose(fp);
+			}
+		} //end host set TRACE loop
+
+		__SUP_COUT__ << "mod'd TRACE Trigger Status received: \n" << modifiedTriggerStatus << __E__;
+		xmlOut.addTextElementToData("modTriggerStatus", modifiedTriggerStatus);
+	} //end getTraceSnapshot
 	else
 	{
 		__SUP_SS__ << "requestType Request, " << requestType << ", not recognized."

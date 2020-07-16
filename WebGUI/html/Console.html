@@ -556,6 +556,9 @@
 			var _advancedFilterDelaySetTimer = 0;
 			var _advancedFilterINIT_VAL = "Wildcard(*) filter here.";
 			
+
+			var _codeEditorAppId; //Code Editor Supervisor LID
+			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
@@ -645,6 +648,23 @@
 				document.body.onmouseleave = handleMouseUp;
 
 				document.body.style.display = "block";
+				
+				
+
+				//fill in CodeEditor appId
+				DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
+						"&classNeedle=ots::CodeEditorSupervisor",
+						"", //end post data, 
+						function(req) 
+						{			
+					_codeEditorAppId = DesktopContent.getXMLValue(req,"id") | 0;
+					Debug.log("_codeEditorAppId " + _codeEditorAppId);
+						}, //end handler
+						0, 0, true,//reqParam, progressHandler, callHandlerOnErr, 
+						false,//doNotShowLoadingOverlay,
+						true //targetSupervisor
+				); //end getAppId request
+				
 			} //end init()
 
 			//=====================================================================================
@@ -1898,10 +1918,23 @@
 					str += htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
+									"title" : 	"Disable the TRACE buffer.",
+									"onclick":	"advancedPause();",
+							},"Pause TRACE",true);
+					str += htmlOpen("button",
+							{
+									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
+									"title" : 	"Enable the TRACE buffer.",
+									"onclick":	"advancedResume();",
+							},"Resume TRACE",true);
+					str += htmlOpen("button",
+							{
+									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Get a snapshot of the current TRACE buffer.",
 									"onclick":	"advancedGetSnapshot();",
 							},"Get Snapshot",true);
 
+					str += htmlClearDiv();
 					str += "<div id='ac_snapshot'></div>";
 					_advancedEl.innerHTML = str;
 				} //end localCreateSnapshotPage()
@@ -2580,12 +2613,62 @@
 					hostStr += ";" + host;
 				}
 				DesktopContent.XMLHttpRequest(
-						"Request?RequestType=getTraceSnapshot",						
+						"Request?RequestType=GetTraceSnapshot",						
 						"hostList=" + hostStr,
 						function(req)
 						{
 					console.log("Snapshot",req);
+					
+					
 					handleAdvancedGetTriggerStatus(req);
+					
+					var el = document.getElementById("ac_snapshot");
+					var str = el.innerHTML;
+					
+					var hosts = req.responseXML.getElementsByTagName("host");
+					//var snapshots = req.responseXML.getElementsByTagName("hostSnapshot");
+						
+					
+					
+					str += "<br>";
+					//str += "<select>";
+					for(var i=0;i<hosts.length;++i)
+					{
+						var filename = "/$USER_DATA/ServiceData/ConsoleSnapshots/snapshot_" + DesktopContent.getXMLValue(hosts[i]) + ".txt";
+						str += DesktopContent.getXMLValue(hosts[i]) + " snapshot: <a onclick='DesktopContent.openNewWindow(" +
+								"\"Code Editor\",\".h\"," + 
+								"\"/WebPath/html/CodeEditor.html?" + 
+								"urn=" + _codeEditorAppId + 
+								"&startFilePrimary=" +
+								filename + "\",0 /*unique*/);' " +
+								"title='Click to open this snapshot file in the Code Editor.'>" +
+								"Open</a> &nbsp;&nbsp;&nbsp;";
+						str += "<a onclick='DesktopContent.openNewBrowserTab(" +
+								"\"Code Editor\",\"\"," + 
+								"\"/WebPath/html/CodeEditor.html?" + 
+								"urn=" + _codeEditorAppId + 
+								"&startFilePrimary=" +
+								filename + "\",0 /*unique*/);' " +
+								"title='Click to open this snapshot file in a new browser tab.'>" +
+								"New Tab</a>";
+						str += "<br>";
+						
+					}
+//						str += "<option>" + DesktopContent.getXMLValue(hosts[i]) + "</option>";
+//					str += "</select>";
+//					str += "<div id='ac_snapshot_text'>";
+//					for(var i=0;i<snapshots.length;++i)
+//					{
+//						str += "<div class='ac_host_snapshot' id='ac_host_snapshot-" + 
+//								i + "' ";
+//						if(i != 0)
+//							str += " style='display:none' ";
+//						str += ">" + DesktopContent.getXMLValue(snapshots[i]) + "</div>";					}
+//					
+//					str += "</div>";
+					
+					el.innerHTML = str;
+						
 						});
 			} //end advancedGetSnapshot()
 			
@@ -2608,11 +2691,49 @@
 			} //end advancedReset()
 			
 			//=====================================================================================
+			function advancedPause()
+			{
+				Debug.log("advancedPause");
+
+				var hostStr = "";
+
+				//for now apply to all hosts
+				for(var host in _traceLevels)
+				{
+					hostStr += ";" + host;
+				}
+				DesktopContent.XMLHttpRequest(
+						"Request?RequestType=EnableTRACE",						
+						"enable=0" +
+						"&hostList=" + hostStr,
+						handleAdvancedGetTriggerStatus);
+			} //end advancedPause()
+			
+			//=====================================================================================
+			function advancedResume()
+			{
+				Debug.log("advancedResume");
+
+				var hostStr = "";
+
+				//for now apply to all hosts
+				for(var host in _traceLevels)
+				{
+					hostStr += ";" + host;
+				}
+				DesktopContent.XMLHttpRequest(
+						"Request?RequestType=EnableTRACE",						
+						"enable=1" +
+						"&hostList=" + hostStr,
+						handleAdvancedGetTriggerStatus);
+			} //end advancedResume()
+			
+			//=====================================================================================
 			function handleAdvancedGetTriggerStatus(req)
 			{
 				Debug.log("handleAdvancedGetTriggerStatus");
 
-			} //end advancedReset()
+			} //end handleAdvancedGetTriggerStatus()
 			
 			//=====================================================================================
 			function createEditableBitMask(val64,label,
