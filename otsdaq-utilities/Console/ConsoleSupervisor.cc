@@ -497,7 +497,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 
 				if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
 				{
-					__SUP_SS__ << "Unrecognized command at destination Supervisor hostname = " <<
+					__SUP_SS__ << "Unrecognized command at destination TRACE Supervisor hostname = " <<
 							appInfo.first <<
 								"/" << appInfo.second.getId()
 					             << " name = " << appInfo.second.getName()
@@ -513,7 +513,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 			}
 			catch(const xdaq::exception::Exception& e)
 			{
-				__SUP_SS__ << "Error transmitting request to FE Supervisor LID = "
+				__SUP_SS__ << "Error transmitting request to TRACE Supervisor LID = "
 						<< appInfo.second.getId() << " name = " << appInfo.second.getName()
 						<< ". \n\n"
 						<< e.what() << __E__;
@@ -608,7 +608,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 
 				if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
 				{
-					__SUP_SS__ << "Unrecognized command at destination Supervisor hostname = " <<
+					__SUP_SS__ << "Unrecognized command at destination TRACE Supervisor hostname = " <<
 							hostLabelsPair.first <<
 							"/" << appInfo.getId()
 							<< " name = " << appInfo.getName()
@@ -625,7 +625,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 			}
 			catch(const xdaq::exception::Exception& e)
 			{
-				__SUP_SS__ << "Error transmitting request to FE Supervisor LID = "
+				__SUP_SS__ << "Error transmitting request to TRACE Supervisor LID = "
 						<< appInfo.getId() << " name = " << appInfo.getName()
 						<< ". \n\n"
 						<< e.what() << __E__;
@@ -639,6 +639,350 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 
 		__SUP_COUT__ << "mod'd TRACE List received: \n" << modifiedTraceList << __E__;
 		xmlOut.addTextElementToData("modTraceList", modifiedTraceList);
+	}
+	else if(requestType == "GetTriggerStatus")
+	{
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		SOAPParameters txParameters;  // params for xoap to send
+		txParameters.addParameter("Request", "GetTriggerStatus");
+
+		SOAPParameters rxParameters;  // params for xoap to recv
+		rxParameters.addParameter("Command");
+		rxParameters.addParameter("Error");
+		rxParameters.addParameter("TRACETriggerStatus");
+
+		std::string traceTriggerStatus = "";
+		auto& allTraceApps = allSupervisorInfo_.getAllTraceControllerSupervisorInfo();
+		for(const auto& appInfo: allTraceApps)
+		{
+			__SUP_COUT__ << "Supervisor hostname = " << appInfo.first <<
+					"/" << appInfo.second.getId()
+					<< " name = " << appInfo.second.getName()
+					<< " class = " << appInfo.second.getClass()
+					<< " hostname = " << appInfo.second.getHostname() <<
+					__E__;
+			try
+			{
+				xoap::MessageReference retMsg =
+						SOAPMessenger::sendWithSOAPReply(appInfo.second.getDescriptor(),
+								"TRACESupervisorRequest",
+								txParameters);
+				SOAPUtilities::receive(retMsg, rxParameters);
+				__SUP_COUT__ << "Received TRACE response: " <<
+						SOAPUtilities::translate(retMsg).getCommand()
+						<< " ==> " << SOAPUtilities::translate(retMsg) << __E__;
+
+				if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
+				{
+					__SUP_SS__ << "Unrecognized command at destination TRACE Supervisor hostname = " <<
+							appInfo.first <<
+							"/" << appInfo.second.getId()
+							<< " name = " << appInfo.second.getName()
+							<< " class = " << appInfo.second.getClass()
+							<< " hostname = " << appInfo.second.getHostname() << __E__;
+					__SUP_SS_THROW__;
+				}
+				else if(SOAPUtilities::translate(retMsg).getCommand() == "TRACEFault")
+				{
+					__SUP_SS__ << "Error received: " << rxParameters.getValue("Error") << __E__;
+					__SUP_SS_THROW__;
+				}
+			}
+			catch(const xdaq::exception::Exception& e)
+			{
+				__SUP_SS__ << "Error transmitting request to TRACE Supervisor LID = "
+						<< appInfo.second.getId() << " name = " << appInfo.second.getName()
+						<< ". \n\n"
+						<< e.what() << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			traceTriggerStatus        += rxParameters.getValue("TRACETriggerStatus");
+
+		} //end app get TRACE loop
+		__SUP_COUT__ << "TRACE Trigger Status received: \n" << traceTriggerStatus << __E__;
+		xmlOut.addTextElementToData("traceTriggerStatus", traceTriggerStatus);
+	}
+	else if(requestType == "SetTriggerEnable")
+	{
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
+
+		std::string hostList    	= CgiDataUtilities::postData(cgiIn, "hostList");
+
+		__SUP_COUTV__(hostList);
+
+		std::vector<std::string /*host*/> hosts;
+
+		auto& allTraceApps = allSupervisorInfo_.getAllTraceControllerSupervisorInfo();
+
+
+		SOAPParameters rxParameters;  // params for xoap to recv
+		rxParameters.addParameter("Command");
+		rxParameters.addParameter("Error");
+		rxParameters.addParameter("TRACETriggerStatus");
+
+		std::string modifiedTriggerStatus = "";
+		size_t a;
+		std::string artdaqHostSubstr;
+		StringMacros::getVectorFromString(hostList,hosts,{';'});
+		for(auto& host:hosts)
+		{
+			//identify artdaq hosts to go through ARTDAQ supervisor
+			//	by adding "artdaq.." to hostname artdaq..correlator2.fnal.gov
+			__SUP_COUTV__(host);
+			if(host.size() < 3) continue; //skip bad hostnames
+
+			a = host.find("artdaq..");
+			if(a == 0)
+				artdaqHostSubstr  = host.substr(strlen("artdaq.."));
+			else
+				artdaqHostSubstr  = host;
+
+			__SUP_COUTV__(artdaqHostSubstr);
+			for(auto& allTraceApp:allTraceApps)
+				__SUP_COUTV__(allTraceApp.first);
+
+			auto& appInfo = allTraceApps.at(artdaqHostSubstr);
+			__SUP_COUT__ << "Supervisor hostname = " << host <<
+					"/" << appInfo.getId()
+					<< " name = " << appInfo.getName()
+					<< " class = " << appInfo.getClass()
+					<< " hostname = " << appInfo.getHostname() <<
+					__E__;
+			try
+			{
+
+				SOAPParameters txParameters;  // params for xoap to send
+				txParameters.addParameter("Request", "SetTriggerEnable");
+				txParameters.addParameter("Host", host);
+
+				xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(appInfo.getDescriptor(),
+						"TRACESupervisorRequest",
+						txParameters);
+				SOAPUtilities::receive(retMsg, rxParameters);
+				__SUP_COUT__ << "Received TRACE response: " <<
+						SOAPUtilities::translate(retMsg).getCommand()
+						<< " ==> " << SOAPUtilities::translate(retMsg) << __E__;
+
+				if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
+				{
+					__SUP_SS__ << "Unrecognized command at destination TRACE Supervisor hostname = " <<
+							host <<
+							"/" << appInfo.getId()
+							<< " name = " << appInfo.getName()
+							<< " class = " << appInfo.getClass()
+							<< " hostname = " << appInfo.getHostname() <<
+							__E__;
+					__SUP_SS_THROW__;
+				}
+				else if(SOAPUtilities::translate(retMsg).getCommand() == "TRACEFault")
+				{
+					__SUP_SS__ << "Error received: " << rxParameters.getValue("Error") << __E__;
+					__SUP_SS_THROW__;
+				}
+			}
+			catch(const xdaq::exception::Exception& e)
+			{
+				__SUP_SS__ << "Error transmitting request to TRACE Supervisor LID = "
+						<< appInfo.getId() << " name = " << appInfo.getName()
+						<< ". \n\n"
+						<< e.what() << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			modifiedTriggerStatus        += rxParameters.getValue("TRACETriggerStatus");
+		} //end host set TRACE loop
+
+		__SUP_COUT__ << "mod'd TRACE Trigger Status received: \n" << modifiedTriggerStatus << __E__;
+		xmlOut.addTextElementToData("modTriggerStatus", modifiedTriggerStatus);
+	}
+	else if(requestType == "ResetTRACE")
+	{
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
+
+		std::string hostList    	= CgiDataUtilities::postData(cgiIn, "hostList");
+
+		__SUP_COUTV__(hostList);
+
+		std::vector<std::string /*host*/> hosts;
+
+		auto& allTraceApps = allSupervisorInfo_.getAllTraceControllerSupervisorInfo();
+
+
+		SOAPParameters rxParameters;  // params for xoap to recv
+		rxParameters.addParameter("Command");
+		rxParameters.addParameter("Error");
+		rxParameters.addParameter("TRACETriggerStatus");
+
+		std::string modifiedTriggerStatus = "";
+		size_t a;
+		std::string artdaqHostSubstr;
+		StringMacros::getVectorFromString(hostList,hosts,{';'});
+		for(auto& host:hosts)
+		{
+			//identify artdaq hosts to go through ARTDAQ supervisor
+			//	by adding "artdaq.." to hostname artdaq..correlator2.fnal.gov
+			__SUP_COUTV__(host);
+			if(host.size() < 3) continue; //skip bad hostnames
+
+			a = host.find("artdaq..");
+			if(a == 0)
+				artdaqHostSubstr  = host.substr(strlen("artdaq.."));
+			else
+				artdaqHostSubstr  = host;
+
+			__SUP_COUTV__(artdaqHostSubstr);
+			for(auto& allTraceApp:allTraceApps)
+				__SUP_COUTV__(allTraceApp.first);
+
+			auto& appInfo = allTraceApps.at(artdaqHostSubstr);
+			__SUP_COUT__ << "Supervisor hostname = " << host <<
+					"/" << appInfo.getId()
+					<< " name = " << appInfo.getName()
+					<< " class = " << appInfo.getClass()
+					<< " hostname = " << appInfo.getHostname() <<
+					__E__;
+			try
+			{
+
+				SOAPParameters txParameters;  // params for xoap to send
+				txParameters.addParameter("Request", "ResetTRACE");
+				txParameters.addParameter("Host", host);
+
+				xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(appInfo.getDescriptor(),
+						"TRACESupervisorRequest",
+						txParameters);
+				SOAPUtilities::receive(retMsg, rxParameters);
+				__SUP_COUT__ << "Received TRACE response: " <<
+						SOAPUtilities::translate(retMsg).getCommand()
+						<< " ==> " << SOAPUtilities::translate(retMsg) << __E__;
+
+				if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
+				{
+					__SUP_SS__ << "Unrecognized command at destination TRACE Supervisor hostname = " <<
+							host <<
+							"/" << appInfo.getId()
+							<< " name = " << appInfo.getName()
+							<< " class = " << appInfo.getClass()
+							<< " hostname = " << appInfo.getHostname() <<
+							__E__;
+					__SUP_SS_THROW__;
+				}
+				else if(SOAPUtilities::translate(retMsg).getCommand() == "TRACEFault")
+				{
+					__SUP_SS__ << "Error received: " << rxParameters.getValue("Error") << __E__;
+					__SUP_SS_THROW__;
+				}
+			}
+			catch(const xdaq::exception::Exception& e)
+			{
+				__SUP_SS__ << "Error transmitting request to TRACE Supervisor LID = "
+						<< appInfo.getId() << " name = " << appInfo.getName()
+						<< ". \n\n"
+						<< e.what() << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			modifiedTriggerStatus        += rxParameters.getValue("TRACETriggerStatus");
+		} //end host set TRACE loop
+
+		__SUP_COUT__ << "mod'd TRACE Trigger Status received: \n" << modifiedTriggerStatus << __E__;
+		xmlOut.addTextElementToData("modTriggerStatus", modifiedTriggerStatus);
+	}
+	else if(requestType == "getTraceSnapshot")
+	{
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
+
+		std::string hostList    	= CgiDataUtilities::postData(cgiIn, "hostList");
+
+		__SUP_COUTV__(hostList);
+
+		std::vector<std::string /*host*/> hosts;
+
+		auto& allTraceApps = allSupervisorInfo_.getAllTraceControllerSupervisorInfo();
+
+
+		SOAPParameters rxParameters;  // params for xoap to recv
+		rxParameters.addParameter("Command");
+		rxParameters.addParameter("Error");
+		rxParameters.addParameter("TRACETriggerStatus");
+		rxParameters.addParameter("TRACESnapshot");
+
+		std::string modifiedTriggerStatus = "";
+		size_t a;
+		std::string artdaqHostSubstr;
+		StringMacros::getVectorFromString(hostList,hosts,{';'});
+		for(auto& host:hosts)
+		{
+			//identify artdaq hosts to go through ARTDAQ supervisor
+			//	by adding "artdaq.." to hostname artdaq..correlator2.fnal.gov
+			__SUP_COUTV__(host);
+			if(host.size() < 3) continue; //skip bad hostnames
+
+			a = host.find("artdaq..");
+			if(a == 0)
+				artdaqHostSubstr  = host.substr(strlen("artdaq.."));
+			else
+				artdaqHostSubstr  = host;
+
+			__SUP_COUTV__(artdaqHostSubstr);
+			for(auto& allTraceApp:allTraceApps)
+				__SUP_COUTV__(allTraceApp.first);
+
+			auto& appInfo = allTraceApps.at(artdaqHostSubstr);
+			__SUP_COUT__ << "Supervisor hostname = " << host <<
+					"/" << appInfo.getId()
+					<< " name = " << appInfo.getName()
+					<< " class = " << appInfo.getClass()
+					<< " hostname = " << appInfo.getHostname() <<
+					__E__;
+			try
+			{
+
+				SOAPParameters txParameters;  // params for xoap to send
+				txParameters.addParameter("Request", "GetSnapshot");
+				txParameters.addParameter("Host", host);
+
+				xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(appInfo.getDescriptor(),
+						"TRACESupervisorRequest",
+						txParameters);
+				SOAPUtilities::receive(retMsg, rxParameters);
+				__SUP_COUT__ << "Received TRACE response: " <<
+						SOAPUtilities::translate(retMsg).getCommand()
+						<< " ==> " << SOAPUtilities::translate(retMsg) << __E__;
+
+				if(SOAPUtilities::translate(retMsg).getCommand() == "Fault")
+				{
+					__SUP_SS__ << "Unrecognized command at destination TRACE Supervisor hostname = " <<
+							host <<
+							"/" << appInfo.getId()
+							<< " name = " << appInfo.getName()
+							<< " class = " << appInfo.getClass()
+							<< " hostname = " << appInfo.getHostname() <<
+							__E__;
+					__SUP_SS_THROW__;
+				}
+				else if(SOAPUtilities::translate(retMsg).getCommand() == "TRACEFault")
+				{
+					__SUP_SS__ << "Error received: " << rxParameters.getValue("Error") << __E__;
+					__SUP_SS_THROW__;
+				}
+			}
+			catch(const xdaq::exception::Exception& e)
+			{
+				__SUP_SS__ << "Error transmitting request to TRACE Supervisor LID = "
+						<< appInfo.getId() << " name = " << appInfo.getName()
+						<< ". \n\n"
+						<< e.what() << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			modifiedTriggerStatus        += rxParameters.getValue("TRACETriggerStatus");
+			xmlOut.addTextElementToData("hostSnapshot", rxParameters.getValue("TRACESnapshot"));
+		} //end host set TRACE loop
+
+		__SUP_COUT__ << "mod'd TRACE Trigger Status received: \n" << modifiedTriggerStatus << __E__;
+		xmlOut.addTextElementToData("modTriggerStatus", modifiedTriggerStatus);
 	}
 	else
 	{
