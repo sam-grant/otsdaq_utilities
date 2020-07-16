@@ -2338,7 +2338,7 @@
 					}
 					
 					var label = rows[r].children[1].innerText;
-					var hosts = rows[r].children[3].innerText.split(':');
+					var hosts = rows[r].children[3].innerText.split(';');
 					Debug.log("Row",checked,label,hosts);
 
 					for(var h=0;h<hosts.length;++h)
