@@ -1026,8 +1026,12 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		__SUP_COUT__ << "requestType " << requestType << std::endl;
 
 		std::string hostList    	= CgiDataUtilities::postData(cgiIn, "hostList");
+		std::string filterFor    	= CgiDataUtilities::postData(cgiIn, "filterFor");
+		std::string filterOut    	= CgiDataUtilities::postData(cgiIn, "filterOut");
 
 		__SUP_COUTV__(hostList);
+		__SUP_COUTV__(filterFor);
+		__SUP_COUTV__(filterOut);
 
 		std::vector<std::string /*host*/> hosts;
 
@@ -1078,6 +1082,8 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 				SOAPParameters txParameters;  // params for xoap to send
 				txParameters.addParameter("Request", "GetSnapshot");
 				txParameters.addParameter("Host", host);
+				txParameters.addParameter("FilterForCSV", filterFor);
+				txParameters.addParameter("FilterOutCSV", filterOut);
 
 				xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(appInfo.getDescriptor(),
 						"TRACESupervisorRequest",
@@ -1132,7 +1138,14 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 					__SUP_SS__ << "Failed to create snapshot file: " << filename << __E__;
 					__SUP_SS_THROW__;
 				}
+				fprintf(fp,"TRACE Snapshot taken at %s\n",StringMacros::getTimestampString().c_str());
 
+				if(snapshot.size() > 5 && snapshot[2] != 'i')
+				{
+					//add header lines
+					fprintf(fp,"  idx           us_tod       delta    pid    tid cpu                                trcname lvl r msg                       \n");
+					fprintf(fp,"----- ---------------- ----------- ------ ------ --- -------------------------------------- --- - --------------------------\n");
+				}
 				fprintf(fp,"%s",snapshot.c_str());
 				fclose(fp);
 			}

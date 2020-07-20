@@ -512,15 +512,15 @@ CodeEditor.create = function(standAlone) {
 				if(parameterStartFile[0] && parameterStartFile[0] != "")
 				{
 					i = parameterStartFile[0].lastIndexOf('.');
-					filePath = parameterStartFile[0];
+					//filePath = parameterStartFile[0];
 					if(i > 0) //up to extension
 					{
-						//filePath = parameterStartFile[0].substr(0,i);
+						filePath = parameterStartFile[0].substr(0,i);
 						fileExtension = parameterStartFile[0].substr(i+1);
 					}
 					else
 					{
-						//filePath = parameterStartFile[0];
+						filePath = parameterStartFile[0];
 						fileExtension = "";
 					}
 				}
@@ -549,15 +549,15 @@ CodeEditor.create = function(standAlone) {
 				if(parameterStartFile[1] && parameterStartFile[1] != "")
 				{
 					i = parameterStartFile[1].lastIndexOf('.');
-					filePath = parameterStartFile[1];
+					//filePath = parameterStartFile[1];
 					if(i > 0) //up to extension
 					{
-						//filePath = parameterStartFile[1].substr(0,i);
+						filePath = parameterStartFile[1].substr(0,i);
 						fileExtension = parameterStartFile[1].substr(i+1);
 					}
 					else
 					{
-						//filePath = parameterStartFile[1];
+						filePath = parameterStartFile[1];
 						fileExtension = "";
 					}
 				}
@@ -1620,6 +1620,19 @@ CodeEditor.create = function(standAlone) {
 			name = specialFiles[i].getAttribute('value');
 			nameSplit = name.split('/');	
 			
+			var filePath, fileExtension; 
+			var n = name.lastIndexOf('.');
+			if(n > 0) //up to extension
+			{
+				filePath = name.substr(0,n);
+				fileExtension = name.substr(n+1);
+			}
+			else
+			{
+				filePath = name;
+				fileExtension = "";
+			}
+			
 			str += "<tr><td>";
 						
 			//open in new window
@@ -1645,8 +1658,8 @@ CodeEditor.create = function(standAlone) {
 					"srcs" + name,
 					"onclick":"CodeEditor.editor.openFile(" + 
 					(!forPrimary) + ",\"" + 
-						name + "\", \"" +
-						name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
+					filePath + "\", \"" +
+					fileExtension + "\"" + 
 						");", //end onclick
 				},
 				"<img class='dirNavFileNewWindowImgNewPane' " +
@@ -1656,8 +1669,8 @@ CodeEditor.create = function(standAlone) {
 			//open in this pane
 			str += "<a class='dirNavFile' onclick='CodeEditor.editor.openFile(" + 
 				forPrimary + ",\"" + 
-				name + "\",\"" +
-				name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
+				filePath + "\", \"" +
+				fileExtension + "\"" + 
 				")' title='Open file: \nsrcs" + name + "' >";
 					
 			str += nameSplit[nameSplit.length-1] + "</a>";			
@@ -1723,6 +1736,20 @@ CodeEditor.create = function(standAlone) {
 		{
 			name = files[i].getAttribute('value');
 			
+			var filePath, fileExtension; 
+			filePath = path + "/" + name;
+			var n = filePath.lastIndexOf('.');
+			if(n > 0) //up to extension
+			{
+				fileExtension = filePath.substr(n+1);
+				filePath = filePath.substr(0,n);
+			}
+			else
+			{
+				filePath = filePath;
+				fileExtension = "";
+			}
+
 			//open in new window
 			str += htmlOpen("a",
 				{
@@ -1746,8 +1773,8 @@ CodeEditor.create = function(standAlone) {
 					"srcs" + path + "/" + name,
 					"onclick":"CodeEditor.editor.openFile(" + 
 					(!forPrimary) + ",\"" + 
-						path + "/" + name + "\", \"" +
-						name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
+					filePath + "\", \"" +
+					fileExtension + "\"" + 
 						");", //end onclick
 				},
 				"<img class='dirNavFileNewWindowImgNewPane' " +
@@ -1758,11 +1785,10 @@ CodeEditor.create = function(standAlone) {
 			//open in this pane
 			str += "<a class='dirNavFile' onclick='CodeEditor.editor.openFile(" + 
 				forPrimary + ",\"" + 
-				path + "/" + name + "\", \"" +
-				name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
+				filePath + "\", \"" +
+				fileExtension + "\"" + 
 				")' title='Open file: \nsrcs" + path + "/" + name + "' >" +
-				name + "</a>";
-			
+				name + "</a>";			
 			
 			
 			str += "<br>";
@@ -1997,8 +2023,14 @@ CodeEditor.create = function(standAlone) {
 		Debug.log("openFile forPrimary=" + forPrimary +
 				" path=" + path);
 		var i = path.lastIndexOf('.');
+		
+		//extension should not be included anymore!!
 		if(i > 0) //up to extension
-			path = path.substr(0,i);
+		{
+			//path = path.substr(0,i);
+			if(extension == path.substr(i+1))
+				Debug.warn("Does this file have a double extension?! If not, notify admins, this extension is being handled the wrong way!");
+		}
 	
 		if(!propagateErr) propagateErr = "";
 		
@@ -2993,7 +3025,19 @@ CodeEditor.create = function(standAlone) {
 						
 						
 						Debug.log("name " + name);
-	
+						
+						var filePath, fileExtension; 
+						var n = name.lastIndexOf('.');
+						if(n > 0) //up to extension
+						{
+							filePath = name.substr(0,n);
+							fileExtension = name.substr(n+1);
+						}
+						else
+						{
+							filePath = name;
+							fileExtension = "";
+						}
 							
 						//open in this pane
 						str += htmlOpen("a",
@@ -3002,8 +3046,8 @@ CodeEditor.create = function(standAlone) {
 										"srcs" + name,
 										"onclick":"CodeEditor.editor.openFile(" + 
 										(forPrimary) + ",\"" + 
-										name + "\", \"" +
-										name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
+										filePath + "\", \"" +
+										fileExtension + "\"" + 
 										");", //end onclick
 								},
 								"<div " +
@@ -3019,8 +3063,8 @@ CodeEditor.create = function(standAlone) {
 										"srcs" + name,
 										"onclick":"CodeEditor.editor.openFile(" + 
 										(!forPrimary) + ",\"" + 
-										name + "\", \"" +
-										name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
+										filePath + "\", \"" +
+										fileExtension + "\"" + 
 										");", //end onclick
 								},
 								"<div " +
@@ -5852,17 +5896,6 @@ CodeEditor.create = function(standAlone) {
 		
 		_filePath[forPrimary] = val.substr(0,extPos);
 		_fileExtension[forPrimary] = extPos > 0?val.substr(extPos+1):"";
-		
-		
-		//		var el = document.getElementById("fileNameDiv" + forPrimary);
-		//		
-		//		var str = "";
-		//		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
-		//				",\"" + _filePath[forPrimary] + "\",\"" + _fileExtension[forPrimary] + "\",true /*doConfirm*/);'>" +
-		//				_filePath[forPrimary] + "." + _fileExtension[forPrimary] + "</a>";
-		//		
-		//		el.innerHTML = str;
-		
 		
 		
 		//indicate file was not saved

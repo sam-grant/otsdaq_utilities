@@ -544,6 +544,7 @@
 			var _advancedPage_HOST = 3;
 			var _advancedPage_SNAPSHOT = 4;
 			var _advancedPage = _advancedPage_SLOW; //default to slow view
+			var _advancedLabelSelectSave = []; //remember selections as leaving page
 			var _advancedPopup = undefined;
 			var _advancedContextMenuBlock = false;
 			var _advancedEditBitMask = [0/*msb*/,0 /*lsb*/]; //64bits = 2 32-bit numbers
@@ -1678,7 +1679,36 @@
 				if(page === undefined)
 					page = _advancedPage;
 				else
+				{
+					//if leaving a label selection page, capture the selected labels
+					if(_advancedPage < _advancedPage_HOST)
+					{
+						var rows = document.getElementsByClassName("ac_row");
+						_advancedLabelSelectSave = []; //reset
+						var isAllLabels = false;
+						if(rows.length == Object.keys(_traceLabelPresence).length)
+						{
+							Debug.log("is ALL labels!");
+							isAllLabels = true;
+						}
+						for(var r=0;r<rows.length;++r)
+						{
+							var checked = rows[r].children[0].children[0].checked;
+							if(!checked) 
+							{
+								isAllLabels = false;
+								continue;
+							}
+							var label = rows[r].children[1].innerText;
+							_advancedLabelSelectSave.push(label);
+						}
+						
+						if(isAllLabels)
+							_advancedLabelSelectSave = []; //reset to indicate all labels selected
+					}
+					
 					_advancedPage = page|0;
+				}
 
 				//create page/view options:
 				
@@ -1687,7 +1717,7 @@
 				
 				if(_advancedPage == _advancedPage_HOST)
 					localCreateHostSelectPage();
-				else if(_advancedPage == _advancedPage_SNAPSHOT)
+				else if(_advancedPage == _advancedPage_SNAPSHOT)					
 					localCreateSnapshotPage();
 				else
 					localCreateMaskPage();
@@ -1872,7 +1902,7 @@
 				//=======================
 				function localCreateSnapshotPage()
 				{
-					Debug.log("localCreateSnapshotPage()",_advancedPage);
+					Debug.log("localCreateSnapshotPage()",_advancedPage,_advancedLabelSelectSave.length);
 
 					//Page shows 
 					//	[Reset Trace]
@@ -1927,14 +1957,54 @@
 									"title" : 	"Enable the TRACE buffer.",
 									"onclick":	"advancedResume();",
 							},"Resume TRACE",true);
+					str += htmlClearDiv();
 					str += htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Get a snapshot of the current TRACE buffer.",
 									"onclick":	"advancedGetSnapshot();",
 							},"Get Snapshot",true);
+					str += htmlClearDiv();
+					str += htmlOpen("input",
+							{
+									"style" : 	"margin: 8px 10px 3px -2px; float:left;",
+									"type"	: 	"checkbox",
+									"id"	: 	"ac_snapshotFilterForCheckbox",
+									"title" : 	"Filter for selected labels in snapshot.",
+									"onclick" : "document.getElementById(\"ac_snapshotFilterOutCheckbox\").checked = false;",
+							},"",true);
+					var selectedStr = "";
+					selectedStr += "Filter for " + _advancedLabelSelectSave.length + " selected label(s): ";
+					for(var i=0;i<_advancedLabelSelectSave.length;++i)
+						selectedStr += (i?", ":"") +  _advancedLabelSelectSave[i];
+					str += htmlOpen("div",
+							{
+									"style" : 	"margin: 8px 10px 3px -2px; float:left; overflow-x: auto; " +
+										"overflow-y: hidden; width:250px; white-space: nowrap;",
+									
+							},selectedStr,true);
 
 					str += htmlClearDiv();
+					str += htmlOpen("input",
+							{
+									"style" : 	"margin: 8px 10px 3px -2px; float:left;",
+									"type"	: 	"checkbox",
+									"id"	: 	"ac_snapshotFilterOutCheckbox",
+									"title" : 	"Filter out selected labels in snapshot.",
+									"onclick" : "document.getElementById(\"ac_snapshotFilterForCheckbox\").checked = false;",
+							},"",true);
+					var selectedStr = "";
+					selectedStr += "Filter out " + _advancedLabelSelectSave.length + " selected label(s): ";
+					for(var i=0;i<_advancedLabelSelectSave.length;++i)
+						selectedStr += (i?", ":"") +  _advancedLabelSelectSave[i];
+					str += htmlOpen("div",
+							{
+									"style" : 	"margin: 8px 10px 3px -2px; float:left; overflow-x: auto; " +
+										"overflow-y: hidden; width:250px; white-space: nowrap;",
+									
+							},selectedStr,true);
+					str += htmlClearDiv();
+					
 					str += "<div id='ac_snapshot'></div>";
 					_advancedEl.innerHTML = str;
 				} //end localCreateSnapshotPage()
@@ -2612,13 +2682,31 @@
 				{
 					hostStr += ";" + host;
 				}
+				
+				var filterFor = "";
+				if(document.getElementById("ac_snapshotFilterForCheckbox").checked)
+				{	
+					for(var i=0;i<_advancedLabelSelectSave.length;++i)
+						filterFor += (i?",":"") +  _advancedLabelSelectSave[i];					
+				}
+				
+				var filterOut = "";
+				if(document.getElementById("ac_snapshotFilterOutCheckbox").checked)
+				{	
+					for(var i=0;i<_advancedLabelSelectSave.length;++i)
+						filterOut += (i?",":"") +  _advancedLabelSelectSave[i];					
+				}
+				
+				Debug.log("GetTraceSnapshot req",hostStr,filterFor,filterOut);
+				
 				DesktopContent.XMLHttpRequest(
 						"Request?RequestType=GetTraceSnapshot",						
-						"hostList=" + hostStr,
+						"hostList=" + hostStr +
+						"&filterFor=" + filterFor +
+						"&filterOut=" + filterOut,
 						function(req)
 						{
-					console.log("Snapshot",req);
-					
+					console.log("Snapshot",req);					
 					
 					handleAdvancedGetTriggerStatus(req);
 					
@@ -2636,7 +2724,7 @@
 					{
 						var filename = "/$USER_DATA/ServiceData/ConsoleSnapshots/snapshot_" + DesktopContent.getXMLValue(hosts[i]) + ".txt";
 						str += DesktopContent.getXMLValue(hosts[i]) + " snapshot: <a onclick='DesktopContent.openNewWindow(" +
-								"\"Code Editor\",\".h\"," + 
+								"\"Code Editor\",\"Snapshot " + DesktopContent.getXMLValue(hosts[i]) + "\"," + 
 								"\"/WebPath/html/CodeEditor.html?" + 
 								"urn=" + _codeEditorAppId + 
 								"&startFilePrimary=" +
@@ -2644,7 +2732,7 @@
 								"title='Click to open this snapshot file in the Code Editor.'>" +
 								"Open</a> &nbsp;&nbsp;&nbsp;";
 						str += "<a onclick='DesktopContent.openNewBrowserTab(" +
-								"\"Code Editor\",\"\"," + 
+								"\"Code Editor\",\"Snapshot " + DesktopContent.getXMLValue(hosts[i]) + "\"," + 
 								"\"/WebPath/html/CodeEditor.html?" + 
 								"urn=" + _codeEditorAppId + 
 								"&startFilePrimary=" +
