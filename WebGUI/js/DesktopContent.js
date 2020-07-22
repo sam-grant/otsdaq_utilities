@@ -539,7 +539,7 @@ DesktopContent.init = function(onloadFunction)
 		else
 		{
 			
-			Debug.log("Request or Response!");
+			//Debug.log("Request or Response!");
 			
 			if(DesktopContent._theWindowId != event.data.windowId)
 			{
@@ -551,19 +551,19 @@ DesktopContent.init = function(onloadFunction)
 			{
 			case "getCookieCode" + "Response":
 				DesktopContent._cookieCodeMailbox = event.data.cookieCode;
-				console.log("getCookieCode" + "Response");
+				//console.log("getCookieCode" + "Response");
 				break;
 			case "loginNotify":
 				DesktopContent._needToLoginMailbox = false;
-				console.log("loginNotify",DesktopContent._needToLoginMailbox);
+				//console.log("loginNotify",DesktopContent._needToLoginMailbox);
 				break;
 			case "startNeedingMouseXY":
 				DesktopContent._desktopNeedsMouseXY = true;
-				console.log("_desktopNeedsMouseXY", DesktopContent._desktopNeedsMouseXY);
+				//console.log("_desktopNeedsMouseXY", DesktopContent._desktopNeedsMouseXY);
 				break;
 			case "stopNeedingMouseXY":
 				DesktopContent._desktopNeedsMouseXY = false;
-				console.log("_desktopNeedsMouseXY", DesktopContent._desktopNeedsMouseXY);
+				//console.log("_desktopNeedsMouseXY", DesktopContent._desktopNeedsMouseXY);
 				break;
 			default:
 				Debug.log("Illegal response received from Desktop! Notify admins", Debug.HIGH_PRIORITY);

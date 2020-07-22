@@ -3338,7 +3338,12 @@ CodeEditor.create = function(standAlone) {
 								(prevChar != '\\' && val[i] == "'")
 								))
 					{						
-						if(startOfString == -1 && //start string
+						if(startOfString == -1 && //start string 
+								//dont start string immediately after alpha-numeric
+								!((prevChar >= 'a' && prevChar <= 'z') ||
+										(prevChar >= 'A' && prevChar <= 'Z') ||
+										(prevChar >= '0' && prevChar <= '9') 
+										) &&
 								(val[i] == '"' || val[i] == "'")) 
 						{
 							startOfString = i;

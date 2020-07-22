@@ -534,6 +534,8 @@
 			var _advancedPreset_INFO = 2;
 			var _advancedPreset_WARN = 3;
 			var _advancedPreset_ERROR = 4;
+			var _advancedPreset_NONE = 5;
+			var _advancedPreset_ALL = 6;
 			var _advancedMaskPreset = _advancedPreset_MASK;
 			
 			
@@ -614,7 +616,7 @@
 			    //init console history
 				_consoleEl.innerHTML = "--- Console messages will be displayed here. Old messages will scroll up as new messages are received. ---";
 				
-				window.onresize = redrawConsoleWindow;
+				window.onresize = function(e) {redrawConsoleWindow(); /*ignore event and pass undefined to keep same side bar status*/};
 				_historyEl.onmousewheel = handleUserInputScroll;
 				_historyEl.onmousedown = handleUserInputScroll;
 				_historyEl.onscroll = handleUserScroll;
@@ -2080,14 +2082,18 @@
 					str += htmlOpen("select",
 							{
 									"class" : 	"ac_menuLink",
-									"style" : 	"margin: 5px 6px 3px -2px; float:left;",
+									"id"	:	"ac_maskPresetSelect",
+									"style" : 	"margin: 5px 6px 3px -2px; float:left;",									
 									"onchange":	"advancedPresetSelect(this.selectedIndex);"
 							});
+					
 					str += "<option selected>Custom  Mask</option>";
 					str += "<option>Debug Preset</option>";
 					str += "<option>Info Preset</option>";
 					str += "<option>Warning Preset</option>";
 					str += "<option>Error Preset</option>";
+					str += "<option>None Preset</option>";
+					str += "<option>All Preset</option>";
 					str += "</select>"; //end set type select
 
 					str += htmlOpen("div",
@@ -2369,12 +2375,12 @@
 			//=====================================================================================
 			function advancedHelperGetHosts(labeli)
 			{
-				Debug.log("advancedHelperGetHosts()",labeli);
+				//Debug.log("advancedHelperGetHosts()",labeli);
 				
 				var rows = document.getElementsByClassName("ac_row");
 				//hosts is column 3
 				labeli |= 0;
-				Debug.log("Rows",rows.length,"labeli",labeli);
+				//Debug.log("Rows",rows.length,"labeli",labeli);
 				if(labeli < 0 || labeli >= rows.length)
 				{
 					Debug.err("Illegal label index " + labeli + " with " +
@@ -2613,7 +2619,8 @@
 			function advancedPresetSelect(preset)
 			{
 				Debug.log("advancedPresetSelect",preset);
-				_advancedMaskPreset = preset;
+				_advancedMaskPreset = preset|0;
+				document.getElementById("ac_maskPresetSelect").selectedIndex = _advancedMaskPreset;
 				
 				DesktopContent.tooltip("Mask Preset",
 						"Use the Mask Preset select box to choose a TRACE message severity preset. For example, if you choose " +
@@ -2634,6 +2641,10 @@
 					val64 = [0,0x3];
 				else if(_advancedMaskPreset == _advancedPreset_ERROR)
 					val64 = [0,0x1];
+				else if(_advancedMaskPreset == _advancedPreset_NONE)
+					val64 = [0,0];
+				else if(_advancedMaskPreset == _advancedPreset_ALL)
+					val64 = [-1,-1];
 									
 				_advancedEditBitMask = [val64[0] /*msb*/,val64[1] /*lsb*/];
 				
@@ -2921,7 +2932,7 @@
 			//=====================================================================================
 			function handleBitMouseOver(e,label,b,labeli) 
 			{
-				Debug.log("handleBitMouseOver",_advancedButtonDown,label,b,"labeli",labeli);
+				//Debug.log("handleBitMouseOver",_advancedButtonDown,label,b,"labeli",labeli);
 								
 				var str = "";
 				str += "Bit-<label style='color:red;font-weight:bold;'>" + b;
@@ -2938,7 +2949,7 @@
 				{
 					//use labeli to identify the host/label pair to find the value
 					var hosts = advancedHelperGetHosts(labeli);
-					Debug.log("Hosts found",hosts);
+					//Debug.log("Hosts found",hosts);
 					if(!hosts) 
 						return;		
 					if(!hosts.length || 
@@ -3217,7 +3228,7 @@
 			//=====================================================================================
 			function handleBitMouseMove(e,label,b,labeli) 
 			{
-				Debug.log("handleBitMouseMove",_advancedButtonDown,"=",e.button,label,b,labeli);
+				//Debug.log("handleBitMouseMove",_advancedButtonDown,"=",e.button,label,b,labeli);
 				e.stopPropagation();
 				
 				//now set bit mask change if mouse button down
