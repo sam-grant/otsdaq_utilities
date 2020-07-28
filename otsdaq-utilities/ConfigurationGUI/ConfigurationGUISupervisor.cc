@@ -1506,8 +1506,8 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 		             << __E__;
 	}
 
-	std::map<std::string /*name*/, TableVersion /*version*/> modifiedTablesMap;
-	std::map<std::string /*name*/, TableVersion /*version*/>::iterator
+	std::map<std::string /*name*/, std::pair<bool /*foundAffectedGroup*/,TableVersion /*version*/>> modifiedTablesMap;
+	std::map<std::string /*name*/, std::pair<bool /*foundAffectedGroup*/,TableVersion /*version*/>>::iterator
 	    modifiedTablesMapIt;
 	{
 		std::istringstream f(modifiedTables);
@@ -1516,31 +1516,44 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 		{
 			getline(f, version, ',');
 			modifiedTablesMap.insert(
-			    std::pair<std::string /*name*/, TableVersion /*version*/>(
-			        table, TableVersion(version)));
+			    std::pair<std::string /*name*/, 
+			    	std::pair<bool /*foundAffectedGroup*/,TableVersion /*version*/>>(
+			        table, std::make_pair(false /*foundAffectedGroup*/,TableVersion(version))));
 		}
 		__SUP_COUT__ << modifiedTables << __E__;
 		for(auto& pair : modifiedTablesMap)
-			__SUP_COUT__ << "modified table " << pair.first << ":" << pair.second
+			__SUP_COUT__ << "modified table " << pair.first << ":" << pair.second.second
 			             << __E__;
 	}
 
 	bool                 affected;
 	xercesc::DOMElement* parentEl;
 	std::string          groupComment;
-	for(auto group : consideredGroups)
+	std::vector<std::string> orderedGroupTypes({
+		ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT,
+		ConfigurationManager::ACTIVE_GROUP_NAME_BACKBONE,
+		ConfigurationManager::ACTIVE_GROUP_NAME_ITERATE,
+		ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION	
+	});
+	//for(auto group : consideredGroups)
+	for(auto groupType : orderedGroupTypes)
 	{
-		if(group.second.second.isInvalid())
+		if(consideredGroups.find(groupType) == consideredGroups.end())
+			continue; //skip missing
+		
+		const std::pair<std::string, TableGroupKey>& group = consideredGroups[groupType];
+	
+		if(group.second.isInvalid())
 			continue;  // skip invalid
 
-		__SUP_COUT__ << "Considering " << group.first << " group " << group.second.first
-		             << " (" << group.second.second << ")" << __E__;
+		__SUP_COUT__ << "Considering " << groupType << " group " << group.first
+		             << " (" << group.second << ")" << __E__;
 
 		affected = false;
 
 		std::map<std::string /*name*/, TableVersion /*version*/> memberMap;
-		cfgMgr->loadTableGroup(group.second.first,
-		                       group.second.second,
+		cfgMgr->loadTableGroup(group.first,
+		                       group.second,
 		                       0,
 		                       &memberMap,
 		                       0,
@@ -1557,12 +1570,13 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 			if((modifiedTablesMapIt = modifiedTablesMap.find(table.first)) !=
 			       modifiedTablesMap
 			           .end() &&  // check if version is different for member table
-			   table.second != (*modifiedTablesMapIt).second)
+			   table.second != (*modifiedTablesMapIt).second.second)
 			{
 				__SUP_COUT__ << "Affected by " << (*modifiedTablesMapIt).first << ":"
-				             << (*modifiedTablesMapIt).second << __E__;
+				             << (*modifiedTablesMapIt).second.second << __E__;
 				affected               = true;
-				memberMap[table.first] = (*modifiedTablesMapIt).second;
+				memberMap[table.first] = (*modifiedTablesMapIt).second.second;
+				(*modifiedTablesMapIt).second.first = true; //found affected group
 			}
 		}
 
@@ -1571,11 +1585,14 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 			__SUP_COUT__ << "Considering mockup tables for Configuration Group..." << __E__;
 			for(auto& table : modifiedTablesMap)
 			{
-				if(table.second.isMockupVersion() && memberMap.find(table.first) == memberMap.end())
+				if(table.second.first) //already found affected group
+					continue;
+			
+				if(table.second.second.isMockupVersion() && memberMap.find(table.first) == memberMap.end())
 				{
 					__SUP_COUT__ << "Found mockup table '" <<
 							table.first << "' for Configuration Group." << __E__;
-					memberMap[table.first] = table.second;
+					memberMap[table.first] = table.second.second;
 					affected               = true;
 				}
 			}
@@ -1584,9 +1601,9 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 		if(affected)
 		{
 			parentEl = xmlOut.addTextElementToData("AffectedActiveGroup", "");
-			xmlOut.addTextElementToParent("GroupName", group.second.first, parentEl);
+			xmlOut.addTextElementToParent("GroupName", group.first, parentEl);
 			xmlOut.addTextElementToParent(
-			    "GroupKey", group.second.second.toString(), parentEl);
+			    "GroupKey", group.second.toString(), parentEl);
 			xmlOut.addTextElementToParent("GroupComment", groupComment, parentEl);
 
 			for(auto& table : memberMap)
@@ -1596,7 +1613,7 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 				    "MemberVersion", table.second.toString(), parentEl);
 			}
 		}
-	}
+	} //end affected group loop
 }
 catch(std::runtime_error& e)
 {
