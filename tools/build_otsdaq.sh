@@ -19,6 +19,7 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
+copyback_deps=${COPYBACK_DEPS}
 
 IFS_save=$IFS
 IFS=":"
@@ -201,6 +202,34 @@ cat ${blddir}/art-${art_dotver}-${upsflavor}-${basequal}-${build_type}_MANIFEST.
 cat ${blddir}/artdaq-${artdaq_dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
 cat ${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt|grep -v source|sort|uniq >>${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
 mv ${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
+
+if [ $copyback_deps == "false" ]; then
+  echo "Removing art and artdaq bundle products"
+  for file in ${blddir}/*.bz2;do
+    filebase=`basename $file`
+    if [[ "${filebase}" =~ "otsdaq" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "qt" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "swig" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "mongodb" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "xdaq" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "artdaq_daqinterface" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "artdaq_mfextensions" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "artdaq_database" ]]; then
+        echo "Not deleting ${filebase}"
+    else
+        echo "Deleting ${filebase}"
+	    rm -f $file
+    fi
+  done
+  rm -f ${blddir}/art-*_MANIFEST.txt
+fi
 
 echo
 echo "move files"
