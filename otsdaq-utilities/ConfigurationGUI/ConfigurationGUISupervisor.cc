@@ -1482,7 +1482,7 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 			__SUP_SS__ << "Failed to determine type of table group for " << rootGroupName
 			           << "(" << rootGroupKey << ")! " << e.what() << __E__;
 			__SUP_COUT_ERR__ << "\n" << ss.str();
-			__SS_THROW__;
+			//__SS_THROW__;
 		}
 
 		// else assume it was the intention to just consider the active groups
@@ -1497,7 +1497,7 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 		{
 			__SUP_COUT_ERR__ << "Failed to determine type of table group for "
 			                 << rootGroupName << "(" << rootGroupKey << ")!" << __E__;
-			throw;
+			//throw;
 		}
 
 		// else assume it was the intention to just consider the active groups
