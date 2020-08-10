@@ -249,6 +249,7 @@
 			white-space: 			pre; /*nowrap;*/
 			tab-size: 				4;
 			-moz-tab-size:			4;
+			padding-left:			3px; /*to see cursor on left position 0*/
 		}		
 		.editableBox * {
 			user-select: 			text; 

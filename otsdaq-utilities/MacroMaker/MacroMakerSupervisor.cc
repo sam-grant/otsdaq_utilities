@@ -2185,7 +2185,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 	std::string feClassSelected = CgiDataUtilities::getData(cgi, "feClassSelected");
 	std::string feUIDSelected   = CgiDataUtilities::getData(cgi, "feUIDSelected");
 	std::string macroType       = CgiDataUtilities::getData(cgi, "macroType");
-	std::string macroName       = CgiDataUtilities::getData(cgi, "macroName");
+	std::string macroName       = StringMacros::decodeURIComponent(CgiDataUtilities::getData(cgi, "macroName"));
 	std::string inputArgs       = CgiDataUtilities::postData(cgi, "inputArgs");
 	std::string outputArgs      = CgiDataUtilities::postData(cgi, "outputArgs");
 	bool        saveOutputs     = CgiDataUtilities::getDataAsInt(cgi, "saveOutputs") == 1;
