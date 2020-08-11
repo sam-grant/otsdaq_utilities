@@ -2594,19 +2594,16 @@
 			//createTopPaneContent ~~
 			function createTopPaneContent(H, W) 
 			{
-				if (document.getElementById("topPane") != null) return;
-
 				var popupBody = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				popupBody.innerHTML = "";
 
 				// Make Top pane
-/*				if (document.getElementById("topPane") != null)
+				if (document.getElementById("topPane") != null)
 				{
 					document.getElementById("selbox-TopPVBox").parentNode.removeChild(document.getElementById("selbox-TopPVBox"));
 					document.getElementById("recordTopMultiSelect").parentNode.removeChild(document.getElementById("recordTopMultiSelect"));
 					document.getElementById("topPane").parentNode.removeChild(document.getElementById("topPane"));
 				}
-*/
 
 				var _topPane = document.createElement("div");
 				_topPane.setAttribute("class", "pane");
@@ -2676,19 +2673,30 @@
 				add.onclick = function(e)
 				{
 					//e.stopPropagation();
-					var pvIndexList = MultiSelectBox.getSelectionArray(document.getElementById("recordTopMultiSelect"));
-					console.log("Add PVContent:", pvIndexList);
 
 					var i =0;
 					var selected  = {};
-					for (var pv in pvIndexList)
+
+					var currentPvIndexList = MultiSelectBox.getSelectionArray(document.getElementById("recordBottomMultiSelect"));
+					for (var pv in currentPvIndexList)
 					{
-						if(pvIndexList[pv] != 0)
+						var selection = MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordBottomMultiSelect"), pv);
+						if(selection != null) selected[selection.innerText] = i;
+						i++;
+					}
+
+					var addedPvIndexList = MultiSelectBox.getSelectionArray(document.getElementById("recordTopMultiSelect"));
+					for (var pv in addedPvIndexList)
+					{
+						var selection = MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordTopMultiSelect"), pv);
+						if(addedPvIndexList[pv] != 0 && addedPvIndexList[pv] != currentPvIndexList[pv] && selection != null)
 						{
-							selected[MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordTopMultiSelect"), pv).innerText] = i;
+							selected[selection.innerText] = i;
 							i++;
 						}
 					}
+
+					console.log("Add PVContent:", selected);
 					createBottomPaneContent(130, 400, selected);
 				};
 
@@ -2704,9 +2712,10 @@
 					if (pvIndexList.length==0) return;
 					for (var pv in pvIndexList)
 					{
-						if(pvIndexList[pv] == 0)
+						var selection = MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordBottomMultiSelect"), pv);
+						if(pvIndexList[pv] == 0 && selection != null)
 						{
-							selected[MultiSelectBox.getSelectionElementByIndex(document.getElementById("recordBottomMultiSelect"), pv).innerText] = i;
+							selected[selection.innerText] = i;
 							i++;
 						}
 					}
@@ -2779,6 +2788,7 @@
 				_bottomPane.appendChild(el);
 				var popupBody = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				popupBody.appendChild(_bottomPane);
+				MultiSelectBox.initMySelectBoxes(true);
 			}	//end createBottomPaneContent()
 
 
