@@ -29,7 +29,7 @@
 			//init()
 
 			var pv_settings_ = [];
-			var parameters_ = {class: "", "upload_csv_file": "not uploaded", "export_csv_file": " ", "background_color": "transparent", "table_border": "1px", "table_border_color": "grey"};
+			var parameters_ = {class: "", "upload_csv_file": "not uploaded", "export_csv_file": " ", "background_color": "transparent", "table_border": "1px", "table_border_color": "grey","link_to_page": ""};
 
 			//define data sample
 			//each cell contain
@@ -196,8 +196,8 @@
 											, tabledata[cell].pvSeverity
 											, pv_settings_);
 
-					var fullPathToPage = "";
-					tds[cell].firstElementChild.firstElementChild.href = "javascript:window.parent.loadPageNewWindow(\""+fullPathToPage+"\")";
+					var fullPathToPage = parameters_["link_to_page"];
+					tds[cell].firstElementChild.firstElementChild.href = "javascript:window.parent.loadPhoebusPage(\""+fullPathToPage+"\")";
 
 					var valColor = 0;
 					var max = 0;

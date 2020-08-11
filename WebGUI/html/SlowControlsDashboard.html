@@ -241,7 +241,8 @@
 			var cutWidget_;
 			var cutWidgetId_;
 			var _tableUploadStr;
-
+			var previousPage_ = "";
+			var actualPage_ = "";
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -584,6 +585,7 @@
 					var upload_csv_file = widgets[i].getElementsByTagName("upload_csv_file")[0]; //2dstoplight widget
 					var table_border = widgets[i].getElementsByTagName("table_border")[0]; //2dstoplight widget
 					var table_border_color = widgets[i].getElementsByTagName("table_border_color")[0]; //2dstoplight widget
+					var link_to_page = widgets[i].getElementsByTagName("link_to_page")[0]; //2dstoplight widget
 
 					//set attributes
 					if (label_class !== undefined) widgetObject.attributes["class"] = label_class.innerHTML;
@@ -599,6 +601,7 @@
 					if (upload_csv_file !== undefined) widgetObject.attributes["upload_csv_file"] = upload_csv_file.innerHTML;
 					if (table_border !== undefined) widgetObject.attributes["table_border"] = table_border.innerHTML;
 					if (table_border_color !== undefined) widgetObject.attributes["table_border_color"] = table_border_color.innerHTML;
+					if (link_to_page !== undefined) widgetObject.attributes["link_to_page"] = link_to_page.innerHTML;
 
 					console.log("Drawing and creating widget",i,widgetObject);
 
@@ -1065,6 +1068,8 @@
 			function loadPhoebusPage(page)
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=loadPhoebusPage&Page=" + page, "", loadPhoebusPageReqHandler);//, undefined, undefined, "sequence");
+				if(previousPage_ == "") previousPage_ = page;
+				actualPage_ = page;
 			} //end loadPhoebusPage()
 
 
@@ -2327,6 +2332,7 @@
 				if(editBlock_.isHidden && !isReadOnly_)
 				{
 					Debug.log("Edit Mode On");
+					document.getElementById("menuli3").innerHTML = "";
 
 					editBlock_.isHidden = false;
 					editBlock_.el.style.display = "block";
@@ -2370,6 +2376,7 @@
 				else
 				{
 					Debug.log("Edit Mode Off");
+					//document.getElementById("menuli3").innerHTML = "<br/>Go Back to previous page";
 
 					editBlock_.isHidden = true;
 					editBlock_.el.style.display = "none";
@@ -2428,6 +2435,13 @@
 				}
 			} //end toggleEditMode()
 
+
+			//=====================================================================================
+			function goBackToPreviousPage()
+			{
+				console.log("goBackToPreviousPage(): ");
+				if(previousPage_ != "") loadPhoebusPage(previousPage_);
+			} //end goBackToPreviousPage()
 
 			//=====================================================================================
 			// returns a handler function that can be used to respond 
@@ -2580,16 +2594,20 @@
 			//createTopPaneContent ~~
 			function createTopPaneContent(H, W) 
 			{
+				if (document.getElementById("topPane") != null) return;
+
 				var popupBody = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				popupBody.innerHTML = "";
 
 				// Make Top pane
-				if (document.getElementById("topPane") != null)
+/*				if (document.getElementById("topPane") != null)
 				{
 					document.getElementById("selbox-TopPVBox").parentNode.removeChild(document.getElementById("selbox-TopPVBox"));
 					document.getElementById("recordTopMultiSelect").parentNode.removeChild(document.getElementById("recordTopMultiSelect"));
 					document.getElementById("topPane").parentNode.removeChild(document.getElementById("topPane"));
 				}
+*/
+
 				var _topPane = document.createElement("div");
 				_topPane.setAttribute("class", "pane");
 				_topPane.setAttribute("id", "topPane");
@@ -2638,8 +2656,12 @@
 			//createAddRemovePVContent ~~
 			function createAddRemovePVContent(W) 
 			{
+				if (document.getElementById("addRemovePv") != null) return;
+
 				//create add remove buttons
 				var div = document.createElement("div");
+				div.setAttribute("id", "addRemovePv");
+
 				div.setAttribute("style", //"height:200px; width:250px;" +
 						//);
 						//"margin-bottom: 0px;" +
@@ -4447,6 +4469,7 @@
 		    <ul id="navigationMenu">
 		      <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">File Manager</a></li>
 		      <li><a href="#" title="" id="menuli2" onclick="toggleEditMode()">Edit Mode</a></li>
+		      <a href="#" title="" id="menuli3" onclick="goBackToPreviousPage()"></a>
 		    </ul>
 	      </nav>
 		</div>
