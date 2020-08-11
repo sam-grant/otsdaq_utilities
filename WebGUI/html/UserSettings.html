@@ -299,14 +299,16 @@
 					_layoutArray.push("0");
 				}
 				//for array to proper size for sever communication (just in case)								
-				_layoutArray = _layoutArray.slice(0,_NUM_USER_LAYOUTS+1);
+				_layoutArray = _layoutArray.slice(0,_NUM_USER_LAYOUTS);
 
 				//cleanse layoutArray
 				for(var i=0;i<_layoutArray.length;++i)
 				{
 					console.log("_layoutArray[i]",_layoutArray[i]);
 					var layoutEntry = _layoutArray[i].split(',');
+					if(_layoutArray[i] == "") _layoutArray[i] = "0";
 					console.log("layoutEntry",layoutEntry);
+										
 					if(_layoutArray[i] != "0" &&
 							layoutEntry.length%_NUM_OF_LAYOUT_FIELDS != 0)
 					{
@@ -338,7 +340,9 @@
 					{
 						console.log("_sysLayoutArray[i]",_sysLayoutArray[i]);
 						var layoutEntry = _sysLayoutArray[i].split(',');
-						console.log("layoutEntry",layoutEntry);
+						if(_sysLayoutArray[i] == "") _sysLayoutArray[i] = "0";
+						console.log("layoutEntry",layoutEntry);		
+						
 						if(_sysLayoutArray[i] != "0" &&
 								layoutEntry.length%_NUM_OF_LAYOUT_FIELDS != 0)
 						{

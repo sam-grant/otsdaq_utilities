@@ -954,6 +954,9 @@ CodeEditor.create = function(standAlone) {
 			_eel[i].addEventListener('paste', 
 					function(e)
 					{
+				var forPrimary = this.id[this.id.length-1]|0;
+				forPrimary = forPrimary?1:0;
+					
 				Debug.log("paste handler() for editor" + forPrimary);
 				var paste = (e.clipboardData || window.clipboardData).getData('text');
 				
@@ -961,7 +964,22 @@ CodeEditor.create = function(standAlone) {
 				if (!selection.rangeCount) return false;
 				selection.deleteFromDocument();
 				selection.getRangeAt(0).insertNode(document.createTextNode(paste));
-
+				
+				//leaves cursor selecting insert, so now move cursor to end of paste
+				var pasteTextEl = selection.baseNode.nextSibling;//.textContent
+				var range = document.createRange();
+				range.setStart(pasteTextEl,
+						pasteTextEl.textContent.length);
+				range.setEnd(pasteTextEl,
+						pasteTextEl.textContent.length);
+				selection.removeAllRanges();
+				selection.addRange(range);
+				
+//				var cursor = CodeEditor.editor.getCursor(_eel[forPrimary]);
+// 				cursor.startNodeIndex = cursor.endNodeIndex;
+// 				cursor.startPos = cursor.endPos;
+// 				CodeEditor.editor.setCursor(_eel[forPrimary],cursor);
+		
 				e.preventDefault();
 					});  //end addEventListener
 			
@@ -2399,7 +2417,7 @@ CodeEditor.create = function(standAlone) {
 			};
 			
 			//if focus is at end, set scrollEndIntoView
-			var scrollEndIntoView = cursor.focusAtEnd?true:false;			
+			var scrollEndIntoView = cursor.focusAtEnd?true:false;
 			
 			try
 			{
@@ -2453,7 +2471,7 @@ CodeEditor.create = function(standAlone) {
 							el.removeChild(newNode1);
 							secondEl.textContent = val;		
 						}
-						else //if is the end of the first element, focus on next element
+						else if(cursor.endNodeIndex+1 < el.childNodes.length) //if is the end of the first element, focus on next element
 						{							
 							el.childNodes[cursor.endNodeIndex+1].scrollIntoViewIfNeeded();
 						}
@@ -2482,24 +2500,31 @@ CodeEditor.create = function(standAlone) {
 						{
 							//add an element to scroll into view and then remove it
 							firstEl = el.childNodes[cursor.startNodeIndex];
-							var val = firstEl.textContent;					
-							var newNode1 = document.createTextNode(
-									val.substr(0,cursor.startPos)); //pre-special text
-							
-							el.insertBefore(newNode1,firstEl);
-							
-							var newNode = document.createElement("label");
-							newNode.textContent = val[cursor.startPos]; //special text
-							el.insertBefore(newNode,firstEl);
-							
-							firstEl.textContent = val.substr(cursor.startPos+1); //post-special text
-							
-							newNode.scrollIntoViewIfNeeded();
-							
-							//now remove new nodes
-							el.removeChild(newNode);
-							el.removeChild(newNode1);
-							firstEl.textContent = val;							
+							var val = firstEl.textContent;	
+							if(cursor.startPos < val.length)
+							{	
+								var newNode1 = document.createTextNode(
+										val.substr(0,cursor.startPos)); //pre-special text
+								
+								el.insertBefore(newNode1,firstEl);
+								
+								var newNode = document.createElement("label");
+								newNode.textContent = val[cursor.startPos]; //special text
+								el.insertBefore(newNode,firstEl);
+								
+								firstEl.textContent = val.substr(cursor.startPos+1); //post-special text
+								
+								newNode.scrollIntoViewIfNeeded();
+								
+								//now remove new nodes
+								el.removeChild(newNode);
+								el.removeChild(newNode1);
+								firstEl.textContent = val;
+							}
+							else if(cursor.startNodeIndex+1 < el.childNodes.length) //if is the end of the first element, focus on next element
+							{							
+								el.childNodes[cursor.startNodeIndex+1].scrollIntoViewIfNeeded();
+							}
 						}
 						else
 							Debug.log("scrollEndIntoView only");

@@ -215,7 +215,7 @@
 					var feClass = macroVar[2];
 					var feUID = macroVar[3];
 					
-					if(macroVar.length > FEMACROS_HEADER_FIELDS) //at least one function, so display name
+					if(1) // ALWAYS add FE in case want to run Macro //  macroVar.length > FEMACROS_HEADER_FIELDS) //at least one function, so display name
 					{
 						//add FE UID to FE Class in global map ---------------
 						if(!feClassToFEsMap_[feClass])
