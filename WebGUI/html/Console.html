@@ -384,8 +384,10 @@
 				//init()	
 				//redrawConsoleWindow(showSideBar)
 				//getConsoleUpdates()
+				//reconnectConsole()
 				//handleRefreshConsole(req)
 				//updateConsoleHistory()
+			
 				//getColorForLevel()
 				//formatTime(time_t)
 				//convertForClient(str)
@@ -652,7 +654,7 @@
 
 				document.body.style.display = "block";
 				
-				
+				DesktopContent._loginNotifyHandler = reconnectConsole; //define relogin handler
 
 				//fill in CodeEditor appId
 				DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
@@ -953,6 +955,17 @@
 										true /*callHandlerOnErr*/,
 										true /*doNotShowLoadingOverlay*/);
 			} //end getConsoleUpdates()		
+			
+			//=====================================================================================
+			//reconnectConsole ~
+			// 	attempt reconnect
+			function reconnectConsole()
+			{		
+				Debug.log("reconnectConsole()");
+				_lastUpdateCount = 0;
+				_lastUpdateIndex = -1; 
+				getConsoleUpdates();
+			} //end reconnectConsole()
 			
 			//=====================================================================================
 			//handleRefreshConsole ~
@@ -3313,7 +3326,7 @@
 		</div>
 		
 		<div id='consoleConnectionStatus'>
-			<a onclick='_lastUpdateCount = 0; _lastUpdateIndex = -1; getConsoleUpdates();' title='Attempt to Reconnect Console' class='consoleLink'>*** DISCONNECTED ***</a>
+			<a onclick='reconnectConsole();' title='Attempt to Reconnect Console' class='consoleLink'>*** DISCONNECTED ***</a>
 		</div>
 		
 		<div id='userLink'>
