@@ -586,6 +586,8 @@
 					var table_border = widgets[i].getElementsByTagName("table_border")[0]; //2dstoplight widget
 					var table_border_color = widgets[i].getElementsByTagName("table_border_color")[0]; //2dstoplight widget
 					var link_to_page = widgets[i].getElementsByTagName("link_to_page")[0]; //2dstoplight widget
+					var trace_type = widgets[i].getElementsByTagName("trace_type")[0]; //plotly_bar_chart widget
+					var trace_mode = widgets[i].getElementsByTagName("trace_type")[0]; //plotly_bar_chart widget
 
 					//set attributes
 					if (label_class !== undefined) widgetObject.attributes["class"] = label_class.innerHTML;
@@ -602,6 +604,8 @@
 					if (table_border !== undefined) widgetObject.attributes["table_border"] = table_border.innerHTML;
 					if (table_border_color !== undefined) widgetObject.attributes["table_border_color"] = table_border_color.innerHTML;
 					if (link_to_page !== undefined) widgetObject.attributes["link_to_page"] = link_to_page.innerHTML;
+					if (trace_type !== undefined) widgetObject.attributes["trace_type"] = trace_type.innerHTML;
+					if (trace_mode !== undefined) widgetObject.attributes["trace_mode"] = trace_mode.innerHTML;
 
 					console.log("Drawing and creating widget",i,widgetObject);
 

@@ -18,14 +18,14 @@
 		<!-- <script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
 
 		<script>
-			//functions:			
-			//init()					
+			//functions:
+			//init()
 
 			var pv_settings_ = [];
 			var timeData = {};
 			var valueData = {};
 			var PVList;
-			var parameters_ = {class: "", "show_labels": "false", "background_color": "transparent"};
+			var parameters_ = {class: "", "show_labels": "false", "background_color": "transparent", "trace_type": "scatter", "trace_mode": "lines"};
 
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -79,7 +79,10 @@
 			{
 				var date = new Date(pvTime*1000);
 				if (timeData[pvName] !== undefined && timeData[pvName].length)
-					if (date <= timeData[pvName][timeData.length-1]) { console.log("return"); return;}
+					if ((date <= timeData[pvName][timeData.length-1]))
+					{
+						console.log("chart drawNewValue(): return"); return;
+					}
 
 				if (timeData[pvName] !== undefined) timeData[pvName].push(date);
 				if (valueData[pvName] !== undefined) valueData[pvName].push(pvValue);
@@ -90,7 +93,7 @@
 
 				drawGraph(pvName, pvStatus, pvSeverity);
 
-				var display = document.getElementById('display');
+				var display = document.getElementById("display");
 				if (pv_settings_.length) display.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pv_settings_);
 			}
 
@@ -102,7 +105,7 @@
 				var traces = [];
 				for (pv in PVList)
 				{
-					traces.push({ y: [],  type: 'scatter', mode: 'lines' });
+					traces.push({ y: [],  type: parameters_["trace_type"], mode: parameters_["trace_mode"], visible: true });
 				}
 
 				Plotly.newPlot("display"
@@ -141,6 +144,8 @@
 					plotColor = "red";
 				else if(pvSeverity == "MINOR")
 					plotColor = "orange";
+				else if(pvSeverity == "INVALID")
+					plotColor = "darkgrey";
 				else
 					plotColor = "green";
 
@@ -167,7 +172,7 @@
 						var xval = timeData[pv];
 						var yval = valueData[pv];
 					}
-					var trace = { x: xval, y: yval, mode: 'lines', name: pv };
+					var trace = { x: xval, y: yval, type: parameters_["trace_type"], mode: parameters_["trace_mode"], name: pv, visible: (plot.data[i].visible == true) ? true : 'legendonly'};
 					traces.push(trace);
 					//Plotly.deleteTraces(plot, i);
 					i++;
