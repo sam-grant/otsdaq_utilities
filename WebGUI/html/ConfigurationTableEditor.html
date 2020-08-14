@@ -1218,7 +1218,7 @@
 			//	this means el can not be trusted to still exist!!
 			// so use r,c to recover element
 			
-			//if column is Author or Timestamp, don't allow select
+			//if column is Comment, Author, or Timestamp, don't allow select
 			var tableEl = document.getElementById("SubSystemTable");
 			var rows = tableEl.getElementsByClassName("SubSystemTableRow");//getElementsByTagName("tr");
 			var typeCell; //cols = []; //just need target column info, not all columns			
@@ -1253,7 +1253,7 @@
 			}
 			
 			//colType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font
-			colType = typeCell.childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font
+			colType = typeCell.childNodes[0].innerText.split('\n')[0]; //type text is in a div for smaller font
 			if(colType == "Author" || 
 					colType == "Timestamp"|| 
 					colType == "Comment" )//|| 
@@ -1269,8 +1269,8 @@
 			_editingCellEl = el;
 			_editingCellPos = [r,c];			
 
-			//var colDataType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('>')[1]; //type text is in a div for smaller font
-			var colDataType = typeCell.childNodes[0].innerHTML.split('>')[1]; //type text is in a div for smaller font
+			
+			var colDataType = typeCell.childNodes[0].innerText.split('<')[1].split('>')[0];
 			
 			_editingCellElOldValue = el.innerHTML;
 			
@@ -1296,7 +1296,7 @@
 						str += "</option>";
 						
 						if(typeOptionIndex == -1 && //only take first match
-								el.getElementsByTagName("div")[0].innerText.indexOf(_typeArray[i]) == 0) 
+								colDataType == _typeArray[i]) 
 							typeOptionIndex = i; //get starting sel index for type
 					}				
 					str += "</select>";
