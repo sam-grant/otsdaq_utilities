@@ -195,7 +195,7 @@ else {
 			str += "<div id='loginRetypeDiv' style='display:none' >Re-type Password: <input id='loginInput2' type='password' /><br /></div>";
 			str += "<div id='newAccountCodeDiv' style='display:none' >New Account Code: <input id='loginInput3' type='text' /><br /></div>";
 			str += "<a target='_blank' href='" + 
-				"https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit?usp=sharing" + 
+				"https://cdcvs.fnal.gov/redmine/projects/otsdaq/wiki/Otsdaq_User_Manual" + //https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit?usp=sharing" + 
 				"' title='Click to open Help documentation' ><img src='/WebPath/images/dashboardImages/icon-Help.png' onerror='this.style.display=\"none\";'></a>";
 			str += "<a href='#' onmouseup='Desktop.desktop.login.promptNewUser(this); return false;' style='margin:0 100px 0 50px'>New User?</a>";
 			str += "<input type='submit' class='DesktopDashboard-button' value='    Login    ' onmouseup='Desktop.desktop.login.attemptLogin();' /><br />"
@@ -461,10 +461,29 @@ else {
 				//success!
 				
 				//Note: only two places where login successful, in 
-				//	_handleCookieCheck() and in _handleLoginAttempt()				
+				//	_handleCookieCheck() and in _handleLoginAttempt()	
+				DesktopContent._serverUrnLid = urnLid_;
+				DesktopContent._serverOrigin = serverOrigin_;
+				DesktopContent._cookieCodeMailbox = cookieCode; //init for tooltip call
+				DesktopContent._needToLoginMailbox = false;
+				DesktopContent._arrayOfFailedHandlers = []; // clear			
 				Desktop.desktopTooltip();
+				
 				_attemptedCookieCheck = false;
 				_killLogoutInfiniteLoop = false;
+				
+				//notify all windows of login
+				var reqObject = {
+						"request":		"loginNotify",
+						"cookieCode":	cookieCode
+				};
+				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i)
+				{
+					reqObject["windowId"] = Desktop.desktop.getWindowByIndex(i).getWindowId();        					
+					Desktop.desktop.getWindowByIndex(i).getFrame().contentWindow.postMessage(
+							reqObject,"*");
+				}
+
 				return;
 			} //end handle login success
 			else 
@@ -578,13 +597,27 @@ else {
 				
 				//Note: only two places where login successful,
 				//	in _handleCookieCheck() and in _handleLoginAttempt()	
-				DesktopContent._cookieCodeMailbox = cookieCode; //init for tooltip call
 				DesktopContent._serverUrnLid = urnLid_;
 				DesktopContent._serverOrigin = serverOrigin_;
+				DesktopContent._cookieCodeMailbox = cookieCode; //init for tooltip call
+				DesktopContent._needToLoginMailbox = false;
+				DesktopContent._arrayOfFailedHandlers = []; // clear
 				Desktop.desktopTooltip();
 				
 				_attemptedCookieCheck = false;
 				_killLogoutInfiniteLoop = false;
+				
+				//notify all windows of login
+				var reqObject = {
+						"request":		"loginNotify",
+						"cookieCode":	cookieCode
+				};
+				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i)
+				{
+					reqObject["windowId"] = Desktop.desktop.getWindowByIndex(i).getWindowId();        					
+					Desktop.desktop.getWindowByIndex(i).getFrame().contentWindow.postMessage(
+							reqObject,"*");
+				}
 				return;
 			}
 			else 

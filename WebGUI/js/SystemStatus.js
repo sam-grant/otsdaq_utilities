@@ -60,6 +60,8 @@ function init()
     
     collapsibleList();
 
+    DesktopContent._loginNotifyHandler = updateAppsArray; //define relogin handler
+	
     window.onresize = paint;
     paint();
     

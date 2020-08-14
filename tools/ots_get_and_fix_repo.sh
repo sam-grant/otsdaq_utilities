@@ -89,7 +89,7 @@ function fixTargetRepos
 				fi
 
 				#echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t\t ${GIT_FETCH_ARR[0]}"
-				if [ "${GIT_FETCH_ARR[0]}" == "origin	ssh:" ]; then
+				if [[ ("${GIT_FETCH_ARR[0]}" == "origin	ssh:") || ("${GIT_FETCH_ARR[0]}" != "origin http:") ]]; then
 					echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t Fixing fetch origin..."
 					
 					#create http url

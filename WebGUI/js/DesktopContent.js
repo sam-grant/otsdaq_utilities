@@ -210,10 +210,14 @@ DesktopContent._verifyPopUp = 0;
 DesktopContent._verifyPopUpId = "DesktopContent-verifyPopUp";
 
 
-DesktopContent._sequence = 0;
+
 
 DesktopContent._mouseMoveSubscribers = [];
+DesktopContent._loginNotifyHandler = undefined; //User code should define this function if action desired when re-login occurs
+
 DesktopContent._pageInitCalled = false;
+
+DesktopContent._sequence = 0;
 
 //=====================================================================================
 //initialize content's place in the world
@@ -554,8 +558,15 @@ DesktopContent.init = function(onloadFunction)
 				//console.log("getCookieCode" + "Response");
 				break;
 			case "loginNotify":
+				DesktopContent._cookieCodeMailbox = event.data.cookieCode;
 				DesktopContent._needToLoginMailbox = false;
-				//console.log("loginNotify",DesktopContent._needToLoginMailbox);
+				DesktopContent._arrayOfFailedHandlers = []; // clear
+				console.log("loginNotify",DesktopContent._needToLoginMailbox);
+				//Debug.info("This window has received notice of a successful login!");
+				
+				//call user login notify handler
+				if(DesktopContent._loginNotifyHandler)
+					DesktopContent._loginNotifyHandler();
 				break;
 			case "startNeedingMouseXY":
 				DesktopContent._desktopNeedsMouseXY = true;
@@ -812,7 +823,7 @@ DesktopContent.init();
 
 //used by DesktopContent.XMLHttpRequest to reject multiple calls to same handler 
 //(this is a result of bad error handling in the desktop window page.. so this is meant to inform the developer to fix the issue)
-DesktopContent._arrayOfFailedHandlers = new Array();
+DesktopContent._arrayOfFailedHandlers = [];
 
 //=====================================================================================
 //=====================================================================================
