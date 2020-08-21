@@ -47,6 +47,9 @@ for qual in ${qualarray[@]};do
         e19)
             basequal=e19
             ;;
+        e20)
+            basequal=e20
+            ;;
         c2)
             basequal=c2
             ;;
@@ -98,6 +101,10 @@ for qual in ${qualarray[@]};do
         s96)
             squal=s96
             artver=v3_05_00
+            ;;
+        s100)
+            squal=s100 
+            artver=v3_06_02
             ;;
         nodb)
             build_db=0
