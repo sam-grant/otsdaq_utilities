@@ -430,7 +430,7 @@
 				Debug.log("inputArgs " + inputsArr[i]);
 				Debug.log("inputArgs.value " + inEls[i].value);
 				if(i) postData += ";";
-				postData += inputsArr[i] + "," + inEls[i].value;
+				postData += encodeURIComponent(inputsArr[i]) + "," + encodeURIComponent(inEls[i].value);
 			}
 			
 			postData += "&outputArgs=";
@@ -438,7 +438,7 @@
 			{
 				Debug.log("outputArgs " + outputsArr[i]);
 				if(i) postData += ",";
-				postData += outputsArr[i];
+				postData += encodeURIComponent(outputsArr[i]);
 			}
 			
 			console.log("postData",postData);
