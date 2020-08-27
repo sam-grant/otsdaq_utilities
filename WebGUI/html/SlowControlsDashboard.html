@@ -684,6 +684,9 @@
 				console.log(page_.widgets);
 				console.log("loadPhoebusPageReqHandler(): groups");
 				console.log(groups);
+
+				editBlock_.isHidden = false;
+				toggleEditMode();
 			} //end loadPhoebusPageReqHandler()
 
 
@@ -1072,7 +1075,7 @@
 			function loadPhoebusPage(page)
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=loadPhoebusPage&Page=" + page, "", loadPhoebusPageReqHandler);//, undefined, undefined, "sequence");
-				if(previousPage_ == "") previousPage_ = page;
+				previousPage_ = actualPage_;
 				actualPage_ = page;
 			} //end loadPhoebusPage()
 
@@ -2380,7 +2383,7 @@
 				else
 				{
 					Debug.log("Edit Mode Off");
-					//document.getElementById("menuli3").innerHTML = "<br/>Go Back to previous page";
+					document.getElementById("menuli3").innerHTML = "<br/>Go Back to previous page";
 
 					editBlock_.isHidden = true;
 					editBlock_.el.style.display = "none";
@@ -3036,6 +3039,12 @@
 								tdButton.style.height = "50%";
 								tdButton.onmouseup = function (){popupUploadImage();};
 							}
+							else if(parameter == "inner_map_html")
+							{
+								var tdTextArea = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0];
+								tdTextArea.style.backgroundColor = "white";
+
+							}
 							else
 								attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0].readOnly = true;
 
@@ -3143,6 +3152,10 @@
 				dummytr.appendChild(dummyts2);
 				dummytr.style["max-height"] = "10%";
 				tbody.appendChild(dummytr);	
+				if(keyParam == "inner_map_html")
+				{
+					valueField.style.backgroundColor = "white";
+				}
 			} //end editWidgetAttributesaddRowPVList()
 
 
