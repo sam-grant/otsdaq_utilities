@@ -224,6 +224,8 @@ if [ $copyback_deps == "false" ]; then
         echo "Not deleting ${filebase}"
     elif [[ "${filebase}" =~ "xdaq" ]]; then
         echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "pqxx" ]]; then
+        echo "Not deleting ${filebase}"
     elif [[ "${filebase}" =~ "artdaq_daqinterface" ]]; then
         echo "Not deleting ${filebase}"
     elif [[ "${filebase}" =~ "artdaq_mfextensions" ]]; then
