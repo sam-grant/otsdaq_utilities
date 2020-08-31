@@ -2473,21 +2473,29 @@ CodeEditor.create = function(standAlone) {
 						}
 						else if(cursor.endNodeIndex+1 < el.childNodes.length) //if is the end of the first element, focus on next element
 						{							
-							el.childNodes[cursor.endNodeIndex+1].scrollIntoViewIfNeeded();
+							//el.childNodes[cursor.endNodeIndex+1].scrollIntoViewIfNeeded();
+							//Note: #text type is not scrollable and neither is an empty node
+							// instead of toying with it, just add a node that can be scrolled to							
+							var newNode = document.createElement("label");							
+							newNode.textContent = " "; //special text
+							el.insertBefore(newNode,el.childNodes[cursor.endNodeIndex+1]);								
+							newNode.scrollIntoViewIfNeeded(); //target the middle special text								
+							el.removeChild(newNode);														
 						}
 																
 					}
 					catch(e)
 					{
 						Debug.log("Failed to scroll to inserted 2nd element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
-						try
-						{
-							secondEl.scrollIntoViewIfNeeded();
-						}
-						catch(e)
-						{
-							Debug.log("Failed to scroll 2nd element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
-						}
+						//the following tends to cause the jump to the top
+//						try
+//						{
+//							secondEl.scrollIntoViewIfNeeded();
+//						}
+//						catch(e)
+//						{
+//							Debug.log("Failed to scroll 2nd element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
+//						}
 					}
 					
 
@@ -2523,7 +2531,14 @@ CodeEditor.create = function(standAlone) {
 							}
 							else if(cursor.startNodeIndex+1 < el.childNodes.length) //if is the end of the first element, focus on next element
 							{							
-								el.childNodes[cursor.startNodeIndex+1].scrollIntoViewIfNeeded();
+								//el.childNodes[cursor.startNodeIndex+1].scrollIntoViewIfNeeded();
+								//Note: #text type is not scrollable and neither is an empty node 
+								// instead of toying with it, just add a node that can be scrolled to								
+								var newNode = document.createElement("label");			
+								newNode.textContent = " "; //special text
+								el.insertBefore(newNode,el.childNodes[cursor.startNodeIndex+1]);
+								newNode.scrollIntoViewIfNeeded(); //target the middle special text									
+								el.removeChild(newNode);								
 							}
 						}
 						else
@@ -2531,15 +2546,17 @@ CodeEditor.create = function(standAlone) {
 					}
 					catch(e)
 					{
-						Debug.log("Failed to scroll to inserted 1st element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);							
-						try
-						{
-							firstEl.scrollIntoViewIfNeeded();
-						}
-						catch(e)
-						{
-							Debug.log("Failed to scroll 1st element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
-						}
+						Debug.log("Failed to scroll to inserted 1st element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);	
+						
+						//the following tends to cause the jump to the top
+//						try
+//						{
+//							firstEl.scrollIntoViewIfNeeded();
+//						}
+//						catch(e)
+//						{
+//							Debug.log("Failed to scroll 1st element:[" + DesktopContent.getExceptionLineNumber(e) + "]: " + e);
+//						}
 					}
 					
 					
@@ -3353,6 +3370,9 @@ CodeEditor.create = function(standAlone) {
 				for(i=0;i<val.length;++i)
 				{
 					
+					//if(n==9 && i ==0) //(n==6 && i == 22)
+					//	console.log("Case ERR!?");
+					
 					//for each character:
 					//	check if in quoted string
 					//	then if in comment
@@ -3371,13 +3391,20 @@ CodeEditor.create = function(standAlone) {
 										) &&
 								(val[i] == '"' || val[i] == "'")) 
 						{
+							
+							
 							startOfString = i;
 							stringQuoteChar = val[i];
+							
+							//if(n < 10)
+							//	console.log("string",n,val.substr(i,20));
 							
 							firstSpecialStringStartHandling = true;
 							firstSpecialStringEndHandling = true;
 						}
-						else if(prevChar != '\\' && val[i] == stringQuoteChar)	//end string
+						else if(startOfString != -1 && 
+							((prevChar != '\\' && val[i] == stringQuoteChar) ||
+							val[i] == '\n'))	//end string due to quote or new line
 						{	
 							++i; //include " in label
 							specialString = val.substr(startOfString,i-startOfString);
@@ -3403,7 +3430,7 @@ CodeEditor.create = function(standAlone) {
 							firstSpecialStringStartHandling = true;
 							firstSpecialStringEndHandling = true;
 						}
-						else if(val[i] == '\n')	//end comment
+						else if(startOfComment != -1 && val[i] == '\n')	//end comment
 						{	
 							//++i; //do not include \n in label
 							specialString = val.substr(startOfComment,i-startOfComment);
@@ -3608,7 +3635,8 @@ CodeEditor.create = function(standAlone) {
 						{
 							//string handling
 							if(startOfString != -1 && 
-									(prevChar != '\\' && val[i] == '"')) //end string
+								((prevChar != '\\' && val[i] == '"') ||
+								val[i] == '\n'))	//end string due to quote or new line
 							{
 								Debug.log("Closing node crossed string.");
 								
@@ -5884,7 +5912,7 @@ CodeEditor.create = function(standAlone) {
 		str += htmlOpen("input",
 			{
 				"type":"text",
-				"style":"text-align:center;margin:-4px -2px -4px -1px;width:90%;" + 
+				"style":"text-align:center;margin:-4px -2px -4px -1px;width:100%;" + 
 				" height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px",
 				"value": initVal,
 				"onclick":"event.stopPropagation();",
@@ -6852,7 +6880,7 @@ CodeEditor.create = function(standAlone) {
 			"<img class='dirNavFileNewWindowImgNewPane' " +
 			"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'>" 
 			/*innerHTML*/, true /*doCloseTag*/);
-		str += "</td><td>";	
+		str += "</td><td style='width:90%'>";	
 		
 		//add path div		
 		str += htmlOpen("div",

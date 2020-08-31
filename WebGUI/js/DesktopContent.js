@@ -1055,7 +1055,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		//check if already marked the mailbox.. and do nothing because we know something is wrong
 		
 		errStr = "The system appears to be down.";
-		errStr += " (Try reconnecting/reloading the page, or alert ots admins if problem persists.)";
+		errStr += " (Try reconnecting/reloading the page, or alert ots admins if the problem persists.)";
 		
 		if(!callHandlerOnErr)
 			Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);

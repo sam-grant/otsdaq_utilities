@@ -109,8 +109,8 @@ else {
 				ldiv = document.getElementById("DesktopDashboard-user-displayName");
 				var tmpStr = "Welcome to " + _otsOwner + "ots, " + _displayName;
 				
-				if(ldiv.innerHTML != "" && //if not first time
-						ldiv.innerHTML != tmpStr) //and name is different
+				if(ldiv.innerText != "" && //if not first time
+						ldiv.innerText.indexOf("ots, " + _displayName) < 0) //and name is different
 				{
 					//if _display name is different then close all windows!
 					Debug.log("Desktop.desktop.closeAllWindows() for new user",Debug.LOW_PRIORITY);
