@@ -414,7 +414,10 @@
 			    	Debug.log("Handling login notification...");
 			    	Debug.closeErrorPop();
 			    	//get state machine from server
-					refreshFSM();	
+					DesktopContent.XMLHttpRequest(
+						"Request?RequestType=getStateMachine" + 
+						"&fsmName=" + _fsmName, "", 
+						smRequestHandler);		
 			    } //end login notify handler
 				
 				_blackout = document.getElementById("blackout");
