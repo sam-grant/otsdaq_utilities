@@ -409,6 +409,13 @@
 				else
 					_fsmWindowName = "";	
 				
+				DesktopContent._loginNotifyHandler = function()
+			    {    	
+			    	Debug.log("Handling login notification...");
+			    	Debug.closeErrorPop();
+			    	//get state machine from server
+					refreshFSM();	
+			    } //end login notify handler
 				
 				_blackout = document.getElementById("blackout");
 				_blackoutReveal = document.getElementById("blackout-reveal");

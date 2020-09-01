@@ -60,7 +60,11 @@ function init()
     
     collapsibleList();
 
-    DesktopContent._loginNotifyHandler = updateAppsArray; //define relogin handler
+    DesktopContent._loginNotifyHandler = function()
+    {    	
+    	Debug.log("Handling login notification...");
+    	updateAppsArray(); //define relogin handler	
+    } //end login notify handler
 	
     window.onresize = paint;
     paint();

@@ -1332,7 +1332,7 @@ CodeEditor.create = function(standAlone) {
 			// (looks like they come from emacs tabbing -- they seem to be backwards (i.e. 2C and 0A are real characters))
 			textObj.text = textObj.text.replace(/%20%20/g,"%20%20").replace(/%20/g, //convert two to tab, otherwise space
 					"%20").replace(/%20/g,"%20").replace(/%20/g,"%20");
-			
+			textObj.text = textObj.text.replace(/\r/g,''); //pasting can introduce carriage returns
 			
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" +  
