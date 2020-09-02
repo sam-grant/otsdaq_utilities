@@ -1,4 +1,4 @@
-#include "otsdaq-utilities/MacroMaker/MacroMakerSupervisor.h"
+	#include "otsdaq-utilities/MacroMaker/MacroMakerSupervisor.h"
 
 #include "otsdaq/CodeEditor/CodeEditor.h"
 #include "otsdaq/ConfigurationInterface/ConfigurationManager.h"
@@ -607,7 +607,9 @@ xoap::MessageReference MacroMakerSupervisor::frontEndCommunicationRequest(
 			                      .getChildren();
 
 			for(auto& fe : feChildren)
-			{
+			{				
+				if(!fe.second.status()) continue; //skip disabled FEs
+				
 				__SUP_COUTV__(fe.first);
 				FEtoSupervisorMap_[fe.first] = feApp.first;
 
@@ -2380,6 +2382,16 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 			// build output arguments
 			//	parse args, colon-separated pairs, and then comma-separated
 			{
+				DOMElement* feMacroExecParent = xmldoc.addTextElementToData("feMacroExec", 
+					macroName);
+
+				xmldoc.addTextElementToParent("exec_time", StringMacros::getTimestampString(), feMacroExecParent);
+				xmldoc.addTextElementToParent("fe_uid", feUID, feMacroExecParent);		
+				xmldoc.addTextElementToParent("fe_type", FEtoPluginTypeMap_[feUID], feMacroExecParent);	
+				xmldoc.addTextElementToParent("fe_context",it->second.getContextName(), feMacroExecParent);	
+				xmldoc.addTextElementToParent("fe_supervisor", it->second.getName(), feMacroExecParent);	
+				xmldoc.addTextElementToParent("fe_hostname", it->second.getHostname(), feMacroExecParent);			
+			
 				std::istringstream inputStream(outputResults);
 				std::string        splitVal, argName, argValue;
 				while(getline(inputStream, splitVal, ';'))
@@ -2396,9 +2408,9 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 						        StringMacros::decodeURIComponent(argValue).c_str());
 					}
 					else
-					{
-						xmldoc.addTextElementToData("outputArgs_name", argName);
-						xmldoc.addTextElementToData("outputArgs_value", argValue);
+					{						
+						xmldoc.addTextElementToParent("outputArgs_name", argName, feMacroExecParent);
+						xmldoc.addTextElementToParent("outputArgs_value", argValue, feMacroExecParent);
 					}
 					__SUP_COUT__ << argName << ": " << argValue << __E__;
 				}

@@ -642,7 +642,7 @@ else {
 			
 			if(!req || req.responseText.length != _DEFAULT_SESSION_STRING_LEN) 
 			{ //sessionId failed
-				Debug.log("Invalid session ID",Debug.HIGH_PRIORITY);
+				Debug.log("Invalid session ID");
 
                 if(!req) 
                 {
@@ -660,7 +660,7 @@ else {
 	                		"uuid="+_uid,
 							_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
 				else
-					Desktop.log("Cannot establish session ID - failed 10 times",Desktop.HIGH_PRIORITY);
+					Debug.err("Cannot establish session ID - failed 10 times");
 				
 				return;
 			} 

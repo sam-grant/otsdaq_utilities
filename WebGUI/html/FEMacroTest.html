@@ -68,9 +68,19 @@
 			font-weight:		bold;
 		}
 		h1{
-			font-size: 40px;
+			font-size: 			40px;
 		}
 		
+		.goodValue {
+			color:				darkgreen; 
+			font-size:			inherit;
+			font-weight:		bold;
+		}
+		.badValue {
+			color:				red; 
+			font-size:			inherit;
+			font-weight:		bold;
+		}
 		
 	</style>
 	
@@ -477,35 +487,79 @@
 					return;
 				}
 				
-				var outputArgNames = req.responseXML.getElementsByTagName("outputArgs_name");
-				var outputArgValues = req.responseXML.getElementsByTagName("outputArgs_value");
-				Debug.log("outputArgNames.length = " + outputArgNames.length);	
+				var feExecs = req.responseXML.getElementsByTagName("feMacroExec");
 				
-				str += "Last ran... " + getDateString(new Date);
-				str += "<br>";
-				for(var i=0;i<outputArgNames.length;++i)
+				Debug.log("feExecs .length = " + feExecs .length);	
+				
+				
+				for(var f=0;f == 0 || f<feExecs.length;++f)
 				{
-					var name = outputArgNames[i].getAttribute("value");
-					var value = decodeURIComponent(outputArgValues[i].getAttribute("value"));
-					if(name == "Filename" || name == "filename")
-						str += name + " = " +
-							//if filename, add link to CodeEditor
-							htmlOpen("a", //start macro module table
-								{
-									"title":"Open file in a new browser tab: \n" +
-									value,
-									"onclick":"DesktopContent.openNewBrowserTab(" +
-									"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
-									"\"?" +
-									"startFilePrimary=" +
-									value + "\",undefined /*unique undefined for LID lookup*/);' ", //end onclick
-								},
-								value /*innerHTML*/,
-								true /*doCloseTag*/) + "<br>";
+					if(feExecs.length)
+					{
+						var feMacroName =  feExecs[f].getAttribute("value");
+						var feExecTime = DesktopContent.getXMLValue(feExecs[f],"exec_time");
+						var feTargetUID = DesktopContent.getXMLValue(feExecs[f],"fe_uid");
+						var feTargetHostname = DesktopContent.getXMLValue(feExecs[f],"fe_hostname");
+						var feTargetContext = DesktopContent.getXMLValue(feExecs[f],"fe_context");
+						var feTargetSupervisor = DesktopContent.getXMLValue(feExecs[f],"fe_supervisor");
+						var outputArgNames = feExecs[f].getElementsByTagName("outputArgs_name");
+						var outputArgValues = feExecs[f].getElementsByTagName("outputArgs_value");	
+						str += "<hr width='80%'><br>";
+						str += "<b>Ran... " + feExecTime + "<br>";
+						str += "FEMacro: &quot;" + feMacroName + "&quot;<br>";
+						str += "FE Target UID: <label style='color:red; font-size:inherit;'>" +
+							feTargetUID + "</label> (" + 
+							feTargetHostname + ":" + feTargetContext + "/" + feTargetSupervisor + 
+							")</b><br>";
+					}
+					else //old way
+					{
+						var outputArgNames = req.responseXML.getElementsByTagName("outputArgs_name");
+						var outputArgValues = req.responseXML.getElementsByTagName("outputArgs_value");	
+						str += "Last ran... " + getDateString(new Date);
+						str += "<br>";
+					}
+				
+
+					for(var i=0;i<outputArgNames.length;++i)
+					{
+						var name = outputArgNames[i].getAttribute("value");
+						var value = decodeURIComponent(outputArgValues[i].getAttribute("value"));
+						if(name == "Filename" || name == "filename")
+							str += name + " = " +
+								//if filename, add link to CodeEditor
+								htmlOpen("a", //start macro module table
+									{
+										"title":"Open file in a new browser tab: \n" +
+										value,
+										"onclick":"DesktopContent.openNewBrowserTab(" +
+										"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
+										"\"?" +
+										"startFilePrimary=" +
+										value + "\",undefined /*unique undefined for LID lookup*/);' ", //end onclick
+									},
+									value /*innerHTML*/,
+									true /*doCloseTag*/) + "<br>";
+								
+						else
+						{
+							value = value.replace(/OK/g,"<label class='goodValue'>OK</label>")
+								.replace(/DONE/g,"<label class='goodValue'>DONE</label>")
+								.replace(/GOOD/g,"<label class='goodValue'>GOOD</label>")
+								.replace(/LOCKED/g,"<label class='goodValue'>LOCKED</label>")
+
+								.replace(/NOT/g,"<label class='badValue'>NOT</label>")
+								.replace(/FAILED/g,"<label class='badValue'>FAILED</label>")
+								.replace(/FAIL/g,"<label class='badValue'>FAIL</label>")
+								.replace(/ERROR/g,"<label class='badValue'>ERROR</label>")									.replace(/MISSING/g,"<label class='badValue'>MISSING</label>")
+								.replace(/BAD/g,"<label class='badValue'>BAD</label>")
+								;
 							
-					else
-						str += name + " = " + 
-							value + "<br>";
+							str += name + " = " + 
+								value + "<br>";
+						}
+					}
+					str += "<br>";
 				}
 				
 				el.innerHTML = str;
