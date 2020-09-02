@@ -746,8 +746,6 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 				__SUP_SS_THROW__;
 			}
 
-			TObject* tobjectClone = nullptr;
-
 			if(tobject != nullptr)  // turns out was a root object path
 			{
 				//ignore lock, because Lore says only crashed with Canvas
@@ -771,8 +769,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 					doJSONobject = true;
 				}
 				
-				// Clone tobject to avoid conflict when it is filled by other
-				// threads
+				TString     json;
+				TBufferFile tBuffer(TBuffer::kWrite);
 				if(theDataManager_ != nullptr &&
 						theDataManager_->getLiveDQMHistos() != nullptr &&
 						LDQM_pos == 0)
@@ -781,31 +779,25 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 					    static_cast<DQMHistosConsumerBase*>(
 					        theDataManager_->getLiveDQMHistos())
 					        ->getFillHistoMutex());
-					tobjectClone = tobject->Clone();
+					TBufferJSON::ConvertToJSON(tobject);
+					tobject->Streamer(tBuffer);
 				}
 				else
 				{
-					tobjectClone = tobject->Clone();
+					TBufferJSON::ConvertToJSON(tobject);
+					tobject->Streamer(tBuffer);
 				}
 				
-				
-
-				TString     json = TBufferJSON::ConvertToJSON(tobjectClone);
-				TBufferFile tBuffer(TBuffer::kWrite);
-				tobjectClone->Streamer(tBuffer);
-
 				std::string hexString = BinaryStringMacros::binaryStringToHexString(
 				    tBuffer.Buffer(), tBuffer.Length());
 
-				__SUP_COUT__ << "Returning object '" << tobjectClone->GetName()
-				             << "' of class '" << tobjectClone->ClassName() << __E__;
+				__SUP_COUT__ << "Returning object '" << tobject->GetName()
+				             << "' of class '" << tobject->ClassName() << __E__;
 
-				xmlOut.addTextElementToData("rootType", doJSONobject?"JSON":tobjectClone->ClassName());
+				xmlOut.addTextElementToData("rootType", doJSONobject?"JSON":tobject->ClassName());
 				xmlOut.addTextElementToData("rootData", hexString);
 				xmlOut.addTextElementToData("rootJSON", json.Data());
 
-				if(tobjectClone != nullptr)
-					delete tobjectClone;
 				if(h8 != nullptr)
 					delete h8;
 			}
