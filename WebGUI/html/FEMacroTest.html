@@ -491,7 +491,6 @@
 				
 				Debug.log("feExecs .length = " + feExecs .length);	
 				
-				
 				for(var f=0;f == 0 || f<feExecs.length;++f)
 				{
 					if(feExecs.length)
@@ -504,8 +503,13 @@
 						var feTargetSupervisor = DesktopContent.getXMLValue(feExecs[f],"fe_supervisor");
 						var outputArgNames = feExecs[f].getElementsByTagName("outputArgs_name");
 						var outputArgValues = feExecs[f].getElementsByTagName("outputArgs_value");	
+												
+						str += "Last ran... " + getDateString(new Date) + "<br>";
+						str += "FEMacro: &quot;" + feMacroName + "&quot;<br>";						
+						str += "On " + feExecs.length + " front-end target(s).<br>";
+						
 						str += "<hr width='80%'><br>";
-						str += "<b>Ran... " + feExecTime + "<br>";
+						str += "<b>";//Ran... " + feExecTime + "<br>";
 						str += "FEMacro: &quot;" + feMacroName + "&quot;<br>";
 						str += "FE Target UID: <label style='color:red; font-size:inherit;'>" +
 							feTargetUID + "</label> (" + 
@@ -516,8 +520,8 @@
 					{
 						var outputArgNames = req.responseXML.getElementsByTagName("outputArgs_name");
 						var outputArgValues = req.responseXML.getElementsByTagName("outputArgs_value");	
-						str += "Last ran... " + getDateString(new Date);
-						str += "<br>";
+						
+						str += "Last ran... " + getDateString(new Date) + "<br>";
 					}
 				
 
@@ -548,7 +552,7 @@
 								.replace(/GOOD/g,"<label class='goodValue'>GOOD</label>")
 								.replace(/LOCKED/g,"<label class='goodValue'>LOCKED</label>")
 
-								.replace(/NOT/g,"<label class='badValue'>NOT</label>")
+								.replace(/Not/g,"<label class='badValue'>Not</label>")
 								.replace(/FAILED/g,"<label class='badValue'>FAILED</label>")
 								.replace(/FAIL/g,"<label class='badValue'>FAIL</label>")
 								.replace(/ERROR/g,"<label class='badValue'>ERROR</label>")									.replace(/MISSING/g,"<label class='badValue'>MISSING</label>")
