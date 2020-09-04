@@ -2227,13 +2227,13 @@
 					version + "\",\"" + backLinkStr + "\");";
 
 				str += "<tr>"; //open pre/comment table row
-				str += "<td>";
+				str += "<td style='width:10px;'>";
 				str += "<div style='float:left;margin-right:20px;'>";	//open name div
 				str += "<a name='anchorTag-" + tableName + "'></a>";
 				str += "<b>" + niceName(tableName) + "</b> ";
 				str += "</div>"; //close member name 
 
-				str += "</td><td style='background-color: rgb(218, 194, 194);'>"; //open "curren version" link
+				str += "</td><td style='background-color: rgb(218, 194, 194); width:10px;'>"; //open "curren version" link
 
 				str += "<div style='float:left;white-space:nowrap;'>";	//open name div
 				str += "<a id='" + tableName + "-currentVersionLink' " +
@@ -2247,7 +2247,7 @@
 				str += "</a>";
 				str += "</div>"; //close member current version link
 
-				str += "</td><td>"; //open table nav link
+				str += "</td><td style='width:20px;'>"; //open table nav link
 
 				//add member nav goto link
 				{
