@@ -110,6 +110,7 @@
 		//setupGroupCreator(preSelectStr)
 		//setupGroupCreatorHandler(req,preSelectStr)
 		//handleGroupMemberGoto(name,backLinkStr)
+		//handleGroupMemberChange()
 		//addMemberToConfigGroup(groupName,backLinkStr) 
 
 		//activateSystemConfig(groupName, groupKey, ignoreWarnings, doneHandler)
@@ -5610,7 +5611,7 @@
 			var refreshLinkStr = "setupGroupCreator(\"" +
 				preSelectStr + "&backLinkStr=" + backLinkStr + "\");";
 			str += "<a href='#' onclick='" + refreshLinkStr +
-				"; return false;'>Refresh</a>";
+				"; _cachedGroupComment=\"" + _cachedGroupComment + "\"; return false;'>Refresh</a>";
 			str += "<br>";
 
 			if (preSelectStr)
@@ -5665,12 +5666,12 @@
 
 				//add checkbox
 				str += "<input type='checkbox' class='memberTableCheckbox' value='" +
-					name + "'>";
+					name + "' onclick='handleGroupMemberChange();' >";
 				//add link so text toggles checkbox
 				str += "<a style='text-decoration:none;color:black;' onclick='" +
 					"var el = document.getElementsByClassName(\"memberTableCheckbox\");" +
 					"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
-					" return false;'>";
+					"handleGroupMemberChange(); return false;'>";
 				str += niceName(name); //can display however
 				str += "</a>";
 				str += "</input>";
@@ -5680,7 +5681,7 @@
 
 				str += "</td><td>";
 
-				str += "<select id='select-" + name + "'>";
+				str += "<select id='select-" + name + "' onchange='handleGroupMemberChange();'>";
 				for (var j = 0; j < tableVersions.length; ++j)
 				{
 					version = tableVersions[j].getAttribute("value");
@@ -5689,19 +5690,12 @@
 					str += "</option>";
 				}
 				str += "</select>";
-				str += "</td>";
+				str += "</td>";"setupGroupCreator(\\\"" + preSelectStr + "\\\");"
 
-				backLinkStr = "setupGroupCreator(\\\"" + preSelectStr + "\\\");";
-
-				str += "<td>";
+				str += "<td id='goto-" + name + "' >";
 				str += "<a onclick='" +
 					"return handleGroupMemberGoto(\"" + name + "\",\"" + backLinkStr + "\");'" +
-					//						"var sel = document.getElementById(\"select-" + name + "\");" +
-					//						"if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default" +
-					//						"setupSpecificTable(\"" + name + "\"," +
-					//						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1" +
-					//						",\"" + backLinkStr + "\"); return false;'" +
-					" title='Go to " + name + "&apos;s selected version'" +
+					" title='Go to " + name + "&apos;s selected version.'" +
 					">";
 				str += "goto</a>";
 				//"(tableName, version)"
@@ -5826,7 +5820,7 @@
 		//handleGroupMemberGoto ~
 		function handleGroupMemberGoto(name, backLinkStr)
 		{
-			Debug.log("tmpF " + name);
+			Debug.log("handleGroupMemberGoto " + name);
 
 			var sel = document.getElementById("select-" + name);
 
@@ -5837,7 +5831,55 @@
 					sel.options[sel.selectedIndex].value : -1,
 				backLinkStr);
 			return false;
-		} //end handleGroupMemberGoto()
+		} //endemberGoto()
+		
+		//==============================================================================
+		//handleGroupMemberChange ~
+		function handleGroupMemberChange()
+		{
+			Debug.log("handleGroupMemberChange ");
+					
+			var els = document.getElementsByClassName("memberTableCheckbox");
+			var sel;
+			var tableMap = document.getElementById("newConfigName").value + ",";
+			for (var el = 0; el < els.length; ++el)
+				if (els[el].checked)
+				{
+					sel = document.getElementById("select-" + els[el].value);
+					if (sel.options.length) 
+					{
+						if (sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
+						Debug.log("table=" + els[el].value + " version=" +
+							sel.options[sel.selectedIndex].value);
+						tableMap += els[el].value + "," + sel.options[sel.selectedIndex].value + ",";
+					}
+					else //if no options, choose mockup version, -1
+					{
+						Debug.log("table=" + els[el].value + " version=" +
+							(-1));
+						tableMap += els[el].value + "," + (-1) + ",";
+					}
+				}
+			
+			Debug.log("new preSelectStr=", tableMap);
+			
+			var backLinkStr = "setupGroupCreator(\\\"" + tableMap + "\\\");";
+				
+			//now replace all goto actions
+			// copied from L5695 setupGroupCreatorHandler()
+			for (var el = 0; el < els.length; ++el)
+			{				
+				var tableName = els[el].value;
+				sel = document.getElementById("goto-" + tableName);
+				var str = "<a onclick='" +
+					"return handleGroupMemberGoto(\"" + tableName + "\",\"" + backLinkStr + "\");'" +
+					" title='Go to " + tableName + "&apos;s selected version.'" +
+					">goto</a>";
+				sel.innerHTML = str;
+			}
+			
+			return false;
+		} //end handleGroupMemberChange()
 
 		//==============================================================================
 		//versionsForCreateTableGroup ~
@@ -13404,8 +13446,12 @@
 
 			var str = "<br><a id='" +
 				"popUpDialog" +
-				"-header' onclick='var el = document.getElementById(" +
-				"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+				"-header' onclick='" +
+				"_cachedGroupComment = document.getElementById(" +
+				"\"popUpDialog-comment\").value; " +
+				"var el = document.getElementById(" +
+				"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); " +				
+				"return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
 
