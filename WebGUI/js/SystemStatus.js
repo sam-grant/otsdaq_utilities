@@ -397,9 +397,9 @@ function displayTable(appsArray)
             		staleString = "0." + ping_ + " seconds ago";
             	else if(staleSeconds < 2)
             		staleString = "1." + ping_ + " seconds ago";            		
-            	else if(staleSeconds < 10)
+            	else if(staleSeconds < 46)
             		staleString = staleSeconds + " seconds ago";
-            	else if(staleSeconds < 60)
+            	else if(staleSeconds < 90)
             		staleString = "One minute ago";
             	else if(staleSeconds < 40*60)
             		staleString = (((staleSeconds/60)|0)+1) + " minutes ago";
