@@ -49,7 +49,7 @@
 
 #define PRE_MADE_ROOT_CFG_FILE_EXT std::string(".rcfg")
 
-#define PREFERENCES_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/V2Data/"
+#define PREFERENCES_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/VisualizerV2Data/"
 #define PREFERENCES_FILE_EXT ".pref"
 
 #define ROOT_VIEWER_PERMISSIONS_THRESHOLD 100
@@ -746,6 +746,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 				__SUP_SS_THROW__;
 			}
 
+			//TObject* tobjectClone = nullptr;
+
 			if(tobject != nullptr)  // turns out was a root object path
 			{
 				//ignore lock, because Lore says only crashed with Canvas
@@ -779,12 +781,13 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 					    static_cast<DQMHistosConsumerBase*>(
 					        theDataManager_->getLiveDQMHistos())
 					        ->getFillHistoMutex());
-					TBufferJSON::ConvertToJSON(tobject);
+					json = TBufferJSON::ConvertToJSON(tobject);
 					tobject->Streamer(tBuffer);
 				}
 				else
 				{
-					TBufferJSON::ConvertToJSON(tobject);
+					//No need to lock from file!
+					json = TBufferJSON::ConvertToJSON(tobject);
 					tobject->Streamer(tBuffer);
 				}
 				
@@ -793,7 +796,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 
 				__SUP_COUT__ << "Returning object '" << tobject->GetName()
 				             << "' of class '" << tobject->ClassName() << __E__;
-
+				
+				//__SUP_COUT__ << "Data: " << json.Data() << std::endl;
 				xmlOut.addTextElementToData("rootType", doJSONobject?"JSON":tobject->ClassName());
 				xmlOut.addTextElementToData("rootData", hexString);
 				xmlOut.addTextElementToData("rootJSON", json.Data());
