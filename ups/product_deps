@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent otsdaq_utilities	v2_05_04_indev
+parent otsdaq_utilities	v2_05_04
 defaultqual	e17:s85
 
 # These optional lines define the installed directories where
@@ -17,9 +17,9 @@ bindir      fq_dir      bin
 fcldir      -
 
 #
-product		 version	optional
-otsdaq              v2_05_03
-cetbuildtools       v7_17_01     -        only_for_build
+product			version		optional
+otsdaq			v2_05_04
+cetbuildtools	v7_17_01	-	only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
@@ -27,37 +27,37 @@ end_product_list
 # s7  - with art v1_13_01
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
-qualifier    	   otsdaq	 xdaq	    notes
-e20:s100:prof		e20:s100:prof		e20:prof		-std=c++17		
-e20:s100:debug		e20:s100:debug		e20:debug		-std=c++17		
-e19:s100:prof		e19:s100:prof		e19:prof		-std=c++17		
-e19:s100:debug		e19:s100:debug		e19:debug		-std=c++17		
-c7:s100:debug		c7:s100:debug		c7:debug		-std=c++17		
-c7:s100:prof      c7:s100:prof c7:prof  -std=c++17
+qualifier			otsdaq				notes
+e20:s101:prof		e20:s101:prof		-std=c++17
+e20:s101:debug		e20:s101:debug		-std=c++17
+e19:s101:prof		e19:s101:prof		-std=c++17
+e19:s101:debug		e19:s101:debug		-std=c++17
+c7:s101:debug		c7:s101:debug		-std=c++17
+c7:s101:prof		c7:s101:prof		-std=c++17
 
-e19:s96:prof		e19:s96:prof		e19:prof		-std=c++17		
-e19:s96:debug		e19:s96:debug		e19:debug		-std=c++17		
-e19:s96:py2:prof   e19:s96:py2:prof  e19:prof   -std=c++17
-e19:s96:py2:debug  e19:s96:py2:debug e19:debug  -std=c++17
+e19:s96:prof		e19:s96:prof		-std=c++17
+e19:s96:debug		e19:s96:debug		-std=c++17
+e19:s96:py2:prof	e19:s96:py2:prof	-std=c++17
+e19:s96:py2:debug	e19:s96:py2:debug	-std=c++17
 
-c7:s96:debug		c7:s96:debug		c7:debug		-std=c++17		
-c7:s96:prof      c7:s96:prof c7:prof  -std=c++17
-c7:s96:py2:prof   c7:s96:py2:prof  c7:prof   -std=c++17
-c7:s96:py2:debug  c7:s96:py2:debug c7:debug  -std=c++17
+c7:s96:debug		c7:s96:debug		-std=c++17
+c7:s96:prof			c7:s96:prof			-std=c++17
+c7:s96:py2:prof		c7:s96:py2:prof		-std=c++17
+c7:s96:py2:debug	c7:s96:py2:debug	-std=c++17
 
-e19:s87:prof       e19:s87:prof  e19:prof   -std=c++17
-e19:s87:debug      e19:s87:debug e19:debug  -std=c++17
-e17:s87:prof       e17:s87:prof  e17:prof   -std=c++17
-e17:s87:debug      e17:s87:debug e17:debug  -std=c++17
+e19:s87:prof		e19:s87:prof		-std=c++17
+e19:s87:debug		e19:s87:debug		-std=c++17
+e17:s87:prof		e17:s87:prof		-std=c++17
+e17:s87:debug		e17:s87:debug		-std=c++17
 
-e17:s85:prof       e17:s85:prof  e17:prof   -std=c++17
-e17:s85:debug      e17:s85:debug e17:debug  -std=c++17
+e17:s85:prof		e17:s85:prof		-std=c++17
+e17:s85:debug		e17:s85:debug		-std=c++17
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
 
 ### Local Variables:
-### tab-width: 8
+### tab-width: 4
 ### End:
 
-# vi:set ts=8 noexpandtab:
+# vi:set ts=4 noexpandtab:
