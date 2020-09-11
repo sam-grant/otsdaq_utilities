@@ -586,8 +586,8 @@
 					var table_border = widgets[i].getElementsByTagName("table_border")[0]; //2dstoplight widget
 					var table_border_color = widgets[i].getElementsByTagName("table_border_color")[0]; //2dstoplight widget
 					var link_to_page = widgets[i].getElementsByTagName("link_to_page")[0]; //2dstoplight widget
-					var trace_type = widgets[i].getElementsByTagName("trace_type")[0]; //plotly_bar_chart widget
-					var trace_mode = widgets[i].getElementsByTagName("trace_type")[0]; //plotly_bar_chart widget
+					var trace_type = widgets[i].getElementsByTagName("trace_type")[0]; //plotly_bar_chart and xy_chart widgets
+					var trace_mode = widgets[i].getElementsByTagName("trace_mode")[0]; //plotly_bar_chart and xy_chart widgets
 
 					//set attributes
 					if (label_class !== undefined) widgetObject.attributes["class"] = label_class.innerHTML;
@@ -3043,7 +3043,15 @@
 							{
 								var tdTextArea = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0];
 								tdTextArea.style.backgroundColor = "white";
-
+								var tdButton = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0];
+								
+								//Use this Button to go to https://www.image-map.net/ to make image map area code. After add your <area ....> code in the next text area
+								tdButton.setAttribute("type", "button");
+								tdButton.className = "";
+								tdButton.style.width = "100%";
+								tdButton.style.height = "50%";
+								tdButton.onclick = function(){window.open("https://www.image-map.net/", "_blank")};
+								tdButton.title = "Click here to go to https://www.image-map.net/ to make image map area code. After add your <area ....> code in the next text area";
 							}
 							else
 								attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0].readOnly = true;
@@ -3124,6 +3132,16 @@
 					keyField.style.width = "100%";
 					keyField.style.height = "50%";
 					keyField.onmouseup = function (){popupUploadImage();};
+				}
+				else if(keyParam == "inner_map_html")
+				{
+					//Use this Button to go to https://www.image-map.net/ to make image map area code. After add your <area ....> code in the next text area
+					keyField.setAttribute("type", "button");
+					keyField.className = "";
+					keyField.style.width = "100%";
+					keyField.style.height = "50%";
+					keyField.onclick = function(){window.open("https://www.image-map.net/", "_blank")};
+					keyField.title = "Click here to go to https://www.image-map.net/ to make image map area code. After add your <area ....> code in the next text area";
 				}
 				else
 				{
