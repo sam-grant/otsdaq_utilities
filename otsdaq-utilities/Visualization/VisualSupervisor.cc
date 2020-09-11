@@ -1131,20 +1131,27 @@ void VisualSupervisor::request(const std::string               & requestType,
         else if(requestType == "getMeRootFile") //################################################################################################################
         {
          xmlOut.setDarioStyle(true) ; // workaround for XML formatting....
-	 std::string fSystemPath  = std::string(ROOT_BROWSER_PATH) + "/";
-	 std::string fRootPath    = CgiDataUtilities::postData(cgiIn, "fRootPath"   );
-	 std::string fFoldersPath = CgiDataUtilities::postData(cgiIn, "fFoldersPath");
-	 std::string fHistName    = CgiDataUtilities::postData(cgiIn, "fHistName"   );
-	 std::string fFileName    = CgiDataUtilities::postData(cgiIn, "fFileName"   );
+	 std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
+	 std::string fRootPath     = CgiDataUtilities::postData(cgiIn, "fRootPath"    );
+	 std::string fFoldersPath  = CgiDataUtilities::postData(cgiIn, "fFoldersPath" );
+	 std::string fHistName     = CgiDataUtilities::postData(cgiIn, "fHistName"    );
+	 std::string fRFoldersPath = CgiDataUtilities::postData(cgiIn, "fRFoldersPath");
+	 std::string fFileName     = CgiDataUtilities::postData(cgiIn, "fFileName"    );
          boost::regex re("%2F") ;
          fRootPath    = boost::regex_replace(fRootPath   ,re,"/") ;
          fFoldersPath = boost::regex_replace(fFoldersPath,re,"/") ;
-// 	 STDLINE(std::string("fSystemPath : ")+fSystemPath ,ACCyan);
-// 	 STDLINE(std::string("fRootPath   : ")+fRootPath   ,ACCyan);
-// 	 STDLINE(std::string("fFoldersPath: ")+fFoldersPath,ACCyan);
-// 	 STDLINE(std::string("fHistName   : ")+fHistName   ,ACCyan);
-//  	 STDLINE(std::string("fFileName   : ")+fFileName   ,ACCyan);
-         RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, fRootPath, fFoldersPath, fHistName, fFileName) ;
+// 	 STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
+// 	 STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
+// 	 STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
+// 	 STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
+// 	 STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
+//  	 STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
+         RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, 
+                                                               fRootPath, 
+                                                               fFoldersPath, 
+                                                               fHistName, 
+                                                               fRFoldersPath, 
+                                                               fFileName) ;
          xmlOut.setDocument(theExplorer->initialize(false)) ;
 //         std::ostringstream* out ;
 	 //xmlOut.outputXmlDocument((std::ostringstream*) out, true);
@@ -1152,32 +1159,55 @@ void VisualSupervisor::request(const std::string               & requestType,
 	else if(requestType == "getMeLIVE-DQMFile") //################################################################################################################
         {
          xmlOut.setDarioStyle(true) ; // workaround for XML formatting....
-	 std::string fSystemPath  = std::string(ROOT_BROWSER_PATH) + "/";
-	 std::string fRootPath    = CgiDataUtilities::postData(cgiIn, "fRootPath"   );
-	 std::string fFoldersPath = CgiDataUtilities::postData(cgiIn, "fFoldersPath");
-	 std::string fHistName    = CgiDataUtilities::postData(cgiIn, "fHistName"   );
-	 std::string fFileName    = CgiDataUtilities::postData(cgiIn, "fFileName"   );
-// 	 STDLINE(std::string("fSystemPath : ")+fSystemPath ,ACCyan);
-// 	 STDLINE(std::string("fRootPath   : ")+fRootPath   ,ACCyan);
-// 	 STDLINE(std::string("fFoldersPath: ")+fFoldersPath,ACCyan);
-// 	 STDLINE(std::string("fHistName   : ")+fHistName   ,ACCyan);
-//  	 STDLINE(std::string("fFileName   : ")+fFileName   ,ACCyan);
+	 std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
+	 std::string fRootPath     = CgiDataUtilities::postData(cgiIn, "fRootPath"    );
+	 std::string fFoldersPath  = CgiDataUtilities::postData(cgiIn, "fFoldersPath" );
+	 std::string fHistName     = CgiDataUtilities::postData(cgiIn, "fHistName"    );
+	 std::string fRFoldersPath = CgiDataUtilities::postData(cgiIn, "fRFoldersPath");
+	 std::string fFileName     = CgiDataUtilities::postData(cgiIn, "fFileName"    );
+	 STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
+	 STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
+	 STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
+	 STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
+	 STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
+ 	 STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
          boost::regex re("%2F") ;
          fRootPath    = boost::regex_replace(fRootPath   ,re,"/") ;
          fFoldersPath = boost::regex_replace(fFoldersPath,re,"/") ;
 
  	 TFile * rootFile; 
-//          STDLINE("Getting LiveDQMHistos",ACGreen) ;
+         STDLINE("Getting LiveDQMHistos",ACGreen) ;
  	 if(theDataManager_->getLiveDQMHistos() != nullptr )
          {
+ 	  STDLINE("Selecting LIVE_DQM.root",ACCyan);
           rootFile  = theDataManager_->getLiveDQMHistos()->getFile();
           fRootPath = "LIVE_DQM.root" ;
          } 
          else
          {
+          STDLINE(string("fRootPath: ")+fRootPath,ACGreen) ;
           rootFile = TFile::Open(fRootPath.c_str());
          }
-         RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, fRootPath, fFoldersPath, fHistName, fFileName, rootFile) ;
+         string cmd = string("ls -la ")+fRootPath ;
+         system(cmd.c_str()) ;
+STDLINE(string("before regexp fRootPath: ")+fRootPath,ACGreen) ;
+fRootPath = rootFile->GetName() ; // Bisogna strippare via il full path!!!
+boost::regex regg(fSystemPath.c_str()) ;
+fRootPath = boost::regex_replace(fRootPath,regg,"/") ; // Dario: should be transparent for Ryan's purposes but required by Extjs
+STDLINE(string("after regexp fRootPath: ")+fRootPath,ACGreen) ;
+	 STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
+	 STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
+	 STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
+	 STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
+	 STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
+ 	 STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
+         RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, 
+                                                               fRootPath, 
+                                                               fFoldersPath, 
+                                                               fHistName, 
+                                                               fRFoldersPath, 
+                                                               fFileName, 
+                                                               rootFile) ;
          xmlOut.setDocument(theExplorer->initialize(true)) ;
 //         std::ostringstream* out ;
 	 //xmlOut.outputXmlDocument((std::ostringstream*) out, true);

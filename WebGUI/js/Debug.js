@@ -266,12 +266,14 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				source = source.substr(0,source.indexOf('?'));
 				
 				if(useStrOnly)
-					console.log("%c" + type + "-Priority" +  
-							":\t " + Debug.lastLog + " from " + source + ":\n" +
-							Debug.lastLogger + "::\t" + str,							 
-							num == 0?"color:#F30;"	//chrome/firefox allow css styling
-									:(num == 1?"color:#F70" //warn
-											:(num < 99?"color:#092":"color:#333")));
+                                {
+ 					console.log("%c" + type + "-Priority" +  
+ 							":\t " + Debug.lastLog + " from " + source + ":\n" +
+ 							Debug.lastLogger + "::\t" + str,							 
+ 							num == 0?"color:#F30;"	//chrome/firefox allow css styling
+ 									:(num == 1?"color:#F70" //warn
+ 											:(num < 99?"color:#092":"color:#333")));
+                                }
 				else
 				{
 					var consoleArguments = [];

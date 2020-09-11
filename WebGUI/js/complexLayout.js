@@ -22,6 +22,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.         *
  ================================================================================*/
 
+/*________________________________________________________________________________/
+/   The execution path of this asynchronous program starts at the end of this file
+/*_______________________________________________________________________________*/
+    
 Ext.require(['*']);
 Ext.QuickTips.init();
 
@@ -32,50 +36,50 @@ Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
 Ext.onReady(
 function() 
 {
- var buttonStyle_         = 'margin-left  : 2px;' +
-                            'margin-right : 2px;' + 
-                            'margin-top   : 2px;' +
-                            'margin-bottom: 2px;' +
-                            'padding      : 2px;'                                                   ;
- var canvasTabs_          = []                                                                      ;
- var configStore_         = 0                                                                       ;
- var configPanel_         = 0                                                                       ;
- var currentCanvas_       = 0                                                                       ;
- var dataModel_           = ""                                                                      ;
- var enableDebug_         = true                                                                    ;
- var globalCanvas_        = 0                                                                       ;
- var gridDivision_        = "grid1x1"                                                               ;
- var doReset_             = true                                                                    ;
- var grid_                = ""                                                                      ;
- var mdi_                 = ""                                                                      ;
- var nxPlots_             = 1                                                                       ;
- var nyPlots_             = 1                                                                       ;
- var periodicPlotID_      = []                                                                      ;
- var ROOTControlsPanel_   = 0                                                                       ;
- var selectedItem_        = "getDirectories";                                                       ;
- var superimposeFlag_     = false                                                                   ;
- var theCanvasModel_      = 0                                                                       ;
- var theConfigWin_        = 0                                                                       ;
- var theInformationPanel_ = 0                                                                       ;
- var theNavigatorPanel_   = 0                                                                       ;
- var theProvenance_       = 0                                                                       ;
- var theSourcesComboBox_  = 0                                                                       ;
- var theStore_            = 0                                                                       ;
- var theViewPort_         = 0                                                                       ;
- var timeoutInterval_     = 2                                                                       ;
- var treeDisplayField_    = "fDisplayName"                                                          ;
- var options1D_           = []                                                                      ;
- var options2D_           = []                                                                      ;
- var options3D_           = []                                                                      ;
- var optionsBodies1D_     = []                                                                      ;
- var optionsBodies2D_     = []                                                                      ;
- var optionsBodies3D_     = []                                                                      ;
+ var buttonStyle_         = 'margin-left  : 2px;'             +
+                            'margin-right : 2px;'             +
+                            'margin-top   : 2px;'             +
+                            'margin-bottom: 2px;'             +
+                            'padding      : 2px;'              ;
+ var canvasTabs_          = []                                 ;
+ var configStore_         = 0                                  ;
+ var configPanel_         = 0                                  ;
+ var currentCanvas_       = 0                                  ;
+ var dataModel_           = ""                                 ;
+ var enableDebug_         = true                               ;
+ var globalCanvas_        = 0                                  ;
+ var gridDivision_        = "grid1x1"                          ;
+ var doReset_             = true                               ;
+ var grid_                = ""                                 ;
+ var mdi_                 = ""                                 ;
+ var nxPlots_             = 1                                  ;
+ var nyPlots_             = 1                                  ;
+ var periodicPlotID_      = []                                 ;
+ var ROOTControlsPanel_   = 0                                  ;
+ var selectedItem_        = "getDirectories";                  ;
+ var superimposeFlag_     = false                              ;
+ var theCanvasModel_      = 0                                  ;
+ var theConfigWin_        = 0                                  ;
+ var theInformationPanel_ = 0                                  ;
+ var theNavigatorPanel_   = 0                                  ;
+ var theProvenance_       = 0                                  ;
+ var theSourcesComboBox_  = 0                                  ;
+ var theStore_            = 0                                  ;
+ var theViewPort_         = 0                                  ;
+ var timeoutInterval_     = 2                                  ;
+ var treeDisplayField_    = "fDisplayName"                     ;
+ var options1D_           = []                                 ;
+ var options2D_           = []                                 ;
+ var options3D_           = []                                 ;
+ var optionsBodies1D_     = []                                 ;
+ var optionsBodies2D_     = []                                 ;
+ var optionsBodies3D_     = []                                 ;
 
- var _theWindow           = self                                                                    ;
- var _requestURL          = self.parent.window.location.origin                                     +
-                            "/urn:xdaq-application:lid="                                           +
-                            getLocalURN(0,"urn")                                                   +
-                            "/Request?"                                                             ;
+ var _theWindow           = self                               ;
+ var _requestURL          = self.parent.window.location.origin+
+                            "/urn:xdaq-application:lid="      +
+                            getLocalURN(0,"urn")              +
+                            "/Request?"                        ;
 
  options1D_[ 0] = 'P'         ;
  options1D_[ 1] = 'P0'        ;
@@ -160,7 +164,7 @@ function()
   for(var i=0; i< theArray.length; i++)
   {
    var v = theArray[i] ;
-   STDLINE("    v: "+v) ;
+//   STDLINE("    v: "+v) ;
    theBody.push(
                 {
                  xtype   : 'checkbox'                          ,
@@ -1073,7 +1077,7 @@ function()
                                                                                        'RequestType=getMeDirs'                            ) ;
                                                                              makeGrid (theProvenance_.getRootPath(currentCanvas_           ,
                                                                                                                   thePad)                  ,
-                                                                                        'Directories and files'                           ) ;
+                                                                                       'Directories and files'                            ) ;
                                                                             }
                                                                            }
                                                                  }
@@ -1315,6 +1319,7 @@ function()
                                                            makeStore(thisRootPath, 
                                                                      'RequestType=getMeDirs'                              );
                                                           }
+                STDLINE("---------------------------------------> selectedItem_ = "+selectedItem_) ;
                                                           makeGrid (thisRootPath,              
                                                                     'Directories and files'                               );
                                                          },
@@ -1413,6 +1418,7 @@ function()
  //-----------------------------------------------------------------------------
  function makeGrid(where,what)
  { 
+  STDLINE("===> makeGrid <============") ;
   STDLINE("makeGrid("+where+","+what+")") ;
   if( grid_ ) grid_.destroy()     ;
   theStore_.sort(treeDisplayField_, 'ASC');
@@ -1545,7 +1551,7 @@ function()
                                                    treeDisplayField_  = 'fDisplayName'                                  ;       
                                                    selectedItem_      = "getRootObject"                                 ;       
                                                    currentTree_       = 'fileContent'                                   ;       
-//                                                   STDLINE("Paths: "+  theProvenance_.getPathsNumber(thePad))           ;       
+                                                   STDLINE("Paths: "+  theProvenance_.getPathsNumber(thePad))           ;       
                                                    currentDirectory_ = theProvenance_.getSystemPath (currentCanvas_,
                                                                                                      thePad)           +        
                                                                        '/'                                             +        
@@ -1560,13 +1566,13 @@ function()
 //                                                   STDLINE('RequestType      : getMeRootFile'     )                     ;       
 //                                                   STDLINE('currentDirectory_: '+currentDirectory_)                     ;       
                                                    makeStore(currentDirectory_,'RequestType=getMeRootFile')             ;       
-                                                   makeGrid (currentDirectory_,'ROOT file content'        )             ;       
+                                                   makeGrid (currentDirectory_,'ROOT file content'        )             ; 
                                                   }
                                                   else if( selectedItem_ == "getRootObject" || 
                                                            selectedItem_ == "getMeLIVE-DQMFile" )
                                                   { 
 //                                                   theProvenance_.dumpAll("getRootObject")                              ;
-//                                                   STDLINE("Request for thePad: " + thePad)                             ;
+                                                   STDLINE("Request for thePad: " + thePad)                             ;
                                                    if( selectedItem_ == "getMeLIVE-DQMFile" ) 
                                                    {
                                                     theProvenance_.setFileName  (""                                   ,
@@ -1585,11 +1591,12 @@ function()
                                                                          theProvenance_.getRFoldersPath(currentCanvas_,
                                                                                                         thePad)        +    
                                                                          "/"                                           +        
-                                                                         theProvenance_.getHistName    (currentCanvas_,
-                                                                                                        thePad)         ;    
-//                                                    STDLINE('RequestType       : getRootObject'      )                   ;        
-//                                                    STDLINE('currentRootObject_: '+currentRootObject_)                   ;        
-//                                                    STDLINE('_requestURL       : '+_requestURL       )                   ;        
+                                                                         theProvenance_.getHistName    (currentCanvas_,+
+                                                                                                        thePad)         ;
+                                                   currentRootObject_  = currentRootObject_.replace(/\/\//g, '/' )      ;
+                                                   STDLINE('RequestType       : getRootObject'      )                   ;        
+                                                   STDLINE('currentRootObject_: '+currentRootObject_)                   ;        
+                                                   STDLINE('_requestURL       : '+_requestURL       )                   ;        
                                                    theAjaxRequest(
                                                                   _requestURL+"RequestType=getRoot",
                                                                   {                                                           
@@ -1642,10 +1649,11 @@ function()
  function makeStore(path, reqType)
  { 
 //  theProvenance_.dump("makeStore", 0   ) ;
-  theProvenance_.dumpAll("makeStore"   ) ;
+  STDLINE("===> makeStore <============") ;
   STDLINE("path       : " + path       ) ;
   STDLINE("reqType    : " + reqType    ) ;
   STDLINE("_requestURL: " + _requestURL) ;
+  theProvenance_.dumpAll("makeStore"   ) ;
   var thePad = theCanvasModel_.getCurrentPad(currentCanvas_);
   theStore_ = Ext.create(
                          'Ext.data.TreeStore', 
@@ -1659,38 +1667,38 @@ function()
                           proxy    : {
                                       type         : 'ajax',
                                       actionMethods: {
-                                                      read          : 'POST'
+                                                      read           : 'POST'
                                                      }, 
                                       extraParams  : { 
-                                                      "CookieCode"  : DesktopContent._cookieCodeMailbox                                          ,
-                                                      "Path"        : path                                                 ,
-                                                      "fRootPath"   : theProvenance_.getRootPath   (currentCanvas_, thePad),
-                                                      "fFoldersPath": theProvenance_.getFoldersPath(currentCanvas_, thePad),
-                                                      "fHistName"   : theProvenance_.getHistName   (currentCanvas_, thePad),
-                                                      "fFileName"   : theProvenance_.getFileName   (currentCanvas_, thePad)
+                                                      "CookieCode"   : DesktopContent._cookieCodeMailbox                                          ,
+                                                      "Path"         : path                                                  ,
+                                                      "fRootPath"    : theProvenance_.getRootPath    (currentCanvas_, thePad),
+                                                      "fFoldersPath" : theProvenance_.getFoldersPath (currentCanvas_, thePad),
+                                                      "fHistName"    : theProvenance_.getHistName    (currentCanvas_, thePad),
+                                                      "fRFoldersPath": theProvenance_.getRFoldersPath(currentCanvas_, thePad),
+                                                      "fFileName"    : theProvenance_.getFileName    (currentCanvas_, thePad)
                                                      },
                                       url          : _requestURL + reqType,
                                       reader       : {
-                                                      type          : 'xml'   ,
-                                                      root          : 'nodes' ,
-                                                      record        : '> node'
+                                                      type           : 'xml'   ,
+                                                      root           : 'nodes' ,
+                                                      record         : '> node'
                                                      },
                                      },
                           listeners: {
                                       beforeload   : function(thisStore, operation, eOpts) 
                                                      {
-//                                                       STDLINE("Request: "+_requestURL + reqType) ;
+                                                       STDLINE("Request: "+_requestURL + reqType) ;
                                                      },
                                       load         : function( thisStore, records, successful, operation, node, eOpts )
                                                      {
-//                                                       STDLINE("Load was succesful? "+successful) ;
+                                                       STDLINE("Load was succesful? "+successful) ;
                                                      }
                                      }
                          }
                         );
-//   STDLINE("Going to load...") ;
+  STDLINE("Going to load...") ;
   theStore_.load() ;
-//   STDLINE("...loaded!") ;
  }
  
  //-----------------------------------------------------------------------------
@@ -1711,8 +1719,10 @@ function()
   {
    pad = theParams.pad ;
   }
-//   STDLINE("Ajax request issued to " + theRequestURL      + " at " + time);
-//   STDLINE("theParams.RootPath: "    + theParams.RootPath                );
+  theRequestURL = theRequestURL.replace(/\/\//g, "/") ;
+  theRequestURL = theRequestURL.replace(/http:\//, "http://") ;
+  STDLINE("Ajax request issued to " + theRequestURL      + " at " + time);
+  STDLINE("theParams.RootPath: "    + theParams.RootPath                );
   Ext.Ajax.request(                                                                                                                       
                    {                                                                                                                      
                     url    : theRequestURL,                                                                                               
@@ -1725,10 +1735,8 @@ function()
                     timeout: 50000        ,                                                                                                       
                     success: function(response, request)                                                                                  
                              { 
-//                               STDLINE("Got answer") ;
                               if(getXMLValue(response,"headOfSearch") == 'located') // Returns the list of available fRooPaths                                                                     
                               { // Get list of head-points
-//                                STDLINE("headOfSearch") ;
                                var dirs     = [] ;
                                var theNodes = getXMLNodes(response,'dir') ;
                                for(var i=0; i<theNodes.length; ++i)
@@ -1746,10 +1754,8 @@ function()
                                var rootName  = getXMLValue (response,"path"          );              
                                var rootJSON  = getXMLValue (response,"rootJSON"      );          
                                var object    = JSROOT.parse(rootJSON                 );
-//                                STDLINE("Cuccato " + object.fTitle                    );
                                if( updateProvenance ) 
                                {
-//                                 STDLINE("Updating provenance"                        );
                                 theProvenance_.setRequestURL(          theRequestURL ,
                                                                        currentCanvas_,
                                                                        thePad        );
@@ -1760,16 +1766,15 @@ function()
                                                                        object        ,
                                                                        theProvenance_);
                                }
-                               else
-                               {                              
-//                                 STDLINE("Not updating provenance"                    );
-                               }
                                displayPlot_                  (        object, thePad );
+                               return ;
                               }
-                              else
+                              if(getXMLValue(response,"dir") == 'LIVE_DQM.root') 
                               {
-                               STDLINE("None of the above..."                        );
-                              }
+                               selectedItem_ = "getMeLIVE-DQMFile" ;
+                               makeStore('LIVE_DQM.root', 'RequestType=getMeLIVE-DQMFile');
+                               makeGrid ('LIVE_DQM.root', 'Directories and files'        );
+                              }                                                                    
                              },                                                                                                           
                     failure: function(response, options)                                                                                  
                              {                                                                                                            
@@ -1915,6 +1920,8 @@ function()
  //                                                                             //
  //-----------------------------------------------------------------------------//
 
+ // Send a request to the server to initialize the "Source" combobox of the Visualizer window
+ // with the list of available data sources (histograms and/or canvases)
  theAjaxRequest(
                 _requestURL+"RequestType=getDirectoryContents",
                 {                                                            
