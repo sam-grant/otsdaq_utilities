@@ -9671,7 +9671,7 @@
 							++numberOfRequests;
 							///////////////////////////////////////////////////////////
 							DesktopContent.XMLHttpRequest(reqStr, tableMap,
-								function (req) 
+								function (req, reqi) 
 								{
 
 									var attemptedNewGroupName = DesktopContent.getXMLValue(req, "AttemptedNewGroupName");
@@ -9718,7 +9718,7 @@
 									++numberOfReturns;
 
 									var newGroupKey = DesktopContent.getXMLValue(req, "TableGroupKey");
-									affectedGroupKeys.push(newGroupKey);
+									affectedGroupKeys[reqi] = newGroupKey;//.push(newGroupKey);  // take from req parameter, since order may vary
 
 									var foundEquivalentKey = DesktopContent.getXMLValue(req, "foundEquivalentKey") | 0; //as int
 
@@ -9801,7 +9801,7 @@
 									}
 
 
-								}, 0, 0, true  //reqParam, progressHandler, callHandlerOnErr
+								}, i, 0, true  //reqParam, progressHandler, callHandlerOnErr
 							); //end save new group request
 						} //end else case for saving group i 
 					} //localSaveAndActivateGroup()
@@ -14647,7 +14647,7 @@
 							++numberOfReturns;
 
 							var newGroupKey = DesktopContent.getXMLValue(req, "TableGroupKey");
-							affectedGroupKeys.push(newGroupKey);
+							affectedGroupKeys.push(newGroupKey); //can only be index 0, since affectedArr[0] was used for request
 
 							var foundEquivalentKey = DesktopContent.getXMLValue(req, "foundEquivalentKey") | 0; //as int
 
@@ -15207,7 +15207,7 @@
 
 					reqStr = ""; //reuse
 					reqStr = "Request?RequestType=saveNewTableGroup" +
-						"&groupName=" + affectedGroupNames[i] +
+						"&groupName=" + affectedGroupNames[0] +
 						"&allowDuplicates=0" +
 						"&lookForEquivalent=1" +
 						"&ignoreWarnings=" + (ignoreWarnings ? 1 : 0) +
@@ -15285,7 +15285,7 @@
 							++numberOfReturns;
 
 							var newGroupKey = DesktopContent.getXMLValue(req, "TableGroupKey");
-							affectedGroupKeys.push(newGroupKey);
+							affectedGroupKeys.push(newGroupKey); //can only be one group, since affectedGroupNames[0] was used in request
 
 							var foundEquivalentKey = DesktopContent.getXMLValue(req, "foundEquivalentKey") | 0; //as int
 

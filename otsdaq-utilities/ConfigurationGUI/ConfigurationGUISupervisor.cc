@@ -3532,6 +3532,15 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 	    std::string /*converted gidB*/>
 	    groupidConversionMap;
 
+	std::stringstream mergeReport;
+	mergeReport << "======================================" << __E__;
+	mergeReport << "Merging context group pair " << groupANameContext << " ("
+            << groupAKeyContext << ") & " << groupBNameContext << " ("
+            << groupBKeyContext << ") and table group pair " << groupANameConfig
+            << " (" << groupAKeyConfig << ") & " << groupBNameConfig << " ("
+            << groupBKeyConfig << ") with approach '" << mergeApproach << __E__;
+	mergeReport << "======================================" << __E__;
+
 	// first loop create record conversion map, second loop implement merge (using
 	// conversion map if Rename)
 	for(unsigned int i = 0; i < 2; ++i)
@@ -3603,7 +3612,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 					        ConfigurationManager::
 					            XDAQ_APPLICATION_TABLE_NAME /* generateUniqueDataColumns
 					                                         */
-					);  // dont make destination version the first time
+					, &mergeReport);  // dont make destination version the first time
 
 					if(i == 1)
 					{
@@ -3680,6 +3689,28 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 		xmlOut.addTextElementToData("ConfigGroupName", groupANameConfig);
 		xmlOut.addTextElementToData("ConfigGroupKey", newKeyConfig.toString());
 	}
+
+	//output merge report
+	{
+		std::string mergeReportPath = std::string(__ENV__("SERVICE_DATA_PATH")) + "/ConfigurationGUI_mergeReports/";
+
+		// make macro directories in case they don't exist
+		mkdir(mergeReportPath.c_str(), 0755);
+
+		mergeReportPath += "merge_" + std::to_string(clock()) + ".txt";
+		__SUP_COUTV__(mergeReportPath);
+
+		FILE* fp = fopen(mergeReportPath.c_str(),"w");
+		if(fp)
+		{
+			fprintf(fp,mergeReport.str().c_str());
+			fclose(fp);
+			xmlOut.addTextElementToData("MergeReportFile", mergeReportPath);
+		}
+		else
+			xmlOut.addTextElementToData("MergeReportFile", "FILE FAILURE");
+	} //end output merge report
+
 
 }  // end handleMergeGroupsXML
 catch(std::runtime_error& e)
@@ -4889,12 +4920,6 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 				// check if this version has one or many aliases
 				for(const auto& aliasPair : tableIterator->second)
 				{
-					//					__SUP_COUT__ << "Checking " << aliasPair.second <<
-					//"
-					//-->
-					//"
-					//<< 							aliasPair.first << " for " << v <<
-					//__E__;
 					if(v == aliasPair.second)
 					{
 						__SUP_COUT__ << "Found Alias " << aliasPair.second << " --> "
