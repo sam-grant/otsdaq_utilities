@@ -3534,6 +3534,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 
 	std::stringstream mergeReport;
 	mergeReport << "======================================" << __E__;
+	mergeReport << "Time of merge: " << StringMacros::getTimestampString() << __E__;
 	mergeReport << "Merging context group pair " << groupANameContext << " ("
             << groupAKeyContext << ") & " << groupBNameContext << " ("
             << groupBKeyContext << ") and table group pair " << groupANameConfig
@@ -3580,6 +3581,10 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 
 				if(memberMapAref.find(bkey.first) == memberMapAref.end())
 				{
+
+					mergeReport << "\n'" << mergeApproach << "'-Missing table '" << bkey.first << "' A=v" <<
+						-1 << ", adding B=v" << bkey.second << __E__;
+
 					// not found, so add to A member map
 					memberMapAref[bkey.first] = bkey.second;
 				}
@@ -3692,20 +3697,23 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 
 	//output merge report
 	{
-		std::string mergeReportPath = std::string(__ENV__("SERVICE_DATA_PATH")) + "/ConfigurationGUI_mergeReports/";
-
-		// make macro directories in case they don't exist
-		mkdir(mergeReportPath.c_str(), 0755);
+		std::string mergeReportBasePath = std::string(__ENV__("USER_DATA"));
+		std::string mergeReportPath = "/ServiceData/";
+		// make merge report directories in case they don't exist
+		mkdir((mergeReportBasePath + mergeReportPath).c_str(), 0755);
+		mergeReportPath += "ConfigurationGUI_mergeReports/";
+		// make merge report directories in case they don't exist
+		mkdir((mergeReportBasePath + mergeReportPath).c_str(), 0755);
 
 		mergeReportPath += "merge_" + std::to_string(clock()) + ".txt";
 		__SUP_COUTV__(mergeReportPath);
 
-		FILE* fp = fopen(mergeReportPath.c_str(),"w");
+		FILE* fp = fopen((mergeReportBasePath + mergeReportPath).c_str(),"w");
 		if(fp)
 		{
 			fprintf(fp,mergeReport.str().c_str());
 			fclose(fp);
-			xmlOut.addTextElementToData("MergeReportFile", mergeReportPath);
+			xmlOut.addTextElementToData("MergeReportFile", "/$USER_DATA/" + mergeReportPath);
 		}
 		else
 			xmlOut.addTextElementToData("MergeReportFile", "FILE FAILURE");

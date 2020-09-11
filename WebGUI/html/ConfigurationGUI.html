@@ -581,6 +581,7 @@
 		var firstInit_ = true;
 		var systemViewPreventInfiniteLoop_ = false;
 
+		var _codeEditorAppId; //Code Editor Supervisor LID
 														  
 		//==============================================================================				
 		//init called once body has loaded
@@ -727,6 +728,21 @@
 			}
 			else
 				setupSystemViewMode();
+			
+
+			//fill in CodeEditor appId
+			DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
+					"&classNeedle=ots::CodeEditorSupervisor",
+					"", //end post data, 
+					function(req) 
+					{			
+				_codeEditorAppId = DesktopContent.getXMLValue(req,"id") | 0;
+				Debug.log("_codeEditorAppId " + _codeEditorAppId);
+					}, //end handler
+					0, 0, true,//reqParam, progressHandler, callHandlerOnErr, 
+					false,//doNotShowLoadingOverlay,
+					true //targetSupervisor
+			); //end getAppId request
 
 		} //end init()
 
@@ -16035,6 +16051,22 @@
 							contextGroupName + "\",\"" + contextGroupKey + "\");'>" +
 							contextGroupName + "(" + contextGroupKey + ") Tree-view</a>!"
 							, Debug.INFO_PRIORITY);
+
+						var mergeReportFile = DesktopContent.getXMLValue(req, "MergeReportFile");
+						var str = "";
+						str += "You can view the merge report in the Code Editor...\n" + 
+								"(Click " +
+								"<a onclick='DesktopContent.openNewBrowserTab(" +
+								"\"Code Editor\",\"\"," + 
+								"\"/WebPath/html/CodeEditor.html?" + 
+								"urn=" + _codeEditorAppId + 
+								"&startFilePrimary=" +
+								mergeReportFile + "\",0 /*unique*/);' " +
+								"title='Click to open the merge report in a new browser tab using the Code Editor.'>" +
+								"here</a> to open the merge report in a new tab)";
+						
+						Debug.info(str);
+						
 					}
 					else
 						Debug.log("Skipped merger of context groups due to empty group name.", Debug.INFO_PRIORITY);
