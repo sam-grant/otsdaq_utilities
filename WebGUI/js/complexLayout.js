@@ -74,76 +74,132 @@ function()
  var optionsBodies1D_     = []                                 ;
  var optionsBodies2D_     = []                                 ;
  var optionsBodies3D_     = []                                 ;
-
+ var options1DText_       = []                                 ;
+ var options2DText_       = []                                 ;
+ var options3DText_       = []                                 ;
+ var LIVERunning_         = false                              ;
+ 
  var _theWindow           = self                               ;
  var _requestURL          = self.parent.window.location.origin+
                             "/urn:xdaq-application:lid="      +
                             getLocalURN(0,"urn")              +
                             "/Request?"                        ;
 
- options1D_[ 0] = 'P'         ;
- options1D_[ 1] = 'P0'        ;
- options1D_[ 2] = 'star'      ;
- options1D_[ 3] = '*H'        ;
- options1D_[ 4] = 'L'         ;
- options1D_[ 5] = 'LF2'       ;
- options1D_[ 6] = 'A'         ;
- options1D_[ 7] = 'B'         ;
- options1D_[ 8] = 'E'         ;
- options1D_[ 9] = 'E0'        ;
- options1D_[10] = 'E1'        ;
- options1D_[11] = 'E1X0'      ;
- options1D_[12] = 'PE2'       ;
- options1D_[13] = 'E3'        ;
- options1D_[14] = 'E4'        ;
- options1D_[15] = 'text'      ;
- options1D_[16] = 'lego'      ;
- options1D_[17] = 'lego2'     ;
- options1D_[18] = 'X+'        ;
- options1D_[19] = 'Y+'        ;
- options1D_[20] = 'inspect'   ;
- options1D_[21] = 'pal50'     ;
- options1D_[22] = 'fill_red'  ;
- options1D_[23] = 'fill_blue' ;
- options1D_[24] = 'fill_green';
- options1D_[25] = 'fill_blue' ;
+ // Options for 1D only
+ options1D_[ 0] = ''          ; options1DText_[ 0] = 'Default' ;
+ options1D_[ 1] = 'AH'        ; options1DText_[ 1] = 'Draw histogram without axis. "A" can be combined with any drawing option. For instance, "AC" draws the histogram as a smooth Curve without axis.' ; 
+ options1D_[ 2] = ']['        ; options1DText_[ 2] = 'When this option is selected the first and last vertical lines of the histogram are not drawn. ' ;
+ options1D_[ 3] = 'B'         ; options1DText_[ 3] = 'Bar chart option.' ;
+ options1D_[ 4] = 'BAR'       ; options1DText_[ 4] = 'Like option "B", but bars can be drawn with a 3D effect.' ; 
+ options1D_[ 5] = 'HBAR'      ; options1DText_[ 5] = 'Like option "BAR", but bars are drawn horizontally. ' ; 
+ options1D_[ 6] = 'C'         ; options1DText_[ 6] = 'Draw a smooth Curve through the histogram bins. ' ;
+ options1D_[ 7] = 'E0'        ; options1DText_[ 7] = 'Draw error bars. Markers are drawn for bins with 0 contents.  ' ;
+ options1D_[ 8] = 'E1'        ; options1DText_[ 8] = 'Draw error bars with perpendicular lines at the edges. ' ;
+ options1D_[ 9] = 'E2'        ; options1DText_[ 9] = 'Draw error bars with rectangles.  ' ;
+ options1D_[10] = 'E3'        ; options1DText_[10] = 'Draw a fill area through the end points of the vertical error bars.' ;
+ options1D_[11] = 'E4'        ; options1DText_[11] = 'Draw a smoothed filled area through the end points of the error bars.' ;
+ options1D_[12] = 'E5'        ; options1DText_[12] = 'Like E3 but ignore the bins with 0 contents.  ' ;
+ options1D_[13] = 'E6'        ; options1DText_[13] = 'Like E4 but ignore the bins with 0 contents.' ;
+ options1D_[14] = 'X0'        ; options1DText_[14] = 'When used with one of the "E" option, it suppress the error bar along X as gStyle->SetErrorX(0) would do. ' ;
+ options1D_[15] = 'L'         ; options1DText_[15] = 'Draw a line through the bin contents. ' ;
+ options1D_[16] = 'P'         ; options1DText_[16] = 'Draw current marker at each bin except empty bins.  ' ;
+ options1D_[17] = 'P0'        ; options1DText_[17] = 'Draw current marker at each bin including empty bins. ' ;
+ options1D_[18] = 'PIE'       ; options1DText_[18] = 'Draw histogram as a Pie Chart. ' ;
+ options1D_[19] = 'H'         ; options1DText_[19] = 'Draw histogram with a * at each bin. ' ;
+ options1D_[20] = 'LF2'       ; options1DText_[20] = 'Draw histogram like with option "L" but with a fill area. Note that "L" draws also a fill area if the hist fill color is set but the fill area corresponds to the histogram contour. ' ;
 
- options2D_[ 0] = 'col'       ;
- options2D_[ 1] = 'colPal77'  ;
- options2D_[ 2] = 'colz'      ;
- options2D_[ 3] = 'acol'      ;
- options2D_[ 4] = 'projx1'    ;
- options2D_[ 5] = 'projx3'    ;
- options2D_[ 6] = 'arr'       ;
- options2D_[ 7] = 'cont'      ;
- options2D_[ 8] = 'cont1'     ;
- options2D_[ 9] = 'cont2'     ;
- options2D_[10] = 'cont3'     ;
- options2D_[11] = 'cont4'     ;
- options2D_[12] = 'surf'      ;
- options2D_[13] = 'surf1'     ;
- options2D_[14] = 'surf2'     ;
- options2D_[15] = 'surf3'     ;
- options2D_[16] = 'surf4'     ;
- options2D_[17] = 'lego'      ;
- options2D_[18] = 'lego1'     ;
- options2D_[19] = 'lego2'     ;
- options2D_[20] = 'lego3'     ;
- options2D_[21] = 'lego4'     ;
- options2D_[22] = 'text'      ;
- options2D_[23] = 'scat'      ;
- options2D_[24] = 'box'       ;
- options2D_[25] = 'box1'      ;
+ // Options for 1D AND 2D
+ options1D_[21] = 'E'         ; options1DText_[21] = 'Draw error bars. ' ;
+ options1D_[22] = 'AXIS'      ; options1DText_[22] = 'Draw only axis. ' ;
+ options1D_[23] = 'AXIG'      ; options1DText_[23] = 'Draw only grid (if the grid is requested). ' ;
+ options1D_[24] = 'HIST'      ; options1DText_[24] = 'When an histogram has errors it is visualized by default with error bars. To visualize it without errors use the option "HIST" together with the required option (eg "hist same c"). The "HIST" option can also be used to plot only the histogram and not the associated function(s). ' ;
+ options1D_[25] = 'FUNC'      ; options1DText_[25] = 'When an histogram has a fitted function, this option allows to draw the fit result only. ' ;
+ options1D_[26] = 'SAME'      ; options1DText_[26] = 'Superimpose on previous picture in the same pad. ' ;
+ options1D_[27] = 'SAMES'     ; options1DText_[27] = 'Same as "SAME" and draw the statistics box ' ;
+ options1D_[28] = 'PFC'       ; options1DText_[28] = "Palette Fill Color: histogram's fill color is taken in the current palette. " ;
+ options1D_[29] = 'PLC'       ; options1DText_[29] = "Palette Line Color: histogram's line color is taken in the current palette. " ;
+ options1D_[30] = 'PMC'       ; options1DText_[30] = "Palette Marker Color: histogram's marker color is taken in the current palette. " ;
+ options1D_[31] = 'LEGO'      ; options1DText_[31] = 'Draw a lego plot with hidden line removal. ' ;
+ options1D_[32] = 'LEGO1'     ; options1DText_[32] = 'Draw a lego plot with hidden surface removal. ' ;
+ options1D_[33] = 'LEGO2'     ; options1DText_[33] = 'Draw a lego plot using colors to show the cell contents When the option "0" is used with any LEGO option, the empty bins are not drawn. ' ;
+ options1D_[34] = 'LEGO3'     ; options1DText_[34] = 'Draw a lego plot with hidden surface removal, like LEGO1 but the border lines of each lego-bar are not drawn. ' ;
+ options1D_[35] = 'LEGO4'     ; options1DText_[35] = 'Draw a lego plot with hidden surface removal, like LEGO1 but without the shadow effect on each lego-bar. ' ;
+ options1D_[36] = 'TEXT'      ; options1DText_[36] = 'Draw bin contents as text (format set via gStyle->SetPaintTextFormat). ' ;
+ options1D_[37] = 'TEXT90'    ; options1DText_[37] = 'Draw bin contents as text at angle 90. ' ;
+ options1D_[38] = 'X+'        ; options1DText_[38] = 'The X-axis is drawn on the top side of the plot. ' ;
+ options1D_[39] = 'Y+'        ; options1DText_[39] = 'The Y-axis is drawn on the top side of the plot. ' ;
+ options1D_[40] = 'MIN0'      ; options1DText_[40] = 'Set minimum value for the Y axis to 0, equivalent to gStyle->SetHistMinimumZero(). ' ;
 
- options3D_[ 0] = 'box'       ;
- options3D_[ 1] = 'box1'      ;
- options3D_[ 2] = 'box2'      ;
- options3D_[ 3] = 'box3'      ;
- options3D_[ 4] = 'glbox'     ;
- options3D_[ 5] = 'glbox1'    ;
- options3D_[ 6] = 'glbox2'    ;
- options3D_[ 7] = 'glbox3'    ;
- options3D_[ 8] = 'glcol'     ;
+ options2D_[ 0] = ''          ; options2DText_[ 0] = 'Default (scatter plot)';
+ options2D_[ 1] = 'ARR'       ; options2DText_[ 1] = 'Arrow mode. Shows gradient between adjacent cells.';
+ options2D_[ 2] = 'BOX'       ; options2DText_[ 2] = "A box is drawn for each cell with surface proportional to the content's absolute value. A negative content is marked with a X.'";
+ options2D_[ 3] = 'BOX1'      ; options2DText_[ 3] = "A button is drawn for each cell with surface proportional to content's absolute value. A sunken button is drawn for negative values a raised one for positive.";
+ options2D_[ 4] = 'COL'       ; options2DText_[ 4] = 'A box is drawn for each cell with a color scale varying with contents. All the none empty bins are painted.';
+ options2D_[ 5] = 'COLZ'      ; options2DText_[ 5] = 'Same as "COL". In addition the color palette is also drawn.';
+ options2D_[ 6] = 'COL2'      ; options2DText_[ 6] = 'Alternative rendering algorithm to "COL". Can significantly improve rendering performance for large, non-sparse 2-D histograms.';
+ options2D_[ 7] = 'COLZ2'     ; options2DText_[ 7] = 'Same as "COL2". In addition the color palette is also drawn.';
+ options2D_[ 8] = 'ZCJUST'    ; options2DText_[ 8] = 'In combination with colored options "COL","CONT0" etc: Justify labels in the color palette at color boudaries. For more details see TPaletteAxis';
+ options2D_[ 9] = 'CANDLE'    ; options2DText_[ 9] = 'Draw a candle plot along X axis.';
+ options2D_[10] = 'CANDLEX'   ; options2DText_[10] = 'Same as "CANDLE".';
+ options2D_[11] = 'CANDLEY'   ; options2DText_[11] = 'Draw a candle plot along Y axis.';
+ options2D_[12] = 'CANDLEX1'  ; options2DText_[12] = 'Draw a candle plot along X axis with style 1.';
+ options2D_[13] = 'CANDLEX2'  ; options2DText_[13] = 'Draw a candle plot along X axis with style 2.';
+ options2D_[14] = 'CANDLEX3'  ; options2DText_[14] = 'Draw a candle plot along X axis with style 3.';
+ options2D_[15] = 'CANDLEX4'  ; options2DText_[15] = 'Draw a candle plot along X axis with style 4.';
+ options2D_[16] = 'CANDLEX5'  ; options2DText_[16] = 'Draw a candle plot along X axis with style 5.';
+ options2D_[17] = 'CANDLEX6'  ; options2DText_[17] = 'Draw a candle plot along X axis with style 6.';
+ options2D_[18] = 'CANDLEY1'  ; options2DText_[18] = 'Draw a candle plot along Y axis with style 1.';
+ options2D_[19] = 'CANDLEY2'  ; options2DText_[19] = 'Draw a candle plot along Y axis with style 2.';
+ options2D_[20] = 'CANDLEY3'  ; options2DText_[20] = 'Draw a candle plot along Y axis with style 3.';
+ options2D_[21] = 'CANDLEY4'  ; options2DText_[21] = 'Draw a candle plot along Y axis with style 4.';
+ options2D_[22] = 'CANDLEY5'  ; options2DText_[22] = 'Draw a candle plot along Y axis with style 5.';
+ options2D_[23] = 'CANDLEY6'  ; options2DText_[23] = 'Draw a candle plot along Y axis with style 6.';
+ options2D_[24] = 'VIOLIN'    ; options2DText_[24] = 'Draw a violin plot along X axis. ';
+ options2D_[25] = 'VIOLINX'   ; options2DText_[25] = 'Same as "VIOLIN"';
+ options2D_[26] = 'VIOLINY'   ; options2DText_[26] = 'Draw a violin plot along Y axis. ';
+ options2D_[27] = 'VIOLINX1'  ; options2DText_[27] = 'Draw a violin plot along X axis with style 1';
+ options2D_[28] = 'VIOLINX2'  ; options2DText_[28] = 'Draw a violin plot along X axis with style 2';
+ options2D_[29] = 'VIOLINY1'  ; options2DText_[29] = 'Draw a violin plot along Y axis with style 1';
+ options2D_[30] = 'VIOLINY2'  ; options2DText_[30] = 'Draw a violin plot along Y axis with style 2';
+ options2D_[31] = 'CONT'      ; options2DText_[31] = 'Draw a contour plot (same as CONT0).';
+ options2D_[32] = 'CONT0'     ; options2DText_[32] = 'Draw a contour plot using surface colors to distinguish contours.';
+ options2D_[33] = 'CONT1'     ; options2DText_[33] = 'Draw a contour plot using line styles to distinguish contours.';
+ options2D_[34] = 'CONT2'     ; options2DText_[34] = 'Draw a contour plot using the same line style for all contours.';
+ options2D_[35] = 'CONT3'     ; options2DText_[35] = 'Draw a contour plot using fill area colors.';
+ options2D_[36] = 'CONT4'     ; options2DText_[36] = 'Draw a contour plot using surface colors (SURF option at theta = 0).';
+ options2D_[37] = 'CONT5'     ; options2DText_[37] = '(TGraph2D only) Draw a contour plot using Delaunay triangles.';
+ options2D_[38] = 'LIST'      ; options2DText_[38] = 'Generate a list of TGraph objects for each contour.';
+ options2D_[39] = 'CYL'       ; options2DText_[39] = 'Use Cylindrical coordinates. The X coordinate is mapped on the angle and the Y coordinate on the cylinder length.';
+ options2D_[40] = 'POL'       ; options2DText_[40] = 'Use Polar coordinates. The X coordinate is mapped on the angle and the Y coordinate on the radius.';
+ options2D_[41] = 'SAME0'     ; options2DText_[41] = 'Same as "SAME" but do not use the z-axis range of the first plot.';
+ options2D_[42] = 'SAMES0'    ; options2DText_[42] = 'Same as "SAMES" but do not use the z-axis range of the first plot.';
+ options2D_[43] = 'SPH'       ; options2DText_[43] = 'Use Spherical coordinates. The X coordinate is mapped on the latitude and the Y coordinate on the longitude.';
+ options2D_[44] = 'PSR'       ; options2DText_[44] = 'Use PseudoRapidity/Phi coordinates. The X coordinate is mapped on Phi.';
+ options2D_[45] = 'SURF'      ; options2DText_[45] = 'Draw a surface plot with hidden line removal.';
+ options2D_[46] = 'SURF1'     ; options2DText_[46] = 'Draw a surface plot with hidden surface removal.';
+ options2D_[47] = 'SURF2'     ; options2DText_[47] = 'Draw a surface plot using colors to show the cell contents.';
+ options2D_[48] = 'SURF3'     ; options2DText_[48] = 'Same as SURF with in addition a contour view drawn on the top.';
+ options2D_[49] = 'SURF4'     ; options2DText_[49] = 'Draw a surface using Gouraud shading.';
+ options2D_[50] = 'SURF5'     ; options2DText_[50] = 'Same as SURF3 but only the colored contour is drawn. Used with option CYL, SPH or PSR it allows to draw colored contours on a sphere, a cylinder or a in pseudo rapidity space. In cartesian or polar coordinates, option SURF3 is used.';
+ options2D_[51] = 'LEGO9'     ; options2DText_[51] = 'Draw the 3D axis only. Mainly needed for internal use';
+ options2D_[52] = 'FB'        ; options2DText_[52] = 'With LEGO or SURFACE, suppress the Front-Box.';
+ options2D_[53] = 'BB'        ; options2DText_[53] = 'With LEGO or SURFACE, suppress the Back-Box.';
+ options2D_[54] = 'A'         ; options2DText_[54] = 'With LEGO or SURFACE, suppress the axis.';
+ options2D_[55] = 'SCAT'      ; options2DText_[55] = 'Draw a scatter-plot (default).';
+
+ options3D_[ 0] = ''          ; options3DText_[ 0] = 'Default (scatter plot)';
+ options3D_[ 1] = 'ISO'       ; options3DText_[ 1] = 'Draw a Gouraud shaded 3d iso surface through a 3d histogram. It paints one surface at the value computed as follow: SumOfWeights/(NbinsX*NbinsY*NbinsZ). ';
+ options3D_[ 2] = 'BOX'       ; options3DText_[ 2] = "Draw a for each cell with volume proportional to the content's absolute value. An hidden line removal algorithm is used";
+ options3D_[ 3] = 'BOX1'      ; options3DText_[ 3] = 'Same as BOX but an hidden surface removal algorithm is used ';
+ options3D_[ 4] = 'BOX2'      ; options3DText_[ 4] = "The boxes' colors are picked in the current palette according to the bins' contents";
+ options3D_[ 5] = 'BOX2Z'     ; options3DText_[ 5] = 'Same as "BOX2". In addition the color palette is also drawn. ';
+ options3D_[ 6] = 'BOX3'      ; options3DText_[ 6] = 'Same as BOX1, but the border lines of each lego-bar are not drawn. ';
+ options3D_[ 7] = 'LEGO'      ; options3DText_[ 7] = 'Same as BOX';
+// options3D_[ 8] = 'GLBOX'     ; options3DText_[ 8] = '';
+// options3D_[ 9] = 'GLBOX1'    ; options3DText_[ 9] = '';
+// options3D_[10] = 'GLBOX2'    ; options3DText_[10] = '';
+// options3D_[11] = 'GLBOX3'    ; options3DText_[11] = '';
+// options3D_[12] = 'GLCOL'     ; options3DText_[12] = '';
          
 //  var thisOne = self ;
 //  var theParentWindow   = thisOne.parent ;
@@ -159,17 +215,17 @@ function()
 //  window.outerWidth  = 1600 ;
 //  window.outerHeight = 1000  ;
  //--------------------------------------------------------------------------------------------------
- function initializeOptions(dim, theBody, theArray)
+ function initializeOptions(dim, theBody, theArray, theText)
  {
   for(var i=0; i< theArray.length; i++)
   {
-   var v = theArray[i] ;
-//   STDLINE("    v: "+v) ;
+   var v = theArray[i] ;   
+   //STDLINE("    v: "+v) ;
    theBody.push(
                 {
                  xtype   : 'checkbox'                          ,
                  id      : 'ID-' + dim + '-' + v + '_CB'       ,
-                 boxLabel:                     v               ,
+                 boxLabel:                     v + ' <font color="red">- ' + theText[i] + '</font>'              ,
                  name    :                     v               ,
                  value   :                     v               ,
                  tooltip : 'Set option '     + v + ' for plots'      
@@ -180,12 +236,24 @@ function()
 
  enableSTDLINE             (enableDebug_                   ) ;
 
- initializeOptions         (1,optionsBodies1D_, options1D_ ) ;               
- initializeOptions         (2,optionsBodies2D_, options2D_ ) ;               
- initializeOptions         (3,optionsBodies3D_, options3D_ ) ;               
+ initializeOptions         (1,optionsBodies1D_, options1D_, options1DText_) ;               
+ initializeOptions         (2,optionsBodies2D_, options2D_, options2DText_ ) ;               
+ initializeOptions         (3,optionsBodies3D_, options3D_, options3DText_ ) ;               
  generateDIVPlaceholderSize('canvas0'         , 350, 440   ) ;
  generateDIVPlaceholderSize('canvas1'         , 350, 440   ) ;
 
+ //--------------------------------------------------------------------------------------------------
+ setButtonColor = function(color)
+ {
+  buttonStyle_ = 'margin-left  : 2px;' +
+                 'margin-right : 2px;' +
+                 'margin-top   : 2px;' +
+                 'margin-bottom: 2px;' +
+                 'padding      : 2px;' +
+                 'background   : '     + 
+                 color + ";"     ;
+  return buttonStyle_ ;
+ }
  //--------------------------------------------------------------------------------------------------
  getCanvasDiv_ = function(number)
                  {
@@ -647,17 +715,17 @@ function()
  var nDivXCB = Ext.create(
                           'Ext.form.field.Number',
                           {
-                           xtype     : 'numberfield'       ,  
-                           name      : 'hzon'              ,
-                           labelWidth: 50                  ,
-                           flex      : 0                   ,
-                           width     : 100                 ,
-                           height    : 18                  ,
-                           fieldLabel: 'PlotsX'            ,  
-                           value     : 1                   ,  
-                           minValue  : 1                   ,  
-                           maxValue  : 20                  ,
-                           style     : buttonStyle_        ,
+                           xtype     : 'numberfield'          , 
+                           name      : 'hzon'                 ,
+                           labelWidth: 50                     ,
+                           flex      : 0                      ,
+                           width     : 100                    ,
+                           height    : 18                     ,
+                           fieldLabel: 'PlotsX'               ,
+                           value     : 1                      ,
+                           minValue  : 1                      ,
+                           maxValue  : 20                     ,
+                           style     : setButtonColor('white'),
                            listeners : {
                                         change: function( thisSpinner, newValue, oldValue, eOpts )
                                                 {
@@ -670,17 +738,17 @@ function()
  var nDivYCB = Ext.create(
                           'Ext.form.field.Number',
                           {
-                           xtype     : 'numberfield'       ,  
-                           name      : 'vzon'              ,
-                           labelWidth: 50                  ,
-                           flex      : 0                   ,
-                           width     : 100                 ,
-                           height    : 18                  ,
-                           fieldLabel: 'PlotsY'            ,  
-                           value     : 1                   ,  
-                           minValue  : 1                   ,  
-                           maxValue  : 20                  ,
-                           style     : buttonStyle_        ,      
+                           xtype     : 'numberfield'         ,
+                           name      : 'vzon'                ,
+                           labelWidth: 50                    ,
+                           flex      : 0                     ,
+                           width     : 100                   ,
+                           height    : 18                    ,
+                           fieldLabel: 'PlotsY'              ,
+                           value     : 1                     ,
+                           minValue  : 1                     ,
+                           maxValue  : 20                    ,
+                           style     : setButtonColor('white'),      
                            listeners : {
                                         change: function( thisSpinner, newValue, oldValue, eOpts )
                                                 {
@@ -747,14 +815,14 @@ function()
                                                                ],
                                                    items     : [
                                                                 {
-                                                                 xtype     : 'button'                        ,
-                                                                 text      : 'Add canvas'                    ,
-                                                                 tooltip   : 'Add a new canvas'              ,
-                                                                 width     : 100                             ,
-                                                                 height    : 20                              ,
-                                                                 pressed   : true                            ,
-                                                                 border    : true                            ,
-                                                                 style     : buttonStyle_                    , 
+                                                                 xtype     : 'button'               ,
+                                                                 text      : 'Add canvas'           ,
+                                                                 tooltip   : 'Add a new canvas'     ,
+                                                                 width     : 100                    ,
+                                                                 height    : 20                     ,
+                                                                 pressed   : true                   ,
+                                                                 border    : true                   ,
+                                                                 style     : setButtonColor('white'), 
                                                                  handler   : function()
                                                                              {
                                                                               var addIndex   = globalCanvas_.items.length                      ;
@@ -789,7 +857,7 @@ function()
                                                                  tooltip   : 'Clear the current canvas content but do not'  +
                                                                              ' reset the list of displayed plots'           ,
                                                                  border    : true                                           ,
-                                                                 style     : buttonStyle_                                   , 
+                                                                 style     : setButtonColor('white')                        , 
                                                                  handler   : function()  
                                                                              {
                                                                               JSROOT.cleanup(getCanvasDiv_(   currentCanvas_));
@@ -806,7 +874,7 @@ function()
                                                                  tooltip   : 'Clear the canvas container in memory AND '  +
                                                                              'the canvas display'                         ,
                                                                  border    : true                                         ,
-                                                                 style     : buttonStyle_                                 ,   
+                                                                 style     : setButtonColor('white')                      ,   
                                                                  handler   : function()  
                                                                              {
                                                                               JSROOT.cleanup(getCanvasDiv_(currentCanvas_));
@@ -822,7 +890,7 @@ function()
                                                                  tooltip   : 'Clear the canvas container in memory but '  +
                                                                              'not the canvas display'                     ,
                                                                  border    : true                                         ,
-                                                                 style     : buttonStyle_                                 ,   
+                                                                 style     : setButtonColor('white')                      ,   
                                                                  handler   : function()  
                                                                              {
                                                                               redrawCanvas() ;
@@ -835,7 +903,7 @@ function()
                                                                  height    : 20                                           ,
                                                                  tooltip   : 'Clear the current canvas content'           ,
                                                                  border    : true                                         ,
-                                                                 style     : buttonStyle_                                 ,   
+                                                                 style     : setButtonColor('white')                      ,  
                                                                  handler   : function()  
                                                                              {
                                                                               theCanvasModel_.dump(currentCanvas_         ,
@@ -845,9 +913,9 @@ function()
                                                                 nDivXCB,
                                                                 nDivYCB,
                                                                 {
-                                                                 defaultType: 'checkbox'                                   ,
+                                                                 defaultType: 'checkbox'                                  ,
                                                                  border     : false                                       ,  
-                                                                 style      : buttonStyle_                                ,    
+                                                                 style      : setButtonColor('white')                     ,    
                                                                  items      : [
                                                                                {
                                                                                 boxLabel  : 'Superimpose'                 ,  
@@ -872,7 +940,7 @@ function()
                                                                  tooltip   : 'Set Y axis to highest number of entires '   +
                                                                              '(+10%) of selected histograms'              ,
                                                                  border    : true                                         ,
-                                                                 style     : buttonStyle_                                 ,   
+                                                                 style     : setButtonColor('white')                      ,  
                                                                  handler   : function()  
                                                                              {
                                                                               STDLINE("Going to normalize")               ;
@@ -884,7 +952,7 @@ function()
                                                    title     : 'Timing'                                                   ,
                                                    html      : '<p>Controls the periodic update/refresh of canvases.</p>' ,
                                                    autoScroll: true                                                       ,
-                                                   padding   : '5 5 5 5'                                                  ,
+                                                   //padding   : '5 5 5 5'                                                  ,
                                                    iconCls   : 'info'                                                     ,
                                                    items     : [
                                                                 refreshIntervalSpinbox                                    ,
@@ -892,13 +960,14 @@ function()
                                                                  xtype       : 'button'                                   ,
                                                                  text        : 'Start'                                    ,
                                                                  pressed     : true                                       ,
-                                                                 style       : buttonStyle_                               ,
+                                                                 style       : setButtonColor('white')                    ,  
                                                                  tooltip     : 'Start periodic update of histograms'      ,
                                                                  border      : true                                       ,
                                                                  handler     : function()
                                                                                {
                                                                                 var t = refreshIntervalSpinbox.getValue() ;
                                                                                 t *= 1000                                 ; // From msec to sec
+                                                                                LIVERunning_ = true                       ;
                                                                                 redrawCanvas()                            ;
                                                                                 periodicPlotID_[currentCanvas_] = setInterval(
                                                                                                                               function()
@@ -914,7 +983,7 @@ function()
                                                                  xtype       : 'button'                                       ,
                                                                  text        : 'Stop'                                         ,
                                                                  pressed     : true                                           ,
-                                                                 style       : buttonStyle_                                   ,
+                                                                 style       : setButtonColor('white')                        ,  
                                                                  tooltip     : 'Stop refreshing of histograms'                ,
                                                                  border      : true                                           ,
                                                                  handler     : function()
@@ -922,19 +991,22 @@ function()
                                                                                 var v = refreshIntervalSpinbox.getValue()     ;
                                                                                 STDLINE("Clearing timeout: "+v) ;
                                                                                 clearInterval(periodicPlotID_[currentCanvas_]);
+                                                                                LIVERunning_ = false                          ;
+                                                                                var thisB = Ext.getCmp('liveDQM-ID')          ;
+                                                                                thisB.getEl().setStyle('background', 'red')   ;
                                                                                }
                                                                 }
                                                                ]
                                                   }, {
                                                    title     : 'Navigator'                                                   ,
                                                    autoScroll: true                                                          ,
-                                                   padding   : '5 5 5 5'                                                     ,
+                                                   //padding   : '5 5 5 5'                                                     ,
                                                    iconCls   : 'info'                                                        ,
                                                    items     : [
                                                                 {
                                                                  defaultType: 'checkbox'                                     ,
                                                                  border     : false                                          ,
-                                                                 style      : buttonStyle_                                   , 
+                                                                 style      : setButtonColor('white')                        , 
                                                                  items      : [
                                                                                {
                                                                                 boxLabel  : 'Debugger'                       ,
@@ -1319,7 +1391,6 @@ function()
                                                            makeStore(thisRootPath, 
                                                                      'RequestType=getMeDirs'                              );
                                                           }
-                STDLINE("---------------------------------------> selectedItem_ = "+selectedItem_) ;
                                                           makeGrid (thisRootPath,              
                                                                     'Directories and files'                               );
                                                          },
@@ -1368,7 +1439,7 @@ function()
                                                     height    : 20                        ,
                                                     pressed   : true                      ,
                                                     border    : true                      ,
-                                                    style     : buttonStyle_              ,
+                                                    style     : setButtonColor('white')   ,  
                                                     handler   : makeConfigWin
                                                    },
                                                    {
@@ -1380,14 +1451,52 @@ function()
                                                     height    : 20                        ,
                                                     pressed   : true                      ,
                                                     border    : true                      ,
-                                                    style     : buttonStyle_              ,
+                                                    style     : setButtonColor('white')   ,
                                                     handler   : function()
                                                                 {
                                                                  if( theConfigWin_ ) theConfigWin_.destroy();
                                                                  alert("Sorry, not implemented yet");
                                                                 }
                                                    },
-                                                   
+                                                   {
+                                                    xtype     : 'button'                  ,
+                                                    id        : 'liveDQM-ID'              ,
+                                                    text      : 'LIVE'                    ,
+                                                    tooltip   : 'Semaphore'               ,
+                                                    width     : 40                        ,
+                                                    height    : 20                        ,
+                                                    pressed   : true                      ,
+                                                    border    : true                      ,
+                                                    style     : setButtonColor('red')     ,
+                                                    listeners : {
+                                                                 click: function() 
+                                                                        {
+                                                                         var thisB = Ext.getCmp('liveDQM-ID');
+                                                                         if( LIVERunning_ )
+                                                                         {
+                                                                          clearInterval(periodicPlotID_[currentCanvas_]);
+                                                                          thisB.getEl().setStyle('background', 'red');
+                                                                          LIVERunning_ = false                       ;
+                                                                         }
+                                                                         else
+                                                                         {
+                                                                          var t = refreshIntervalSpinbox.getValue() ;
+                                                                          t *= 1000                                 ; // From msec to sec
+                                                                          LIVERunning_ = true                       ;
+                                                                          redrawCanvas()                            ;
+                                                                          periodicPlotID_[currentCanvas_] = setInterval(
+                                                                                                                        function()
+                                                                                                                        {
+                                                                                                                         STDLINE("Launching Ajax Request with refresh time: "+t) ;
+                                                                                                                         redrawCanvas() ;
+                                                                                                                        },
+                                                                                                                        t
+                                                                                                                       ) ;
+                                                                          thisB.getEl().setStyle('background', 'green');
+                                                                         }
+                                                                        }
+                                                                }
+                                                   }
                                                   ]
                                    }
                                   ) ;
@@ -1790,35 +1899,44 @@ function()
  } ; 
  
  //-----------------------------------------------------------------------------
- function applyOptions()
+ function applyOptions(hType)
  {
   var opts = "" ;
   var idx = 0 ;
-  for(var i=0; i<options1D_.length-1; i++)
+  if( hType.match(/TH1/))
   {
-   idx = 'ID-1-' + options1D_[i] + '_CB' ;
-   if(Ext.getCmp(idx).getValue()) 
+   for(var i=0; i<options1D_.length-1; i++)
    {
-    opts += Ext.getCmp(idx).getName()
-    opts += "," ;
+    idx = 'ID-1-' + options1D_[i] + '_CB' ;
+    if(Ext.getCmp(idx).getValue()) 
+    {
+     opts += Ext.getCmp(idx).getName()
+     opts += "," ;
+    }
    }
   }
-  for(var i=0; i<options2D_.length-1; i++)
+  if( hType.match(/TH2/))
   {
-   idx = 'ID-2-' + options2D_[i] + '_CB' ;
-   if(Ext.getCmp(idx).getValue()) 
-   {
-    opts += Ext.getCmp(idx).getName()
-    opts += "," ;
+   for(var i=0; i<options2D_.length-1; i++) 
+   {                                        
+    idx = 'ID-2-' + options2D_[i] + '_CB' ; 
+    if(Ext.getCmp(idx).getValue())          
+    {                                       
+     opts += Ext.getCmp(idx).getName()      
+     opts += "," ;                          
+    }                                       
    }
-  }
+  }                                        
+  if( hType.match(/TH3/))
+  {
    for(var i=0; i<options3D_.length-1; i++)
-  {
-   idx = 'ID-3-' + options3D_[i] + '_CB' ;
-   if(Ext.getCmp(idx).getValue()) 
    {
-    opts += Ext.getCmp(idx).getName()
-    opts += "," ;
+    idx = 'ID-3-' + options3D_[i] + '_CB' ;
+    if(Ext.getCmp(idx).getValue()) 
+    {
+     opts += Ext.getCmp(idx).getName()
+     opts += "," ;
+    }
    }
   }
   opts = opts.replace(/,$/,"") ;
@@ -1861,18 +1979,18 @@ function()
 //                          theFrame        );
 
 //                  STDLINE("Options selected: "+opts) ;
-                 options = applyOptions() ;
+                 options = applyOptions(object._typename) ;
                  if( superimposeFlag_ )
                  {
-//                   STDLINE("Superimpose on "+theFrame+"...") ;
-                  JSROOT.draw  (
+                   STDLINE("Superimpose on "+theFrame+" with options "+options+"...") ;
+                   JSROOT.draw  (
                                 theFrame,
                                 object  ,
                                 options
                                ); 
                  } else {
-//                   STDLINE("Do NOT superimpose on "+theFrame+"...") ;
-                  if( nx == 1 && ny == 1 ) JSROOT.cleanup(getCanvasDiv_(currentCanvas_))    ;
+                   STDLINE("Do NOT superimpose on "+theFrame+" with options "+options+"...") ;
+//                  if( nx == 1 && ny == 1 ) JSROOT.cleanup(getCanvasDiv_(currentCanvas_))    ;
                   JSROOT.redraw(
                                 theFrame,
                                 object  ,
@@ -1884,11 +2002,20 @@ function()
  //-----------------------------------------------------------------------------
  function redrawCanvas()
  {
-  theCanvasModel_.resetCurrentPad(          currentCanvas_) ;
+//  theCanvasModel_.resetCurrentPad(          currentCanvas_) ;
 //  theCanvasModel_.dump(currentCanvas_,"Redrawing canvas"  ) ;
   var objs = theCanvasModel_.getROOTObjects(currentCanvas_) ;
   STDLINE("") ;
-  STDLINE("^^^^^^^^^^^ Redrawing canvas "+currentCanvas_  ) ;
+  var thisB = Ext.getCmp('liveDQM-ID');
+  if( LIVERunning_ )
+  {
+   thisB.getEl().setStyle('background', 'green');
+  }
+  else
+  {
+   thisB.getEl().setStyle('background', 'red'  );
+  }
+  STDLINE("^^^^^^^^^^^ Redrawing canvas "+currentCanvas_ + " periodicPlot_ID_: "+ periodicPlotID_[currentCanvas_] ) ;
   for(var i=0; i<objs.length; ++i)
   {
    var obj  = objs[i].object                                                         ;
@@ -1904,11 +2031,15 @@ function()
 //    STDLINE("  pad: "+padC+" fParams_.RootPath  : "+pro.fParams_    [padC].RootPath  ); 
    if( pro.fRootPath_[padC] == 'LIVE_DQM.root') 
    {
-    theAjaxRequest(pro.fRequestURL_[padC], pro.fParams_[padC], "", pad, false   );
+    theAjaxRequest(pro.fRequestURL_[padC], 
+                   pro.fParams_[padC], 
+                   "", 
+                   pad, 
+                   false );
    }
    else
    {                                           
-    displayPlot_(obj, pad                                                       );
+    displayPlot_(obj, pad);
    }
   }
 //  theCanvasModel_.dump(currentCanvas_,"Just after redraw"                          ); 

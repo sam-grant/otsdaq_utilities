@@ -1136,104 +1136,104 @@ STDLINE(string("######## from LIVE DQM! "),"") ;
 	}
         else if(requestType == "getMeRootFile") //################################################################################################################
         {
-         xmlOut.setDarioStyle(true) ; // workaround for XML formatting....
-	 std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
-	 std::string fRootPath     = CgiDataUtilities::postData(cgiIn, "fRootPath"    );
-	 std::string fFoldersPath  = CgiDataUtilities::postData(cgiIn, "fFoldersPath" );
-	 std::string fHistName     = CgiDataUtilities::postData(cgiIn, "fHistName"    );
-	 std::string fRFoldersPath = CgiDataUtilities::postData(cgiIn, "fRFoldersPath");
-	 std::string fFileName     = CgiDataUtilities::postData(cgiIn, "fFileName"    );
-         boost::regex re("%2F") ;
-         fRootPath    = boost::regex_replace(fRootPath   ,re,"/") ;
-         fFoldersPath = boost::regex_replace(fFoldersPath,re,"/") ;
-// 	 STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
-// 	 STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
-// 	 STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
-// 	 STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
-// 	 STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
-//  	 STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
-         RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, 
-                                                               fRootPath, 
-                                                               fFoldersPath, 
-                                                               fHistName, 
-                                                               fRFoldersPath, 
-                                                               fFileName) ;
-         xmlOut.setDocument(theExplorer->initialize(false)) ;
-//         std::ostringstream* out ;
-	 //xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+               xmlOut.setDarioStyle(true) ; // workaround for XML formatting....
+	       std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
+	       std::string fRootPath     = CgiDataUtilities::postData(cgiIn, "fRootPath"    );
+	       std::string fFoldersPath  = CgiDataUtilities::postData(cgiIn, "fFoldersPath" );
+	       std::string fHistName     = CgiDataUtilities::postData(cgiIn, "fHistName"    );
+	       std::string fRFoldersPath = CgiDataUtilities::postData(cgiIn, "fRFoldersPath");
+	       std::string fFileName     = CgiDataUtilities::postData(cgiIn, "fFileName"    );
+               boost::regex re("%2F") ;
+               fRootPath    = boost::regex_replace(fRootPath   ,re,"/") ;
+               fFoldersPath = boost::regex_replace(fFoldersPath,re,"/") ;
+// 	       STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
+// 	       STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
+// 	       STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
+// 	       STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
+// 	       STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
+//  	       STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
+               RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, 
+                                                                     fRootPath, 
+                                                                     fFoldersPath, 
+                                                                     fHistName, 
+                                                                     fRFoldersPath, 
+                                                                     fFileName) ;
+               xmlOut.setDocument(theExplorer->initialize(false)) ;
+               std::ostringstream* out = NULL ;
+	       xmlOut.outputXmlDocument((std::ostringstream*) out, true);
         }
 	else if(requestType == "getMeLIVE-DQMFile") //################################################################################################################
         {
-         xmlOut.setDarioStyle(true) ; // workaround for XML formatting....
-	 std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
-	 std::string fRootPath     = CgiDataUtilities::postData(cgiIn, "fRootPath"    );
-	 std::string fFoldersPath  = CgiDataUtilities::postData(cgiIn, "fFoldersPath" );
-	 std::string fHistName     = CgiDataUtilities::postData(cgiIn, "fHistName"    );
-	 std::string fRFoldersPath = CgiDataUtilities::postData(cgiIn, "fRFoldersPath");
-	 std::string fFileName     = CgiDataUtilities::postData(cgiIn, "fFileName"    );
-	 STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
-	 STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
-	 STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
-	 STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
-	 STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
- 	 STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
-         boost::regex re("%2F") ;
-         fRootPath     = boost::regex_replace(fRootPath    ,re,"/") ;
-         fFoldersPath  = boost::regex_replace(fFoldersPath ,re,"/") ;
-         fRFoldersPath = boost::regex_replace(fRFoldersPath,re,"/") ;
+               xmlOut.setDarioStyle(true) ; // workaround for XML formatting....
+	       std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
+	       std::string fRootPath     = CgiDataUtilities::postData(cgiIn, "fRootPath"    );
+	       std::string fFoldersPath  = CgiDataUtilities::postData(cgiIn, "fFoldersPath" );
+	       std::string fHistName     = CgiDataUtilities::postData(cgiIn, "fHistName"    );
+	       std::string fRFoldersPath = CgiDataUtilities::postData(cgiIn, "fRFoldersPath");
+	       std::string fFileName     = CgiDataUtilities::postData(cgiIn, "fFileName"    );
+	       STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
+	       STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
+	       STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
+	       STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
+	       STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
+ 	       STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
+               boost::regex re("%2F") ;
+               fRootPath     = boost::regex_replace(fRootPath    ,re,"/") ;
+               fFoldersPath  = boost::regex_replace(fFoldersPath ,re,"/") ;
+               fRFoldersPath = boost::regex_replace(fRFoldersPath,re,"/") ;
 
- 	 TFile * rootFile; 
- 	 if(theDataManager_->getLiveDQMHistos() != nullptr )
-         {
-          rootFile  = theDataManager_->getLiveDQMHistos()->getFile();
-          fRootPath = "LIVE_DQM.root" ;
-         } 
-         else
-         {
-          rootFile = TFile::Open(fRootPath.c_str());
-         }
-         RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, 
-                                                               fRootPath, 
-                                                               fFoldersPath, 
-                                                               fHistName, 
-                                                               fRFoldersPath, 
-                                                               fFileName, 
-                                                               rootFile) ;
-         xmlOut.setDocument(theExplorer->initialize(true)) ;
-//         std::ostringstream* out ;
-	 //xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+ 	       TFile * rootFile; 
+ 	       if(theDataManager_->getLiveDQMHistos() != nullptr )
+               {
+                rootFile  = theDataManager_->getLiveDQMHistos()->getFile();
+                fRootPath = "LIVE_DQM.root" ;
+               } 
+               else
+               {
+                rootFile = TFile::Open(fRootPath.c_str());
+               }
+               RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, 
+                                                                     fRootPath, 
+                                                                     fFoldersPath, 
+                                                                     fHistName, 
+                                                                     fRFoldersPath, 
+                                                                     fFileName, 
+                                                                     rootFile) ;
+               xmlOut.setDocument(theExplorer->initialize(true)) ;
+               std::ostringstream* out = NULL;
+	       xmlOut.outputXmlDocument((std::ostringstream*) out, true);
         }
 	else if(requestType == "saveConfiguration") //################################################################################################################
         {
-	 std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
-         STDLINE("configPayload: ",ACRed   ) ;
-         STDLINE(configPayload    ,ACYellow) ;
-         
-         fstream outFile;
-         outFile.open("/tmp/configPayload.json", ios::out | ios::app);
-         outFile << configPayload << endl ;
-         outFile.close() ;
+	       std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
+               STDLINE("configPayload: ",ACRed   ) ;
+               STDLINE(configPayload    ,ACYellow) ;
+               
+               fstream outFile;
+               outFile.open("/tmp/configPayload.json", ios::out | ios::app);
+               outFile << configPayload << endl ;
+               outFile.close() ;
         }
 	else if(requestType == "getConfiguration") //################################################################################################################
         {
-	 std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
-         std::string JSONPayLoad   = "" ;
-         std::string line          = "" ;
+	       std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
+               std::string JSONPayLoad   = "" ;
+               std::string line          = "" ;
          
-         ifstream JSONFile("/tmp/configPayload.json");
+               ifstream JSONFile("/tmp/configPayload.json");
 
-         if( JSONFile.is_open() )
-         {
-          while( getline(JSONFile,line) )
-          {
-           JSONPayLoad += line ;
-          }
-          JSONFile.close() ;
-         }
+               if( JSONFile.is_open() )
+               {
+                while( getline(JSONFile,line) )
+                {
+                 JSONPayLoad += line ;
+                }
+                JSONFile.close() ;
+               }
 
-	 xmlOut.addTextElementToData("JSONPayLoad", JSONPayLoad);
-//         std::ostringstream* out ;
-//	 xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+	       xmlOut.addTextElementToData("JSONPayLoad", JSONPayLoad);
+//               std::ostringstream* out = NULL;
+//	       xmlOut.outputXmlDocument((std::ostringstream*) out, true);
         }
 }
 

@@ -1190,11 +1190,11 @@ void VisualSupervisor::request(const std::string               & requestType,
          }
          string cmd = string("ls -la ")+fRootPath ;
          system(cmd.c_str()) ;
-STDLINE(string("before regexp fRootPath: ")+fRootPath,ACGreen) ;
-fRootPath = rootFile->GetName() ; // Bisogna strippare via il full path!!!
-boost::regex regg(fSystemPath.c_str()) ;
-fRootPath = boost::regex_replace(fRootPath,regg,"/") ; // Dario: should be transparent for Ryan's purposes but required by Extjs
-STDLINE(string("after regexp fRootPath: ")+fRootPath,ACGreen) ;
+// STDLINE(string("before regexp fRootPath: ")+fRootPath,ACGreen) ;
+// fRootPath = rootFile->GetName() ; // Bisogna strippare via il full path!!!
+// boost::regex regg(fSystemPath.c_str()) ;
+// fRootPath = boost::regex_replace(fRootPath,regg,"/") ; // Dario: should be transparent for Ryan's purposes but required by Extjs
+// STDLINE(string("after regexp fRootPath: ")+fRootPath,ACGreen) ;
 	 STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
 	 STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
 	 STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
