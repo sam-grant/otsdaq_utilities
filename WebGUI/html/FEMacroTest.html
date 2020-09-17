@@ -512,9 +512,11 @@
 							str += "On " + feExecs.length + " front-end target(s).<br>";
 						}
 						
-						str += "<hr width='80%'><br>";
+						if(outputArgNames.length > 1 || f == 0)
+							str += "<hr width='80%'><br>";
 						str += "<b>";//Ran... " + feExecTime + "<br>";
-						str += "FEMacro: &quot;" + feMacroName + "&quot;<br>";
+						if(outputArgNames.length > 1 || f == 0)
+							str += "FEMacro: &quot;" + feMacroName + "&quot;<br>";
 						str += "FE Target #" + (f+1) + " UID: <label style='color:red; font-size:inherit;'>" +
 							feTargetUID + "</label> (" + 
 							feTargetHostname + ":" + feTargetContext + "/" + feTargetSupervisor + 
@@ -1144,7 +1146,7 @@
 			var tooltip 	= macroObj.tooltip;
 			if(tooltip != "")
 				DesktopContent.tooltip(macroName,tooltip);
-				
+
 			//var supervisor 	= macroObj.supervisor;
 			//var lid 		= macroObj.lid;
 			
