@@ -1679,7 +1679,7 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		__SUP_COUT__ << "Loading group '" << groupName << "(" << groupKey << ")'"
 		             << __E__;
 
-		std::string groupComment, groupAuthor, configGroupCreationTime;
+		std::string groupComment, groupAuthor, tableGroupCreationTime;
 
 		// only same member map if object pointer was passed
 		cfgMgr->loadTableGroup(groupName,
@@ -1690,14 +1690,14 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		                       accumulatedErrors,
 		                       doGetGroupInfo ? &groupComment : 0,
 		                       doGetGroupInfo ? &groupAuthor : 0,
-		                       doGetGroupInfo ? &configGroupCreationTime : 0);
+		                       doGetGroupInfo ? &tableGroupCreationTime : 0);
 
 		if(doGetGroupInfo)
 		{
-			xmlOut.addTextElementToData("configGroupComment", groupComment);
-			xmlOut.addTextElementToData("configGroupAuthor", groupAuthor);
-			xmlOut.addTextElementToData("configGroupCreationTime",
-			                            configGroupCreationTime);
+			xmlOut.addTextElementToData("tableGroupComment", groupComment);
+			xmlOut.addTextElementToData("tableGroupAuthor", groupAuthor);
+			xmlOut.addTextElementToData("tableGroupCreationTime",
+			                            tableGroupCreationTime);
 		}
 
 		if(accumulatedErrors && *accumulatedErrors != "")
@@ -1812,7 +1812,7 @@ catch(...)
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV list of records to create
@@ -2003,7 +2003,7 @@ catch(...)
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV list of records to create
@@ -2119,7 +2119,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV list of records to rename
@@ -2239,7 +2239,7 @@ void ConfigurationGUISupervisor::handleFillRenameTreeNodeRecordsXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV list of records to create
@@ -2354,7 +2354,7 @@ void ConfigurationGUISupervisor::handleFillCopyTreeNodeRecordsXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV list of records for which to write values for fields
@@ -2555,7 +2555,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordStr := CSV list of records for which to lookup values for fields
@@ -2649,7 +2649,7 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	depth from starting node path
 //	modifiedTables := CSV of table/version pairs
@@ -2821,7 +2821,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 //	 then do for active groups
 //
 // parameters
-//		configGroupName (full name with key)
+//		tableGroupName (full name with key)
 //		starting node path
 //		modifiedTables := CSV of table/version pairs
 //		recordList := CSV of records to search for unique values
@@ -2976,7 +2976,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 //	 then return tree for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	depth from starting node path
 //	modifiedTables := CSV of table/version pairs
@@ -6283,15 +6283,15 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 	const std::map<std::string, GroupInfo>& allGroupInfo = cfgMgr->getAllGroupInfo();
 
 	//	ConfigurationInterface* theInterface = cfgMgr->getConfigurationInterface();
-	//	std::set<std::string /*name*/>  configGroups =
+	//	std::set<std::string /*name*/>  tableGroups =
 	// theInterface->getAllTableGroupNames();
-	//	__SUP_COUT__ << "Number of Table groups: " << configGroups.size() << __E__;
+	//	__SUP_COUT__ << "Number of Table groups: " << tableGroups.size() << __E__;
 	//
 	//	TableGroupKey groupKey;
 	//	std::string groupName;
 	//
 	//	std::map<std::string /*groupName*/,std::set<TableGroupKey> > allGroupsWithKeys;
-	//	for(auto& groupString:configGroups)
+	//	for(auto& groupString:tableGroups)
 	//	{
 	//		TableGroupKey::getGroupNameAndKey(groupString,groupName,groupKey);
 	//		allGroupsWithKeys[groupName].emplace(groupKey);
@@ -6889,7 +6889,7 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 //	save artdaq configuration GUI layout for group/key
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //
 void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
     HttpXmlDocument&        /*xmlOut*/,

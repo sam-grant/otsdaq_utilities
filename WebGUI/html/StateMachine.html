@@ -511,13 +511,14 @@
             //	user code should call with null input parameters
             //	then code launches requests to fill parameters, _transitionParameterValues
             var _transParamsHtmlStr;
-			function initTransitionParameters(req) {
-				if(!req) //first time
+			function initTransitionParameters(req) 
+			{
+				if (!req) //first time
 				{
 					_parameterInitCount = 0;
-                    _transitionParameterValues = [];
-    
-                    _transParamsHtmlStr = "<table width='100%'><tr><td><b><u>Parameter</u></b></td><td width='50%'><b><u>Value</u></b></td></tr>";
+					_transitionParameterValues = [];
+
+					_transParamsHtmlStr = "<table width='100%'><tr><td><b><u>Parameter</u></b></td><td width='50%'><b><u>Value</u></b></td></tr>";
 				}
                 else
                 {
@@ -535,8 +536,9 @@
                     	//get all system aliases and put in drop-down
                         var aliasArr = req.responseXML.getElementsByTagName("config_alias"); 
                         var aliasGroupArr = req.responseXML.getElementsByTagName("config_key");
-                        var aliasCommentArr = req.responseXML.getElementsByTagName("config_comment");
-                        var aliasAuthorArr = req.responseXML.getElementsByTagName("config_author");
+                        var aliasGroupCommentArr = req.responseXML.getElementsByTagName("config_comment");
+						var aliasCommentArr = req.responseXML.getElementsByTagName("config_alias_comment");                    
+						var aliasAuthorArr = req.responseXML.getElementsByTagName("config_author");
                         var aliasCreateTimeArr = req.responseXML.getElementsByTagName("config_create_time");
                         
             			var userLastConfigAlias = 
@@ -556,7 +558,8 @@
                         	_aliasTranslationMetaDataMap[alias] = [
 																   aliasCommentArr[i].getAttribute('value'),
 																   aliasAuthorArr[i].getAttribute('value'),
-																   aliasCreateTimeArr[i].getAttribute('value')
+																   aliasCreateTimeArr[i].getAttribute('value'),
+																   aliasGroupCommentArr[i].getAttribute('value')
 																   ];
 														 
                             //choose the first system alias by default
@@ -1793,7 +1796,13 @@
 								y += f-4;
 								metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][0]);
 								_context.fillText("   " + 
-										"Comment: '" + metaValue.substr(0,30) + 
+										"Alias Comment: '" + metaValue.substr(0,30) + 
+												(metaValue.length > 30?"...":"") + "'", 
+												x, y);
+								y += f-4;
+								metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][3]);
+								_context.fillText("   " + 
+										"Group Comment: '" + metaValue.substr(0,30) + 
 												(metaValue.length > 30?"...":"") + "'", 
 												x, y);
 							}

@@ -62,17 +62,29 @@ function fixTargetRepos
 				cd $p
 				
 				
+
 				#two step fix:
 				#	1. fix by making fetch http
 				#	2. if origin-ssh, copy to origin (push)
 				
-				
+				#but first fix pull selection to merge
+				git config pull.rebase false  # merge (the default strategy)
 
 				############################# 1. fix by making fetch http
-				GIT_REMOTE_ARR="$(git remote -v | grep origin | grep \(fetch\) )"
+				
+				#get the correct from one of the push origins
+				GIT_REMOTE_ARR="$(git remote -v | grep origin-ssh | grep \(push\) )"
 				
 				if [ -z "${GIT_REMOTE_ARR}" ]; then 
-					echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t Failed to find fetch origin, skipping $bp..."
+					#echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t No push origin-ssh found, assuming push origin is good."				
+					GIT_REMOTE_ARR="$(git remote -v | grep origin | grep \(push\) )"
+				fi
+
+				#do not get it from fetch, which  might  be broken
+				#GIT_REMOTE_ARR="$(git remote -v | grep origin | grep \(fetch\) )"
+				
+				if [ -z "${GIT_REMOTE_ARR}" ]; then 
+					echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t Failed to find a valid push origin, skipping $bp..."
 					cd - &>/dev/null 2>&1 #hide output
 					continue;
 				fi
@@ -89,7 +101,7 @@ function fixTargetRepos
 				fi
 
 				#echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t\t ${GIT_FETCH_ARR[0]}"
-				if [[ ("${GIT_FETCH_ARR[0]}" == "origin	ssh:") || ("${GIT_FETCH_ARR[0]}" != "origin http:") ]]; then
+				if [ "${GIT_FETCH_ARR[0]}" == "origin	ssh:" ]; then
 					echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t Fixing fetch origin..."
 					
 					#create http url
@@ -106,8 +118,8 @@ function fixTargetRepos
 						#echo -e "ots_get_and_fix_repo.sh [${LINENO}] \t $i ${git_arr_piece} "
 						GIT_REMOTE_URL="${GIT_REMOTE_URL}/${git_arr_piece}"
 					done
-					
-					echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t\t git remote set-url origin --fetch ${GIT_REMOTE_URL}"
+				
+					echo -e "ots_get_and_fix_repo.sh [${LINENO}]  \t\t git remote set-url origin --fetch ${GIT_REMOTE_URL}"				
 					git remote set-url origin ${GIT_REMOTE_URL}
 						
 					#sometimes (always?) no option also sets the push, so set it back
