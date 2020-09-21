@@ -777,6 +777,11 @@ void VisualSupervisor::request(const std::string               & requestType,
 						theDataManager_->getLiveDQMHistos() != nullptr &&
 						LDQM_pos == 0)
 				{
+					if(tobject->IsA() == TCanvas::Class())
+					{
+						static_cast<TCanvas*>(tobject)->Modified();
+						static_cast<TCanvas*>(tobject)->Update();
+					}
 					std::unique_lock<std::mutex> lock(
 					    static_cast<DQMHistosConsumerBase*>(
 					        theDataManager_->getLiveDQMHistos())
