@@ -509,7 +509,6 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 	}
 	else if(requestType == "getRoot") //################################################################################################################
 	{
-STDLINE(string("######## GETROOT!!!!!!! "),"") ;
 		// return directory structure for requested ROOT path, types are "dir" and "file"
 
                 ss.str("") ; ss << "PID: " << ::getpid() ;
@@ -544,10 +543,8 @@ STDLINE(string("######## GETROOT!!!!!!! "),"") ;
 		std::string::size_type LDQM_pos = path.find("/" + LIVEDQM_DIR + ".root/");
 		__SUP_COUTV__(LDQM_pos);
 		TFile* rootFile = nullptr;
-STDLINE(string("######## path: ")+path,"") ;
 		if(LDQM_pos == std::string::npos)  // If it is not from LIVE_DQM
 		{
-STDLINE(string("######## NOT from LIVE DQM! "),"") ;
 			__SUP_COUTV__(rootFileName);
 			rootFile = TFile::Open(rootFileName.c_str());
 
@@ -559,7 +556,6 @@ STDLINE(string("######## NOT from LIVE DQM! "),"") ;
 		}
 		else
 		{
-STDLINE(string("######## from LIVE DQM! "),"") ;
 			if(theDataManager_ != nullptr &&
 					theDataManager_->getLiveDQMHistos() != nullptr)
 			{
@@ -1146,12 +1142,12 @@ STDLINE(string("######## from LIVE DQM! "),"") ;
                boost::regex re("%2F") ;
                fRootPath    = boost::regex_replace(fRootPath   ,re,"/") ;
                fFoldersPath = boost::regex_replace(fFoldersPath,re,"/") ;
-// 	       STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
-// 	       STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
-// 	       STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
-// 	       STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
-// 	       STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
-//  	       STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
+	       STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
+	       STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
+	       STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
+	       STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
+	       STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
+ 	       STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
                RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, 
                                                                      fRootPath, 
                                                                      fFoldersPath, 

@@ -768,8 +768,8 @@ function()
                                           labelWidth      : 45                ,
                                           name            : 'updateInterval'  ,
                                           value           : 5.000             ,
-                                          minValue        : 5.00              ,
-                                          maxValue        : 30.000            ,
+                                          minValue        : 0.50              ,
+                                          maxValue        : 90.000            ,
                                           allowDecimals   : true              ,
                                           tooltip         : 'Refresh interval',
                                           decimalPrecision: 2
@@ -1152,18 +1152,23 @@ function()
                                                                                        'Directories and files'                            ) ;
                                                                             }
                                                                            }
+                                                                 },
+                                                                 {
+                                                                  type   : 'down'                 ,
+                                                                  tooltip: 'Expand folders'       ,
+                                                                  handler: function()
+                                                                           {
+                                                                            grid_.expandAll()     ;
+                                                                           }
+                                                                 },
+                                                                 {
+                                                                  type   : 'up'                   ,
+                                                                  tooltip: 'Collapse folders'     ,
+                                                                  handler: function()
+                                                                           {
+                                                                            grid_.collapseAll()   ;
+                                                                           }
                                                                  }
-//                                                                  {
-//                                                                   type   : 'left'                          ,
-//                                                                   tooltip: 'Slide out to the left'         ,
-//                                                                   handler: function()
-//                                                                            {
-//                                                                             STDLINE("Collapsing")          ;
-//                                                                             theNavigatorPanel_  .collapse();
-//                                                                             ROOTControlsPanel_  .collapse();
-//                                                                             theInformationPanel_.collapse();
-//                                                                            }
-//                                                                  }
                                                                 ]
                                                   }, 
                                                   {
@@ -1216,9 +1221,8 @@ function()
                                 {
                                  id            : 'my-status'   ,
                                  defaultText   : 'Ready'       ,
-                                 defaultIconCls: 'default-icon',
                                  text          : 'Ready'       ,
-                                 iconCls       : 'ready-icon'  
+                                 iconCls       : 'x-status-valid'  
 //                                  items         : [
 //                                                   {
 //                                                     text: 'A Button'
@@ -1229,40 +1233,43 @@ function()
                                 }
                                );
  //-----------------------------------------------------------------------------------------------
+ function displayStatus(message) 
+ {
+  theStatusBar_.clearStatus({useDefaults:true}); 
+  theStatusBar_.showBusy() ;
+  theStatusBar_.setStatus(
+                          {
+                           text   : message  ,
+                           //icon   : '../images/load.gif',
+                           //iconCls: 'ok-icon',
+                           //clear  : true      // auto-clear after a set interval
+                          }
+                         );
+ }
+ //-----------------------------------------------------------------------------------------------
  function makeInformationPanel()
  {
   if( theInformationPanel_ ) theInformationPanel_.destroy() ;
   theInformationPanel_ = Ext.create(
                                     'Ext.panel.Panel',
                                     {
-                                     region      : 'south'              ,
-                                     contentEl   : 'south'              ,
-                                     split       : true                 ,
-                                     height      : 50                   ,
-                                     minSize     : 20                   ,
-                                     maxSize     : 200                  ,
-                                     collapsible : true                 ,
-                                     collapsed   : false                ,
-                                     bbar        : theStatusBar_        ,
-                                     html        : 'Panel initialized'  ,
-                                     title       : 'Status bar'         ,
+                                     region      : 'south'            ,
+                                     contentEl   : 'south'            ,
+                                     split       : true               ,
+                                     height      : 50                 ,
+                                     minSize     : 20                 ,
+                                     maxSize     : 200                ,
+                                     collapsible : true               ,
+                                     collapsed   : false              ,
+                                     bbar        : theStatusBar_      ,
+                                     html        : 'Panel initialized',
+                                     title       : 'Status bar'       ,
                                      margins     : '0 0 0 0'
                                     },
                                    ) ;
  }
- //-----------------------------------------------------------------------------------------------
- function displayStatus(message) 
- {
-  theStatusBar_.showBusy() ;
-  theStatusBar_.setStatus(
-                          {
-                           text   : message  ,
-                           iconCls: 'ok-icon',
-                           clear  : true      // auto-clear after a set interval
-                          }
-                         );
- }
 
+ //-----------------------------------------------------------------------------------------------
  makeInformationPanel() ;
 
  //-----------------------------------------------------------------------------
@@ -1588,7 +1595,7 @@ function()
                                      xtype    : 'treecolumn'    ,
                                      hidden   : false           ,
                                      text     : 'fFoldersPath'  ,
-                                     width    : 1               ,
+                                     width    : 100               ,
                                      dataIndex: 'fFoldersPath'                
                                     }, 
                                     { 
@@ -1817,12 +1824,13 @@ function()
                          thePad, 
                          updateProvenance)                                                                   
  { 
+  displayStatus("Loading data...") ;
   var today = new Date();
   var time  = today.getHours() + ":" + today.getMinutes() + ": "  + today.getSeconds();
   var pad   = 0 ;
   if( updateProvenance )
   {
-   pad   = theCanvasModel_.getCurrentPad(currentCanvas_                 );
+   pad = theCanvasModel_.getCurrentPad(currentCanvas_);
   }
   else
   {
@@ -1860,22 +1868,22 @@ function()
                               }                                                                                                         
                               else if(!(typeof getXMLValue(response,"rootType") === 'undefined')) // Returns the plot to display                                                                     
                               { // get specific ROOT Object and display
-                               var rootName  = getXMLValue (response,"path"          );              
-                               var rootJSON  = getXMLValue (response,"rootJSON"      );          
-                               var object    = JSROOT.parse(rootJSON                 );
+                               var rootName  = getXMLValue (response,"path"    );              
+                               var rootJSON  = getXMLValue (response,"rootJSON");          
+                               var object    = JSROOT.parse(rootJSON           );
                                if( updateProvenance ) 
                                {
-                                theProvenance_.setRequestURL(          theRequestURL ,
-                                                                       currentCanvas_,
-                                                                       thePad        );
-                                theProvenance_.setParams(              theParams     ,
-                                                                       currentCanvas_,
-                                                                       thePad        );
-                                theCanvasModel_.addROOTObject(         currentCanvas_,
-                                                                       object        ,
-                                                                       theProvenance_);
+                                theProvenance_.setRequestURL ( theRequestURL ,
+                                                               currentCanvas_,
+                                                               thePad        );
+                                theProvenance_.setParams     ( theParams     ,
+                                                               currentCanvas_,
+                                                               thePad        );
+                                theCanvasModel_.addROOTObject( currentCanvas_,
+                                                               object        ,
+                                                               theProvenance_);
                                }
-                               displayPlot_                  (        object, thePad );
+                               displayPlot_                  (object, thePad );
                                return ;
                               }
                               if(getXMLValue(response,"dir") == 'LIVE_DQM.root') 
@@ -1884,10 +1892,19 @@ function()
                                makeStore('LIVE_DQM.root', 'RequestType=getMeLIVE-DQMFile');
                                makeGrid ('LIVE_DQM.root', 'Directories and files'        );
                               }                                                                    
+                              displayStatus("Done loading data!") ;
                              },                                                                                                           
                     failure: function(response, options)                                                                                  
                              {                                                                                                            
                               var a = response ;                                                                                          
+                              displayStatus("Done loading data!") ;
+                              theStatusBbar_.setStatus(
+                                                       {
+                                                        text   : 'Oops! Something went wrong:'+response.responseText,
+                                                        iconCls: 'x-status-error',
+                                                        clear  : true 
+                                                       }
+                                                      );
                               Ext.MessageBox.alert(                                                                                       
                                                    'Something went wrong:',                                                               
                                                    'Response: ' + response.responseText                                                   
