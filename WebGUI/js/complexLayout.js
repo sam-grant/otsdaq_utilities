@@ -1621,110 +1621,117 @@ function()
                                      }
                                    ],
                       listeners  : {
-                                    expand    : function(expandedItem, options) 
-                                                {
-                                                 STDLINE("expanded") ;
-                                                },                                   
-                                    itemclick : function(thisItem, record, item, index, e, eOpts)
-                                                {
-                                                 var selection = this.getSelection()                                    ;
-                                                 STDLINE("Selected "+selection.length+" items")                         ;
-                                                 var thePad = theCanvasModel_.getCurrentPad(currentCanvas_)             ;
-                                                 STDLINE("thePad       : "+thePad                   )                   ;      
-                                                 STDLINE("selectedItem_: "+selectedItem_            )                   ;      
-                                                 STDLINE("Selected     : "+selection.length+" items")                   ;
-                                                 theProvenance_.clearAll(currentCanvas_,thePad) ;
-                                                 for(var i=0; i<selection.length; i++)  
-                                                 {  
-                                                  theProvenance_.setSystemPath  (selection[i].data.fSystemPath        ,
-                                                                                 currentCanvas_                       ,
-                                                                                 thePad                                );
-                                                  theProvenance_.setRootPath    (selection[i].data.fRootPath          ,
-                                                                                 currentCanvas_                       ,
-                                                                                 thePad                                );
-                                                  theProvenance_.setFoldersPath (selection[i].data.fFoldersPath       ,
-                                                                                 currentCanvas_                       ,
-                                                                                 thePad                                );
-                                                  theProvenance_.setFileName    (selection[i].data.fFileName          ,
-                                                                                 currentCanvas_                       ,
-                                                                                 thePad                                );
-                                                  theProvenance_.setRFoldersPath(selection[i].data.fRFoldersPath      ,
-                                                                                 currentCanvas_                       ,
-                                                                                 thePad                                );
-                                                  theProvenance_.setHistName    (selection[i].data.fHistName          ,
-                                                                                 currentCanvas_                       ,
-                                                                                 thePad                                );
-                                                  theProvenance_.dump           ("Item selected",thePad                );      
-                                                 } 
-                                                 theProvenance_.dumpAll("Selected plot to display") ; 
-//                                                 theCanvasModel_.dumpContent("Clicked on item "+selectedItem_)                                          ;
-                                                 var itemSplit     = item.innerText.split("\n\t\n")                     ;      
-                                                 var isLeaf        = itemSplit[1].replace("\n","").replace("\t","")     ;      
-                                                 if( isLeaf == "true" ) 
-                                                 {
-                                                  if( selectedItem_ == "getDirectories" )
-                                                  {
-                                                   treeDisplayField_  = 'fDisplayName'                                  ;       
-                                                   selectedItem_      = "getRootObject"                                 ;       
-                                                   currentTree_       = 'fileContent'                                   ;       
-                                                   STDLINE("Paths: "+  theProvenance_.getPathsNumber(thePad))           ;       
-                                                   currentDirectory_ = theProvenance_.getSystemPath (currentCanvas_,
-                                                                                                     thePad)           +        
-                                                                       '/'                                             +        
-                                                                       theProvenance_.getRootPath   (currentCanvas_,
-                                                                                                     thePad)           +        
-                                                                       "/"                                             +        
-                                                                       theProvenance_.getFoldersPath(currentCanvas_,
-                                                                                                     thePad)           +        
-                                                                       "/"                                             +        
-                                                                       theProvenance_.getFileName   (currentCanvas_,
-                                                                                                     thePad)            ;       
-//                                                   STDLINE('RequestType      : getMeRootFile'     )                     ;       
-//                                                   STDLINE('currentDirectory_: '+currentDirectory_)                     ;       
-                                                   makeStore(currentDirectory_,'RequestType=getMeRootFile')             ;       
-                                                   makeGrid (currentDirectory_,'ROOT file content'        )             ; 
-                                                  }
-                                                  else if( selectedItem_ == "getRootObject" || 
-                                                           selectedItem_ == "getMeLIVE-DQMFile" )
-                                                  { 
-//                                                   theProvenance_.dumpAll("getRootObject")                              ;
-                                                   STDLINE("Request for thePad: " + thePad)                             ;
-                                                   if( selectedItem_ == "getMeLIVE-DQMFile" ) 
-                                                   {
-                                                    theProvenance_.setFileName  (""                                   ,
-                                                                                 currentCanvas_                       ,
-                                                                                 thePad                                );
-                                                   }
-                                                   currentRootObject_  = "/"                                           +        
-                                                                         theProvenance_.getRootPath    (currentCanvas_,
-                                                                                                        thePad)        +    
-                                                                         "/"                                           +        
-                                                                         theProvenance_.getFoldersPath (currentCanvas_,
-                                                                                                        thePad)        +    
-                                                                         theProvenance_.getFileName    (currentCanvas_,
-                                                                                                        thePad)        +    
-                                                                         "/"                                           +        
-                                                                         theProvenance_.getRFoldersPath(currentCanvas_,
-                                                                                                        thePad)        +    
-                                                                         "/"                                           +        
-                                                                         theProvenance_.getHistName    (currentCanvas_,+
-                                                                                                        thePad)         ;
-                                                   currentRootObject_  = currentRootObject_.replace(/\/\//g, '/' )      ;
-                                                   STDLINE('RequestType       : getRootObject'      )                   ;        
-                                                   STDLINE('currentRootObject_: '+currentRootObject_)                   ;        
-                                                   STDLINE('_requestURL       : '+_requestURL       )                   ;        
-                                                   theAjaxRequest(
-                                                                  _requestURL+"RequestType=getRoot",
-                                                                  {                                                           
-                                                                   CookieCode: DesktopContent._cookieCodeMailbox         ,                                  
-                                                                   RootPath  : currentRootObject_                                     
-                                                                  }                                , 
-                                                                  ""                               ,
-                                                                  thePad                           ,
-                                                                  true
-                                                                 ) ;
-                                                  }
-                                                 }
+                                    cellcontextmenu: function(thisTree, td, cellIndex, record, tr, rowIndex, e, eOpts)
+                                                     {
+                                                      STDLINE("Path to dir: "         +
+                                                              record.data.fSystemPath + "/" +
+                                                              record.data.fRootPath   +
+                                                              record.data.fRFoldersPath) ;
+                                                     },
+                                    expand         : function(expandedItem, options) 
+                                                     {
+                                                      STDLINE("expanded") ;
+                                                     },                                   
+                                    itemclick      : function(thisItem, record, item, index, e, eOpts)
+                                                     {
+                                                      var selection = this.getSelection()                                    ;
+                                                      STDLINE("Selected "+selection.length+" items")                         ;
+                                                      var thePad = theCanvasModel_.getCurrentPad(currentCanvas_)             ;
+                                                      STDLINE("thePad       : "+thePad                   )                   ;     
+                                                      STDLINE("selectedItem_: "+selectedItem_            )                   ;     
+                                                      STDLINE("Selected     : "+selection.length+" items")                   ;
+                                                      theProvenance_.clearAll(currentCanvas_,thePad) ;
+                                                      for(var i=0; i<selection.length; i++)  
+                                                      {  
+                                                       theProvenance_.setSystemPath  (selection[i].data.fSystemPath        ,
+                                                                                      currentCanvas_                       ,
+                                                                                      thePad                                );
+                                                       theProvenance_.setRootPath    (selection[i].data.fRootPath          ,
+                                                                                      currentCanvas_                       ,
+                                                                                      thePad                                );
+                                                       theProvenance_.setFoldersPath (selection[i].data.fFoldersPath       ,
+                                                                                      currentCanvas_                       ,
+                                                                                      thePad                                );
+                                                       theProvenance_.setFileName    (selection[i].data.fFileName          ,
+                                                                                      currentCanvas_                       ,
+                                                                                      thePad                                );
+                                                       theProvenance_.setRFoldersPath(selection[i].data.fRFoldersPath      ,
+                                                                                      currentCanvas_                       ,
+                                                                                      thePad                                );
+                                                       theProvenance_.setHistName    (selection[i].data.fHistName          ,
+                                                                                      currentCanvas_                       ,
+                                                                                      thePad                                );
+                                                       theProvenance_.dump           ("Item selected",thePad                );     
+                                                      } 
+                                                      theProvenance_.dumpAll("Selected plot to display") ; 
+//                                                      theCanvasModel_.dumpContent("Clicked on item "+selectedItem_)                                     ;
+                                                      var itemSplit     = item.innerText.split("\n\t\n")                     ;     
+                                                      var isLeaf        = itemSplit[1].replace("\n","").replace("\t","")     ;     
+                                                      if( isLeaf == "true" ) 
+                                                      {
+                                                       if( selectedItem_ == "getDirectories" )
+                                                       {
+                                                        treeDisplayField_  = 'fDisplayName'                                  ;     
+                                                        selectedItem_      = "getRootObject"                                 ;     
+                                                        currentTree_       = 'fileContent'                                   ;     
+                                                        STDLINE("Paths: "+  theProvenance_.getPathsNumber(thePad))           ;     
+                                                        currentDirectory_ = theProvenance_.getSystemPath (currentCanvas_,
+                                                                                                          thePad)           +      
+                                                                            '/'                                             +      
+                                                                            theProvenance_.getRootPath   (currentCanvas_,
+                                                                                                          thePad)           +      
+                                                                            "/"                                             +      
+                                                                            theProvenance_.getFoldersPath(currentCanvas_,
+                                                                                                          thePad)           +      
+                                                                            "/"                                             +      
+                                                                            theProvenance_.getFileName   (currentCanvas_,
+                                                                                                          thePad)            ;     
+//                                                        STDLINE('RequestType      : getMeRootFile'     )                     ;   
+//                                                        STDLINE('currentDirectory_: '+currentDirectory_)                     ;   
+                                                        makeStore(currentDirectory_,'RequestType=getMeRootFile')             ;     
+                                                        makeGrid (currentDirectory_,'ROOT file content'        )             ; 
+                                                       }
+                                                       else if( selectedItem_ == "getRootObject" || 
+                                                                selectedItem_ == "getMeLIVE-DQMFile" )
+                                                       { 
+//                                                        theProvenance_.dumpAll("getRootObject")                              ;
+                                                        STDLINE("Request for thePad: " + thePad)                             ;
+                                                        if( selectedItem_ == "getMeLIVE-DQMFile" ) 
+                                                        {
+                                                         theProvenance_.setFileName  (""                                   ,
+                                                                                      currentCanvas_                       ,
+                                                                                      thePad                                );
+                                                        }
+                                                        currentRootObject_  = "/"                                           +      
+                                                                              theProvenance_.getRootPath    (currentCanvas_,
+                                                                                                             thePad)        +    
+                                                                              "/"                                           +      
+                                                                              theProvenance_.getFoldersPath (currentCanvas_,
+                                                                                                             thePad)        +    
+                                                                              theProvenance_.getFileName    (currentCanvas_,
+                                                                                                             thePad)        +    
+                                                                              "/"                                           +      
+                                                                              theProvenance_.getRFoldersPath(currentCanvas_,
+                                                                                                             thePad)        +    
+                                                                              "/"                                           +      
+                                                                              theProvenance_.getHistName    (currentCanvas_,+
+                                                                                                             thePad)         ;
+                                                        currentRootObject_  = currentRootObject_.replace(/\/\//g, '/' )      ;
+                                                        STDLINE('RequestType       : getRootObject'      )                   ;     
+                                                        STDLINE('currentRootObject_: '+currentRootObject_)                   ;     
+                                                        STDLINE('_requestURL       : '+_requestURL       )                   ;     
+                                                        theAjaxRequest(
+                                                                       _requestURL+"RequestType=getRoot",
+                                                                       {                                                           
+                                                                        CookieCode: DesktopContent._cookieCodeMailbox         ,                             
+                                                                        RootPath  : currentRootObject_                                
+                                                                       }                                , 
+                                                                       ""                               ,
+                                                                       thePad                           ,
+                                                                       true
+                                                                      ) ;
+                                                       }
+                                                      }
                                                 },
                                     headerclick: function(ct, column, e, t, eOpts)
                                                  {
