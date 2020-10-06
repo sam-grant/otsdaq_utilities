@@ -216,10 +216,10 @@
 		popupEditMacroDiv.style.top =  b8[1] + "px";
 		popupEditMacroDiv.style.height =  b8[3] + "px";
 		
-		historybox.style.height =  (h-_MARGIN*2-54) + "px"; //h*0.88 + "px";
+		historybox.style.height =  (h-_MARGIN*2-154) + "px"; //h*0.88 + "px";
 		sequencebox.style.height =  (h-_MARGIN*2-54) + "px"; //h*0.88 + "px";
-		privateMacroBox.style.height =  (h/2-_MARGIN*2-54-2) + "px"; //h*0.38 + "px";
-		publicMacroBox.style.height =  (h/2-_MARGIN*2-54-2) + "px"; //h*0.38 + "px";
+		privateMacroBox.style.height =  (h/2-_MARGIN*2-154-2) + "px"; //h*0.38 + "px";
+		publicMacroBox.style.height =  (h/2-_MARGIN*2-154-2) + "px"; //h*0.38 + "px";
 		
 		initLite();
 	}
@@ -511,57 +511,62 @@
     	
     	var reminderEl = document.getElementById('reminder');
     	
-		var dataOutput = DesktopContent.getXMLValue(req,"readData");
-		if(putReadResultInBoxFlag) boxOfFreshVar = dataOutput;
-		
-		var convertedOutput;
-		
-    	var reverse = document.getElementById("lsbFirst").checked;
-    	if(runningMacroLSBF == 1) reverse = true; 
-        if(runningMacroLSBF == 2) reverse = false; 
-        
-        var argOutput;
-		if (isNaN("0x"+dataOutput)) 
+		var readDataArr = DesktopContent.getXMLChildren(req,"readData"); // DesktopContent.getXMLValue(req,"readData");
+		for(var v=0;v<readDataArr.length;++v)
 		{
-			convertedOutput = "<span class='red'>" + dataOutput + "</span>";
-			argOutput = "";
-		}
-		else 
-		{
-			convertedOutput = convertFromHex(dataFormatStr,reverseLSB(dataOutput,reverse),extractBitField);
-			argOutput = convertedOutput;
-		}
+			dataOutput = DesktopContent.getXMLValue(readDataArr[0]);
+			if(putReadResultInBoxFlag) boxOfFreshVar = dataOutput;
+			
+			var convertedOutput;
+			
+			var reverse = document.getElementById("lsbFirst").checked;
+			if(runningMacroLSBF == 1) reverse = true; 
+			if(runningMacroLSBF == 2) reverse = false; 
+			
+			var argOutput;
+			if (isNaN("0x"+dataOutput)) 
+			{
+				convertedOutput = "<span class='red'>" + dataOutput + "</span>";
+				argOutput = "";
+			}
+			else 
+			{
+				convertedOutput = convertFromHex(dataFormatStr,reverseLSB(dataOutput,reverse),extractBitField);
+				argOutput = convertedOutput;
+			}
 
-		var selectionStrArray = [];
-		for (var i = 0; i < selected.length; i++) 
-		{
-			if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
-		}
-		var innerClass = "class=\"innerClass1\"";
-		if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
-		var contentEl = document.getElementById('historyContent');
+			var selectionStrArray = [];
+			for (var i = 0; i < selected.length; i++) 
+			{
+				if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
+			}
+			var innerClass = "class=\"innerClass1\"";
+			if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
+			var contentEl = document.getElementById('historyContent');
 
-		var update = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
-				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"histCmdReadDivOnclick(" + 
-				"'" + theAddressStrForRead + "','" + argOutput + "'" +
-				",'" + addressFormatStr + "','" + dataFormatStr + "'" + 
-				")\">Read [" + dataFormatStr + "] <b>" 
-				+ convertedOutput + LSBchecker(reverse)
-				+ "</b> from register [" + addressFormatStr + "]<b>" + 
-				theAddressStrForRead + LSBchecker(reverse) + "</b></div>";
+			var update = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
+					+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"histCmdReadDivOnclick(" + 
+					"'" + theAddressStrForRead + "','" + argOutput + "'" +
+					",'" + addressFormatStr + "','" + dataFormatStr + "'" + 
+					")\">Read [" + dataFormatStr + "] <b>" 
+					+ convertedOutput + LSBchecker(reverse)
+					+ "</b> from register [" + addressFormatStr + "]<b>" + 
+					theAddressStrForRead + LSBchecker(reverse) + "</b></div>";
 		
-		theAddressStrForRead = "";
-		contentEl.innerHTML += update;
-		CMDHISTDIVINDEX++; 
-		contentEl.scrollTop = contentEl.scrollHeight;
-		reminderEl.innerHTML = "Data read: " + convertedOutput;
-		var runningPercentageEl = document.getElementById('macroRunningPercentage');
-		var barEl = document.getElementById('macroRunningBar');
-		barWidth += barIncrement;
-		barEl.style.width = barWidth + '%'; 
-		runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';
-		waitForCurrentCommandToComeBack = false;
-	}
+			theAddressStrForRead = "";
+			contentEl.innerHTML += update;
+			CMDHISTDIVINDEX++; 
+			contentEl.scrollTop = contentEl.scrollHeight;
+			reminderEl.innerHTML = "Data read: " + convertedOutput;
+			var runningPercentageEl = document.getElementById('macroRunningPercentage');
+			var barEl = document.getElementById('macroRunningBar');
+			barWidth += barIncrement;
+			barEl.style.width = barWidth + '%'; 
+			runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';
+			waitForCurrentCommandToComeBack = false;
+		} //end multiple read results
+
+	} //end readHandler()
 
 	//=====================================================================================
     function isArrayAllZero(arr)
