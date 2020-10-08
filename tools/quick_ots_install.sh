@@ -30,7 +30,7 @@ echo -e "quick_ots_install.sh [${LINENO}]  "
 if [ $USER == "root" ]; then
 
 	#install ots dependencies
-	yum install -y libuuid-devel openssl-devel python-devel
+	yum install -y libuuid-devel openssl-devel python-devel elfutils-libelf-devel
 	
 	#install cvmfs
 	yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
@@ -73,6 +73,9 @@ for p in ${REPO_DIR[@]}; do
 			echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory found as: $bp"
 			
 			cd $p
+			if [ $bp == "otsdaq_utilities" ]; then
+			    git checkout WebGUI 
+			fi
 			git pull
 			cd -
 		fi
@@ -85,6 +88,8 @@ cp srcs/otsdaq_utilities/tools/change_ots_qualifiers.sh .
 chmod 755 change_ots_qualifiers.sh
 ./change_ots_qualifiers.sh DEFAULT DEFAULT
 
+echo "" >> setup_ots.sh
+echo "alias UpdateOTS.sh='${MRB_SOURCE}/otsdaq_utilities/tools/UpdateOTS.sh'" >> setup_ots.sh
 source setup_ots.sh
 
 #update all (need to do again, after setup, or else ninja does not do mrbsetenv correctly(?))
@@ -99,6 +104,9 @@ for p in ${REPO_DIR[@]}; do
 			echo -e "quick_ots_install.sh [${LINENO}]  \t Repo directory found as: $bp"
 			
 			cd $p
+			if [ $bp == "otsdaq_utilities" ]; then
+			    git checkout WebGUI 
+			fi
 			git pull
 			cd -
 		fi

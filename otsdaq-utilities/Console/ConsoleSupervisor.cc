@@ -241,6 +241,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 				// generate special message to indicate missed packets
 				cs->messages_.emplace_back(CONSOLE_SPECIAL_WARNING + ss.str(),
 				                           cs->messageCount_++);
+
 			}
 
 			// save the new last sequence ID
