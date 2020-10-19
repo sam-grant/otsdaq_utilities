@@ -271,7 +271,9 @@ function()
      fFoldersPath_  : {},                                                 
      fRFoldersPath_ : {},                                                 
      fFileName_     : {},                                                 
-     fHistName_     : {}
+     fHistName_     : {},
+     fRequestURL_   : {},
+     fParams_       : {}
     }                                                 
  */
  
@@ -301,20 +303,12 @@ function()
                                      var addr = 'canvas'+ theCanvas + "_" + thePad; 
                                      if( typeof SystemPath   === "undefined" ) this.fSystemPath_  [addr]=""
                                      else                                      this.fSystemPath_  [addr]=SystemPath  ;
-                                     STDLINE("addr : "         + 
-                                             addr              + 
-                                             " fSystemPath_: " +
-                                             this.fSystemPath_[addr]) ;               
                                     },                                                   
                    setRootPath    : function(RootPath    , theCanvas, thePad)                                     
                                     {                                                    
                                      var addr = 'canvas'+ theCanvas + "_" + thePad; STDLINE("RootPath: "+RootPath);
                                      if( typeof RootPath     === "undefined" ) this.fRootPath_    [addr]="" 
                                      else                                      this.fRootPath_    [addr]=RootPath    ; 
-                                     STDLINE("addr : "         + 
-                                             addr              + 
-                                             " fRootPath_: "   +
-                                             this.fRootPath_[addr]) ;               
                                     },                                                   
                    setFoldersPath : function(FoldersPath , theCanvas, thePad)                                
                                     {                                                    
@@ -715,7 +709,8 @@ function()
  var nDivXCB = Ext.create(
                           'Ext.form.field.Number',
                           {
-                           xtype     : 'numberfield'          , 
+                           xtype     : 'numberfield'          ,
+                           id        : 'nPlotsX'              , 
                            name      : 'hzon'                 ,
                            labelWidth: 50                     ,
                            flex      : 0                      ,
@@ -739,6 +734,7 @@ function()
                           'Ext.form.field.Number',
                           {
                            xtype     : 'numberfield'         ,
+                           id        : 'nPlotsY'              , 
                            name      : 'vzon'                ,
                            labelWidth: 50                    ,
                            flex      : 0                     ,
@@ -767,7 +763,7 @@ function()
                                           fieldLabel      : 'Interval'        ,
                                           labelWidth      : 45                ,
                                           name            : 'updateInterval'  ,
-                                          value           : 5.000             ,
+                                          value           : 2.000             ,
                                           minValue        : 0.50              ,
                                           maxValue        : 90.000            ,
                                           allowDecimals   : true              ,
@@ -1469,7 +1465,8 @@ function()
                                                     xtype     : 'button'                  ,
                                                     id        : 'liveDQM-ID'              ,
                                                     text      : 'LIVE'                    ,
-                                                    tooltip   : 'Semaphore'               ,
+                                                    tooltip   : 'Toggle from static to '  +
+                                                                'automatic refresh'       ,
                                                     width     : 40                        ,
                                                     height    : 20                        ,
                                                     pressed   : true                      ,
@@ -1503,6 +1500,32 @@ function()
                                                                          }
                                                                         }
                                                                 }
+                                                   },
+                                                   {
+                                                    xtype     : 'button'                  ,
+                                                    id        : 'resetButton'             ,
+                                                    text      : 'Reset'                   ,
+                                                    tooltip   : 'Swith to new calibration',
+                                                    width     : 45                        ,
+                                                    height    : 20                        ,
+                                                    pressed   : true                      ,
+                                                    border    : true                      ,
+                                                    style     : setButtonColor('green')   ,
+                                                    listeners : {
+                                                                 click: function() 
+                                                                        {
+                                                                         theAjaxRequest(
+                                                                                        _requestURL+"RequestType=getDirectoryContents",
+                                                                                        {                                                 
+                                                                                         CookieCode: DesktopContent._cookieCodeMailbox,   
+                                                                                         Path      : "/"                                 
+                                                                                        }, 
+                                                                                        "",
+                                                                                        0 ,
+                                                                                        true
+                                                                                       ) ;                                                
+                                                                        }
+                                                                }
                                                    }
                                                   ]
                                    }
@@ -1530,7 +1553,27 @@ function()
                            );
   theViewPort_.setPosition(0,0) ;
  } ;
- 
+ //-----------------------------------------------------------------------------
+ function displayZones(total)
+ {
+  var nx = 1 ;
+  var ny = 1 ;
+  if( total ==  2 ) {nx =  2; ny =  1;}
+  if( total ==  3 ) {nx =  3; ny =  1;}
+  if( total ==  4 ) {nx =  2; ny =  2;}
+  if( total ==  5 ) {nx =  3; ny =  2;}
+  if( total ==  6 ) {nx =  3; ny =  2;}
+  if( total ==  7 ) {nx =  3; ny =  3;}
+  if( total ==  8 ) {nx =  3; ny =  3;}
+  if( total ==  9 ) {nx =  3; ny =  3;}
+  if( total == 10 ) {nx =  4; ny =  3;}
+  if( total == 11 ) {nx =  4; ny =  3;}
+  if( total == 12 ) {nx =  4; ny =  3;}
+  theCanvasModel_.setnDivX(currentCanvas_, nx) ;
+  theCanvasModel_.setnDivY(currentCanvas_, ny) ;
+  Ext.getCmp('nPlotsX').setValue(nx) ;
+  Ext.getCmp('nPlotsY').setValue(ny) ;
+ }
  //-----------------------------------------------------------------------------
  function makeGrid(where,what)
  { 
@@ -1568,14 +1611,23 @@ function()
                                      id       : 'provenance'    ,
                                      text     : where           ,
                                      flex     : 1               ,
-                                     dataIndex: 'fDisplayName' 
+                                     dataIndex: 'fDisplayName'                                      
                                     }, 
                                     { 
                                      xtype    : 'treecolumn'    ,
                                      hidden   : false           ,
                                      text     : 'type'          ,
                                      width    : 1               ,
-                                     dataIndex: 'leaf'                 
+                                     dataIndex: 'leaf'          ,
+//                                      renderer : function (value, metaData, record, rowIndex, colIndex, theStore, view) 
+//                                                 {
+//                                                  if( value )
+//                                                  {
+//                                                   metaData.style = 'background-image: url(../images/histogram2d.gif)';
+//                                                  }
+//                                                  return view.panel.columns[colIndex].defaultRenderer(value, metaData, record); ;
+//                                                 }
+//         
                                     }, 
                                     { 
                                      xtype    : 'treecolumn'    ,
@@ -1595,7 +1647,7 @@ function()
                                      xtype    : 'treecolumn'    ,
                                      hidden   : false           ,
                                      text     : 'fFoldersPath'  ,
-                                     width    : 100               ,
+                                     width    : 1               ,
                                      dataIndex: 'fFoldersPath'                
                                     }, 
                                     { 
@@ -1613,20 +1665,63 @@ function()
                                       dataIndex: 'fRFoldersPath'                
                                      }, 
                                     { 
-                                      xtype    : 'treecolumn'  ,
-                                      hidden   : false         ,
-                                      text     : 'fHistName'   ,
-                                      width    : 1             ,
+                                      xtype    : 'treecolumn'   ,
+                                      hidden   : false          ,
+                                      text     : 'fHistName'    ,
+                                      width    : 1              ,
                                       dataIndex: 'fHistName'                
                                      }
                                    ],
                       listeners  : {
                                     cellcontextmenu: function(thisTree, td, cellIndex, record, tr, rowIndex, e, eOpts)
                                                      {
-                                                      STDLINE("Path to dir: "         +
-                                                              record.data.fSystemPath + "/" +
-                                                              record.data.fRootPath   +
-                                                              record.data.fRFoldersPath) ;
+                                                      var nPlots=0;
+                                                      for(var i=0; i<record.childNodes.length; i++)
+                                                      {
+                                                       if(record.childNodes[i].data.leaf) nPlots++ ;
+                                                      }
+                                                      displayZones(nPlots) ;
+                                                      var pad = 0
+                                                      for(var i=0; i<record.childNodes.length; i++)
+                                                      {
+                                                       if(!record.childNodes[i].data.leaf) {continue;}
+                                                       var r = record.childNodes[i].data ;
+                                                       var fullPath = r.fSystemPath   +
+                                                                      r.fRootPath     + 
+                                                                      "/"             +
+                                                                      r.fRFoldersPath +
+                                                                      r.fHistName     ;
+                                                       theProvenance_.setSystemPath  (r.fSystemPath,
+                                                                                      currentCanvas_ ,
+                                                                                      pad             );
+                                                       theProvenance_.setRootPath    (r.fRootPath,
+                                                                                      currentCanvas_ ,
+                                                                                      pad             );
+                                                       theProvenance_.setFoldersPath (r.fFoldersPath,
+                                                                                      currentCanvas_ ,
+                                                                                      pad             );
+                                                       theProvenance_.setRFoldersPath(r.fRFoldersPath,
+                                                                                      currentCanvas_ ,
+                                                                                      pad             );
+                                                       theProvenance_.setHistName    (r.fHistName,
+                                                                                      currentCanvas_ ,
+                                                                                      pad             );
+                                                       theProvenance_.setFileName    (r.fFileName,
+                                                                                      currentCanvas_ ,
+                                                                                      pad             );
+                                                       theAjaxRequest(
+                                                                      _requestURL+"RequestType=getRoot",
+                                                                      {                                                       
+                                                                       CookieCode: DesktopContent._cookieCodeMailbox,         
+                                                                       RootPath  : fullPath                                 
+                                                                      }, 
+                                                                      "",
+                                                                      pad ,
+                                                                      true
+                                                                     ) ;
+                                                       pad++ ;
+                                                      }
+                                                      e.stopEvent() ; // Stop propagation to the browser                                                      
                                                      },
                                     expand         : function(expandedItem, options) 
                                                      {
@@ -1723,14 +1818,18 @@ function()
                                                         theAjaxRequest(
                                                                        _requestURL+"RequestType=getRoot",
                                                                        {                                                           
-                                                                        CookieCode: DesktopContent._cookieCodeMailbox         ,                             
+                                                                        CookieCode: DesktopContent._cookieCodeMailbox,                             
                                                                         RootPath  : currentRootObject_                                
-                                                                       }                                , 
-                                                                       ""                               ,
-                                                                       thePad                           ,
+                                                                       }                                             ,
+                                                                       ""                                            ,
+                                                                       thePad                                        ,
                                                                        true
                                                                       ) ;
                                                        }
+                                                      }
+                                                      else
+                                                      {
+                                                       alert("Just clicked on a folder: no function implemented yet") ;
                                                       }
                                                 },
                                     headerclick: function(ct, column, e, t, eOpts)
@@ -1816,6 +1915,7 @@ function()
                                       load         : function( thisStore, records, successful, operation, node, eOpts )
                                                      {
                                                        STDLINE("Load was succesful? "+successful) ;
+                                                       if( !successful ) {alert("The state machine returned an error!") ;}
                                                      }
                                      }
                          }
@@ -1845,6 +1945,7 @@ function()
   }
   theRequestURL = theRequestURL.replace(/\/\//g, "/") ;
   theRequestURL = theRequestURL.replace(/http:\//, "http://") ;
+  STDLINE("====================== AJAX Request begin ===============================");
   STDLINE("Ajax request issued to " + theRequestURL      + " at " + time);
   STDLINE("theParams.RootPath: "    + theParams.RootPath                );
   Ext.Ajax.request(                                                                                                                       
@@ -1857,8 +1958,17 @@ function()
                     params : theParams    ,                                                                                                          
                     rawData: theRawData   ,                                                                                                  
                     timeout: 50000        ,                                                                                                       
-                    success: function(response, request)                                                                                  
+                    success: function(response, request)                                                                                
                              { 
+                              if( response.responseText.match("An error was encountered"))
+                              {
+                               var errMsg = response.responseText.match(/<Error value='(.*)?'\/>/) ;
+                               Ext.MessageBox.alert(                                                                                      
+                                                    'Something went wrong:',                                                              
+                                                    errMsg                                                
+                                                   );                                                                                     
+                               return ;
+                              }
                               if(getXMLValue(response,"headOfSearch") == 'located') // Returns the list of available fRooPaths                                                                     
                               { // Get list of head-points
                                var dirs     = [] ;
@@ -1891,6 +2001,7 @@ function()
                                                                theProvenance_);
                                }
                                displayPlot_                  (object, thePad );
+                               STDLINE("====================== AJAX Request end ===============================");
                                return ;
                               }
                               if(getXMLValue(response,"dir") == 'LIVE_DQM.root') 
@@ -1900,6 +2011,7 @@ function()
                                makeGrid ('LIVE_DQM.root', 'Directories and files'        );
                               }                                                                    
                               displayStatus("Done loading data!") ;
+                              STDLINE("====================== AJAX Request end ===============================");
                              },                                                                                                           
                     failure: function(response, options)                                                                                  
                              {                                                                                                            
@@ -1973,6 +2085,7 @@ function()
  displayPlot_ = function(object, currentPad)
                 {
                  if( ! object ) return ;
+                 STDLINE("Displaying plot -------------------------------->") ;
                  var nx        = theCanvasModel_.getnDivX   (currentCanvas_);
                  var ny        = theCanvasModel_.getnDivY   (currentCanvas_);
 //                  STDLINE(      "Plot: "      + 
@@ -2046,13 +2159,14 @@ function()
    var pro  = objs[i].provenance                                                     ;
    var pad = i ;
    var padC = 'canvas' + currentCanvas_ + '_' + i ;
-//   pro.dumpAll("Redraw canvas")                                                    ;
-//    STDLINE("  Object "+i                                                            );
-//    STDLINE("  pad: "+padC+" fSystemPath_       : "+pro.fSystemPath_[padC]           );                             
-//    STDLINE("  pad: "+padC+" fRootPath_         : "+pro.fRootPath_  [padC]           );
-//    STDLINE("  pad: "+padC+" fRequestURL_       : "+pro.fRequestURL_[padC]           );
-//    STDLINE("  pad: "+padC+" fParams_.CookieCode: "+pro.fParams_    [padC].CookieCode); 
-//    STDLINE("  pad: "+padC+" fParams_.RootPath  : "+pro.fParams_    [padC].RootPath  ); 
+   STDLINE("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ >>>>> |"+pro.fRootPath_[padC]+"|");
+   pro.dumpAll("Redraw canvas")                                                    ;
+   STDLINE("  Object "+i                                                            );
+   STDLINE("  pad: "+padC+" fSystemPath_       : "+pro.fSystemPath_[padC]           );                             
+   STDLINE("  pad: "+padC+" fRootPath_         : "+pro.fRootPath_  [padC]           );
+   STDLINE("  pad: "+padC+" fRequestURL_       : "+pro.fRequestURL_[padC]           );
+   STDLINE("  pad: "+padC+" fParams_.CookieCode: "+pro.fParams_    [padC].CookieCode); 
+   STDLINE("  pad: "+padC+" fParams_.RootPath  : "+pro.fParams_    [padC].RootPath  ); 
    if( pro.fRootPath_[padC] == 'LIVE_DQM.root') 
    {
     theAjaxRequest(pro.fRequestURL_[padC], 

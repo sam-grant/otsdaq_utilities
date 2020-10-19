@@ -1,9 +1,12 @@
 .controlButtons      {
 		      background-color : #ffffff ; !important
                      }
-.histogram-leaf-icon {
+.x-tree-icon-leaf    {
                       background-image: url(../images/histogram.gif) !important;
                      }
-.x-tree-icon-custom  {
+.isticket            {
+                      background-image: url(../images/histogram2d.gif) !important;
+                     }
+.x-tree-icon-parent  {
                       background-image: url(../images/folder.gif)    !important;
                      }

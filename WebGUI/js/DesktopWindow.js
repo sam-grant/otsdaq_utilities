@@ -354,7 +354,7 @@ else {
 			//firefox linux shows circle-arrow character slightly bigger than other firefox
 			tmpEl.innerHTML = 
 					"<div style='font-size:21px; margin: -1px 0 0 -3px; color:inherit;'  "+
-					"title='Click to refresh onl this window'>↻</div>";        	
+					"title='Click to refresh only this window'>↻</div>";        	
 			//_fullScreenRefreshBtn.style.height = "16px";
 			//_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
 		}
@@ -364,7 +364,7 @@ else {
 			//windows shows circle-arrow bigger
 			tmpEl.innerHTML = 
 					"<div style='font-size:21px; margin: -2px 0 0 -2px; color:inherit;' "+
-					"title='Click to refresh onl this window'>↻</div>";    
+					"title='Click to refresh only this window'>↻</div>";    
 		}
 		else if(Debug.BROWSER_TYPE != Debug.BROWSER_TYPE_FIREFOX &&
 				Debug.OS_TYPE == Debug.OS_TYPE_WINDOWS) //Windows chrome
@@ -372,14 +372,14 @@ else {
 			//windows shows circle-arrow bigger
 			tmpEl.innerHTML = 
 					"<div style='font-size:20px; margin: 0 0 0 0; color:inherit;' "+
-					"title='Click to refresh onl this window'>↻</div>";    
+					"title='Click to refresh only this window'>↻</div>";    
 		}
 		else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
 		{
 			//firefox shows circle-arrow character smaller
 			tmpEl.innerHTML = 
 					"<div style='font-size:28px; margin: -4px 0 0 -1px; color:inherit;'  "+
-					"title='Click to refresh onl this window'>↻</div>";        	
+					"title='Click to refresh only this window'>↻</div>";        	
 			//_fullScreenRefreshBtn.style.height = "16px";
 			//_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
 		}
@@ -388,7 +388,7 @@ else {
 		{
 			tmpEl.innerHTML = 
 					"<div style='font-size:21px; margin: -2px 0 0 1px; color:inherit;' "+
-					"title='Click to refresh onl this window'>↻</div>";         	
+					"title='Click to refresh only this window'>↻</div>";         	
 			//_fullScreenRefreshBtn.style.height = "16px";
 			//_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
 		}
