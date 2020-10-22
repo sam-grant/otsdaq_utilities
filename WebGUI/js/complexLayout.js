@@ -682,16 +682,16 @@ function()
  // Resize the div signed by id to width/height sizes
  function changeHistogramPanelSize(thisPanel, width, height, from)      
  {
-  STDLINE("getdiv: "+getCanvasDiv_(currentCanvas_)) ;
   var div = document.getElementById(getCanvasDiv_(currentCanvas_));
-  div.style.width  = width  - 20                                  ;
-  div.style.height = height - 30                                  ;
+  var w = width  * 1.5 ; w = "width:"  + w + "px;" ; 
+  var h = height * 0.9 ; h = "height:" + h + "px;" ; 
+  div.setAttribute("style",w) ;
+  div.setAttribute("style",h) ;
  } 
              
  //-----------------------------------------------------------------------------------------------
  function createCanvasTab(tabNumber)
  {
-  STDLINE("Creating canvas tab number "+tabNumber) ;
   var closable = false ;
   if(tabNumber>0) closable = true ;
   canvasTabs_.push(Ext.create(
@@ -2207,18 +2207,19 @@ function()
   STDLINE("^^^^^^^^^^^ Redrawing canvas "+currentCanvas_ + " periodicPlot_ID_: "+ periodicPlotID_[currentCanvas_] ) ;
   for(var i=0; i<objs.length; ++i)
   {
-   var obj  = objs[i].object                                                         ;
-   var pro  = objs[i].provenance                                                     ;
-   var pad = i ;
-   var padC = 'canvas' + currentCanvas_ + '_' + i ;
-   STDLINE("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ >>>>> |"+pro.fRootPath_[padC]+"|");
-   pro.dumpAll("Redraw canvas")                                                    ;
-   STDLINE("  Object "+i                                                            );
-   STDLINE("  pad: "+padC+" fSystemPath_       : "+pro.fSystemPath_[padC]           );                             
-   STDLINE("  pad: "+padC+" fRootPath_         : "+pro.fRootPath_  [padC]           );
-   STDLINE("  pad: "+padC+" fRequestURL_       : "+pro.fRequestURL_[padC]           );
-   STDLINE("  pad: "+padC+" fParams_.CookieCode: "+pro.fParams_    [padC].CookieCode); 
-   STDLINE("  pad: "+padC+" fParams_.RootPath  : "+pro.fParams_    [padC].RootPath  ); 
+   var obj  = objs[i].object                                                            ;
+   var pro  = objs[i].provenance                                                        ;
+   var pad = i                                                                          ;
+   var padC = 'canvas' + currentCanvas_ + '_' + i                                       ;
+   STDLINE("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ >>>>> |"+pro.fRootPath_[padC]+"|")       ;
+   pro.dumpAll("Redraw canvas")                                                         ;
+   STDLINE("  Object: "+i                                                              );
+   STDLINE("  padC  : "+padC                                                           );
+   STDLINE("  pad   : "+padC+" fSystemPath_       : "+pro.fSystemPath_[padC]           );                          
+   STDLINE("  pad   : "+padC+" fRootPath_         : "+pro.fRootPath_  [padC]           );
+   STDLINE("  pad   : "+padC+" fRequestURL_       : "+pro.fRequestURL_[padC]           );
+   STDLINE("  pad   : "+padC+" fParams_.CookieCode: "+pro.fParams_    [padC].CookieCode); 
+   STDLINE("  pad   : "+padC+" fParams_.RootPath  : "+pro.fParams_    [padC].RootPath  ); 
    if( pro.fRootPath_[padC] == 'LIVE_DQM.root') 
    {
     theAjaxRequest(pro.fRequestURL_[padC], 
