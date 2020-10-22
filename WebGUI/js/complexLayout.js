@@ -1757,7 +1757,6 @@ function()
                                                        theProvenance_.setFileName    (r.fFileName    ,
                                                                                       currentCanvas_ ,
                                                                                       pad             );
-//alert("fullPath: "+fullPath) ;
                                                        theAjaxRequest(
                                                                       _requestURL+"RequestType=getRoot",
                                                                       {                                                       
@@ -1863,6 +1862,7 @@ function()
                                                         STDLINE('RequestType       : getRootObject'      )                   ;     
                                                         STDLINE('currentRootObject_: '+currentRootObject_)                   ;     
                                                         STDLINE('_requestURL       : '+_requestURL       )                   ;     
+//("currentRootObject_: "+currentRootObject_) ;
                                                         theAjaxRequest(
                                                                        _requestURL+"RequestType=getRoot",
                                                                        {                                                           
@@ -2137,49 +2137,35 @@ function()
                   alert("No object found to display") ;
                   return ;
                  }
-                 STDLINE("Displaying plot -------------------------------->") ;
-                 var nx        = theCanvasModel_.getnDivX   (currentCanvas_);
-                 var ny        = theCanvasModel_.getnDivY   (currentCanvas_);
-//                  STDLINE(      "Plot: "      + 
-//                                object.fTitle + 
-//                                ' on pad: '   +
-//                                currentPad    ) ;
-                 displayStatus("Plot: "      + 
-                               object.fTitle + 
-                               ' on pad: '   +
-                               currentPad    ) ;
+                 var nx        = theCanvasModel_.getnDivX   (currentCanvas_) ;
+                 var ny        = theCanvasModel_.getnDivY   (currentCanvas_) ;
+                 displayStatus("Plot: "                                     + 
+                               object.fTitle                                + 
+                               ' on pad: '                                  + 
+                               currentPad    )                               ;
 
                  gridDivision_ = "gridi" + nx + "x" + ny ;
                  mdi_ = new JSROOT.GridDisplay(getCanvasDiv_(currentCanvas_), 
                                                              gridDivision_ ) ;
                  if (mdi_!=null) theFrame = mdi_.FindFrame  (currentPad     , 
                                                              false         ) ;
-                 if( nx == 1 & ny == 1 ) 
+                 if( nx == 1 && ny == 1 ) 
                  {
                   theFrame = 'canvas' + currentCanvas_                       ;
+                  JSROOT.cleanup(getCanvasDiv_(   currentCanvas_))           ;
+                  theCanvasModel_.resetCurrentPad(currentCanvas_)            ;
                  } else {
                   theFrame = 'canvas' + currentCanvas_ + '_' + currentPad    ;
                  }
-//                  STDLINE("Plotting "      +
-//                          object._typename +
-//                          ": "             +
-//                          object.fTitle    +
-//                          " on: "          +
-//                          theFrame        );
-
-//                  STDLINE("Options selected: "+opts) ;
-                 options = applyOptions(object._typename) ;
+                 options = applyOptions(object._typename)                    ;
                  if( superimposeFlag_ )
                  {
-                   STDLINE("Superimpose on "+theFrame+" with options "+options+"...") ;
-                   JSROOT.draw  (
+                   JSROOT.draw (
                                 theFrame,
                                 object  ,
                                 options
                                ); 
                  } else {
-                   STDLINE("Do NOT superimpose "+object.fTitle+" on "+theFrame+" with options "+options+"...") ;
-//                  if( nx == 1 && ny == 1 ) JSROOT.cleanup(getCanvasDiv_(currentCanvas_))    ;
                   JSROOT.redraw(
                                 theFrame,
                                 object  ,
