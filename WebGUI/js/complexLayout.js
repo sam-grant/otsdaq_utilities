@@ -1442,7 +1442,7 @@ function()
                                     split       : true                   ,
                                     width       : 200                    ,
                                     minWidth    : 175                    ,
-                                    maxWidth    : 1000                   ,
+                                    maxWidth    : 3000                   ,
                                     collapsible : false                  ,
                                     animCollapse: true                   ,
                                     multi       : true                   ,
@@ -1521,28 +1521,19 @@ function()
                                                                 }
                                                    },
                                                    {
-                                                    xtype     : 'button'                  ,
-                                                    id        : 'resetButton'             ,
-                                                    text      : 'Reset'                   ,
-                                                    tooltip   : 'Swith to new calibration',
-                                                    width     : 45                        ,
-                                                    height    : 20                        ,
-                                                    pressed   : true                      ,
-                                                    border    : true                      ,
-                                                    style     : setButtonColor('green')   ,
+                                                    xtype     : 'button'                       ,
+                                                    id        : 'resetButton'                  ,
+                                                    text      : 'Reset'                        ,
+                                                    tooltip   : 'Reset canvas divisions to 1x1',
+                                                    width     : 45                             ,
+                                                    height    : 20                             ,
+                                                    pressed   : true                           ,
+                                                    border    : true                           ,
+                                                    style     : setButtonColor('green')        ,
                                                     listeners : {
                                                                  click: function() 
                                                                         {
-                                                                         theAjaxRequest(
-                                                                                        _requestURL+"RequestType=getDirectoryContents",
-                                                                                        {                                                 
-                                                                                         CookieCode: DesktopContent._cookieCodeMailbox,   
-                                                                                         Path      : "/"                                 
-                                                                                        }, 
-                                                                                        "",
-                                                                                        0 ,
-                                                                                        true
-                                                                                       ) ;                                                
+                                                                         displayZones(1) ;
                                                                         }
                                                                 }
                                                    }
@@ -1577,6 +1568,7 @@ function()
  {
   var nx = 1 ;
   var ny = 1 ;
+  if( total ==  1 ) {nx =  1; ny =  1;}
   if( total ==  2 ) {nx =  2; ny =  1;}
   if( total ==  3 ) {nx =  3; ny =  1;}
   if( total ==  4 ) {nx =  2; ny =  2;}
@@ -1630,7 +1622,13 @@ function()
                                      id       : 'provenance'    ,
                                      text     : what            ,
                                      flex     : 1               ,
-                                     dataIndex: 'fDisplayName'                                      
+                                     dataIndex: 'fDisplayName'  ,                                     
+                                     listeners: {
+                                                 focus: function()
+                                                        {
+                                                         alert(what) ;
+                                                        }
+                                                }
                                     }, 
                                     { 
                                      xtype    : 'treecolumn'    ,
@@ -1670,19 +1668,19 @@ function()
                                      dataIndex: 'fFoldersPath'                
                                     }, 
                                     { 
-                                      xtype    : 'treecolumn'   ,
-                                      hidden   : false          ,
-                                      text     : 'fFileName'    ,
-                                      width    : 1              ,
-                                      dataIndex: 'fFileName'                
-                                     }, 
-                                     { 
-                                      xtype    : 'treecolumn'   ,
-                                      hidden   : false          ,
-                                      text     : 'fRFoldersPath',
-                                      width    : 1              ,
-                                      dataIndex: 'fRFoldersPath'                
-                                     }, 
+                                     xtype    : 'treecolumn'    ,
+                                     hidden   : false           ,
+                                     text     : 'fFileName'     ,
+                                     width    : 1               ,
+                                     dataIndex: 'fFileName'                
+                                    }, 
+                                    { 
+                                     xtype    : 'treecolumn'    ,
+                                     hidden   : false           ,
+                                     text     : 'fRFoldersPath' ,
+                                     width    : 1               ,
+                                     dataIndex: 'fRFoldersPath'                
+                                    }, 
                                     { 
                                       xtype    : 'treecolumn'   ,
                                       hidden   : false          ,
@@ -1698,11 +1696,8 @@ function()
                                                      },
                                     cellcontextmenu: function(thisTree, td, cellIndex, record, tr, rowIndex, e, eOpts)
                                                      {
-//                                                      alert("Provenance: "+Ext.getCmp('navigator').title) ;
-//                                                      alert("selectedItem_: "+selectedItem_) ;
                                                       if(!(selectedItem_.match(/getMeLIVE|getRootObject/))) 
                                                       {
-//                                                       alert("Wrong Flag: ") ;
                                                        e.stopEvent() ; // Stop propagation to the browser 
                                                        return ;
                                                       }
@@ -1722,22 +1717,23 @@ function()
                                                        var fullPath = "" ;
                                                        if(selectedItem_.match(/getMeLIVE/))
                                                        {
-                                                        fullPath = /*r.fSystemPath   +*/"/" +
-                                                                      r.fRootPath     +
-                                                                      "/"             +
-                                                                      r.fRFoldersPath +
-                                                                      r.fHistName     ;
+                                                        fullPath = "/" +
+                                                                   r.fRootPath     +
+                                                                   "/"             +
+                                                                   r.fRFoldersPath +
+                                                                   r.fHistName     ;
                                                        }
                                                        else
                                                        {
-                                                        fullPath = /*r.fSystemPath   +*/"/" +
-                                                                      r.fRootPath     +
-                                                                      "/"             +
-                                                                      r.fFoldersPath  +
-                                                                      r.fFileName     + 
-                                                                      "/"             +
-                                                                      r.fRFoldersPath +
-                                                                      r.fHistName     ;
+                                                        if (typeof r.fFoldersPath === 'undefined') {r.fFoldersPath="";}
+                                                        fullPath = "/" +
+                                                                   r.fRootPath     +
+                                                                   "/"             +
+                                                                   r.fFoldersPath  +
+                                                                   r.fFileName     + 
+                                                                   "/"             +
+                                                                   r.fRFoldersPath +
+                                                                   r.fHistName     ;
                                                        }
                                                        theProvenance_.setSystemPath  (r.fSystemPath  ,
                                                                                       currentCanvas_ ,
@@ -1774,7 +1770,11 @@ function()
                                     expand         : function(expandedItem, options) 
                                                      {
                                                       STDLINE("expanded") ;
-                                                     },                                   
+                                                     },  
+                                    itemmouseenter : function(thisObj, record, item, index, e, eOpts )
+                                                     {
+                                                      displayStatus("Ci entro:") ;
+                                                     },                                 
                                     itemclick      : function(thisItem, record, item, index, e, eOpts)
                                                      {
                                                       var selection = this.getSelection()                                    ;
@@ -2034,7 +2034,27 @@ function()
                               else if(!(typeof getXMLValue(response,"rootType") === 'undefined')) // Returns the plot to display                                                                     
                               { // get specific ROOT Object and display
                                var rootName  = getXMLValue (response,"path"    );              
-                               var rootJSON  = getXMLValue (response,"rootJSON");          
+                               var rootJSON  = getXMLValue (response,"rootJSON");
+//   mmsg = Ext.create(
+//                      'Ext.window.Window', 
+//                      {
+//                       title    : 'The configuration manager',
+//                       height   : 800                        ,
+//                       width    : 800                        ,
+//                       margins  : '5 5 5 5'                  ,
+//                       padding  : '5 5 5 5'                  ,
+//                       items    : [
+//                                   {
+//                                    xtype : 'textfield',
+//                                    width : 800,
+//                                    height: 800,
+//                                    value : rootJSON
+//                                   }
+//                                  ]
+//                      }
+//                     ) ;
+//   mmsg.setPosition(0,52) ;
+//   mmsg.show()            ;      
                                var object    = JSROOT.parse(rootJSON           );
                                if( updateProvenance ) 
                                {
@@ -2124,8 +2144,6 @@ function()
    }
   }
   opts = opts.replace(/,$/,"") ;
-//   var o = Ext.getCmp('ID-Opts-TF').getValue() ;
-//   if( o != '') opts = o ;
   return opts ;
  }
  
@@ -2147,8 +2165,8 @@ function()
                  gridDivision_ = "gridi" + nx + "x" + ny ;
                  mdi_ = new JSROOT.GridDisplay(getCanvasDiv_(currentCanvas_), 
                                                              gridDivision_ ) ;
-                 if (mdi_!=null) theFrame = mdi_.FindFrame  (currentPad     , 
-                                                             false         ) ;
+//                  if (mdi_!=null) theFrame = mdi_.FindFrame  (currentPad     , 
+//                                                              false         ) ;
                  if( nx == 1 && ny == 1 ) 
                  {
                   theFrame = 'canvas' + currentCanvas_                       ;
