@@ -1967,10 +1967,12 @@
         			} //end 2D state grid loop            	            	
             }
 
+			//==============================================================================
 			//drawCurrentStateAndTransitions ~~
 			//	called to draw current state, _currState, in middle
             //	previous state above and display valid transitions below
-			function drawCurrentStateAndTransitions() {
+			function drawCurrentStateAndTransitions() 
+			{
 				
 				if(_altStateDrawingMode)
 				{
@@ -1983,7 +1985,10 @@
 			
                 //draw previous state at top
 				if(_prevState != -1) drawState(_prevState,
-						_canvas.width/2+_perimeterRadius,_canvas.height/2-_perimeterRadius);
+						_canvas.width/2+_perimeterRadius,
+						_stateOvalRadius*2);
+						// _canvas.height/2-
+						// 	(_perimeterRadius > _stateOvalRadius*4?_perimeterRadius:_stateOvalRadius*4));
                 
                 //get all of transitions for currState
                 _currStateTransArr = new Array();                
@@ -2042,11 +2047,13 @@
 							true /*drawSelectedComponents*/);
                 }
                 
-			}
+			} //end drawCurrentStateAndTransitions()
 
+			//==============================================================================
 			//altDrawTransition
 			//	draws arrow for state transition from (startx, starty) towards <x, y> vector
-			function altDrawTransition(stateIndex, x, y, startx, starty, isBidir, isSelected) {
+			function altDrawTransition(stateIndex, x, y, startx, starty, isBidir, isSelected)
+			{
 				
 				var ALT_EXTRA_MARGIN = 8;				
 				
@@ -2137,11 +2144,13 @@
 				}
 
 				_context.restore(); //matching save/restore 1
-			}
+			} //end altDrawTransition()
 
+			//==============================================================================
 			//drawTransition
 			//	draws arrow for state transition from (startx, starty) towards <x, y> vector
-			function drawTransition(stateIndex, x, y, startx, starty, drawSelectedComponents) {				
+			function drawTransition(stateIndex, x, y, startx, starty, drawSelectedComponents) 
+			{				
 				var isSelected = _selectedTransition != -1 && 
 						_currStateTransArr[_selectedTransition] !== undefined &&
 						_transitions[_currStateTransArr[_selectedTransition]] !== undefined &&
@@ -2216,20 +2225,26 @@
 				}
                 
 				_context.restore(); //matching save/restore 1
-            }
+            } //end drawTransition()
 
+			//==============================================================================
 			//drawSelfTransition
 			//	draws loop-back arrow for self state transition
 			//	isSelected added for alt drawing mode
-			function drawSelfTransition(stateIndex, x, y, startx, starty, isSelected, drawSelectedComponents) {
-				
+			function drawSelfTransition(stateIndex, x, y, startx, starty, isSelected, drawSelectedComponents) 
+			{
 				var mag = Math.sqrt(x*x+y*y);
 				var up = [x/mag,y/mag]; //from canvas center towards state pos
                 var innerRadius = _altStateDrawingMode?
                 		_stateOvalRadius*2- _stateOvalRadius*2*0.2:
 						(_stateOvalRadius*2 - (_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2)*0.2); //make arrows all same width
-                if(innerRadius < 10) innerRadius = 10;
-                var outerRadius = _stateOvalRadius*2;
+				//if(innerRadius < 10) innerRadius = 10;
+				//innerRadius *=4;
+				var outerRadius = _stateOvalRadius*2;
+				if(innerRadius < outerRadius*0.8) innerRadius = (outerRadius*0.8)|0;
+				//outerRadius /= 4;
+				//innerRadius /=8;
+				console.log("innerRadius",innerRadius,"outerRadius",outerRadius);
                 var arrowPos = [startx + (_stateOvalRadius*2 + outerRadius + _ARROW_MARGIN*2)*up[0],
 								starty + (_stateOvalRadius*2 + outerRadius + _ARROW_MARGIN*2)*up[1]];
                 
@@ -2257,7 +2272,8 @@
 					var drawPos = [arrowPos[0] + outerRadius*Math.cos(startAng),
 								   arrowPos[1] + outerRadius*Math.sin(startAng)]; //setup starting position
 					var arrowSz = _altStateDrawingMode?_stateOvalRadius*2:
-							(_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2); //match other arrow size
+							(_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2)/2; //match other arrow size
+							
 					var jutSz = 0.1;
 					var pointSz = 0.3;
 
@@ -2331,7 +2347,7 @@
 				}
                 
 				_context.restore(); //matching save/restore 1
-            }
+            } //end drawSelfTransition()
 
 			//getStateDrawingColor 
 			//	return proper color for drawing based on state index i
