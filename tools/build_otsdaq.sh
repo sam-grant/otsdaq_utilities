@@ -27,7 +27,6 @@ read -a qualarray <<<"$qual_set"
 IFS=$IFS_save
 basequal=
 squal=
-artver=
 pyflag=
 build_db=1
 
@@ -42,50 +41,7 @@ for qual in ${qualarray[@]};do
 		c*)		basequal=${qual};;
 		py*)	pyflag=${qual};;
 		nodb)	build_db=0;;
-		s67)
-			squal=s67
-			artver=v2_11_01
-			;;
-		s73)
-			squal=s73
-			artver=v2_11_05
-			;;
-		s82)
-			squal=s82
-			artver=v3_02_04
-			;;
-		s83)
-			squal=s83
-			artver=v3_02_05
-			;;
-		s85)
-			squal=s85
-			artver=v2_13_00
-			;;
-		s87)
-			squal=s87
-			artver=v3_03_00
-			;;
-		s89)
-			squal=s89
-			artver=v3_03_01
-			;;
-		s92)
-			squal=s92
-			artver=v3_02_06c
-			;;
-		s94)
-			squal=s94
-			artver=v3_04_00
-			;;
-		s96)
-			squal=s96
-			artver=v3_05_00
-			;;
-		s101)
-			squal=s101
-			artver=v3_06_03
-			;;
+		s*)     squal=${qual};;
 		esac
 done
 
@@ -111,8 +67,6 @@ case ${build_type} in
 esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
-art_dotver=`echo ${artver} | sed -e 's/_/./g' | sed -e 's/^v//'`
-artdaq_dotver=`echo ${artdaq_ver} | sed -e 's/_/./g' | sed -e 's/^v//'`
 
 echo "building the otsdaq distribution for ${version} ${dotver} ${qual_set} ${build_type}"
 
@@ -181,11 +135,6 @@ cat ${artdaqManifest}|grep -v source|sort|uniq >>${artdaqManifest}.tmp
 mv ${artdaqManifest}.tmp ${artdaqManifest}
 cat ${otsdaqManifest}|grep -v source|sort|uniq >>${otsdaqManifest}.tmp
 mv ${otsdaqManifest}.tmp ${otsdaqManifest}
-
-cat ${blddir}/art-${art_dotver}-${upsflavor}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq-${artdaq_dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat ${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt|grep -v source|sort|uniq >>${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
-mv ${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
 
 if [ $copyback_deps == "false" ]; then
   echo "Removing art and artdaq bundle products"
