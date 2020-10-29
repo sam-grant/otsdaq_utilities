@@ -3711,7 +3711,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 		FILE* fp = fopen((mergeReportBasePath + mergeReportPath).c_str(),"w");
 		if(fp)
 		{
-			fprintf(fp,mergeReport.str().c_str());
+			fprintf(fp,"%s",mergeReport.str().c_str());
 			fclose(fp);
 			xmlOut.addTextElementToData("MergeReportFile", "/$USER_DATA/" + mergeReportPath);
 		}
