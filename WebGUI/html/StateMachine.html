@@ -2089,8 +2089,11 @@
 				var up = [x/mag,y/mag];
 				var lt = [y/mag,-x/mag];				
 				var arrowOff = _stateOvalRadius*2 + _ARROW_MARGIN + ALT_EXTRA_MARGIN;
+				//add some limits to avoid negative arrows
 				if(arrowOff*2 >= _perimeterRadius)
 					arrowOff = _perimeterRadius/4;
+				if(_perimeterRadius - arrowOff*2 < _stateOvalRadius)
+					arrowOff = _stateOvalRadius*3/2;
 				var arrowSz = 
 						[_stateOvalRadius*2,
 						 _perimeterRadius - arrowOff*2];
