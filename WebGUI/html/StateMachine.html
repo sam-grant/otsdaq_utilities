@@ -366,6 +366,8 @@
             	_transitionResultingState;
             	
 			var _fsmName, _fsmWindowName;
+
+			var _suppressReloginPopups = false;
 			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -417,6 +419,7 @@
 			    {    	
 			    	Debug.log("Handling login notification...");
 			    	Debug.closeErrorPop();
+					_suppressReloginPopups = true;
 			    	//get state machine from server
 					DesktopContent.XMLHttpRequest(
 						"Request?RequestType=getStateMachine" + 
@@ -924,9 +927,14 @@
 											". (Likely there was a error transitioning a Supervisor)",Debug.HIGH_PRIORITY);
 								}
 								else
-									Debug.log("State was changed unexpectedly from " + 
+								{
+									if(!_suppressReloginPopups)
+										Debug.log("State was changed unexpectedly from " + 
 											_stateNames[_currState] + " to " + _stateNames[i] +
 											". (Likely the server was restarted or another user changed the state)",Debug.HIGH_PRIORITY);
+									
+								}
+								_suppressReloginPopups = false;
 
 							    
 							    if(_states[i] == "F") //Failed state occured, so get error message
