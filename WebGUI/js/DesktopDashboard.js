@@ -18,7 +18,8 @@ if (typeof Debug == 'undefined')
 	
 if (typeof Desktop == 'undefined') 
 	console.log('ERROR: Desktop is undefined! Must include Desktop.js before DesktopDashboard.js');
-else {
+else 
+{
 
 		
 	////////////////////////////////////////////////////////////////////
@@ -26,8 +27,10 @@ else {
 	//define Desktop.createDashboard to return dashboard class	
 	////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////
-	Desktop.createDashboard = function(z) {
-        if(false === (this instanceof Desktop.createDashboard)) {
+	Desktop.createDashboard = function(z)
+	{
+		if(false === (this instanceof Desktop.createDashboard)) 
+		{
 			//here to correct if called as "var v = Desktop.createDesktop();"
 			//	instead of "var v = new Desktop.createDesktop();"
 	        return new Desktop.createDashboard(z);
@@ -100,8 +103,10 @@ else {
 		//------------------------------------------------------------------
 		//create PRIVATE members functions ----------------------
 		//------------------------------------------------------------------
+
       	//=====================================================================================
-        var _toggleWindowDashboard = function(event,setValue) {        	
+		var _toggleWindowDashboard = function(event,setValue) 
+		{        	
         	
         	if(setValue !== undefined)
         		_displayWindowDashboard = setValue;
@@ -110,16 +115,16 @@ else {
 
         	_setDashboardWidth(); //undefined to keep width and save status to URL
         	
-//			var newURL = window.parent.window.location.pathname +
-//									window.parent.window.location.search +
-//									"#"+
-//									(_displayWindowDashboard?"1":"0"); 
-//			
-//			//update browser url so refresh will give same desktop experience
-//			if(!Desktop.isWizardMode()) 
-//				window.parent.window.history.replaceState('ots', 'ots', newURL);    
-//			else
-//				window.parent.window.history.replaceState('ots wiz', 'ots wiz', newURL); 
+			// var newURL = window.parent.window.location.pathname +
+			// 						window.parent.window.location.search +
+			// 						"#"+
+			// 						(_displayWindowDashboard?"1":"0"); 
+			
+			// //update browser url so refresh will give same desktop experience
+			// if(!Desktop.isWizardMode()) 
+			// 	window.parent.window.history.replaceState('ots', 'ots', newURL);    
+			// else
+			// 	window.parent.window.history.replaceState('ots wiz', 'ots wiz', newURL);
 			
             _windowDashboard.style.display = _displayWindowDashboard?"inline":"none";
             Desktop.desktop.redrawDesktop();
@@ -219,13 +224,15 @@ else {
 	        }
 	        if(i == document.styleSheets.length) Debug.log("FAIL -- Could not locate CSS Rule for Dashboard Window.",Debug.HIGH_PRIORITY);
 	        return 0;
-		}
+		} //end _getDashboardWindowWidthCSSRule()
 		
 				
+		//==============================================================================
 		//tile the desktop windows in various ways
         var _windowOrganizeMode = -1;
         var _windowOrganizeModeTimeout = 0;
-		var _windowDashboardOrganize = function() {
+		var _windowDashboardOrganize = function() 
+		{
 		
 			//reset mode after 10 seconds
 			clearTimeout(_windowOrganizeModeTimeout);
@@ -255,7 +262,8 @@ else {
 				var ww = Math.floor(dw/numOfWindows);
 				var wh = dh;
 				
-				while(ww*2 < wh) {				
+				while(ww*2 < wh) 
+				{				
 					//Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
 					ww = Math.floor(dw/Math.ceil(numOfWindows/++rows)); wh = Math.floor(dh/rows);				
 				}  //have too much height, so add row
@@ -266,21 +274,26 @@ else {
 						
 				
 				//we know size, now place windows
+
 				
+				Desktop.desktop.lastTileWinPositions = {}; //reset, if windows are tiled, this map will be updated with wid => x,y,w,h of each window
+				
+
 				//first the bigger one
 				var ic = 0; //counter for new row
 				if(_windowOrganizeMode && numOfWindows > 1)
 				{
 					var i = _windowOrganizeMode-1; //target window index
 					
-					win = Desktop.desktop.getWindowByIndex(
-							document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
+					win = Desktop.desktop.getWindowByIndex(i);
+							//document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
 
 					if(win.isMinimized()) win.unminimize();
 					if(win.isMaximized()) win.unmaximize();
 					
 					//make double wide
-					win.setWindowSizeAndPosition(xx,yy,ww*2,wh);						
+					win.setWindowSizeAndPosition(xx,yy,ww*2,wh);	
+					Desktop.desktop.lastTileWinPositions[win.getWindowId()] = [xx,yy,ww*2,wh];					
 
 					xx += ww*2;
 					ic+=2;
@@ -291,21 +304,28 @@ else {
 				}
 				
 				//now the other windows
-				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {		
-					
-					if(_windowOrganizeMode && numOfWindows > 1 && i == _windowOrganizeMode-1) continue; //skip the window already placed
-					
-					win = Desktop.desktop.getWindowByIndex(
-							document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
+				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) 
+				{							
+					if(_windowOrganizeMode && numOfWindows > 1 && i == _windowOrganizeMode-1) 
+						continue; //skip the window already placed
+										
+					win = Desktop.desktop.getWindowByIndex(i);
+						//document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
 
 					if(win.isMinimized()) win.unminimize();
 					if(win.isMaximized()) win.unmaximize();
 
 					//if last window fill remaining space rows*cols > numOfWindows
 					if(i == Desktop.desktop.getNumberOfWindows()-1) 
+					{
 						win.setWindowSizeAndPosition(xx,yy,ww*(1 + (rows*cols - numOfWindows)),wh);
+						Desktop.desktop.lastTileWinPositions[win.getWindowId()] = [xx,yy,ww*(1 + (rows*cols - numOfWindows)),wh];	
+					}
 					else
+					{
 						win.setWindowSizeAndPosition(xx,yy,ww,wh);
+						Desktop.desktop.lastTileWinPositions[win.getWindowId()] = [xx,yy,ww,wh];	
+					}
 										
 					xx += ww;
 					if((++ic)%cols==0){xx = dx; yy += wh;} //start new row			
@@ -316,21 +336,29 @@ else {
 				Desktop.desktop.redrawDashboardWindowButtons();				
 			}
 			
-			Debug.log("Desktop Dashboard Organize Mode: " + _windowOrganizeMode,Debug.LOW_PRIORITY);
-		}
+			Debug.log("Desktop Dashboard Organize Mode: ",
+				_windowOrganizeMode,
+				Desktop.desktop.lastTileWinPositions);
+		} //end _windowDashboardOrganize()
 		
-		var _windowDashboardMinimizeAll = function() {
+		//==============================================================================
+		var _windowDashboardMinimizeAll = function() 
+		{
 				var win;
-				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {
+				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) 
+				{
 					win = Desktop.desktop.getWindowByIndex(i);
 					win.minimize();	if(!win.isMinimized()) win.minimize(); //minimize twice, in case was mazimized
 				     
 				}
-		}
+		} //end _windowDashboardMinimizeAll()
 
-		var _windowDashboardRestoreAll = function() {
+		//==============================================================================
+		var _windowDashboardRestoreAll = function() 
+		{
 				var win;
-				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {
+				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) 
+				{
 					win = Desktop.desktop.getWindowByIndex(i);
 					win.unminimize();
 					if (win.isMaximized())
@@ -338,10 +366,12 @@ else {
 
 				}
 				//Desktop.desktop.setForeWindow(Desktop.desktop.getWindowByIndex(0));
-		}	
+		} //end _windowDashboardRestoreAll()
 
 
-		var _windowDashboardToggleWindows = function () {
+		//==============================================================================
+		var _windowDashboardToggleWindows = function () 
+		{
 		   
 		    
 		    // if (Desktop.desktop.getForeWindow() &&
@@ -357,19 +387,23 @@ else {
 
 		    Desktop.desktop.redrawDashboardWindowButtons();
 		    
-//		    _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
-//				((Desktop.desktop.getForeWindow() &&
-//				  Desktop.desktop.getForeWindow().isMinimized())?"Restore Windows":"Show Desktop") + "</a>";
-		}
+		    // _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
+			// 	((Desktop.desktop.getForeWindow() &&
+			// 	  Desktop.desktop.getForeWindow().isMinimized())?"Restore Windows":"Show Desktop") + "</a>";
+		} //end _windowDashboardToggleWindows()
 		
-		var _windowDashboardRefresh = function() {	        
+		//==============================================================================
+		var _windowDashboardRefresh = function() 
+		{	        
 		    updateWindows();
 		    Debug.log("Window refreshed.");
-		}
+		} //end _windowDashboardRefresh()
 
+		//==============================================================================
 		//_windowDashboardLayoutsDropDown ~
 		//	toggles default layout drop down menu
-		var _windowDashboardLayoutsDropDown = function() {		
+		var _windowDashboardLayoutsDropDown = function()
+		{		
 			_layoutDropDownDisplayed = !_layoutDropDownDisplayed;
 			Debug.log("Desktop _windowDashboardDefaultsDropDown " + 
 					_layoutDropDownDisplayed,Debug.LOW_PRIORITY);
@@ -412,7 +446,7 @@ else {
         	
         	el.innerHTML = str;
 			_dashboardElement.appendChild(el);
-		}
+		} //end _windowDashboardLayoutsDropDown()
 		
 		//------------------------------------------------------------------
 		//create PUBLIC members functions ----------------------
@@ -594,9 +628,9 @@ else {
         	data += "username=" + user;
 
         	var jsReq = "Desktop.desktop.dashboard.doSetUserWithLock();";  			
-//        			"Desktop.XMLHttpRequest(\"" +
-//					"Request?RequestType=setUserWithLock&accounts=1\"," +
-//					"\"" + data + "\",Desktop.desktop.dashboard.handleSetUserWithLock)";
+       			// "Desktop.XMLHttpRequest(\"" +
+				// 	"Request?RequestType=setUserWithLock&accounts=1\"," +
+				// 	"\"" + data + "\",Desktop.desktop.dashboard.handleSetUserWithLock)";
 
        		
        		if(_oldUserNameWithLock == usernameWithLock && 
@@ -637,7 +671,7 @@ else {
    			el.style.display = "block";
    			
        		_oldUserNameWithLock = usernameWithLock; 
-        }        
+        } //end displayUserLock()
 
       	//=====================================================================================
         this.handleSetUserWithLock = function(req) 
@@ -651,12 +685,13 @@ else {
         			Desktop.getXMLValue(req,"username_with_lock"));        	
 
         	Desktop.desktop.resetDesktop(); //soft reset attempt
-        }
+        } //end handleSetUserWithLock()
         
-
+      	//=====================================================================================
         //displayConnectionStatus ~~
         //	bool connected
-        this.displayConnectionStatus = function(connected) {    
+		this.displayConnectionStatus = function(connected) 
+		{    
        		var el = document.getElementById("DesktopDashboard-serverConnectionStatus");
        		
        		if(connected) 
@@ -673,20 +708,24 @@ else {
        			//hide user with lock icon (because it usually looks bad when disconnected)
        			document.getElementById("DesktopDashboard-userWithLock").style.display = "none";
        		}
-        }
+        } //end displayConnectionStatus()
         
+      	//=====================================================================================
         //handleDashboardWinMouseUp ~~
-        this.handleDashboardWinMouseUp = function(event, winId) {  
+		this.handleDashboardWinMouseUp = function(event, winId)
+		{  
 			if(_deepClickTimer)
 			{
 				window.clearTimeout(_deepClickTimer);
 				_deepClickTimer = 0;
 			}
         	Desktop.desktop.clickedWindowDashboard(winId);
-        }
+        } //end handleDashboardWinMouseUp()
         
+      	//=====================================================================================
         //handleDashboardWinMouseDown ~~
-        this.handleDashboardWinMouseDown = function(event, winId) {
+		this.handleDashboardWinMouseDown = function(event, winId) 
+		{
 			event.cancelBubble = true; //prevent default behavior 
 			event.preventDefault();
 			_deepClickTimer = window.setTimeout(function() {
@@ -718,7 +757,7 @@ else {
 				);
 
 			},500); //end timeout handler
-        }        
+        } //end handleDashboardWinMouseDown()
         
 		//------------------------------------------------------------------
 		//handle class construction ----------------------
@@ -852,9 +891,9 @@ else {
         Debug.log("Desktop Window Dashboard created",Debug.LOW_PRIORITY);
 
         Debug.log("Desktop Dashboard created",Debug.LOW_PRIORITY);
-    }
+    } //end createDashboard object
 
-}
+} //end library define
 
 
 

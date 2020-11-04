@@ -72,19 +72,21 @@ else {
 		//------------------------------------------------------------------
 		//create PRIVATE members functions ----------------------
 		//------------------------------------------------------------------
-		//_refreshHeader()
-		
-			//_refreshHeader() ~~~
-			//	private function to refresh header name based on window size
-			// 	clip text if too long
-		var _refreshHeader = function() {
+				
+		//==============================================================================
+		//_refreshHeader() ~~~
+		//	private function to refresh header name based on window size
+		// 	clip text if too long
+		var _refreshHeader = function() 
+		{
 			var hdrW = _w-2*_defaultHeaderLeftMargin-5*(_defaultButtonSize+_defaultButtonLeftMargin)-1;
 			_winhdr.style.width = hdrW +"px"; 
 			_winhdr.innerHTML = _name + (_subname==""?"":" - ") + _subname;
 			while(_winhdr.scrollWidth > hdrW && _winhdr.innerHTML.length > 4)
 				_winhdr.innerHTML = _winhdr.innerHTML.substr(0,_winhdr.innerHTML.length-4)+"...";
-		}
+		} //end _refreshHeader()
 		
+		//==============================================================================
 		var _handleWindowContentLoading = function() {
 			
 			Debug.log("Server desktop sending first message to window: " + _id);
@@ -109,9 +111,10 @@ else {
 			};
 			
 			_winfrm.contentWindow.postMessage(
-					initObject,"*");
-			
-		}
+					initObject,"*");			
+		} //end _handleWindowContentLoading()
+
+
 		//------------------------------------------------------------------
 		//create PUBLIC members functions ----------------------
 		//------------------------------------------------------------------
@@ -122,7 +125,8 @@ else {
 		//maximize
 		//minimize
 		
-			//member variable access functions ~~~
+		//==============================================================================
+		//member variable access functions ~~~
 		this.getWindowName = function() { return _name; }
 		this.getWindowSubName = function() { return _subname; }
 		this.getWindowUrl = function() { return _url; }
@@ -137,27 +141,34 @@ else {
 		this.isMinimized = function() {return _isMinimized;}
 
 
+		//==============================================================================
 		// bringing window to foreground then back to original location for refresh
-		this.setWindowZ = function(z) { 
+		this.setWindowZ = function(z) 
+		{ 
 			//console.log("z",z,this.getWindowName());
 			_z = z; this.windiv.style.zIndex = _z; 
-		}
+		} //end setWindowZ()
 		
+		//==============================================================================
 		this.showFrame = function() { _winfrm.style.display = "inline"; }
 		this.hideFrame = function() { _winfrm.style.display = "none"; }
 		this.getFrame = function() { return _winfrm; }
 		
-			//setWindowNameAndSubName() ~~~
-			//	set name and subname
-		this.setWindowNameAndSubName = function(name,subname) {
+		//==============================================================================
+		//setWindowNameAndSubName() ~~~
+		//	set name and subname
+		this.setWindowNameAndSubName = function(name,subname) 
+		{
 			_name = name; _subname = subname;
 			_refreshHeader();			
 			Debug.log("Desktop Window name=" + name + " and subname=" + subname,Debug.LOW_PRIORITY);
-		}
+		} //end setWindowNameAndSubName()
 		
-			//setWindowSizeAndPosition() ~~~
-			//	set size and position of window and its elements
-		this.setWindowSizeAndPosition = function(x,y,w,h) {		
+		//==============================================================================
+		//setWindowSizeAndPosition() ~~~
+		//	set size and position of window and its elements
+		this.setWindowSizeAndPosition = function(x,y,w,h) 
+		{		
 			x = parseInt(x);
 			y = parseInt(y);		
 			w = parseInt(w);
@@ -171,9 +182,9 @@ else {
 			
 			//keep window within desktop content bounds
 			if(_x + _w > Desktop.desktop.getDesktopContentX() + Desktop.desktop.getDesktopContentWidth())
-				_x = Desktop.desktop.getDesktopContentX() + Desktop.desktop.getDesktopContentWidth() - _w;
+				_w = Desktop.desktop.getDesktopContentX() + Desktop.desktop.getDesktopContentWidth() - _x;
 			if(_y + _h > Desktop.desktop.getDesktopContentY() + Desktop.desktop.getDesktopContentHeight())
-				_y = Desktop.desktop.getDesktopContentY() + Desktop.desktop.getDesktopContentHeight() - _h;
+				_h = Desktop.desktop.getDesktopContentY() + Desktop.desktop.getDesktopContentHeight() - _y;
 			
             this.windiv.style.width = _w +"px";
 		   	this.windiv.style.height = _h+"px"; 
@@ -232,10 +243,13 @@ else {
             }
 			
             Desktop.desktop.login.resetCurrentLayoutUpdateTimer();
-		}
-			//moveWindowByOffset() ~~~
-			//	move position of window and its elements by an offset
-		this.moveWindowByOffset = function(dx,dy) {
+		} //end setWindowSizeAndPosition()
+
+		//==============================================================================
+		//moveWindowByOffset() ~~~
+		//	move position of window and its elements by an offset
+		this.moveWindowByOffset = function(dx,dy) 
+		{
 			_x += dx;
 			_y += dy;
             //if(_x < Desktop.desktop.getDesktopContentX()) _x = Desktop.desktop.getDesktopContentX();
@@ -248,21 +262,27 @@ else {
 		   	
 		   	//reset current layout update timer if a window moves
 		   	Desktop.desktop.login.resetCurrentLayoutUpdateTimer();
-		}
-			//resizeAndPositionWindow(x,y,w,h) ~~~
-			//	resize and position of window and its elements
-			//	do not allow weird re-size effects
-		this.resizeAndPositionWindow = function(x,y,w,h) {		
+		} //end moveWindowByOffset()
+
+		//==============================================================================
+		//resizeAndPositionWindow(x,y,w,h) ~~~
+		//	resize and position of window and its elements
+		//	do not allow weird re-size effects
+		this.resizeAndPositionWindow = function(x,y,w,h) 
+		{		
+			//Debug.log("Resizing");
 			if((w <= _defaultWindowMinWidth && x > _x) ||
 				(h <= _defaultWindowMinHeight && y > _y)) return;
             if(x < Desktop.desktop.getDesktopContentX()) x = Desktop.desktop.getDesktopContentX();
             if(y < Desktop.desktop.getDesktopContentY()) y = Desktop.desktop.getDesktopContentY();            
 			this.setWindowSizeAndPosition(x,y,w,h);
-		}
+		} //end resizeAndPositionWindow()
 				
-        	//maximize() ~~~
-			//	maximize window toggle fulls screen mode
-		this.maximize = function() {
+		//==============================================================================
+		//maximize() ~~~
+		//	maximize window toggle fulls screen mode
+		this.maximize = function() 
+		{
 			 
 			if(_isMinimized) this.unminimize(); //untoggle minimize flag
 			_isMaximized = true;
@@ -272,20 +292,24 @@ else {
 			window.parent.document.title= _name;
 			console.log(document.title, _name, "Maximize()");
 			
-		}
+		} //end maximize()
 
-		this.unmaximize = function() {
+		//==============================================================================
+		this.unmaximize = function()
+		{
 
 			_isMaximized = false;
 			
 			this.windiv.style.display = "inline"; //make sure is visible
 			this.setWindowSizeAndPosition(_x,_y,_w,_h);
 			window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
-		}
+		} //end unmaximize()
 
-			//minimize() ~~~
-			//	minimize window toggles visible or not (does not affect current position/size)
-		this.minimize = function() {
+		//==============================================================================
+		//minimize() ~~~
+		//	minimize window toggles visible or not (does not affect current position/size)
+		this.minimize = function() 
+		{
 		    
 		    if(_isMaximized)
 		    	window.parent.document.title = _name;
@@ -294,10 +318,12 @@ else {
 		    
 		    _isMinimized = true;
 		    this.windiv.style.display = "none";
-		    Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
-		}
+		    Debug.log(_name,"this.windiv.style.display now is " + this.windiv.style.display);
+		} //end minimize()
 
-		this.unminimize = function() {
+		//==============================================================================
+		this.unminimize = function()
+		{
 		    
 		    if(_isMaximized)
 		    	window.parent.document.title = _name;
@@ -306,8 +332,8 @@ else {
 		   
 		    _isMinimized = false;
 		    this.windiv.style.display = "inline";
-		    Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
-		}
+		    Debug.log(_name,"this.windiv.style.display now is " + this.windiv.style.display);
+		} //end unminimize()
                 
 		//------------------------------------------------------------------
 		//handle class construction ----------------------

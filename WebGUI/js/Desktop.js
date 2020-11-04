@@ -148,14 +148,12 @@ Desktop.createDesktop = function(security) {
 	var _currentTop = _defaultTop;
 	
 	var _windows = new Array(); //windows are initialized to empty, array represents z-depth also
+	var _lastTileWinPositions = {}; //initialize to empty, if windows are tiled, this map will be updated with wid => x,y,w,h of each window
+
 	var _desktopElement;
     var _dashboard, _icons, _mouseOverXmailbox, _mouseOverYmailbox;
-    //var _needToLoginMailbox;
-    //var _updateTimeMailbox, 
     var _updateSettingsMailbox, 
-		_settingsLayoutMailbox;//, _openWindowMailbox;
-    //, _blockSystemCheckMailbox;    
-    //var _windowColorPostbox;
+		_settingsLayoutMailbox;
     var _MAILBOX_TIMER_PERIOD = 500; //timer period for checking mailbox and system messages: 500 ms
     var _sysMsgId = 0; //running counter to identify system message pop-ups
 	var _SYS_MSG_SOUND_PATH = "/WebPath/sounds/fx-System-Message.wav"; // "http://www.soundjay.com/button/button-2.wav"; //must be .wav for firefox incompatibility	
@@ -180,9 +178,7 @@ Desktop.createDesktop = function(security) {
 	this.checkMailboxTimer;
 	this.serverConnected = true;
 	this.security = security;
-	
-	//this.cookieCodeMailbox = 0;
-    
+	    
 	this.defaultWindowFrameColor = "rgba(196,229,255,.9)";
 		
 	//------------------------------------------------------------------
@@ -190,7 +186,8 @@ Desktop.createDesktop = function(security) {
 	//------------------------------------------------------------------
 	
     //===========================================================
-	var _handleDesktopResize = function(event) {
+	var _handleDesktopResize = function(event) 
+	{
 		_desktopElement.style.height = (window.innerHeight-_desktopElement.offsetTop) + "px";
 		_desktopElement.style.width = (window.innerWidth-_desktopElement.offsetLeft) + "px";
         if(!_dashboard) return; //initial calls dashboard might not be defined
@@ -199,20 +196,20 @@ Desktop.createDesktop = function(security) {
         if(_icons) _icons.redrawIcons();
          
         //if top windows is maximized, then resize
-        if(_windows.length && _windows[_windows.length-1].isMaximized()) {
+		if(_windows.length && _windows[_windows.length-1].isMaximized()) 
+		{
             var w = _windows[_windows.length-1];
             w.setWindowSizeAndPosition(w.getWindowX(),w.getWindowY(),w.getWindowWidth(),w.getWindowHeight());
         }
         
-        //_icons.style.left = Desktop.desktop.getDesktopContentX()+50+"px";
-        //_icons.style.top = Desktop.desktop.getDesktopContentY()+50+"px";
 	} //end _handleDesktopResize()
 
     //===========================================================
 	//return current window layout in string with parameters separated by commas
 	//	Note: represent position in terms of 0-10000 for the entire Desktop Content area
 	//		- this should allow for translation to any size Desktop Content area when loaded
-	var _getWindowLayoutStr = function() {		
+	var _getWindowLayoutStr = function() 
+	{		
 		var dw = Desktop.desktop.getDesktopContentWidth()/10000.0; //to calc int % 0-10000
 		var dh = Desktop.desktop.getDesktopContentHeight()/10000.0;//to calc int % 0-10000
 		var dx = Desktop.desktop.getDesktopContentX();
@@ -246,7 +243,8 @@ Desktop.createDesktop = function(security) {
     var _getForeWindow = function() { return _windows.length?_windows[_windows.length-1]:0; } //return last window in array as forewindow
 
     //===========================================================
-    var _closeWindow = function(win) {
+	var _closeWindow = function(win) 
+	{
     	Desktop.desktop.setForeWindow(win);
 		win.windiv.parentNode.removeChild(win.windiv); //remove from page!
 		
@@ -615,6 +613,7 @@ Desktop.createDesktop = function(security) {
     this.getLastFrameMouseY = function() { return parseInt(_mouseOverYmailbox);} 
     this.resetFrameMouse = function() { _mouseOverXmailbox = -1;_mouseOverYmailbox = -1;} 
 	this.getWindowLayoutStr = _getWindowLayoutStr;
+	this.lastTileWinPositions = _lastTileWinPositions;
 
 	//==============================================================================
 	//addWindow ~~~
@@ -1651,7 +1650,7 @@ Desktop.handleTouchStart = function(touchEvent)
 		var locX = touch.pageX - this.offsetLeft;
 		var locY = touch.pageY - this.offsetTop;
 		
-		//Debug.log("Touch Down " + locX + " - " + locY);
+		Debug.log("Touch Down " + locX + " - " + locY);
 		
 		Desktop.desktop.getForeWindow().hideFrame();
 		
@@ -1678,7 +1677,7 @@ Desktop.handleTouchEnd = function(touchEvent)
 		Desktop.foreWinLastMouse = [-1,-1];
 		Desktop.winManipMode = -1;
 		if(Desktop.desktop.getForeWindow()) Desktop.desktop.getForeWindow().showFrame();	
-		//Debug.log("Touch End ");
+		Debug.log("Touch End ");
 	}
 } //end handleTouchEnd()
 
@@ -1725,7 +1724,14 @@ Desktop.handleWindowMouseDown = function(mouseEvent)
 	{
 		//register move cursor and window in question
 		Desktop.foreWinLastMouse = [mouseEvent.clientX,mouseEvent.clientY];
-		if(!isDashboard) Desktop.desktop.getForeWindow().hideFrame();
+		if(!isDashboard)
+		{ 
+			//Desktop.desktop.getForeWindow().hideFrame();
+
+			for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i)
+				Desktop.desktop.getWindowByIndex(i).hideFrame();
+			
+		}
 		//Debug.log("Move/Resize Mode: " + Desktop.winManipMode);
 	}
 	
@@ -1738,8 +1744,7 @@ Desktop.handleWindowMouseDown = function(mouseEvent)
 //handleWindowMouseUp ~~
 //  indicate that no further movement is happening
 Desktop.handleWindowMouseUp = function(mouseEvent) 
-{
-	
+{	
 	if(Desktop.foreWinLastMouse[0] != -1) //currently action happening on foreground window
 	{			
 		if(Desktop.stretchAndMoveInterval) 
@@ -1759,7 +1764,14 @@ Desktop.handleWindowMouseUp = function(mouseEvent)
 		
 		Desktop.foreWinLastMouse = [-1,-1];	//indicate no movements happening	
 		Desktop.winManipMode = -1;
-		if(Desktop.desktop.getForeWindow()) Desktop.desktop.getForeWindow().showFrame();		
+		//if(Desktop.desktop.getForeWindow()) 
+		if(1)
+		{
+			//Desktop.desktop.getForeWindow().showFrame();		
+
+			for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i)
+				Desktop.desktop.getWindowByIndex(i).showFrame();
+		}
 		
 		//Debug.log("Mouse was released! which=" + mouseEvent.which);
 	}
@@ -1948,8 +1960,124 @@ Desktop.handleWindowManipulation = function(delta)
     if(!Desktop.desktop.getForeWindow()) return false;
 	
 	var win = Desktop.desktop.getForeWindow();
+
+	//check if windows are tiled
+	var lastPositions = Desktop.desktop.lastTileWinPositions;
+	var keepTile = Object.keys(lastPositions).length == Desktop.desktop.getNumberOfWindows() &&
+		Desktop.winManipMode != 0 /* window translation breaks tile always*/;	
+	//keep track of windows that should follow each side of target window
+	var followTiledBottom = [];
+	var followTiledTop = [];
+	var followTiledLeft = [];
+	var followTiledRight = [];
+	for(var i=0;keepTile && i<Desktop.desktop.getNumberOfWindows();++i) 
+	{
+		var w = Desktop.desktop.getWindowByIndex(i);
+		
+			//document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
+
+		if(	!lastPositions[w.getWindowId()] || 
+			Math.abs(w.getWindowX() - lastPositions[w.getWindowId()][0]) > 2 ||
+			Math.abs(w.getWindowY() - lastPositions[w.getWindowId()][1]) > 2 ||
+			Math.abs(w.getWindowWidth() - lastPositions[w.getWindowId()][2]) > 2  ||
+			Math.abs(w.getWindowHeight() - lastPositions[w.getWindowId()][3]) > 2 )
+		{
+			Debug.log("mismatch wid",w.getWindowId());
+			keepTile = false;
+			break;
+		}
+
+
+		//build follow arrays
+		//	if target win bottom is same Y as this window's top
+
+		//skip the target window for constructing follow arrays
+		if(win.getWindowId() == w.getWindowId()) continue;
+
+		//find windows with bottoms aligned with top of target window
+		//	and with edge within x bounds
+		if(Desktop.winManipMode == 1 ||  //size from top-left
+			Desktop.winManipMode == 3 ||  //size from top-right
+			Desktop.winManipMode == 7  //size from top
+		)
+		{
+			if(Math.abs(w.getWindowY() + w.getWindowHeight() - win.getWindowY()) <= 2)
+			//  &&
+			// 	((w.getWindowX() >= win.getWindowX()-2 &&
+			// 		w.getWindowX() <= win.getWindowX() + win.getWindowWidth() + 2) || 
+			// 	 (w.getWindowX() + w.getWindowWidth() >= win.getWindowX()-2 && 
+			// 	 	w.getWindowX() + w.getWindowWidth() <= win.getWindowX() + win.getWindowWidth() + 2)))
+				followTiledTop.push(w);
+			else if(Math.abs(w.getWindowY() - win.getWindowY()) <= 2)
+				followTiledBottom.push(w);
+		}
+
+		//find windows with tops aligned with bottom of target window
+		//	and with edge within x bounds
+		if(Desktop.winManipMode == 2 ||  //size from bottom-right
+			Desktop.winManipMode == 4 ||  //size from bottom-left
+			Desktop.winManipMode == 8  //size from bottom
+		)
+		{
+			if(Math.abs(w.getWindowY() - (win.getWindowY() + win.getWindowHeight())) <= 2)
+			//  &&
+			// 	((w.getWindowX() >= win.getWindowX()-2 &&
+			// 		w.getWindowX() <= win.getWindowX() + win.getWindowWidth() + 2) || 
+			// 	 (w.getWindowX() + w.getWindowWidth() >= win.getWindowX()-2 && 
+			// 	 	w.getWindowX() + w.getWindowWidth() <= win.getWindowX() + win.getWindowWidth() + 2)))
+				followTiledBottom.push(w);
+			else if(Math.abs(w.getWindowY() - win.getWindowY()) <= 2)
+				followTiledTop.push(w);
+		}
+
+		//find windows with rights aligned with left of target window
+		//	and with edge within y bounds
+		if(Desktop.winManipMode == 1 ||  //size from top-left
+			Desktop.winManipMode == 4 ||  //size from bottom-left
+			Desktop.winManipMode == 5  //size from left
+		)
+		{
+			if(Math.abs(w.getWindowX() + w.getWindowWidth() - win.getWindowX()) <= 2)
+			// &&
+			// 	((w.getWindowY() >= win.getWindowY()-2 &&
+			// 		w.getWindowY() <= win.getWindowY() + win.getWindowHeight() + 2) || 
+			// 	 (w.getWindowY() + w.getWindowHeight() >= win.getWindowY()-2 && 
+			// 	 	w.getWindowY() + w.getWindowHeight() <= win.getWindowY() + win.getWindowHeight() + 2)))
+				followTiledLeft.push(w);
+			// OR if left edge aligned then grow with it
+			else if(Math.abs(w.getWindowX() - win.getWindowX()) <= 2)
+				followTiledRight.push(w);
+		}
+
+		//find windows with lefts aligned with right of target window
+		//	and with edge within y bounds
+		if(Desktop.winManipMode == 2 ||  //size from bottom-right
+			Desktop.winManipMode == 3 ||  //size from top-right
+			Desktop.winManipMode == 6  //size from right
+		)
+		{
+			if(Math.abs(w.getWindowX() - (win.getWindowX() + win.getWindowWidth())) <= 2)
+			//  &&
+			// 	((w.getWindowY() >= win.getWindowY()-2 &&
+			// 		w.getWindowY() <= win.getWindowY() + win.getWindowHeight() + 2) || 
+			// 	 (w.getWindowY() + w.getWindowHeight() >= win.getWindowY()-2 && 
+			// 	 	w.getWindowY() + w.getWindowHeight() <= win.getWindowY() + win.getWindowHeight() + 2)))
+				followTiledRight.push(w);
+			else if(Math.abs(w.getWindowX() - win.getWindowX()) <= 2)
+				followTiledLeft.push(w);
+		}
+
+	} //end tiled prep loop
+
+	Debug.log("keepTile",keepTile,Desktop.winManipMode,"followTiledRight",followTiledRight.length,delta[0]);
+
+	if(!keepTile)
+		Desktop.desktop.lastTileWinPositions = {}; //clear to avoid future checks
+
+	//if(keepTile) return false;
     
-    switch(Desktop.winManipMode) { 
+	switch(Desktop.winManipMode) 
+	{ 
 		case 0: //move
 			win.moveWindowByOffset(delta[0],delta[1]);
 			break;
@@ -2010,7 +2138,55 @@ Desktop.handleWindowManipulation = function(delta)
 				win.getWindowHeight() + delta[1]);
 			break;
 		default:
-    }
+	}
+
+	for(var i=0;i<followTiledTop.length;++i)
+	{
+		followTiledTop[i].resizeAndPositionWindow(
+			followTiledTop[i].getWindowX(),
+			followTiledTop[i].getWindowY(),
+			followTiledTop[i].getWindowWidth(),
+			followTiledTop[i].getWindowHeight() + delta[1]);
+		lastPositions[followTiledTop[i].getWindowId()][3] = followTiledTop[i].getWindowHeight();
+	}
+	for(var i=0;i<followTiledLeft.length;++i)
+	{
+		followTiledLeft[i].resizeAndPositionWindow(
+			followTiledLeft[i].getWindowX(),
+			followTiledLeft[i].getWindowY(),
+			followTiledLeft[i].getWindowWidth() + delta[0],
+			followTiledLeft[i].getWindowHeight());
+		lastPositions[followTiledLeft[i].getWindowId()][2] = followTiledLeft[i].getWindowWidth();
+	}
+	for(var i=0;i<followTiledRight.length;++i)
+	{
+		followTiledRight[i].resizeAndPositionWindow(
+			followTiledRight[i].getWindowX() + delta[0],
+			followTiledRight[i].getWindowY(),
+			followTiledRight[i].getWindowWidth() - delta[0],
+			followTiledRight[i].getWindowHeight());
+		lastPositions[followTiledRight[i].getWindowId()][0] = followTiledRight[i].getWindowX();
+		lastPositions[followTiledRight[i].getWindowId()][2] = followTiledRight[i].getWindowWidth();
+	}
+	for(var i=0;i<followTiledBottom.length;++i)
+	{
+		followTiledBottom[i].resizeAndPositionWindow(
+			followTiledBottom[i].getWindowX(),
+			followTiledBottom[i].getWindowY() + delta[1],
+			followTiledBottom[i].getWindowWidth(),
+			followTiledBottom[i].getWindowHeight() - delta[1]);
+		lastPositions[followTiledBottom[i].getWindowId()][1] = followTiledBottom[i].getWindowY();
+		lastPositions[followTiledBottom[i].getWindowId()][3] = followTiledBottom[i].getWindowHeight();
+	}
+	
+
+	if(keepTile)
+		lastPositions[win.getWindowId()] = [
+			win.getWindowX(),
+			win.getWindowY(),
+			win.getWindowWidth(),
+			win.getWindowHeight()];
+
 } //end handleWindowManipulation()
 
 //==============================================================================

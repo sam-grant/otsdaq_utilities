@@ -604,7 +604,12 @@
 		//			- EXECUTE_FE_MACRO <FE macro name> <target Group #which can span multiple FE-Managers or whatever>
 		//				<parameter group of name, value, iteration step size to adjust in inputs to FE macro>
 		//			- RUN	<dump type> <bool: wait for all FEs to complete running thread else use time> 
-		//				<seconds for run>		
+		//				<seconds for run>	
+		//			- START - execute transition 
+		//			- STOP - execute transition
+		//			- PAUSE - execute transition
+		//			- RESUME - execute transition
+		//			- HALT - execute transition
 		//
 		//		
 		//	- Save functionality should be same as saving tree	
@@ -705,6 +710,11 @@
 		_COMMAND_TYPES.MODIFY_ACTIVE_GROUP 		= "MODIFY_ACTIVE_GROUP";
 		_COMMAND_TYPES.REPEAT_LABEL 			= "REPEAT_LABEL";
 		_COMMAND_TYPES.RUN 						= "RUN";
+		_COMMAND_TYPES.START 					= "START";
+		_COMMAND_TYPES.STOP 					= "STOP";
+		_COMMAND_TYPES.PAUSE 					= "PAUSE";
+		_COMMAND_TYPES.RESUME 					= "RESUME";
+		_COMMAND_TYPES.HALT 					= "HALT";
 		
 		var _COMMAND_PARAM_FIELDS = {}; //for now, keys are same as value, but value is (intended to be) display name
 		_COMMAND_PARAM_FIELDS.NameOfStateMachine 				= "NameOfStateMachine";
@@ -729,7 +739,11 @@
 		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= [_COMMAND_PARAM_FIELDS.Targets,_COMMAND_PARAM_FIELDS.DoTrackGroupChanges,_COMMAND_PARAM_FIELDS.RelativePathToField,"FieldStartValue","FieldIterationStepSize"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.REPEAT_LABEL] 			= ["Label","NumberOfRepetitions"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.RUN] 					= [_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread,"DurationInSeconds"];
-        
+        _COMMAND_PARAMS[_COMMAND_TYPES.START] 	= [];
+		_COMMAND_PARAMS[_COMMAND_TYPES.STOP] 	= [];
+		_COMMAND_PARAMS[_COMMAND_TYPES.PAUSE] 	= [];
+		_COMMAND_PARAMS[_COMMAND_TYPES.RESUME] 	= [];
+		_COMMAND_PARAMS[_COMMAND_TYPES.HALT] 	= [];
         
         var _DEBUG_WOUT_SERVER = 0;
         
@@ -3898,7 +3912,7 @@
 					str += "<tr><td style='white-space:nowrap;font-weight:bold;'>" +
 							"Group comment:</td>";
 					str += "<td style='white-space:nowrap'>" +
-							_tableGroupAliases[j].groupComment +
+							decodeURIComponent(_tableGroupAliases[j].groupComment) +
 							"</td></tr>";
 					str += "<tr><td style='white-space:nowrap;font-weight:bold;'>" +
 							"Alias comment:</td>";

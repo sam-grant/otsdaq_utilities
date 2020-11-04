@@ -222,7 +222,7 @@ function getAppsArray()
 				var all0 = true;
 				for(var i=1;i<appTime.length;++i)
 				{
-					//Wed Oct 14 05:20:48 1970 CDT
+					//e.g. Wed Oct 14 05:20:48 1970 CDT
 					var appTimeSplit = appTime[i].getAttribute("value").split(' ');
 					if(appTime[i].getAttribute("value") != "0" &&
 							(appTimeSplit.length > 2 && 
@@ -408,7 +408,7 @@ function displayTable(appsArray)
             	else if (staleSeconds < 60*60*2)
             		staleString = (((staleSeconds/60/60)|0)+1) + " hours ago";
             	else if (staleSeconds < 60*60*48)
-            		staleString = (((staleSeconds/60/60)|0)+1) + " days ago";
+            		staleString = (((staleSeconds/60/60/24)|0)+1) + " days ago";
             		
             	cell.innerHTML = staleString;
             }
