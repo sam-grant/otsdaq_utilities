@@ -1535,7 +1535,6 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 		ConfigurationManager::ACTIVE_GROUP_NAME_ITERATE,
 		ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION	
 	});
-	//for(auto group : consideredGroups)
 	for(auto groupType : orderedGroupTypes)
 	{
 		if(consideredGroups.find(groupType) == consideredGroups.end())
@@ -1580,7 +1579,7 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 			}
 		}
 
-		if(group.first == ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION)
+		if(groupType == ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION)
 		{
 			__SUP_COUT__ << "Considering mockup tables for Configuration Group..." << __E__;
 			for(auto& table : modifiedTablesMap)
