@@ -125,7 +125,7 @@ li a:hover:not(.active) {
     border: 2px solid black;
     border-radius: 5px;	
     width: 30%;
-    padding-right: 2%;
+    margin-right: 2%;
     margin-top: 10px;
 }
 

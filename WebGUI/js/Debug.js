@@ -110,6 +110,21 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 	//	Note: must call with brackets e.g. Debug.logv({firstInit_});
 	Debug.logv = varObj => 
 		{
+			//preserve line number from source
+			if(Debug.BROWSER_TYPE == 1) //chrome
+			{
+				Debug.lastLogger = (new Error).stack.split("\n")[2];						
+				Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
+				Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+						Debug.lastLogger.length-1);
+			}
+			else if(Debug.BROWSER_TYPE == 2) //firefox
+			{
+				Debug.lastLogger = (new Error).stack.split("\n")[1];						
+				Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf('@'));
+				Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+1,
+						Debug.lastLogger.length);
+			}
 			var keys = Object.keys(varObj);
 			Debug.log(keys[0] + " \t= ",varObj[keys[0]]);
 		}; //end Debug.logv()

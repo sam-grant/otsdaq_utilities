@@ -1535,7 +1535,6 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 		ConfigurationManager::ACTIVE_GROUP_NAME_ITERATE,
 		ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION	
 	});
-	//for(auto group : consideredGroups)
 	for(auto groupType : orderedGroupTypes)
 	{
 		if(consideredGroups.find(groupType) == consideredGroups.end())
@@ -1580,7 +1579,7 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 			}
 		}
 
-		if(group.first == ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION)
+		if(groupType == ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION)
 		{
 			__SUP_COUT__ << "Considering mockup tables for Configuration Group..." << __E__;
 			for(auto& table : modifiedTablesMap)
@@ -1679,7 +1678,7 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		__SUP_COUT__ << "Loading group '" << groupName << "(" << groupKey << ")'"
 		             << __E__;
 
-		std::string groupComment, groupAuthor, configGroupCreationTime;
+		std::string groupComment, groupAuthor, tableGroupCreationTime;
 
 		// only same member map if object pointer was passed
 		cfgMgr->loadTableGroup(groupName,
@@ -1690,14 +1689,14 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		                       accumulatedErrors,
 		                       doGetGroupInfo ? &groupComment : 0,
 		                       doGetGroupInfo ? &groupAuthor : 0,
-		                       doGetGroupInfo ? &configGroupCreationTime : 0);
+		                       doGetGroupInfo ? &tableGroupCreationTime : 0);
 
 		if(doGetGroupInfo)
 		{
-			xmlOut.addTextElementToData("configGroupComment", groupComment);
-			xmlOut.addTextElementToData("configGroupAuthor", groupAuthor);
-			xmlOut.addTextElementToData("configGroupCreationTime",
-			                            configGroupCreationTime);
+			xmlOut.addTextElementToData("tableGroupComment", groupComment);
+			xmlOut.addTextElementToData("tableGroupAuthor", groupAuthor);
+			xmlOut.addTextElementToData("tableGroupCreationTime",
+			                            tableGroupCreationTime);
 		}
 
 		if(accumulatedErrors && *accumulatedErrors != "")
@@ -1812,7 +1811,7 @@ catch(...)
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV list of records to create
@@ -2003,7 +2002,7 @@ catch(...)
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV list of records to create
@@ -2119,7 +2118,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV list of records to rename
@@ -2239,7 +2238,7 @@ void ConfigurationGUISupervisor::handleFillRenameTreeNodeRecordsXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV list of records to create
@@ -2354,7 +2353,7 @@ void ConfigurationGUISupervisor::handleFillCopyTreeNodeRecordsXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV list of records for which to write values for fields
@@ -2555,7 +2554,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordStr := CSV list of records for which to lookup values for fields
@@ -2649,7 +2648,7 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	depth from starting node path
 //	modifiedTables := CSV of table/version pairs
@@ -2821,7 +2820,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 //	 then do for active groups
 //
 // parameters
-//		configGroupName (full name with key)
+//		tableGroupName (full name with key)
 //		starting node path
 //		modifiedTables := CSV of table/version pairs
 //		recordList := CSV of records to search for unique values
@@ -2976,7 +2975,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 //	 then return tree for active groups
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //	starting node path
 //	depth from starting node path
 //	modifiedTables := CSV of table/version pairs
@@ -3532,6 +3531,16 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 	    std::string /*converted gidB*/>
 	    groupidConversionMap;
 
+	std::stringstream mergeReport;
+	mergeReport << "======================================" << __E__;
+	mergeReport << "Time of merge: " << StringMacros::getTimestampString() << __E__;
+	mergeReport << "Merging context group pair " << groupANameContext << " ("
+            << groupAKeyContext << ") & " << groupBNameContext << " ("
+            << groupBKeyContext << ") and table group pair " << groupANameConfig
+            << " (" << groupAKeyConfig << ") & " << groupBNameConfig << " ("
+            << groupBKeyConfig << ") with approach '" << mergeApproach << __E__;
+	mergeReport << "======================================" << __E__;
+
 	// first loop create record conversion map, second loop implement merge (using
 	// conversion map if Rename)
 	for(unsigned int i = 0; i < 2; ++i)
@@ -3571,6 +3580,10 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 
 				if(memberMapAref.find(bkey.first) == memberMapAref.end())
 				{
+
+					mergeReport << "\n'" << mergeApproach << "'-Missing table '" << bkey.first << "' A=v" <<
+						-1 << ", adding B=v" << bkey.second << __E__;
+
 					// not found, so add to A member map
 					memberMapAref[bkey.first] = bkey.second;
 				}
@@ -3603,7 +3616,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 					        ConfigurationManager::
 					            XDAQ_APPLICATION_TABLE_NAME /* generateUniqueDataColumns
 					                                         */
-					);  // dont make destination version the first time
+					, &mergeReport);  // dont make destination version the first time
 
 					if(i == 1)
 					{
@@ -3680,6 +3693,31 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 		xmlOut.addTextElementToData("ConfigGroupName", groupANameConfig);
 		xmlOut.addTextElementToData("ConfigGroupKey", newKeyConfig.toString());
 	}
+
+	//output merge report
+	{
+		std::string mergeReportBasePath = std::string(__ENV__("USER_DATA"));
+		std::string mergeReportPath = "/ServiceData/";
+		// make merge report directories in case they don't exist
+		mkdir((mergeReportBasePath + mergeReportPath).c_str(), 0755);
+		mergeReportPath += "ConfigurationGUI_mergeReports/";
+		// make merge report directories in case they don't exist
+		mkdir((mergeReportBasePath + mergeReportPath).c_str(), 0755);
+
+		mergeReportPath += "merge_" + std::to_string(clock()) + ".txt";
+		__SUP_COUTV__(mergeReportPath);
+
+		FILE* fp = fopen((mergeReportBasePath + mergeReportPath).c_str(),"w");
+		if(fp)
+		{
+			fprintf(fp,"%s",mergeReport.str().c_str());
+			fclose(fp);
+			xmlOut.addTextElementToData("MergeReportFile", "/$USER_DATA/" + mergeReportPath);
+		}
+		else
+			xmlOut.addTextElementToData("MergeReportFile", "FILE FAILURE");
+	} //end output merge report
+
 
 }  // end handleMergeGroupsXML
 catch(std::runtime_error& e)
@@ -4889,12 +4927,6 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 				// check if this version has one or many aliases
 				for(const auto& aliasPair : tableIterator->second)
 				{
-					//					__SUP_COUT__ << "Checking " << aliasPair.second <<
-					//"
-					//-->
-					//"
-					//<< 							aliasPair.first << " for " << v <<
-					//__E__;
 					if(v == aliasPair.second)
 					{
 						__SUP_COUT__ << "Found Alias " << aliasPair.second << " --> "
@@ -6250,15 +6282,15 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 	const std::map<std::string, GroupInfo>& allGroupInfo = cfgMgr->getAllGroupInfo();
 
 	//	ConfigurationInterface* theInterface = cfgMgr->getConfigurationInterface();
-	//	std::set<std::string /*name*/>  configGroups =
+	//	std::set<std::string /*name*/>  tableGroups =
 	// theInterface->getAllTableGroupNames();
-	//	__SUP_COUT__ << "Number of Table groups: " << configGroups.size() << __E__;
+	//	__SUP_COUT__ << "Number of Table groups: " << tableGroups.size() << __E__;
 	//
 	//	TableGroupKey groupKey;
 	//	std::string groupName;
 	//
 	//	std::map<std::string /*groupName*/,std::set<TableGroupKey> > allGroupsWithKeys;
-	//	for(auto& groupString:configGroups)
+	//	for(auto& groupString:tableGroups)
 	//	{
 	//		TableGroupKey::getGroupNameAndKey(groupString,groupName,groupKey);
 	//		allGroupsWithKeys[groupName].emplace(groupKey);
@@ -6856,7 +6888,7 @@ void ConfigurationGUISupervisor::handleLoadArtdaqNodeLayoutXML(
 //	save artdaq configuration GUI layout for group/key
 //
 // parameters
-//	configGroupName (full name with key)
+//	tableGroupName (full name with key)
 //
 void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
     HttpXmlDocument&        /*xmlOut*/,

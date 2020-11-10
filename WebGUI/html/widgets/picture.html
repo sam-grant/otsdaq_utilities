@@ -16,9 +16,12 @@
 			}
 		</style>
 
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/image-map-resizer/1.0.10/js/imageMapResizer.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/image-map-resizer/1.0.10/js/imageMapResizer.js"></script>
+
 		<script>
 
-			var parameters_ = {"class": "", "upload_image": "picture-icon.png", "inner_map_html": ""};
+			var parameters_ = {"class": "", "inner_map_html": "", "upload_image": "picture-icon.png"};
 			var IMAGE_PATH = "/WebPath/UserWebPath/ControlsDashboardData/private/";
 			//functions:
 			//init()
@@ -43,6 +46,7 @@
 				document.getElementById("display").innerHTML += "<map name='#imgmap'>" + parameters_["inner_map_html"] + "</map>";
 				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
 				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
+				imageMapResize();
 			}
 
 			function getAttributes()
@@ -61,6 +65,7 @@
 			window.onresize = function() {
 				document.getElementById("img1").style.width = (parseInt(window.innerWidth) - 16) + "px";
 				document.getElementById("img1").style.height = (parseInt(window.innerHeight) - 16) + "px";
+				imageMapResize();
 			}
 
 		</script>

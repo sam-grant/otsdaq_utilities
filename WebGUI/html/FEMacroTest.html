@@ -250,18 +250,19 @@
 						feToMacrosMap_[feUID][macroName] = 
 						{
 								"requiredPermissions": 	macroVar[c+1],
+								"tooltip":				decodeURIComponent(macroVar[c+2]),
 								"inputs": 				[],
 								"outputs": 				[],
 								"supervisor": 			supervisor,
 								"lid": 					lid,
 								"feClass":				feClass,
 						};
-						c += 2;
+						c += 3; //skip permissions and tooltip
 						for(var j=0;j<(macroVar[c]|0);++j)							
-							feToMacrosMap_[feUID][macroName].inputs.push(macroVar[c+1+j]);
+							feToMacrosMap_[feUID][macroName].inputs.push(decodeURIComponent(macroVar[c+1+j]));
 						c += 1 + (macroVar[c]|0);
 						for(var j=0;j<(macroVar[c]|0);++j)
-							feToMacrosMap_[feUID][macroName].outputs.push(macroVar[c+1+j]);																
+							feToMacrosMap_[feUID][macroName].outputs.push(decodeURIComponent(macroVar[c+1+j]));																
 
 							
 						c += 1 + (macroVar[c]|0);
@@ -503,15 +504,20 @@
 						var feTargetSupervisor = DesktopContent.getXMLValue(feExecs[f],"fe_supervisor");
 						var outputArgNames = feExecs[f].getElementsByTagName("outputArgs_name");
 						var outputArgValues = feExecs[f].getElementsByTagName("outputArgs_value");	
-												
-						str += "Last ran... " + getDateString(new Date) + "<br>";
-						str += "FEMacro: &quot;" + feMacroName + "&quot;<br>";						
-						str += "On " + feExecs.length + " front-end target(s).<br>";
 						
-						str += "<hr width='80%'><br>";
+						if(f == 0)
+						{
+							str += "Last ran... " + getDateString(new Date) + "<br>";
+							str += "FEMacro: &quot;" + feMacroName + "&quot;<br>";						
+							str += "On " + feExecs.length + " front-end target(s).<br>";
+						}
+						
+						if(outputArgNames.length > 1 || f == 0)
+							str += "<hr width='80%'><br>";
 						str += "<b>";//Ran... " + feExecTime + "<br>";
-						str += "FEMacro: &quot;" + feMacroName + "&quot;<br>";
-						str += "FE Target UID: <label style='color:red; font-size:inherit;'>" +
+						if(outputArgNames.length > 1 || f == 0)
+							str += "FEMacro: &quot;" + feMacroName + "&quot;<br>";
+						str += "FE Target #" + (f+1) + " UID: <label style='color:red; font-size:inherit;'>" +
 							feTargetUID + "</label> (" + 
 							feTargetHostname + ":" + feTargetContext + "/" + feTargetSupervisor + 
 							")</b><br>";
@@ -1137,6 +1143,10 @@
 			var requiredPermissions = macroObj.requiredPermissions;			
 			var inputsArr 	= macroObj.inputs;
 			var outputsArr 	= macroObj.outputs;
+			var tooltip 	= macroObj.tooltip;
+			if(tooltip != "")
+				DesktopContent.tooltip(macroName,tooltip);
+
 			//var supervisor 	= macroObj.supervisor;
 			//var lid 		= macroObj.lid;
 			

@@ -1590,6 +1590,29 @@ DesktopContent.tooltip = function(id,tip,alwaysShow) {
 			if(id != "ALWAYS")
 			{
 				str += "<input type='checkbox' " +
+						"id='DesktopContent-tooltip-DisableALL-above-" +
+						id + "' " +
+						"onclick='" + 					
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						"ALL" + "\",\"" +
+						"ALL" + "\",\"" +
+						"ALL" + "\", this.checked);" + "'>";
+				str += " ";
+				str += "<a onclick='" +
+						"var el = document.getElementById(\"" +
+						"DesktopContent-tooltip-DisableALL-above-" +
+						id + "\");" +
+						"el.checked = !el.checked;" +
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						"ALL" + "\",\"" +
+						"ALL" + "\",\"" +
+						"ALL" + "\", el.checked);" +
+						"'>";
+				str += "Disable ALL your Tooltips, or...";
+				str += "</a>";
+				str +="</input> ";
+
+				str += "<input type='checkbox' " +
 						"id='DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
 						id + "' " +
 						"onclick='" + 					
@@ -1633,7 +1656,7 @@ DesktopContent.tooltip = function(id,tip,alwaysShow) {
 						srcFile + "\",\"" +
 						id + "\", 0 /*neverShow*/, el.checked);" +
 						"'>";
-				str += "Silence this Tooltip for a week (can be reset in Settings):";
+				str += "Silence this Tooltip for a week (can reset in Settings):";
 				str += "</a>";
 				str +="</input>";
 			}
@@ -1741,8 +1764,9 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,neverShow,temp
 			"&temporarySilence=" + (temporarySilence?1:0) 
 			,""
 			,0,0,0,0,true,true); //show loading, and target supervisor
-	
+		
 	if(temporarySilence) return;
+	if(srcFunc == "ALL" && srcFile == "ALL" && id == "ALL") return;
 	
 	//make sure all checkboxes mirror choice
 	document.getElementById("DesktopContent-tooltip-SetNeverShowCheckbox-below-" +

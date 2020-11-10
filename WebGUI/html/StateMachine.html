@@ -258,6 +258,9 @@
 			#parameter-setup td {
 				text-align: left;
 			}
+			#parameter-setup {
+				z-index: 2 /* put on top of time/run info */;
+			}
 			
 			#blackout-reveal {
 				color : white;				
@@ -312,7 +315,7 @@
 
 			var _PARAMETER_SETUP_MIN_HEIGHT = 25; 
 			var _PARAMETER_SETUP_MAX_HEIGHT = 100; 
-			var _PARAMETER_SETUP_WIDTH = 260; 
+			var _PARAMETER_SETUP_WIDTH = 150; 
 			
 			var _EXTRAS_WIDTH = 220; 
 			var _EXTRAS_HEIGHT = 80; 
@@ -363,6 +366,8 @@
             	_transitionResultingState;
             	
 			var _fsmName, _fsmWindowName;
+
+			var _suppressReloginPopups = false;
 			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -382,6 +387,7 @@
             //		*** check server for new current state
             //			display fades in (goto start of gui strategy)			
 			
+			//=====================================================================================
 			//init called once body has loaded
 			function init() 
 			{						
@@ -413,6 +419,7 @@
 			    {    	
 			    	Debug.log("Handling login notification...");
 			    	Debug.closeErrorPop();
+					_suppressReloginPopups = true;
 			    	//get state machine from server
 					DesktopContent.XMLHttpRequest(
 						"Request?RequestType=getStateMachine" + 
@@ -475,8 +482,10 @@
 				});
 			} //end init()
 
+			//=====================================================================================
 			//toggleViewMode ~~
-			function toggleViewMode(setVal) {				
+			function toggleViewMode(setVal) 
+			{				
 				if(setVal !== undefined)	
 					_altStateDrawingMode = setVal;
 				else
@@ -505,19 +514,21 @@
 					el.title = "Click to toggle the state machine display mode to always show the full state machine.";
 				}
 				redrawPhysics();
-			}
+			} //end toggleViewMode()
             
-            //initTransitionParameters
+            //=====================================================================================
+			//initTransitionParameters
             //	user code should call with null input parameters
             //	then code launches requests to fill parameters, _transitionParameterValues
             var _transParamsHtmlStr;
-			function initTransitionParameters(req) {
-				if(!req) //first time
+			function initTransitionParameters(req) 
+			{
+				if (!req) //first time
 				{
 					_parameterInitCount = 0;
-                    _transitionParameterValues = [];
-    
-                    _transParamsHtmlStr = "<table width='100%'><tr><td><b><u>Parameter</u></b></td><td width='50%'><b><u>Value</u></b></td></tr>";
+					_transitionParameterValues = [];
+
+					_transParamsHtmlStr = "<table width='100%'><tr><td><b><u>Parameter</u></b></td><td width='50%'><b><u>Value</u></b></td></tr>";
 				}
                 else
                 {
@@ -535,8 +546,9 @@
                     	//get all system aliases and put in drop-down
                         var aliasArr = req.responseXML.getElementsByTagName("config_alias"); 
                         var aliasGroupArr = req.responseXML.getElementsByTagName("config_key");
-                        var aliasCommentArr = req.responseXML.getElementsByTagName("config_comment");
-                        var aliasAuthorArr = req.responseXML.getElementsByTagName("config_author");
+                        var aliasGroupCommentArr = req.responseXML.getElementsByTagName("config_comment");
+						var aliasCommentArr = req.responseXML.getElementsByTagName("config_alias_comment");                    
+						var aliasAuthorArr = req.responseXML.getElementsByTagName("config_author");
                         var aliasCreateTimeArr = req.responseXML.getElementsByTagName("config_create_time");
                         
             			var userLastConfigAlias = 
@@ -556,7 +568,8 @@
                         	_aliasTranslationMetaDataMap[alias] = [
 																   aliasCommentArr[i].getAttribute('value'),
 																   aliasAuthorArr[i].getAttribute('value'),
-																   aliasCreateTimeArr[i].getAttribute('value')
+																   aliasCreateTimeArr[i].getAttribute('value'),
+																   aliasGroupCommentArr[i].getAttribute('value')
 																   ];
 														 
                             //choose the first system alias by default
@@ -608,8 +621,9 @@
                 default:;
                 }
     
-			}
+			} //end initTransitionParameters()
 			
+			//=====================================================================================
 			//handleTransitionParameterChange
 			function handleTransitionParameterChange(paramIndex,el) 
 			{
@@ -624,8 +638,9 @@
 					Debug.log("handleTransitionParameterChange UNKNOWN?!");
 				}
 				
-			}
+			} //end handleTransitionParameterChange()
 			
+			//=====================================================================================
 			//smRequestHandler
 			//handle receiving state machine
 			//xml format:
@@ -836,7 +851,7 @@
                 for(var i=0;i<_states.length;++i)
                 	if(i != ii)	//skip initial state which was already placed
                 		localPlaceState(i);                
-			}
+			} //end smRequestHandler()
 			
 
 			//=====================================================================================
@@ -848,7 +863,7 @@
 						"", currStateRequestHandler, //end request handler
 						0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
 						true /*doNoShowLoadingOverlay*/);				
-			}
+			} //end getCurrentState()
 			
 
 			//=====================================================================================
@@ -870,8 +885,6 @@
 			    
 			    //Debug.log("Physics currStateRequestHandler: " + cs + " -- " + inTrans);
 
-			    
-			    
 			    //find current state in stateNames array
                 for(var i=0;i<_stateNames.length;++i)
                 	if(_stateNames[i] == cs) 
@@ -914,9 +927,14 @@
 											". (Likely there was a error transitioning a Supervisor)",Debug.HIGH_PRIORITY);
 								}
 								else
-									Debug.log("State was changed unexpectedly from " + 
+								{
+									if(!_suppressReloginPopups)
+										Debug.log("State was changed unexpectedly from " + 
 											_stateNames[_currState] + " to " + _stateNames[i] +
 											". (Likely the server was restarted or another user changed the state)",Debug.HIGH_PRIORITY);
+									
+								}
+								_suppressReloginPopups = false;
 
 							    
 							    if(_states[i] == "F") //Failed state occured, so get error message
@@ -970,11 +988,13 @@
 			    
 			    Debug.log("Illegal state received as current state: " + cs,Debug.HIGH_PRIORITY);
 			    //alert("Illegal state received as current state: " + cs);
-			}
+			} //end currStateRequestHandler()
 			
+			//=====================================================================================
 			//updateTimeInState ~~
 			//  updates time in state by 1 second if not given a time value
-			function updateTimeInState(t) {
+			function updateTimeInState(t) 
+			{
 				
 				if(t == undefined)
 					++_timeInState;
@@ -1032,11 +1052,13 @@
 				str += secs ;
 				
 				document.getElementById("time-elapsed").innerHTML = str;			
-			}
+			} //end updateTimeInState()
 
-            //physicsLaunchHandler ~~
+            //=====================================================================================
+			//physicsLaunchHandler ~~
             //  handle response to launch of physics state change
-            function physicsLaunchHandler(req,transitionAttempted) {
+            function physicsLaunchHandler(req,transitionAttempted) 
+			{
             	            	
             	//Debug.log("Physics physicsLaunchHandler " + req.responseText);
                 if(transitionAttempted)
@@ -1107,10 +1129,12 @@
                 _transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
             } //end physicsLaunchHandler()
             
-            //handleMouseUp ~~
+            //=====================================================================================
+			//handleMouseUp ~~
             //  handle mouse click events
             //  if mouse is over a transition, execute transition
-            function handleMouseUp(mouseEvent) {
+            function handleMouseUp(mouseEvent) 
+			{
                 if(_selectedTransition == -1 || _inAnimation)
                 {
                 	//if in transition, then allow for mouse click of cancel button                
@@ -1171,21 +1195,25 @@
 						transitionPostData, physicsLaunchHandler, //end request handler
 						0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
 						true /*doNoShowLoadingOverlay*/);
-            }
+            } //end handleMouseUp()
                     
-            //getTransitionParameterData
+            //=====================================================================================
+			//getTransitionParameterData
             //  return the get/post data for the StateMachineXgiHandler?StateMachine call parameter
-            function getTransitionParameterData(param) {
+            function getTransitionParameterData(param) 
+			{
                 for(var i=0;i<_TRANSITION_PARAMETERS.length;++i)
                     if(_TRANSITION_PARAMETERS[i] == param)
                         return param + "=" + _transitionParameterValues[i];
                 return "";
-            }    
+            }  //end getTransitionParameterData()
             
-            //transitionTimerHandler ~~
+            //=====================================================================================
+			//transitionTimerHandler ~~
             //  fades out states, fades in progress, when transition complete at server fade out progress
             //  and finally fade in new state
-            function transitionTimerHandler(mouseEvent) {
+            function transitionTimerHandler(mouseEvent) 
+			{
                 
                 //Debug.log("Physics transitionTimerHandler to state " + _transitionFadeAlpha);
                 
@@ -1276,10 +1304,12 @@
                     else if(_transitionFadeAlpha < 0) _transitionFadeAlpha = 0;
     			    _blackout.style.backgroundColor = 'rgba(' + _TRANS_BLACKOUT_COLOR + ',' + _transitionFadeAlpha + ')';
             	}
-            }
+            } //end transitionTimerHandler()
 
-            //handleCheckTransitionProgress ~~
-            function handleCheckTransitionProgress(req,id,err) {
+            //=====================================================================================
+			//handleCheckTransitionProgress ~~
+            function handleCheckTransitionProgress(req,id,err) 
+			{
             	
                 //Debug.log("Physics handleCheckTransitionProgress " + req.responseText);
             	
@@ -1287,16 +1317,16 @@
             	{            		
             		Debug.log("Physics handleCheckTransitionProgress Error: " + err, Debug.HIGH_PRIORITY);
             		
-//            		//show refresh link            		
-//            		var str = "";
-//            		str += "<div style='margin:10px'>";
-//            		str += "Did the server crash? If it's back, try a ";
-//            		str += "<a onclick='_transitionProgress = -1; " + 
-//					"window.clearInterval(_transitionTimer);" +
-//					"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
-//						">Refresh</a>.";
-//            		str += "</div>";
-//            		_blackoutReveal.innerHTML = str;
+           		// //show refresh link            		
+           		// var str = "";
+           		// str += "<div style='margin:10px'>";
+           		// str += "Did the server crash? If it's back, try a ";
+           		// str += "<a onclick='_transitionProgress = -1; " + 
+				// 	"window.clearInterval(_transitionTimer);" +
+				// 	"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+				// 		">Refresh</a>.";
+           		// str += "</div>";
+           		// _blackoutReveal.innerHTML = str;
             		return;
             	}
             	_blackoutReveal.innerHTML = ""; //clear blackout reveal refresh
@@ -1330,16 +1360,16 @@
 			    		Debug.log("Physics handleCheckTransitionProgress " + progress);
 			    	_transitionProgress = progress;
 			    	
-//			    	//show refresh link            		
-//			    	var str = "";
-//			    	str += "<div style='margin:10px'>";
-//
-//			    	str += "<a onclick='_transitionProgress = -1; " + 
-//			    			"window.clearInterval(_transitionTimer);" +
-//							"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
-//							">Refresh</a>";
-//			    	str += "</div>";
-//			    	_blackoutReveal.innerHTML = str;
+			    	// //show refresh link            		
+			    	// var str = "";
+			    	// str += "<div style='margin:10px'>";
+
+			    	// str += "<a onclick='_transitionProgress = -1; " + 
+			    	// 		"window.clearInterval(_transitionTimer);" +
+					// 		"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+					// 		">Refresh</a>";
+			    	// str += "</div>";
+			    	// _blackoutReveal.innerHTML = str;
 			    }
 
 		    	_progressBar.style.width = _transitionProgress + "%";
@@ -1351,16 +1381,19 @@
             					"", handleCheckTransitionProgress, //end request handler
 								0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
 								true /*doNoShowLoadingOverlay*/);
-            		},10); //attempt to get current state again in 10ms
+            		},500); //attempt to get current state again in 500ms
 			    	
-            }
+            } //end handleCheckTransitionProgress()
             
-            //handleMouseMove ~~
+            //=====================================================================================
+			//handleMouseMove ~~
             //  handle mouse movement events and set cursor style
-            function handleMouseMove(mouseEvent) {
+            function handleMouseMove(mouseEvent) 
+			{
                 
             	//do nothing if in transition or current state not defined
-                if(_inAnimation || _currState < 0) {
+                if(_inAnimation || _currState < 0) 
+				{
                 	
                 	//if in transition, then decorate mouse hover for cancel button
                 	if(_transitionProgress !== undefined &&
@@ -1423,11 +1456,13 @@
                 }
             } //end handleMouseMove()
 
-            //getAltTransitionSelection ~~
+            //=====================================================================================
+			//getAltTransitionSelection ~~
             //  check if over grid state
             //  return index of transition,
             //else if not over transition, return -1
-            function getAltTransitionSelection(x,y) {
+            function getAltTransitionSelection(x,y)
+			{
             	
             	//find which neighbor mouse is closest to
             	//	so that mouse move not directly over a state are valid
@@ -1488,18 +1523,18 @@
             			
             			d = (c - (basec+j))*(c - (basec+j)) + (r - (baser+i))*(r - (baser+i));
 
-//            			Debug.log("r,c " + r + "," + c);
-//        				Debug.log("d " + d);
-//        				Debug.log("s " + _stateNames[
-//													 _altStateGrid[baser+i][basec+j]]);
+           			// Debug.log("r,c " + r + "," + c);
+       				// Debug.log("d " + d);
+       				// Debug.log("s " + _stateNames[
+					// 								 _altStateGrid[baser+i][basec+j]]);
         				
             			if(mind == -1 ||
             					d < mind)
             			{
-//            				Debug.log("i,j " + i + "," + j);
-//            				Debug.log("d " + d);
-//            				Debug.log("NEW s " + _stateNames[
-//														 _altStateGrid[baser+i][basec+j]]);
+           				// Debug.log("i,j " + i + "," + j);
+           				// Debug.log("d " + d);
+           				// Debug.log("NEW s " + _stateNames[
+						// 								 _altStateGrid[baser+i][basec+j]]);
             				mind = d;
             				mini = i;
             				minj = j;
@@ -1566,14 +1601,15 @@
             	
             	//if here, then there were no transitions to the state with the mouse over
             	return -1;
-            }
+            } //end getAltTransitionSelection()
             
-            //getTransitionSelection ~~
+            //=====================================================================================
+			//getTransitionSelection ~~
             //  check if within selection band
             //  return index of transition,
             //else if not over transition, return -1
-            function getTransitionSelection(x,y) {
-                
+            function getTransitionSelection(x,y) 
+			{                
             	if(_altStateDrawingMode) return getAltTransitionSelection(x,y);
             	
                 var angleOff = Math.PI/(_currStateTransArr.length);
@@ -1592,12 +1628,13 @@
                     return parseInt(mang/angleOff);
                 }                
                 return -1;
-            }
+            } //end getTransitionSelection()
     
+			//=====================================================================================
 			//redrawPhysics ~
 			// redraw current situation at startup and when window resizes
-			function redrawPhysics() {	
-				
+			function redrawPhysics() 
+			{					
 				if(_currState < 0) return; //do nothing if current state not defined
 				
 			    Debug.log("Physics redrawPhysics to " + window.innerWidth + " - " + window.innerHeight);
@@ -1708,11 +1745,13 @@
 			    	else  //if not configure transition do simple display
 			    		drawHudForMouseHover(); //display text description for mouse hover
                 }
-			}
+			} //end redrawPhysics()
     
-            //drawHudForMouseHover ~~
+            //=====================================================================================
+			//drawHudForMouseHover ~~
             //  draw HUD for mouse over transitions
-            function drawHudForMouseHover() {
+            function drawHudForMouseHover() 
+			{
                 
                 _context.save(); //matching save/restore 1
                 
@@ -1793,7 +1832,13 @@
 								y += f-4;
 								metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][0]);
 								_context.fillText("   " + 
-										"Comment: '" + metaValue.substr(0,30) + 
+										"Alias Comment: '" + metaValue.substr(0,30) + 
+												(metaValue.length > 30?"...":"") + "'", 
+												x, y);
+								y += f-4;
+								metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][3]);
+								_context.fillText("   " + 
+										"Group Comment: '" + metaValue.substr(0,30) + 
 												(metaValue.length > 30?"...":"") + "'", 
 												x, y);
 							}
@@ -1819,10 +1864,12 @@
                 	
 				_context.restore(); //matching save/restore 1
                 
-            }
+            } //end drawHudForMouseHover()
             
-            //altDrawCurrentStateAndTransitions ~~
-            function altDrawCurrentStateAndTransitions() {
+            //=====================================================================================
+			//altDrawCurrentStateAndTransitions ~~
+            function altDrawCurrentStateAndTransitions() 
+			{
             	
             	//get all of transitions for currState            	
             	_currStateTransArr = new Array();            	
@@ -1956,13 +2003,14 @@
 										isSelected);     
         					}  //end transition loop      				
         			} //end 2D state grid loop            	            	
-            }
+            } //end altDrawCurrentStateAndTransitions()
 
+			//==============================================================================
 			//drawCurrentStateAndTransitions ~~
 			//	called to draw current state, _currState, in middle
             //	previous state above and display valid transitions below
-			function drawCurrentStateAndTransitions() {
-				
+			function drawCurrentStateAndTransitions() 
+			{				
 				if(_altStateDrawingMode)
 				{
 					altDrawCurrentStateAndTransitions();
@@ -1974,7 +2022,10 @@
 			
                 //draw previous state at top
 				if(_prevState != -1) drawState(_prevState,
-						_canvas.width/2+_perimeterRadius,_canvas.height/2-_perimeterRadius);
+						_canvas.width/2+_perimeterRadius,
+						_stateOvalRadius*2);
+						// _canvas.height/2-
+						// 	(_perimeterRadius > _stateOvalRadius*4?_perimeterRadius:_stateOvalRadius*4));
                 
                 //get all of transitions for currState
                 _currStateTransArr = new Array();                
@@ -2033,21 +2084,29 @@
 							true /*drawSelectedComponents*/);
                 }
                 
-			}
+			} //end drawCurrentStateAndTransitions()
 
+			//==============================================================================
 			//altDrawTransition
 			//	draws arrow for state transition from (startx, starty) towards <x, y> vector
-			function altDrawTransition(stateIndex, x, y, startx, starty, isBidir, isSelected) {
-				
+			function altDrawTransition(stateIndex, x, y, startx, starty, isBidir, isSelected)
+			{				
 				var ALT_EXTRA_MARGIN = 8;				
 				
 				var mag = Math.sqrt(x*x+y*y);
 				var up = [x/mag,y/mag];
 				var lt = [y/mag,-x/mag];				
 				var arrowOff = _stateOvalRadius*2 + _ARROW_MARGIN + ALT_EXTRA_MARGIN;
+				//add some limits to avoid negative arrows
+				if(arrowOff*2 >= _perimeterRadius)
+					arrowOff = _perimeterRadius/4;
+				if(_perimeterRadius - arrowOff*2 < _stateOvalRadius)
+					arrowOff = _stateOvalRadius*3/2;
 				var arrowSz = 
 						[_stateOvalRadius*2,
 						 _perimeterRadius - arrowOff*2];
+				
+				//console.log("altSize",arrowSz,_perimeterRadius,arrowOff);
 
 				_context.save(); //matching save/restore 1
 
@@ -2128,11 +2187,13 @@
 				}
 
 				_context.restore(); //matching save/restore 1
-			}
+			} //end altDrawTransition()
 
+			//==============================================================================
 			//drawTransition
 			//	draws arrow for state transition from (startx, starty) towards <x, y> vector
-			function drawTransition(stateIndex, x, y, startx, starty, drawSelectedComponents) {				
+			function drawTransition(stateIndex, x, y, startx, starty, drawSelectedComponents) 
+			{				
 				var isSelected = _selectedTransition != -1 && 
 						_currStateTransArr[_selectedTransition] !== undefined &&
 						_transitions[_currStateTransArr[_selectedTransition]] !== undefined &&
@@ -2207,20 +2268,26 @@
 				}
                 
 				_context.restore(); //matching save/restore 1
-            }
+            } //end drawTransition()
 
+			//==============================================================================
 			//drawSelfTransition
 			//	draws loop-back arrow for self state transition
 			//	isSelected added for alt drawing mode
-			function drawSelfTransition(stateIndex, x, y, startx, starty, isSelected, drawSelectedComponents) {
-				
+			function drawSelfTransition(stateIndex, x, y, startx, starty, isSelected, drawSelectedComponents) 
+			{
 				var mag = Math.sqrt(x*x+y*y);
 				var up = [x/mag,y/mag]; //from canvas center towards state pos
                 var innerRadius = _altStateDrawingMode?
                 		_stateOvalRadius*2- _stateOvalRadius*2*0.2:
 						(_stateOvalRadius*2 - (_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2)*0.2); //make arrows all same width
-                if(innerRadius < 10) innerRadius = 10;
-                var outerRadius = _stateOvalRadius*2;
+				//if(innerRadius < 10) innerRadius = 10;
+				//innerRadius *=4;
+				var outerRadius = _stateOvalRadius*2;
+				if(innerRadius < outerRadius*0.8) innerRadius = (outerRadius*0.8)|0;
+				//outerRadius /= 4;
+				//innerRadius /=8;
+				//console.log("innerRadius",innerRadius,"outerRadius",outerRadius);
                 var arrowPos = [startx + (_stateOvalRadius*2 + outerRadius + _ARROW_MARGIN*2)*up[0],
 								starty + (_stateOvalRadius*2 + outerRadius + _ARROW_MARGIN*2)*up[1]];
                 
@@ -2248,7 +2315,8 @@
 					var drawPos = [arrowPos[0] + outerRadius*Math.cos(startAng),
 								   arrowPos[1] + outerRadius*Math.sin(startAng)]; //setup starting position
 					var arrowSz = _altStateDrawingMode?_stateOvalRadius*2:
-							(_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2); //match other arrow size
+							(_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2)/2; //match other arrow size
+							
 					var jutSz = 0.1;
 					var pointSz = 0.3;
 
@@ -2322,11 +2390,13 @@
 				}
                 
 				_context.restore(); //matching save/restore 1
-            }
+            } //end drawSelfTransition()
 
+			//=====================================================================================
 			//getStateDrawingColor 
 			//	return proper color for drawing based on state index i
-			function getStateDrawingColor(i, isBorder) {				
+			function getStateDrawingColor(i, isBorder) 
+			{				
 				if(i == _currState) return isBorder?_TRANS_STATE_SEL_BORDER_COLOR:_CURR_STATE_COLOR;
 				else if(_selectedTransition != -1 && 
 						_currStateTransArr[_selectedTransition] !== undefined && //to prevent errors in strange server situations
@@ -2334,12 +2404,14 @@
 					return isBorder?_TRANS_STATE_SEL_BORDER_COLOR:_TRANS_STATE_COLOR_SEL;
 				else 
 						return isBorder?_TRANS_STATE_BORDER_COLOR:_TRANS_STATE_COLOR;
-			}
+			} //end getStateDrawingColor()
 			
+			//=====================================================================================
 			//getTransitionDrawingColor 
 			//	return proper color for drawing based on state index i
 			//	isSelected is short circuit bool
-			function getTransitionDrawingColor(i, isBorder, isSelected) {				
+			function getTransitionDrawingColor(i, isBorder, isSelected) 
+			{				
 				if(isSelected || 
 						(isSelected === undefined && _selectedTransition != -1 && 
 								_currStateTransArr[_selectedTransition] &&
@@ -2348,12 +2420,13 @@
 					return isBorder?_ARROW_SEL_BORDER_COLOR:_ARROW_SEL_COLOR;
 				else 
 						return isBorder?_ARROW_BORDER_COLOR:_ARROW_COLOR;
-			}
+			} //end getTransitionDrawingColor()
 						
+			//=====================================================================================
 			//drawState
 			//	draws oval for state with text and coords x, y
-			function drawState(stateIndex, x, y, isRootState) {	
-				
+			function drawState(stateIndex, x, y, isRootState) 
+			{					
 				_context.save(); //matching save/restore 1                
 				{
 					x /= 2; //since oval requires scaling apply 2 factor
@@ -2413,30 +2486,36 @@
 	                
 					_context.restore(); //matching save/restore 1
 				}
-			}
+			} //end drawState()
 			
+			//=====================================================================================
 			//toggleParameterSetup()
 			//	show/hide parameter setup pane
-			function toggleParameterSetup() {
+			function toggleParameterSetup() 
+			{
 				
 				_parameterSetupMinimized = !_parameterSetupMinimized;
                 Debug.log("Physics toggleParameterSetup " + _parameterSetupMinimized); 
                 
                 
                 redrawPhysics();
-			}
+			} //end toggleParameterSetup()
 			
+			//=====================================================================================
 			//eatParameterMouseEvent(touchEvent) 
-			function eatParameterMouseEvent(mouseEvent) {
+			function eatParameterMouseEvent(mouseEvent) 
+			{
 				mouseEvent.cancelBubble=true; //eat event away so state changes don't occur
-			}
+			} //end eatParameterMouseEvent()
 			
+			//=====================================================================================
 			//showAlarmSetup() ~~
 			function showAlarmSetup(display)
 			{
 				_alarmBox.style.display = display?"block":"none";
-			}
+			} //end showAlarmSetup()
 
+			//=====================================================================================
 			//setAlarm() ~~
 			function setAlarm(start)
 			{
@@ -2472,15 +2551,17 @@
                 _alarmRunning = start?true:false;
                 
                 Debug.log("Physics setAlarm " + start + " _alarmTimeLeft=" + _alarmTimeLeft);
-			}
+			} //end setAlarm()
 			
+			//=====================================================================================
 			//stopAlarm() ~~
 			function stopAlarm()
 			{
 				_alarmRunning = false;
 				_alarmTimeLeft = 0;
-			}
+			} //end stopAlarm()
 			
+			//=====================================================================================
 			//displayError(err) ~~
 			//put new error at top of current error strings
 			function displayError(err)
@@ -2498,15 +2579,17 @@
 				
         		el.innerHTML = str;
 				_errorBox.style.display = "block";				
-			}
+			} //end displayError()
 			
+			//=====================================================================================
 			//closeErrorBox() ~~
 			function closeErrorBox()
 			{
 				_errorBox.style.display = "none";
 				document.getElementById("error-box-err").innerHTML = ""; //clear string
-			}
+			} //end closeErrorBox()
 
+			//=====================================================================================
 			//closeErrorBox() ~~
 			function refreshFSM()
 			{
@@ -2515,7 +2598,8 @@
 				//_transitionProgress = -1; 
 				//window.clearInterval(_transitionTimer);
 				//_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
-			}
+			} //end refreshFSM()
+
 		</script>
 </head>
 

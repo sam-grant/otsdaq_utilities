@@ -581,6 +581,7 @@
 		var firstInit_ = true;
 		var systemViewPreventInfiniteLoop_ = false;
 
+		var _codeEditorAppId; //Code Editor Supervisor LID
 														  
 		//==============================================================================				
 		//init called once body has loaded
@@ -727,6 +728,21 @@
 			}
 			else
 				setupSystemViewMode();
+			
+
+			//fill in CodeEditor appId
+			DesktopContent.XMLHttpRequest("Request?RequestType=getAppId" + 
+					"&classNeedle=ots::CodeEditorSupervisor",
+					"", //end post data, 
+					function(req) 
+					{			
+				_codeEditorAppId = DesktopContent.getXMLValue(req,"id") | 0;
+				Debug.log("_codeEditorAppId " + _codeEditorAppId);
+					}, //end handler
+					0, 0, true,//reqParam, progressHandler, callHandlerOnErr, 
+					false,//doNotShowLoadingOverlay,
+					true //targetSupervisor
+			); //end getAppId request
 
 		} //end init()
 
@@ -9671,7 +9687,7 @@
 							++numberOfRequests;
 							///////////////////////////////////////////////////////////
 							DesktopContent.XMLHttpRequest(reqStr, tableMap,
-								function (req) 
+								function (req, reqi) 
 								{
 
 									var attemptedNewGroupName = DesktopContent.getXMLValue(req, "AttemptedNewGroupName");
@@ -9718,7 +9734,7 @@
 									++numberOfReturns;
 
 									var newGroupKey = DesktopContent.getXMLValue(req, "TableGroupKey");
-									affectedGroupKeys.push(newGroupKey);
+									affectedGroupKeys[reqi] = newGroupKey;//.push(newGroupKey);  // take from req parameter, since order may vary
 
 									var foundEquivalentKey = DesktopContent.getXMLValue(req, "foundEquivalentKey") | 0; //as int
 
@@ -9801,7 +9817,7 @@
 									}
 
 
-								}, 0, 0, true  //reqParam, progressHandler, callHandlerOnErr
+								}, i, 0, true  //reqParam, progressHandler, callHandlerOnErr
 							); //end save new group request
 						} //end else case for saving group i 
 					} //localSaveAndActivateGroup()
@@ -10383,7 +10399,7 @@
 							treeEditingNodeParentIdString_.split('-')[1], false);
 						pel.innerHTML = "";
 
-						//check if parent is now empty in treeViewHandler()
+						//check if parent is now empty in the handler treeViewHandler()
 						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
 							treeEditingNodeParentIdString_.split('-')[1], true);
 
@@ -14647,7 +14663,7 @@
 							++numberOfReturns;
 
 							var newGroupKey = DesktopContent.getXMLValue(req, "TableGroupKey");
-							affectedGroupKeys.push(newGroupKey);
+							affectedGroupKeys.push(newGroupKey); //can only be index 0, since affectedArr[0] was used for request
 
 							var foundEquivalentKey = DesktopContent.getXMLValue(req, "foundEquivalentKey") | 0; //as int
 
@@ -15207,7 +15223,7 @@
 
 					reqStr = ""; //reuse
 					reqStr = "Request?RequestType=saveNewTableGroup" +
-						"&groupName=" + affectedGroupNames[i] +
+						"&groupName=" + affectedGroupNames[0] +
 						"&allowDuplicates=0" +
 						"&lookForEquivalent=1" +
 						"&ignoreWarnings=" + (ignoreWarnings ? 1 : 0) +
@@ -15285,7 +15301,7 @@
 							++numberOfReturns;
 
 							var newGroupKey = DesktopContent.getXMLValue(req, "TableGroupKey");
-							affectedGroupKeys.push(newGroupKey);
+							affectedGroupKeys.push(newGroupKey); //can only be one group, since affectedGroupNames[0] was used in request
 
 							var foundEquivalentKey = DesktopContent.getXMLValue(req, "foundEquivalentKey") | 0; //as int
 
@@ -16035,6 +16051,22 @@
 							contextGroupName + "\",\"" + contextGroupKey + "\");'>" +
 							contextGroupName + "(" + contextGroupKey + ") Tree-view</a>!"
 							, Debug.INFO_PRIORITY);
+
+						var mergeReportFile = DesktopContent.getXMLValue(req, "MergeReportFile");
+						var str = "";
+						str += "You can view the merge report in the Code Editor...\n" + 
+								"(Click " +
+								"<a onclick='DesktopContent.openNewBrowserTab(" +
+								"\"Code Editor\",\"\"," + 
+								"\"/WebPath/html/CodeEditor.html?" + 
+								"urn=" + _codeEditorAppId + 
+								"&startFilePrimary=" +
+								mergeReportFile + "\",0 /*unique*/);' " +
+								"title='Click to open the merge report in a new browser tab using the Code Editor.'>" +
+								"here</a> to open the merge report in a new tab)";
+						
+						Debug.info(str);
+						
 					}
 					else
 						Debug.log("Skipped merger of context groups due to empty group name.", Debug.INFO_PRIORITY);
