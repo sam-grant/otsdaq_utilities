@@ -808,7 +808,7 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 				__SUP_COUT__ << "Returning object '" << tobject->GetName()
 				             << "' of class '" << tobject->ClassName() << __E__;
 				
-				//__SUP_COUT__ << "Data: " << json.Data() << std::endl;
+				cout << __LINE__ << "] Data: \n-->|" << json.Data() << "|<--" << std::endl;
 				xmlOut.addTextElementToData("rootType", doJSONobject?"JSON":tobject->ClassName());
 				xmlOut.addTextElementToData("rootData", hexString);
 				xmlOut.addTextElementToData("rootJSON", json.Data());
