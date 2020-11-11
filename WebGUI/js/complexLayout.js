@@ -214,7 +214,7 @@ function()
 //  var a = 0 ;
 //  window.outerWidth  = 1600 ;
 //  window.outerHeight = 1000  ;
- //--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
  function initializeOptions(dim, theBody, theArray, theText)
  {
   for(var i=0; i< theArray.length; i++)
@@ -233,14 +233,6 @@ function()
                )
   }
  }
-
- enableSTDLINE             (enableDebug_                   ) ;
-
- initializeOptions         (1,optionsBodies1D_, options1D_, options1DText_) ;               
- initializeOptions         (2,optionsBodies2D_, options2D_, options2DText_ ) ;               
- initializeOptions         (3,optionsBodies3D_, options3D_, options3DText_ ) ;               
- generateDIVPlaceholderSize('canvas0'         , 350, 440   ) ;
- generateDIVPlaceholderSize('canvas1'         , 350, 440   ) ;
 
  //--------------------------------------------------------------------------------------------------
  setButtonColor = function(color)
@@ -708,9 +700,6 @@ function()
   STDLINE("New tab created") ;
  }
 
- createCanvasTab(0) ;
- createCanvasTab(1) ;
-
  //-----------------------------------------------------------------------------------------------
  var nDivXCB = Ext.create(
                           'Ext.form.field.Number',
@@ -1033,8 +1022,6 @@ function()
 
  } ; 
  
- makeROOTControlsPanel() ;
- 
  //-----------------------------------------------------------------------------------------------
  function makeGlobalCanvas()
  {
@@ -1078,8 +1065,6 @@ function()
                             )
  }
  
- makeGlobalCanvas() ;
-
  //-----------------------------------------------------------------------------------------------
  function makeNavigatorPanel()
  {
@@ -1223,8 +1208,6 @@ function()
                                  ) ;
  }
  
- makeNavigatorPanel() ;
- 
  //-----------------------------------------------------------------------------------------------
  var theStatusBar_ = Ext.create(
                                 'Ext.ux.StatusBar', 
@@ -1279,9 +1262,6 @@ function()
                                    ) ;
  }
 
- //-----------------------------------------------------------------------------------------------
- makeInformationPanel() ;
-
  //-----------------------------------------------------------------------------
  function makeConfigStore()
  {
@@ -1323,8 +1303,6 @@ function()
                             }
                            );
  }
- 
- makeConfigStore() ;
  
  //-----------------------------------------------------------------------------
  function makeConfigWin() 
@@ -1918,7 +1896,6 @@ function()
  //-----------------------------------------------------------------------------
  function makeStore(path, reqType)
  { 
-//  theProvenance_.dump("makeStore", 0   ) ;
   STDLINE("===> makeStore <============") ;
   STDLINE("path       : " + path       ) ;
   STDLINE("reqType    : " + reqType    ) ;
@@ -1958,12 +1935,12 @@ function()
                           listeners: {
                                       beforeload   : function(thisStore, operation, eOpts) 
                                                      {
-                                                       STDLINE("Request: "+_requestURL + reqType) ;
+                                                      STDLINE("Request: "+_requestURL + reqType) ;
                                                      },
                                       load         : function( thisStore, records, successful, operation, node, eOpts )
                                                      {
-                                                       STDLINE("Load was succesful? "+successful) ;
-                                                       if( !successful ) {alert("The state machine returned an error!") ;}
+                                                      STDLINE("Load was succesful? "+successful) ;
+                                                      if( !successful ) {alert("The state machine returned an error!") ;}
                                                      }
                                      }
                          }
@@ -2012,14 +1989,14 @@ function()
                               {
                                var errMsg = response.responseText.match(/<Error value='(.*)?'\/>/) ;
                                Ext.MessageBox.alert(                                                                                      
-                                                    'Something went wrong:',                                                              
+                                                    'Oops! Something went wrong:',                                                              
                                                     errMsg                                                
                                                    );                                                                                     
                                return ;
                               }
-                              if(getXMLValue(response,"headOfSearch") == 'located') // Returns the list of available fRooPaths                                                                     
-                              { // Get list of head-points
-                               var dirs     = [] ;
+                              if(getXMLValue(response,"headOfSearch") == 'located') // This preforms a request to get the list of data sources.                                                                     
+                              {                                                     // Data sources are static directories and/or LIVE_DQM  
+                               var dirs     = [] ;                                  // Returns the list of available data sources (fRooPaths)
                                var theNodes = getXMLNodes(response,'dir') ;
                                for(var i=0; i<theNodes.length; ++i)
                                {
@@ -2035,26 +2012,6 @@ function()
                               { // get specific ROOT Object and display
                                var rootName  = getXMLValue (response,"path"    );              
                                var rootJSON  = getXMLValue (response,"rootJSON");
-//   mmsg = Ext.create(
-//                      'Ext.window.Window', 
-//                      {
-//                       title    : 'The configuration manager',
-//                       height   : 800                        ,
-//                       width    : 800                        ,
-//                       margins  : '5 5 5 5'                  ,
-//                       padding  : '5 5 5 5'                  ,
-//                       items    : [
-//                                   {
-//                                    xtype : 'textfield',
-//                                    width : 800,
-//                                    height: 800,
-//                                    value : rootJSON
-//                                   }
-//                                  ]
-//                      }
-//                     ) ;
-//   mmsg.setPosition(0,52) ;
-//   mmsg.show()            ;      
                                var object    = JSROOT.parse(rootJSON           );
                                if( updateProvenance ) 
                                {
@@ -2072,8 +2029,8 @@ function()
                                STDLINE("====================== AJAX Request end ===============================");
                                return ;
                               }
-                              if(getXMLValue(response,"dir") == 'LIVE_DQM.root') 
-                              {
+                              if(getXMLValue(response,"dir") == 'LIVE_DQM.root') // Populate the widget with the content of the LIVE_DQM
+                              {                                                  // This can be folders, canvases and/or histograms
                                selectedItem_ = "getMeLIVE-DQMFile" ;
                                makeStore('LIVE_DQM.root', 'RequestType=getMeLIVE-DQMFile');
                                makeGrid ('LIVE_DQM.root', 'LIVE_DQM'                     );
@@ -2083,18 +2040,18 @@ function()
                              },                                                                                                           
                     failure: function(response, options)                                                                                  
                              {                                                                                                            
-                              var a = response ;                                                                                          
-                              displayStatus("Done loading data!") ;
+                              var errMsg = response.responseText ;                                                                                          
+                              displayStatus("Data loading failed!") ;
                               theStatusBbar_.setStatus(
                                                        {
-                                                        text   : 'Oops! Something went wrong:'+response.responseText,
+                                                        text   : 'Oops! Something went wrong:'+errMsg,
                                                         iconCls: 'x-status-error',
                                                         clear  : true 
                                                        }
                                                       );
                               Ext.MessageBox.alert(                                                                                       
-                                                   'Something went wrong:',                                                               
-                                                   'Response: ' + response.responseText                                                   
+                                                   'Oops! Something went wrong:',                                                               
+                                                   'Response: ' + errMsg                                                   
                                                   );                                                                                      
                              }                                                                                                            
                    }                                                                                                                      
@@ -2248,6 +2205,23 @@ function()
 
  // Send a request to the server to initialize the "Source" combobox of the Visualizer window
  // with the list of available data sources (histograms and/or canvases)
+ enableSTDLINE             (enableDebug_                   ) ;
+
+ initializeOptions         (1,optionsBodies1D_, options1D_, options1DText_ ) ;               
+ initializeOptions         (2,optionsBodies2D_, options2D_, options2DText_ ) ;               
+ initializeOptions         (3,optionsBodies3D_, options3D_, options3DText_ ) ;               
+ generateDIVPlaceholderSize('canvas0'         , 350, 440                   ) ;
+ generateDIVPlaceholderSize('canvas1'         , 350, 440                   ) ;
+
+ createCanvasTab(0)      ;
+ createCanvasTab(1)      ;
+
+ makeROOTControlsPanel() ; 
+ makeGlobalCanvas()      ;
+ makeNavigatorPanel()    ; 
+ makeInformationPanel()  ;
+ makeConfigStore()       ;
+ 
  theAjaxRequest(
                 _requestURL+"RequestType=getDirectoryContents",
                 {                                                            

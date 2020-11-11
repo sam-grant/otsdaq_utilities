@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+   <meta charset="UTF-8">
+
+   <title>Reading geometry and tracks from the ROOT file</title>
+
+   <script src="../scripts/JSRootCore.js" type="text/javascript"></script>
+
+   <script type='text/javascript'>
+     // absolute file path can be used as well
+     var geom_file = "../../files/geom/evegeoshape.json.gz",
+         tracks_file = "../../files/geom/eve_tracks.root";
+
+     JSROOT.httpRequest(geom_file, "object").then(obj => {
+        JSROOT.draw("drawing", obj).then(geo_painter => {
+           JSROOT.openFile(tracks_file).then(file => {
+              file.ReadObject("tracks;1").then(tracks => {
+                 // one could simply draw list of tracks
+                 // JSROOT.draw("drawing", tracks, "same");
+
+                 // or use method of TGeoPainter to draw extras
+                 geo_painter.drawExtras(tracks, "tracks");
+
+                 // use this method if one want to remove all extra objects
+                 // geo_painter.clearExtras();
+              });
+           });
+        });
+     });
+
+   </script>
+
+</head>
+
+<body>
+  <div id="drawing" style="width:800px; height:600px"></div>
+</body>
+
+</html>
+

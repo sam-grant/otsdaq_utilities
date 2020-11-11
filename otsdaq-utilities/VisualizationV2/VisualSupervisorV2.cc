@@ -787,7 +787,7 @@ void VisualSupervisorV2::request(const std::string               & requestType,
                                         if(std::string(tobject->ClassName()) == "TCanvas")
                                          {
                                            //tobject->Draw();
-                                           __SUP_COUT__ << "Updateting canvas!" << __E__;
+                                           //__SUP_COUT__ << "Updating canvas!" << __E__;
                                            dynamic_cast<TCanvas*>(tobject)->Update();
                                            dynamic_cast<TCanvas*>(tobject)->Modified();
                                          }
@@ -805,10 +805,10 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 				std::string hexString = BinaryStringMacros::binaryStringToHexString(
 				    tBuffer.Buffer(), tBuffer.Length());
 
-				__SUP_COUT__ << "Returning object '" << tobject->GetName()
-				             << "' of class '" << tobject->ClassName() << __E__;
+				//__SUP_COUT__ << "Returning object '" << tobject->GetName()
+				//             << "' of class '" << tobject->ClassName() << __E__;
 				
-				cout << __LINE__ << "] Data: \n-->|" << json.Data() << "|<--" << std::endl;
+				//cout << __LINE__ << "] Data: \n-->|" << json.Data() << "|<--" << std::endl;
 				xmlOut.addTextElementToData("rootType", doJSONobject?"JSON":tobject->ClassName());
 				xmlOut.addTextElementToData("rootData", hexString);
 				xmlOut.addTextElementToData("rootJSON", json.Data());
