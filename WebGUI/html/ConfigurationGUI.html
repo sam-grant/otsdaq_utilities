@@ -5780,7 +5780,7 @@
 				case 2: //context	
 					for (var el = 0; el < els.length; ++el) 
 					{
-						Debug.log(els[el].value);
+						//Debug.log(els[el].value);
 						els[el].checked = false;
 						for (var c = 0; c < context.length; ++c)
 							if (els[el].value == context[c]) 
@@ -5793,7 +5793,7 @@
 				case 3: //backbone	
 					for (var el = 0; el < els.length; ++el) 
 					{
-						Debug.log(els[el].value);
+						//Debug.log(els[el].value);
 						els[el].checked = false;
 						for (var c = 0; c < backbone.length; ++c)
 							if (els[el].value == backbone[c]) 
@@ -5832,6 +5832,8 @@
 					for (var el = 0; el < els.length; ++el)
 						els[el].checked = false;
 			}
+
+			handleGroupMemberChange();
 		} //end selectForCreateTableGroup()
 
 		//==============================================================================
@@ -5911,7 +5913,7 @@
 				case 0: //latest
 					for (var el = 0; el < els.length; ++el) 
 					{
-						Debug.log(els[el].value);
+						//Debug.log(els[el].value);
 						sel = document.getElementById("select-" + els[el].value);
 						options = sel.options;
 
@@ -5929,7 +5931,7 @@
 					var defaultToSel;
 					for (var el = 0; el < els.length; ++el) 
 					{
-						Debug.log(els[el].value);
+						//Debug.log(els[el].value);
 						sel = document.getElementById("select-" + els[el].value);
 						options = sel.options;
 
@@ -5957,7 +5959,7 @@
 					var defaultToSel;
 					for (var el = 0; el < els.length; ++el) 
 					{
-						Debug.log(els[el].value);
+						//Debug.log(els[el].value);
 						sel = document.getElementById("select-" + els[el].value);
 						options = sel.options;
 
@@ -5982,6 +5984,8 @@
 				default:
 					Debug.log("Impossible! Should never happen!! Alert system admins.", Debug.HIGH_PRIORITY);
 			}
+
+			handleGroupMemberChange();
 		} //end versionsForCreateTableGroup()
 
 		//==============================================================================
