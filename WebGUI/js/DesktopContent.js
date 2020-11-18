@@ -544,6 +544,19 @@ DesktopContent.init = function(onloadFunction)
 		{
 			
 			//Debug.log("Request or Response!");
+
+			if(event.data.request == "getParentCookieCode")
+			{							
+				Debug.log("Received info request from child page");
+				event.source.postMessage(
+					{			
+						
+					"windowId":		"unknown",	
+					"request":		"giveParentCookieCode",
+					"cookieCode":	DesktopContent._cookieCodeMailbox
+					}, "*");
+				return;
+			}
 			
 			if(DesktopContent._theWindowId != event.data.windowId)
 			{

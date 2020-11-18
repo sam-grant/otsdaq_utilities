@@ -205,6 +205,9 @@
 			var activeMenu_ = "menu--active";
 			//==== END Context Menu
 
+
+			var WIDGET_TYPE_TAB = 12;
+
 			var nav_;
 			var gridColor_;
 			var gridSnap_;
@@ -234,7 +237,10 @@
 			var saveCursorType_;
 
 			var dragLockout_ = false;
-			var targetElement_ = undefined;
+			var targetElement_ = undefined;			
+			var targetTabBodyId_ = undefined;
+
+
 			//==== END Drag and Resize
 
 			var copyWidget_;
@@ -1776,20 +1782,20 @@
 				if(widgetLibrary.dimensions[type])
 				{
 					console.log("selectionRectangle type:" + type);
-					if(widgetLibrary.dimensions[type]["X"])
+					if(widgetLibrary.dimensions[type]["Default Width"])
 					{
-						console.log("Has a specified width");
-						selectionRectangle.style.width = (widgetLibrary.dimensions[type]["X"] + "px");
+						console.log("Has a specified width", widgetLibrary.dimensions[type]["Default Width"]);
+						selectionRectangle.style.width = (widgetLibrary.dimensions[type]["Default Width"] + "px");
 					}
 					else
 					{
 						selectionRectangle.style.width = "1px";
 					}
 
-					if(widgetLibrary.dimensions[type]["Y"])
+					if(widgetLibrary.dimensions[type]["Default Height"])
 					{
 						console.log("Has a specified height");
-						selectionRectangle.style.height = (widgetLibrary.dimensions[type]["Y"] + "px");
+						selectionRectangle.style.height = (widgetLibrary.dimensions[type]["Default Height"] + "px");
 					}
 					else
 					{
@@ -1854,13 +1860,13 @@
 
 						if(adjusted_y_displacement >= w)
 						{
-							drawAndDragBox.style.width = parseFloat(y_displacement * aspect_ratio) + "px";
+							drawAndDragBox.style.width = parseFloat(h * aspect_ratio) + "px";
 							drawAndDragBox.style.height = h + "px";						
 						}
 						else
 						{							
 							drawAndDragBox.style.width = w + "px";
-							drawAndDragBox.style.height = parseFloat(x_displacement / aspect_ratio) + "px";					
+							drawAndDragBox.style.height = parseFloat(w / aspect_ratio) + "px";					
 						}
 					}
 				}
@@ -1912,6 +1918,48 @@
 				dragAndDrawWidgetType_ = undefined;
 				editBlock_.el.firstChild.contentWindow.selectWidgetTile(); //unselect in edit block
 			} //end stopDragAndDrawRectangle()
+
+
+			//=====================================================================================
+			function openTabPage(elmnt) {
+				var i, tabcontent, tablinks;
+
+				// Hide all elements with class="tabcontent" by default */
+				tabcontent = document.getElementsByClassName("tabWidgetBody");
+				for (i = 0; i < tabcontent.length; i++) {
+					tabcontent[i].style.display = "none";
+					for (var j = 0; j < Object.keys(page_.widgets).length;j++ ) {
+						if (page_.widgets[j].tabBodyID == tabcontent[i].id)
+							page_.widgets[j].el.parentElement.style.display = "none";
+					}
+				}
+
+				// Show the specific tab content
+				var tabBody = document.getElementById(elmnt.id.replace("tabSelectButton","tabBody"));
+				tabBody.style.display = "block";
+				for (var j = 0; j < Object.keys(page_.widgets).length;j++ ) {
+					if (page_.widgets[j].tabBodyID == tabBody.id)
+						page_.widgets[j].el.parentElement.style.display = "block";
+				}
+
+				tablinks = document.getElementsByClassName("tabWidgetSelectButton");
+				for (i = 0; i < tablinks.length; i++) {
+					tablinks[i].style.backgroundColor = "";
+				}
+				elmnt.style.backgroundColor = "#777";
+				console.log("Tabs openTabPage()", elmnt.innerHTML);
+			} // end openTabPage()
+
+
+			//=====================================================================================
+			function checkWidgetInTabBody(widget, tabWidget)
+			{
+				if (widget.x >= tabWidget.x && widget.y >= tabWidget.y
+				    && ((widget.x + widget.w) <= (tabWidget.x + tabWidget.w))
+				    && ((widget.y + widget.h) <= (tabWidget.y + tabWidget.h)))
+					return true;
+				return false;
+			} //end checkWidgetInTabBody
 
 
 			//================================================================================
@@ -1980,6 +2028,7 @@
 					widgetObject.attributes 	= {};
 					widgetObject.displayName 	= "widget-" + id;
 					widgetObject.loaded 		= false;
+					widgetObject.tabBodyID		= targetTabBodyId_?targetTabBodyId_:"";
 					//attempt to get element, ok if undefined (will be created)
 					widgetObject.el				= document.getElementById("widget-" + id);
 				} //end new widget object handling
@@ -2006,15 +2055,52 @@
 				{
 					Debug.log("Creating widget elements for widget" + id);
 
-					widgetObject.el = document.createElement("iframe");
-					widgetObject.el.scrolling="No";	
-					widgetObject.el.id = "widget-" + id;
 
 					containerDiv = document.createElement("div");
 					containerDiv.className = "widgetContainerDiv";
 					containerDiv.id = "widget-" + id + "-container";
 					//containerDiv.style["background-color"] = "rgba(0,0,0,0.2)";
 					containerDiv.style.zIndex = Object.keys(page_.widgets).length;
+					
+					if(type == WIDGET_TYPE_TAB)
+					{
+						Debug.log("Making simple tab structure, not iframe.");
+						
+						widgetObject.el = document.createElement("div");
+						var str = "";
+						var STARTING_TAB_COUNT = 3;
+						
+						var tabEl = document.createElement("div");
+						tabEl.className = "tabWidgetTabContainer";
+						for(var i=0;i<STARTING_TAB_COUNT;++i)
+							str += "<div id='widget-" + id + "-tabSelectButton-" + i + 
+								"'' style='background-color:" + (i == 0?"#777":"") + "'class='tabWidgetSelectButton' onclick='openTabPage(this)'>Tab " + i + "</div>";
+						tabEl.innerHTML = str;
+
+						widgetObject.el.appendChild(tabEl);
+
+						var tabBodyEl = document.createElement("div");
+						tabBodyEl.className = "tabWidgetBodyContainer";
+						str = "";
+						for(var i=0;i<STARTING_TAB_COUNT;++i)
+							str += "<div id='widget-" + id + "-tabBody-" + i + 
+								"'' style='display:" + (i == 0?"block":"none") + "' class='tabWidgetBody'>Tab Body " + i + "</div>";
+
+						tabBodyEl.innerHTML = str;
+
+						widgetObject.el.appendChild(tabBodyEl);
+					}
+					else
+					{
+						widgetObject.el = document.createElement("iframe");
+						widgetObject.el.scrolling="No";	
+						widgetObject.el.id = "widget-" + id;
+
+						widgetObject.el.src = "widgets/" + 
+								widgetLibrary.typeToSrc[widgetObject.type];
+						widgetObject.el.style.border = "0";
+						widgetObject.el.innerHTML = widgetObject.displayName;
+					}
 
 					widgetCover = document.createElement("div");
 					widgetCover.className = "widgetCover";
@@ -2094,6 +2180,11 @@
 					widgetCover.addEventListener("mousemove", 
 						function()
 						{
+							var widgetId = this.id.split('-')[1];
+							if(page_.widgets[widgetId].type == WIDGET_TYPE_TAB)
+							{
+								Debug.log("Mouse over TAB widget cover", this.id);
+							}
 							if(!drawingSelectionRectangle_ && 
 								dragAndDrawWidgetType_ !== undefined)
 								this.style.cursor = "crosshair";
@@ -2147,13 +2238,10 @@
 					resizeDiv.appendChild(editIcon);
 					resizeDiv.appendChild(otherEditIcon);
 
-					widgetObject.el.src = "widgets/" + 
-							widgetLibrary.typeToSrc[widgetObject.type];
-					widgetObject.el.style.border = "0";
-					widgetObject.el.innerHTML = widgetObject.displayName;
 
 					containerDiv.appendChild(resizeDiv);
 					containerDiv.appendChild(widgetCover);
+
 
 					containerDiv.appendChild(widgetObject.el);
 
@@ -2366,7 +2454,7 @@
 
 					for(widgetId in page_.widgets)
 					{
-						page_.widgets[widgetId].el.contentWindow.drawWidget(page_.widgets[widgetId]);
+						if(page_.widgets[widgetId].el.contentWindow) page_.widgets[widgetId].el.contentWindow.drawWidget(page_.widgets[widgetId]);
 						drawWidget(widgetId);
 					}
 
@@ -2984,7 +3072,8 @@
 					page_.widgets[menu_.getAttribute("widgetID")].pvList[pvName] = refreshRate_;
 					i++;
 				}
-				page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.init();
+				if(page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow)
+					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.init();
 			} //end addPVPaneToWidget()
 
 
@@ -4051,11 +4140,30 @@
 			//=====================================================================================
 			function handleWidgetCoverMouseDown(e,id)
 			{
+				targetTabBodyId_ = undefined;
 				//allow drawing widget in widget cover
 				if(!drawingSelectionRectangle_ && 
 						dragAndDrawWidgetType_ !== undefined)
 				{
 					Debug.log("handleMouseDown " + dragAndDrawWidgetType_ );
+
+					//check if starting drawing over a tab widget
+					if(id !== undefined && page_.widgets[id].type == WIDGET_TYPE_TAB)
+					{
+
+						var tabcontent = page_.widgets[id].el.getElementsByClassName("tabWidgetBody");						
+						for (var i = 0; i < tabcontent.length; i++) 
+						{
+							if (tabcontent[i].style.display == "block")
+							{
+								targetTabBodyId_ = tabcontent[i].id;
+								break;
+							}
+						}
+						Debug.log("Over tab widget",id,targetTabBodyId_);
+						
+					}
+
 					drawSelectionRectangle(e);
 				}
 				else
@@ -4081,9 +4189,34 @@
 							Debug.HIGH_PRIORITY);
 					return;
 				}
-				//else dragging a widget			
+				//else dragging a widget
 
 				Debug.log("startWidgetDrag() id=" + id);
+
+				//if dragging tab widget, hide all content widgets
+				targetTabBodyId_ = undefined;
+				//check if starting drawing over a tab widget
+				if(id !== undefined && page_.widgets[id].type == WIDGET_TYPE_TAB)
+				{
+					var tabcontent = page_.widgets[id].el.getElementsByClassName("tabWidgetBody");						
+					for (var i = 0; i < tabcontent.length; i++) 
+					{
+						if (tabcontent[i].style.display == "block")
+						{
+							targetTabBodyId_ = tabcontent[i].id;
+							break;
+						}
+					}
+					Debug.log("startWidgetDrag() tab widget",id,targetTabBodyId_);	
+					
+					for (var j = 0; j < Object.keys(page_.widgets).length; j++) 
+						if (j != id && page_.widgets[j].tabBodyID == targetTabBodyId_) 				
+						{
+							//hide the -container element of the tab's active body's children
+							page_.widgets[j].el.parentElement.style.display = "none";
+						}
+				}
+
 
 				resizeWidgetId_ = id;
 				dragLockout_ = true; //indicate dragging
@@ -4144,12 +4277,145 @@
 				}
 
 				Debug.log("endWidgetDragAndResize() " + id);
+				if(!id)
+				{	
+					id = dragAndDrawTargetEl_.id.split('-')[1];
+					Debug.log("endWidgetDragAndResize() " + id);
+				}
 
 				//restore cursor
 				dragAndDrawTargetEl_.style.cursor = saveCursorType_;
 
+				//if target element is a tab widget, redraw children objects at new position
+				if(id !== undefined && page_.widgets[id].type == WIDGET_TYPE_TAB)
+				{
+					var tabcontent = page_.widgets[id].el.getElementsByClassName("tabWidgetBody");						
+					// for (var i = 0; i < tabcontent.length; i++) 
+					// {
+					// 	if (tabcontent[i].style.display == "block")
+					// 	{
+					// 		targetTabBodyId_ = tabcontent[i].id;
+					// 		break;
+					// 	}
+					// }
+					Debug.log("endWidgetDragAndResize() tab widget",id,targetTabBodyId_);	
+					
+					for (var j = 0; j < Object.keys(page_.widgets).length; j++) 						
+						if (j != id && //move all widgets in ANY tab
+							page_.widgets[j].tabBodyID.length &&
+							page_.widgets[j].tabBodyID.split('-')[1] == id) 				
+						{
+							//hide the -container element of the tab's active body's children							
+							if(page_.widgets[j].tabBodyID == targetTabBodyId_) 
+								page_.widgets[j].el.parentElement.style.display = "block";
+
+							if(resizeLockout_)
+								continue;
+							var ex, ey, deltaX, deltaY, newx, newy;
+
+							ex = snapToGrip(e.clientX, GRIDSIZE_);
+							ey = snapToGrip(e.clientY, GRIDSIZE_);
+
+							newx = toPageXCoordinate(page_.widgets[j].x);
+							newy = toPageYCoordinate(page_.widgets[j].y);
+
+							deltaX = ex - xPos_;
+							deltaY = ey - yPos_;
+
+							if (gridSnap_)
+							{
+								newx += -newx % GRIDSIZE_;
+								newy += -newy % GRIDSIZE_;
+							}
+							newx += deltaX;
+							newy += deltaY;
+							drawWidget(j, undefined, newx, newy);
+						}
+				}
+
+				
+
+				//var tabcontent = page_.widgets[id].el.getElementsByClassName("tabWidgetBody");
+				// if(page_.widgets[id].type != WIDGET_TYPE_TAB)
+				// {
+				// 	for (var i = 0; i < tabcontent.length; i++) 
+				// 	{
+				// 		if (tabcontent[i].style.display == "block")
+				// 			if(checkWidgetInTabBody(page_.widgets[id], page_.widgets[tabcontent[i].id.split("-")[1]])) 
+				// 			{
+				// 				page_.widgets[id].tabBodyID = tabcontent[i].id;
+				// 				console.log("Widget is inside tabWidgetBody: " + tabcontent[i].id);
+				// 			}
+				// 			else
+				// 				page_.widgets[id].tabBodyID = "";
+				// 	}
+				// }
+				// else 
+				// {
+				// 	// check widgets with the same tabBbodyIDs and redraw them
+				// 	for (var i = 0; i < tabcontent.length; i++) 
+				// 	{
+				// 		var tabWidget = page_.widgets[tabcontent[i].id.split("-")[1]];
+				// 		for (var j = 0; j < Object.keys(page_.widgets).length; j++) 
+				// 		{
+				// 			if (j != id)
+				// 				if (page_.widgets[j].tabBodyID == tabcontent[i].id) 
+				// 				{
+				// 					page_.widgets[j].el.parentElement.style.display = "block";
+
+				// 					var ex, ey, deltaX, deltaY, newx, newy;
+
+				// 					ex = snapToGrip(e.clientX, GRIDSIZE_);
+				// 					ey = snapToGrip(e.clientY, GRIDSIZE_);
+
+				// 					newx = toPageXCoordinate(page_.widgets[j].x);
+				// 					newy = toPageYCoordinate(page_.widgets[j].y);
+
+				// 					deltaX = ex - xPos_;
+				// 					deltaY = ey - yPos_;
+					
+				// 					if(gridSnap_)
+				// 					{
+				// 						newx += -newx%GRIDSIZE_;
+				// 						newy += -newy%GRIDSIZE_;
+				// 					}
+				// 					newx += deltaX;
+				// 					newy += deltaY;
+				// 					drawWidget(j, undefined, newx, newy);
+				// 				}
+				// 		}
+				// 	}
+				// }
+
 				//redraw target widget one more time and keep final position
 				redrawTargetWidget(e, true /*doNotRestorePosition*/);
+
+				//check if widget is now within a tab body
+				if(id !== undefined && page_.widgets[id].type != WIDGET_TYPE_TAB)
+				{
+					for (var j = 0; j < Object.keys(page_.widgets).length; j++) 
+						if(page_.widgets[j].type == WIDGET_TYPE_TAB)
+						{
+							var tabcontent = page_.widgets[j].el.getElementsByClassName("tabWidgetBody");						
+							for (var i = 0; i < tabcontent.length; i++) 
+							{
+								if (tabcontent[i].style.display == "block")
+								{
+									//found display body
+									if(checkWidgetInTabBody(page_.widgets[id], 
+										page_.widgets[j])) 
+									{
+										page_.widgets[id].tabBodyID = tabcontent[i].id;
+										console.log("Widget is inside tabWidgetBody: " + tabcontent[i].id);
+									}
+									else
+										page_.widgets[id].tabBodyID = "";
+									break;
+								} //end body within tab widget handling
+							} //end body within tab widget search loop		
+						} //end tab widget handling
+					//end tab widget search loop
+				}
 
 				resizeFrom_ = undefined;
 				resizeWidgetId_ = undefined;
@@ -4299,6 +4565,7 @@
 					return;
 				}
 
+				Debug.log("Resizing",newx,newy,neww,newh);
 				drawWidget(
 						resizeWidgetId_,
 						undefined /*type not changed*/,
@@ -4326,6 +4593,7 @@
 				if(!drawingSelectionRectangle_ && 
 						dragAndDrawWidgetType_ !== undefined)
 				{
+					targetTabBodyId_ = undefined;
 					Debug.log("handleMouseDown " + dragAndDrawWidgetType_ );	
 					drawSelectionRectangle(e);
 				}

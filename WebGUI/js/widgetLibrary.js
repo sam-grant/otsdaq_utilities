@@ -24,7 +24,8 @@ widgetLibrary.typeToSrc =		{
 									"8" :"led.html",
 									"9" :"picture.html",
 									"10" :"2d_stop-light.html",
-									"11" :"root_visualizer.html"
+									"11" :"root_visualizer.html",
+									"12" :"tabs.html"
 								}
 
 widgetLibrary.typeToImgSrc =	{
@@ -39,7 +40,8 @@ widgetLibrary.typeToImgSrc =	{
 		   					 		"8" :"led-icon.png",
 		   					 		"9" :"picture-icon.png",
 		   					 		"10" :"2d_stop-light.png",
-		   					 		"11" :"root-icon.png"
+		   					 		"11" :"root-icon.png",
+		   					 		"12" :"tabs-icon.png"
 								}
 
 widgetLibrary.typeToName =		{
@@ -54,7 +56,8 @@ widgetLibrary.typeToName =		{
 									"8" : "Basic Led",
 									"9" : "Basic picture",
 									"10" : "Basic 2D stop-light viewer",
-									"11" : "Basic Root file widget"
+									"11" : "Basic Root file widget",
+									"12" : "Basic tabs widget"
 								}
 
 widgetLibrary.typeToPurpose =	{
@@ -69,30 +72,55 @@ widgetLibrary.typeToPurpose =	{
 									"8" : "Led",
 									"9" : "Picture",
 									"10" : "2D stop-light",
-									"11" : "Root file"
+									"11" : "Root file",
+									"12" : "Tabs"									
 								}
 
 widgetLibrary.dimensions =		{
-									"3": {
-										"X": "350",
-										"Y": "200",
-										"Scale": "True"
+	
+									"1": { /* PVs Table */
+										"Min Width": "400",
+										"Min Height": "200",
+										"Default Width": "400",
+										"Default Height": "200",
+										"Scale": "True",
 									},
-									"4": {
-										"X": "350",
-										"Y": "200",
-										"Scale": "True"
+									"2": { /* Gauge */
+										"Min Width": "200",
+										"Min Height": "200",
+										"Default Width": "400",
+										"Default Height": "400",
+										"Aspect Ratio(W:H)": "200:200",
+										"Scale": "True",
 									},
-									"1": {
-										"X": "400",
-										"Y": "200",
-										"Scale": "True"
+									"3": { /* Time Chart */
+										"Min Width": "200",
+										"Min Height": "200",
+										"Default Width": "350",
+										"Default Height": "200",
+										"Scale": "True",
 									},
-									"10": {
-										"X": "420",
-										"Y": "350",
-										"Scale": "True"
-									}
+									"4": { /* XY Chart */
+										"Min Width": "200",
+										"Min Height": "200",
+										"Default Width": "350",
+										"Default Height": "200",
+										"Scale": "True",
+									},
+									"10": { /* 2D stop-light */
+										"Min Width": "200",
+										"Min Height": "200",
+										"Default Width": "420",
+										"Default Height": "350",
+										"Scale": "True",
+									},
+									"12": { /* Tabs */
+										"Min Width": "200",
+										"Min Height": "200",
+										"Default Width": "350",
+										"Default Height": "300",
+										"Scale": "True",
+									},
 								}
 
 widgetLibrary.init = function()

@@ -771,3 +771,31 @@
 				rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
 		border-radius: 3px;
 	}
+
+	.tabWidgetTabContainer {
+		float: 						left;
+		width: 						100%;
+		margin: 					-44px 0 0 0;
+	}
+
+	.tabWidgetSelectButton {
+		color:						red;
+		background-color: 			darkblue;
+		float:						left;
+		padding:					5px 10px;
+		border-radius:				10px 10px 0 0;
+		border:						1px solid white;
+		cursor:						pointer;
+	}
+
+
+	.tabWidgetBodyContainer {
+		float: 						left;
+		width: 						100%;
+		height: 					calc(100% - 0px);
+	}
+
+	.tabWidgetBody { 
+		background-color: 			lightblue;
+		height: 					100%;
+	}

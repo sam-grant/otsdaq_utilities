@@ -113,9 +113,11 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 			//preserve line number from source
 			if(Debug.BROWSER_TYPE == 1) //chrome
 			{
-				Debug.lastLogger = (new Error).stack.split("\n")[2];						
-				Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
-				Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+				Debug.lastLogger = (new Error).stack.split("\n")[2];	
+				var i = Debug.lastLogger.indexOf(' (');									
+				Debug.lastLog = Debug.lastLogger.slice(0,i);
+				if(i >= 0)
+					Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
 						Debug.lastLogger.length-1);
 			}
 			else if(Debug.BROWSER_TYPE == 2) //firefox
@@ -135,9 +137,11 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 		Debug.presetPriority = Debug.HIGH_PRIORITY.DEBUG_PRIORITY;
 		if(Debug.BROWSER_TYPE == 1) //chrome
 		{
-			Debug.lastLogger = (new Error).stack.split("\n")[2];						
-			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
-			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+			Debug.lastLogger = (new Error).stack.split("\n")[2];	
+			var i = Debug.lastLogger.indexOf(' (');									
+			Debug.lastLog = Debug.lastLogger.slice(0,i);
+			if(i >= 0)
+				Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
 					Debug.lastLogger.length-1);
 		}
 		else if(Debug.BROWSER_TYPE == 2) //firefox
@@ -153,9 +157,11 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 		Debug.presetPriority = Debug.WARN_PRIORITY.DEBUG_PRIORITY;
 		if(Debug.BROWSER_TYPE == 1) //chrome
 		{
-			Debug.lastLogger = (new Error).stack.split("\n")[2];						
-			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
-			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+			Debug.lastLogger = (new Error).stack.split("\n")[2];	
+			var i = Debug.lastLogger.indexOf(' (');									
+			Debug.lastLog = Debug.lastLogger.slice(0,i);
+			if(i >= 0)
+				Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
 					Debug.lastLogger.length-1);
 		}
 		else if(Debug.BROWSER_TYPE == 2) //firefox
@@ -171,9 +177,11 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 		Debug.presetPriority = Debug.INFO_PRIORITY.DEBUG_PRIORITY;
 		if(Debug.BROWSER_TYPE == 1) //chrome
 		{
-			Debug.lastLogger = (new Error).stack.split("\n")[2];						
-			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
-			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+			Debug.lastLogger = (new Error).stack.split("\n")[2];	
+			var i = Debug.lastLogger.indexOf(' (');									
+			Debug.lastLog = Debug.lastLogger.slice(0,i);
+			if(i >= 0)
+				Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
 					Debug.lastLogger.length-1);
 		}
 		else if(Debug.BROWSER_TYPE == 2) //firefox
@@ -189,9 +197,11 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 		Debug.presetPriority = Debug.MED_PRIORITY.DEBUG_PRIORITY;
 		if(Debug.BROWSER_TYPE == 1) //chrome
 		{
-			Debug.lastLogger = (new Error).stack.split("\n")[2];						
-			Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
-			Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+			Debug.lastLogger = (new Error).stack.split("\n")[2];	
+			var i = Debug.lastLogger.indexOf(' (');									
+			Debug.lastLog = Debug.lastLogger.slice(0,i);
+			if(i >= 0)
+				Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
 					Debug.lastLogger.length-1);
 		}
 		else if(Debug.BROWSER_TYPE == 2) //firefox
@@ -262,9 +272,11 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				{
 					if(Debug.BROWSER_TYPE == 1) //chrome
 					{
-						Debug.lastLogger = (new Error).stack.split("\n")[2];						
-						Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
-						Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+						Debug.lastLogger = (new Error).stack.split("\n")[2];		
+						var i = Debug.lastLogger.indexOf(' (');								
+						Debug.lastLog = Debug.lastLogger.slice(0,i);
+						if(i >= 0)
+							Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
 								Debug.lastLogger.length-1);
 					}
 					else if(Debug.BROWSER_TYPE == 2) //firefox
@@ -281,14 +293,14 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				source = source.substr(0,source.indexOf('?'));
 				
 				if(useStrOnly)
-                                {
+				{
  					console.log("%c" + type + "-Priority" +  
  							":\t " + Debug.lastLog + " from " + source + ":\n" +
  							Debug.lastLogger + "::\t" + str,							 
  							num == 0?"color:#F30;"	//chrome/firefox allow css styling
  									:(num == 1?"color:#F70" //warn
  											:(num < 99?"color:#092":"color:#333")));
-                                }
+				}
 				else
 				{
 					var consoleArguments = [];
