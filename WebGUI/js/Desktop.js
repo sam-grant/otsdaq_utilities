@@ -2069,7 +2069,7 @@ Desktop.handleWindowManipulation = function(delta)
 
 	} //end tiled prep loop
 
-	Debug.log("keepTile",keepTile,Desktop.winManipMode,"followTiledRight",followTiledRight.length,delta[0]);
+	//Debug.log("keepTile",keepTile,Desktop.winManipMode,"followTiledRight",followTiledRight.length,delta[0]);
 
 	if(!keepTile)
 		Desktop.desktop.lastTileWinPositions = {}; //clear to avoid future checks

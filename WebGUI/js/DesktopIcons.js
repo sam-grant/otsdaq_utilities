@@ -353,10 +353,14 @@ else {
 			//define icon content
 			if(picfn != "0" && picfn != "DEFAULT" && picfn != "")
 			{ //if icon image			
-				if(picfn[0] != '/')
+				Debug.log("picfn",picfn.substr(0,4),picfn);
+				if(picfn[0] != '/' && ( //avoid if http*: start as well
+					picfn.length < 6 || picfn.substr(0,4) != "http" || picfn[5] != ':'))
 					div.style.backgroundImage = "url(/WebPath/images/iconImages/" + picfn+")";
 				else
 					div.style.backgroundImage = "url(" + picfn+")";
+				
+				div.style.backgroundSize = _defaultIconWidth + "px " + _defaultIconHeight + "px";
 				
 				var div2 = document.createElement("div");
 				div2.setAttribute("class", "DesktopIcons-iconDiv");
