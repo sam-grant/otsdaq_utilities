@@ -206,7 +206,20 @@
 			//==== END Context Menu
 
 
-			var WIDGET_TYPE_TAB = 12;
+			var WIDGET_TYPE_TEXT	= 0;
+			var WIDGET_TYPE_TABLE	= 1;
+			var WIDGET_TYPE_METER	= 2;
+			var WIDGET_TYPE_CHART	= 3;
+			var WIDGET_TYPE_XYCHART	= 4;
+			var WIDGET_TYPE_THERMO	= 5;
+			var WIDGET_TYPE_SIREN	= 6;
+			var WIDGET_TYPE_LABEL	= 7;
+			var WIDGET_TYPE_LED		= 8;
+			var WIDGET_TYPE_PICTURE	= 9;
+			var WIDGET_TYPE_2DLIGHTS= 10;
+			var WIDGET_TYPE_ROOT	= 11;
+			var WIDGET_TYPE_TAB		= 12;
+			var WIDGET_TYPE_NAVTAB	= 13;
 
 			var nav_;
 			var gridColor_;
@@ -239,8 +252,6 @@
 			var dragLockout_ = false;
 			var targetElement_ = undefined;			
 			var targetTabBodyId_ = undefined;
-
-
 			//==== END Drag and Resize
 
 			var copyWidget_;
@@ -495,9 +506,22 @@
 				}
 			} //end pvListReqHandler()
 
-
+			
 			//=====================================================================================
-			var PHOEBUS_MAP = {"textupdate": 0, "table": 1, "meter": 2, "stripchart": 3, "xychart": 4, "thermometer": 5, "siren": 6, "label": 7, "led": 8, "picture": 9, "2dstoplight": 10, "root": 11};
+			var PHOEBUS_MAP = {   "textupdate":	WIDGET_TYPE_TEXT
+								, "table":		WIDGET_TYPE_TABLE
+								, "meter":		WIDGET_TYPE_METER
+								, "stripchart":	WIDGET_TYPE_CHART
+								, "xychart":	WIDGET_TYPE_XYCHART
+								, "thermometer":WIDGET_TYPE_THERMO
+								, "siren":		WIDGET_TYPE_SIREN
+								, "label":		WIDGET_TYPE_LABEL
+								, "led":		WIDGET_TYPE_LED
+								, "picture":	WIDGET_TYPE_PICTURE
+								, "2dstoplight":WIDGET_TYPE_2DLIGHTS
+								, "root":		WIDGET_TYPE_ROOT
+								, "tabs":		WIDGET_TYPE_TAB
+								, "navtabs":	WIDGET_TYPE_NAVTAB};
 			function loadPhoebusPageReqHandler(req)
 			{
 				Debug.log("loadPhoebusPageReqHandler() was called. Req: " + req.responseText);
@@ -532,9 +556,12 @@
 
 				for(i=0; i<widgets.length; ++i)
 				{
-					var widgetObject = {};
-					widgetObject.pvList = {};
+					if (widgets[i].parentElement.tagName != "display") continue;
+
+					var widgetObject 		= {};
+					widgetObject.pvList 	= {};
 					widgetObject.attributes = {};
+					widgetObject.tabBodyID	= "";
 
 					var type = PHOEBUS_MAP[ widgets[i].attributes["type"].nodeValue ];
 					var group = -1;
@@ -559,7 +586,7 @@
 						if (pv_refresh !== undefined) widgetObject.pvList[pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[pv.innerHTML] = refreshRate_;
 					}
 
-					if (type == 3) //smartChart
+					if (type == WIDGET_TYPE_CHART) //smartChart
 					{
 						var traces = widgets[i].getElementsByTagName("traces")[0];
 						if (traces !== undefined)
@@ -643,11 +670,38 @@
 						}
 					}
 
+					if (type == WIDGET_TYPE_TAB) //TABS
+					{
+						
+					}
+
+					if (type == WIDGET_TYPE_NAVTAB) //NAVTABS
+					{
+						console.log(type);
+						var j;
+						for (j=0; j<widgets[i].childElementCount; j++)
+							if (widgets[i].children[j].tagName == "tabs")
+								break;
+						var chlCount = widgets[i].children[j].childElementCount;
+						var chl = widgets[i].children[j].children;
+						var n = 0;
+						for (var k=0; k<chlCount; k++)
+						{
+							for (var l=0; l< chl[k].childElementCount; l++)
+								if (chl[k].children[l].tagName == "file")
+								{
+									n++;
+									widgetObject.attributes["tabs_num"] = n;
+									widgetObject.attributes["file_"+ n] = chl[k].children[l].innerHTML;
+								}
+						}
+					}
+
 					page_.widgets[i] = widgetObject;
 					widgetObject.el = undefined;
 					drawWidget(i);
 
-					if (type == 10) //2dstoplights
+					if (type == WIDGET_TYPE_2DLIGHTS) //2dstoplights
 					{
 						var xSize = widgets[i].getElementsByTagName("table_xSize")[0];
 						if (xSize)  widgetObject.el.contentWindow._xSize = parseInt(xSize.innerHTML);
@@ -1219,6 +1273,241 @@
 
 
 			//=====================================================================================
+			function prepareWidgetXml(widgetId, pageString)
+			{
+				var widget = pageString.createElement("widget");
+				var type = Object.keys(PHOEBUS_MAP).find(key => PHOEBUS_MAP[key] === page_.widgets[widgetId].type);
+				widget.setAttribute("type", type);
+				widget.setAttribute("version",	"2.0.0");
+				var name = pageString.createElement("name");
+				var x = pageString.createElement("x");
+				var y = pageString.createElement("y");
+				var width = pageString.createElement("width");
+				var height = pageString.createElement("height");
+				var tabBodyID = pageString.createElement("tabBodyID");
+
+				name.innerHTML = page_.widgets[widgetId].displayName;
+				widget.appendChild(name);
+
+				//attribute objects
+				for (var attr in page_.widgets[widgetId].attributes)
+				{
+					var attribute = pageString.createElement(attr);
+					attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
+					if (attribute.innerHTML !== "undefined") widget.appendChild(attribute);
+				}
+
+				x.innerHTML = page_.widgets[widgetId].x;//toPageXCoordinate(page_.widgets[widgetId].x);//page_.widgets[widgetId].x * windowWidth_ / (PAGE_POSITIONS_) | 0;
+				y.innerHTML = page_.widgets[widgetId].y;//toPageYCoordinate(page_.widgets[widgetId].y);//page_.widgets[widgetId].y * windowHeight_ / (PAGE_POSITIONS_) | 0;
+				width.innerHTML = page_.widgets[widgetId].w;//toPageXCoordinate(page_.widgets[widgetId].w);//page_.widgets[widgetId].w * windowWidth_ / (PAGE_POSITIONS_) | 0;
+				height.innerHTML = page_.widgets[widgetId].h;//toPageYCoordinate(page_.widgets[widgetId].h);//page_.widgets[widgetId].h * windowHeight_ / (PAGE_POSITIONS_) | 0;
+				widget.appendChild(x);
+				widget.appendChild(y);
+				widget.appendChild(width);
+				widget.appendChild(height);
+
+				return widget;
+			} //end prepareWidgetXml()
+
+
+			//=====================================================================================
+			function makePhoebusXml(widgetId, pageString, display, group)
+			{
+				if(isEmpty(page_.widgets[widgetId].pvList))
+				{
+					var widget = prepareWidgetXml(widgetId, pageString);
+					display.appendChild(widget);
+				}
+				else
+				{
+					var type = Object.keys(PHOEBUS_MAP).find(key => PHOEBUS_MAP[key] === page_.widgets[widgetId].type);
+
+					if (type =="stripchart")
+					{
+						var widget = pageString.createElement("widget");
+						widget.setAttribute("type", type);
+						widget.setAttribute("version",	"2.0.0");
+
+						var name = pageString.createElement("name");
+						var x = pageString.createElement("x");
+						var y = pageString.createElement("y");
+						var width = pageString.createElement("width");
+						var height = pageString.createElement("height");
+						name.innerHTML = page_.widgets[widgetId].displayName;
+						widget.appendChild(name);
+
+						x.innerHTML = page_.widgets[widgetId].x;//toPageXCoordinate(page_.widgets[widgetId].x);//page_.widgets[widgetId].x * windowWidth_ / (PAGE_POSITIONS_) | 0;
+						y.innerHTML = page_.widgets[widgetId].y;//toPageYCoordinate(page_.widgets[widgetId].y);//page_.widgets[widgetId].y * windowHeight_ / (PAGE_POSITIONS_) | 0;
+						width.innerHTML = page_.widgets[widgetId].w;//toPageXCoordinate(page_.widgets[widgetId].w);//page_.widgets[widgetId].w * windowWidth_ / (PAGE_POSITIONS_) | 0;
+						height.innerHTML = page_.widgets[widgetId].h;//toPageYCoordinate(page_.widgets[widgetId].h);//page_.widgets[widgetId].h * windowHeight_ / (PAGE_POSITIONS_) | 0;
+
+						widget.appendChild(x);
+						widget.appendChild(y);
+						widget.appendChild(width);
+						widget.appendChild(height);
+
+						var traces = pageString.createElement("traces");
+
+						for (var pv_name in page_.widgets[widgetId].pvList)
+						{
+							var trace = pageString.createElement("trace");
+
+							var pv = pageString.createElement("y_pv");
+							var pv_refresh = page_.widgets[widgetId].pvList[pv_name];
+							pv.setAttribute("refresh_rate", pv_refresh);
+							pv.innerHTML = pv_name;
+							trace.appendChild(pv);
+
+							//attribute objects
+							for (var attr in page_.widgets[widgetId].attributes)
+							{
+								var attribute = pageString.createElement(attr);
+								attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
+								if (attribute.innerHTML !== "undefined") trace.appendChild(attribute);
+							}
+
+							traces.appendChild(trace);
+						}
+
+						widget.appendChild(traces);
+						display.appendChild(widget);
+					}
+					else if (type =="2dstoplight")
+					{
+						var widget = pageString.createElement("widget");
+						widget.setAttribute("type", type);
+						widget.setAttribute("version",	"2.0.0");
+
+						var name = pageString.createElement("name");
+						var x = pageString.createElement("x");
+						var y = pageString.createElement("y");
+						var width = pageString.createElement("width");
+						var height = pageString.createElement("height");
+						name.innerHTML = page_.widgets[widgetId].displayName;
+						widget.appendChild(name);
+
+						x.innerHTML = page_.widgets[widgetId].x;//toPageXCoordinate(page_.widgets[widgetId].x);//page_.widgets[widgetId].x * windowWidth_ / (PAGE_POSITIONS_) | 0;
+						y.innerHTML = page_.widgets[widgetId].y;//toPageYCoordinate(page_.widgets[widgetId].y);//page_.widgets[widgetId].y * windowHeight_ / (PAGE_POSITIONS_) | 0;
+						width.innerHTML = page_.widgets[widgetId].w;//toPageXCoordinate(page_.widgets[widgetId].w);//page_.widgets[widgetId].w * windowWidth_ / (PAGE_POSITIONS_) | 0;
+						height.innerHTML = page_.widgets[widgetId].h;//toPageYCoordinate(page_.widgets[widgetId].h);//page_.widgets[widgetId].h * windowHeight_ / (PAGE_POSITIONS_) | 0;
+
+						widget.appendChild(x);
+						widget.appendChild(y);
+						widget.appendChild(width);
+						widget.appendChild(height);
+
+						for (var pv_name in page_.widgets[widgetId].pvList)
+						{
+							var pv = pageString.createElement("pv_name");
+							var pv_refresh = page_.widgets[widgetId].pvList[pv_name];
+							pv.setAttribute("refresh_rate", pv_refresh);
+							pv.innerHTML = pv_name;
+							widget.appendChild(pv);
+						}
+
+						//attribute objects
+						for (var attr in page_.widgets[widgetId].attributes)
+						{
+							var attribute = pageString.createElement(attr);
+							attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
+							if (attribute.innerHTML !== "undefined") widget.appendChild(attribute);
+						}
+
+						var table_xSize = pageString.createElement("table_xSize");
+						table_xSize.innerHTML = page_.widgets[widgetId].el.contentWindow._xSize
+						var table_ySize = pageString.createElement("table_ySize");
+						table_ySize.innerHTML = page_.widgets[widgetId].el.contentWindow._ySize;
+
+						var tabledata = pageString.createElement("tabledata");
+						var data = page_.widgets[widgetId].el.contentWindow.tabledata;
+						for (cell in data)
+						{
+							var celldata = pageString.createElement("cell");
+							var id = pageString.createElement("id");
+							id.innerHTML = 	data[cell].id;
+							var x = pageString.createElement("x");
+							x.innerHTML = 	data[cell].x;
+							var y = pageString.createElement("y");
+							y.innerHTML = 	data[cell].y;
+							var pvName = pageString.createElement("pvName");
+							pvName.innerHTML = 	data[cell].pvName;
+							var pvValue = pageString.createElement("pvValue");
+							pvValue.innerHTML = 	data[cell].pvValue;
+							var pvStatus = pageString.createElement("pvStatus");
+							pvStatus.innerHTML = 	data[cell].pvStatus;
+							var pvSeverity = pageString.createElement("pvSeverity");
+							pvSeverity.innerHTML = 	data[cell].pvSeverity;
+							var pvTime = pageString.createElement("pvTime");
+							pvTime.innerHTML = 	data[cell].pvTime;
+
+							celldata.appendChild(id);
+							celldata.appendChild(x);
+							celldata.appendChild(y);
+							celldata.appendChild(pvName);
+							celldata.appendChild(pvValue);
+							celldata.appendChild(pvStatus);
+							celldata.appendChild(pvSeverity);
+							celldata.appendChild(pvTime);
+							tabledata.appendChild(celldata);
+						}
+
+						widget.appendChild(table_xSize);
+						widget.appendChild(table_ySize);
+						widget.appendChild(tabledata);
+						display.appendChild(widget);
+					}
+					else
+					{
+						var counter = 0;
+						for (var pv_name in page_.widgets[widgetId].pvList)
+						{
+							var widget = pageString.createElement("widget");
+							widget.setAttribute("type", type);
+							widget.setAttribute("version",	"2.0.0");
+							if (Object.getOwnPropertyNames(page_.widgets[widgetId].pvList).length > 1) widget.setAttribute("ots_group", group);
+							var name = pageString.createElement("name");
+							var pv = pageString.createElement("pv_name");
+							var x = pageString.createElement("x");
+							var y = pageString.createElement("y");
+							var width = pageString.createElement("width");
+							var height = pageString.createElement("height");
+
+							name.innerHTML = page_.widgets[widgetId].displayName;
+							widget.appendChild(name);
+							var pv_refresh = page_.widgets[widgetId].pvList[pv_name];
+							pv.setAttribute("refresh_rate", pv_refresh);
+							pv.innerHTML = pv_name;
+							widget.appendChild(pv);
+
+							//attribute objects
+							for (var attr in page_.widgets[widgetId].attributes)
+							{
+								var attribute = pageString.createElement(attr);
+								attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
+								if (attribute.innerHTML !== "undefined") widget.appendChild(attribute);
+							}
+
+							x.innerHTML = page_.widgets[widgetId].x;//toPageXCoordinate(page_.widgets[widgetId].x);//page_.widgets[widgetId].x * windowWidth_ / (PAGE_POSITIONS_) | 0;
+							y.innerHTML = page_.widgets[widgetId].y;//toPageYCoordinate(page_.widgets[widgetId].y);//page_.widgets[widgetId].y * windowHeight_ / (PAGE_POSITIONS_) | 0;
+							width.innerHTML = page_.widgets[widgetId].w;//toPageXCoordinate(page_.widgets[widgetId].w);//page_.widgets[widgetId].w * windowWidth_ / (PAGE_POSITIONS_) | 0;
+							height.innerHTML = page_.widgets[widgetId].h;//toPageYCoordinate(page_.widgets[widgetId].h);//page_.widgets[widgetId].h * windowHeight_ / (PAGE_POSITIONS_) | 0;
+							x.innerHTML = parseInt(x.innerHTML) + counter *(parseInt(width.innerHTML) + 2);
+
+							widget.appendChild(x);
+							widget.appendChild(y);
+							widget.appendChild(width);
+							widget.appendChild(height);
+
+							display.appendChild(widget);
+							counter++;
+						}
+						if (Object.getOwnPropertyNames(page_.widgets[widgetId].pvList).length > 1) group++;
+					}
+				}
+			}//end makePhoebusXML()
+
+
+			//=====================================================================================
 			function savePhoebusPageAs()
 			{
 	            var controlsPageName = document.getElementById("controlsPageName").value;
@@ -1251,225 +1540,24 @@
 					var group = 0;
 	    			for (var widgetId in page_.widgets)
 					{
-						if(isEmpty(page_.widgets[widgetId].pvList))
+						if (page_.widgets[widgetId].type != WIDGET_TYPE_TAB && page_.widgets[widgetId].tabBodyID == "")
+							makePhoebusXml(widgetId, pageString, display, group);
+
+						if (page_.widgets[widgetId].type == WIDGET_TYPE_TAB)
 						{
-							var widget = pageString.createElement("widget");
-							var type = Object.keys(PHOEBUS_MAP).find(key => PHOEBUS_MAP[key] === page_.widgets[widgetId].type);
-							widget.setAttribute("type", type);
-							widget.setAttribute("version",	"2.0.0");
-							var name = pageString.createElement("name");
-							var x = pageString.createElement("x");
-							var y = pageString.createElement("y");
-							var width = pageString.createElement("width");
-							var height = pageString.createElement("height");
-
-							name.innerHTML = page_.widgets[widgetId].displayName;
-							widget.appendChild(name);
-
-							//attribute objects
-							for (var attr in page_.widgets[widgetId].attributes)
-							{
-								var attribute = pageString.createElement(attr);
-								attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
-								if (attribute.innerHTML !== "undefined") widget.appendChild(attribute);
-							}
-
-							x.innerHTML = page_.widgets[widgetId].x;//toPageXCoordinate(page_.widgets[widgetId].x);//page_.widgets[widgetId].x * windowWidth_ / (PAGE_POSITIONS_) | 0;
-							y.innerHTML = page_.widgets[widgetId].y;//toPageYCoordinate(page_.widgets[widgetId].y);//page_.widgets[widgetId].y * windowHeight_ / (PAGE_POSITIONS_) | 0;
-							width.innerHTML = page_.widgets[widgetId].w;//toPageXCoordinate(page_.widgets[widgetId].w);//page_.widgets[widgetId].w * windowWidth_ / (PAGE_POSITIONS_) | 0;
-							height.innerHTML = page_.widgets[widgetId].h;//toPageYCoordinate(page_.widgets[widgetId].h);//page_.widgets[widgetId].h * windowHeight_ / (PAGE_POSITIONS_) | 0;
-							widget.appendChild(x);
-							widget.appendChild(y);
-							widget.appendChild(width);
-							widget.appendChild(height);
-
+							var widget = prepareWidgetXml(widgetId, pageString);
+							var tabs = pageString.createElement("tabs");
+							for (var wid in page_.widgets)
+								if (page_.widgets[wid].tabBodyID.split("-")[1] == widgetId)
+								{
+									console.log("test tabs ", tabBodyID);
+									var tab = pageString.createElement("tab");
+									var children = pageString.createElement("children");
+									tab.appendChild(children);
+									tabs.appendChild(tab);
+								}
+							widget.appendChild(tabs);
 							display.appendChild(widget);
-						}
-						else
-						{
-							var type = Object.keys(PHOEBUS_MAP).find(key => PHOEBUS_MAP[key] === page_.widgets[widgetId].type);
-
-							if (type =="stripchart")
-							{
-								var widget = pageString.createElement("widget");
-								widget.setAttribute("type", type);
-								widget.setAttribute("version",	"2.0.0");
-
-								var name = pageString.createElement("name");
-								var x = pageString.createElement("x");
-								var y = pageString.createElement("y");
-								var width = pageString.createElement("width");
-								var height = pageString.createElement("height");
-								name.innerHTML = page_.widgets[widgetId].displayName;
-								widget.appendChild(name);
-
-								x.innerHTML = page_.widgets[widgetId].x;//toPageXCoordinate(page_.widgets[widgetId].x);//page_.widgets[widgetId].x * windowWidth_ / (PAGE_POSITIONS_) | 0;
-								y.innerHTML = page_.widgets[widgetId].y;//toPageYCoordinate(page_.widgets[widgetId].y);//page_.widgets[widgetId].y * windowHeight_ / (PAGE_POSITIONS_) | 0;
-								width.innerHTML = page_.widgets[widgetId].w;//toPageXCoordinate(page_.widgets[widgetId].w);//page_.widgets[widgetId].w * windowWidth_ / (PAGE_POSITIONS_) | 0;
-								height.innerHTML = page_.widgets[widgetId].h;//toPageYCoordinate(page_.widgets[widgetId].h);//page_.widgets[widgetId].h * windowHeight_ / (PAGE_POSITIONS_) | 0;
-
-								widget.appendChild(x);
-								widget.appendChild(y);
-								widget.appendChild(width);
-								widget.appendChild(height);
-
-								var traces = pageString.createElement("traces");
-
-								for (var pv_name in page_.widgets[widgetId].pvList)
-								{
-									var trace = pageString.createElement("trace");
-
-									var pv = pageString.createElement("y_pv");
-									var pv_refresh = page_.widgets[widgetId].pvList[pv_name];
-									pv.setAttribute("refresh_rate", pv_refresh);
-									pv.innerHTML = pv_name;
-									trace.appendChild(pv);
-
-									//attribute objects
-									for (var attr in page_.widgets[widgetId].attributes)
-									{
-										var attribute = pageString.createElement(attr);
-										attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
-										if (attribute.innerHTML !== "undefined") trace.appendChild(attribute);
-									}
-
-									traces.appendChild(trace);
-								}
-
-								widget.appendChild(traces);
-								display.appendChild(widget);
-							}
-							else if (type =="2dstoplight")
-							{
-								var widget = pageString.createElement("widget");
-								widget.setAttribute("type", type);
-								widget.setAttribute("version",	"2.0.0");
-
-								var name = pageString.createElement("name");
-								var x = pageString.createElement("x");
-								var y = pageString.createElement("y");
-								var width = pageString.createElement("width");
-								var height = pageString.createElement("height");
-								name.innerHTML = page_.widgets[widgetId].displayName;
-								widget.appendChild(name);
-
-								x.innerHTML = page_.widgets[widgetId].x;//toPageXCoordinate(page_.widgets[widgetId].x);//page_.widgets[widgetId].x * windowWidth_ / (PAGE_POSITIONS_) | 0;
-								y.innerHTML = page_.widgets[widgetId].y;//toPageYCoordinate(page_.widgets[widgetId].y);//page_.widgets[widgetId].y * windowHeight_ / (PAGE_POSITIONS_) | 0;
-								width.innerHTML = page_.widgets[widgetId].w;//toPageXCoordinate(page_.widgets[widgetId].w);//page_.widgets[widgetId].w * windowWidth_ / (PAGE_POSITIONS_) | 0;
-								height.innerHTML = page_.widgets[widgetId].h;//toPageYCoordinate(page_.widgets[widgetId].h);//page_.widgets[widgetId].h * windowHeight_ / (PAGE_POSITIONS_) | 0;
-
-								widget.appendChild(x);
-								widget.appendChild(y);
-								widget.appendChild(width);
-								widget.appendChild(height);
-
-								for (var pv_name in page_.widgets[widgetId].pvList)
-								{
-									var pv = pageString.createElement("pv_name");
-									var pv_refresh = page_.widgets[widgetId].pvList[pv_name];
-									pv.setAttribute("refresh_rate", pv_refresh);
-									pv.innerHTML = pv_name;
-									widget.appendChild(pv);
-								}
-
-								//attribute objects
-								for (var attr in page_.widgets[widgetId].attributes)
-								{
-									var attribute = pageString.createElement(attr);
-									attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
-									if (attribute.innerHTML !== "undefined") widget.appendChild(attribute);
-								}
-
-								var table_xSize = pageString.createElement("table_xSize");
-								table_xSize.innerHTML = page_.widgets[widgetId].el.contentWindow._xSize
-								var table_ySize = pageString.createElement("table_ySize");
-								table_ySize.innerHTML = page_.widgets[widgetId].el.contentWindow._ySize;
-
-								var tabledata = pageString.createElement("tabledata");
-								var data = page_.widgets[widgetId].el.contentWindow.tabledata;
-								for (cell in data)
-								{
-									var celldata = pageString.createElement("cell");
-									var id = pageString.createElement("id");
-									id.innerHTML = 	data[cell].id;
-									var x = pageString.createElement("x");
-									x.innerHTML = 	data[cell].x;
-									var y = pageString.createElement("y");
-									y.innerHTML = 	data[cell].y;
-									var pvName = pageString.createElement("pvName");
-									pvName.innerHTML = 	data[cell].pvName;
-									var pvValue = pageString.createElement("pvValue");
-									pvValue.innerHTML = 	data[cell].pvValue;
-									var pvStatus = pageString.createElement("pvStatus");
-									pvStatus.innerHTML = 	data[cell].pvStatus;
-									var pvSeverity = pageString.createElement("pvSeverity");
-									pvSeverity.innerHTML = 	data[cell].pvSeverity;
-									var pvTime = pageString.createElement("pvTime");
-									pvTime.innerHTML = 	data[cell].pvTime;
-
-									celldata.appendChild(id);
-									celldata.appendChild(x);
-									celldata.appendChild(y);
-									celldata.appendChild(pvName);
-									celldata.appendChild(pvValue);
-									celldata.appendChild(pvStatus);
-									celldata.appendChild(pvSeverity);
-									celldata.appendChild(pvTime);
-									tabledata.appendChild(celldata);
-								}
-
-								widget.appendChild(table_xSize);
-								widget.appendChild(table_ySize);
-								widget.appendChild(tabledata);
-								display.appendChild(widget);
-							}
-							else
-							{
-								var counter = 0;
-								for (var pv_name in page_.widgets[widgetId].pvList)
-								{
-									var widget = pageString.createElement("widget");
-									widget.setAttribute("type", type);
-									widget.setAttribute("version",	"2.0.0");
-									if (Object.getOwnPropertyNames(page_.widgets[widgetId].pvList).length > 1) widget.setAttribute("ots_group", group);
-									var name = pageString.createElement("name");
-									var pv = pageString.createElement("pv_name");
-									var x = pageString.createElement("x");
-									var y = pageString.createElement("y");
-									var width = pageString.createElement("width");
-									var height = pageString.createElement("height");
-
-									name.innerHTML = page_.widgets[widgetId].displayName;
-									widget.appendChild(name);
-									var pv_refresh = page_.widgets[widgetId].pvList[pv_name];
-									pv.setAttribute("refresh_rate", pv_refresh);
-									pv.innerHTML = pv_name;
-									widget.appendChild(pv);
-
-									//attribute objects
-									for (var attr in page_.widgets[widgetId].attributes)
-									{
-										var attribute = pageString.createElement(attr);
-										attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
-										if (attribute.innerHTML !== "undefined") widget.appendChild(attribute);
-									}
-
-									x.innerHTML = page_.widgets[widgetId].x;//toPageXCoordinate(page_.widgets[widgetId].x);//page_.widgets[widgetId].x * windowWidth_ / (PAGE_POSITIONS_) | 0;
-									y.innerHTML = page_.widgets[widgetId].y;//toPageYCoordinate(page_.widgets[widgetId].y);//page_.widgets[widgetId].y * windowHeight_ / (PAGE_POSITIONS_) | 0;
-									width.innerHTML = page_.widgets[widgetId].w;//toPageXCoordinate(page_.widgets[widgetId].w);//page_.widgets[widgetId].w * windowWidth_ / (PAGE_POSITIONS_) | 0;
-									height.innerHTML = page_.widgets[widgetId].h;//toPageYCoordinate(page_.widgets[widgetId].h);//page_.widgets[widgetId].h * windowHeight_ / (PAGE_POSITIONS_) | 0;
-									x.innerHTML = parseInt(x.innerHTML) + counter *(parseInt(width.innerHTML) + 2);
-
-									widget.appendChild(x);
-									widget.appendChild(y);
-									widget.appendChild(width);
-									widget.appendChild(height);
-
-									display.appendChild(widget);
-									counter++;
-								}
-								if (Object.getOwnPropertyNames(page_.widgets[widgetId].pvList).length > 1) group++;
-							}
 						}
 					}
 
@@ -2054,7 +2142,6 @@
 				if(!widgetObject.el)
 				{
 					Debug.log("Creating widget elements for widget" + id);
-
 
 					containerDiv = document.createElement("div");
 					containerDiv.className = "widgetContainerDiv";
@@ -4290,14 +4377,7 @@
 				if(id !== undefined && page_.widgets[id].type == WIDGET_TYPE_TAB)
 				{
 					var tabcontent = page_.widgets[id].el.getElementsByClassName("tabWidgetBody");						
-					// for (var i = 0; i < tabcontent.length; i++) 
-					// {
-					// 	if (tabcontent[i].style.display == "block")
-					// 	{
-					// 		targetTabBodyId_ = tabcontent[i].id;
-					// 		break;
-					// 	}
-					// }
+
 					Debug.log("endWidgetDragAndResize() tab widget",id,targetTabBodyId_);	
 					
 					for (var j = 0; j < Object.keys(page_.widgets).length; j++) 						
@@ -4332,60 +4412,6 @@
 							drawWidget(j, undefined, newx, newy);
 						}
 				}
-
-				
-
-				//var tabcontent = page_.widgets[id].el.getElementsByClassName("tabWidgetBody");
-				// if(page_.widgets[id].type != WIDGET_TYPE_TAB)
-				// {
-				// 	for (var i = 0; i < tabcontent.length; i++) 
-				// 	{
-				// 		if (tabcontent[i].style.display == "block")
-				// 			if(checkWidgetInTabBody(page_.widgets[id], page_.widgets[tabcontent[i].id.split("-")[1]])) 
-				// 			{
-				// 				page_.widgets[id].tabBodyID = tabcontent[i].id;
-				// 				console.log("Widget is inside tabWidgetBody: " + tabcontent[i].id);
-				// 			}
-				// 			else
-				// 				page_.widgets[id].tabBodyID = "";
-				// 	}
-				// }
-				// else 
-				// {
-				// 	// check widgets with the same tabBbodyIDs and redraw them
-				// 	for (var i = 0; i < tabcontent.length; i++) 
-				// 	{
-				// 		var tabWidget = page_.widgets[tabcontent[i].id.split("-")[1]];
-				// 		for (var j = 0; j < Object.keys(page_.widgets).length; j++) 
-				// 		{
-				// 			if (j != id)
-				// 				if (page_.widgets[j].tabBodyID == tabcontent[i].id) 
-				// 				{
-				// 					page_.widgets[j].el.parentElement.style.display = "block";
-
-				// 					var ex, ey, deltaX, deltaY, newx, newy;
-
-				// 					ex = snapToGrip(e.clientX, GRIDSIZE_);
-				// 					ey = snapToGrip(e.clientY, GRIDSIZE_);
-
-				// 					newx = toPageXCoordinate(page_.widgets[j].x);
-				// 					newy = toPageYCoordinate(page_.widgets[j].y);
-
-				// 					deltaX = ex - xPos_;
-				// 					deltaY = ey - yPos_;
-					
-				// 					if(gridSnap_)
-				// 					{
-				// 						newx += -newx%GRIDSIZE_;
-				// 						newy += -newy%GRIDSIZE_;
-				// 					}
-				// 					newx += deltaX;
-				// 					newy += deltaY;
-				// 					drawWidget(j, undefined, newx, newy);
-				// 				}
-				// 		}
-				// 	}
-				// }
 
 				//redraw target widget one more time and keep final position
 				redrawTargetWidget(e, true /*doNotRestorePosition*/);

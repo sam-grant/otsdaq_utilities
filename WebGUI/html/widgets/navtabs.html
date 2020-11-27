@@ -1,0 +1,197 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>Tabs</title>
+		<style type="text/css">
+
+			body {
+				font: 10px arial;
+				background-color: rgba(255, 255, 255, 1);
+				width: 30;
+				height: 30;
+				//margin: 0px !important;
+			}
+
+			div {
+				font-size: 14px;
+			}
+
+			/* Style tab links */
+			.tabWidgetTabContainer {
+			  float:						left;
+			  width: 						100%;
+			  margin: 						-4px 0 0 0;
+			  color:						red;
+			  background-color: 			darkblue;
+			  padding:						5px 10px;
+			  border-radius:				10px 10px 0 0;
+			  border:						1px solid white;
+			  cursor:						pointer;
+			}
+
+			.tabWidgetTabContainer:hover {
+			  background-color: #777;
+			}
+
+			.tabWidgetSelectButton {
+			  color:						red;
+			  background-color: 			darkblue;
+			  float:						left;
+			  padding:					5px 10px;
+			  border-radius:				10px 10px 0 0;
+			  border:						1px solid white;
+			  cursor:						pointer;
+			}
+
+			/* Style the tab content (and add height:100% for full page content) */
+			.tabWidgetBodyContainer {
+			  float: 					left;
+			  width: 					100%;
+			  height:					100%;
+			  height: 					calc(100% - 0px);
+			  background-color: 		lightblue;
+			  height: 					100%;
+			}
+
+			.tabWidgetBody { 
+			  background-color:			lightblue;
+			  height: 					100%;
+			}
+
+		</style>
+
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
+
+		<script>
+
+			var parameters_ = {"class": "", "tabs_num": "3"};
+			var tabLinks = [];
+			var tabs = [];
+			var BASE_PATH_TO_PAGE = "/WebPath/UserWebPath/ControlsDashboardData/private/trk/";
+			//var BASE_PATH_TO_PAGE = "private/calo2.bob";
+			_savedLID = DesktopContent._localUrnLid;
+			//functions:
+			//init()
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			//init called once body has loaded
+			function init()
+			{
+				console.log("Tabs init()");
+				console.log(window.frameElement.id);
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
+			}
+
+			function setupPVs(settings)	{}
+
+			function drawWidget(widget, parameters)
+			{
+				if (parameters) parameters_ = parameters;
+				var div = document.getElementById("display");
+				var tabEl = document.createElement('div');
+				var tabBodyEl = document.createElement('div');
+				div.innerHTML = "";
+
+				var tabs_num = parameters_["tabs_num"];
+				tabLinks = [];
+				tabs = [];
+				for (var i = 1; i <= tabs_num; i++)
+				{
+					var pageName = "Page"+i;
+
+					//Tab links
+					tabLinks[i-1] = document.createElement('button');
+					tabLinks[i-1].className = "tabWidgetTabContainer";
+					//tabLinks[i-1].class='tabWidgetSelectButton';
+					tabLinks[i-1].id = "Tab"+i
+					tabLinks[i-1].innerHTML = pageName;
+					tabLinks[i-1].onclick = function(){openTabPage(this)};
+					tabLinks[i-1].style.width = 100.0/tabs_num + "%";
+					tabEl.appendChild(tabLinks[i-1]);
+
+					//Tab content
+					tabs[i-1] = document.createElement('div');
+					tabs[i-1].className = "tabWidgetBodyContainer";
+					//tabs[i-1].class='tabWidgetBody';
+					tabs[i-1].id = pageName;
+					tabs[i-1].innerHTML = "<iframe id='my_iframe" + i + "' src='"
+					//http://localhost:3076/WebPath/html/SlowControlsDashboard.html?urn="
+					//+ _savedLID
+					+ window.parent.location.pathname
+					+ window.parent.location.search
+					+ "&page_name=" + BASE_PATH_TO_PAGE + parameters_["file_"+ i] + "'/>";
+					tabs[i-1].style.width = (parseInt(window.innerWidth) - 16) + "px";
+					tabs[i-1].style.height = (parseInt(window.innerHeight) - 16) + "px";
+					tabBodyEl.appendChild(tabs[i-1]);
+				}
+
+				div.appendChild(tabEl);
+				div.appendChild(tabBodyEl);
+
+				// Get the element with id="Page1" and click on it
+				document.getElementById("Page1").click();
+			}
+
+			function openTabPage(elmnt) {
+				var i, tabcontent, tablinks;
+
+				// Hide all elements with class="tabcontent" by default
+				tabcontent = document.getElementsByClassName("tabWidgetBodyContainer");
+				for (i = 0; i < tabcontent.length; i++) {
+					tabcontent[i].style.display = "none";
+				}
+
+				// Show the specific tab content
+				document.getElementById(elmnt.innerHTML).style.display = "block";
+
+				tablinks = document.getElementsByClassName("tabWidgetTabContainer");
+				for (i = 0; i < tablinks.length; i++) {
+					tablinks[i].style.backgroundColor = "";
+				}
+				elmnt.style.backgroundColor = "#777";
+				console.log("Tabs openPage()", elmnt.innerHTML);
+			}
+
+			function getAttributes()
+			{
+				if (window.parent.page_.widgets[window.frameElement.id.split("-")[1]])
+					return window.parent.page_.widgets[window.frameElement.id.split("-")[1]].attributes;
+				else
+					return parameters_;
+			}
+
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log("Tabs setAttributes()", parameters_);
+			}
+
+			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}
+
+			window.onresize = function() {
+				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("display").style.height = (parseInt(window.innerHeight) - 16) + "px";
+
+				document.getElementById("Page1").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("Page1").style.height = (parseInt(window.innerHeight) - 16) + "px";
+				document.getElementById("Page2").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("Page2").style.height = (parseInt(window.innerHeight) - 16) + "px";
+				document.getElementById("Page3").style.width = (parseInt(window.innerWidth) - 16) + "px";
+				document.getElementById("Page3").style.height = (parseInt(window.innerHeight) - 16) + "px";
+			}
+
+		</script>
+
+</head>
+
+	<body onload="Javascript:init()">
+
+	<div id="display"></div>
+
+	</body>
+
+</html>
