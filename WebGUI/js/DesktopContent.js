@@ -417,27 +417,40 @@ DesktopContent.init = function(onloadFunction)
 			}
 			else if(!DesktopContent._sequence)
 				Debug.log("No cookie code and no sequence!");
-				
-			try
+			
+			//========
+			function localOnloadHandler()
 			{
-				
-				if(onloadFunction)
+				if(!document.body) //the document is not ready?!
 				{
-					Debug.log("Calling page body onload!");
-					onloadFunction(); //call page's init!
+					//call self in a bit to try again
+					window.setTimeout(
+						localOnloadHandler,300 /*ms*/);
+					return;
 				}
-				else if(init)
+
+				try
+				{					
+					if(onloadFunction)
+					{
+						Debug.log("Calling page body onload!");
+						onloadFunction(); //call page's init!
+					}
+					else if(init)
+					{
+						Debug.log("Calling page init!");
+						init(); //call page's init!
+					}
+					else
+						Debug.log("Ignoring missing init()");
+				}
+				catch(e)
 				{
-					Debug.log("Calling page init!");
-					init(); //call page's init!
+					Debug.log("Ignoring error in onload init():",e);
 				}
-				else
-					Debug.log("Ignoring missing init()");
-			}
-			catch(e)
-			{
-				Debug.log("Ignoring error in onload init():",e);
-			}
+			} //end localOnloadHandler()
+
+			localOnloadHandler();
 			
 			return;
 		}
@@ -814,18 +827,19 @@ DesktopContent.mouseMoveSubscriber = function(newHandler)
 	DesktopContent._mouseMoveSubscribers.push(newHandler);
 } //end DesktopContent.mouseMoveSubscriber()
 	
-//
-//if(document.body)
-//{
-//	var onloadFunction = document.body.onload;
-//	document.body.onload = function()
-//	{		
-//		Debug.log("Calling Desktop Content init on body load!",onloadFunction);
-//		DesktopContent.init(onloadFunction);
-//	}
-//}
-//else
-//	DesktopContent.init();
+//document.body does not exist yet (always?)!
+// if(document.body)
+// {
+// 	var onloadFunction = document.body.onload;
+// 	document.body.onload = function()
+// 	{		
+// 		Debug.log("Calling Desktop Content init on body load!",onloadFunction);
+// 		DesktopContent.init();
+// 		if(onloadFunction) onloadFunction();
+// 	}
+// }
+// else
+// 	DesktopContent.init();
 DesktopContent.init();
 
 

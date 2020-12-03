@@ -18,15 +18,15 @@
 
 			/* Style tab links */
 			.tabWidgetTabContainer {
-			  float:						left;
-			  width: 						100%;
-			  margin: 						-4px 0 0 0;
-			  color:						red;
-			  background-color: 			darkblue;
-			  padding:						5px 10px;
-			  border-radius:				10px 10px 0 0;
-			  border:						1px solid white;
-			  cursor:						pointer;
+			  float:					left;
+			  width: 					100%;
+			  margin: 					-4px 0 0 0;
+			  color:					red;
+			  background-color: 		darkblue;
+			  padding:					5px 10px;
+			  border-radius:			10px 10px 0 0;
+			  border:					1px solid white;
+			  cursor:					pointer;
 			}
 
 			.tabWidgetTabContainer:hover {
@@ -34,13 +34,13 @@
 			}
 
 			.tabWidgetSelectButton {
-			  color:						red;
-			  background-color: 			darkblue;
-			  float:						left;
+			  color:					red;
+			  background-color: 		darkblue;
+			  float:					left;
 			  padding:					5px 10px;
-			  border-radius:				10px 10px 0 0;
-			  border:						1px solid white;
-			  cursor:						pointer;
+			  border-radius:			10px 10px 0 0;
+			  border:					1px solid white;
+			  cursor:					pointer;
 			}
 
 			/* Style the tab content (and add height:100% for full page content) */
@@ -66,12 +66,10 @@
 
 		<script>
 
-			var parameters_ = {"class": "", "tabs_num": "3"};
+			var parameters_ = {"class": "", "tabs_num": "1", "file_1": ""};
 			var tabLinks = [];
 			var tabs = [];
 			var BASE_PATH_TO_PAGE = "/WebPath/UserWebPath/ControlsDashboardData/private/trk/";
-			//var BASE_PATH_TO_PAGE = "private/calo2.bob";
-			_savedLID = DesktopContent._localUrnLid;
 			//functions:
 			//init()
 
@@ -106,8 +104,7 @@
 					//Tab links
 					tabLinks[i-1] = document.createElement('button');
 					tabLinks[i-1].className = "tabWidgetTabContainer";
-					//tabLinks[i-1].class='tabWidgetSelectButton';
-					tabLinks[i-1].id = "Tab"+i
+					tabLinks[i-1].id = "Tab"+i;
 					tabLinks[i-1].innerHTML = pageName;
 					tabLinks[i-1].onclick = function(){openTabPage(this)};
 					tabLinks[i-1].style.width = 100.0/tabs_num + "%";
@@ -116,11 +113,8 @@
 					//Tab content
 					tabs[i-1] = document.createElement('div');
 					tabs[i-1].className = "tabWidgetBodyContainer";
-					//tabs[i-1].class='tabWidgetBody';
 					tabs[i-1].id = pageName;
 					tabs[i-1].innerHTML = "<iframe id='my_iframe" + i + "' src='"
-					//http://localhost:3076/WebPath/html/SlowControlsDashboard.html?urn="
-					//+ _savedLID
 					+ window.parent.location.pathname
 					+ window.parent.location.search
 					+ "&page_name=" + BASE_PATH_TO_PAGE + parameters_["file_"+ i] + "'/>";
@@ -133,7 +127,7 @@
 				div.appendChild(tabBodyEl);
 
 				// Get the element with id="Page1" and click on it
-				document.getElementById("Page1").click();
+				//document.getElementById("Page1").click();
 			}
 
 			function openTabPage(elmnt) {
@@ -158,7 +152,7 @@
 
 			function getAttributes()
 			{
-				if (window.parent.page_.widgets[window.frameElement.id.split("-")[1]])
+				if (Object.keys(window.parent.page_.widgets[window.frameElement.id.split("-")[1]].attributes!=0).length)
 					return window.parent.page_.widgets[window.frameElement.id.split("-")[1]].attributes;
 				else
 					return parameters_;
@@ -175,13 +169,6 @@
 			window.onresize = function() {
 				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 16) + "px";
 				document.getElementById("display").style.height = (parseInt(window.innerHeight) - 16) + "px";
-
-				document.getElementById("Page1").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("Page1").style.height = (parseInt(window.innerHeight) - 16) + "px";
-				document.getElementById("Page2").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("Page2").style.height = (parseInt(window.innerHeight) - 16) + "px";
-				document.getElementById("Page3").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("Page3").style.height = (parseInt(window.innerHeight) - 16) + "px";
 			}
 
 		</script>
