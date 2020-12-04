@@ -1315,12 +1315,13 @@
 				widget.appendChild(name);
 
 				//attribute objects
-				for (var attr in page_.widgets[widgetId].attributes)
-				{
-					var attribute = pageString.createElement(attr);
-					attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
-					if (attribute.innerHTML !== "undefined") widget.appendChild(attribute);
-				}
+				if (page_.widgets[widgetId].type != WIDGET_TYPE_TAB && page_.widgets[widgetId].type != WIDGET_TYPE_NAVTAB)
+					for (var attr in page_.widgets[widgetId].attributes)
+					{
+						var attribute = pageString.createElement(attr);
+						attribute.innerHTML = page_.widgets[widgetId].attributes[attr];
+						if (attribute.innerHTML !== "undefined") widget.appendChild(attribute);
+					}
 
 				x.innerHTML = page_.widgets[widgetId].x;//toPageXCoordinate(page_.widgets[widgetId].x);//page_.widgets[widgetId].x * windowWidth_ / (PAGE_POSITIONS_) | 0;
 				y.innerHTML = page_.widgets[widgetId].y;//toPageYCoordinate(page_.widgets[widgetId].y);//page_.widgets[widgetId].y * windowHeight_ / (PAGE_POSITIONS_) | 0;
@@ -1533,6 +1534,70 @@
 
 
 			//=====================================================================================
+			function makePhoebusTabsXML(widgetId, pageString, display, group)
+			{
+				if (page_.widgets[widgetId].type == WIDGET_TYPE_TAB)
+				{
+					var widget = prepareWidgetXml(widgetId, pageString);
+					var tabs = pageString.createElement("tabs");
+					var tabs_num = page_.widgets[widgetId].el.children[0].childElementCount;
+					for (var tabId=0; tabId<tabs_num; tabId++)
+					{
+						var tab = pageString.createElement("tab");
+						var name = pageString.createElement("name");
+						name.innerHTML = page_.widgets[widgetId].el.children[0].children[tabId].innerHTML;
+						tab.appendChild(name);
+						var children = pageString.createElement("children");
+						for (var wid in page_.widgets)
+						{
+							if (page_.widgets[wid].tabBodyID != undefined
+								&& page_.widgets[wid].type != WIDGET_TYPE_TAB
+								&& page_.widgets[widgetId].type != WIDGET_TYPE_NAVTAB
+								&& page_.widgets[wid].tabBodyID == "widget-" + widgetId + "-tabBody-" + tabId)
+							{
+								makePhoebusXml(wid, pageString, children, group);
+							}
+							else if (page_.widgets[wid].tabBodyID != undefined
+								&& (page_.widgets[wid].type == WIDGET_TYPE_TAB
+								|| page_.widgets[widgetId].type == WIDGET_TYPE_NAVTAB)
+								&& page_.widgets[wid].tabBodyID == "widget-" + widgetId + "-tabBody-" + tabId)
+							{
+								makePhoebusTabsXml(wid, pageString, children, group);
+							}
+						}
+						tab.appendChild(children);
+						tabs.appendChild(tab);
+					}
+					widget.appendChild(tabs);
+					display.appendChild(widget);
+				}
+				else if (page_.widgets[widgetId].type == WIDGET_TYPE_NAVTAB)
+				{
+					var widget = prepareWidgetXml(widgetId, pageString);
+					var tabs = pageString.createElement("tabs");
+					var tabs_num = page_.widgets[widgetId].el.children[0].childElementCount;
+					for (var tabId=0; tabId<tabs_num; tabId++)
+					{
+						var tab = pageString.createElement("tab");
+						var name = pageString.createElement("name");
+						name.innerHTML = page_.widgets[widgetId].el.children[0].children[tabId].innerHTML;
+						tab.appendChild(name);
+						var file = pageString.createElement("file");
+						file.innerHTML = page_.widgets[widgetId].attributes["file_"+tabId];
+						tab.appendChild(file);
+						var macros = pageString.createElement("macros");
+						tab.appendChild(macros);
+						var group_name = pageString.createElement("group_name");
+						tab.appendChild(group_name);
+						tabs.appendChild(tab);
+					}
+					widget.appendChild(tabs);
+					display.appendChild(widget);
+				}
+			}//end makePhoebusXML()
+
+
+			//=====================================================================================
 			function savePhoebusPageAs()
 			{
 	            var controlsPageName = document.getElementById("controlsPageName").value;
@@ -1565,26 +1630,12 @@
 					var group = 0;
 	    			for (var widgetId in page_.widgets)
 					{
-						if (page_.widgets[widgetId].type != WIDGET_TYPE_TAB && (page_.widgets[widgetId].tabBodyID == "" || page_.widgets[widgetId].tabBodyID == undefined))
+						if (page_.widgets[widgetId].type != WIDGET_TYPE_TAB
+						  && page_.widgets[widgetId].type != WIDGET_TYPE_NAVTAB
+						  && (page_.widgets[widgetId].tabBodyID == "" || page_.widgets[widgetId].tabBodyID == undefined))
 							makePhoebusXml(widgetId, pageString, display, group);
-						else
-						{
-							var widget = prepareWidgetXml(widgetId, pageString);
-							var tabs = pageString.createElement("tabs");
-							for (var wid in page_.widgets)
-								if (page_.widgets[wid].tabBodyID != undefined
-									&& page_.widgets[wid].type != WIDGET_TYPE_TAB
-									&& page_.widgets[wid].tabBodyID.split("-")[1] == widgetId)
-								{
-									console.log("test tabs ", page_.widgets[wid].tabBodyID);
-									var tab = pageString.createElement("tab");
-									var children = pageString.createElement("children");
-									tab.appendChild(children);
-									tabs.appendChild(tab);
-								}
-							widget.appendChild(tabs);
-							display.appendChild(widget);
-						}
+						else if (page_.widgets[widgetId].type == WIDGET_TYPE_TAB || page_.widgets[widgetId].type == WIDGET_TYPE_NAVTAB)
+							makePhoebusTabsXML(widgetId, pageString, display, group);
 					}
 
 					var controlsPageNotes = document.getElementById("controlsPageNotes").value;
@@ -2160,25 +2211,34 @@
 					containerDiv = document.createElement("div");
 					containerDiv.className = "widgetContainerDiv";
 					containerDiv.id = "widget-" + id + "-container";
-					//containerDiv.style["background-color"] = "rgba(0,0,0,0.2)";
 					containerDiv.style.zIndex = Object.keys(page_.widgets).length;
-					
+
 					if(type == WIDGET_TYPE_TAB || type == WIDGET_TYPE_NAVTAB)
 					{
 						Debug.log("Making simple tab structure, not iframe.");
-						
+
 						widgetObject.el = document.createElement("div");
+						widgetObject.el.id = "widget-" + id;
+
 						var str = "";
-						var STARTING_TAB_COUNT = widgetObject.attributes["tabs_num"] ? widgetObject.attributes["tabs_num"]: 3;
-						
+						if (!widgetObject.attributes["tabs_num"])
+							widgetObject.attributes["tabs_num"] = 3;
+
+						var STARTING_TAB_COUNT = widgetObject.attributes["tabs_num"];
+
 						var tabEl = document.createElement("div");
 						tabEl.className = "tabWidgetTabContainer";
 						for(var i=0;i<STARTING_TAB_COUNT;++i)
+						{
+							if (!widgetObject.attributes["tabname_"+i])
+								widgetObject.attributes["tabname_"+i] = "Tab " + i;
+
 							str += "<div id='widget-" + id + "-tabSelectButton-" + i
 								+ "'' style='background-color:" + (i == 0?"#777":"") +
 								"'class='tabWidgetSelectButton'>"
-								+ (widgetObject.attributes["tabname_"+i] ? widgetObject.attributes["tabname_"+i]: "Tab " + i)
+								+ widgetObject.attributes["tabname_"+i]
 								+ "</div>";
+						}
 						tabEl.innerHTML = str;
 
 						widgetObject.el.appendChild(tabEl);
@@ -2190,15 +2250,14 @@
 							str += "<div id='widget-" + id + "-tabBody-" + i + 
 								"'' style='display:" + (i == 0?"block":"none") + 
 								"' class='tabWidgetBody'>Tab Body " + i + "</div>";
-						
-							
+
 						tabBodyEl.innerHTML = str;
 
 						widgetObject.el.appendChild(tabBodyEl);
 
 						//for every tab and body, add mouse handlers
 						var tabBodies = widgetObject.el.getElementsByClassName("tabWidgetBody");
-						for (var i = 0; i < tabBodies.length; i++) 
+						for (var i = 0; i < tabBodies.length; i++)
 						{
 							tabBodies[i].addEventListener("mousedown", 
 									makeHandlerWithID(id,		handleWidgetCoverMouseDown));
@@ -2207,30 +2266,21 @@
 							tabBodies[i].addEventListener("mousemove", 
 								function()
 								{
-									// var widgetId = this.id.split('-')[1];
-									// if(page_.widgets[widgetId].type == WIDGET_TYPE_TAB || 
-									// 	page_.widgets[widgetId].type == WIDGET_TYPE_NAVTAB)
-									// {
-									// 	Debug.log("Mouse over TAB widget cover", this.id);
-									// }
-
 									if(!drawingSelectionRectangle_ && 
 										dragAndDrawWidgetType_ !== undefined)
 										this.style.cursor = "crosshair";
 									else
 										this.style.cursor = "grab";
 								});
-							
+
 						} //end tab body handlers
 						var tabButtons = widgetObject.el.getElementsByClassName("tabWidgetSelectButton");		
-						for (var i = 0; i < tabButtons.length; i++) 
+						for (var i = 0; i < tabButtons.length; i++)
 						{
 							tabButtons[i].addEventListener("mousedown", openTabPage);
-								//	makeHandlerWithID(id,		openTabPage));
 							tabButtons[i].addEventListener("mouseup", 
-									makeHandlerWithID(id,		endWidgetDragAndResize));
+									makeHandlerWithID(id, endWidgetDragAndResize));
 						} //end tab button handlers
-
 
 						if(type == WIDGET_TYPE_NAVTAB)
 						{
@@ -2238,22 +2288,24 @@
 							window.setTimeout(
 								function()							
 								{
-									var tabBodyPages = [];//"private/plot.bob","private/text2.bob"];
-									for(var i=0;i<Object.keys(widgetObject.attributes).length;++i)
+									var tabBodyPages = [];
+									for(var i=0;i<STARTING_TAB_COUNT;++i)
 										if (widgetObject.attributes["file_" + i])
 											tabBodyPages[i] = widgetObject.attributes["file_" + i];
+										else
+											widgetObject.attributes["file_" + i] = "";
+
 									Debug.log("Loading a file",id);
 									for(var i=0;i<tabBodyPages.length;++i)
 										loadPhoebusPage(tabBodyPages[i],
-											"widget-" + id + "-tabBody-" + i); 
+											"widget-" + id + "-tabBody-" + i);
 								}, 1000);
 						}
-
 					}
 					else
 					{
 						widgetObject.el = document.createElement("iframe");
-						widgetObject.el.scrolling="No";	
+						widgetObject.el.scrolling="No";
 						widgetObject.el.id = "widget-" + id;
 
 						widgetObject.el.src = "widgets/" + 
@@ -2676,7 +2728,9 @@
 					}
 
 					for(var i = 0;i<covers.length;++i)
-						covers[i].style.display = "block";
+						if (page_.widgets[i].type != WIDGET_TYPE_TAB
+						  && page_.widgets[i].type != WIDGET_TYPE_NAVTAB)
+							covers[i].style.display = "block";
 
 					for(var i = 0;i<resize_covers.length;++i)
 						resize_covers[i].style.display = "block";//	resize_covers[i].style["z-index"] = "8";
@@ -3375,7 +3429,8 @@
 				}
 				try
 				{
-					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setAttributes(page_.widgets[menu_.getAttribute("widgetID")].attributes);
+					if (page_.widgets[menu_.getAttribute("widgetID")].type != WIDGET_TYPE_TAB && page_.widgets[menu_.getAttribute("widgetID")].type != WIDGET_TYPE_NAVTAB)
+						page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.setAttributes(page_.widgets[menu_.getAttribute("widgetID")].attributes);
 				}
 				catch(e)
 				{
@@ -3384,7 +3439,10 @@
 				}
 				try
 				{
-					page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.drawWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
+					if (page_.widgets[menu_.getAttribute("widgetID")].type != WIDGET_TYPE_TAB && page_.widgets[menu_.getAttribute("widgetID")].type != WIDGET_TYPE_NAVTAB)
+						page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.drawWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
+					else
+						drawWidget(menu_.getAttribute("widgetID"));
 				}
 				catch(e)
 				{
@@ -4220,6 +4278,7 @@
 				else
 					Debug.log("Could not find widget container to remove");
 
+				targetElement_ = undefined;
 				toggleContextMenuOff();
 			} //end deleteWidget()
 
