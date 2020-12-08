@@ -565,189 +565,13 @@
 
 				var widgets = xml.getElementsByTagName("widget");
 				var groups = {};
+				widgetCounter = 0;
 
-				for(i=0; i<widgets.length; ++i)
+				for(var i=0; i<widgets.length; ++i)
 				{
 					if (widgets[i].parentElement.tagName != "display") continue;
-
-					var widgetObject 		= {};
-					widgetObject.pvList 	= {};
-					widgetObject.attributes = {};
-
-					var type = PHOEBUS_MAP[ widgets[i].attributes["type"].nodeValue ];
-					var group = -1;
-					if (widgets[i].attributes["ots_group"] !== undefined) group = widgets[i].attributes["ots_group"].nodeValue;
-
-					var displayName = widgets[i].getElementsByTagName("name")[0];
-					var x = widgets[i].getElementsByTagName("x")[0];
-					var y = widgets[i].getElementsByTagName("y")[0];
-					var w = widgets[i].getElementsByTagName("width")[0];
-					var h = widgets[i].getElementsByTagName("height")[0];
-					var pv = widgets[i].getElementsByTagName("pv_name")[0];
-
-					if (type !== undefined) widgetObject.type = type; else widgetObject.type = 0;
-					if (displayName !== undefined) widgetObject.displayName = displayName.innerHTML; else widgetObject.displayName = "undefined";
-					if (x !== undefined) widgetObject.x = parseFloat(x.innerHTML); else widgetObject.x = 10;
-					if (y !== undefined) widgetObject.y = parseFloat(y.innerHTML); else widgetObject.y = 10;
-					if (w !== undefined) widgetObject.w = parseFloat(w.innerHTML); else widgetObject.w = 50;
-					if (h !== undefined) widgetObject.h = parseFloat(h.innerHTML); else widgetObject.h = 50;
-					if (pv !== undefined)
-					{
-						var pv_refresh = pv.attributes["refresh_rate"];
-						if (pv_refresh !== undefined) widgetObject.pvList[pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[pv.innerHTML] = refreshRate_;
-					}
-
-					if (type == WIDGET_TYPE_CHART) //smartChart
-					{
-						var traces = widgets[i].getElementsByTagName("traces")[0];
-						if (traces !== undefined)
-						{
-							var trace = xml.getElementsByTagName("trace");
-							for(j=0; j<trace.length; ++j)
-							{
-								var y_pv = trace[j].getElementsByTagName("y_pv")[0];
-								if (y_pv !== undefined)
-								{
-									var pv_refresh = y_pv.attributes["refresh_rate"];
-									if (pv_refresh !== undefined) widgetObject.pvList[y_pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[y_pv.innerHTML] = refreshRate_;
-								}
-							}
-						}
-					}
-
-					//attribute objects
-					var label_class = widgets[i].getElementsByTagName("class")[0];
-					var border = widgets[i].getElementsByTagName("border")[0];
-					var text = widgets[i].getElementsByTagName("text")[0];
-					var text_position = widgets[i].getElementsByTagName("text_position")[0];
-					var font = widgets[i].getElementsByTagName("font")[0];
-					var foreground_color = widgets[i].getElementsByTagName("foreground_color")[0];
-					var background_color = widgets[i].getElementsByTagName("background_color")[0];
-					var transparent = widgets[i].getElementsByTagName("transparent")[0];
-					var wrap_words = widgets[i].getElementsByTagName("wrap_words")[0];
-					var upload_image = widgets[i].getElementsByTagName("upload_image")[0];
-					var upload_csv_file = widgets[i].getElementsByTagName("upload_csv_file")[0]; //2dstoplight widget
-					var table_border = widgets[i].getElementsByTagName("table_border")[0]; //2dstoplight widget
-					var table_border_color = widgets[i].getElementsByTagName("table_border_color")[0]; //2dstoplight widget
-					var link_to_page = widgets[i].getElementsByTagName("link_to_page")[0]; //2dstoplight widget
-					var trace_type = widgets[i].getElementsByTagName("trace_type")[0]; //plotly_bar_chart and xy_chart widgets
-					var trace_mode = widgets[i].getElementsByTagName("trace_mode")[0]; //plotly_bar_chart and xy_chart widgets
-
-					//set attributes
-					if (label_class !== undefined) widgetObject.attributes["class"] = label_class.innerHTML;
-					if (border !== undefined) widgetObject.attributes["border"] = border.innerHTML;
-					if (text !== undefined) widgetObject.attributes["text"] = text.innerHTML;
-					if (text_position !== undefined) widgetObject.attributes["text_position"] = text_position.innerHTML;
-					if (font !== undefined) widgetObject.attributes["font"] = font.innerHTML;
-					if (foreground_color !== undefined) widgetObject.attributes["foreground_color"] = foreground_color.innerHTML;
-					if (background_color !== undefined) widgetObject.attributes["background_color"] = background_color.innerHTML;
-					if (transparent !== undefined) widgetObject.attributes["transparent"] = transparent.innerHTML;
-					if (wrap_words !== undefined) widgetObject.attributes["wrap_words"] = wrap_words.innerHTML;
-					if (upload_image !== undefined) widgetObject.attributes["upload_image"] = upload_image.innerHTML;
-					if (upload_csv_file !== undefined) widgetObject.attributes["upload_csv_file"] = upload_csv_file.innerHTML;
-					if (table_border !== undefined) widgetObject.attributes["table_border"] = table_border.innerHTML;
-					if (table_border_color !== undefined) widgetObject.attributes["table_border_color"] = table_border_color.innerHTML;
-					if (link_to_page !== undefined) widgetObject.attributes["link_to_page"] = link_to_page.innerHTML;
-					if (trace_type !== undefined) widgetObject.attributes["trace_type"] = trace_type.innerHTML;
-					if (trace_mode !== undefined) widgetObject.attributes["trace_mode"] = trace_mode.innerHTML;
-
-					console.log("Drawing and creating widget",i,widgetObject);
-
-					widgetObject.loaded = true;
-
-					if (group !== -1)
-					{
-						for (j=0; j<i; ++j)
-						{
-							if (   page_.widgets[j] !== undefined 
-								&& page_.widgets[j].type == widgetObject.type 
-							    && page_.widgets[j].displayName == widgetObject.displayName
-							    && displayName !== undefined
-							    && groups[j] == group)
-							{
-								if (pv !== undefined) 
-									page_.widgets[j].pvList[pv.innerHTML] = refreshRate_;
-								groups[i] = group;
-							}
-						}
-
-						if (groups[i] == undefined)
-						{
-							groups[i] = group;
-						}
-						else
-						{
-							continue;
-						}
-					}
-
-					if (type == WIDGET_TYPE_TAB) //TABS
-					{
-						var j;
-						for (j=0; j<widgets[i].childElementCount; j++)
-							if (widgets[i].children[j].tagName == "tabs")
-								break;
-						var chlCount = widgets[i].children[j].childElementCount;
-						var chl = widgets[i].children[j].children;
-					}
-
-					if (type == WIDGET_TYPE_NAVTAB) //NAVTABS
-					{
-						var j;
-						for (j=0; j<widgets[i].childElementCount; j++)
-							if (widgets[i].children[j].tagName == "tabs")
-								break;
-						var chlCount = widgets[i].children[j].childElementCount;
-						var chl = widgets[i].children[j].children;
-
-						widgetObject.attributes["tabs_num"] = chlCount;
-
-						for (var k=0; k<chlCount; k++)
-						{
-							for (var l=0; l< chl[k].childElementCount; l++)
-							{
-								if (chl[k].children[l].tagName == "file")
-									widgetObject.attributes["file_"+ k] = chl[k].children[l].innerHTML;
-								if (chl[k].children[l].tagName == "name")
-									widgetObject.attributes["tabname_"+ k] = chl[k].children[l].innerHTML;	
-							}
-						}
-					}
-
-					var id = Object.keys(page_.widgets).length;
-					page_.widgets[id] = widgetObject;
-					widgetObject.el = undefined;
-					widgetObject.tabBodyID = targetTabBodyId;
-					targetTabBodyId_ = targetTabBodyId;
-					drawWidget(id,type);
-
-					if (type == WIDGET_TYPE_2DLIGHTS) //2dstoplights
-					{
-						var xSize = widgets[i].getElementsByTagName("table_xSize")[0];
-						if (xSize)  widgetObject.el.contentWindow._xSize = parseInt(xSize.innerHTML);
-						var ySize = widgets[i].getElementsByTagName("table_ySize")[0];
-						if (ySize)  widgetObject.el.contentWindow._ySize = parseInt(ySize.innerHTML);
-
-						var table = widgets[i].getElementsByTagName("tabledata")[0];
-						if (table)
-						{
-							var data = [];
-							var cells = table.getElementsByTagName("cell");
-							for(j = 0; j < cells.length; ++j)
-							{
-								var cell = {
-											  id: 		cells[j].getElementsByTagName("id")[0].innerHTML
-											, x:		cells[j].getElementsByTagName("x")[0].innerHTML
-											, y: 		cells[j].getElementsByTagName("y")[0].innerHTML
-											, pvName:	cells[j].getElementsByTagName("pvName")[0].innerHTML
-										   };
-								data.push(cell);
-								if (cell.pvName != "-1" &&  cell.pvName != "")
-									widgetObject.pvList[cell.pvName] = refreshRate_;
-							}
-							widgetObject.el.contentWindow.tabledata = data;
-						}
-					}
+					widgetCounter = makePhoebusWidget(widgets[i], widgetCounter, xml, groups, targetTabBodyId);
+					++widgetCounter;
 				} //end widget extraction loop
 
 				var time =  xml.getElementsByTagName("time");
@@ -770,6 +594,218 @@
 				//toggleEditMode();
 			} //end loadPhoebusPageReqHandler()
 
+			//=====================================================================================
+			function makePhoebusWidget(widget, i, xml, groups, targetTabBodyId)
+			{
+				var widgetObject 		= {};
+				widgetObject.pvList 	= {};
+				widgetObject.attributes = {};
+
+				var type = PHOEBUS_MAP[ widget.attributes["type"].nodeValue ];
+				var group = -1;
+				if (widget.attributes["ots_group"] !== undefined) group = widget.attributes["ots_group"].nodeValue;
+
+				var displayName = widget.getElementsByTagName("name")[0];
+				var x = widget.getElementsByTagName("x")[0];
+				var y = widget.getElementsByTagName("y")[0];
+				var w = widget.getElementsByTagName("width")[0];
+				var h = widget.getElementsByTagName("height")[0];
+				var pv = widget.getElementsByTagName("pv_name")[0];
+
+				if (type !== undefined) widgetObject.type = type; else widgetObject.type = 0;
+				if (displayName !== undefined) widgetObject.displayName = displayName.innerHTML; else widgetObject.displayName = "undefined";
+				if (x !== undefined) widgetObject.x = parseFloat(x.innerHTML); else widgetObject.x = 10;
+				if (y !== undefined) widgetObject.y = parseFloat(y.innerHTML); else widgetObject.y = 10;
+				if (w !== undefined) widgetObject.w = parseFloat(w.innerHTML); else widgetObject.w = 50;
+				if (h !== undefined) widgetObject.h = parseFloat(h.innerHTML); else widgetObject.h = 50;
+				if (pv !== undefined)
+				{
+					var pv_refresh = pv.attributes["refresh_rate"];
+					if (pv_refresh !== undefined) widgetObject.pvList[pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[pv.innerHTML] = refreshRate_;
+				}
+
+				if (type == WIDGET_TYPE_CHART) //smartChart
+				{
+					var traces = widget.getElementsByTagName("traces")[0];
+					if (traces !== undefined)
+					{
+						var trace = xml.getElementsByTagName("trace");
+						for(j=0; j<trace.length; ++j)
+						{
+							var y_pv = trace[j].getElementsByTagName("y_pv")[0];
+							if (y_pv !== undefined)
+							{
+								var pv_refresh = y_pv.attributes["refresh_rate"];
+								if (pv_refresh !== undefined) widgetObject.pvList[y_pv.innerHTML] = pv_refresh.nodeValue; else widgetObject.pvList[y_pv.innerHTML] = refreshRate_;
+							}
+						}
+					}
+				}
+
+				//attribute objects
+				var label_class = widget.getElementsByTagName("class")[0];
+				var border = widget.getElementsByTagName("border")[0];
+				var text = widget.getElementsByTagName("text")[0];
+				var text_position = widget.getElementsByTagName("text_position")[0];
+				var font = widget.getElementsByTagName("font")[0];
+				var foreground_color = widget.getElementsByTagName("foreground_color")[0];
+				var background_color = widget.getElementsByTagName("background_color")[0];
+				var transparent = widget.getElementsByTagName("transparent")[0];
+				var wrap_words = widget.getElementsByTagName("wrap_words")[0];
+				var upload_image = widget.getElementsByTagName("upload_image")[0];
+				var upload_csv_file = widget.getElementsByTagName("upload_csv_file")[0]; //2dstoplight widget
+				var table_border = widget.getElementsByTagName("table_border")[0]; //2dstoplight widget
+				var table_border_color = widget.getElementsByTagName("table_border_color")[0]; //2dstoplight widget
+				var link_to_page = widget.getElementsByTagName("link_to_page")[0]; //2dstoplight widget
+				var trace_type = widget.getElementsByTagName("trace_type")[0]; //plotly_bar_chart and xy_chart widgets
+				var trace_mode = widget.getElementsByTagName("trace_mode")[0]; //plotly_bar_chart and xy_chart widgets
+
+				//set attributes
+				if (label_class !== undefined) widgetObject.attributes["class"] = label_class.innerHTML;
+				if (border !== undefined) widgetObject.attributes["border"] = border.innerHTML;
+				if (text !== undefined) widgetObject.attributes["text"] = text.innerHTML;
+				if (text_position !== undefined) widgetObject.attributes["text_position"] = text_position.innerHTML;
+				if (font !== undefined) widgetObject.attributes["font"] = font.innerHTML;
+				if (foreground_color !== undefined) widgetObject.attributes["foreground_color"] = foreground_color.innerHTML;
+				if (background_color !== undefined) widgetObject.attributes["background_color"] = background_color.innerHTML;
+				if (transparent !== undefined) widgetObject.attributes["transparent"] = transparent.innerHTML;
+				if (wrap_words !== undefined) widgetObject.attributes["wrap_words"] = wrap_words.innerHTML;
+				if (upload_image !== undefined) widgetObject.attributes["upload_image"] = upload_image.innerHTML;
+				if (upload_csv_file !== undefined) widgetObject.attributes["upload_csv_file"] = upload_csv_file.innerHTML;
+				if (table_border !== undefined) widgetObject.attributes["table_border"] = table_border.innerHTML;
+				if (table_border_color !== undefined) widgetObject.attributes["table_border_color"] = table_border_color.innerHTML;
+				if (link_to_page !== undefined) widgetObject.attributes["link_to_page"] = link_to_page.innerHTML;
+				if (trace_type !== undefined) widgetObject.attributes["trace_type"] = trace_type.innerHTML;
+				if (trace_mode !== undefined) widgetObject.attributes["trace_mode"] = trace_mode.innerHTML;
+
+				console.log("Drawing and creating widget",i,widgetObject);
+
+				widgetObject.loaded = true;
+
+				if (group !== -1)
+				{
+					for (j=0; j<i; ++j)
+					{
+						if (   page_.widgets[j] !== undefined 
+							&& page_.widgets[j].type == widgetObject.type 
+						    && page_.widgets[j].displayName == widgetObject.displayName
+						    && displayName !== undefined
+						    && groups[j] == group)
+						{
+							if (pv !== undefined) 
+								page_.widgets[j].pvList[pv.innerHTML] = refreshRate_;
+							groups[i] = group;
+						}
+					}
+
+					if (groups[i] == undefined)
+					{
+						groups[i] = group;
+					}
+					else
+					{
+						return i;
+					}
+				}
+
+				if (type == WIDGET_TYPE_TAB) //TABS
+				{
+					var j;
+					for (j=0; j<widget.childElementCount; j++)
+						if (widget.children[j].tagName == "tabs")
+							break;
+					var chlCount = widget.children[j].childElementCount;
+					var chl = widget.children[j].children;
+
+					widgetObject.attributes["tabs_num"] = chlCount;
+
+					var id = Object.keys(page_.widgets).length;
+					page_.widgets[id] = widgetObject;
+					widgetObject.el = undefined;
+					widgetObject.tabBodyID = targetTabBodyId;
+					targetTabBodyId_ = targetTabBodyId;
+					drawWidget(id,type);
+
+					for (var k=0; k<chlCount; k++)
+					{
+						for (var l=0; l<chl[k].childElementCount; l++)
+						{
+							if (chl[k].children[l].tagName == "name")
+								widgetObject.attributes["tabname_"+ k] = chl[k].children[l].innerHTML;
+							if (chl[k].children[l].tagName == "children")
+							{
+								var widgetCount = chl[k].children[l].childElementCount;
+								var wids = chl[k].children[l].children;
+								for (var m=0; m<widgetCount; m++)
+								{
+									targetTabBodyId = "widget-" + id + "-tabBody-" + k;
+									makePhoebusWidget(wids[m], ++i, xml, groups, targetTabBodyId);
+								}
+							}
+						}
+					}
+					return i;
+				}
+
+				if (type == WIDGET_TYPE_NAVTAB) //NAVTABS
+				{
+					var j;
+					for (j=0; j<widget.childElementCount; j++)
+						if (widget.children[j].tagName == "tabs")
+							break;
+					var chlCount = widget.children[j].childElementCount;
+					var chl = widget.children[j].children;
+
+					widgetObject.attributes["tabs_num"] = chlCount;
+
+					for (var k=0; k<chlCount; k++)
+					{
+						for (var l=0; l< chl[k].childElementCount; l++)
+						{
+							if (chl[k].children[l].tagName == "file")
+								widgetObject.attributes["file_"+ k] = chl[k].children[l].innerHTML;
+							if (chl[k].children[l].tagName == "name")
+								widgetObject.attributes["tabname_"+ k] = chl[k].children[l].innerHTML;	
+						}
+					}
+				}
+
+				var id = Object.keys(page_.widgets).length;
+				page_.widgets[id] = widgetObject;
+				widgetObject.el = undefined;
+				widgetObject.tabBodyID = targetTabBodyId;
+				targetTabBodyId_ = targetTabBodyId;
+				drawWidget(id,type);
+
+				if (type == WIDGET_TYPE_2DLIGHTS) //2dstoplights
+				{
+					var xSize = widget.getElementsByTagName("table_xSize")[0];
+					if (xSize)  widgetObject.el.contentWindow._xSize = parseInt(xSize.innerHTML);
+					var ySize = widget.getElementsByTagName("table_ySize")[0];
+					if (ySize)  widgetObject.el.contentWindow._ySize = parseInt(ySize.innerHTML);
+
+					var table = widget.getElementsByTagName("tabledata")[0];
+					if (table)
+					{
+						var data = [];
+						var cells = table.getElementsByTagName("cell");
+						for(j = 0; j < cells.length; ++j)
+						{
+							var cell = {
+										  id: 		cells[j].getElementsByTagName("id")[0].innerHTML
+										, x:		cells[j].getElementsByTagName("x")[0].innerHTML
+										, y: 		cells[j].getElementsByTagName("y")[0].innerHTML
+										, pvName:	cells[j].getElementsByTagName("pvName")[0].innerHTML
+									   };
+							data.push(cell);
+							if (cell.pvName != "-1" &&  cell.pvName != "")
+								widgetObject.pvList[cell.pvName] = refreshRate_;
+						}
+						widgetObject.el.contentWindow.tabledata = data;
+					}
+				}
+				return i;
+			} //end makePhoebusWidget()
 
 			//=====================================================================================
 			function pollServerHandlerFunction(req)
@@ -2392,13 +2428,6 @@
 					widgetCover.addEventListener("mousemove", 
 						function()
 						{
-							// var widgetId = this.id.split('-')[1];
-							// if(page_.widgets[widgetId].type == WIDGET_TYPE_TAB || 
-							// 	page_.widgets[widgetId].type == WIDGET_TYPE_NAVTAB)
-							// {
-							// 	Debug.log("Mouse over TAB widget cover", this.id);
-							// }
-
 							if(!drawingSelectionRectangle_ && 
 								dragAndDrawWidgetType_ !== undefined)
 								this.style.cursor = "crosshair";
