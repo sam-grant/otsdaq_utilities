@@ -2126,6 +2126,7 @@
 				editBlock_.el.firstChild.contentWindow.selectWidgetTile(); //unselect in edit block
 			} //end stopDragAndDrawRectangle()
 
+
 			//=====================================================================================
 			function openTabPage(e) 
 			{
@@ -2149,7 +2150,95 @@
 				    && ((widget.y + widget.h) <= (tabWidget.y + tabWidget.h)))
 					return true;
 				return false;
-			} //end checkWidgetInTabBody
+			} //end checkWidgetInTabBody()
+
+
+			//=====================================================================================
+			function drawTabWidgets(id, type, widgetObject)
+			{
+				var str = "";
+				if (!widgetObject.attributes["tabs_num"])
+					widgetObject.attributes["tabs_num"] = 3;
+
+				var STARTING_TAB_COUNT = widgetObject.attributes["tabs_num"];
+
+				var tabEl = document.createElement("div");
+				tabEl.className = "tabWidgetTabContainer";
+				for(var i=0;i<STARTING_TAB_COUNT;++i)
+				{
+					if (!widgetObject.attributes["tabname_"+i])
+						widgetObject.attributes["tabname_"+i] = "Tab " + i;
+
+					str += "<div id='widget-" + id + "-tabSelectButton-" + i
+						+ "'' style='background-color:" + (i == 0?"#777":"") +
+						"'class='tabWidgetSelectButton'>"
+						+ widgetObject.attributes["tabname_"+i]
+						+ "</div>";
+				}
+				tabEl.innerHTML = str;
+
+				widgetObject.el.appendChild(tabEl);
+
+				var tabBodyEl = document.createElement("div");
+				tabBodyEl.className = "tabWidgetBodyContainer";
+				str = "";
+				for(var i=0;i<STARTING_TAB_COUNT;++i)						
+					str += "<div id='widget-" + id + "-tabBody-" + i + 
+						"'' style='display:" + (i == 0?"block":"none") + 
+						"' class='tabWidgetBody'>Tab Body " + i + "</div>";
+
+				tabBodyEl.innerHTML = str;
+
+				widgetObject.el.appendChild(tabBodyEl);
+
+				//for every tab and body, add mouse handlers
+				var tabBodies = widgetObject.el.getElementsByClassName("tabWidgetBody");
+				for (var i = 0; i < tabBodies.length; i++)
+				{
+					tabBodies[i].addEventListener("mousedown", 
+							makeHandlerWithID(id,		handleWidgetCoverMouseDown));
+					tabBodies[i].addEventListener("mouseup", 
+							makeHandlerWithID(id,		endWidgetDragAndResize));
+					tabBodies[i].addEventListener("mousemove", 
+						function()
+						{
+							if(!drawingSelectionRectangle_ && 
+								dragAndDrawWidgetType_ !== undefined)
+								this.style.cursor = "crosshair";
+							else
+								this.style.cursor = "grab";
+						});
+
+				} //end tab body handlers
+				var tabButtons = widgetObject.el.getElementsByClassName("tabWidgetSelectButton");		
+				for (var i = 0; i < tabButtons.length; i++)
+				{
+					tabButtons[i].addEventListener("mousedown", openTabPage);
+					tabButtons[i].addEventListener("mouseup", 
+							makeHandlerWithID(id, endWidgetDragAndResize));
+				} //end tab button handlers
+
+				if(type == WIDGET_TYPE_NAVTAB)
+				{
+					Debug.log("Show starting point widgets");
+					window.setTimeout(
+						function()							
+						{
+							var tabBodyPages = [];
+							for(var i=0;i<STARTING_TAB_COUNT;++i)
+								if (widgetObject.attributes["file_" + i])
+									tabBodyPages[i] = widgetObject.attributes["file_" + i];
+								else
+									widgetObject.attributes["file_" + i] = "";
+
+							Debug.log("Loading a file",id);
+							for(var i=0;i<tabBodyPages.length;++i)
+								loadPhoebusPage(tabBodyPages[i],
+									"widget-" + id + "-tabBody-" + i);
+						}, 1000);
+				}
+			} //end drawTabWidgets()
+
 
 			//================================================================================
 			//draws widget based on id
@@ -2255,88 +2344,7 @@
 
 						widgetObject.el = document.createElement("div");
 						widgetObject.el.id = "widget-" + id;
-
-						var str = "";
-						if (!widgetObject.attributes["tabs_num"])
-							widgetObject.attributes["tabs_num"] = 3;
-
-						var STARTING_TAB_COUNT = widgetObject.attributes["tabs_num"];
-
-						var tabEl = document.createElement("div");
-						tabEl.className = "tabWidgetTabContainer";
-						for(var i=0;i<STARTING_TAB_COUNT;++i)
-						{
-							if (!widgetObject.attributes["tabname_"+i])
-								widgetObject.attributes["tabname_"+i] = "Tab " + i;
-
-							str += "<div id='widget-" + id + "-tabSelectButton-" + i
-								+ "'' style='background-color:" + (i == 0?"#777":"") +
-								"'class='tabWidgetSelectButton'>"
-								+ widgetObject.attributes["tabname_"+i]
-								+ "</div>";
-						}
-						tabEl.innerHTML = str;
-
-						widgetObject.el.appendChild(tabEl);
-
-						var tabBodyEl = document.createElement("div");
-						tabBodyEl.className = "tabWidgetBodyContainer";
-						str = "";
-						for(var i=0;i<STARTING_TAB_COUNT;++i)						
-							str += "<div id='widget-" + id + "-tabBody-" + i + 
-								"'' style='display:" + (i == 0?"block":"none") + 
-								"' class='tabWidgetBody'>Tab Body " + i + "</div>";
-
-						tabBodyEl.innerHTML = str;
-
-						widgetObject.el.appendChild(tabBodyEl);
-
-						//for every tab and body, add mouse handlers
-						var tabBodies = widgetObject.el.getElementsByClassName("tabWidgetBody");
-						for (var i = 0; i < tabBodies.length; i++)
-						{
-							tabBodies[i].addEventListener("mousedown", 
-									makeHandlerWithID(id,		handleWidgetCoverMouseDown));
-							tabBodies[i].addEventListener("mouseup", 
-									makeHandlerWithID(id,		endWidgetDragAndResize));
-							tabBodies[i].addEventListener("mousemove", 
-								function()
-								{
-									if(!drawingSelectionRectangle_ && 
-										dragAndDrawWidgetType_ !== undefined)
-										this.style.cursor = "crosshair";
-									else
-										this.style.cursor = "grab";
-								});
-
-						} //end tab body handlers
-						var tabButtons = widgetObject.el.getElementsByClassName("tabWidgetSelectButton");		
-						for (var i = 0; i < tabButtons.length; i++)
-						{
-							tabButtons[i].addEventListener("mousedown", openTabPage);
-							tabButtons[i].addEventListener("mouseup", 
-									makeHandlerWithID(id, endWidgetDragAndResize));
-						} //end tab button handlers
-
-						if(type == WIDGET_TYPE_NAVTAB)
-						{
-							Debug.log("Show starting point widgets");
-							window.setTimeout(
-								function()							
-								{
-									var tabBodyPages = [];
-									for(var i=0;i<STARTING_TAB_COUNT;++i)
-										if (widgetObject.attributes["file_" + i])
-											tabBodyPages[i] = widgetObject.attributes["file_" + i];
-										else
-											widgetObject.attributes["file_" + i] = "";
-
-									Debug.log("Loading a file",id);
-									for(var i=0;i<tabBodyPages.length;++i)
-										loadPhoebusPage(tabBodyPages[i],
-											"widget-" + id + "-tabBody-" + i);
-								}, 1000);
-						}
+						drawTabWidgets(id, type, widgetObject);
 					}
 					else
 					{
@@ -2516,7 +2524,7 @@
 					resizeDivBottomRight 	= document.getElementById("widget-" + id + "-resize-cover-southeast");
 					resizeDivBottomLeft 	= document.getElementById("widget-" + id + "-resize-cover-southwest");
 
-					//hide and show widget chilren properly
+					//hide and show widget children properly
 					if(widgetObject.type == WIDGET_TYPE_TAB || 
 						widgetObject.type == WIDGET_TYPE_NAVTAB)
 					{				
@@ -3471,7 +3479,39 @@
 					if (page_.widgets[menu_.getAttribute("widgetID")].type != WIDGET_TYPE_TAB && page_.widgets[menu_.getAttribute("widgetID")].type != WIDGET_TYPE_NAVTAB)
 						page_.widgets[menu_.getAttribute("widgetID")].el.contentWindow.drawWidget(page_.widgets[menu_.getAttribute("widgetID")], page_.widgets[menu_.getAttribute("widgetID")].attributes);
 					else
+					{
+						// update tabs widgets
+						var widgetObject = page_.widgets[menu_.getAttribute("widgetID")];
+						var tabs_num = widgetObject.el.children[0].childElementCount;
+						
+						// delete attributes and widgets when tabs are removed
+						if (widgetObject.attributes["tabs_num"] < tabs_num)
+							for (var i=widgetObject.attributes["tabs_num"]; i<tabs_num;++i)
+							{
+								// delete attributes
+								delete widgetObject.attributes["tabname_"+i];
+								if (page_.widgets[menu_.getAttribute("widgetID")].type == WIDGET_TYPE_NAVTAB)
+									delete widgetObject.attributes["file_"+i];
+									
+								// delete widgets in tab bodies
+								for(wid in page_.widgets)
+									if(page_.widgets[wid].tabBodyID == "widget-"+menu_.getAttribute("widgetID")+"-tabBody-"+i)
+									{
+										targetElement_ = page_.widgets[wid].el;
+										deleteWidget();
+									}
+								targetElement_ = undefined;
+							}
+
+						widgetObject.el.innerHTML = "";
+						drawTabWidgets(menu_.getAttribute("widgetID"), page_.widgets[menu_.getAttribute("widgetID")].type, widgetObject);
+
+						//if in a tab widget, add directly
+						for (wid in page_.widgets)
+							if(page_.widgets[wid].tabBodyID && page_.widgets[wid].tabBodyID != "")
+								addWidgetToTabBody(wid,page_.widgets[wid].tabBodyID);
 						drawWidget(menu_.getAttribute("widgetID"));
+					}
 				}
 				catch(e)
 				{
@@ -4276,6 +4316,20 @@
 					return;
 				}
 				var id = targetElement_.id.split('-')[1]|0;
+
+				// delete widgets in tab bodies
+				if (page_.widgets[id].type == WIDGET_TYPE_TAB
+			 	 || page_.widgets[id].type == WIDGET_TYPE_NAVTAB)
+			 	 {
+			 	 	var tabs_num = targetElement_.children[0].childElementCount;
+			 	 	for (var i=0; i<tabs_num; ++i)
+						for(wid in page_.widgets)
+							if(page_.widgets[wid].tabBodyID == "widget-"+id+"-tabBody-"+i)
+							{
+								targetElement_ = page_.widgets[wid].el;
+								deleteWidget();
+							}
+ 	 			}
 
 				if(page_.widgets[id] && page_.widgets[id].el)
 				{
