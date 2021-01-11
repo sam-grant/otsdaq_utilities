@@ -25,7 +25,8 @@ widgetLibrary.typeToSrc =		{
 									"9" :"picture.html",
 									"10" :"2d_stop-light.html",
 									"11" :"root_visualizer.html",
-									"12" :"tabs.html"
+									"12" :"tabs.html",
+									"13" :"navtabs.html"
 								}
 
 widgetLibrary.typeToImgSrc =	{
@@ -41,7 +42,8 @@ widgetLibrary.typeToImgSrc =	{
 		   					 		"9" :"picture-icon.png",
 		   					 		"10" :"2d_stop-light.png",
 		   					 		"11" :"root-icon.png",
-		   					 		"12" :"tabs-icon.png"
+		   					 		"12" :"tabs-icon.png",
+		   					 		"13" :"navtabs-icon.png"
 								}
 
 widgetLibrary.typeToName =		{
@@ -57,7 +59,8 @@ widgetLibrary.typeToName =		{
 									"9" : "Basic picture",
 									"10" : "Basic 2D stop-light viewer",
 									"11" : "Basic Root file widget",
-									"12" : "Basic tabs widget"
+									"12" : "Basic tabs widget",
+									"13" : "Basic nav tabs widget"
 								}
 
 widgetLibrary.typeToPurpose =	{
@@ -73,7 +76,8 @@ widgetLibrary.typeToPurpose =	{
 									"9" : "Picture",
 									"10" : "2D stop-light",
 									"11" : "Root file",
-									"12" : "Tabs"									
+									"12" : "Tabs",									
+									"13" : "NavTabs"									
 								}
 
 widgetLibrary.dimensions =		{
@@ -115,6 +119,13 @@ widgetLibrary.dimensions =		{
 										"Scale": "True",
 									},
 									"12": { /* Tabs */
+										"Min Width": "200",
+										"Min Height": "200",
+										"Default Width": "350",
+										"Default Height": "300",
+										"Scale": "True",
+									},
+									"13": { /* NavTabs */
 										"Min Width": "200",
 										"Min Height": "200",
 										"Default Width": "350",
