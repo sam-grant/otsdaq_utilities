@@ -467,7 +467,7 @@ Debug.errorPopConditionString = function(str) {
 		else
 			rstr += str[i];
 	if(str.length > Debug._ERR_TRUNCATION_LENGTH)
-		rstr += "...&lt;&lt;&lt; MESSAGE TRUNCATED &gt;&gt;&gt;";
+		rstr += "<br>...&lt;&lt;&lt; MESSAGE TRUNCATED &gt;&gt;&gt;";
 	
 	return rstr; 
 } //end errorPopConditionString()
@@ -631,6 +631,11 @@ Debug.errorPop = function(err,severity)
 					"{" +
 					"font-weight: bold;" +
 					"color: rgb(255, 231, 187);" +
+					"}\n\n";
+			css += "#" + Debug._errBoxId + " th" +
+					"{" +
+					"font-weight: bold;" +
+					"text-align: center;" +
 					"}\n\n";
 			
 			//error box style
