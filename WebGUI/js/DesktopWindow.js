@@ -173,6 +173,7 @@ else {
 			y = parseInt(y);		
 			w = parseInt(w);
 			h = parseInt(h);
+			//Debug.log("set size",_x-x,_y-y,_w-w,_h-h,x,y,w,h,_defaultWindowMinWidth,_defaultWindowMinHeight);	
 			
 			//apply minimum size requirements and maximized state
 			_w = _isMaximized?Desktop.desktop.getDesktopContentWidth():(w < _defaultWindowMinWidth?_defaultWindowMinWidth:w);
@@ -268,14 +269,17 @@ else {
 		//resizeAndPositionWindow(x,y,w,h) ~~~
 		//	resize and position of window and its elements
 		//	do not allow weird re-size effects
+		//		+1 because of borders, and content width vs set value
 		this.resizeAndPositionWindow = function(x,y,w,h) 
 		{		
-			//Debug.log("Resizing");
-			if((w <= _defaultWindowMinWidth && x > _x) ||
-				(h <= _defaultWindowMinHeight && y > _y)) return;
-            if(x < Desktop.desktop.getDesktopContentX()) x = Desktop.desktop.getDesktopContentX();
-            if(y < Desktop.desktop.getDesktopContentY()) y = Desktop.desktop.getDesktopContentY();            
+			
+			//Debug.log("Resizing",_x-x,_y-y,_w-w,_h-h,x,y,w,h,_defaultWindowMinWidth,_defaultWindowMinHeight);			
+			if((w <= _defaultWindowMinWidth + 1 && x > _x) ||
+				(h <= _defaultWindowMinHeight + 1 && y > _y)) return [x-_x,y-_y,w-_w,h-_h];
+            if(x < Desktop.desktop.getDesktopContentX()) return [x-_x,y-_y,w-_w,h-_h];//x = Desktop.desktop.getDesktopContentX();
+            if(y < Desktop.desktop.getDesktopContentY()) return [x-_x,y-_y,w-_w,h-_h];//y = Desktop.desktop.getDesktopContentY();            
 			this.setWindowSizeAndPosition(x,y,w,h);
+			return [x-_x,y-_y,w-_w,h-_h];
 		} //end resizeAndPositionWindow()
 				
 		//==============================================================================

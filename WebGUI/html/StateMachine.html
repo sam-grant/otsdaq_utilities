@@ -2560,37 +2560,9 @@
 				_alarmRunning = false;
 				_alarmTimeLeft = 0;
 			} //end stopAlarm()
-			
+					
 			//=====================================================================================
-			//displayError(err) ~~
-			//put new error at top of current error strings
-			function displayError(err)
-			{
-				var el = document.getElementById("error-box-err");
-				var str = el.innerHTML;				
-				var d = new Date();
-				
-				if(str.length)
-					err += "<br>...<br>";
-				str = d.toLocaleDateString() + " " + d.toLocaleTimeString() + ": " +
-						err.replace(/\n/g , "<br>") + str;
-				
-        		Debug.log("Physics displayError Error: " + str + "\n\n" + err);   
-				
-        		el.innerHTML = str;
-				_errorBox.style.display = "block";				
-			} //end displayError()
-			
-			//=====================================================================================
-			//closeErrorBox() ~~
-			function closeErrorBox()
-			{
-				_errorBox.style.display = "none";
-				document.getElementById("error-box-err").innerHTML = ""; //clear string
-			} //end closeErrorBox()
-
-			//=====================================================================================
-			//closeErrorBox() ~~
+			//refreshFSM() ~~
 			function refreshFSM()
 			{
 				Debug.log("refreshFSM");
@@ -2659,13 +2631,7 @@
 	<div class='blackout' id='blackout-reveal'>
 	</div>
 
-</div>
-		
-
-<div id='error-box'>
-<a href="javascript:closeErrorBox()">Close Errors</a><br><br>
-<div id='error-box-err'></div>
-</div>
+</div>		
 
 </body>
 

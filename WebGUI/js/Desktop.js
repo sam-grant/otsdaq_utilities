@@ -36,6 +36,20 @@ Desktop.init = function(security) {
 
 Desktop.SECURITY_TYPE_NONE = "NoSecurity";
 Desktop.SECURITY_TYPE_DIGEST_ACCESS = "DigestAccessAuthentication";
+
+Desktop.WIN_MANIP_MODE = {
+	NONE : -1,
+	NW : 1,
+	SE : 2,
+	NE : 3,
+	SW : 4, 
+	W : 5,
+	E : 6,
+	N : 7, 
+	S : 8, 
+	MOVE : 0,
+	SIDEBAR : 100, 
+};
 		
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -1394,7 +1408,7 @@ Desktop.createDesktop = function(security) {
     //create message request listener from desktop windows, to overcome same-origin policy
     window.addEventListener('message', event => {
     	
-    	console.log("Parent event.data",event.data); 
+    	// console.log("Parent event.data",event.data); 
     	
 		if(event.data.windowId === undefined)
 		{
@@ -1535,16 +1549,16 @@ Desktop.createDesktop = function(security) {
 			responseObject = {
 				"cookieCode":	Desktop.desktop.login.getCookieCode()
 			};
-			console.log("getCookieCode");
+			//console.log("getCookieCode");
 			break;
 		case "updateCookieCode":			
 			//do ms compare to decide if desktop cookie code should be updated with some throttling
 			var delta = parseInt(event.data.cookieCodeTime) - parseInt(Desktop.desktop.login.getCookieTime());
 
-			console.log("updateCookieCode",delta);
+			// console.log("updateCookieCode",delta);
 			if(delta > 5*1000 /*ms*/) //update based on content value
 			{
-				Debug.log("Updating desktop cookie code from content window");
+				// Debug.log("Updating desktop cookie code from content window");
 				Desktop.desktop.login.updateCookieFromContent(
 						event.data.cookieCode,
 						parseInt(event.data.cookieCodeTime)); 
@@ -1556,8 +1570,8 @@ Desktop.createDesktop = function(security) {
 			if(!document.getElementById("Desktop-loginDiv") &&
 					!Desktop.desktop.login.isBlackout())
 			{	
-				//only signal logout if login div is gone (login complete)
-				Debug.log("DesktopContent signaled new login needed!",Debug.HIGH_PRIORITY);
+				//use login div presence to only logout once
+				Debug.log("DesktopContent signaled new login needed!");
 				Desktop.logout();
 			}
 			else
@@ -1574,7 +1588,7 @@ Desktop.createDesktop = function(security) {
 			//send message to window (add windowId for 'security')
 			responseObject["windowId"] = event.data.windowId;
 			responseObject["request"] = event.data.request + "Response";
-			console.log("responseObject",responseObject);
+			// console.log("responseObject",responseObject);
 			this.getWindowById(event.data.windowId|0).getFrame().contentWindow.postMessage(
 					responseObject,"*");
 			
@@ -1613,7 +1627,7 @@ Desktop.createDesktop = function(security) {
 ////////////////////////////////////////////////////////////////////
 
 Desktop.foreWinLastMouse = [-1,-1];
-Desktop.winManipMode = -1;
+Desktop.winManipMode = Desktop.WIN_MANIP_MODE.NONE;
 Desktop.stretchAndMoveInterval = 0; //used to stretch and move even while moving over iFrames
 Desktop.disableMouseDown = 0;
 
@@ -1658,7 +1672,7 @@ Desktop.handleTouchStart = function(touchEvent)
 		
 		if(locY < win.getWindowHeaderHeight()) 
 		{ //move 
-			Desktop.winManipMode = 0;
+			Desktop.winManipMode = Desktop.WIN_MANIP_MODE.MOVE;
 		}
 	}
 	
@@ -1675,7 +1689,7 @@ Desktop.handleTouchEnd = function(touchEvent)
 	if(Desktop.foreWinLastMouse[0] != -1) //action was happening
 	{
 		Desktop.foreWinLastMouse = [-1,-1];
-		Desktop.winManipMode = -1;
+		Desktop.winManipMode = Desktop.WIN_MANIP_MODE.NONE;
 		if(Desktop.desktop.getForeWindow()) Desktop.desktop.getForeWindow().showFrame();	
 		Debug.log("Touch End ");
 	}
@@ -1687,7 +1701,8 @@ Desktop.handleTouchEnd = function(touchEvent)
 Desktop.handleBodyTouchMove = function(touchEvent) {Desktop.handleTouchMove(touchEvent);}
 Desktop.handleTouchMove = function(touchEvent) 
 {
-	if(Desktop.winManipMode != -1 && Desktop.foreWinLastMouse[0] != -1) //action happen now
+	if(Desktop.winManipMode != Desktop.WIN_MANIP_MODE.NONE && 
+		Desktop.foreWinLastMouse[0] != -1) //action happen now
 	{
 		touchEvent.preventDefault(); //fix chrome issue of only 2 fires
 		touchEvent.cancelBubble=true; //eat event away so scrolling doesnt happen
@@ -1720,7 +1735,8 @@ Desktop.handleWindowMouseDown = function(mouseEvent)
 	}	
 		
 	//touches can disable window mouse ops
-	if(!Desktop.disableMouseDown && Desktop.winManipMode != -1 && this.style.cursor != "default") //if moving or resizing window
+	if(!Desktop.disableMouseDown && Desktop.winManipMode != Desktop.WIN_MANIP_MODE.NONE && 
+		this.style.cursor != "default") //if moving or resizing window
 	{
 		//register move cursor and window in question
 		Desktop.foreWinLastMouse = [mouseEvent.clientX,mouseEvent.clientY];
@@ -1763,7 +1779,7 @@ Desktop.handleWindowMouseUp = function(mouseEvent)
 		}
 		
 		Desktop.foreWinLastMouse = [-1,-1];	//indicate no movements happening	
-		Desktop.winManipMode = -1;
+		Desktop.winManipMode = Desktop.WIN_MANIP_MODE.NONE;
 		//if(Desktop.desktop.getForeWindow()) 
 		if(1)
 		{
@@ -1801,7 +1817,7 @@ Desktop.handleWindowMouseMove = function(mouseEvent)
 		if(isDashboard) {
 			if(locX > Desktop.desktop.dashboard.getDashboardWidth() - hotCornerSz) {
 				this.style.cursor = "e-resize";
-				Desktop.winManipMode = 100;
+				Desktop.winManipMode = Desktop.WIN_MANIP_MODE.SIDEBAR;
 			}
 			else
 				this.style.cursor = "default";	
@@ -1810,32 +1826,34 @@ Desktop.handleWindowMouseMove = function(mouseEvent)
 			if((locX < hotCornerSz && locY < hotCornerSz) ||
 				(locX > win.getWindowWidth() - hotCornerSz && locY > win.getWindowHeight() - hotCornerSz)) {
 				this.style.cursor = "nw-resize";
-				Desktop.winManipMode = locY < hotCornerSz?1:2;
+				Desktop.winManipMode = locY < hotCornerSz?
+					Desktop.WIN_MANIP_MODE.NW:Desktop.WIN_MANIP_MODE.SE;
 			}
 			else if((locX > win.getWindowWidth() - hotCornerSz && locY < hotCornerSz) ||
 				(locX < hotCornerSz && locY > win.getWindowHeight() - hotCornerSz)) {		
 				this.style.cursor = "ne-resize";
-				Desktop.winManipMode = locY < hotCornerSz?3:4;
+				Desktop.winManipMode = locY < hotCornerSz?					
+					Desktop.WIN_MANIP_MODE.NE:Desktop.WIN_MANIP_MODE.SW;
 			}
 			else if(locX < hotCornerSz) {		
 				this.style.cursor = "w-resize";
-				Desktop.winManipMode = 5;
+				Desktop.winManipMode = Desktop.WIN_MANIP_MODE.W;
 			}
 			else if(locX > win.getWindowWidth() - hotCornerSz) {		
 				this.style.cursor = "e-resize";
-				Desktop.winManipMode = 6;
+				Desktop.winManipMode = Desktop.WIN_MANIP_MODE.E;
 			}
 			else if(locY < hotCornerSz) {		
 				this.style.cursor = "n-resize";
-				Desktop.winManipMode = 7;
+				Desktop.winManipMode = Desktop.WIN_MANIP_MODE.N;
 			}
 			else if(locY > win.getWindowHeight() - hotCornerSz) {		
 				this.style.cursor = "s-resize";
-				Desktop.winManipMode = 8;
+				Desktop.winManipMode = Desktop.WIN_MANIP_MODE.S;
 			}
 			else if(locY < win.getWindowHeaderHeight()) {
 				this.style.cursor = "all-scroll";		 
-				Desktop.winManipMode = 0;
+				Desktop.winManipMode = Desktop.WIN_MANIP_MODE.MOVE;
 			}
 			else
 				this.style.cursor = "default";
@@ -1871,7 +1889,8 @@ Desktop.handleBodyMouseMove = function(mouseEvent)
     Desktop.desktop.resetFrameMouse(); //reset last iFrame mouse move
     
 	//handle special case for dashboard resize
-	if(Desktop.foreWinLastMouse[0] != -1 && Desktop.winManipMode == 100) { 
+	if(Desktop.foreWinLastMouse[0] != -1 && 
+		Desktop.winManipMode == Desktop.WIN_MANIP_MODE.SIDEBAR) { 
 	
 		if(mouseEvent.which == 0) //mouse button was released!!
 			return Desktop.handleWindowMouseUp(mouseEvent);
@@ -1955,7 +1974,7 @@ Desktop.handleBodyMouseMove = function(mouseEvent)
 
 //==============================================================================
 //handle resizing and moving events for desktop
-Desktop.handleWindowManipulation = function(delta) 
+Desktop.handleWindowManipulation = function(delta)
 {
     if(!Desktop.desktop.getForeWindow()) return false;
 	
@@ -1964,23 +1983,31 @@ Desktop.handleWindowManipulation = function(delta)
 	//check if windows are tiled
 	var lastPositions = Desktop.desktop.lastTileWinPositions;
 	var keepTile = Object.keys(lastPositions).length == Desktop.desktop.getNumberOfWindows() &&
-		Desktop.winManipMode != 0 /* window translation breaks tile always*/;	
+		Desktop.winManipMode != Desktop.WIN_MANIP_MODE.MOVE /* window translation breaks tile always*/;	
 	//keep track of windows that should follow each side of target window
 	var followTiledBottom = [];
 	var followTiledTop = [];
 	var followTiledLeft = [];
 	var followTiledRight = [];
+	var TOLERANCE = 5;
+
 	for(var i=0;keepTile && i<Desktop.desktop.getNumberOfWindows();++i) 
 	{
 		var w = Desktop.desktop.getWindowByIndex(i);
+
+		// if(ignoreWindows && ignoreWindows.indexOf(w.getWindowId()) >= 0)
+		// {
+		// 	Debug.log("Skipping recursive ignore windows",w.getWindowId());
+		// 	continue;
+		// }
 		
 			//document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
 
 		if(	!lastPositions[w.getWindowId()] || 
-			Math.abs(w.getWindowX() - lastPositions[w.getWindowId()][0]) > 2 ||
-			Math.abs(w.getWindowY() - lastPositions[w.getWindowId()][1]) > 2 ||
-			Math.abs(w.getWindowWidth() - lastPositions[w.getWindowId()][2]) > 2  ||
-			Math.abs(w.getWindowHeight() - lastPositions[w.getWindowId()][3]) > 2 )
+			Math.abs(w.getWindowX() - lastPositions[w.getWindowId()][0]) > TOLERANCE ||
+			Math.abs(w.getWindowY() - lastPositions[w.getWindowId()][1]) > TOLERANCE ||
+			Math.abs(w.getWindowWidth() - lastPositions[w.getWindowId()][2]) > TOLERANCE  ||
+			Math.abs(w.getWindowHeight() - lastPositions[w.getWindowId()][3]) > TOLERANCE )
 		{
 			Debug.log("mismatch wid",w.getWindowId());
 			keepTile = false;
@@ -1996,142 +2023,152 @@ Desktop.handleWindowManipulation = function(delta)
 
 		//find windows with bottoms aligned with top of target window
 		//	and with edge within x bounds
-		if(Desktop.winManipMode == 1 ||  //size from top-left
-			Desktop.winManipMode == 3 ||  //size from top-right
-			Desktop.winManipMode == 7  //size from top
+		if(Desktop.winManipMode == Desktop.WIN_MANIP_MODE.NW ||  //size from top-left
+			Desktop.winManipMode == Desktop.WIN_MANIP_MODE.NE ||  //size from top-right
+			Desktop.winManipMode == Desktop.WIN_MANIP_MODE.N  //size from top
 		)
 		{
-			if(Math.abs(w.getWindowY() + w.getWindowHeight() - win.getWindowY()) <= 2)
-			//  &&
-			// 	((w.getWindowX() >= win.getWindowX()-2 &&
-			// 		w.getWindowX() <= win.getWindowX() + win.getWindowWidth() + 2) || 
-			// 	 (w.getWindowX() + w.getWindowWidth() >= win.getWindowX()-2 && 
-			// 	 	w.getWindowX() + w.getWindowWidth() <= win.getWindowX() + win.getWindowWidth() + 2)))
+			if(Math.abs(w.getWindowY() + w.getWindowHeight() - win.getWindowY()) <= TOLERANCE)
+			{
 				followTiledTop.push(w);
-			else if(Math.abs(w.getWindowY() - win.getWindowY()) <= 2)
+			}
+			else if(Math.abs(w.getWindowY() - win.getWindowY()) <= TOLERANCE)
 				followTiledBottom.push(w);
 		}
 
 		//find windows with tops aligned with bottom of target window
 		//	and with edge within x bounds
-		if(Desktop.winManipMode == 2 ||  //size from bottom-right
-			Desktop.winManipMode == 4 ||  //size from bottom-left
-			Desktop.winManipMode == 8  //size from bottom
+		if(Desktop.winManipMode == Desktop.WIN_MANIP_MODE.SE ||  //size from bottom-right
+			Desktop.winManipMode == Desktop.WIN_MANIP_MODE.SW ||  //size from bottom-left
+			Desktop.winManipMode == Desktop.WIN_MANIP_MODE.S  //size from bottom
 		)
 		{
-			if(Math.abs(w.getWindowY() - (win.getWindowY() + win.getWindowHeight())) <= 2)
-			//  &&
-			// 	((w.getWindowX() >= win.getWindowX()-2 &&
-			// 		w.getWindowX() <= win.getWindowX() + win.getWindowWidth() + 2) || 
-			// 	 (w.getWindowX() + w.getWindowWidth() >= win.getWindowX()-2 && 
-			// 	 	w.getWindowX() + w.getWindowWidth() <= win.getWindowX() + win.getWindowWidth() + 2)))
+			if(Math.abs(w.getWindowY() - (win.getWindowY() + win.getWindowHeight())) <= TOLERANCE)
+			// &&
+			// 	((w.getWindowY() >= win.getWindowY()-TOLERANCE &&
+			// 		w.getWindowY() <= win.getWindowY() + win.getWindowHeight() + TOLERANCE) || 
+			// 	 (w.getWindowY() + w.getWindowHeight() >= win.getWindowY()-TOLERANCE && 
+			// 	 	w.getWindowY() + w.getWindowHeight() <= win.getWindowY() + win.getWindowHeight() + TOLERANCE)))
 				followTiledBottom.push(w);
-			else if(Math.abs(w.getWindowY() - win.getWindowY()) <= 2)
+			else if(Math.abs(w.getWindowY() - win.getWindowY()) <= TOLERANCE)
 				followTiledTop.push(w);
 		}
 
 		//find windows with rights aligned with left of target window
 		//	and with edge within y bounds
-		if(Desktop.winManipMode == 1 ||  //size from top-left
-			Desktop.winManipMode == 4 ||  //size from bottom-left
-			Desktop.winManipMode == 5  //size from left
+		if(Desktop.winManipMode == Desktop.WIN_MANIP_MODE.NW ||  //size from top-left
+			Desktop.winManipMode == Desktop.WIN_MANIP_MODE.SW ||  //size from bottom-left
+			Desktop.winManipMode == Desktop.WIN_MANIP_MODE.W  //size from left
 		)
 		{
-			if(Math.abs(w.getWindowX() + w.getWindowWidth() - win.getWindowX()) <= 2)
-			// &&
-			// 	((w.getWindowY() >= win.getWindowY()-2 &&
-			// 		w.getWindowY() <= win.getWindowY() + win.getWindowHeight() + 2) || 
-			// 	 (w.getWindowY() + w.getWindowHeight() >= win.getWindowY()-2 && 
-			// 	 	w.getWindowY() + w.getWindowHeight() <= win.getWindowY() + win.getWindowHeight() + 2)))
+			if(Math.abs(w.getWindowX() + w.getWindowWidth() - win.getWindowX()) <= TOLERANCE)
+			{
 				followTiledLeft.push(w);
+
+				// //fix matching edge within tolerance
+				// w.resizeAndPositionWindow(
+				// 	w.getWindowX(),
+				// 	w.getWindowY(),
+				// 	w.getWindowWidth() - (w.getWindowX() + w.getWindowWidth() - win.getWindowX()),
+				// 	w.getWindowHeight());
+			}
 			// OR if left edge aligned then grow with it
-			else if(Math.abs(w.getWindowX() - win.getWindowX()) <= 2)
+			else if(Math.abs(w.getWindowX() - win.getWindowX()) <= TOLERANCE)
+			{
 				followTiledRight.push(w);
+
+				// //fix matching edge within tolerance
+				// w.resizeAndPositionWindow(
+				// 	w.getWindowX() - (w.getWindowX() - win.getWindowX()),
+				// 	w.getWindowY(),
+				// 	w.getWindowWidth(),
+				// 	w.getWindowHeight());
+			}
 		}
 
 		//find windows with lefts aligned with right of target window
 		//	and with edge within y bounds
-		if(Desktop.winManipMode == 2 ||  //size from bottom-right
-			Desktop.winManipMode == 3 ||  //size from top-right
-			Desktop.winManipMode == 6  //size from right
+		if(Desktop.winManipMode == Desktop.WIN_MANIP_MODE.SE ||  //size from bottom-right
+			Desktop.winManipMode == Desktop.WIN_MANIP_MODE.NE ||  //size from top-right
+			Desktop.winManipMode == Desktop.WIN_MANIP_MODE.E  //size from right
 		)
 		{
-			if(Math.abs(w.getWindowX() - (win.getWindowX() + win.getWindowWidth())) <= 2)
-			//  &&
-			// 	((w.getWindowY() >= win.getWindowY()-2 &&
-			// 		w.getWindowY() <= win.getWindowY() + win.getWindowHeight() + 2) || 
-			// 	 (w.getWindowY() + w.getWindowHeight() >= win.getWindowY()-2 && 
-			// 	 	w.getWindowY() + w.getWindowHeight() <= win.getWindowY() + win.getWindowHeight() + 2)))
+			if(Math.abs(w.getWindowX() - (win.getWindowX() + win.getWindowWidth())) <= TOLERANCE)
 				followTiledRight.push(w);
-			else if(Math.abs(w.getWindowX() - win.getWindowX()) <= 2)
+			else if(Math.abs(w.getWindowX() - win.getWindowX()) <= TOLERANCE)
 				followTiledLeft.push(w);
 		}
 
 	} //end tiled prep loop
 
-	//Debug.log("keepTile",keepTile,Desktop.winManipMode,"followTiledRight",followTiledRight.length,delta[0]);
+	Debug.log("keepTile",keepTile,Desktop.winManipMode,
+		"followTiledRight",followTiledRight.length,
+		"followTiledTop",followTiledTop.length,
+		"followTiledLeft",followTiledLeft.length,
+		"followTiledBottom",followTiledBottom.length,
+		delta);
 
 	if(!keepTile)
 		Desktop.desktop.lastTileWinPositions = {}; //clear to avoid future checks
 
 	//if(keepTile) return false;
-    
+    var deltaResidual = [0,0,0,0]; //do not move other window if target window reached limits
 	switch(Desktop.winManipMode) 
 	{ 
-		case 0: //move
+		case Desktop.WIN_MANIP_MODE.MOVE: //move
 			win.moveWindowByOffset(delta[0],delta[1]);
 			break;
-		case 1: //size from top-left
-			win.resizeAndPositionWindow(
+		case Desktop.WIN_MANIP_MODE.NW: //size from top-left
+			deltaResidual = win.resizeAndPositionWindow(
 				win.getWindowX() + delta[0],
 				win.getWindowY() + delta[1],
 				win.getWindowWidth() - delta[0],
 				win.getWindowHeight() - delta[1]);
 			break;
-		case 2: //size from bottom-right		
-			win.resizeAndPositionWindow(
+		case Desktop.WIN_MANIP_MODE.SE: //size from bottom-right		
+			deltaResidual = win.resizeAndPositionWindow(
 				win.getWindowX(),
 				win.getWindowY(),
 				win.getWindowWidth() + delta[0],
 				win.getWindowHeight() + delta[1]);
 			break;
-		case 3: //size from top-right
-			win.resizeAndPositionWindow(
+		case Desktop.WIN_MANIP_MODE.NE: //size from top-right
+			deltaResidual = win.resizeAndPositionWindow(
 				win.getWindowX(),
 				win.getWindowY() + delta[1],
 				win.getWindowWidth() + delta[0],
 				win.getWindowHeight() - delta[1]);
 			break;
-		case 4: //size from bottom-left
-			win.resizeAndPositionWindow(
+		case Desktop.WIN_MANIP_MODE.SW: //size from bottom-left
+			deltaResidual = win.resizeAndPositionWindow(
 				win.getWindowX() + delta[0],
 				win.getWindowY(),
 				win.getWindowWidth() - delta[0],
 				win.getWindowHeight() + delta[1]);
 			break;
-		case 5: //size from left
-			win.resizeAndPositionWindow(
+		case Desktop.WIN_MANIP_MODE.W: //size from left
+			deltaResidual = win.resizeAndPositionWindow(
 				win.getWindowX() + delta[0],
 				win.getWindowY(),
 				win.getWindowWidth() - delta[0],
 				win.getWindowHeight());
 			break;
-		case 6: //size from right
-			win.resizeAndPositionWindow(
+		case Desktop.WIN_MANIP_MODE.E: //size from right
+			deltaResidual = win.resizeAndPositionWindow(
 				win.getWindowX(),
 				win.getWindowY(),
 				win.getWindowWidth() + delta[0],
 				win.getWindowHeight());
 			break;
-		case 7: //size from top
-			win.resizeAndPositionWindow(
+		case Desktop.WIN_MANIP_MODE.N: //size from top
+			deltaResidual = win.resizeAndPositionWindow(
 				win.getWindowX(),
 				win.getWindowY() + delta[1],
 				win.getWindowWidth(),
 				win.getWindowHeight() - delta[1]);
 			break;
-		case 8: //size from bottom
-			win.resizeAndPositionWindow(
+		case Desktop.WIN_MANIP_MODE.S: //size from bottom
+			deltaResidual = win.resizeAndPositionWindow(
 				win.getWindowX(),
 				win.getWindowY(),
 				win.getWindowWidth(),
@@ -2139,46 +2176,48 @@ Desktop.handleWindowManipulation = function(delta)
 			break;
 		default:
 	}
+	if(delta[0] || delta[1])
+	Debug.log(deltaResidual,delta);
 
+	var winChangeStack = [];
 	for(var i=0;i<followTiledTop.length;++i)
-	{
-		followTiledTop[i].resizeAndPositionWindow(
+	{		
+		winChangeStack.push([followTiledTop[i],followTiledTop[i].resizeAndPositionWindow(
 			followTiledTop[i].getWindowX(),
 			followTiledTop[i].getWindowY(),
 			followTiledTop[i].getWindowWidth(),
-			followTiledTop[i].getWindowHeight() + delta[1]);
+			followTiledTop[i].getWindowHeight() + delta[1])]);
 		lastPositions[followTiledTop[i].getWindowId()][3] = followTiledTop[i].getWindowHeight();
 	}
 	for(var i=0;i<followTiledLeft.length;++i)
 	{
-		followTiledLeft[i].resizeAndPositionWindow(
+		winChangeStack.push([followTiledLeft[i],followTiledLeft[i].resizeAndPositionWindow(
 			followTiledLeft[i].getWindowX(),
 			followTiledLeft[i].getWindowY(),
-			followTiledLeft[i].getWindowWidth() + delta[0],
-			followTiledLeft[i].getWindowHeight());
+			followTiledLeft[i].getWindowWidth() + delta[0] - deltaResidual[0],
+			followTiledLeft[i].getWindowHeight())]);
 		lastPositions[followTiledLeft[i].getWindowId()][2] = followTiledLeft[i].getWindowWidth();
 	}
 	for(var i=0;i<followTiledRight.length;++i)
 	{
-		followTiledRight[i].resizeAndPositionWindow(
-			followTiledRight[i].getWindowX() + delta[0],
+		winChangeStack.push([followTiledRight[i],followTiledRight[i].resizeAndPositionWindow(
+			followTiledRight[i].getWindowX() + delta[0]  - deltaResidual[0],
 			followTiledRight[i].getWindowY(),
-			followTiledRight[i].getWindowWidth() - delta[0],
-			followTiledRight[i].getWindowHeight());
+			followTiledRight[i].getWindowWidth() - delta[0] + deltaResidual[0],
+			followTiledRight[i].getWindowHeight())]);
 		lastPositions[followTiledRight[i].getWindowId()][0] = followTiledRight[i].getWindowX();
 		lastPositions[followTiledRight[i].getWindowId()][2] = followTiledRight[i].getWindowWidth();
 	}
 	for(var i=0;i<followTiledBottom.length;++i)
 	{
-		followTiledBottom[i].resizeAndPositionWindow(
+		winChangeStack.push([followTiledBottom[i],followTiledBottom[i].resizeAndPositionWindow(
 			followTiledBottom[i].getWindowX(),
 			followTiledBottom[i].getWindowY() + delta[1],
 			followTiledBottom[i].getWindowWidth(),
-			followTiledBottom[i].getWindowHeight() - delta[1]);
+			followTiledBottom[i].getWindowHeight() - delta[1])]);
 		lastPositions[followTiledBottom[i].getWindowId()][1] = followTiledBottom[i].getWindowY();
 		lastPositions[followTiledBottom[i].getWindowId()][3] = followTiledBottom[i].getWindowHeight();
 	}
-	
 
 	if(keepTile)
 		lastPositions[win.getWindowId()] = [
@@ -2186,6 +2225,41 @@ Desktop.handleWindowManipulation = function(delta)
 			win.getWindowY(),
 			win.getWindowWidth(),
 			win.getWindowHeight()];
+
+	// //now launch any fallout from windows reaching extremes
+	// for(var i=0;i<winChangeStack.length;++i)
+	// {
+	// 	if(winChangeStack[i][1][0] ||
+	// 		winChangeStack[i][1][1] || 
+	// 		winChangeStack[i][1][2] ||
+	// 		winChangeStack[i][1][3] )
+	// 	{
+	// 		Debug.log("winChangeStack",i,winChangeStack[i][0],winChangeStack[i][1]);	
+
+	// 		if(!ignoreWindows) //create recursive ignore windows list
+	// 			ignoreWindows = []; 
+			
+	// 		if(winChangeStack[i][1][0])
+	// 		{
+	// 			Desktop.winManipMode = Desktop.WIN_MANIP_MODE.W;
+	// 			Desktop.handleWindowManipulation(
+	// 				[winChangeStack[i][1][0],0] /*delta*/,
+	// 				winChangeStack[i][0] /*targetWindow*/,
+	// 				ignoreWindows.concat([winChangeStack[i][0].getWindowId()])
+	// 			);
+	// 		}
+	// 		if(winChangeStack[i][1][2])
+	// 		{
+	// 			Desktop.winManipMode = Desktop.WIN_MANIP_MODE.E;
+	// 			Desktop.handleWindowManipulation(
+	// 				[winChangeStack[i][1][2],0] /*delta*/,
+	// 				winChangeStack[i][0] /*targetWindow*/,
+	// 				ignoreWindows.concat([winChangeStack[i][0].getWindowId()])
+	// 			);
+	// 		}
+			
+	// 	}
+	// }
 
 } //end handleWindowManipulation()
 

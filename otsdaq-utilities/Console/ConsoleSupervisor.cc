@@ -47,7 +47,7 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 //==============================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
-    : CoreSupervisorBase(stub), messageCount_(0), maxMessageCount_(100000)
+    : CoreSupervisorBase(stub), messageCount_(0), maxMessageCount_(100000), maxClientMessageRequest_(500)
 {
 	__SUP_COUT__ << "Constructor started." << __E__;
 
@@ -114,7 +114,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 	ReceiverSocket rsock(myip, myport);  // Take Port from Configuration
 	try
 	{
-		rsock.initialize(0xA00000 /*socketReceiveBufferSize*/);
+		rsock.initialize(0x1400000 /*socketReceiveBufferSize*/);
 	}
 	catch(...)
 	{
@@ -161,8 +161,9 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 	    sourceLastSequenceID;  // map from sourceID to
 	                           // lastSequenceID to
 	                           // identify missed messages
-	long long    newSourceId;
-	unsigned int newSequenceId;
+	long long   newSourceId;
+	uint32_t 	newSequenceId;
+	unsigned int c;
 
 	// force a starting message
 	__MOUT__ << "DEBUG messages look like this." << __E__;
@@ -215,44 +216,56 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			// this guarantees the reading thread can safely access the messages
 			std::lock_guard<std::mutex> lock(cs->messageMutex_);
 
-			cs->messages_.emplace_back(buffer, cs->messageCount_++);
-
-			// check if sequence ID is out of order
-			newSourceId   = cs->messages_.back().getSourceIDAsNumber();
-			newSequenceId = cs->messages_.back().getSequenceIDAsNumber();
-
-			//__COUT__ << "newSourceId: " << newSourceId << std::endl;
-			//__COUT__ << "newSequenceId: " << newSequenceId << std::endl;
-
-			if(newSourceId != -1 &&
-			   sourceLastSequenceID.find(newSourceId) !=
-			       sourceLastSequenceID.end() &&  // ensure not first packet received
-			   ((newSequenceId == 0 && sourceLastSequenceID[newSourceId] !=
-			                               (unsigned int)-1) ||  // wrap around case
-			    newSequenceId !=
-			        sourceLastSequenceID[newSourceId] + 1))  // normal sequence case
+			//handle message stacking in packet
+			c = 0;
+			while(c < buffer.size())
 			{
-				// missed some messages!
-				__SS__ << "Missed packets from " << cs->messages_.back().getSource()
-				       << "! Sequence IDs " << sourceLastSequenceID[newSourceId] + 1
-				       << " to " << newSequenceId - 1 << "." << __E__;
-				std::cout << ss.str();
+				// std::cout << "CONSOLE " << c << " sz=" << buffer.size() << " len=" <<
+				// 	strlen(&(buffer.c_str()[c])) << __E__;
+				cs->messages_.emplace_back(&(buffer.c_str()[c]), 
+					cs->messageCount_++);
 
-				// generate special message to indicate missed packets
-				cs->messages_.emplace_back(CONSOLE_SPECIAL_WARNING + ss.str(),
-				                           cs->messageCount_++);
+				// check if sequence ID is out of order
+				newSourceId   = cs->messages_.back().getSourceIDAsNumber();
+				newSequenceId = cs->messages_.back().getSequenceIDAsNumber();
 
-			}
+				//__COUT__ << "newSourceId: " << newSourceId << std::endl;
+				//__COUT__ << "newSequenceId: " << newSequenceId << std::endl;
 
-			// save the new last sequence ID
-			sourceLastSequenceID[newSourceId] = newSequenceId;
+				if(newSourceId != -1 &&
+					sourceLastSequenceID.find(newSourceId) !=
+						sourceLastSequenceID.end() &&  // ensure not first packet received
+					((newSequenceId == 0 && sourceLastSequenceID[newSourceId] !=
+												(uint32_t)-1) ||  // wrap around case
+						newSequenceId !=
+							sourceLastSequenceID[newSourceId] + 1))  // normal sequence case
+				{
+					// missed some messages!
+					std::stringstream missedSs;
+					missedSs << "Console missed " << 
+						(newSequenceId - 1) - (sourceLastSequenceID[newSourceId] + 1) + 1 <<
+						" packet(s) from " << cs->messages_.back().getSource()
+						<< "!" << __E__;
+					__SS__ << missedSs.str();
+					std::cout << ss.str();
 
-			while(cs->messages_.size() > 0 && cs->messages_.size() > cs->maxMessageCount_)
-			{
-				cs->messages_.erase(cs->messages_.begin());
-			}
-		}
-		else
+					// generate special message to indicate missed packets
+					cs->messages_.emplace_back(CONSOLE_SPECIAL_WARNING + missedSs.str(),
+											cs->messageCount_++);
+				}
+
+				// save the new last sequence ID
+				sourceLastSequenceID[newSourceId] = newSequenceId;
+
+				while(cs->messages_.size() > 0 && cs->messages_.size() > cs->maxMessageCount_)
+				{
+					cs->messages_.erase(cs->messages_.begin());
+				}
+
+				c += strlen(&(buffer.c_str()[c]))+1;
+			} //end handle message stacking in packet
+		} //end received packet handling
+		else //idle network handling
 		{
 			if(i < 120)  // if nothing received for 120 seconds, then something is wrong
 			             // with Console configuration
@@ -280,7 +293,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			}
 
 			++heartbeatCount;
-		}
+		} //end idle network handling
 
 		// if nothing received for 2 minutes seconds, then something is wrong with Console
 		// configuration 	after 5 seconds there is a self-send. Which will at least
@@ -295,7 +308,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			         << std::endl;
 			break;  // assume something wrong, and break loop
 		}
-	}
+	} //end infinite loop
 
 }  // end messageFacilityReceiverWorkLoop()
 catch(const std::runtime_error& e)
@@ -305,7 +318,7 @@ catch(const std::runtime_error& e)
 catch(...)
 {
 	__COUT_ERR__ << "Unknown error caught at Console Supervisor thread." << __E__;
-}
+} // end messageFacilityReceiverWorkLoop() exception handling
 
 //==============================================================================
 void ConsoleSupervisor::defaultPage(xgi::Input* /*in*/, xgi::Output* out)
@@ -1227,12 +1240,12 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 	if(refreshReadPointer >= messages_.size())
 		return;
 
-	if(messages_.size() - refreshReadPointer > 250)
+	if(messages_.size() - refreshReadPointer > maxClientMessageRequest_)
 	{
-		__SUP_COUT__ << "Only sending latest 250 messages!";
+		__SUP_COUT__ << "Only sending latest " << maxClientMessageRequest_ << " messages!";
 
 		auto oldrrp        = refreshReadPointer;
-		refreshReadPointer = messages_.size() - 250;
+		refreshReadPointer = messages_.size() - maxClientMessageRequest_;
 
 		// generate special message to indicate failed socket
 		__SS__ << "Skipping " << (refreshReadPointer - oldrrp)

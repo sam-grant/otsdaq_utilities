@@ -324,8 +324,8 @@ DesktopContent.init = function(onloadFunction)
 	//The first message is initiated by the Desktop once the window frame has been loaded.
 	window.addEventListener('message', event => {
 
-		console.log(window.location.href,
-			"Child event.data",event.data); 
+		// console.log(window.location.href,
+		// 	"Child event.data",event.data); 
 
 
 		if(!event.data.windowId)
@@ -461,8 +461,8 @@ DesktopContent.init = function(onloadFunction)
 	//The first message is initiated by the Desktop once the window frame has been loaded.
 	DesktopContent._theWindow.addEventListener('message', event => {
 
-		console.log(window.location.href,
-			"Desktop Window event.data",event.data); 
+		// console.log(window.location.href,
+		// 	"Desktop Window event.data",event.data); 
 
 
 		if(!event.data.windowId)
@@ -494,12 +494,12 @@ DesktopContent.init = function(onloadFunction)
 				{
 					window.clearTimeout(DesktopContent._updateCookieCodeTimer);
 					
-					Debug.log("localUpdateCookieCode");
+					// Debug.log("localUpdateCookieCode");
 					var deltaTime = parseInt((new Date()).getTime()) - //in ms
 							parseInt(DesktopContent._updateTimeMailbox);
 					if(deltaTime > 30)						
 					{			
-						Debug.log("Requesting updated cooking code from desktop");
+						// Debug.log("Requesting updated cooking code from desktop");
 
 						DesktopContent._theDesktopWindow.postMessage(
 								{
@@ -507,8 +507,8 @@ DesktopContent.init = function(onloadFunction)
 							"request":  		"getCookieCode"
 								},"*");
 					}
-					else
-						Debug.log("No need to update deltaTime=" + deltaTime);
+					// else
+					// 	Debug.log("No need to update deltaTime=" + deltaTime);
 					
 					DesktopContent._updateCookieCodeTimer = window.setTimeout(
 							localUpdateCookieCode,30*1000 /*ms*/);

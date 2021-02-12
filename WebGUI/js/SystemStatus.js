@@ -63,6 +63,7 @@ function init()
     DesktopContent._loginNotifyHandler = function()
     {    	
     	Debug.log("Handling login notification...");
+		Debug.closeErrorPop();
     	//updateAppsArray(); //define relogin handler
     	init();
     } //end login notify handler

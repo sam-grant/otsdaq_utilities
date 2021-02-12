@@ -340,6 +340,10 @@
 				margin: 			2px 0 4px 22px;
 				height: 			12px;
 		    }
+
+			#chatText {
+				border-bottom: 		3px solid rgb(123 13 13);
+			}
 		</style>
 				
 
@@ -454,7 +458,7 @@
 			var _displayName;
 			
 			var _consoleHistoryFields = ["chat_entry","chat_author","chat_time"];
-			var _CONSOLE_HISTORY_MAX_LENGTH = 500000;
+			var _CONSOLE_HISTORY_MAX_LENGTH = 1000000;
 						
 			var _chatUsersTitle = "<div class='userTitle'>Chatting:</div>";
 			var _activeUsersTitle = "<div class='userTitle'>Logged In:</div>";
@@ -463,9 +467,7 @@
 			var _displaySidePane = false;
 			var _scrollWithNewChats = true; //true if following new chats, false if user has scrolled up into history
 			var _userMouseInput = false; //use flag to determine if scrolling is due to user mouse input
-			
-			
-			
+									
 			
 			
 			var _lastUpdateCount = 0; //0 is for initial request
@@ -479,6 +481,7 @@
 									"Time",
 									"File",
 									"Line",
+									"SequenceID",
 									//"Count" //not needed
 								  ];
 			var _MESSAGE_FIELD_LEVEL = _consoleMessageFields.indexOf("Level"),
@@ -487,6 +490,7 @@
 					_MESSAGE_FIELD_MSG = _consoleMessageFields.indexOf("Msg"), 
 					_MESSAGE_FIELD_TIME = _consoleMessageFields.indexOf("Time"), 
 					_MESSAGE_FIELD_FILE = _consoleMessageFields.indexOf("File"), 
+					_MESSAGE_FIELD_ID = _consoleMessageFields.indexOf("SequenceID"), 
 					_MESSAGE_FIELD_LINE = _consoleMessageFields.indexOf("Line");
 
 			var _consoleMessageArray; 			
@@ -1227,8 +1231,7 @@
 			//updateConsoleHistory ~
 			// 	add console history from _consoleMessageArray
 			function updateConsoleHistory() 
-			{
-				
+			{				
 				if(!_consoleMessageArray || //if _consoleMessageArray incomplete, do nothing (should never happpen?)
 						_consoleMessageArray.length != _consoleMessageFields.length) return;
 			    
@@ -1249,6 +1252,7 @@
 				{		 			
 					tmp.Label = _consoleMessageArray[_MESSAGE_FIELD_LABEL][i].getAttribute('value');
 					tmp.Level = _consoleMessageArray[_MESSAGE_FIELD_LEVEL][i].getAttribute('value');
+					tmp.ID = _consoleMessageArray[_MESSAGE_FIELD_ID][i].getAttribute('value');
 					
 					firstMsg = _consoleMessageArray[_MESSAGE_FIELD_FILE][i].getAttribute('value') +
 							"[" + _consoleMessageArray[_MESSAGE_FIELD_LINE][i].getAttribute('value') + "]\t";
@@ -1259,7 +1263,8 @@
 					secondMsg = convertForClient(secondMsg);
 					
 					//important to only have one /div> per entry for truncate
-					str += "<div class='consoleEntry' style='color:" + 
+					str += "<div class='consoleEntry consoleEntryId-" +
+						tmp.ID + "' style='color:" + 
 						getColorForLevel(tmp.Level) + "'>" +
 						"<span class='" + tmp.Label + "_LabelEntry'>" + 
 						"<span class='" + tmp.Level + "_LevelEntry'>" + //open label level span (for filtering)
@@ -1292,6 +1297,18 @@
 				//				for(var i in _observedLabels)					
 				//					Debug.log(i + ": " + _observedLabels[i]);	
 				
+				var startPosition = 0;
+				var startIndex = -1;
+				if(_consoleEl.children.length)
+				{
+					startPosition = _consoleEl.children[_consoleEl.children.length-1].
+						offsetTop;
+					startIndex = _consoleEl.children[_consoleEl.children.length-1].
+						className.split('-')[1]|0;
+					// Debug.logv({startPosition});
+					// Debug.logv({startIndex});
+				}
+							
 				str = _consoleEl.innerHTML + str;	
 				var lendiff = str.length - _CONSOLE_HISTORY_MAX_LENGTH;	
 				if(lendiff > 0) //truncate chat history at entry div start
@@ -1301,6 +1318,14 @@
 				
 				if(_scrollWithNewChats)
 					_historyEl.scrollTop = _historyEl.scrollHeight;
+				else if(startIndex > 0)					
+				{					
+					var els = _consoleEl.getElementsByClassName("consoleEntryId-" + startIndex);					
+					var endPosition = els[els.length-1].offsetTop;
+					// Debug.log("endPosition ",endPosition,endPosition-startPosition);
+					_historyEl.scrollTop += endPosition-startPosition;
+				}
+				
 			} //end updateConsoleHistory()
 			
 			//=====================================================================================
@@ -1465,10 +1490,11 @@
 			function handleUserScroll(e) 
 			{							    
 				if(_userMouseInput) //only mess with scroll if user did something with mouse recently
-				{
-					_scrollWithNewChats = (_historyEl.scrollTop >=_historyEl.scrollHeight - _historyEl.offsetHeight - 2);
+				{					
+					_scrollWithNewChats = (_historyEl.scrollTop >= (_historyEl.scrollHeight - _historyEl.offsetHeight)*0.99 - 2);
 					DesktopContent.handleScroll(e);
-							     _userMouseInput = false; //clear
+					_userMouseInput = false; //clear
+					Debug.logv({_scrollWithNewChats});
 				}
 			} //end handleUserScroll()
 			
@@ -3298,12 +3324,14 @@
 			//=====================================================================================
 			function handleMouseUp(e) 
 			{
-				Debug.log("Body handleMouseUp and Leave",_advancedButtonDown,"=",e.button);
+				// Debug.log("Body handleMouseUp and Leave",_advancedButtonDown,"=",e.button);
 				_advancedButtonDown = -1;
 				_advancedLastBitDown = [-1 /*labeli*/,-1 /*bit*/];
 				if(_advancedPopup)		
 					_advancedPopup.style.display = "none";
 				
+				_scrollWithNewChats = (_historyEl.scrollTop >= (_historyEl.scrollHeight - _historyEl.offsetHeight)*0.99 - 2);
+				// Debug.logv({_scrollWithNewChats});
 			} //end handleMouseUp()
 			
 			

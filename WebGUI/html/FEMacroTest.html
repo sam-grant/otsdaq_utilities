@@ -151,6 +151,8 @@
 		MAP_FROM_LAYOUT_TO_MACRO_TYPES_[MACRO_TYPE_FE_] 		= 0;
 		MAP_FROM_LAYOUT_TO_MACRO_TYPES_[MACRO_TYPE_PUBLIC_] 	= 1;
 		MAP_FROM_LAYOUT_TO_MACRO_TYPES_[MACRO_TYPE_PRIVATE_] 	= 2;
+
+		var inputValueHistory_ = {}; //keep last input values, and recall for quick launches
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -440,6 +442,7 @@
 			{
 				Debug.log("inputArgs " + inputsArr[i]);
 				Debug.log("inputArgs.value " + inEls[i].value);
+				inputValueHistory_[inputsArr[i]] = inEls[i].value;
 				if(i) postData += ";";
 				postData += encodeURIComponent(inputsArr[i]) + "," + encodeURIComponent(inEls[i].value);
 			}
@@ -534,7 +537,10 @@
 					for(var i=0;i<outputArgNames.length;++i)
 					{
 						var name = outputArgNames[i].getAttribute("value");
-						var value = decodeURIComponent(outputArgValues[i].getAttribute("value"));
+		    			//first decode URI, then convert html entities
+						var value = Debug.errorPopConditionString(decodeURIComponent(
+								outputArgValues[i].getAttribute("value")));
+
 						if(name == "Filename" || name == "filename")
 							str += name + " = " +
 								//if filename, add link to CodeEditor
@@ -1175,7 +1181,8 @@
 							"id": "macroInput-row-" + r + "-col-" + c +
 								"-i-" + i,
 							"class":"macroInput " + "macroInput-row-" + r + "-col-" + c,
-							"value":"Default",
+							"value":(inputValueHistory_[inputsArr[i]]?
+								inputValueHistory_[inputsArr[i]]:"Default"),
 							"onclick":"setCaretPosition(this,0,this.value.length);",
 							"autocomplete":"off",
 							"autocorrect":"off",
