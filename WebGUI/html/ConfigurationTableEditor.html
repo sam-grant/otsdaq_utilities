@@ -78,12 +78,17 @@
 		
 		var _dataTypeArray = [_STRING_TYPE, _NUMBER_TYPE, _DATE_TYPE];
 		var _defaultArray = {};
+		var _minArray = {};
+		var _maxArray = {};
 				
 		var _editingCell = false;
 		var _editingCellEl, _editingCellElOldValue;
 		var _editingCellPos = [-1,-1];	
 		var _srcName;
-		var _colHdrArr, _colTypeArr, _colDataTypeArr, _colDefaultValueArr, _colChoicesArr;
+		var _colHdrArr, _colTypeArr, _colDataTypeArr, _colDefaultValueArr, 
+		_colMinValueArr, _colMaxValueArr, 
+		_colChoicesArr;
+		//variables for min and max
 		//_colChoicesArr is CSV where first entry is always arbitraryBool=0/1 for fixed choice columns
 		
 		var _tableDescription;
@@ -199,6 +204,9 @@
 				var defDataType = req.responseXML.getElementsByTagName("columnDefaultDataType");
 				var defTypeFilter = req.responseXML.getElementsByTagName("columnDefaultTypeFilter");
 				var defValue = req.responseXML.getElementsByTagName("columnDefaultValue");
+				// added min and max value here to get elements by tag name as well
+				var minValue= req.responseXML.getElementsByTagName("columnMinValue");
+				var maxValue= req.responseXML.getElementsByTagName("columnMaxValue");
 				
 				if(colTypes.length)
 					_typeArray = []; //clear and take from data
@@ -213,10 +221,20 @@
 					_dataTypeArray.push(colDataTypes[i].getAttribute("value"));				
 				
 				_defaultArray = {};
+						// fill min and max array
+				_minArray = {};
+				_maxArray = {};
+
 				var dVal;
+				var minVal;
+				var maxVal;
 				for(var i=0;i<_dataTypeArray.length;++i)
 				{
 					_defaultArray[_dataTypeArray[i]] = {};
+
+					_minArray[_dataTypeArray[i]] = {};
+					_maxArray[_dataTypeArray[i]] = {};
+
 					for(var j=0;j<_typeArray.length;++j)
 					{
 						//search through default dataTypes and type filter pairs
@@ -231,6 +249,8 @@
 								{
 									found = true;
 									dVal = defValue[a].getAttribute("value");
+									// minVal = minValue[a].getAttribute("value");
+									// maxVal = maxValue[a].getAttribute("value");
 									break;
 								}
 								else if(_typeArray[j] == 
@@ -238,10 +258,14 @@
 								{
 									found = true;
 									dVal = defValue[a].getAttribute("value");
+									// minVal = minValue[a].getAttribute("value");
+									// maxVal = maxValue[a].getAttribute("value");
 									break;
 								}
 							}
 						}
+
+						//shall min and max be included here?
 						
 						if(!found)
 						{
@@ -253,7 +277,16 @@
 						
 						_defaultArray[_dataTypeArray[i]]
 									  [_typeArray[j]]
-									  = dVal;						
+									  = dVal;
+						
+						_minArray[_dataTypeArray[i]]
+									  [_typeArray[j]]
+									  = dVal;
+
+						_maxArray[_dataTypeArray[i]]
+									  [_typeArray[j]]
+									  = dVal;
+						
 					}
 				}
 				
@@ -264,7 +297,10 @@
 				_defaultArray[_STRING_TYPE]["Author"] = _defaultArray[_STRING_TYPE]["Data"];
 				_defaultArray[_DATE_TYPE]["Timestamp"] = _defaultArray[_DATE_TYPE]["Data"];
 				
-				Debug.log("default array = ",_defaultArray);	
+				Debug.log("default array = ",_defaultArray);
+				Debug.log("min array = ",_minArray);
+				Debug.log("max array = ",_maxArray);
+
 
 				DesktopContent.XMLHttpRequest("Request?RequestType=getTables&refresh=1&allowIllegalColumns=1", "",
 						setupTableEditor,
@@ -343,8 +379,6 @@
 					"style='margin:-4px -2px -4px -1px; width:310px' value=''>";
 			str += " <input type='button' onmouseup='saveTable(0)' value='Save'/>";
 			
-			
-			
 			var el = document.getElementById("controls");
 			el.innerHTML = str;
 			
@@ -357,14 +391,18 @@
 		} //end setupTableEditor
 
 		//==============================================================================
-		//handleTypeSelect ~
+		
 		function handleTypeSelect()
 		{
 			var sel = document.getElementById("selectCellTypeSelect");
-			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
+			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default, is there a way to include default in the min and max fields?
 			var selVal = sel.options[sel.selectedIndex].value;
 			Debug.log("CfgTableEditor handleTypeSelect = " + selVal);
 
+			var cellSelect = document.getElementById("selectCellDataTypeSelect");
+			if(cellSelect.selectedIndex < 0) cellSelect.selectedIndex = 0;
+			var cellSelectVal = cellSelect.options[cellSelect.selectedIndex].value;
+			Debug.log("CfgTableEditor handleTypeSelect: cellSelect = "+ cellSelectVal);
 			
 			//show Link ID or not
 			{
@@ -389,9 +427,23 @@
 					if(selVal == specTypeArray[i]) { found = true; break; }
 
 				var el = document.getElementById("selectCellSpecTypeDefaultDiv");
+				var elMinMax = document.getElementById("selectCellSpecTypeMinMaxDiv");
 
 				el.style.display = found?"block":"none";
+				if(cellSelectVal == "NUMBER")
+					elMinMax.style.display = found?"block":"none";
 			}
+			//show max and min if number is selected
+			// {
+			// 	// show min and max
+			// 	var elMinMax = document.getElementById("selectCellSpecTypeMinMaxDiv")
+			// 	if(cellSelectVal == "NUMBER"){
+			// 		elMinMax.style.display = "block";
+			// 	}
+			// 	else{
+			// 		elMinMax.style.display = "none";
+			// 	}
+			// }
 			
 			//show defaultValue BOOL or not
 			{
@@ -405,6 +457,8 @@
 	
 				el.style.display = found?"block":"none";
 			}
+
+
 		} //end handleTypeSelect
 
 		//==============================================================================
@@ -414,7 +468,7 @@
 			var sel = document.getElementById("loadFromConfigName");
 			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 			var tableName = sel.options[sel.selectedIndex].value;
-			
+			// do min and max need to be included here?
 			Debug.log("CfgTableEditor loadTable from " + tableName);
 
 			//load mockup for chosen table
@@ -436,10 +490,27 @@
 			
 			var data = "";
 			for(var i=0;i<_colHdrArr.length;++i)
-				data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
+				if(_colMinValueArr[i] != undefined && _colMaxValueArr[i] != undefined && (_colMaxValueArr[i] >= _colMinValueArr[i]))
+				{
+					data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
 					_colDataTypeArr[i] + "," + 
-					encodeURIComponent(_colDefaultValueArr[i].trim()) + ";";
-			
+					encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
+					encodeURIComponent(_colMinValueArr[i].trim()) + "," +
+					encodeURIComponent(_colMaxValueArr[i].trim()) + ";";
+				}
+				else if (_colMinValueArr[i] != undefined && _colMaxValueArr[i] != undefined && (_colMinValueArr[i] > _colMaxValueArr[i]))
+				{
+
+				}
+				else
+				{
+					data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
+					_colDataTypeArr[i] + "," + 
+					encodeURIComponent(_colDefaultValueArr[i].trim()) + ";"; 
+				}
+			// TODO add mins and max when exporting, maybe add an extra if to ensure that it will only happens when a number is located on the table? 
+			// added on the lines before with defaultvalue. 
+
 			//handle table description
 			var tableDescription = document.getElementById("table-description").value.trim();			
 			if(tableDescription.length)
@@ -469,7 +540,6 @@
 					colChoicesData += _colChoicesArr[i] + ";";
 				}
 			}
-			
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=saveTableInfo" +
 				"&tableName=" + tableName + 
@@ -558,10 +628,30 @@
 				_defaultArray[_STRING_TYPE][colTypes[1]],
 				_defaultArray[_STRING_TYPE][colTypes[2]],
 				_defaultArray[_DATE_TYPE][colTypes[3]]];
+				// included min and max values starting points, same as default. Originally they were empty
+			var colMinValues =
+				[ //colDefaultValues;
+					//	_defaultArray[_STRING_TYPE][colTypes[0]],
+					//_defaultArray[_STRING_TYPE][colTypes[1]],
+					//	_defaultArray[_STRING_TYPE][colTypes[2]],
+					//	_defaultArray[_DATE_TYPE][colTypes[3]]
+				]
+				;
+			var colMaxValues =
+				[ //colDefaultValues;
+					//	_defaultArray[_STRING_TYPE][colTypes[0]],
+					//_defaultArray[_STRING_TYPE][colTypes[1]],
+					//	_defaultArray[_STRING_TYPE][colTypes[2]],
+					//	_defaultArray[_DATE_TYPE][colTypes[3]]
+				]
+				;
 			var colHdrs = ["UID","CommentDescription","Author","RecordInsertionTime"];
 			var colChoices = ["","","",""];
-			setupTable("Empty Table Template",colHdrs,colTypes,colDataTypes,colDefaultValues,
-					colChoices,"No description.");
+
+			// this one does not show values of min and max yet, it always default them to some letters from no description, fix defaultarray. 
+
+			setupTable("Empty Table Template",colHdrs,colTypes,colDataTypes, colDefaultValues, 
+					colChoices, colMinValues, colMaxValues, "No description.");
 		} //end setupEmptyTable()
 
 		//==============================================================================
@@ -606,6 +696,10 @@
 			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
 			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
 			var colDefaultValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDefaultValue");
+			var colMinValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMinValue");
+			var colMaxValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMaxValue");
+			//	 min and max default values here as well? they are included already.
+
 			var colChoices = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnChoices");
 
 			var tableDescription = DesktopContent.getXMLValue(req,"TableDescription");
@@ -623,6 +717,18 @@
 			for(var i=0;i<colDefaultValues.length;++i)
 				colDefaultValuesArr.push(
 						colDefaultValues[i].getAttribute("value"));
+
+			// added minvaluesarr and maxvaluesarr
+			var colMinValuesArr = [];
+			for(var i=0;i<colMinValues.length;++i)
+				colMinValuesArr.push(
+						colMinValues[i].getAttribute("value"));
+
+			var colMaxValuesArr = [];
+			for(var i=0;i<colMaxValues.length;++i)
+				colMaxValuesArr.push(
+						colMaxValues[i].getAttribute("value"));						
+
 			var colChoicesArr = [];
 			for(var i=0;i<colChoices.length;++i)
 			{
@@ -652,13 +758,13 @@
 			
 			Debug.log("tableDescription = " + tableDescription);
 			setupTable(tableName,colHdrsArr,colTypesArr,colDataTypesArr,colDefaultValuesArr,
-					colChoicesArr,tableDescription);
+					colChoicesArr, colMinValuesArr, colMaxValuesArr, tableDescription);
 		} //end specificTableRequestHandler()
 
 		//==============================================================================
 		//setupTable ~
 		function setupTable(srcName,colHdrs,colTypes,colDataTypes,colDefaultValues,
-				colChoices,tableDescription)
+				colChoices, colMinValues, colMaxValues, tableDescription)
 		{
 			Debug.log("colChoices " + colChoices);
 			
@@ -684,7 +790,18 @@
 			if(!colDefaultValues)
 				colDefaultValues = _colDefaultValueArr;
 			else
-				_colDefaultValueArr = colDefaultValues;	
+				_colDefaultValueArr = colDefaultValues;
+			
+			// added colminvalues and colmaxvalues	
+			if(!colMinValues)
+				colMinValues = _colMinValueArr;
+			else
+				_colMinValueArr = colMinValues; 
+			if(!colMaxValues)
+				colMaxValues = _colMaxValueArr;
+			else
+				_colMaxValueArr = colMaxValues;
+
 			if(!colChoices)
 				colChoices = _colChoicesArr;
 			else
@@ -708,7 +825,6 @@
 			colHdrs[colHdrs.length-3] = "CommentDescription";
 			_colHdrArr[colHdrs.length-3] = "CommentDescription";
 			
-						
 			var str = "";
 			
 			str += "Starting point was loaded at " +
@@ -860,7 +976,8 @@
 				str += "<select id='newChoiceInput-" + c + "' " +							
 						">";
 				
-				//always include default first in selection list				
+				//always include default first in selection list
+				//shall be max and min included in these options??				
 				str += "<option>" +
 						"NO_LINK" +
 						"</option>";		
@@ -956,11 +1073,33 @@
 				str += "<div style='font-size:12px' title='";		
 				str += colTypes[c];
 				str += " &#60;" + colDataTypes[c] + "&#62;";
-				str += " [Default: " + colDefaultValues[c] + "]";
+				str += " [Default: " + colDefaultValues[c];
+				// added min and max in the same way as default values, making it only visible if it is a number type
+				
+				if (colDataTypes[c] == _NUMBER_TYPE) 
+				{
+					if (colMinValues[c] != undefined) {
+						str += "<br>Minimum: " + colMinValues[c];
+					}
+					if (colMaxValues[c] != undefined) {
+						str += ", Maximum: " + colMaxValues[c];
+					}
+				}
+				str += "]";
 				str += "'><label style='font-weight:bold;color:black;font-size:12px;'>";
 				str += colTypes[c];
 				str += "</label><br>&#60;" + colDataTypes[c] + "&#62;";
-				str += "<br>[Default: " + colDefaultValues[c] + "]";
+				str += "<br>[Default: " + colDefaultValues[c];
+				if (colDataTypes[c] == _NUMBER_TYPE) 
+				{
+					if(colMinValues[c] != undefined){
+						str += "<br>Minimum: "+colMinValues[c];
+					}
+					if(colMaxValues[c] != undefined){
+						str += ", Maximum: "+colMaxValues[c];
+					}
+				}
+				str += "]";
 				str += "</div>";
 				str += "</td>";	
 			}
@@ -1317,7 +1456,7 @@
 						">";
 
 				str += "<div id='clearDiv'></div>";				
-				str += "<select onkeydown='keyHandler(event)'  id='selectCellDataTypeSelect'>";
+				str += "<select onkeydown='keyHandler(event)'  id='selectCellDataTypeSelect' onchange='handleTypeSelect()'>";
 				for(var i=0;i<_dataTypeArray.length;++i)
 				{			
 					str += "<option value='" + _dataTypeArray[i] + "'>";
@@ -1336,6 +1475,14 @@
 				var encodedDefaultValue;
 				if(_colDefaultValueArr[c] !== undefined)
 					encodedDefaultValue = encodeHTML(_colDefaultValueArr[c]);
+
+				// new additions min and max, check if they work, no error founds yet
+
+				else if(_colDefaultMinArr[c]!== undefined)
+					encodedMinValue = encodeHTML(_colDefaultValueArr[c]);
+				else if(_colDefaultMaxArr[c]!== undefined)
+					encodedMaxValue = encodeHTML(_colDefaultValueArr[c]);
+
 				else if(dataTypeOptionIndex != -1) //encodeHTML(decodeURIComponent(
 					encodedDefaultValue = encodeHTML(_defaultArray[_dataTypeArray[dataTypeOptionIndex]][colType]);
 								
@@ -1350,6 +1497,41 @@
 						">";
 				str += "</div>";
 				
+				str += "<div id='clearDiv'></div>";	
+				str += "<div id='selectCellSpecTypeMinMaxDiv' style='display:none; float:left;'>";
+				str += "Minimum: ";
+				
+				// render min value
+				var encodedMinValue = "";
+				if(_colMinValueArr[c] !== undefined)
+					encodedMinValue = encodeHTML(_colMinValueArr[c]);
+				str += "<input type='text' id='selectCellSpecTypeMinInput' onkeydown='keyHandler(event)' " +
+					"style='width:" + 
+					(100 > (el.offsetWidth-8-160 /*160=width of type-dropdown*/)?100: //min of 100
+							(el.offsetWidth-8-160 /*160=width of type-dropdown*/)) +
+						"px; height: 13px; font-size: 14px;' value='" + 
+						encodedMinValue;
+				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
+						">";
+
+				str += "Maximum: ";
+				var encodedMaxValue = "";
+				if(_colMaxValueArr[c] !== undefined)
+					encodedMaxValue = encodeHTML(_colMaxValueArr[c]);
+
+				//  render max value
+				str += "<input type='text' id='selectCellSpecTypeMaxInput' onkeydown='keyHandler(event)' " +
+					"style='width:" + 
+					(100 > (el.offsetWidth-8-160 /*160=width of type-dropdown*/)?100: //min of 100
+							(el.offsetWidth-8-160 /*160=width of type-dropdown*/)) +
+						"px; height: 13px; font-size: 14px;' value='" + 
+						encodedMaxValue;
+				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
+						">";
+				str += "</div>";
+
 				//show defaultValue BOOL but not by default
 				str += "<div id='selectCellSpecTypeDefaultBoolDiv' style='display:none; float:left;'>";
 				str += "Default: ";
@@ -1620,6 +1802,7 @@
 							del = document.getElementById("selectCellSpecTypeDefaultInput");
 							Debug.log("Getting default value",del.value);
 							_colDefaultValueArr[c] = del.value;
+							// should min and max be included here???
 						}
 						del = document.getElementById("selectCellSpecTypeDefaultBoolDiv");
 						if(del.style.display != "none")
@@ -1627,6 +1810,18 @@
 							del = document.getElementById("selectCellSpecTypeDefaultSelect");
 							Debug.log("Getting default bool value",del.value);
 							_colDefaultValueArr[c] = del.value;
+						}
+
+						//min and max set on log and definition of values for arrays colmaxvalue and colminvalue
+						del = document.getElementById("selectCellSpecTypeMinMaxDiv");
+						if(del.style.display != "none")
+						{
+							del = document.getElementById("selectCellSpecTypeMinInput");
+							Debug.log("Getting min value",del.value);
+							_colMinValueArr[c] = del.value;
+							del = document.getElementById("selectCellSpecTypeMaxInput");
+							Debug.log("Getting max value",del.value);
+							_colMaxValueArr[c] = del.value;
 						}
 					}
 										
@@ -1760,9 +1955,17 @@
 			_colDataTypeArr.splice(c,0, _STRING_TYPE);
 			_colDefaultValueArr.splice(c,0, encodeHTML(decodeURIComponent(
 					_defaultArray[_colDataTypeArr[c]][_colTypeArr[c]])));
+					
+			_colMinValueArr.splice(c,0, encodeHTML(decodeURIComponent(
+					_minArray[_colDataTypeArr[c]][_colTypeArr[c]])));
+
+			_colMaxValueArr.splice(c,0, encodeHTML(decodeURIComponent(
+					_maxArray[_colDataTypeArr[c]][_colTypeArr[c]])));
+
 			_colChoicesArr.splice(c,0,"");
 			
-			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colDefaultValueArr,_colChoicesArr);
+			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colDefaultValueArr, 
+			_colChoicesArr, _colMinValueArr, _colMaxValueArr, null);
 		}
 
 		//==============================================================================
@@ -1777,9 +1980,14 @@
 			_colTypeArr.splice(c,1);
 			_colDataTypeArr.splice(c,1);
 			_colDefaultValueArr.splice(c,1);
+			
+			_colMinValueArr.splice(c,1);
+			_colMaxValueArr.splice(c,1);
+			
 			_colChoicesArr.splice(c,1);
 			
-			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colDefaultValueArr,_colChoicesArr);
+			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colDefaultValueArr, 
+			_colChoicesArr, _colMinValueArr, _colMaxValueArr, null);
 		}
 
 		//==============================================================================
@@ -1926,6 +2134,11 @@
 				_colTypeArr.splice(dest,0,_colTypeArr[src + i]);
 				_colDataTypeArr.splice(dest,0,_colDataTypeArr[src + i]);
 				_colDefaultValueArr.splice(dest,0,_colDefaultValueArr[src + i]);
+				
+				_colMinValueArr.splice(dest,0,_colMinValueArr[src + i]);
+				_colMaxValueArr.splice(dest,0,_colMaxValueArr[src + i]);
+				
+				
 				_colChoicesArr.splice(dest,0,_colChoicesArr[src + i]);
 				
 				if(dest < src)
@@ -1941,10 +2154,17 @@
 					_colTypeArr.splice(deleteField,1);
 					_colDataTypeArr.splice(deleteField,1);
 					_colDefaultValueArr.splice(deleteField,1);
+
+					_colMinValueArr.splice(deleteField,1);
+					_colMaxValueArr.splice(deleteField,1);
+
+
 					_colChoicesArr.splice(deleteField,1);
 				}	// end delete field loop
 				
-			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colDefaultValueArr,_colChoicesArr);
+			setupTable(0, _colHdrArr,_colTypeArr,_colDataTypeArr,_colDefaultValueArr,
+			_colChoicesArr, _colMinValueArr, _colMaxValueArr, 
+			null);
 						
 		} //end tableCopyOrMoveRow()
 

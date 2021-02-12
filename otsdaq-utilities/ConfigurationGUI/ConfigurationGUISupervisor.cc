@@ -387,7 +387,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		    TableViewColumnInfo::getAllDataTypesForGUI();
 		std::map<std::pair<std::string, std::string>, std::string> allDefaults =
 		    TableViewColumnInfo::getAllDefaultsForGUI();
-
+		// TODO maybe here a new function will be needed to get allminmaxforGUI 
 		for(const auto& type : allTypes)
 			xmlOut.addTextElementToData("columnTypeForGUI", type);
 		for(const auto& dataType : allDataTypes)
@@ -400,6 +400,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			                            colDefault.first.second);
 			xmlOut.addTextElementToData("columnDefaultValue", colDefault.second);
 		}
+		//TODO add min and max responses.
 	}
 	else if(requestType == "getGroupAliases")
 	{
@@ -2771,7 +2772,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 			xmlOut.addTextElementToParent("FieldColumnDefaultValue",
 			                              fieldInfo.columnInfo_->getDefaultValue(),
 			                              parentEl);
-
+			// again, should min and max be included here?
 			parentTypeEl =
 			    xmlOut.addTextElementToParent("FieldColumnDataChoices", "", parentEl);
 
@@ -5022,6 +5023,8 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		xmlOut.addTextElementToParent(
 		    "ColumnDefaultValue", colInfo[i].getDefaultValue(), parentEl);
 
+			//TODO should min and max be added here?
+
 		choicesParentEl = xmlOut.addTextElementToParent("ColumnChoices", "", parentEl);
 		// add data choices if necessary
 		if(colInfo[i].getType() == TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
@@ -5031,6 +5034,11 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 			for(auto& choice : colInfo[i].getDataChoices())
 				xmlOut.addTextElementToParent("ColumnChoice", choice, choicesParentEl);
 		}
+
+		xmlOut.addTextElementToParent(
+		    "ColumnMinValue", colInfo[i].getMinValue(), parentEl);
+		xmlOut.addTextElementToParent(
+		    "ColumnMaxValue", colInfo[i].getMaxValue(), parentEl);
 	}
 
 	// verify mockup columns after columns are posted to xmlOut
@@ -5349,80 +5357,179 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 	      << "\" Type=\"File,Database,DatabaseTest\" Description=\"" << tableDescription
 	      << "\">\n";
 
-	// each column is represented by 4 fields
-	//	- type, name, dataType, defaultValue
+	// each column is represented by 4 fields or 6 
+	//	- type, name, dataType, defaultValue, minValue, maxValue
 
-	int i = 0;                  // use to parse data std::string
-	int j = data.find(',', i);  // find next field delimiter
-	int k = data.find(';', i);  // find next col delimiter
+	// int i = 0;                  // use to parse data std::string
+	// int j = data.find(',', i);  // find next field delimiter
+	// int k = data.find(';', i);  // find next col delimiter
 
 	std::istringstream columnChoicesISS(columnChoicesCSV);
 	std::string        columnChoicesString;
-	std::string        columnType, columnDataType, columnDefaultValue;
+	std::string        columnType, columnDataType, columnDefaultValue, columnMinValue, columnMaxValue;
+	std::vector<std::string> columnParameters;
+	std::vector<std::string> columnData = StringMacros::getVectorFromString(data,{';'} /*delimiter*/);
 
-	while(k != (int)(std::string::npos))
+	for(unsigned int c=0; c < columnData.size() -1; ++ c)
 	{
-		// type
-		columnType = data.substr(i, j - i);
+		columnParameters =
+		    StringMacros::getVectorFromString(columnData[c], {','} /*delimiter*/);
+		__COUT__ << "Column #" << c << ": "
+		         << StringMacros::vectorToString(columnParameters) << __E__;
+		for(unsigned int p = 0; p < columnParameters.size(); ++p)
+		{
+			__COUT__ << "\t Parameter #" << p << ": " << columnParameters[p] << __E__;
+		}
+		__COUT__ << "\t creating the new xml" << __E__;
 		outss << "\t\t\t\t<COLUMN Type=\"";
-		outss << columnType;
-
-		i = j + 1;
-		j = data.find(',', i);  // find next field delimiter
-
-		// name and storage name
+		outss << columnParameters[0];
 		outss << "\" \t Name=\"";
-		capsName = data.substr(i, j - i);  // not caps yet
-		outss << capsName;
+	 	outss << columnParameters[1];
 		outss << "\" \t StorageName=\"";
-
 		try
 		{
-			outss << TableBase::convertToCaps(capsName);  // now caps
+			outss << TableBase::convertToCaps(columnParameters[1]);  // now caps
 		}
 		catch(std::runtime_error& e)
 		{  // error! non-alpha
-			xmlOut.addTextElementToData("Error",
-			                            std::string("For column name '") +
-			                                data.substr(i, j - i) + "' - " + e.what());
+			xmlOut.addTextElementToData("Error", std::string("For column name '") +
+			                                columnParameters[1] + "' - " + e.what());
 			return;
 		}
-
-		i = j + 1;
-		j = data.find(',', i);  // find next field delimiter
-		columnDataType = data.substr(i, j - i);
-
-		// data type
 		outss << "\" \t	DataType=\"";
-		outss << columnDataType;
-
-		i = j + 1;
-		j = data.find(',', i);  // find next field delimiter
-		columnDefaultValue = data.substr(i, k - i);
-
-		// default value (Note: check by decoding URI because..
-		//	which characters are encoded is not exact match to browser)
-		if(StringMacros::decodeURIComponent(columnDefaultValue) !=
-				TableViewColumnInfo::getDefaultDefaultValue(columnType,columnDataType))
+		outss << columnParameters[2];
+		if(StringMacros::decodeURIComponent(columnParameters[3]) !=
+				TableViewColumnInfo::getDefaultDefaultValue(columnParameters[0],columnParameters[2]))
 		{
-			__SUP_COUT__ << "FOUND user spec'd default value = " << columnDefaultValue << __E__;
+			__SUP_COUT__ << "FOUND user spec'd default value = " << columnParameters[3] << __E__;
 			outss << "\" \t	DefaultValue=\"";
-			outss << columnDefaultValue;
+			outss << columnParameters[3];
 		}
-
-		// fixed data choices for TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA
 		getline(columnChoicesISS, columnChoicesString, ';');
 		//__SUP_COUT__ << "columnChoicesString = " << columnChoicesString << __E__;
 		outss << "\" \t	DataChoices=\"";
 		outss << columnChoicesString;
 
-		// end column info
+// it will only include min and max if size of parameters includes both values.
+		if (columnParameters.size() > 4)
+		{
+			if(StringMacros::decodeURIComponent(columnParameters[4]) !=
+				TableViewColumnInfo::getMinDefaultValue(columnParameters[2]))
+			{
+				__SUP_COUT__ << "FOUND user spec'd min default value = " << columnParameters[4] << __E__;
+				outss << "\" \t	MinValue=\"";
+				outss << columnParameters[4];
+			}
+			if(StringMacros::decodeURIComponent(columnParameters[5]) !=
+				TableViewColumnInfo::getMaxDefaultValue(columnParameters[2]))
+			{
+				__SUP_COUT__ << "FOUND user spec'd max default value = " << columnParameters[5] << __E__;
+				outss << "\" \t	MaxValue=\"";
+				outss << columnParameters[5];
+			}
+		}
 		outss << "\"/>\n";
-
-		i = k + 1;
-		j = data.find(',', i);  // find next field delimiter
-		k = data.find(';', i);  // find new col delimiter
 	}
+
+//gets number of parameters and its values, outss is the xml on the output that should be modified.
+
+
+	// while(k != (int)(std::string::npos))
+	// {
+	// 	// type
+	// 	columnType = data.substr(i, j - i);
+	// 	outss << "\t\t\t\t<COLUMN Type=\"";
+	// 	outss << columnType;
+
+	// 	i = j + 1;
+	// 	j = data.find(',', i);  // find next field delimiter
+
+	// 	// name and storage name
+	// 	outss << "\" \t Name=\"";
+	// 	capsName = data.substr(i, j - i);  // not caps yet
+	// 	outss << capsName;
+	// 	outss << "\" \t StorageName=\"";
+
+	// 	try
+	// 	{
+	// 		outss << TableBase::convertToCaps(capsName);  // now caps
+	// 	}
+	// 	catch(std::runtime_error& e)
+	// 	{  // error! non-alpha
+	// 		xmlOut.addTextElementToData("Error",
+	// 		                            std::string("For column name '") +
+	// 		                                data.substr(i, j - i) + "' - " + e.what());
+	// 		return;
+	// 	}
+
+	// 	i = j + 1;
+	// 	j = data.find(',', i);  // find next field delimiter
+	// 	columnDataType = data.substr(i, j - i);
+
+	// 	// data type
+	// 	outss << "\" \t	DataType=\"";
+	// 	outss << columnDataType;
+
+	// 	i = j + 1;
+	// 	j = data.find(',', i);  // find next field delimiter
+	// 	columnDefaultValue = data.substr(i, k - i);
+
+	// 	// default value (Note: check by decoding URI because..
+	// 	//	which characters are encoded is not exact match to browser)
+	// 	if(StringMacros::decodeURIComponent(columnDefaultValue) !=
+	// 			TableViewColumnInfo::getDefaultDefaultValue(columnType,columnDataType))
+	// 	{
+	// 		__SUP_COUT__ << "FOUND user spec'd default value = " << columnDefaultValue << __E__;
+	// 		outss << "\" \t	DefaultValue=\"";
+	// 		outss << columnDefaultValue;
+	// 	}
+
+	// 	// fixed data choices for TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA
+	// 	getline(columnChoicesISS, columnChoicesString, ';');
+	// 	//__SUP_COUT__ << "columnChoicesString = " << columnChoicesString << __E__;
+	// 	outss << "\" \t	DataChoices=\"";
+	// 	outss << columnChoicesString;
+
+	// 	//including min and max here if they are available, max is taken from the end of the column delimiter minus the last position before the field delimiter
+		
+	// 	//It only works with both min and max, if none are given then they should be set otherwise the program crashes.
+	// 	__COUT__ << "\t value of k " << k  << "value of j " << j << __E__;
+	// 	// if (k != j)
+	// 	// {
+
+	// 	// 	i = j + 1;
+	// 	// 	j = data.find(',', i);  // find next field delimiter
+	// 	// 	columnMinValue = data.substr(i, j - i);
+			
+	// 	// 	if(StringMacros::decodeURIComponent(columnMinValue) !=
+	// 	// 		TableViewColumnInfo::getMinValue(columnDataType))
+	// 	// 	{
+	// 	// 		__SUP_COUT__ << "FOUND user spec'd min value = " << columnMinValue << __E__;
+	// 	// 		outss << "\" \t	MinValue=\"";
+	// 	// 		outss << columnMinValue;
+	// 	// 	}
+
+	// 	// 	i = j + 1;
+	// 	// 	j = data.find(',', i);
+	// 	// 	columnMaxValue = data.substr(i, k - i);
+	// 	// 	if(StringMacros::decodeURIComponent(columnMaxValue) !=
+	// 	// 		TableViewColumnInfo::getMinValue(columnDataType))
+	// 	// 	{
+	// 	// 		__SUP_COUT__ << "FOUND user spec'd max value = " << columnMaxValue << __E__;
+	// 	// 		outss << "\" \t	MaxValue=\"";
+	// 	// 		outss << columnMaxValue;
+	// 	// 	}
+
+	// 	// }
+
+	// 	// end column info
+	// 	outss << "\"/>\n";
+
+	// 	i = k + 1;
+	// 	j = data.find(',', i);  // find next field delimiter
+	// 	k = data.find(';', i);  // find new col delimiter
+
+	// }
 
 	outss << "\t\t\t</VIEW>\n";
 	outss << "\t\t</TABLE>\n";

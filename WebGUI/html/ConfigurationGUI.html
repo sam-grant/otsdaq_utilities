@@ -2471,6 +2471,8 @@
 			var colTypeEls = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
 			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
 			var colChoices = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnChoices");
+			var colMinValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMinValue");
+			var colMaxValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMaxValue");
 
 			//fill fixed choice structure
 			_tableFixedChoiceData = {};
@@ -2728,7 +2730,8 @@
 					for (var c = 0; c < colHdrs.length; ++c) {
 						colType = colTypeEls[c].getAttribute("value");
 						colDataType = colDataTypes[c].getAttribute("value");
-
+						colMinValue = colMinValues[c].getAttribute("value");
+						colMaxValue = colMaxValues[c].getAttribute("value");
 
 						typeDivStr = "";
 						typeDivStr += "<div style='font-size:12px' title='";
@@ -2736,7 +2739,14 @@
 						typeDivStr += " &#60;" + colDataType + "&#62;";
 						typeDivStr += "'>";
 						typeDivStr += colType;
-						typeDivStr += "<br>&#60;" + colDataType + "&#62;";
+						typeDivStr += "<br>&#60;" + colDataType + "&#62;"
+						if (colDataType == "NUMBER") 
+						{
+							if (colMinValues[c] != undefined && colMaxValues[c] != undefined && colMinValue!=colMaxValue) {
+								typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue + "<br>MAX VALUE ALLOWED: " + colMaxValue
+							}
+						}
+
 						typeDivStr += "</div>";
 
 						cols[cols.length - 1].push(typeDivStr);
@@ -8308,6 +8318,7 @@
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 					"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
 					">";
+
 			}
 
 			localFinishUpSelectCell();
