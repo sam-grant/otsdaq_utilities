@@ -25,7 +25,7 @@ Desktop.init = function(security) {
 	
 	Desktop.desktop = Desktop.createDesktop(security);
 	if(Desktop.desktop)
-		Debug.log("Desktop.desktop Initalized Successfully",Debug.LOW_PRIORITY);
+		Debug.log("Desktop.desktop Initalized Successfully");
 	
 	// Enable navigation prompt 
 	//	(to prevent accidental/back/forward/nav leaving the page)
@@ -263,9 +263,9 @@ Desktop.createDesktop = function(security) {
 		win.windiv.parentNode.removeChild(win.windiv); //remove from page!
 		
 		//delete top window from windows array
-		//		Debug.log("Desktop Window closed z:" + _windows[_windows.length-1].getWindowZ(),Debug.LOW_PRIORITY);
+		//		Debug.log("Desktop Window closed z:" + _windows[_windows.length-1].getWindowZ());
 		_windows.splice(_windows.length-1,1);
-		//		Debug.log("Desktop Windows left:" + _windows.length,Debug.LOW_PRIORITY);
+		//		Debug.log("Desktop Windows left:" + _windows.length);
         
         _dashboard.updateWindows();
     } //end _closeWindow()
@@ -462,7 +462,7 @@ Desktop.createDesktop = function(security) {
 //		{
 //			Desktop.desktop.setForeWindow(); //should pass undefined window.. to just relabel Z depth
 //			//Desktop.desktop.getForeWindow()			
-//			Debug.log("Desktop Foreground Window Refreshed by _checkMailboxes Timeout",Debug.LOW_PRIORITY);
+//			Debug.log("Desktop Foreground Window Refreshed by _checkMailboxes Timeout");
 //		}
 	    
 //	    //check need for login mailbox
@@ -489,14 +489,14 @@ Desktop.createDesktop = function(security) {
 	    { 
 	    	//this mailbox defines read/write actions between settings dialog and desktop
 	    	
-			//Debug.log("Desktop Settings update " + _updateSettingsMailbox.innerHTML ,Debug.LOW_PRIORITY);
+			//Debug.log("Desktop Settings update " + _updateSettingsMailbox.innerHTML );
 			
 			if(_updateSettingsMailbox.innerHTML == "LAYOUT") //settings is reading from desktop
 			{
 				//return current window layout in mailbox with parameters separated by commas
 				var layout = _getWindowLayoutStr();
 				_settingsLayoutMailbox.innerHTML = layout;
-				Debug.log("Desktop _updateSettingsMailbox " + layout,Debug.LOW_PRIORITY);
+				Debug.log("Desktop _updateSettingsMailbox " + layout);
 			}
 			else //settings is writing to destkop
 			{			
@@ -532,7 +532,7 @@ Desktop.createDesktop = function(security) {
 	//	handles request returns periodically (ever _SYS_MSG_MAX_COUNT times through _checkMailboxes)
 	var _handleSystemMessages = function(req) 
 	{
-		//Debug.log("Desktop _handleSystemMessages " + req.responseText,Debug.LOW_PRIORITY);
+		//Debug.log("Desktop _handleSystemMessages " + req.responseText);
 		
 		_sysMsgCounter = 0; //reset system message counter to setup next request
 
@@ -567,7 +567,7 @@ Desktop.createDesktop = function(security) {
 	    
 	    Debug.log("Desktop _handleSystemMessages ========================== " + Desktop.formatTime(msgArr[0]) +
 				" - " + msgArr[1]
-				,Debug.LOW_PRIORITY);
+				);
 				
 		++_sysMsgId; //increment to new ID
 		var sysMsgEl = document.createElement("div");
@@ -644,22 +644,22 @@ Desktop.createDesktop = function(security) {
 	//  returns new window
 	this.addWindow = function(name,subname,url,unique,extraStep) 
 	{		
-		Debug.log(name + " - " + subname + " - " + url + " - " + unique,Debug.LOW_PRIORITY);
+		Debug.log(name + " - " + subname + " - " + url + " - " + unique);
 		
 		if(unique == 2) //open as stand-alone new tab page
 		{
-			Debug.log("Opening stand-alone new tab",Debug.LOW_PRIORITY);
+			Debug.log("Opening stand-alone new tab");
 			window.open(url,'_blank');	
 			return;			
 		}
 		
 		if(unique) 
 		{
-			Debug.log("Adding window uniquely",Debug.LOW_PRIORITY);
+			Debug.log("Adding window uniquely");
 			for(var i=0;i<_windows.length;++i)
 				if(_windows[i].getWindowName() == name && _windows[i].getWindowSubName() == subname) 
 				{
-					Debug.log("Window creation failed. Not unique.",Debug.LOW_PRIORITY);
+					Debug.log("Window creation failed. Not unique.");
 					if(_windows[i].isMinimized())
 					{
 						Debug.log(_windows[i].getWindowSubName() + "was minimized but will now be restored!");
@@ -716,7 +716,7 @@ Desktop.createDesktop = function(security) {
         
 	   	_desktopElement.appendChild(newWin.windiv); //add to desktop element and show on screen!
 	   	
-		Debug.log("Desktop Window Added with id " + _windows[_windows.length-1].getWindowId(),Debug.LOW_PRIORITY);
+		Debug.log("Desktop Window Added with id " + _windows[_windows.length-1].getWindowId());
         
         _dashboard.updateWindows();
         
@@ -800,8 +800,8 @@ Desktop.createDesktop = function(security) {
 		
 		_dashboard.updateWindows();
 		
-		//if(win) Debug.log("Desktop Window Set to Foreground named " + win.getWindowSubName(),Debug.LOW_PRIORITY);
-		//else  Debug.log("Desktop Foreground Window with no parameter",Debug.LOW_PRIORITY);
+		//if(win) Debug.log("Desktop Window Set to Foreground named " + win.getWindowSubName());
+		//else  Debug.log("Desktop Foreground Window with no parameter");
 	} //end setForeWindow()
 
 	//==============================================================================
@@ -838,7 +838,7 @@ Desktop.createDesktop = function(security) {
         
         //_dashboard.redrawFullScreenButton();
         //_dashboard.redrawRefreshButton();
-        Debug.log("Full Screen Toggled",Debug.LOW_PRIORITY);
+        Debug.log("Full Screen Toggled");
     } //end toggleFullScreen()
 
 	//==============================================================================
@@ -966,7 +966,7 @@ Desktop.createDesktop = function(security) {
         	_getForeWindow().unminimize();
         else
         	_getForeWindow().minimize();
-        Debug.log("Minimize Toggled",Debug.LOW_PRIORITY);
+        Debug.log("Minimize Toggled");
         //_dashboard.updateWindows();
 
     } //end toggleMinimize()
@@ -1005,7 +1005,7 @@ Desktop.createDesktop = function(security) {
 		//	3-5 are user defaults
 		//	6 is last saved layout checkpoint 
 	this.defaultLayoutSelect = function(i) {
-		Debug.log("Desktop defaultLayoutSelect " + i,Debug.LOW_PRIORITY);
+		Debug.log("Desktop defaultLayoutSelect " + i);
 			
 		var layoutStr;
 		var numOfUserLayouts = 5;
@@ -1051,7 +1051,7 @@ Desktop.createDesktop = function(security) {
 		var dy = Desktop.desktop.getDesktopContentY();
 		for(i=0;i<numOfWins;++i) 
 		{		
-			Debug.log("adding " + layoutArr[i*numOfFields].substr(1) + "-" + layoutArr[i*numOfFields+1],Debug.LOW_PRIORITY);	
+			Debug.log("adding " + layoutArr[i*numOfFields].substr(1) + "-" + layoutArr[i*numOfFields+1]);	
 			this.addWindow(	//(name,subname,url,unique)
 				decodeURIComponent(layoutArr[i*numOfFields]), 
 				decodeURIComponent(layoutArr[i*numOfFields+1]),
@@ -1075,7 +1075,7 @@ Desktop.createDesktop = function(security) {
  	// close all windows is used when default layout is changed or a new user logs in
 	this.closeAllWindows = function() 
 	{ 
-		Debug.log("Desktop closeAllWindows",Debug.LOW_PRIORITY);	
+		Debug.log("Desktop closeAllWindows");	
 		//clear all current windows
 		while(_windows.length) _closeWindow(_windows[_windows.length-1]);
 	} //end closeAllWindows()
@@ -1614,9 +1614,9 @@ Desktop.createDesktop = function(security) {
 	if(_login.loginDiv)
 		_desktopElement.appendChild(_login.loginDiv); //add to desktop element for login to display things
     
-	Debug.log("Desktop Created",Debug.LOW_PRIORITY);	
+	Debug.log("Desktop Created");	
 
-	Debug.log("Checking for any shortcut work from get parameters...",Debug.LOW_PRIORITY);
+	Debug.log("Checking for any shortcut work from get parameters...");
 	Desktop.desktop.actOnParameterAction();  //first time, _firstCheckOfMailboxes is true (then it will try again in checkMailboxes)   
 } //end Desktop constructor
 
@@ -1751,7 +1751,7 @@ Desktop.handleWindowMouseDown = function(mouseEvent)
 		//Debug.log("Move/Resize Mode: " + Desktop.winManipMode);
 	}
 	
-	//if(!isDashboard) Debug.log("Mouse Down WinId:" + win.getWindowId() + " - " + this.style.cursor,Debug.LOW_PRIORITY);
+	//if(!isDashboard) Debug.log("Mouse Down WinId:" + win.getWindowId() + " - " + this.style.cursor);
 			
 	return false; //to disable drag and drops
 } //end handleWindowMouseDown()
@@ -2466,7 +2466,7 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex)
 					//return;
 				}
 					
-		        //Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
+		        //Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML);
 			}
 			else 
 			{

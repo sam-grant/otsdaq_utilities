@@ -54,7 +54,36 @@ else {
 				
 		var _name;
 		var _subname;
-		var _url = url;	
+
+		var _url;
+		function _urlHandler()
+		{
+			Debug.log("Handling window url",url);	
+
+			//find port colon
+			var hostColonIndex = window.location.href.indexOf(':');
+			if(hostColonIndex < 5) //from http: or https:, then look again
+				hostColonIndex = window.location.href.indexOf(':',hostColonIndex+1);
+			if(hostColonIndex < 0) return url;
+			if(url.indexOf("http://") != 0) return url;
+			var urlColonIndex = url.indexOf(':',7); //7 because look after http://
+			if(urlColonIndex < 0) return url;
+
+			var gatewayURL = window.location.href.substr(0, hostColonIndex);
+			Debug.log("Handling window url",url,gatewayURL);
+			if(gatewayURL == "localhost" || 
+			gatewayURL == "http://localhost" || 
+			gatewayURL.indexOf("https://") == 0)
+			{
+				_url = gatewayURL + url.substr(urlColonIndex);
+				Debug.log("Manipulating address based on gateway url from",
+					url,"to",_url);				
+			}
+			else
+				_url = url;	
+		} //end url handling
+		_urlHandler(); //call url handler
+		
 		var _id = id; //unique window id, cannot change! Used as link between html div container and object
 
 		var _winhdr,_winfrm,_winfrmHolder;
@@ -87,9 +116,9 @@ else {
 		} //end _refreshHeader()
 		
 		//==============================================================================
-		var _handleWindowContentLoading = function() {
+		var _handleWindowContentLoading = function(e) {
 			
-			Debug.log("Server desktop sending first message to window: " + _id);
+			Debug.log("Server desktop sending first message to window: ",_id,e);
 			
 			//remove the "Loading" once iframe loades
 			if(_winfrmHolder.childNodes.length > 1) 
@@ -161,7 +190,7 @@ else {
 		{
 			_name = name; _subname = subname;
 			_refreshHeader();			
-			Debug.log("Desktop Window name=" + name + " and subname=" + subname,Debug.LOW_PRIORITY);
+			Debug.log("Desktop Window name=" + name + " and subname=" + subname);
 		} //end setWindowNameAndSubName()
 		
 		//==============================================================================
@@ -200,7 +229,7 @@ else {
 			_winfrmHolder.style.height = (_h-_defaultHeaderHeight-_defaultFrameBorder-2)+"px"; 	//extra 2 for border pixels	
 			
             //Debug.log("Desktop Window position to " + _x + "," +
-            //           _y + " size to " + _w + "," + _h,Debug.LOW_PRIORITY);
+            //           _y + " size to " + _w + "," + _h);
 					
             if(_isMaximized){ //keep proper dimensions
                 _winfrm.style.position = "absolute";
@@ -259,7 +288,7 @@ else {
 		   	this.windiv.style.top = _y+"px";    
 		   	
 			//Debug.log("Desktop Window position to " + _x + "," +
-			//	_y ,Debug.LOW_PRIORITY);
+			//	_y );
 		   	
 		   	//reset current layout update timer if a window moves
 		   	Desktop.desktop.login.resetCurrentLayoutUpdateTimer();
@@ -338,7 +367,7 @@ else {
 		    this.windiv.style.display = "inline";
 		    Debug.log(_name,"this.windiv.style.display now is " + this.windiv.style.display);
 		} //end unminimize()
-                
+
 		//------------------------------------------------------------------
 		//handle class construction ----------------------
 		//------------------------------------------------------------------
@@ -500,6 +529,7 @@ else {
 		_winfrm.setAttribute("name", "DesktopWindowFrame-" + _id);
 		_winfrm.setAttribute("allow", "autoplay"); //allow sounds without user clicking page first
 		_winfrm.onload = _handleWindowContentLoading; //event to delete "Loading"
+		_winfrm.onerror = _handleWindowContentLoading; //event to delete "Loading"
 		_winfrm.setAttribute("src", _url);
 		_winfrmHolder.appendChild(_winfrm); //add frame to holder	 
 		this.windiv.appendChild(_winfrmHolder); //add holder to window  
@@ -518,7 +548,7 @@ else {
 	   	this.windiv.addEventListener('touchmove',Desktop.handleTouchMove);
 	   	   	
 	   		   	
-		Debug.log("Desktop Window Created",Debug.LOW_PRIORITY);
+		Debug.log("Desktop Window Created");
 	
-	}
-}
+	} //end createWindow "constructor"
+} //end DesktopWindow definition scope
