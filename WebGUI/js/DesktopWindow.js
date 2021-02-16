@@ -58,16 +58,17 @@ else {
 		var _url;
 		function _urlHandler()
 		{
+			_url = url; //default to full copy
 			Debug.log("Handling window url",url);	
 
 			//find port colon
 			var hostColonIndex = window.location.href.indexOf(':');
 			if(hostColonIndex < 5) //from http: or https:, then look again
 				hostColonIndex = window.location.href.indexOf(':',hostColonIndex+1);
-			if(hostColonIndex < 0) return url;
-			if(url.indexOf("http://") != 0) return url;
+			if(hostColonIndex < 0) return;
+			if(url.indexOf("http://") != 0) return;
 			var urlColonIndex = url.indexOf(':',7); //7 because look after http://
-			if(urlColonIndex < 0) return url;
+			if(urlColonIndex < 0) return;
 
 			var gatewayURL = window.location.href.substr(0, hostColonIndex);
 			Debug.log("Handling window url",url,gatewayURL);
