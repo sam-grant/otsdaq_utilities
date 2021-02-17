@@ -952,9 +952,9 @@
 							_currState = i;
 							redrawPhysics();
 
-							//update run number
-							document.getElementById("run-number").innerHTML = DesktopContent.getXMLValue(req,"run_number");
 						}
+						//update run number
+						document.getElementById("run-number").innerHTML = DesktopContent.getXMLValue(req,"run_number");
                 		
                 		window.clearTimeout(_verifyStateTimeout);
 						_verifyStateTimeout = window.setTimeout(getCurrentState,_VERIFY_STATE_PERIOD); //verify current state every 10 seconds (and resync time elapse)
