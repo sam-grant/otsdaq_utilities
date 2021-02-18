@@ -89,14 +89,14 @@ void ConsoleSupervisor::destroy(void)
 //	Note: Uses std::mutex to avoid conflict with reading thread.
 void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) try
 {
-	__COUT__ << std::endl;
+	__COUT__ << "Starting workloop" << __E__;
 
 	std::string configFile = QUIET_CFG_FILE;
 	FILE*       fp         = fopen(configFile.c_str(), "r");
 	if(!fp)
 	{
 		__SS__ << "File with port info could not be loaded: " << QUIET_CFG_FILE
-		       << std::endl;
+		       << __E__;
 		__COUT__ << "\n" << ss.str();
 		__SS_THROW__;
 	}
@@ -132,14 +132,14 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			          "instances of otsdaq processes, or notify admins."
 			       << " Multiple instances of otsdaq on the same node should be "
 			          "possible, but port numbers must be unique."
-			       << std::endl;
+			       << __E__;
 			__SS_THROW__;
 		}
 
 		// generate special message to indicate failed socket
 		__SS__ << "FATAL Console error. Could not initialize socket on port " << myport
 		       << ". Perhaps it is already in use? Exiting Console receive loop."
-		       << std::endl;
+		       << __E__;
 		__COUT__ << ss.str();
 
 		cs->messages_.emplace_back(CONSOLE_SPECIAL_ERROR + ss.str(), cs->messageCount_++);
@@ -210,7 +210,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			else  // reset heartbeat if external messages are coming through
 				heartbeatCount = 0;
 
-			//__COUT__ << buffer << std::endl;
+			//__COUT__ << buffer << __E__;
 
 			// lockout the messages array for the remainder of the scope
 			// this guarantees the reading thread can safely access the messages
@@ -229,8 +229,8 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 				newSourceId   = cs->messages_.back().getSourceIDAsNumber();
 				newSequenceId = cs->messages_.back().getSequenceIDAsNumber();
 
-				//__COUT__ << "newSourceId: " << newSourceId << std::endl;
-				//__COUT__ << "newSequenceId: " << newSequenceId << std::endl;
+				//__COUT__ << "newSourceId: " << newSourceId << __E__;
+				//__COUT__ << "newSequenceId: " << newSequenceId << __E__;
 
 				if(newSourceId != -1 &&
 					sourceLastSequenceID.find(newSourceId) !=
@@ -282,14 +282,14 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 				++selfGeneratedMessageCount;  // increment internal message count
 				__MOUT__ << "Console is alive and waiting... (if no messages, next "
 				            "heartbeat is in two minutes)"
-				         << std::endl;
+				         << __E__;
 			}
 			else if(heartbeatCount % (60 * 30) == 59)  // approx every hour
 			{
 				++selfGeneratedMessageCount;  // increment internal message count
 				__MOUT__ << "Console is alive and waiting a long time... (if no "
 				            "messages, next heartbeat is in one hour)"
-				         << std::endl;
+				         << __E__;
 			}
 
 			++heartbeatCount;
@@ -305,7 +305,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) t
 			__COUTV__(selfGeneratedMessageCount);
 			__COUT__ << "No messages received at Console Supervisor. Exiting Console "
 			            "messageFacilityReceiverWorkLoop"
-			         << std::endl;
+			         << __E__;
 			break;  // assume something wrong, and break loop
 		}
 	} //end infinite loop
@@ -324,7 +324,7 @@ catch(...)
 void ConsoleSupervisor::defaultPage(xgi::Input* /*in*/, xgi::Output* out)
 {
 	__SUP_COUT__ << "ApplicationDescriptor LID="
-	             << getApplicationDescriptor()->getLocalId() << std::endl;
+	             << getApplicationDescriptor()->getLocalId() << __E__;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
 	        "src='/WebPath/html/Console.html?urn="
 	     << getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
@@ -351,7 +351,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
                                 HttpXmlDocument&                 xmlOut,
                                 const WebUsers::RequestUserInfo& userInfo)
 {
-	//__SUP_COUT__ << "requestType " << requestType << std::endl;
+	//__SUP_COUT__ << "requestType " << requestType << __E__;
 
 	// Commands:
 	// GetConsoleMsgs
@@ -376,7 +376,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		if(lastUpdateCountStr == "")
 		{
 			__SUP_COUT_ERR__ << "Invalid Parameters! lastUpdateCount="
-			                 << lastUpdateCountStr << std::endl;
+			                 << lastUpdateCountStr << __E__;
 			xmlOut.addTextElementToData("Error",
 			                            "Error - Invalid parameters for GetConsoleMsgs.");
 			return;
@@ -384,7 +384,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 
 		size_t lastUpdateCount = std::stoull(lastUpdateCountStr);
 
-		//		__SUP_COUT__ << "lastUpdateCount=" << lastUpdateCount << std::endl;
+		//		__SUP_COUT__ << "lastUpdateCount=" << lastUpdateCount << __E__;
 
 		insertMessageRefresh(&xmlOut, lastUpdateCount);
 	}
@@ -396,17 +396,17 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		int messageOnly    = CgiDataUtilities::postDataAsInt(cgiIn, "messageOnly");
 		int hideLineNumers = CgiDataUtilities::postDataAsInt(cgiIn, "hideLineNumers");
 
-		__SUP_COUT__ << "requestType " << requestType << std::endl;
-		__SUP_COUT__ << "colorIndex: " << colorIndex << std::endl;
-		__SUP_COUT__ << "showSideBar: " << showSideBar << std::endl;
-		__SUP_COUT__ << "noWrap: " << noWrap << std::endl;
-		__SUP_COUT__ << "messageOnly: " << messageOnly << std::endl;
-		__SUP_COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
+		// __SUP_COUT__ << "requestType " << requestType << __E__;
+		// __SUP_COUT__ << "colorIndex: " << colorIndex << __E__;
+		// __SUP_COUT__ << "showSideBar: " << showSideBar << __E__;
+		// __SUP_COUT__ << "noWrap: " << noWrap << __E__;
+		// __SUP_COUT__ << "messageOnly: " << messageOnly << __E__;
+		// __SUP_COUT__ << "hideLineNumers: " << hideLineNumers << __E__;
 
 		if(userInfo.username_ == "")  // should never happen?
 		{
 			__SUP_COUT_ERR__ << "Invalid user found! user=" << userInfo.username_
-			                 << std::endl;
+			                 << __E__;
 			xmlOut.addTextElementToData("Error",
 			                            "Error - InvauserInfo.username_user found.");
 			return;
@@ -415,7 +415,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + userInfo.username_ + "." +
 		                 (std::string)USERS_PREFERENCES_FILETYPE;
 
-		__SUP_COUT__ << "Save preferences: " << fn << std::endl;
+		// __SUP_COUT__ << "Save preferences: " << fn << __E__;
 		FILE* fp = fopen(fn.c_str(), "w");
 		if(!fp)
 		{
@@ -431,14 +431,14 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	}
 	else if(requestType == "LoadUserPreferences")
 	{
-		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		// __SUP_COUT__ << "requestType " << requestType << __E__;
 
 		unsigned int colorIndex, showSideBar, noWrap, messageOnly, hideLineNumers;
 
 		if(userInfo.username_ == "")  // should never happen?
 		{
 			__SUP_COUT_ERR__ << "Invalid user found! user=" << userInfo.username_
-			                 << std::endl;
+			                 << __E__;
 			xmlOut.addTextElementToData("Error", "Error - Invalid user found.");
 			return;
 		}
@@ -446,13 +446,13 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + userInfo.username_ + "." +
 		                 (std::string)USERS_PREFERENCES_FILETYPE;
 
-		__SUP_COUT__ << "Load preferences: " << fn << std::endl;
+		// __SUP_COUT__ << "Load preferences: " << fn << __E__;
 
 		FILE* fp = fopen(fn.c_str(), "r");
 		if(!fp)
 		{
 			// return defaults
-			__SUP_COUT__ << "Returning defaults." << std::endl;
+			__SUP_COUT__ << "Returning defaults." << __E__;
 			xmlOut.addTextElementToData("colorIndex", "0");
 			xmlOut.addTextElementToData("showSideBar", "0");
 			xmlOut.addTextElementToData("noWrap", "1");
@@ -466,11 +466,11 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		fscanf(fp, "%*s %u", &messageOnly);
 		fscanf(fp, "%*s %u", &hideLineNumers);
 		fclose(fp);
-		__SUP_COUT__ << "colorIndex: " << colorIndex << std::endl;
-		__SUP_COUT__ << "showSideBar: " << showSideBar << std::endl;
-		__SUP_COUT__ << "noWrap: " << noWrap << std::endl;
-		__SUP_COUT__ << "messageOnly: " << messageOnly << std::endl;
-		__SUP_COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
+		// __SUP_COUT__ << "colorIndex: " << colorIndex << __E__;
+		// __SUP_COUT__ << "showSideBar: " << showSideBar << __E__;
+		// __SUP_COUT__ << "noWrap: " << noWrap << __E__;
+		// __SUP_COUT__ << "messageOnly: " << messageOnly << __E__;
+		// __SUP_COUT__ << "hideLineNumers: " << hideLineNumers << __E__;
 
 		char tmpStr[20];
 		sprintf(tmpStr, "%u", colorIndex);
@@ -486,7 +486,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	}
 	else if(requestType == "GetTraceLevels")
 	{
-		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << __E__;
 
 		SOAPParameters txParameters;  // params for xoap to send
 		txParameters.addParameter("Request", "GetTraceLevels");
@@ -565,7 +565,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	} //end GetTraceLevels
 	else if(requestType == "SetTraceLevels")
 	{
-		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << __E__;
 
 		std::string individualValues    = CgiDataUtilities::postData(cgiIn, "individualValues");
 		std::string hostLabelMap    	= CgiDataUtilities::postData(cgiIn, "hostLabelMap");
@@ -680,7 +680,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	} //end SetTraceLevels
 	else if(requestType == "GetTriggerStatus")
 	{
-		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << __E__;
 		SOAPParameters txParameters;  // params for xoap to send
 		txParameters.addParameter("Request", "GetTriggerStatus");
 
@@ -743,7 +743,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	} //end GetTriggerStatus
 	else if(requestType == "SetTriggerEnable")
 	{
-		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << __E__;
 
 		std::string hostList    	= CgiDataUtilities::postData(cgiIn, "hostList");
 
@@ -840,7 +840,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	} //end SetTriggerEnable
 	else if(requestType == "ResetTRACE")
 	{
-		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << __E__;
 
 		std::string hostList    	= CgiDataUtilities::postData(cgiIn, "hostList");
 
@@ -937,7 +937,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	} //end ResetTRACE
 	else if(requestType == "EnableTRACE")
 	{
-		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << __E__;
 
 		std::string hostList    	= CgiDataUtilities::postData(cgiIn, "hostList");
 		std::string enable    		= CgiDataUtilities::postData(cgiIn, "enable");
@@ -1037,7 +1037,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 	} //end EnableTRACE
 	else if(requestType == "GetTraceSnapshot")
 	{
-		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << __E__;
 
 		std::string hostList    	= CgiDataUtilities::postData(cgiIn, "hostList");
 		std::string filterFor    	= CgiDataUtilities::postData(cgiIn, "filterFor");
@@ -1202,7 +1202,7 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
                                              const size_t     lastUpdateCount)
 {
-	//__SUP_COUT__ << std::endl;
+	//__SUP_COUT__ << __E__;
 
 	if(messages_.size() == 0)
 		return;
@@ -1211,7 +1211,7 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 	if(lastUpdateCount > messages_.back().getCount() && lastUpdateCount != (size_t)-1)
 	{
 		__SS__ << "Invalid lastUpdateCount: " << lastUpdateCount
-		       << " messagesArray size = " << messages_.back().getCount() << std::endl;
+		       << " messagesArray size = " << messages_.back().getCount() << __E__;
 		__SS_THROW__;
 	}
 
@@ -1240,22 +1240,21 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 	if(refreshReadPointer >= messages_.size())
 		return;
 
+	//limit number of catch-up messages
 	if(messages_.size() - refreshReadPointer > maxClientMessageRequest_)
 	{
-		__SUP_COUT__ << "Only sending latest " << maxClientMessageRequest_ << " messages!";
+		// __SUP_COUT__ << "Only sending latest " << maxClientMessageRequest_ << " messages!";
 
-		auto oldrrp        = refreshReadPointer;
+		// auto oldrrp        = refreshReadPointer;
 		refreshReadPointer = messages_.size() - maxClientMessageRequest_;
 
-		// generate special message to indicate failed socket
-		__SS__ << "Skipping " << (refreshReadPointer - oldrrp)
-		       << " messages because the web console has fallen behind!" << std::endl;
-		__COUT__ << ss.str();
-
-		ConsoleMessageStruct msg(CONSOLE_SPECIAL_WARNING + ss.str(), lastUpdateCount);
-		auto                 it = messages_.begin();
-		std::advance(it, refreshReadPointer + 1);
-		messages_.insert(it, msg);
+		// __SS__ << "Skipping " << (refreshReadPointer - oldrrp)
+		//        << " messages because the web console has fallen behind!" << __E__;
+		// __COUT__ << ss.str();
+		// ConsoleMessageStruct msg(CONSOLE_SPECIAL_WARNING + ss.str(), lastUpdateCount);
+		// auto                 it = messages_.begin();
+		// std::advance(it, refreshReadPointer + 1);
+		// messages_.insert(it, msg);
 	}
 
 	// output oldest to new
@@ -1267,9 +1266,8 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 			if(!requestOutOfSync)  // record out of sync message once only
 			{
 				requestOutOfSync = true;
-				__SS__ << "Request is out of sync! Message count should be more recent "
-				          "than update clock! "
-				       << msg.getCount() << " < " << lastUpdateCount << std::endl;
+				__SS__ << "Request is out of sync! Message count should be more recent! "
+				       << msg.getCount() << " < " << lastUpdateCount << __E__;
 				requestOutOfSyncMsg = ss.str();
 			}
 			// assume these messages are new (due to a system restart)
@@ -1298,4 +1296,4 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument* xmlOut,
 
 	if(requestOutOfSync)  // if request was out of sync, show message
 		__SUP_COUT__ << requestOutOfSyncMsg;
-}
+} //end insertMessageRefresh()

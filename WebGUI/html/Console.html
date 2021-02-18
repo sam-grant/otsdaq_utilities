@@ -354,35 +354,7 @@
 		<script src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
 		<script>		
-		
-			//=====================================================================================
-			//htmlOpen ~~		
-			//	tab name and attribute/value map object
-			function htmlOpen(tag,attObj,innerHTML,doCloseTag)
-			{
-				var str = "";
-				var attKeys = Object.keys(attObj); 
-				str += "<" + tag + " ";
-				for(var i=0;i<attKeys.length;++i)
-					if(attKeys[i] == "selected") str += (attObj[attKeys[i]]|0)?" selected ":""; //no value
-					else if(attKeys[i] == "checked") str += (attObj[attKeys[i]]|0)?" checked ":""; //no value
-					else if(attKeys[i] == "") continue; //skip empty key
-					else
-						str += " " + attKeys[i] + "='" +
-						attObj[attKeys[i]] + "' ";
-				str += ">";
-				if(innerHTML) str += innerHTML;
-				if(doCloseTag)
-					str += "</" + tag + ">";
-				return str;
-			} // end htmlOpen()
-	
-			//=====================================================================================
-			//htmlClearDiv ~~		
-			function htmlClearDiv()
-			{
-				return "<div id='clearDiv'></div>";
-			} //end htmlClearDiv()
+					
 			
 			//functions:		
 				//init()	
@@ -1791,12 +1763,12 @@
 
 					str += "</select>";
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					
 					var options = ["One row per label","Only show labels present on all hosts","One row per label-host pair"];
 
 					str += "Label settings: ";
-					str += htmlOpen("select",
+					str += DesktopContent.htmlOpen("select",
 							{
 									"class" : 	"ac_menuLink",
 									"onchange":	"_traceHostSelect.mode = this.selectedIndex;"
@@ -1807,7 +1779,7 @@
 							">" + options[i] + "</option>";
 					str += "</select>";
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "<div style='margin:11px 0 0 0;'>Host filter: </div>";
 
 					str += "</div>"; //end advancedControlsMenu tag
@@ -1817,7 +1789,7 @@
 
 					str += "</div>"; //end advancedControlsTable tag
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "<div id='advancedControlsTableRows' oncontextmenu='_advancedContextMenuBlock=true;'>"; //scroll rows vertically
 
 					str += "</div>"; //end advancedControlsTable tag
@@ -1829,7 +1801,7 @@
 
 					var COL_NAMES = ["Select","Host","Labels"];
 					var COL_DISPLAY_NAMES = [										 
-						 htmlOpen("input",
+						 DesktopContent.htmlOpen("input",
 								 {
 										 "type"	: 	"checkbox",
 										 "class" : 	"ac_checkboxSelect",
@@ -1965,48 +1937,48 @@
 
 					str += "</select>";
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					
 
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Get the status of the TRACE trigger environment.",
 									"onclick":	"advancedGetTriggerStatus();",
 							},"Get Trigger Status",true);
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Set the status of the TRACE trigger environment.",
 									"onclick":	"advancedSetTriggerStatus();",
 							},"Set Trigger Status",true);
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Reset the TRACE buffer to empty.",
 									"onclick":	"advancedReset();",
 							},"Reset TRACE",true);
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Disable the TRACE buffer.",
 									"onclick":	"advancedPause();",
 							},"Pause TRACE",true);
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Enable the TRACE buffer.",
 									"onclick":	"advancedResume();",
 							},"Resume TRACE",true);
-					str += htmlClearDiv();
-					str += htmlOpen("button",
+					str += DesktopContent.htmlClearDiv();
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Get a snapshot of the current TRACE buffer.",
 									"onclick":	"advancedGetSnapshot();",
 							},"Get Snapshot",true);
-					str += htmlClearDiv();
-					str += htmlOpen("input",
+					str += DesktopContent.htmlClearDiv();
+					str += DesktopContent.htmlOpen("input",
 							{
 									"style" : 	"margin: 8px 10px 3px -2px; float:left;",
 									"type"	: 	"checkbox",
@@ -2018,15 +1990,15 @@
 					selectedStr += "Filter for " + _advancedLabelSelectSave.length + " selected label(s): ";
 					for(var i=0;i<_advancedLabelSelectSave.length;++i)
 						selectedStr += (i?", ":"") +  _advancedLabelSelectSave[i];
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 							{
 									"style" : 	"margin: 8px 10px 3px -2px; float:left; overflow-x: auto; " +
 										"overflow-y: hidden; width:250px; white-space: nowrap;",
 									
 							},selectedStr,true);
 
-					str += htmlClearDiv();
-					str += htmlOpen("input",
+					str += DesktopContent.htmlClearDiv();
+					str += DesktopContent.htmlOpen("input",
 							{
 									"style" : 	"margin: 8px 10px 3px -2px; float:left;",
 									"type"	: 	"checkbox",
@@ -2038,13 +2010,13 @@
 					selectedStr += "Filter out " + _advancedLabelSelectSave.length + " selected label(s): ";
 					for(var i=0;i<_advancedLabelSelectSave.length;++i)
 						selectedStr += (i?", ":"") +  _advancedLabelSelectSave[i];
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 							{
 									"style" : 	"margin: 8px 10px 3px -2px; float:left; overflow-x: auto; " +
 										"overflow-y: hidden; width:250px; white-space: nowrap;",
 									
 							},selectedStr,true);
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					
 					str += "<div id='ac_snapshot'></div>";
 					_advancedEl.innerHTML = str;
@@ -2070,13 +2042,13 @@
 					
 					
 					str += "<div id='advancedControlsMenu' oncontextmenu='_advancedContextMenuBlock=true;'>";
-					str += htmlOpen("img",
+					str += DesktopContent.htmlOpen("img",
 							{
 									"src" : 	"/WebPath/images/windowContentImages/magnifying-glass.png",
 									"style": 	"margin: -7px 0 -10px -14px; width: 30px;",
 							});
 
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"id" 	: 	"ac_searchBox", 
 									"type" 	: 	"text",
@@ -2109,16 +2081,16 @@
 
 					str += "</select>";
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Apply the editable bit mask to all checked/selected labels.",
 									"onclick":	"advancedSetBitMask();",
 							},"Set",true);
 
-					str += htmlOpen("select",
+					str += DesktopContent.htmlOpen("select",
 							{
 									"class" : 	"ac_menuLink",
 									"id"	:	"ac_maskPresetSelect",
@@ -2135,7 +2107,7 @@
 					str += "<option>All Preset</option>";
 					str += "</select>"; //end set type select
 
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 							{
 									"id"	: 	"ac_selectedCaption",
 									"style" : 	"margin: 8px 0 0 -2px;" +
@@ -2144,7 +2116,7 @@
 									"title" : 	"Click a label to include, and right-click to exclued from the selected labels.",
 							},"No checkboxes selected.",true);
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 
 					str += createEditableBitMask(
 							_advancedEditBitMask,
@@ -2160,13 +2132,13 @@
 
 					str += "</div>"; //end advancedControlsTable tag
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "<div id='advancedControlsTableRows' oncontextmenu='_advancedContextMenuBlock=true;'>"; //scroll rows vertically
 
 					str += "</div>"; //end advancedControlsTable tag
 					str += "</div>";
 
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 							{
 									"id" : 	"ac_popupBox"
 							});
@@ -2208,7 +2180,7 @@
 			    
 				var COL_NAMES = ["Select","Label","SeverityMask","HostPresence"];
 				var COL_DISPLAY_NAMES = [										 
-					 htmlOpen("input",
+					 DesktopContent.htmlOpen("input",
 							 {
 								 "type"	: 	"checkbox",
 								 "class" : 	"ac_checkboxSelect",
@@ -2901,7 +2873,7 @@
 					//if(j%8 == 0) str += " ";
 					//str += (val >> (31-j))&1;
 
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"class" : 			"ac_maskbit ac_maskbit" + 
 								(((val >> (j))&1)?"ON":"OFF"),
@@ -2927,7 +2899,7 @@
 				var val = val64[0]|0;
 				for(var j=0;j<32;++j)
 				{
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"class" : 			"ac_maskbit ac_maskbit" + 
 								(((val >> (j))&1)?"ON":"OFF"),

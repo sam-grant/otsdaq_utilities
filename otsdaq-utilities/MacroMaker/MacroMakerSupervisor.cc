@@ -2278,8 +2278,8 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 			fprintf(fp, "### \t\t Inputs: %s\n", inputArgs.c_str());
 			fprintf(fp, "############################\n\n\n");
 
-			xmldoc.addTextElementToData("outputArgs_name", "Filename");
-			xmldoc.addTextElementToData("outputArgs_value", "$OTSDAQ_DATA/" + filename);
+			xmldoc.addTextElementToData("feMacroRunArgs_name", "Filename");
+			xmldoc.addTextElementToData("feMacroRunArgs_value", "$OTSDAQ_DATA/" + filename);
 		}
 
 		// do for all target front-ends

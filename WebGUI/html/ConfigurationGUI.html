@@ -176,36 +176,13 @@
 		//ConfigurationAPI._DEFAULT_COMMENT
 		//end ConfigurationAPI constants =========
 
-		//htmlOpen(tag,attObj,innerHTML,closeTag)
-		//htmlClearDiv()
+		//DesktopContent.htmlOpen(tag,attObj,innerHTML,closeTag)
+		//DesktopContent.htmlClearDiv()
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 
-		//=====================================================================================
-		//htmlOpen ~~		
-		//	tab name and attribute/value map object
-		function htmlOpen(tag, attObj, innerHTML, doCloseTag) {
-			var str = "";
-			var attKeys = attObj ? Object.keys(attObj) : [];
-			str += "<" + tag + " ";
-			for (var i = 0; i < attKeys.length; ++i)
-				str += " " + attKeys[i] + "='" +
-					attObj[attKeys[i]] + "' ";
-			str += ">";
-			if (innerHTML) str += innerHTML;
-			if (doCloseTag)
-				str += "</" + tag + ">";
-			return str;
-		} // end htmlOpen()
-
-		//=====================================================================================
-		//htmlClearDiv ~~		
-		function htmlClearDiv() {
-			return "<div id='clearDiv'></div>";
-		} //end htmlClearDiv()
-
-
+		
 	</script>
 
 	<title>ConfigurationGUI</title>
@@ -2198,7 +2175,7 @@
 
 			//add Download link
 			str += "<br>";
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"onclick": "popUpGroupUploadDownloadForm(\"" + groupName +
 						"\",\"" + groupKey + "\", false /*isUpload*/);",
@@ -2208,7 +2185,7 @@
 				true /*doCloseTag*/);
 			//add Upload link
 			str += "<br>";
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"onclick": "popUpGroupUploadDownloadForm(\"" + groupName +
 						"\",\"" + groupKey + "\", true /*isUpload*/);",
@@ -12636,7 +12613,7 @@
 						str += "<option value= ';'>Semicolon ;</option>";
 						str += "</select><br><br>";
 
-						str += htmlOpen("a",
+						str += DesktopContent.htmlOpen("a",
 							{
 								"onclick": "var el = document.getElementsByClassName(\"uploadDownloadCheckbox\");" +
 									"for(var i in el){var forFirefox = (el[i].checked = true);}",
@@ -12644,7 +12621,7 @@
 							"Select All" /*innerHTML*/,
 							true /*doCloseTag*/);
 						str += " ";
-						str += htmlOpen("a",
+						str += DesktopContent.htmlOpen("a",
 							{
 								"onclick": "var el = document.getElementsByClassName(\"uploadDownloadCheckbox\");" +
 									"for(var i in el){var forFirefox = (el[i].checked = false);}",
@@ -12656,8 +12633,8 @@
 					}
 
 					var tableName, tableVersion;
-					str += htmlOpen("center");
-					str += htmlOpen("table");
+					str += DesktopContent.htmlOpen("center");
+					str += DesktopContent.htmlOpen("table");
 
 					_memberMapForGroupSave = {}; //clear global variable
 					for (var i = 0; i < tableNames.length && i < tableVersions.length; ++i) 
@@ -12666,8 +12643,8 @@
 						tableVersion = tableVersions[i].getAttribute("value");
 						_memberMapForGroupSave[tableName] = tableVersion;
 
-						str += htmlOpen("tr");
-						str += htmlOpen("td", {
+						str += DesktopContent.htmlOpen("tr");
+						str += DesktopContent.htmlOpen("td", {
 							"style": "white-space:nowrap;text-align:left;" +
 								(i % 2 ? "background-color:rgb(218, 194, 194);" : "")
 						});
@@ -12677,7 +12654,7 @@
 							str += tableName + "-v" + tableVersion;
 
 							str += "</td>";
-							str += htmlOpen("td", {
+							str += DesktopContent.htmlOpen("td", {
 								"style": "text-align:left;" +
 									(i % 2 ? "background-color:rgb(218, 194, 194);" : "")
 							});
@@ -12688,12 +12665,12 @@
 						}
 						else //is download
 						{
-							str += htmlOpen("input",
+							str += DesktopContent.htmlOpen("input",
 								{
 									"type": "checkbox",
 									"class": "uploadDownloadCheckbox",
 								},
-								htmlOpen("a",
+								DesktopContent.htmlOpen("a",
 									{
 										"style": "text-decoration:none;color:black;",
 										"onclick": "var el = document.getElementsByClassName(\"uploadDownloadCheckbox\");" +
@@ -12711,7 +12688,7 @@
 					str += "</center>";
 
 					str += "<br><br>";
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 						{
 							"type": "button",
 							"id": "uploadDownloadButton",

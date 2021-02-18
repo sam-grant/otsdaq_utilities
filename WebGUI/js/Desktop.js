@@ -1243,9 +1243,11 @@ Desktop.createDesktop = function(security) {
 				Debug.log("Opening desktop window... " + windowName);
 				
 				
-				var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
-				console.log("Desktop.desktop.icons.iconNameToPathMap",
-						Desktop.desktop.icons.iconNameToPathMap);
+				var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap;
+				if(pathUniquePair) 
+					pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
+				Debug.log("Desktop.desktop.icons.iconNameToPathMap",
+					pathUniquePair);
 				
 				if(pathUniquePair ===
 						undefined)
@@ -1412,7 +1414,12 @@ Desktop.createDesktop = function(security) {
     	
 		if(event.data.windowId === undefined)
 		{
-			Debug.log("Illegal window  message received! Notify admins", Debug.HIGH_PRIORITY);
+			if(event.data.request)
+				Debug.log("Illegal window  message received! Notify admins", 
+					Debug.HIGH_PRIORITY);
+			else
+				Debug.log("Illegal window  message received! Assuming this is a window not implementing DesktopContent.js")
+				
 			return;
 		}
 		

@@ -59,8 +59,8 @@
 
 	//		localPrevButtonHandler() switch
 	
-	//htmlOpen(tag,attObj,innerHTML,closeTag)
-	//htmlClearDiv()
+	//DesktopContent.htmlOpen(tag,attObj,innerHTML,closeTag)
+	//DesktopContent.htmlClearDiv()
 	
 	//getRecordConfiguration()
 	//getRecordFilter()
@@ -388,14 +388,14 @@ DeleteWiz.createWiz = function(doneHandler) {
 								" named '" +  
 								recordName + "':</b><br>";
 						{ //start contexts
-							str += htmlOpen("select",
+							str += DesktopContent.htmlOpen("select",
 									{
 											"id" :		stepString + "rootChildren",
 									});
 
 							for(var i=0;i<children.length;++i)
 							{
-								str += htmlOpen("option",
+								str += DesktopContent.htmlOpen("option",
 										{		
 										},
 										ConfigurationAPI.getTreeRecordName(children[i]) /*innerHTML*/, 
@@ -403,8 +403,8 @@ DeleteWiz.createWiz = function(doneHandler) {
 							}
 							str += "</select>"; //end aliases dropdown
 
-							str += htmlClearDiv();
-							str += htmlOpen("input",
+							str += DesktopContent.htmlClearDiv();
+							str += DesktopContent.htmlOpen("input",
 									{
 											"id": stepString + "deleteDescendants",
 											"type": "button",
@@ -421,9 +421,9 @@ DeleteWiz.createWiz = function(doneHandler) {
 						recordName + "?'";
 					
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 								    "style": "margin:20px;",
 									"id": stepString + "deleteOnlyRoot",
@@ -452,7 +452,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 				str += "Choose a '" + paramObj["groupType"] +
 						"' group to activate (either a System Alias or specific group):";
 
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 
 				str += "<center>"; 
 				str += "<table style='margin-bottom: 10px;'>";
@@ -460,21 +460,21 @@ DeleteWiz.createWiz = function(doneHandler) {
 				{
 					str += "<tr><td><b>System Aliases:</b></td><td>";
 					{ //start aliases
-						str += htmlOpen("select",
+						str += DesktopContent.htmlOpen("select",
 								{
 										"id" :		stepString + "aliases",
 								});
 
 						for(var i=0;i<_systemGroups.aliases[paramObj["groupType"]].length;++i)
 						{
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{		
 									},
 									_systemGroups.aliases[paramObj["groupType"]]
 														  [i].alias /*innerHTML*/, true /*closeTag*/);
 						}
 						str += "</select>"; //end aliases dropdown
-						str += htmlOpen("input",
+						str += DesktopContent.htmlOpen("input",
 								{
 										"id": stepString + "activateAlias",
 										"type": "button",
@@ -493,14 +493,14 @@ DeleteWiz.createWiz = function(doneHandler) {
 				{
 					str += "<tr><td><b>Group Names:</b></td><td>";
 					{ //start groups
-						str += htmlOpen("select",
+						str += DesktopContent.htmlOpen("select",
 								{
 										"id" :		stepString + "groupNames",
 								});
 
 						for(var i=0;i<groupNames.length;++i)
 						{
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{		
 									},
 									groupNames[i] /*innerHTML*/, true /*closeTag*/);
@@ -517,7 +517,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 				{
 					str += "<tr><td><b>Group Keys:</b></td><td>";
 					{ //start keys
-						str += htmlOpen("select",
+						str += DesktopContent.htmlOpen("select",
 								{
 										"id" :		stepString + "groupKeys",
 								});
@@ -525,14 +525,14 @@ DeleteWiz.createWiz = function(doneHandler) {
 						for(var i=0;i<_systemGroups.groups[paramObj["groupType"]]
 														   [groupNames[0]].keys.length;++i)
 						{
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{		
 									},
 									_systemGroups.groups[paramObj["groupType"]]
 														 [groupNames[0]].keys[i] /*innerHTML*/, true /*closeTag*/);
 						}
 						str += "</select>"; //end group keys dropdown
-						str += htmlOpen("input",
+						str += DesktopContent.htmlOpen("input",
 								{
 										"id": stepString + "activateGroup",
 										"type": "button",
@@ -559,7 +559,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 
 				///////////////////////
 				// header
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"style" : "font-weight:bold; margin: 6px 0 20px 0;"		
 						}, 
@@ -567,14 +567,14 @@ DeleteWiz.createWiz = function(doneHandler) {
 								("Would you like to delete another " + _recordAlias + "?"):
 						("Welcome to the " + _recordAlias + " deletion Wizard!")) /*innerHTML*/,
 						true /*closeTag*/);
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				
 				///////////////////////
 				// existing records
 				str += "Choose the " + _recordAlias + " record name to be deleted: ";
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 
-				str += htmlOpen("select",
+				str += DesktopContent.htmlOpen("select",
 						{
 								"id" :		stepString + "recordName",
 								"style" :	"margin-bottom: 16px;"
@@ -595,7 +595,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 
 				///////////////////////
 				// active groups
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "Note you are currently editing these active groups:";
 				str += "<center>"; 
 				str += "<table style='margin-bottom: 10px;'>";
@@ -603,7 +603,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 				str += ConfigurationAPI._activeGroups.Context.groupName + " (" + ConfigurationAPI._activeGroups.Context.groupKey + ")";
 						//_systemGroups.activeGroups.Context.groupName + " (" + _systemGroups.activeGroups.Context.groupKey + ")";
 
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id":		stepString + "editContext",
 								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-editIcon",
@@ -616,7 +616,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 				str += "<tr><td><b>Active Configuration:</b></td><td>";
 				str += _systemGroups.activeGroups.Configuration.groupName + " (" + _systemGroups.activeGroups.Configuration.groupKey + ")";
 
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id":		stepString + "editConfig",
 								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-editIcon",
@@ -640,21 +640,21 @@ DeleteWiz.createWiz = function(doneHandler) {
 				
 				///////////////////////
 				// header
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"style" : "font-weight:bold; margin: 6px 0 20px 0;"		
 						}, 
 						"Welcome to the record deletion Wizard!" /*innerHTML*/,
 						true /*closeTag*/);
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				
 				///////////////////////
 				// existing record types
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "Below is a dropdown of record types that this Wizard can help you delete. " + 
 						" Choose one and proceed through the steps to delete the chosen record and its children:";
-				str += htmlClearDiv();
-				str += htmlOpen("select",
+				str += DesktopContent.htmlClearDiv();
+				str += DesktopContent.htmlOpen("select",
 						{
 								"id" :		stepString + "recordTypes",
 								"style" :	"margin-bottom: 16px;"
@@ -662,7 +662,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 
 				for(var i=0;i<_validRecordTypes.length;++i)
 				{
-					str += htmlOpen("option",
+					str += DesktopContent.htmlOpen("option",
 							{		
 							},_validRecordTypes[i] /*innerHTML*/, true /*closeTag*/);
 				}
@@ -680,7 +680,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 			var ctrlStr = "";
 
 			if(stepIndex && showPrevButton)
-				ctrlStr += htmlOpen("input",
+				ctrlStr += DesktopContent.htmlOpen("input",
 						{
 								"class": "prevButton " + stepString + "prevButton",
 								"type": "button",
@@ -689,7 +689,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 						},
 						0 /*html*/, true /*closeTag*/);	
 			if(showNextButton)
-				ctrlStr += htmlOpen("input",
+				ctrlStr += DesktopContent.htmlOpen("input",
 						{
 								"class": "nextButton " + stepString + "nextButton",
 								"type": "button",
@@ -705,7 +705,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 			
 			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
 			
-			el.innerHTML = ctrlStr + htmlClearDiv() + str + htmlClearDiv() + ctrlStr;
+			el.innerHTML = ctrlStr + DesktopContent.htmlClearDiv() + str + DesktopContent.htmlClearDiv() + ctrlStr;
 			document.body.appendChild(el);	
 		} //end localAddContent()
 
@@ -962,7 +962,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 					for(var i=0;i<_systemGroups.groups[paramObj["groupType"]]
 													   [this.value].keys.length;++i)
 					{
-						str += htmlOpen("option",
+						str += DesktopContent.htmlOpen("option",
 								{		
 								},
 								_systemGroups.groups[paramObj["groupType"]]
@@ -1239,8 +1239,6 @@ DeleteWiz.createWiz = function(doneHandler) {
 		
 		return retVal;		
 	} //end getRecordConfiguration()
-
-	
 	
 	//=====================================================================================
 	//getRecordFilter ~~	
@@ -1255,32 +1253,6 @@ DeleteWiz.createWiz = function(doneHandler) {
 		return retVal;		
 	} //end getRecordFilter()
 	
-
-	//=====================================================================================
-	//htmlOpen ~~		
-	//	tab name and attribute/value map object
-	function htmlOpen(tag,attObj,innerHTML,closeTag)
-	{
-		var str = "";
-		var attKeys = Object.keys(attObj); 
-		str += "<" + tag + " ";
-		for(var i=0;i<attKeys.length;++i)
-			str += " " + attKeys[i] + "='" +
-			attObj[attKeys[i]] + "' ";
-		str += ">";
-		if(innerHTML) str += innerHTML;
-		if(closeTag)
-			str += "</" + tag + ">";
-		return str;
-	} // end htmlOpen()
-
-	//=====================================================================================
-	//htmlClearDiv ~~		
-	function htmlClearDiv()
-	{
-		return "<div id='clearDiv'></div>";
-	} //end htmlClearDiv()
-
 
 }; //end DeleteWiz.createWiz()
 
