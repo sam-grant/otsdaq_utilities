@@ -2477,7 +2477,7 @@
 			var colChoices = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnChoices");
 			var colMinValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMinValue");
 			var colMaxValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMaxValue");
-
+			
 			//fill fixed choice structure
 			_tableFixedChoiceData = {};
 			var fixedChoiceArr;
@@ -2746,12 +2746,19 @@
 						typeDivStr += " &#60;" + colDataType + "&#62;";
 						typeDivStr += "'>";
 						typeDivStr += colType;
-						typeDivStr += "<br>&#60;" + colDataType + "&#62;"
+						typeDivStr += "<br>&#60;" + colDataType + "&#62;" ;
 						if (colDataType == "NUMBER") 
 						{
-							if (colMinValues[c] != undefined && colMaxValues[c] != undefined && colMinValue!=colMaxValue) {
-								typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue + "<br>MAX VALUE ALLOWED: " + colMaxValue
-							}
+							if (colMinValue != "")
+								typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue;
+							if (colMaxValue != "")
+								typeDivStr += "<br>MAX VALUE ALLOWED: " + colMaxValue;
+							// if (colMinValues[c] != "" && colMaxValues[c] != "") 
+							// {
+							// 	// if (colMinValue == 0 && colMaxValue == -1) {}
+							// 	// else
+							// 		typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue + "<br>MAX VALUE ALLOWED: " + colMaxValue ;
+							// }
 						}
 
 						typeDivStr += "</div>";

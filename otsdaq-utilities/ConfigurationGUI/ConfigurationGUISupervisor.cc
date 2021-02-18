@@ -5062,7 +5062,6 @@ try
 		xmlOut.addTextElementToParent(
 		    "ColumnDefaultValue", colInfo[i].getDefaultValue(), parentEl);
 
-			//TODO should min and max be added here?
 
 		choicesParentEl = xmlOut.addTextElementToParent("ColumnChoices", "", parentEl);
 		// add data choices if necessary
@@ -5074,10 +5073,8 @@ try
 				xmlOut.addTextElementToParent("ColumnChoice", choice, choicesParentEl);
 		}
 
-		xmlOut.addTextElementToParent(
-		    "ColumnMinValue", colInfo[i].getMinValue(), parentEl);
-		xmlOut.addTextElementToParent(
-		    "ColumnMaxValue", colInfo[i].getMaxValue(), parentEl);
+		xmlOut.addTextElementToParent("ColumnMinValue", colInfo[i].getMinValue(), parentEl);
+		xmlOut.addTextElementToParent("ColumnMaxValue", colInfo[i].getMaxValue(), parentEl);
 	}
 
 	// verify mockup columns after columns are posted to xmlOut
@@ -5428,6 +5425,7 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 			__COUT__ << "\t Parameter #" << p << ": " << columnParameters[p] << __E__;
 		}
 		__COUT__ << "\t creating the new xml" << __E__;
+
 		outss << "\t\t\t\t<COLUMN Type=\"";
 		outss << columnParameters[0];
 		outss << "\" \t Name=\"";
@@ -5457,22 +5455,33 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 		outss << "\" \t	DataChoices=\"";
 		outss << columnChoicesString;
 
-// it will only include min and max if size of parameters includes both values.
+
 		if (columnParameters.size() > 4)
 		{
-			if(StringMacros::decodeURIComponent(columnParameters[4]) !=
-				TableViewColumnInfo::getMinDefaultValue(columnParameters[2]))
+			if (StringMacros::decodeURIComponent(columnParameters[4]) != "")
 			{
-				__SUP_COUT__ << "FOUND user spec'd min default value = " << columnParameters[4] << __E__;
-				outss << "\" \t	MinValue=\"";
-				outss << columnParameters[4];
+				if(StringMacros::decodeURIComponent(columnParameters[4]) !=
+				   TableViewColumnInfo::getMinDefaultValue(columnParameters[2]))
+				{
+					__SUP_COUT__
+					    << "FOUND user spec'd min default value = " << columnParameters[4]
+					    << __E__;
+					outss << "\" \t	MinValue=\"";
+					outss << columnParameters[4];
+				}
 			}
-			if(StringMacros::decodeURIComponent(columnParameters[5]) !=
-				TableViewColumnInfo::getMaxDefaultValue(columnParameters[2]))
+			
+			if (StringMacros::decodeURIComponent(columnParameters[5]) != "")
 			{
-				__SUP_COUT__ << "FOUND user spec'd max default value = " << columnParameters[5] << __E__;
-				outss << "\" \t	MaxValue=\"";
-				outss << columnParameters[5];
+				if(StringMacros::decodeURIComponent(columnParameters[5]) !=
+				   TableViewColumnInfo::getMaxDefaultValue(columnParameters[2]))
+				{
+					__SUP_COUT__
+					    << "FOUND user spec'd max default value = " << columnParameters[5]
+					    << __E__;
+					outss << "\" \t	MaxValue=\"";
+					outss << columnParameters[5];
+				}
 			}
 		}
 		outss << "\"/>\n";

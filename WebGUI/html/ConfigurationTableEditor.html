@@ -185,7 +185,56 @@
 		function init() 
 		{			
 			Debug.log("CfgTableEditor init");
+
 			
+			var windowTooltip = 
+				"Welcome to the <i>otsdaq</i> Table Editor. " +
+				"You will find different tables that can be modified or deleted according to your needs \n\n" +
+
+				"\n\t- <b>Main Functions:</b> " +
+				"<INDENT>" +
+				"You can check all table names by clicking on Table name list. " +
+				" If you want to load a particular table just press " +
+				"LOAD icon, or if you want to delete it then you can use " +
+				"DELETE button. It will ask for confirmation for deletion " +
+				"You can also save a table by changing an empty template or " +
+				"load a different one, then giving it a name on table name blank space " +
+				"and then pressing SAVE icon. " +
+				"</INDENT>" +
+
+				"\n\t- <b>Operations on Empty Table:</b> " +
+				"<INDENT>" +
+				"You will find an empty table template with four columns that can't be changed " +
+				"If you want to include a new column just press the add button ( + ) " +
+				"You can also delete one column by using the minus button ( - ) " +
+				"You can also change names and values of each new column, because the preexisting ones " +
+				"can't be modified. " +
+				"</INDENT>" +
+
+				"\n\t- <b>Changing values on Fields</b> " +
+				"<INDENT>" +
+				"By clicking on any desired field you will be given the option to change its value " +
+				"If you change the type of data to NUMBER then two more blocks will appear: Minimum and Maximum " +
+				"You can use them to limit the number that can be assigned on that field to a specific range " +
+				"Their default value is empty, so if you don't put anything on them they will not be saved " +
+				"You can also use environmental variables and, if needed, you can do basic operations between " +
+				"an environmental value expressed within braces '{}' and any number " +
+				"</INDENT>" +
+
+				"\n\t- <b>Table Description:</b> " +
+				"<INDENT>" +
+				"You can set a description for the table contents on the white block at the bottom of the page" +
+				"for information about the columns meaning, or limits or whatever you need. " +
+				"</INDENT>" +
+
+				"\n\nRemember, if you would like to take a look at the available online documentation, " +
+				"click the question mark at the top-right of the Desktop." ;
+			
+			DesktopContent.tooltip("Table Editor Introduction", windowTooltip);
+			DesktopContent.setWindowTooltip(windowTooltip);
+
+
+
 			//attempt to get last table name used.. to load after refresh
 			_lastTableNameUsed = "";
 			try
@@ -281,11 +330,11 @@
 						
 						_minArray[_dataTypeArray[i]]
 									  [_typeArray[j]]
-									  = dVal;
+									  = [];
 
 						_maxArray[_dataTypeArray[i]]
 									  [_typeArray[j]]
-									  = dVal;
+									  = [];
 						
 					}
 				}
@@ -488,29 +537,49 @@
 			//	write new info file for tableName based CSV column info
 			//			data="type,name,dataType;type,name,dataType;..."
 			
+			// create a string with all the values that will get converted in the server to a table, than then will return to this script to show it.
+			//trim does not process null values and then the other options were needed
 			var data = "";
 			for(var i=0;i<_colHdrArr.length;++i)
-				if(_colMinValueArr[i] != undefined && _colMaxValueArr[i] != undefined && (_colMaxValueArr[i] >= _colMinValueArr[i]))
-				{
-					data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
-					_colDataTypeArr[i] + "," + 
-					encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
-					encodeURIComponent(_colMinValueArr[i].trim()) + "," +
-					encodeURIComponent(_colMaxValueArr[i].trim()) + ";";
-				}
-				else if (_colMinValueArr[i] != undefined && _colMaxValueArr[i] != undefined && (_colMinValueArr[i] > _colMaxValueArr[i]))
-				{
+			{
+				if (_colDataTypeArr[i] == _NUMBER_TYPE) {
+					if (_colMinValueArr[i] != undefined && _colMaxValueArr[i] != undefined) {
+						data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
+							_colDataTypeArr[i] + "," +
+							encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
+							encodeURIComponent(_colMinValueArr[i].trim()) + "," +
+							encodeURIComponent(_colMaxValueArr[i].trim()) + ";";
+					}
 
-				}
-				else
-				{
-					data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
-					_colDataTypeArr[i] + "," + 
-					encodeURIComponent(_colDefaultValueArr[i].trim()) + ";"; 
-				}
-			// TODO add mins and max when exporting, maybe add an extra if to ensure that it will only happens when a number is located on the table? 
-			// added on the lines before with defaultvalue. 
+					else if (_colMinValueArr[i] != undefined && _colMaxValueArr[i] == undefined) {
+						data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
+							_colDataTypeArr[i] + "," +
+							encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
+							encodeURIComponent(_colMinValueArr[i].trim()) + "," +
+							encodeURIComponent(null) + ";";
+					}
+					else if (_colMinValueArr[i] == undefined && _colMaxValueArr[i] != undefined)
+						data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
+							_colDataTypeArr[i] + "," +
+							encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
+							encodeURIComponent(null) + "," +
+							encodeURIComponent(_colMaxValueArr[i].trim()) + ";";
 
+					else if (_colMinValueArr[i] == undefined && _colMaxValueArr[i] == undefined)
+						data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
+							_colDataTypeArr[i] + "," +
+							encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
+							encodeURIComponent(null) + "," +
+							encodeURIComponent(null) + ";";
+				}
+				else {
+					data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
+						_colDataTypeArr[i] + "," +
+						encodeURIComponent(_colDefaultValueArr[i].trim()) + ";"
+						// encodeURIComponent("f") + "," +
+						// encodeURIComponent("f") + ";";
+				}
+			}
 			//handle table description
 			var tableDescription = document.getElementById("table-description").value.trim();			
 			if(tableDescription.length)
@@ -1076,14 +1145,13 @@
 				str += " [Default: " + colDefaultValues[c];
 				// added min and max in the same way as default values, making it only visible if it is a number type
 				
-				if (colDataTypes[c] == _NUMBER_TYPE) 
+				if (colDataTypes[c] == _NUMBER_TYPE)
 				{
-					if (colMinValues[c] != undefined) {
+					if (colMinValues[c] != "")
 						str += "<br>Minimum: " + colMinValues[c];
-					}
-					if (colMaxValues[c] != undefined) {
-						str += ", Maximum: " + colMaxValues[c];
-					}
+					if (colMaxValues[c] != "")
+						str += "<br>Maximum: " + colMaxValues[c];
+
 				}
 				str += "]";
 				str += "'><label style='font-weight:bold;color:black;font-size:12px;'>";
@@ -1092,12 +1160,10 @@
 				str += "<br>[Default: " + colDefaultValues[c];
 				if (colDataTypes[c] == _NUMBER_TYPE) 
 				{
-					if(colMinValues[c] != undefined){
-						str += "<br>Minimum: "+colMinValues[c];
-					}
-					if(colMaxValues[c] != undefined){
-						str += ", Maximum: "+colMaxValues[c];
-					}
+					if (colMinValues[c] != "")
+						str += "<br>Minimum: " + colMinValues[c];
+					if (colMaxValues[c] != "")
+						str += "<br>Maximum: " + colMaxValues[c];
 				}
 				str += "]";
 				str += "</div>";
