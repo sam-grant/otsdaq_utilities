@@ -357,6 +357,7 @@
 			
 			var _parameterSetupMinimized = true;	//default to minimized
 			var _parameterInitCount;
+			var _lastAliasListUpdateTime = 0;
 			
 			var _inAnimation; //bool used to indicate if currently in transition (animation taking place)
 			var _smallStateMode, _stateOvalRadius, _perimeterRadius, _currStateTransArr;
@@ -952,9 +953,9 @@
 							_currState = i;
 							redrawPhysics();
 
-							//update run number
-							document.getElementById("run-number").innerHTML = DesktopContent.getXMLValue(req,"run_number");
 						}
+						//update run number
+						document.getElementById("run-number").innerHTML = DesktopContent.getXMLValue(req,"run_number");
                 		
                 		window.clearTimeout(_verifyStateTimeout);
 						_verifyStateTimeout = window.setTimeout(getCurrentState,_VERIFY_STATE_PERIOD); //verify current state every 10 seconds (and resync time elapse)
@@ -1723,24 +1724,35 @@
 			    	if(isSelected && _transitionActions[_currStateTransArr[_selectedTransition]] 
 										  == "Configure") //if configure, get alias info
 		            {
-						//update alias list periodically also, since it could change
+						//update alias list box (by setting _parameterInitCount to 0)
+						//	periodically also, since it could change
 						_parameterInitCount = 0;
-						DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList" +
-								"&fsmName=" + _fsmName, "", 
-								function(req)
-								{
-							//update system aliases conversion map
-							var aliasArr = req.responseXML.getElementsByTagName("config_alias"); 
-							var aliasGroupArr = req.responseXML.getElementsByTagName("config_key");
+						if( parseInt((new Date()).getTime()) - _lastAliasListUpdateTime >
+							10*1000) //in ms, 10 seconds
+						{
+							//immediately prevent next refresh for 10 seconds
+							_lastAliasListUpdateTime = parseInt((new Date()).getTime()); //in ms
 
-							for(var i=0;i<aliasArr.length;++i) 
-								_aliasTranslationMap[aliasArr[i].getAttribute('value')] = 
-										aliasGroupArr[i].getAttribute('value');
-							
-		                    drawHudForMouseHover(); //display text description for mouse hover
-								}, //end request handler
-								0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
-								true /*doNoShowLoadingOverlay*/);
+							DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList" +
+									"&fsmName=" + _fsmName, "", 
+									function(req)
+									{
+								//update system aliases conversion map
+								var aliasArr = req.responseXML.getElementsByTagName("config_alias"); 
+								var aliasGroupArr = req.responseXML.getElementsByTagName("config_key");
+
+								for(var i=0;i<aliasArr.length;++i) 
+									_aliasTranslationMap[aliasArr[i].getAttribute('value')] = 
+											aliasGroupArr[i].getAttribute('value');
+								
+								drawHudForMouseHover(); //display text description for mouse hover
+								
+									}, //end request handler
+									0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+									true /*doNoShowLoadingOverlay*/);
+						}
+						else //use cached alias list
+							drawHudForMouseHover(); //display text description for mouse hover
 		            }
 			    	else  //if not configure transition do simple display
 			    		drawHudForMouseHover(); //display text description for mouse hover
@@ -2560,37 +2572,9 @@
 				_alarmRunning = false;
 				_alarmTimeLeft = 0;
 			} //end stopAlarm()
-			
+					
 			//=====================================================================================
-			//displayError(err) ~~
-			//put new error at top of current error strings
-			function displayError(err)
-			{
-				var el = document.getElementById("error-box-err");
-				var str = el.innerHTML;				
-				var d = new Date();
-				
-				if(str.length)
-					err += "<br>...<br>";
-				str = d.toLocaleDateString() + " " + d.toLocaleTimeString() + ": " +
-						err.replace(/\n/g , "<br>") + str;
-				
-        		Debug.log("Physics displayError Error: " + str + "\n\n" + err);   
-				
-        		el.innerHTML = str;
-				_errorBox.style.display = "block";				
-			} //end displayError()
-			
-			//=====================================================================================
-			//closeErrorBox() ~~
-			function closeErrorBox()
-			{
-				_errorBox.style.display = "none";
-				document.getElementById("error-box-err").innerHTML = ""; //clear string
-			} //end closeErrorBox()
-
-			//=====================================================================================
-			//closeErrorBox() ~~
+			//refreshFSM() ~~
 			function refreshFSM()
 			{
 				Debug.log("refreshFSM");
@@ -2659,13 +2643,7 @@
 	<div class='blackout' id='blackout-reveal'>
 	</div>
 
-</div>
-		
-
-<div id='error-box'>
-<a href="javascript:closeErrorBox()">Close Errors</a><br><br>
-<div id='error-box-err'></div>
-</div>
+</div>		
 
 </body>
 

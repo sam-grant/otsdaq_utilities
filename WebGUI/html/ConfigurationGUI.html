@@ -176,36 +176,13 @@
 		//ConfigurationAPI._DEFAULT_COMMENT
 		//end ConfigurationAPI constants =========
 
-		//htmlOpen(tag,attObj,innerHTML,closeTag)
-		//htmlClearDiv()
+		//DesktopContent.htmlOpen(tag,attObj,innerHTML,closeTag)
+		//DesktopContent.htmlClearDiv()
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 
-		//=====================================================================================
-		//htmlOpen ~~		
-		//	tab name and attribute/value map object
-		function htmlOpen(tag, attObj, innerHTML, doCloseTag) {
-			var str = "";
-			var attKeys = attObj ? Object.keys(attObj) : [];
-			str += "<" + tag + " ";
-			for (var i = 0; i < attKeys.length; ++i)
-				str += " " + attKeys[i] + "='" +
-					attObj[attKeys[i]] + "' ";
-			str += ">";
-			if (innerHTML) str += innerHTML;
-			if (doCloseTag)
-				str += "</" + tag + ">";
-			return str;
-		} // end htmlOpen()
-
-		//=====================================================================================
-		//htmlClearDiv ~~		
-		function htmlClearDiv() {
-			return "<div id='clearDiv'></div>";
-		} //end htmlClearDiv()
-
-
+		
 	</script>
 
 	<title>ConfigurationGUI</title>
@@ -691,7 +668,7 @@
 			//============================
 			//		for debugging
 
-			//setupSpecificTable("DesktopIconTable","2",""); return;
+			// setupSpecificTable("DTCInterfaceTable","27",""); return;
 			//setupSpecificTable("XDAQContextTable","2","setupTableViewMode('anchorTag-XDAQContextTable');"); return;
 
 			//setupSpecificTableGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerTable"); return;			
@@ -2198,7 +2175,7 @@
 
 			//add Download link
 			str += "<br>";
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"onclick": "popUpGroupUploadDownloadForm(\"" + groupName +
 						"\",\"" + groupKey + "\", false /*isUpload*/);",
@@ -2208,7 +2185,7 @@
 				true /*doCloseTag*/);
 			//add Upload link
 			str += "<br>";
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"onclick": "popUpGroupUploadDownloadForm(\"" + groupName +
 						"\",\"" + groupKey + "\", true /*isUpload*/);",
@@ -6339,6 +6316,20 @@
 		//tableCopyOrMoveRow
 		function tableCopyOrMoveRow(deleteSrc) 
 		{
+			var numberOfCopies = 1;
+			if(!deleteSrc)
+			{
+				//propmpt for number of copies
+				numberOfCopies = prompt("How many copy instances would you like (default: 1)?",1);
+				if (numberOfCopies)
+					numberOfCopies = numberOfCopies|0;
+				else //prompt was cancelled
+				{
+					Debug.warn("The copy operation was cancelled by the user.");
+					return;
+				}
+				Debug.logv({numberOfCopies});
+			}
 			var src = document.getElementById("copyAndMoveRowsSrc").value | 0;
 			var dest = document.getElementById("copyAndMoveRowsDest").value | 0;
 			var srcCount = document.getElementById("copyAndMoveRowsSrcCount").value | 0;
@@ -6375,7 +6366,7 @@
 
 					//handle adding new rows
 					if (newr - _CONFIG_DATA_ROW_OFFSET >= dest &&
-						newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount)
+						newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount * numberOfCopies)
 					{
 						//add new empty TD row
 						var newRowArr = [];
@@ -6386,7 +6377,7 @@
 						++newr;
 
 						//if this is not last row added, continue adding
-						if (newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount)
+						if (newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount * numberOfCopies)
 						{
 							--r;
 							continue;
@@ -6408,16 +6399,18 @@
 
 				//copy source values to dest values
 				if (src >= dest) //account for source index being pushed back
-					src += srcCount;
+					src += srcCount * numberOfCopies;
 
-				for (var r = 0; r < srcCount; ++r) 
+				for (var r = 0; r < srcCount * numberOfCopies; ++r) 
 				{
 					for (var c = 0; c < rows[0].childNodes.length; ++c) 
 					{
-						val = cols[_CONFIG_DATA_ROW_OFFSET + src + r][c].innerHTML;
+						val = cols[_CONFIG_DATA_ROW_OFFSET + src + (r % srcCount)][c].innerHTML;
 
-						if (colTypes[c] == "UID" || colTypes[c] == "UniqueData") 
+						//if copying, keep unique columns unique
+						if (!deleteSrc &&  (colTypes[c] == "UID" || colTypes[c] == "UniqueData"))
 						{
+							
 							//create array for existing unique values
 							uniqueVals = [];
 							for (var rr = _CONFIG_DATA_ROW_OFFSET; rr < cols.length; ++rr)
@@ -6453,14 +6446,14 @@
 					for (var r = 0, newr = 0, tmpColsIndex = 0; r < tmpCols.length + 1 + 1; ++r) //+1 for th, and +1 for new block of rows
 					{
 						if (newr - _CONFIG_DATA_ROW_OFFSET >= dest &&
-							newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount) 
+							newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount * numberOfCopies) 
 						{
 							//create default col cell to new row
 							cols[c][newr] = document.createElement("td");
 							++newr;
 
 							//if this is not last row added, continue adding
-							if (newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount) 
+							if (newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount * numberOfCopies) 
 							{
 								--r;
 								continue;
@@ -6480,15 +6473,16 @@
 
 				//copy source values to dest values
 				if (src >= dest) //account for source index being pushed back
-					src += srcCount;
-				for (var r = 0; r < srcCount; ++r) 
+					src += srcCount * numberOfCopies;
+
+				for (var r = 0; r < srcCount * numberOfCopies; ++r) 
 				{
 					for (var c = 0; c < rows.length; ++c) 
 					{
-						val = cols[c][_CONFIG_DATA_ROW_OFFSET + src + r].innerHTML;
+						val = cols[c][_CONFIG_DATA_ROW_OFFSET + src + (r % srcCount)].innerHTML;
 
-
-						if (colTypes[c] == "UID" || colTypes[c] == "UniqueData")
+						//if copying, keep unique columns unique
+						if (!deleteSrc &&  (colTypes[c] == "UID" || colTypes[c] == "UniqueData"))
 						{
 							//create array for existing unique values
 							uniqueVals = [];
@@ -12643,7 +12637,7 @@
 						str += "<option value= ';'>Semicolon ;</option>";
 						str += "</select><br><br>";
 
-						str += htmlOpen("a",
+						str += DesktopContent.htmlOpen("a",
 							{
 								"onclick": "var el = document.getElementsByClassName(\"uploadDownloadCheckbox\");" +
 									"for(var i in el){var forFirefox = (el[i].checked = true);}",
@@ -12651,7 +12645,7 @@
 							"Select All" /*innerHTML*/,
 							true /*doCloseTag*/);
 						str += " ";
-						str += htmlOpen("a",
+						str += DesktopContent.htmlOpen("a",
 							{
 								"onclick": "var el = document.getElementsByClassName(\"uploadDownloadCheckbox\");" +
 									"for(var i in el){var forFirefox = (el[i].checked = false);}",
@@ -12663,8 +12657,8 @@
 					}
 
 					var tableName, tableVersion;
-					str += htmlOpen("center");
-					str += htmlOpen("table");
+					str += DesktopContent.htmlOpen("center");
+					str += DesktopContent.htmlOpen("table");
 
 					_memberMapForGroupSave = {}; //clear global variable
 					for (var i = 0; i < tableNames.length && i < tableVersions.length; ++i) 
@@ -12673,8 +12667,8 @@
 						tableVersion = tableVersions[i].getAttribute("value");
 						_memberMapForGroupSave[tableName] = tableVersion;
 
-						str += htmlOpen("tr");
-						str += htmlOpen("td", {
+						str += DesktopContent.htmlOpen("tr");
+						str += DesktopContent.htmlOpen("td", {
 							"style": "white-space:nowrap;text-align:left;" +
 								(i % 2 ? "background-color:rgb(218, 194, 194);" : "")
 						});
@@ -12684,7 +12678,7 @@
 							str += tableName + "-v" + tableVersion;
 
 							str += "</td>";
-							str += htmlOpen("td", {
+							str += DesktopContent.htmlOpen("td", {
 								"style": "text-align:left;" +
 									(i % 2 ? "background-color:rgb(218, 194, 194);" : "")
 							});
@@ -12695,12 +12689,12 @@
 						}
 						else //is download
 						{
-							str += htmlOpen("input",
+							str += DesktopContent.htmlOpen("input",
 								{
 									"type": "checkbox",
 									"class": "uploadDownloadCheckbox",
 								},
-								htmlOpen("a",
+								DesktopContent.htmlOpen("a",
 									{
 										"style": "text-decoration:none;color:black;",
 										"onclick": "var el = document.getElementsByClassName(\"uploadDownloadCheckbox\");" +
@@ -12718,7 +12712,7 @@
 					str += "</center>";
 
 					str += "<br><br>";
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 						{
 							"type": "button",
 							"id": "uploadDownloadButton",

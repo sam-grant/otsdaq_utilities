@@ -54,7 +54,37 @@ else {
 				
 		var _name;
 		var _subname;
-		var _url = url;	
+
+		var _url;
+		function _urlHandler()
+		{
+			_url = url; //default to full copy
+			Debug.log("Handling window url",url);	
+
+			//find port colon
+			var hostColonIndex = window.location.href.indexOf(':');
+			if(hostColonIndex < 5) //from http: or https:, then look again
+				hostColonIndex = window.location.href.indexOf(':',hostColonIndex+1);
+			if(hostColonIndex < 0) return;
+			if(url.indexOf("http://") != 0) return;
+			var urlColonIndex = url.indexOf(':',7); //7 because look after http://
+			if(urlColonIndex < 0) return;
+
+			var gatewayURL = window.location.href.substr(0, hostColonIndex);
+			Debug.log("Handling window url",url,gatewayURL);
+			if(gatewayURL == "localhost" || 
+			gatewayURL == "http://localhost" || 
+			gatewayURL.indexOf("https://") == 0)
+			{
+				_url = gatewayURL + url.substr(urlColonIndex);
+				Debug.log("Manipulating address based on gateway url from",
+					url,"to",_url);				
+			}
+			else
+				_url = url;	
+		} //end url handling
+		_urlHandler(); //call url handler
+		
 		var _id = id; //unique window id, cannot change! Used as link between html div container and object
 
 		var _winhdr,_winfrm,_winfrmHolder;
@@ -87,9 +117,9 @@ else {
 		} //end _refreshHeader()
 		
 		//==============================================================================
-		var _handleWindowContentLoading = function() {
+		var _handleWindowContentLoading = function(e) {
 			
-			Debug.log("Server desktop sending first message to window: " + _id);
+			Debug.log("Server desktop sending first message to window: ",_id,e);
 			
 			//remove the "Loading" once iframe loades
 			if(_winfrmHolder.childNodes.length > 1) 
@@ -161,7 +191,7 @@ else {
 		{
 			_name = name; _subname = subname;
 			_refreshHeader();			
-			Debug.log("Desktop Window name=" + name + " and subname=" + subname,Debug.LOW_PRIORITY);
+			Debug.log("Desktop Window name=" + name + " and subname=" + subname);
 		} //end setWindowNameAndSubName()
 		
 		//==============================================================================
@@ -173,6 +203,7 @@ else {
 			y = parseInt(y);		
 			w = parseInt(w);
 			h = parseInt(h);
+			//Debug.log("set size",_x-x,_y-y,_w-w,_h-h,x,y,w,h,_defaultWindowMinWidth,_defaultWindowMinHeight);	
 			
 			//apply minimum size requirements and maximized state
 			_w = _isMaximized?Desktop.desktop.getDesktopContentWidth():(w < _defaultWindowMinWidth?_defaultWindowMinWidth:w);
@@ -199,7 +230,7 @@ else {
 			_winfrmHolder.style.height = (_h-_defaultHeaderHeight-_defaultFrameBorder-2)+"px"; 	//extra 2 for border pixels	
 			
             //Debug.log("Desktop Window position to " + _x + "," +
-            //           _y + " size to " + _w + "," + _h,Debug.LOW_PRIORITY);
+            //           _y + " size to " + _w + "," + _h);
 					
             if(_isMaximized){ //keep proper dimensions
                 _winfrm.style.position = "absolute";
@@ -258,7 +289,7 @@ else {
 		   	this.windiv.style.top = _y+"px";    
 		   	
 			//Debug.log("Desktop Window position to " + _x + "," +
-			//	_y ,Debug.LOW_PRIORITY);
+			//	_y );
 		   	
 		   	//reset current layout update timer if a window moves
 		   	Desktop.desktop.login.resetCurrentLayoutUpdateTimer();
@@ -268,14 +299,17 @@ else {
 		//resizeAndPositionWindow(x,y,w,h) ~~~
 		//	resize and position of window and its elements
 		//	do not allow weird re-size effects
+		//		+1 because of borders, and content width vs set value
 		this.resizeAndPositionWindow = function(x,y,w,h) 
 		{		
-			//Debug.log("Resizing");
-			if((w <= _defaultWindowMinWidth && x > _x) ||
-				(h <= _defaultWindowMinHeight && y > _y)) return;
-            if(x < Desktop.desktop.getDesktopContentX()) x = Desktop.desktop.getDesktopContentX();
-            if(y < Desktop.desktop.getDesktopContentY()) y = Desktop.desktop.getDesktopContentY();            
+			
+			//Debug.log("Resizing",_x-x,_y-y,_w-w,_h-h,x,y,w,h,_defaultWindowMinWidth,_defaultWindowMinHeight);			
+			if((w <= _defaultWindowMinWidth + 1 && x > _x) ||
+				(h <= _defaultWindowMinHeight + 1 && y > _y)) return [x-_x,y-_y,w-_w,h-_h];
+            if(x < Desktop.desktop.getDesktopContentX()) return [x-_x,y-_y,w-_w,h-_h];//x = Desktop.desktop.getDesktopContentX();
+            if(y < Desktop.desktop.getDesktopContentY()) return [x-_x,y-_y,w-_w,h-_h];//y = Desktop.desktop.getDesktopContentY();            
 			this.setWindowSizeAndPosition(x,y,w,h);
+			return [x-_x,y-_y,w-_w,h-_h];
 		} //end resizeAndPositionWindow()
 				
 		//==============================================================================
@@ -334,7 +368,7 @@ else {
 		    this.windiv.style.display = "inline";
 		    Debug.log(_name,"this.windiv.style.display now is " + this.windiv.style.display);
 		} //end unminimize()
-                
+
 		//------------------------------------------------------------------
 		//handle class construction ----------------------
 		//------------------------------------------------------------------
@@ -496,6 +530,7 @@ else {
 		_winfrm.setAttribute("name", "DesktopWindowFrame-" + _id);
 		_winfrm.setAttribute("allow", "autoplay"); //allow sounds without user clicking page first
 		_winfrm.onload = _handleWindowContentLoading; //event to delete "Loading"
+		_winfrm.onerror = _handleWindowContentLoading; //event to delete "Loading"
 		_winfrm.setAttribute("src", _url);
 		_winfrmHolder.appendChild(_winfrm); //add frame to holder	 
 		this.windiv.appendChild(_winfrmHolder); //add holder to window  
@@ -514,7 +549,7 @@ else {
 	   	this.windiv.addEventListener('touchmove',Desktop.handleTouchMove);
 	   	   	
 	   		   	
-		Debug.log("Desktop Window Created",Debug.LOW_PRIORITY);
+		Debug.log("Desktop Window Created");
 	
-	}
-}
+	} //end createWindow "constructor"
+} //end DesktopWindow definition scope

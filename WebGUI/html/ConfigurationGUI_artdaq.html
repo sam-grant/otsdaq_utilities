@@ -113,38 +113,8 @@
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 
-		//=====================================================================================
-		//htmlOpen ~~		
-		//	tab name and attribute/value map object
-		function htmlOpen(tag,attObj,innerHTML,doCloseTag)
-		{
-			var str = "";
-			var attKeys = Object.keys(attObj); 
-			str += "<" + tag + " ";
-			for(var i=0;i<attKeys.length;++i)
-				if(attKeys[i] == "selected") str += (attObj[attKeys[i]]|0)?" selected ":""; //no value
-				else if(attKeys[i] == "checked") str += (attObj[attKeys[i]]|0)?" checked ":""; //no value
-				else if(attKeys[i] == "") continue; //skip empty key
-				else
-					str += " " + attKeys[i] + "='" +
-					attObj[attKeys[i]] + "' ";
-			str += ">";
-			if(innerHTML) str += innerHTML;
-			if(doCloseTag)
-				str += "</" + tag + ">";
-			return str;
-		} // end htmlOpen()
-
-		//=====================================================================================
-		//htmlClearDiv ~~		
-		function htmlClearDiv()
-		{
-			return "<div id='clearDiv'></div>";
-		} //end htmlClearDiv()
 		
 		//functions:
-			//htmlOpen()
-			//htmlClearDiv()
 			//init()	
 			//	localFinishInit()
 			//initArtdaqNodes(doneHandler)
@@ -1176,7 +1146,7 @@
 				var el = document.getElementById("Status");
 				var str = "";	//el.innerHTML;
 				
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				
 				//add delete trash can icon
 				str += "<div id='allNodes" +  
@@ -1736,7 +1706,7 @@
 						(_nodes[i].status?"":"<label style='color:red; font-size:inherit;'>*OFF*</label> ") +
 						(count > 1?(_nodes[i].nodeCount + "x "):"") + 
 						typeName + "::" + nodeName +
-						htmlClearDiv() + 
+						DesktopContent.htmlClearDiv() + 
 						(_subsystems[_nodes[i].subsystemId]? //e.g. undefined for artdaq supervisor
 								_subsystems[_nodes[i].subsystemId].label:"") + 
 						" @ " + hostname +			
@@ -3383,7 +3353,7 @@
 			_mouseMoveMode = _MMM_POPUP_DIALOG;
 			
 			var ctrlStr = "";
-			ctrlStr += htmlOpen("input",
+			ctrlStr += DesktopContent.htmlOpen("input",
 					{
 							"class": "closeButton",
 							"type": "button",
@@ -3403,14 +3373,14 @@
 			var isHostnameArray = _nodes[i].hostname.indexOf('*') >= 0;			
 			var isHostnameFixedWidth = _nodes[i].hostnameFixedWidth && _nodes[i].hostnameFixedWidth > 1;
 
-			str += htmlClearDiv();
+			str += DesktopContent.htmlClearDiv();
 			
 			str += "<br><center><table class='editNodeDialog-table'>";
 			
 			//======== Subsystem Field
 			str += "<tr><td class='editNodeDialog-fieldCol'><b>Subsystem Name:</b></td><td class='editNodeDialog-valueCol'>";
 			{ //start subsystems
-				str += htmlOpen("select",
+				str += DesktopContent.htmlOpen("select",
 						{
 								"id": "ediNode-" + "subsystem",
 								"style": "float:left; margin:7px; width:187px;",
@@ -3427,7 +3397,7 @@
 				}
 				str += "</select>"; //end aliases dropdown
 
-				str += htmlOpen("input",
+				str += DesktopContent.htmlOpen("input",
 						{
 								"id": "ediNode-" + "subsystemText",
 								"type": "text",
@@ -3437,7 +3407,7 @@
 						},
 						0 /*html*/, true /*closeTag*/);	
 
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id": "subsystem-editIcon",
 								"class": "node-editIcon",
@@ -3452,7 +3422,7 @@
 
 			//======== Other Node Names Field
 			str += "<tr><td class='editNodeDialog-fieldCol'><b>Other Node Names:</b></td><td class='editNodeDialog-valueCol'>";												
-			str += htmlOpen("select",
+			str += DesktopContent.htmlOpen("select",
 					{
 							"id": "ediNode-" + "otherNodeNames",
 							"style": "float:left; margin:7px; width:187px; background-color: rgb(183, 178, 178);",
@@ -3473,7 +3443,7 @@
 
 			//======== Node Name Field
 			str += "<tr><td class='editNodeDialog-fieldCol'><b>Node Name:</b></td><td class='editNodeDialog-valueCol'>";						
-			str += htmlOpen("input",
+			str += DesktopContent.htmlOpen("input",
 					{
 							"id": "ediNode-" + "nodeName",
 							"type": "text",
@@ -3486,7 +3456,7 @@
 			
 			str += "<tr><td colspan='2' style='text-align:right'>";
 
-			str += htmlOpen("input",
+			str += DesktopContent.htmlOpen("input",
 					{
 							"type": "checkbox",
 							"id": "enableMultiNodeCheckbox",
@@ -3495,7 +3465,7 @@
 							"onclick": "handleEditNodeDialogMultiNodeCheckbox(" + i + ",this);",
 							"title": "Enable multi-node instances using printer syntax.",
 					},
-					htmlOpen("a",
+					DesktopContent.htmlOpen("a",
 							{
 									"style": "text-decoration:none;color:black;",
 									"onclick": "var el = document.getElementsByClassName(\"enableMultiNodeCheckbox\");" +
@@ -3516,7 +3486,7 @@
 			//======== end Node Name Field
 			str += "</table>";
 
-			str += htmlClearDiv();
+			str += DesktopContent.htmlClearDiv();
 			
 			//======== Multi Node Settings
 			str += "<div id='multiNodeSettings' style='display:" + 
@@ -3524,13 +3494,13 @@
 			{ //start multi-node
 				str += "For Multi-Node Instances, use 'printer page syntax' (e.g. '0,4-6'), and * in the Node Name..."
 						
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "<br><table class='editNodeDialog-table'>";
 						
 				//======== Multi Node Settings
 				str += "<tr><td class='editNodeDialog-fieldCol'><b>Multi-Node Indices:</b></td><td class='editNodeDialog-valueCol'>";
 										
-				str += htmlOpen("input",
+				str += DesktopContent.htmlOpen("input",
 						{
 								"id": "ediNode-" + "nodeIndices",
 								"type": "text",
@@ -3543,7 +3513,7 @@
 				str += "<tr><td colspan='2' style='text-align:right'>";
 
 				//checkbox for node name fixed width settings
-				str += htmlOpen("input",
+				str += DesktopContent.htmlOpen("input",
 						{
 								"type": "checkbox",
 								"id": "enableNodeNameFixedWidthCheckbox",
@@ -3551,7 +3521,7 @@
 								"checked": (isNodeNameFixedWidth?1:0),
 								"onclick": "handleEditNodeDialogNodeNameFixedWidthCheckbox(" + i + ",this);",
 						},
-						htmlOpen("a",
+						DesktopContent.htmlOpen("a",
 								{
 										"style": "text-decoration:none;color:black;",
 										"onclick": "var el = document.getElementsByClassName(\"enableNodeNameFixedWidthCheckbox\");" +
@@ -3566,7 +3536,7 @@
 				str += "</td></tr>";
 				str += "</table>";
 
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "<div id='nodeNameFixedWidthSettings' style='display:" + 
 						(isNodeNameFixedWidth?"block":"none") + "'>";
 				{ //start node name fixed-width
@@ -3574,10 +3544,10 @@
 							" each Node Name (e.g. 3 would yield numbers like 001, 002, etc.)." +
 							"<br>";
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "<br><table class='editNodeDialog-table'>";
 					str += "<tr><td class='editNodeDialog-fieldCol'><b>Node Name Fixed-width:</b></td><td class='editNodeDialog-valueCol'>";										
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"id": "ediNode-" + "nodeNameFixedWidth",
 									"type": "text",
@@ -3593,11 +3563,11 @@
 				} //end node name fixed width settings
 				str += "</div>"; //close nodeName Fixed Width Settings
 				
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "<br><table class='editNodeDialog-table'>";
 				str += "<tr><td style='text-align:right; white-space:nowrap;'>";										
 
-				str += htmlOpen("input",
+				str += DesktopContent.htmlOpen("input",
 						{
 								"type": "checkbox",
 								"id": "enableHostnameArrayCheckbox",
@@ -3606,7 +3576,7 @@
 								"onclick": "handleEditNodeDialogHostnameArrayCheckbox(" + i + ",this);",
 								"title": "Enable associating the nodes with an array of hostnames.",
 						},
-						htmlOpen("a",
+						DesktopContent.htmlOpen("a",
 								{
 										"style": "text-decoration:none;color:black;",
 										"onclick": "var el = document.getElementsByClassName(\"enableHostnameArrayCheckbox\");" +
@@ -3625,12 +3595,12 @@
 			} //end multi-node
 			str += "</div>"; //close multi-node settings div
 			
-			str += htmlClearDiv();
+			str += DesktopContent.htmlClearDiv();
 
 			str += "<br><table class='editNodeDialog-table'>";
 			str += "<tr><td class='editNodeDialog-fieldCol'><b>Hostname:</b></td><td class='editNodeDialog-valueCol'>";
 			{ //start hostnames
-				str += htmlOpen("select",
+				str += DesktopContent.htmlOpen("select",
 						{
 								"id": "ediNode-" + "hostname",
 								"style": "float: left; margin: 7px;",
@@ -3645,7 +3615,7 @@
 				}
 				str += "</select>"; //end aliases dropdown
 
-				str += htmlOpen("input",
+				str += DesktopContent.htmlOpen("input",
 						{
 								"id": "ediNode-" + "hostnameText",
 								"style": "display:none; float: left;",
@@ -3655,7 +3625,7 @@
 						},
 						0 /*html*/, true /*closeTag*/);	
 
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id": "hostname-editIcon",
 								"class": "node-editIcon",
@@ -3669,7 +3639,7 @@
 			str += "</td></tr>";
 			str += "</table>";
 
-			str += htmlClearDiv();
+			str += DesktopContent.htmlClearDiv();
 			
 			
 			str += "<div id='hostnameArraySettings' style='display:" + 
@@ -3677,11 +3647,11 @@
 			{ //start hostnameArraySettings 
 				str += "Use 'printer page syntax' (e.g. '0,4-6'), and * in the Hostname..."
 
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "<br><table class='editNodeDialog-table'>";
 
 				str += "<tr><td class='editNodeDialog-fieldCol'><b>Hostname Indices:</b></td><td class='editNodeDialog-valueCol'>";
-				str += htmlOpen("input",
+				str += DesktopContent.htmlOpen("input",
 						{
 								"id": "ediNode-" + "hostnameIndices",
 								"type": "text",
@@ -3693,7 +3663,7 @@
 
 				str += "<tr><td colspan='2' style='text-align:right; white-space:nowrap;'>";
 
-				str += htmlOpen("input",
+				str += DesktopContent.htmlOpen("input",
 						{
 								"type": "checkbox",
 								"id": "enableHostnameFixedWidthCheckbox",
@@ -3701,7 +3671,7 @@
 								"checked": (isHostnameFixedWidth?1:0),
 								"onclick": "handleEditNodeDialogHostnameFixedWidthCheckbox(" + i + ",this);",
 						},
-						htmlOpen("a",
+						DesktopContent.htmlOpen("a",
 								{
 										"style": "text-decoration:none;color:black;",
 										"onclick": "var el = document.getElementsByClassName(\"enableHostnameFixedWidthCheckbox\");" +
@@ -3719,7 +3689,7 @@
 			} //end hostnameArraySettings
 			str += "</div>"; //close hostnameArray settings div
 
-			str += htmlClearDiv();
+			str += DesktopContent.htmlClearDiv();
 			str += "<div id='hostnameFixedWidthSettings' style='display:" + 
 					(isHostnameFixedWidth?"block":"none") + "'>";
 			{ //start hostname fixed-width
@@ -3727,10 +3697,10 @@
 						" each hostname (e.g. 3 would yield numbers like 001, 002, etc.)." +
 						"<br>";
 
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "<br><table class='editNodeDialog-table'>";
 				str += "<tr><td class='editNodeDialog-fieldCol'><b>Hostname Fixed-width:</b></td><td class='editNodeDialog-valueCol'>";
-				str += htmlOpen("input",
+				str += DesktopContent.htmlOpen("input",
 						{
 								"id": "ediNode-" + "hostnameFixedWidth",
 								"type": "text",
@@ -3748,10 +3718,10 @@
 			
 			
 
-			str += htmlClearDiv();
+			str += DesktopContent.htmlClearDiv();
 
 			
-			str += htmlOpen("input",
+			str += DesktopContent.htmlOpen("input",
 					{
 							"id": "ediNode-" + "saveNode",
 							"type": "button",
@@ -3774,8 +3744,8 @@
 					undefined /*border*/,
 					50 /*margin*/);
 
-			el.innerHTML = ctrlStr + htmlClearDiv() + 
-					str + htmlClearDiv(); // + ctrlStr;
+			el.innerHTML = ctrlStr + DesktopContent.htmlClearDiv() + 
+					str + DesktopContent.htmlClearDiv(); // + ctrlStr;
 			document.body.appendChild(el);
 
 			localAddHandlers();
@@ -4473,7 +4443,7 @@
 				Debug.log("localOpenActiveGroupsDialog()");
 
 				var ctrlStr = "";
-				ctrlStr += htmlOpen("input",
+				ctrlStr += DesktopContent.htmlOpen("input",
 						{
 								"class": "closeButton",
 								"type": "button",
@@ -4498,7 +4468,7 @@
 					str += "Choose a '" + groupTypes[g] +
 							"' group to activate<br>(either a System Alias or specific group):";
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 
 					str += "<center><br>";
 					str += "Current active '" + groupTypes[g] +
@@ -4507,28 +4477,28 @@
 							"(" + 
 							_systemGroups.activeGroups[groupTypes[g]].groupKey +
 							")</label>";
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "<br><table style='margin-bottom: 10px;'>";
 					if(_systemGroups.aliases[groupTypes[g]] &&
 							_systemGroups.aliases[groupTypes[g]].length)
 					{
 						str += "<tr><td><b>System Aliases:</b></td><td>";
 						{ //start aliases
-							str += htmlOpen("select",
+							str += DesktopContent.htmlOpen("select",
 									{
 											"id" :		stepString + "aliases",
 									});
 
 							for(var i=0;i<_systemGroups.aliases[groupTypes[g]].length;++i)
 							{
-								str += htmlOpen("option",
+								str += DesktopContent.htmlOpen("option",
 										{		
 										},
 										_systemGroups.aliases[groupTypes[g]]
 															  [i].alias /*innerHTML*/, true /*closeTag*/);
 							}
 							str += "</select>"; //end aliases dropdown
-							str += htmlOpen("input",
+							str += DesktopContent.htmlOpen("input",
 									{
 											"id": stepString + "activateAlias",
 											"type": "button",
@@ -4548,14 +4518,14 @@
 					{
 						str += "<tr><td><b>Group Names:</b></td><td>";
 						{ //start groups
-							str += htmlOpen("select",
+							str += DesktopContent.htmlOpen("select",
 									{
 											"id" :		stepString + "groupNames",
 									});
 
 							for(var i=0;i<groupNames.length;++i)
 							{
-								str += htmlOpen("option",
+								str += DesktopContent.htmlOpen("option",
 										{		
 								"selected": (groupNames[i] ==
 										_systemGroups.activeGroups[groupTypes[g]].groupName && (selectedGroupName = i))
@@ -4575,7 +4545,7 @@
 					{
 						str += "<tr><td><b>Group Keys:</b></td><td>";
 						{ //start keys
-							str += htmlOpen("select",
+							str += DesktopContent.htmlOpen("select",
 									{
 											"id" :		stepString + "groupKeys",
 									});
@@ -4583,14 +4553,14 @@
 							for(var i=0;i<_systemGroups.groups[groupTypes[g]]
 															   [groupNames[selectedGroupName]].keys.length;++i)
 							{
-								str += htmlOpen("option",
+								str += DesktopContent.htmlOpen("option",
 										{		
 										},
 										_systemGroups.groups[groupTypes[g]]
 															 [groupNames[selectedGroupName]].keys[i] /*innerHTML*/, true /*closeTag*/);
 							}
 							str += "</select>"; //end group keys dropdown
-							str += htmlOpen("input",
+							str += DesktopContent.htmlOpen("input",
 									{
 											"id": stepString + "activateGroup",
 											"type": "button",
@@ -4619,8 +4589,8 @@
 						undefined /*border*/,
 						50 /*margin*/);
 
-				el.innerHTML = ctrlStr + htmlClearDiv() + 
-						str + htmlClearDiv() + ctrlStr;
+				el.innerHTML = ctrlStr + DesktopContent.htmlClearDiv() + 
+						str + DesktopContent.htmlClearDiv() + ctrlStr;
 				document.body.appendChild(el);
 
 				localAddHandlers();
@@ -4712,7 +4682,7 @@
 							for(var i=0;i<_systemGroups.groups[localGroupType]
 															   [this.value].keys.length;++i)
 							{
-								str += htmlOpen("option",
+								str += DesktopContent.htmlOpen("option",
 										{		
 										},
 										_systemGroups.groups[localGroupType]
@@ -4845,7 +4815,7 @@
 			_mouseMoveMode = _MMM_POPUP_DIALOG;
 
 			var ctrlStr = "";
-			ctrlStr += htmlOpen("input",
+			ctrlStr += DesktopContent.htmlOpen("input",
 					{
 							"class": "closeButton",
 							"type": "button",
@@ -4859,14 +4829,14 @@
 
 			str += "Choose the node type to add...";
 
-			str += htmlClearDiv();
+			str += DesktopContent.htmlClearDiv();
 
 			str += "<br><center><table class='editNodeDialog-table'>";
 			
 			//======== Subsystem Field
 			str += "<tr><td class='editNodeDialog-fieldCol'><b>Node Type:</b></td><td class='editNodeDialog-valueCol'>";
 			{ //start subsystems
-				str += htmlOpen("select",
+				str += DesktopContent.htmlOpen("select",
 						{
 								"id": "ediNode-" + "nodeType",
 								"style": "float:left; margin:7px; width:187px;",
@@ -4892,7 +4862,7 @@
 			
 
 			
-			str += htmlOpen("input",
+			str += DesktopContent.htmlOpen("input",
 					{
 							"id": "ediNode-" + "addNode",
 							"type": "button",
@@ -4915,8 +4885,8 @@
 					undefined /*border*/,
 					50 /*margin*/);
 
-			el.innerHTML = ctrlStr + htmlClearDiv() + 
-					str + htmlClearDiv(); // + ctrlStr;
+			el.innerHTML = ctrlStr + DesktopContent.htmlClearDiv() + 
+					str + DesktopContent.htmlClearDiv(); // + ctrlStr;
 			document.body.appendChild(el);
 
 			localAddHandlers();

@@ -102,6 +102,7 @@
 //		DesktopContent.getWindowHeight()
 //		DesktopContent.getWindowScrollLeft()
 //		DesktopContent.getWindowScrollTop()
+//		DesktopContent.setWindowScrollTop(scrollTop)
 //		DesktopContent.getMouseX()
 //		DesktopContent.getMouseY()
 //		DesktopContent.getDefaultWindowColor() 	 // returns "rgb(#,#,#)"
@@ -111,6 +112,8 @@
 //		DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
 //		DesktopContent.openNewBrowserTab(name,subname,windowPath,unique,completeHandler)
 //		DesktopContent.addDesktopIcon(iconName)
+//		DesktopContent.htmlOpen(tag,attObj,innerHTML,doCloseTag)
+//		DesktopContent.htmlClearDiv()
 //
 //=====================================================================================
 
@@ -139,6 +142,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getWindowHeight()
 //	DesktopContent.getWindowScrollLeft()
 //	DesktopContent.getWindowScrollTop()
+//	DesktopContent.setWindowScrollTop(scrollTop)
 //	DesktopContent.getBodyWidth()
 //	DesktopContent.getBodyHeight()
 //	DesktopContent.getMouseX()
@@ -324,8 +328,8 @@ DesktopContent.init = function(onloadFunction)
 	//The first message is initiated by the Desktop once the window frame has been loaded.
 	window.addEventListener('message', event => {
 
-		console.log(window.location.href,
-			"Child event.data",event.data); 
+		// console.log(window.location.href,
+		// 	"Child event.data",event.data); 
 
 
 		if(!event.data.windowId)
@@ -461,8 +465,8 @@ DesktopContent.init = function(onloadFunction)
 	//The first message is initiated by the Desktop once the window frame has been loaded.
 	DesktopContent._theWindow.addEventListener('message', event => {
 
-		console.log(window.location.href,
-			"Desktop Window event.data",event.data); 
+		// console.log(window.location.href,
+		// 	"Desktop Window event.data",event.data); 
 
 
 		if(!event.data.windowId)
@@ -494,12 +498,12 @@ DesktopContent.init = function(onloadFunction)
 				{
 					window.clearTimeout(DesktopContent._updateCookieCodeTimer);
 					
-					Debug.log("localUpdateCookieCode");
+					// Debug.log("localUpdateCookieCode");
 					var deltaTime = parseInt((new Date()).getTime()) - //in ms
 							parseInt(DesktopContent._updateTimeMailbox);
 					if(deltaTime > 30)						
 					{			
-						Debug.log("Requesting updated cooking code from desktop");
+						// Debug.log("Requesting updated cooking code from desktop");
 
 						DesktopContent._theDesktopWindow.postMessage(
 								{
@@ -507,8 +511,8 @@ DesktopContent.init = function(onloadFunction)
 							"request":  		"getCookieCode"
 								},"*");
 					}
-					else
-						Debug.log("No need to update deltaTime=" + deltaTime);
+					// else
+					// 	Debug.log("No need to update deltaTime=" + deltaTime);
 					
 					DesktopContent._updateCookieCodeTimer = window.setTimeout(
 							localUpdateCookieCode,30*1000 /*ms*/);
@@ -2184,6 +2188,13 @@ DesktopContent.getBodyWidth = function() { return document.body.offsetWidth; }
 DesktopContent.getBodyHeight = function() { return document.body.offsetHeight; }
 DesktopContent.getWindowScrollLeft = function() { return document.documentElement.scrollLeft || document.body.scrollLeft || 0; }
 DesktopContent.getWindowScrollTop = function() { return document.documentElement.scrollTop || document.body.scrollTop || 0; }
+DesktopContent.setWindowScrollTop = function(scrollTop) 
+{ 
+	if(document.documentElement.scrollTop === undefined)
+		document.body.scrollTop = scrollTop; 
+	else
+		document.documentElement.scrollTop = scrollTop; 
+} //end setWindowScrollTop()
 DesktopContent.getMouseX = function() { return DesktopContent._windowMouseX | 0; } //force to int
 DesktopContent.getMouseY = function() { return DesktopContent._windowMouseY | 0; } //force to int
 DesktopContent.getDefaultWindowColor = function() {
@@ -2679,10 +2690,60 @@ DesktopContent.getExceptionLineNumber = function(e)
 		return e.stack.split('\n')[1].split(':')[4].split(')')[0]|0; }
 	catch(newError) { return -1; } //hide error and give invalid line number
 } //end getExceptionLineNumber()
-	
 
+//=====================================================================================
+//	provide html tag name and attribute/value map object
+DesktopContent.htmlOpen = function(tag, attObj, innerHTML, doCloseTag)
+{
+	var str = "";
+	var detectedCheckbox = false;
+	var attKeys = attObj?Object.keys(attObj):[]; 
+	str += "<" + tag + " ";
+	for(var i=0;i<attKeys.length;++i)
+	{
+		if(attKeys[i] == "type" && attObj[attKeys[i]] == "checkbox")
+			detectedCheckbox = true;
 
+		if(attKeys[i] == "selected") str += (attObj[attKeys[i]]|0)?" selected ":""; //no value
+		else if(attKeys[i] == "checked") str += (attObj[attKeys[i]]|0)?" checked ":""; //no value
+		else if(attKeys[i] == "") continue; //skip empty key
+		else
+			str += " " + attKeys[i] + "='" +
+			attObj[attKeys[i]] + "' ";
+	}
+	str += ">";
+	if(innerHTML) 
+	{
+		//if not internal tags on inner HTML of checkbox, then add link to manipulate checkbox
+		if(detectedCheckbox && doCloseTag && innerHTML.indexOf("<a") < 0)
+		{
+			var childAtt = {"style": "text-decoration:none;color:inherit;",
+				"onclick": "var el = this.previousSibling; Debug.log(el.id); " + //= document.getElementsByClassName(\"enableMultiNodeCheckbox\");" +
+					"var forFirefox = (el.checked = !el.checked); " +
+					"if (typeof el.onclick == \"function\") { " +
+						"el.onclick.apply(el); }"
+			}
+			if(attObj["title"])
+				childAtt["title"] = attObj["title"];
 
+			str += DesktopContent.htmlOpen("a",childAtt,
+				innerHTML /*innerHTML*/,
+				true /*doCloseTag*/
+				);
+		}
+		else
+			str += innerHTML;
+	}
+	if(doCloseTag)
+		str += "</" + tag + ">";
+	return str;
+} //end htmlOpen()
+
+//=====================================================================================
+DesktopContent.htmlClearDiv = function()
+{
+	return "<div id='clearDiv'></div>";
+} //end htmlClearDiv()
 
 
 

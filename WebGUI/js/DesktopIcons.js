@@ -351,7 +351,7 @@ else {
 			div.style.marginLeft = (_defaultIconTextWidth-_defaultIconWidth-2)/2 + "px"; //extra 2 for border
 			
 			//define icon content
-			if(picfn != "0" && picfn != "DEFAULT" && picfn != "")
+			if(picfn != "0" && picfn != "DEFAULT" && picfn != "NO ICON" && picfn != "")
 			{ //if icon image			
 				Debug.log("picfn",picfn.substr(0,4),picfn);
 				if(picfn[0] != '/' && ( //avoid if http*: start as well

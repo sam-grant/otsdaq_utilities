@@ -68,8 +68,8 @@
     	//updateIterateStatus()	
     	//bodyMouseMoveHandler()
     	//htmlOpenDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,titleStr,mousedownStr,dragStr,dragendStr)
-    	//htmlOpen(tag,attObj,innerHTML,closeTag)
-		//htmlClearDiv()
+    	//DesktopContent.htmlOpen(tag,attObj,innerHTML,closeTag)
+		//DesktopContent.htmlClearDiv()
 	
 			//Input Handlers:
 		//handleMouseOver(type,id) 
@@ -1207,7 +1207,7 @@
                 //show created time
         		//ConfigurationAPI.getDateString(date)
 
-                str += htmlClearDiv();
+                str += DesktopContent.htmlClearDiv();
 
                 var commands = _commands;
                 var depth = 0;
@@ -1226,7 +1226,7 @@
                 {	//start depth 0 span -----------										
                 	for(i=0;i<commands.length;++i)
                 	{
-                		str += htmlClearDiv();
+                		str += DesktopContent.htmlClearDiv();
 
                 		//get command parameter keys (already verified, hopefully, in extraction from server or creation of commands)
                 		paramKeys = Object.keys(commands[i].param); 
@@ -1430,7 +1430,7 @@
                 	//finished with commands, add "End" indicator
                 	//add last command control
                 	{
-                		str += htmlClearDiv();
+                		str += DesktopContent.htmlClearDiv();
 
                 		str += htmlOpenDiv(	//start end command ----------- 
                 				"plan-command-" + i,
@@ -1501,7 +1501,7 @@
 
                 if(_planIsModified)
                 {
-                	str += htmlClearDiv();
+                	str += DesktopContent.htmlClearDiv();
                 	str += "<br><br>";
                 	str += localCreateSaveButton();
                 }
@@ -1568,31 +1568,6 @@
 					(dragendStr?(" ondragend='" + dragendStr + "' "):"") +
 					">";
 		} //end htmlOpenDiv
-
-		//=====================================================================================
-		//htmlOpen ~~		
-		//	tab name and attribute/value map object
-		function htmlOpen(tag,attObj,innerHTML,closeTag)
-		{
-			var str = "";
-			var attKeys = Object.keys(attObj); 
-			str += "<" + tag + " ";
-			for(var i=0;i<attKeys.length;++i)
-				str += " " + attKeys[i] + "='" +
-					attObj[attKeys[i]] + "' ";
-			str += ">";
-			if(innerHTML) str += innerHTML;
-			if(closeTag)
-				str += "</" + tag + ">";
-			return str;
-		} // end htmlOpen()
-		
-		//=====================================================================================
-		//htmlClearDiv ~~		
-		function htmlClearDiv()
-		{
-			return "<div id='clearDiv'></div>";
-		} //end htmlClearDiv
 
 		//=====================================================================================
 		//handlePlanNameDrag ~~		
@@ -1811,7 +1786,7 @@
 					"showCommandDialog(" + i + ", true /*modifyExisting*/);" /*mouseup*/);
 			str += "</div>";
 			
-			str += htmlClearDiv();			
+			str += DesktopContent.htmlClearDiv();			
 			
 			
 			//str += "<br>";
@@ -2730,7 +2705,7 @@
 
 					str += "<center>";
 					str += "<br>";
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"id": ConfigurationAPI._POP_UP_DIALOG_ID + "-submitButton",
 									"type": "button",
@@ -2744,7 +2719,7 @@
 					{
 						str += "<br>";
 						str += "<table><tr><td>";
-						str += htmlOpen("input",
+						str += DesktopContent.htmlOpen("input",
 								{
 										"id": "popUp-cloneButton",
 										"type": "button",
@@ -2824,7 +2799,7 @@
 						{
 							//FSM name field, show select box including ""
 
-							str += htmlOpen("select",
+							str += DesktopContent.htmlOpen("select",
 									{
 											"id":("popUp-param-" + i),
 											"class":"popUp-param",
@@ -2832,12 +2807,12 @@
 									});
 
 							//give empty option
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{"value":" "},
 									0 /*innerHTML*/, true /*closeTag*/);
 
 							for(var j=0;j<_fsmNames.length;++j)
-								str += htmlOpen("option" +
+								str += DesktopContent.htmlOpen("option" +
 										(_fsmNames[j] == initValue? //select the init value if match
 												" selected":""),
 												{"value":_fsmNames[j]},
@@ -2851,7 +2826,7 @@
 						{
 							//system alias field, show select box
 							//	with details below
-							str += htmlOpen("select",
+							str += DesktopContent.htmlOpen("select",
 									{
 											"id":("popUp-param-" + i),
 											"class":"popUp-param",
@@ -2860,7 +2835,7 @@
 									});
 
 							for(var j=0;j<_tableGroupAliases.length;++j)
-								str += htmlOpen("option" +
+								str += DesktopContent.htmlOpen("option" +
 										(_tableGroupAliases[j].alias == initValue? //select the init value if match
 												" selected":""),
 												{
@@ -2870,7 +2845,7 @@
 
 							str += "</select>";	
 
-							str += htmlOpen("div",
+							str += DesktopContent.htmlOpen("div",
 									{
 											"id":"popUp-param-systemAliasDetails"										
 									});
@@ -2883,7 +2858,7 @@
 						else if(_COMMAND_PARAMS[commandKey][i] ==  //targets
 									_COMMAND_PARAM_FIELDS.Targets)
 						{
-							str += htmlOpen("input",
+							str += DesktopContent.htmlOpen("input",
 									{
 											"id":("popUp-param-" + i),
 											"class":"popUp-param popUp-param-wiz",
@@ -2893,7 +2868,7 @@
 											"onchange":"_popUpParamsModified = true;"
 									}, 0 /*innerHTML*/, true /*closeTag*/);
 							
-							str += htmlOpen("div",
+							str += DesktopContent.htmlOpen("div",
 									{
 											"class":ConfigurationAPI._POP_UP_DIALOG_ID + "-editIcon",
 											"style":"float:left; display:block; margin: 2px 0 0 10px;",
@@ -2927,7 +2902,7 @@
 						else if(_COMMAND_PARAMS[commandKey][i] ==  //targets
 								_COMMAND_PARAM_FIELDS.RelativePathToField)
 						{
-							str += htmlOpen("input",
+							str += DesktopContent.htmlOpen("input",
 									{
 											"id":("popUp-param-" + i),
 											"class":"popUp-param popUp-param-wiz",
@@ -2937,7 +2912,7 @@
 											"onchange":"_popUpParamsModified = true;"
 									}, 0 /*innerHTML*/, true /*closeTag*/);
 							
-							str += htmlOpen("div",
+							str += DesktopContent.htmlOpen("div",
 									{
 											"class":ConfigurationAPI._POP_UP_DIALOG_ID + "-editIcon",
 											"style":"float:left; display:block; margin: 2px 0 0 10px;",
@@ -2956,7 +2931,7 @@
 						{
 							//boolean field, show select box and set value to 1/0
 
-							str += htmlOpen("select",
+							str += DesktopContent.htmlOpen("select",
 									{
 											"id":("popUp-param-" + i),
 											"class":"popUp-param",
@@ -2969,21 +2944,21 @@
 									initValue == "On" || 
 									initValue == "1") 
 							{
-								str += htmlOpen("option selected",
+								str += DesktopContent.htmlOpen("option selected",
 										{"value":1},
 										"Yes" /*innerHTML*/, true /*closeTag*/);
 
-								str += htmlOpen("option",
+								str += DesktopContent.htmlOpen("option",
 										{"value":0},
 										"No" /*innerHTML*/, true /*closeTag*/);
 							}
 							else
 							{
-								str += htmlOpen("option",
+								str += DesktopContent.htmlOpen("option",
 										{"value":1},
 										"Yes" /*innerHTML*/, true /*closeTag*/);
 
-								str += htmlOpen("option selected",
+								str += DesktopContent.htmlOpen("option selected",
 										{"value":0},
 										"No" /*innerHTML*/, true /*closeTag*/);
 							}
@@ -2997,7 +2972,7 @@
 						{
 							if(initValue == "") //set default table name
 								initValue = _MACRO_DIM_LOOP_TABLE;
-							str += htmlOpen("input",
+							str += DesktopContent.htmlOpen("input",
 									{
 											"id":("popUp-param-" + i),
 											"class":"popUp-param",
@@ -3007,7 +2982,7 @@
 									}, 0 /*innerHTML*/, true /*closeTag*/);
 						}
 						else //default field input	
-							str += htmlOpen("input",
+							str += DesktopContent.htmlOpen("input",
 									{
 											"id":("popUp-param-" + i),
 											"class":"popUp-param",
@@ -3160,16 +3135,16 @@
 						"popUp-fieldWiz-cancelButton" + 
 						"' href='#'>Cancel</a><br><br>";
 
-				str += htmlClearDiv();
-				str += htmlOpen("div",
+				str += DesktopContent.htmlClearDiv();
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id":"popUp-fieldWiz-firstBox",
 								"style":"height:390px; margin-top: -16px;"
 						},
 						0,true);
 				
-				str += htmlClearDiv();
-				str += htmlOpen("input",
+				str += DesktopContent.htmlClearDiv();
+				str += DesktopContent.htmlOpen("input",
 						{
 								"id": "popUp-fieldWiz-submitButton",
 								"type": "button",
@@ -3329,12 +3304,12 @@
 						"-div"); //start main div ----------- 
 
 				//make target display
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id":"popUp-targetDisplayLabel",
 								"style":"float: left;"
 						},0,true);
-				str += htmlOpen("input readonly ",
+				str += DesktopContent.htmlOpen("input readonly ",
 						{
 								"id":"popUp-targetDisplay",
 								"type":"text",
@@ -3344,7 +3319,7 @@
 						});
 				str += "</input>";
 				
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id":"popUp-targetDisplayClearButton",
 								"style":"float: left; cursor: pointer",
@@ -3353,15 +3328,15 @@
 						"x",
 						true);
 
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				
 				//make checkbox for FE only filter
-				str += htmlOpen("input",
+				str += DesktopContent.htmlOpen("input",
 						{
 								"type":"checkbox",
 								"id":"popUp-targetWizFEOnly"								
 						},
-						htmlOpen("label",
+						DesktopContent.htmlOpen("label",
 								{
 								"id":"popUp-targetWizFEOnlyName",
 								"style":"cursor:pointer;"										
@@ -3369,15 +3344,15 @@
 								"Filter on Front-ends only",true),
 								true);
 				
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				
 				//make checkbox for second-level all UIDs
-				str += htmlOpen("input",
+				str += DesktopContent.htmlOpen("input",
 						{
 								"type":"checkbox",
 								"id":"popUp-targetWizAllUIDs",
 						},
-						htmlOpen("label",
+						DesktopContent.htmlOpen("label",
 								{
 										"id":"popUp-targetWizAllUIDsName",
 										"style":"cursor:pointer;"										
@@ -3385,21 +3360,21 @@
 								"Target all records within parent",true),
 								true);
 
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id":"popUp-targetWiz-firstBox",
 								"style":"height:160px; margin-top: -16px;"
 						},
 						0,true);
 
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id":"popUp-targetWiz-secondBoxDiv",
 								"style":"display:block"
 						});
 				
 				
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id":"popUp-targetWiz-secondBox",
 								"style":"height:160px; margin-top: -16px;"
@@ -3408,8 +3383,8 @@
 						0,true);
 				str += "</div>";
 
-				str += htmlClearDiv();
-				str += htmlOpen("input",
+				str += DesktopContent.htmlClearDiv();
+				str += DesktopContent.htmlOpen("input",
 						{
 								"id": "popUp-targetWiz-submitButton",
 								"type": "button",
@@ -3901,7 +3876,7 @@
 				if(_tableGroupAliases[j].alias == value)
 				{
 					//found details
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "<table>";
 					str += "<tr><td style='white-space:nowrap;font-weight:bold;'>" +
 							"Translates to:</td>";

@@ -827,17 +827,19 @@ Debug._errBoxLastContent = "";
 //Close the error popup on the window
 Debug.closeErrorPop = function() 
 {
-	document.getElementById(Debug._errBoxId).style.display = "none";
+	var el = document.getElementById(Debug._errBoxId);
+	if(!el) return;
+	el.style.display = "none";
 	Debug._errBoxLastContent = document.getElementById(Debug._errBoxId + "-err").innerHTML;
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = ""; //clear string
-}
+} //end closeErrorPop()
 //=====================================================================================
 //Bring the error popup back
 Debug.bringBackErrorPop = function() 
 {
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = Debug._errBoxLastContent; //bring back string
 	document.getElementById(Debug._errBoxId).style.display = "block";
-}
+} //end bringBackErrorPop()
 
 
 Debug._errBoxOffMoveStartX = -1;
