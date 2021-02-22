@@ -141,6 +141,7 @@
 		//configIncrementByReplace()
 		//versionHasChanged()
 
+		//togglePaintCellValue()
 		//tableVersionDiff()
 		//setupTableVersionDiff()
 		//setupCopyAndMoveRows()
@@ -409,6 +410,15 @@
 			border-left: 		2px solid rgb(140, 86, 86);
 			padding-bottom:		5px;
 		}
+
+		.noUserSelect {
+			-webkit-touch-callout: 	none;
+			-webkit-user-select: 	none;
+			-khtml-user-select: 	none;
+			-moz-user-select: 		none;
+			-ms-user-select: 		none;
+			user-select: 			none;
+		}
 	</style>
 
 
@@ -668,7 +678,7 @@
 			//============================
 			//		for debugging
 
-			// setupSpecificTable("DTCInterfaceTable","27",""); return;
+			setupSpecificTable("DTCInterfaceTable","27",""); return;
 			//setupSpecificTable("XDAQContextTable","2","setupTableViewMode('anchorTag-XDAQContextTable');"); return;
 
 			//setupSpecificTableGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerTable"); return;			
@@ -5111,6 +5121,9 @@
 		//activateSystemConfigHandler ~
 		function activateSystemConfigHandler(req, displayErrors)
 		{
+			//reset (could be silly play in table view value painter)
+			document.body.style.cursor = "default";
+
 			var withWarningsStr = "";
 			var name, key; //only filled in if withWarningsStr != ""
 			if (displayErrors)
@@ -6078,6 +6091,36 @@
 		} //end createTableGroupHandler()
 
 		//==============================================================================
+		//togglePaintCellValue
+		function togglePaintCellValue() 
+		{			
+			Debug.log("togglePaintCellValue",document.body.style.cursor);
+
+			var painterSource = 'url("/WebPath/images/iconImages/cursor-PaintRoller.png"), auto';
+			var selectorSource = "crosshair";
+
+			var vpel = document.getElementById("valuePainterButton");
+			if(!vpel) return;	
+			if(document.body.style.cursor == painterSource || 
+				document.body.style.cursor == selectorSource)
+			{
+				document.body.style.cursor = "default";
+				vpel.value = "Copy and Paint a Cell";
+				vpel.title = "Click to enable choosing a cell value to copy and paint into other cells by dragging the mouse cursor.";
+
+				//return table to selectable text
+				var tel = document.getElementById("SubSystemTable");
+				tel.className = "";
+			}
+			else
+			{
+				vpel.value = "Cancel Cell Value Selection";
+				vpel.title = "Click to cancel cell value selection mode.";
+				document.body.style.cursor = selectorSource;
+			}
+		} //end togglePaintCellValue()
+
+		//==============================================================================
 		//tableVersionDiff
 		function tableVersionDiff() 
 		{			
@@ -6290,6 +6333,10 @@
 			str += "<input type='button' onmouseup='configCopyView()' value='" +
 				"Copy Source Version to new Temporary Version' title='" +
 				"Copy Source Version (with possibly different column names) to a new Temporary Version with current column names." +
+				"'/>";
+			str += "<br><br>";
+			str += "<input id='valuePainterButton' type='button' onmouseup='togglePaintCellValue()' value='Copy and Paint a Cell' title='" +
+				"Click to enable choosing a cell value to copy and paint into other cells by dragging the mouse cursor." +
 				"'/>";
 			str += "<br><br>";
 			el.innerHTML = str;
@@ -7816,8 +7863,108 @@
 
 		//==============================================================================
 		//selectThisCell ~~
-		function selectThisCell(r, c, el, event)
+		function selectThisCell(r, c, el, event, paintMode)
 		{
+			var painterSource = 'url("/WebPath/images/iconImages/cursor-PaintRoller.png"), auto';
+			var selectorSource = "crosshair";
+			
+			if(paintMode)
+			{
+				if(event.buttons && document.body.style.cursor == painterSource)
+				{
+					if(el.innerText == _editingCellElOldValue)
+						return; //already same value
+
+					Debug.log(r,c,"paint mode",event.buttons);
+					el.innerHTML = "";
+					el.appendChild(document.createTextNode(_editingCellElOldValue));				
+
+					var selVal = _editingCellElOldValue;
+					//assume coloring yes/no is good enough until table is saved
+					var boolTypeTrues = ["On", "True", "Yes"];
+					var statusTypeFalses = ["Off", "False", "No"];
+
+					//determine if true value
+					var isTrue = false;
+					var isFalse = false;
+					for (var i = 0; i < boolTypeTrues.length; ++i)
+						if (boolTypeTrues[i] == selVal) 
+						{
+							isTrue = true; break;
+						}
+					for (var i = 0; !isTrue && i < statusTypeFalses.length; ++i)
+						if (statusTypeFalses[i] == selVal) 
+						{
+							isFalse = true; break;
+						}
+
+					if (isTrue)
+						el.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
+					else if (isFalse)
+						el.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+
+					versionHasChanged();
+				}
+				return;
+			}
+			else if(document.body.style.cursor == selectorSource)
+			{
+				//start painting mode
+				var vpel = document.getElementById("valuePainterButton");
+				if(vpel)
+				{
+					_editingCellElOldValue = el.textContent;
+					document.body.style.cursor = painterSource;
+					vpel.value = "End Cell Value Painting";
+					vpel.title = "Click to end cell value painting mode.";
+					Debug.log("Value-to-paint",_editingCellElOldValue);
+				}
+				else 
+					document.body.style.cursor = "default";
+
+				var tel = document.getElementById("SubSystemTable");
+				tel.className = "noUserSelect";
+				return;
+			}
+			else if(document.body.style.cursor == painterSource)
+			{
+				if(el.innerText == _editingCellElOldValue)
+					return; //already same value
+				//do painting
+				Debug.log("Painting value",_editingCellElOldValue);
+
+				el.innerHTML = "";
+				el.appendChild(document.createTextNode(_editingCellElOldValue));
+				var selVal = _editingCellElOldValue;
+
+				//assume coloring yes/no is good enough until table is saved
+				var boolTypeTrues = ["On", "True", "Yes"];
+				var statusTypeFalses = ["Off", "False", "No"];
+
+				//determine if true value
+				var isTrue = false;
+				var isFalse = false;
+				for (var i = 0; i < boolTypeTrues.length; ++i)
+					if (boolTypeTrues[i] == selVal) 
+					{
+						isTrue = true; break;
+					}
+				for (var i = 0; !isTrue && i < statusTypeFalses.length; ++i)
+					if (statusTypeFalses[i] == selVal) 
+					{
+						isFalse = true; break;
+					}
+
+				if (isTrue)
+					el.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
+				else if (isFalse)
+					el.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+
+			versionHasChanged();
+				return;
+			}
+
+
 			_editingCellElOldTitle = el.title; //originally only used by tree, but 
 			//table cells have title now too
 
@@ -16794,7 +16941,11 @@
 						str += "<td onmouseup='selectThisCell(" + (r - _CONFIG_DATA_ROW_OFFSET) + "," +
 							(c - _CONFIG_DATA_COL_OFFSET) + ",this,event);' " +
 							tdStyle +
-
+							//paint mode is use for cell value painter
+							" onmouseover='selectThisCell(" + (r - _CONFIG_DATA_ROW_OFFSET) + "," +
+							(c - _CONFIG_DATA_COL_OFFSET) + ",this,event,true /*paintMode*/);' " +
+							" onmousemove='selectThisCell(" + (r - _CONFIG_DATA_ROW_OFFSET) + "," +
+							(c - _CONFIG_DATA_COL_OFFSET) + ",this,event,true /*paintMode*/);' " +
 							" title='UID : " + uidVal + "\n" +
 							colHdr +
 							" : " +
