@@ -387,7 +387,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		    TableViewColumnInfo::getAllDataTypesForGUI();
 		std::map<std::pair<std::string, std::string>, std::string> allDefaults =
 		    TableViewColumnInfo::getAllDefaultsForGUI();
-
+		// TODO maybe here a new function will be needed to get allminmaxforGUI 
 		for(const auto& type : allTypes)
 			xmlOut.addTextElementToData("columnTypeForGUI", type);
 		for(const auto& dataType : allDataTypes)
@@ -400,6 +400,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			                            colDefault.first.second);
 			xmlOut.addTextElementToData("columnDefaultValue", colDefault.second);
 		}
+		//TODO add min and max responses.
 	}
 	else if(requestType == "getGroupAliases")
 	{
@@ -600,6 +601,11 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		    CgiDataUtilities::getData(cgiIn, "allowIllegalColumns");  // from GET
 		__SUP_COUT__ << "allowIllegalColumns: " << (allowIllegalColumns == "1") << __E__;
 
+		std::string rawData =
+		    CgiDataUtilities::getData(cgiIn, "rawData");  // from GET
+		__SUP_COUT__ << "rawData: " << (rawData == "1") << __E__;
+
+
 		__SUP_COUT__ << "getSpecificTable: " << tableName << " versionStr: " << versionStr
 		             << " chunkSize: " << chunkSize << " dataOffset: " << dataOffset
 		             << __E__;
@@ -658,7 +664,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                  cfgMgr,
 		                  tableName,
 		                  TableVersion(version),
-		                  (allowIllegalColumns == "1"));
+		                  (allowIllegalColumns == "1"),
+		                  (rawData == "1"));
 		// append author column default value
 		xmlOut.addTextElementToData("DefaultRowValue", userInfo.username_);
 	}
@@ -2771,7 +2778,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 			xmlOut.addTextElementToParent("FieldColumnDefaultValue",
 			                              fieldInfo.columnInfo_->getDefaultValue(),
 			                              parentEl);
-
+			// again, should min and max be included here?
 			parentTypeEl =
 			    xmlOut.addTextElementToParent("FieldColumnDataChoices", "", parentEl);
 
@@ -4851,7 +4858,9 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
                                                    ConfigurationManagerRW* cfgMgr,
                                                    const std::string&      tableName,
                                                    TableVersion            version,
-                                                   bool allowIllegalColumns) try
+                                                   bool 				   allowIllegalColumns /* = false */,
+												   bool					   getRawData /* = false */) 
+try
 {
 	char                 tmpIntStr[100];
 	xercesc::DOMElement *parentEl, *subparentEl;
@@ -4873,18 +4882,21 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 
 	//__COUTV__(allowIllegalColumns);
 
-	// send all table names along with
-	//	and check for specific version
-	xmlOut.addTextElementToData("ExistingTableNames",
-	                            TableViewColumnInfo::DATATYPE_LINK_DEFAULT);
-	for(auto& configPair : allTableInfo)
+	if(!getRawData)
 	{
-		xmlOut.addTextElementToData("ExistingTableNames", configPair.first);
-		if(configPair.first == tableName &&  // check that version exists
-		   configPair.second.versions_.find(version) == configPair.second.versions_.end())
+		// send all table names along with
+		//	and check for specific version
+		xmlOut.addTextElementToData("ExistingTableNames",
+									TableViewColumnInfo::DATATYPE_LINK_DEFAULT);
+		for(auto& configPair : allTableInfo)
 		{
-			__SUP_COUT__ << "Version not found, so using mockup." << __E__;
-			version = TableVersion();  // use INVALID
+			xmlOut.addTextElementToData("ExistingTableNames", configPair.first);
+			if(configPair.first == tableName &&  // check that version exists
+			configPair.second.versions_.find(version) == configPair.second.versions_.end())
+			{
+				__SUP_COUT__ << "Version not found, so using mockup." << __E__;
+				version = TableVersion();  // use INVALID
+			}
 		}
 	}
 
@@ -4893,6 +4905,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	                            table->getTableDescription());  // table name
 
 	// existing table versions
+	if(!getRawData)
 	{
 		// get version aliases for translation
 		std::map<
@@ -4942,30 +4955,54 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	// table columns and then rows (from table view)
 
 	// get view pointer
-	TableView* cfgViewPtr;
+	TableView* tableViewPtr;
 	if(version.isInvalid())  // use mock-up
 	{
-		cfgViewPtr = table->getMockupViewP();
+		tableViewPtr = table->getMockupViewP();
 	}
 	else  // use view version
 	{
 		//__COUTV__(allowIllegalColumns);
-
+		// __COUTV__(getRawData);
 		try
 		{
 			// locally accumulate 'manageable' errors getting the version to avoid
 			// reverting to mockup
 			std::string localAccumulatedErrors = "";
-			cfgViewPtr =
+			tableViewPtr =
 			    cfgMgr
 			        ->getVersionedTableByName(tableName,
 			                                  version,
 			                                  allowIllegalColumns /*looseColumnMatching*/,
-			                                  &localAccumulatedErrors)
+			                                  &localAccumulatedErrors,
+											  getRawData)
 			        ->getViewP();
 
+			if(getRawData)
+			{		
+				xmlOut.addTextElementToData("TableRawData", tableViewPtr->getSourceRawData());
+				
+				const std::set<std::string>& 	srcColNames  = tableViewPtr->getSourceColumnNames();
+				for (auto& srcColName : srcColNames)
+					xmlOut.addTextElementToData("ColumnHeader", srcColName);
+
+				if(!version.isTemporaryVersion())
+				{
+					//if version is temporary, view is already ok
+					table->eraseView(version); //clear so that the next get will fill the table
+					tableViewPtr =
+						cfgMgr
+						->getVersionedTableByName(tableName,
+												version,
+												allowIllegalColumns /*looseColumnMatching*/,
+												&localAccumulatedErrors,
+												false /* getRawData */)
+						->getViewP();
+				}
+			} //end rawData handling
+				
 			if(localAccumulatedErrors != "")
-				xmlOut.addTextElementToData("Error", localAccumulatedErrors);
+				xmlOut.addTextElementToData("Error", localAccumulatedErrors);			
 		}
 		catch(std::runtime_error& e)  // default to mock-up for fail-safe in GUI editor
 		{
@@ -4975,7 +5012,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 
 			__SUP_COUT_ERR__ << "\n" << ss.str();
 			version    = TableVersion();
-			cfgViewPtr = table->getMockupViewP();
+			tableViewPtr = table->getMockupViewP();
 
 			xmlOut.addTextElementToData("Error", "Error getting view! " + ss.str());
 		}
@@ -4992,18 +5029,21 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 
 			__SUP_COUT_ERR__ << "\n" << ss.str();
 			version    = TableVersion();
-			cfgViewPtr = table->getMockupViewP();
+			tableViewPtr = table->getMockupViewP();
 
 			xmlOut.addTextElementToData("Error", "Error getting view! " + ss.str());
 		}
 	}
 	xmlOut.addTextElementToData("TableVersion", version.toString());  // table version
 
+	if(getRawData)
+		return; //no need to go further for rawData handling	
+
 	// get 'columns' of view
 	xercesc::DOMElement* choicesParentEl;
 	parentEl = xmlOut.addTextElementToData("CurrentVersionColumnHeaders", "");
 
-	std::vector<TableViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
+	std::vector<TableViewColumnInfo> colInfo = tableViewPtr->getColumnsInfo();
 
 	for(int i = 0; i < (int)colInfo.size(); ++i)  // column headers and types
 	{
@@ -5022,6 +5062,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		xmlOut.addTextElementToParent(
 		    "ColumnDefaultValue", colInfo[i].getDefaultValue(), parentEl);
 
+
 		choicesParentEl = xmlOut.addTextElementToParent("ColumnChoices", "", parentEl);
 		// add data choices if necessary
 		if(colInfo[i].getType() == TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
@@ -5031,13 +5072,16 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 			for(auto& choice : colInfo[i].getDataChoices())
 				xmlOut.addTextElementToParent("ColumnChoice", choice, choicesParentEl);
 		}
+
+		xmlOut.addTextElementToParent("ColumnMinValue", colInfo[i].getMinValue(), parentEl);
+		xmlOut.addTextElementToParent("ColumnMaxValue", colInfo[i].getMaxValue(), parentEl);
 	}
 
 	// verify mockup columns after columns are posted to xmlOut
 	try
 	{
 		if(version.isInvalid())
-			cfgViewPtr->init();
+			tableViewPtr->init();
 	}
 	catch(std::runtime_error& e)
 	{
@@ -5051,7 +5095,7 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 
 	parentEl = xmlOut.addTextElementToData("CurrentVersionRows", "");
 
-	for(int r = 0; r < (int)cfgViewPtr->getNumberOfRows(); ++r)
+	for(int r = 0; r < (int)tableViewPtr->getNumberOfRows(); ++r)
 	{
 		//__SUP_COUT__ << "\t\tRow " << r << ": "  << __E__;
 
@@ -5059,27 +5103,27 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 		xercesc::DOMElement* tmpParentEl =
 		    xmlOut.addTextElementToParent("Row", tmpIntStr, parentEl);
 
-		for(int c = 0; c < (int)cfgViewPtr->getNumberOfColumns(); ++c)
+		for(int c = 0; c < (int)tableViewPtr->getNumberOfColumns(); ++c)
 		{
 			if(colInfo[c].getDataType() == TableViewColumnInfo::DATATYPE_TIME)
 			{
 				std::string timeAsString;
-				cfgViewPtr->getValue(timeAsString, r, c);
+				tableViewPtr->getValue(timeAsString, r, c);
 				xmlOut.addTextElementToParent("Entry", timeAsString, tmpParentEl);
 			}
 			else
 				xmlOut.addTextElementToParent(
-				    "Entry", cfgViewPtr->getDataView()[r][c], tmpParentEl);
+				    "Entry", tableViewPtr->getDataView()[r][c], tmpParentEl);
 		}
 	}
 
 	// add "other" fields associated with configView
-	xmlOut.addTextElementToData("TableComment", cfgViewPtr->getComment());
-	xmlOut.addTextElementToData("TableAuthor", cfgViewPtr->getAuthor());
+	xmlOut.addTextElementToData("TableComment", tableViewPtr->getComment());
+	xmlOut.addTextElementToData("TableAuthor", tableViewPtr->getAuthor());
 	xmlOut.addTextElementToData("TableCreationTime",
-	                            std::to_string(cfgViewPtr->getCreationTime()));
+	                            std::to_string(tableViewPtr->getCreationTime()));
 	xmlOut.addTextElementToData("TableLastAccessTime",
-	                            std::to_string(cfgViewPtr->getLastAccessTime()));
+	                            std::to_string(tableViewPtr->getLastAccessTime()));
 
 	// add to xml the default row values
 	//NOTE!! ColumnDefaultValue defaults may be unique to this version of the table, whereas DefaultRowValue are the defaults for the mockup
@@ -5088,12 +5132,12 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	for(unsigned int c = 0; c < defaultRowValues.size() - 2; ++c)
 	{
 		//		__SUP_COUT__ << "Default for c" << c << "=" <<
-		//				cfgViewPtr->getColumnInfo(c).getName() << " is " <<
+		//				tableViewPtr->getColumnInfo(c).getName() << " is " <<
 		//				defaultRowValues[c] << __E__;
 		xmlOut.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
 	}
 
-	const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
+	const std::set<std::string> srcColNames = tableViewPtr->getSourceColumnNames();
 
 	if(accumulatedErrors != "")  // add accumulated errors to xmlOut
 	{
@@ -5106,52 +5150,60 @@ void ConfigurationGUISupervisor::handleGetTableXML(HttpXmlDocument&        xmlOu
 	}
 	else if(!version.isTemporaryVersion() &&  // not temporary (these are not filled from
 	                                          // interface source)
-	        (srcColNames.size() != cfgViewPtr->getNumberOfColumns() ||
-	         cfgViewPtr->getSourceColumnMismatch() !=
+	        (srcColNames.size() != tableViewPtr->getNumberOfColumns() ||
+	         tableViewPtr->getSourceColumnMismatch() !=
 	             0))  // check for column size mismatch
 	{
 		__SUP_SS__ << "\n\nThere were warnings found when loading the table " << tableName
 		           << ":v" << version << ". Please see the details below:\n\n"
-		           << "The source column size was found to be " << srcColNames.size()
-		           << ", and the current number of columns for this table is "
-		           << cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of "
-		           << cfgViewPtr->getSourceColumnMismatch()
-		           << " source column mismatches, and a count of "
-		           << cfgViewPtr->getSourceColumnMissing() << " table entries missing in "
-		           << cfgViewPtr->getNumberOfRows() << " row(s) of data." << __E__;
+		           << tableViewPtr->getMismatchColumnInfo();
+		// 		   "The source column size was found to be " << srcColNames.size()
+		//            << ", and the current number of columns for this table is "
+		//            << tableViewPtr->getNumberOfColumns() << ". This resulted in a count of "
+		//            << tableViewPtr->getSourceColumnMismatch()
+		//            << " source column mismatches, and a count of "
+		//            << tableViewPtr->getSourceColumnMissing() << " table entries missing in "
+		//            << tableViewPtr->getNumberOfRows() << " row(s) of data." << __E__;
 
-		ss << "\n\nSource column names in ALPHABETICAL order were as follows:\n";
-		char        index       = 'a';
-		std::string preIndexStr = "";
-		for(auto& srcColName : srcColNames)
-		{
-			ss << "\n\t" << preIndexStr << index << ". " << srcColName;
-			if(index == 'z')  // wrap-around
-			{
-				preIndexStr += 'a';  // keep adding index 'digits' for wrap-around
-				index = 'a';
-			}
-			else
-				++index;
-		}
-		ss << __E__;
 
-		std::set<std::string> destColNames = cfgViewPtr->getColumnStorageNames();
-		ss << "\n\nCurrent table column names in ALPHABETICAL order are as follows:\n";
-		index       = 'a';
-		preIndexStr = "";
-		for(auto& destColName : destColNames)
-		{
-			ss << "\n\t" << preIndexStr << index << ". " << destColName;
-			if(index == 'z')  // wrap-around
-			{
-				preIndexStr += 'a';  // keep adding index 'digits' for wrap-around
-				index = 'a';
-			}
-			else
-				++index;
-		}
-		ss << __E__;
+		// std::set<std::string> destColNames = tableViewPtr->getColumnStorageNames();
+
+		// ss << "\n\nSource column names in ALPHABETICAL order were as follows:\n";
+		// char        index       = 'a';
+		// std::string preIndexStr = "";
+		// for(auto& srcColName : srcColNames)
+		// {
+		// 	ss << "\n\t" << preIndexStr << index << ". " << srcColName;
+		// 	if(destColNames.find(srcColName) == destColNames.end())
+		// 		ss << " *";
+		// 	if(index == 'z')  // wrap-around
+		// 	{
+		// 		preIndexStr += 'a';  // keep adding index 'digits' for wrap-around
+		// 		index = 'a';
+		// 	}
+		// 	else
+		// 		++index;
+		// }
+		// ss << __E__;
+
+		// ss << "\n\nCurrent table column names in ALPHABETICAL order are as follows:\n";
+		// index       = 'a';
+		// preIndexStr = "";
+		// for(auto& destColName : destColNames)
+		// {
+		// 	ss << "\n\t" << preIndexStr << index << ". " << destColName;
+		// 	if(srcColNames.find(destColName) == srcColNames.end())
+		// 		ss << " *";
+
+		// 	if(index == 'z')  // wrap-around
+		// 	{
+		// 		preIndexStr += 'a';  // keep adding index 'digits' for wrap-around
+		// 		index = 'a';
+		// 	}
+		// 	else
+		// 		++index;
+		// }
+		// ss << __E__;
 
 		__SUP_COUT__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("TableWarnings", ss.str());
@@ -5349,80 +5401,191 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 	      << "\" Type=\"File,Database,DatabaseTest\" Description=\"" << tableDescription
 	      << "\">\n";
 
-	// each column is represented by 4 fields
-	//	- type, name, dataType, defaultValue
+	// each column is represented by 4 fields or 6 
+	//	- type, name, dataType, defaultValue, minValue, maxValue
 
-	int i = 0;                  // use to parse data std::string
-	int j = data.find(',', i);  // find next field delimiter
-	int k = data.find(';', i);  // find next col delimiter
+	// int i = 0;                  // use to parse data std::string
+	// int j = data.find(',', i);  // find next field delimiter
+	// int k = data.find(';', i);  // find next col delimiter
 
 	std::istringstream columnChoicesISS(columnChoicesCSV);
 	std::string        columnChoicesString;
-	std::string        columnType, columnDataType, columnDefaultValue;
+	std::string        columnType, columnDataType, columnDefaultValue, columnMinValue, columnMaxValue;
+	std::vector<std::string> columnParameters;
+	std::vector<std::string> columnData = StringMacros::getVectorFromString(data,{';'} /*delimiter*/);
 
-	while(k != (int)(std::string::npos))
+	for(unsigned int c=0; c < columnData.size() -1; ++ c)
 	{
-		// type
-		columnType = data.substr(i, j - i);
+		columnParameters =
+		    StringMacros::getVectorFromString(columnData[c], {','} /*delimiter*/);
+		__COUT__ << "Column #" << c << ": "
+		         << StringMacros::vectorToString(columnParameters) << __E__;
+		for(unsigned int p = 0; p < columnParameters.size(); ++p)
+		{
+			__COUT__ << "\t Parameter #" << p << ": " << columnParameters[p] << __E__;
+		}
+		__COUT__ << "\t creating the new xml" << __E__;
+
 		outss << "\t\t\t\t<COLUMN Type=\"";
-		outss << columnType;
-
-		i = j + 1;
-		j = data.find(',', i);  // find next field delimiter
-
-		// name and storage name
+		outss << columnParameters[0];
 		outss << "\" \t Name=\"";
-		capsName = data.substr(i, j - i);  // not caps yet
-		outss << capsName;
+	 	outss << columnParameters[1];
 		outss << "\" \t StorageName=\"";
-
 		try
 		{
-			outss << TableBase::convertToCaps(capsName);  // now caps
+			outss << TableBase::convertToCaps(columnParameters[1]);  // now caps
 		}
 		catch(std::runtime_error& e)
 		{  // error! non-alpha
-			xmlOut.addTextElementToData("Error",
-			                            std::string("For column name '") +
-			                                data.substr(i, j - i) + "' - " + e.what());
+			xmlOut.addTextElementToData("Error", std::string("For column name '") +
+			                                columnParameters[1] + "' - " + e.what());
 			return;
 		}
-
-		i = j + 1;
-		j = data.find(',', i);  // find next field delimiter
-		columnDataType = data.substr(i, j - i);
-
-		// data type
 		outss << "\" \t	DataType=\"";
-		outss << columnDataType;
-
-		i = j + 1;
-		j = data.find(',', i);  // find next field delimiter
-		columnDefaultValue = data.substr(i, k - i);
-
-		// default value (Note: check by decoding URI because..
-		//	which characters are encoded is not exact match to browser)
-		if(StringMacros::decodeURIComponent(columnDefaultValue) !=
-				TableViewColumnInfo::getDefaultDefaultValue(columnType,columnDataType))
+		outss << columnParameters[2];
+		if(StringMacros::decodeURIComponent(columnParameters[3]) !=
+				TableViewColumnInfo::getDefaultDefaultValue(columnParameters[0],columnParameters[2]))
 		{
-			__SUP_COUT__ << "FOUND user spec'd default value = " << columnDefaultValue << __E__;
+			__SUP_COUT__ << "FOUND user spec'd default value = " << columnParameters[3] << __E__;
 			outss << "\" \t	DefaultValue=\"";
-			outss << columnDefaultValue;
+			outss << columnParameters[3];
 		}
-
-		// fixed data choices for TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA
 		getline(columnChoicesISS, columnChoicesString, ';');
 		//__SUP_COUT__ << "columnChoicesString = " << columnChoicesString << __E__;
 		outss << "\" \t	DataChoices=\"";
 		outss << columnChoicesString;
 
-		// end column info
-		outss << "\"/>\n";
 
-		i = k + 1;
-		j = data.find(',', i);  // find next field delimiter
-		k = data.find(';', i);  // find new col delimiter
+		if (columnParameters.size() > 4)
+		{
+			if (StringMacros::decodeURIComponent(columnParameters[4]) != "")
+			{
+				if(StringMacros::decodeURIComponent(columnParameters[4]) !=
+				   TableViewColumnInfo::getMinDefaultValue(columnParameters[2]))
+				{
+					__SUP_COUT__
+					    << "FOUND user spec'd min default value = " << columnParameters[4]
+					    << __E__;
+					outss << "\" \t	MinValue=\"";
+					outss << columnParameters[4];
+				}
+			}
+			
+			if (StringMacros::decodeURIComponent(columnParameters[5]) != "")
+			{
+				if(StringMacros::decodeURIComponent(columnParameters[5]) !=
+				   TableViewColumnInfo::getMaxDefaultValue(columnParameters[2]))
+				{
+					__SUP_COUT__
+					    << "FOUND user spec'd max default value = " << columnParameters[5]
+					    << __E__;
+					outss << "\" \t	MaxValue=\"";
+					outss << columnParameters[5];
+				}
+			}
+		}
+		outss << "\"/>\n";
 	}
+
+//gets number of parameters and its values, outss is the xml on the output that should be modified.
+
+
+	// while(k != (int)(std::string::npos))
+	// {
+	// 	// type
+	// 	columnType = data.substr(i, j - i);
+	// 	outss << "\t\t\t\t<COLUMN Type=\"";
+	// 	outss << columnType;
+
+	// 	i = j + 1;
+	// 	j = data.find(',', i);  // find next field delimiter
+
+	// 	// name and storage name
+	// 	outss << "\" \t Name=\"";
+	// 	capsName = data.substr(i, j - i);  // not caps yet
+	// 	outss << capsName;
+	// 	outss << "\" \t StorageName=\"";
+
+	// 	try
+	// 	{
+	// 		outss << TableBase::convertToCaps(capsName);  // now caps
+	// 	}
+	// 	catch(std::runtime_error& e)
+	// 	{  // error! non-alpha
+	// 		xmlOut.addTextElementToData("Error",
+	// 		                            std::string("For column name '") +
+	// 		                                data.substr(i, j - i) + "' - " + e.what());
+	// 		return;
+	// 	}
+
+	// 	i = j + 1;
+	// 	j = data.find(',', i);  // find next field delimiter
+	// 	columnDataType = data.substr(i, j - i);
+
+	// 	// data type
+	// 	outss << "\" \t	DataType=\"";
+	// 	outss << columnDataType;
+
+	// 	i = j + 1;
+	// 	j = data.find(',', i);  // find next field delimiter
+	// 	columnDefaultValue = data.substr(i, k - i);
+
+	// 	// default value (Note: check by decoding URI because..
+	// 	//	which characters are encoded is not exact match to browser)
+	// 	if(StringMacros::decodeURIComponent(columnDefaultValue) !=
+	// 			TableViewColumnInfo::getDefaultDefaultValue(columnType,columnDataType))
+	// 	{
+	// 		__SUP_COUT__ << "FOUND user spec'd default value = " << columnDefaultValue << __E__;
+	// 		outss << "\" \t	DefaultValue=\"";
+	// 		outss << columnDefaultValue;
+	// 	}
+
+	// 	// fixed data choices for TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA
+	// 	getline(columnChoicesISS, columnChoicesString, ';');
+	// 	//__SUP_COUT__ << "columnChoicesString = " << columnChoicesString << __E__;
+	// 	outss << "\" \t	DataChoices=\"";
+	// 	outss << columnChoicesString;
+
+	// 	//including min and max here if they are available, max is taken from the end of the column delimiter minus the last position before the field delimiter
+		
+	// 	//It only works with both min and max, if none are given then they should be set otherwise the program crashes.
+	// 	__COUT__ << "\t value of k " << k  << "value of j " << j << __E__;
+	// 	// if (k != j)
+	// 	// {
+
+	// 	// 	i = j + 1;
+	// 	// 	j = data.find(',', i);  // find next field delimiter
+	// 	// 	columnMinValue = data.substr(i, j - i);
+			
+	// 	// 	if(StringMacros::decodeURIComponent(columnMinValue) !=
+	// 	// 		TableViewColumnInfo::getMinValue(columnDataType))
+	// 	// 	{
+	// 	// 		__SUP_COUT__ << "FOUND user spec'd min value = " << columnMinValue << __E__;
+	// 	// 		outss << "\" \t	MinValue=\"";
+	// 	// 		outss << columnMinValue;
+	// 	// 	}
+
+	// 	// 	i = j + 1;
+	// 	// 	j = data.find(',', i);
+	// 	// 	columnMaxValue = data.substr(i, k - i);
+	// 	// 	if(StringMacros::decodeURIComponent(columnMaxValue) !=
+	// 	// 		TableViewColumnInfo::getMinValue(columnDataType))
+	// 	// 	{
+	// 	// 		__SUP_COUT__ << "FOUND user spec'd max value = " << columnMaxValue << __E__;
+	// 	// 		outss << "\" \t	MaxValue=\"";
+	// 	// 		outss << columnMaxValue;
+	// 	// 	}
+
+	// 	// }
+
+	// 	// end column info
+	// 	outss << "\"/>\n";
+
+	// 	i = k + 1;
+	// 	j = data.find(',', i);  // find next field delimiter
+	// 	k = data.find(';', i);  // find new col delimiter
+
+	// }
 
 	outss << "\t\t\t</VIEW>\n";
 	outss << "\t\t</TABLE>\n";

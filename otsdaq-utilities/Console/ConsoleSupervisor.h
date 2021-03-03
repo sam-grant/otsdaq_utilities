@@ -246,7 +246,7 @@ class ConsoleSupervisor : public CoreSupervisorBase
 	std::deque<ConsoleMessageStruct> messages_;
 	std::mutex                       messageMutex_;
 	size_t messageCount_;  //"unique" incrementing ID for messages
-	size_t maxMessageCount_;
+	size_t maxMessageCount_, maxClientMessageRequest_;
 
 	std::map<std::string /*TRACE hostname*/,std::string /*xdaq context hostname*/> traceMapToXDAQHostname_;
 

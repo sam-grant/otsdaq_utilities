@@ -537,9 +537,18 @@ else
         	if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX &&
         			Debug.OS_TYPE == Debug.OS_TYPE_LINUX) //Linux firefox
 			{
-				//firefox linux shows circle-arrow character slightly bigger than other firefox
+				//firefox on Linux shows circle-arrow character slightly bigger than other firefox
 				_fullScreenRefreshBtn.innerHTML = 
 						"<div style='font-size:30px;margin-top:-9px;' title='Click to reload the desktop and all windows'>↻</div>";        	
+				_fullScreenRefreshBtn.style.height = "16px";
+				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
+			}
+        	else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_CHROME &&
+        			Debug.OS_TYPE == Debug.OS_TYPE_MAC) //Mac chrome
+			{
+				//chrome on Mac shows circle-arrow smaller than Windows and Linux
+				_fullScreenRefreshBtn.innerHTML = 
+						"<div style='font-size: 23px; margin: -5px 0 0 2px;' title='Click to reload the desktop and all windows'>↻</div>";        	
 				_fullScreenRefreshBtn.style.height = "16px";
 				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
 			}
@@ -552,15 +561,6 @@ else
 				_fullScreenRefreshBtn.style.height = "16px";
 				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
     		}
-    		else if(Debug.BROWSER_TYPE != Debug.BROWSER_TYPE_FIREFOX &&
-    				Debug.OS_TYPE == Debug.OS_TYPE_WINDOWS) //Windows chrome
-    		{
-    			//windows shows circle-arrow bigger
-				_fullScreenRefreshBtn.innerHTML = 
-						"<div style='font-size: 23px; margin: -3px 0 0 2px;' title='Click to reload the desktop and all windows'>↻</div>";        	
-				_fullScreenRefreshBtn.style.height = "16px";
-				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px"; 
-    		}
         	else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
         	{
         		//firefox shows circle-arrow character smaller
@@ -572,7 +572,7 @@ else
         	else //chrome
         	{
 				_fullScreenRefreshBtn.innerHTML = 
-						"<div style='font-size: 23px; margin: -5px 0 0 2px;' title='Click to reload the desktop and all windows'>↻</div>";        	
+						"<div style='font-size: 22px; margin: -2px 0 0 2px;' title='Click to reload the desktop and all windows'>↻</div>";        	
 				_fullScreenRefreshBtn.style.height = "16px";
 				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
         	}

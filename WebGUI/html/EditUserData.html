@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta charset="UTF-8">
-	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
-	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
-	
-	
+
+
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/SecuritySettings.css">
 	<script type="text/JavaScript">
 		var selectedChoice_ = "";
@@ -412,7 +413,7 @@
 			//'import_file',document.getElementById('fileToUpload').files[0]);
 			console.log(fd);
 			//makeServerRequest(reqCmd, fd, handler); 
-		
+			Debug.log("User Data was uploaded successfully, you should launch OTS wizard again for the changes to be effective" , Debug.INFO_PRIORITY);
 		} //end uploadToServer()
 		
 
@@ -472,6 +473,7 @@
 		function uploadComplete(evt)
 		{
 			Debug.log("Edit User Data uploadComplete " +  evt.target.responseText);
+			//Debug.log("User Data was uploaded successfully 11111111" , Debug.INFO_PRIORITY);
 		}
 
 		//=====================================================================================
@@ -520,7 +522,7 @@
 		    	fileSize = (Math.round(totFileSize * 100 / (1024 * 1024)) / 100).toString() + ' MB';
 		    else	
 		    	fileSize = (Math.round(totFileSize * 100 / 1024) / 100).toString() + ' KB';
-		    
+			//Debug.log("User Data was uploaded successfully 11111111" , Debug.INFO_PRIORITY);
 			/*document.getElementById('fileName').innerHTML = '<b>Name:</b> ' + 
 				fileNameConcat.substr(0,60) + (fileNameConcat.length > 60?"...":"");
 			document.getElementById('fileSize').innerHTML = '<b>Size:</b>&nbsp;&nbsp;&nbsp; ' + fileSize;
@@ -536,6 +538,7 @@
 			//makeServerRequest("");
 			var data = "RequestType=Export";
 			DesktopContent.XMLHttpRequest("UserSettings", data, userSettingsHandler, undefined, undefined);
+			Debug.log("User Data was exported successfully, check log to get its location" , Debug.INFO_PRIORITY);
 
 		} //end exportUserSettingsBtn()
 
@@ -567,6 +570,7 @@
 	
 			Debug.log("Successfully handled User Settings.");
 			Debug.log(req);
+			//Debug.log("User Data was uploaded successfully 11111" , Debug.INFO_PRIORITY);
 
 		} //end userSettingsHandler()
 
@@ -617,97 +621,100 @@
 		} //end handleImportSettings
 		
 	</script>
-	
-	
-	
+
+
+
 	<style>
 		a {
-			color:white;
+			color: white;
 		}
-	
+
 		body {
-		/*	background-color: rgb(124, 143, 182);*/
+			/*	background-color: rgb(124, 143, 182);*/
 		}
 	</style>
 </head>
 
 <body onload="//init() called by DesktopContent.js">
-  <!--<h1>Edit User Data</h1>-->
+	<!--<h1>Edit User Data</h1>-->
 
-  <h2 id="state" style='display:none'></h2>
-  <ul>
-  		
-  <li>
-	
-  <div class="shape">
-	<div class="glow" id="ResetAllUserTooltips">
-	<a href="#"  class="overlay round"></a>
-	<div class="details">
-		<span class="heading">Reset Tooltips</span>
-		<hr />
-		<p>Click this button to reset the 'never show' property of Tooltips for all users. 
-		This is irreversible, and will result in users seeing all Tooltips again. (This 
-		is useful, for example, if the Tooltip content has been revised)
-		</p>		
-		<a href="#" onclick="confirmTooltip()" class="button">Select</a>		
-	</div>
-	<div class="bg"></div>
-	<div class="base">
-		<img src="/WebPath/images/windowContentImages/EditUserData-ResetTooltips.png" alt="" />
-	</div>
-  </div>	
-  </div> 	
-  </li>
-  		
-  <li>
-	
-  <div class="shape">
-	<div class="glow" id="ResetAllUserData">
-	<a href="#"  class="overlay round"></a>
-	<div class="details">
-		<span class="heading">Reset<br>User Data</span>
-		<hr />
-		<p>Click this button to reset ALL user data back to 'factory settings'
-		(i.e. delete accounts, passwords, preferences, logbook entries, etc.). This is irreversible.
-		<br>
-  		<b>Make sure this is really what you want to do!!</b></p>		
-		<a href="#" onclick="confirm()" class="button">Select</a>		
-	</div>
-	<div class="bg"></div>
-	<div class="base">
-		<img src="/WebPath/images/windowContentImages/EditUserData-ResetUserData.png" alt="" />
-	</div>
-  </div>
-</li>
-<li>
- <div class="shape">
-	<div class="glow" id="ImportExportUserData">
-	<a href="#"  class="overlay round"></a>
-	<div class="details">
-		<span class="heading">Import/Export<br>User Data</span>
-		<hr />
-		<p>Use this tool to import or export usernames and preferences for or from another installation.</p>
-		<p id="PreviewStatus"></p>
-		<br>
-  			<form id="fileForm" enctype="multipart/form-data" method="post" action="Log">
-				<input type="file" name="fileToUpload" id="fileToUpload" onchange="handleFiles()" class="inputfile"/>
-				<label for="fileToUpload">Import</label>
-			</form>
-				<input type='submit' id="submitBtn" onmouseup='uploadToServer("UserSettings",handleImportSettings);' value='Import' >	
-				<a href="#" id="exportBtn" class="button" onmouseup='exportUserSettingsBtn()'>Export</a>
-	</div>
-	<div class="bg"></div>
-	<div class="base">
-		<img src="/WebPath/images/windowContentImages/EditUserData-ImportExportData.png" alt="" />
-	</div>
-	</div>	
-  </div> 	
-  </li>
+	<h2 id="state" style='display:none'></h2>
+	<ul>
 
-  	
-  </ul>
-  
-  
+		<li>
+
+			<div class="shape">
+				<div class="glow" id="ResetAllUserTooltips">
+					<a href="#" class="overlay round"></a>
+					<div class="details">
+						<span class="heading">Reset Tooltips</span>
+						<hr />
+						<p>Click this button to reset the 'never show' property of Tooltips for all users.
+							This is irreversible, and will result in users seeing all Tooltips again. (This
+							is useful, for example, if the Tooltip content has been revised)
+						</p>
+						<a href="#" onclick="confirmTooltip()" class="button">Select</a>
+					</div>
+					<div class="bg"></div>
+					<div class="base">
+						<img src="/WebPath/images/windowContentImages/EditUserData-ResetTooltips.png" alt="" />
+					</div>
+				</div>
+			</div>
+		</li>
+
+		<li>
+
+			<div class="shape">
+				<div class="glow" id="ResetAllUserData">
+					<a href="#" class="overlay round"></a>
+					<div class="details">
+						<span class="heading">Reset<br>User Data</span>
+						<hr />
+						<p>Click this button to reset ALL user data back to 'factory settings'
+							(i.e. delete accounts, passwords, preferences, logbook entries, etc.). This is irreversible.
+							<br>
+							<b>Make sure this is really what you want to do!!</b></p>
+						<a href="#" onclick="confirm()" class="button">Select</a>
+					</div>
+					<div class="bg"></div>
+					<div class="base">
+						<img src="/WebPath/images/windowContentImages/EditUserData-ResetUserData.png" alt="" />
+					</div>
+				</div>
+		</li>
+		<li>
+			<div class="shape">
+				<div class="glow" id="ImportExportUserData">
+					<a href="#" class="overlay round"></a>
+					<div class="details">
+						<span class="heading">Import/Export<br>User Data</span>
+						<hr />
+						<p>Use this tool to import or export usernames and preferences for or from another installation.
+						</p>
+						<p id="PreviewStatus"></p>
+						<br>
+						<form id="fileForm" enctype="multipart/form-data" method="post" action="Log">
+							<input type="file" name="fileToUpload" id="fileToUpload" onchange="handleFiles()"
+								class="inputfile" />
+							<label for="fileToUpload">Import</label>
+						</form>
+						<input type='submit' id="submitBtn"
+							onmouseup='uploadToServer("UserSettings",handleImportSettings);' value='Import'>
+						<a href="#" id="exportBtn" class="button" onmouseup='exportUserSettingsBtn()'>Export</a>
+					</div>
+					<div class="bg"></div>
+					<div class="base">
+						<img src="/WebPath/images/windowContentImages/EditUserData-ImportExportData.png" alt="" />
+					</div>
+				</div>
+			</div>
+		</li>
+
+
+	</ul>
+
+
 </body>
 
 </html>

@@ -776,16 +776,24 @@
 		float: 						left;
 		width: 						100%;
 		margin: 					-44px 0 0 0;
+
+		/* avoid tabs wrapping, keep on same line */
+		white-space:				nowrap;
+		overflow-x:					auto;
+		overflow-y:					hidden;
+		height:						44px;
 	}
 
 	.tabWidgetSelectButton {
 		color:						red;
 		background-color: 			darkblue;
-		float:						left;
+		
 		padding:					5px 10px;
 		border-radius:				10px 10px 0 0;
 		border:						1px solid white;
 		cursor:						pointer;
+
+		display:					inline-block;
 	}
 
 
@@ -793,9 +801,14 @@
 		float: 						left;
 		width: 						100%;
 		height: 					calc(100% - 0px);
+
 	}
 
 	.tabWidgetBody { 
 		background-color: 			lightblue;
 		height: 					100%;
+		position:					relative; /* so that scroll considers all absolute-positioned children */
+		overflow:					auto;
+		z-index: 					49;
+    	color: 						rgb(72 119 148);
 	}

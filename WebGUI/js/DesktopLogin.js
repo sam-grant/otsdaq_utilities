@@ -153,7 +153,7 @@ else {
 			var ldiv;			
 			//create prompt functionality
 			ldiv = document.createElement("div");
-			ldiv.setAttribute("id", "Desktop-loginDiv"); //this div holds everything else and is what is delete at start
+			ldiv.setAttribute("id", "Desktop-loginDiv"); //this div holds everything else and is what is deleted at start
 			ldiv.style.width = Desktop.desktop.getDesktopWidth() + "px";
 			ldiv.style.height = Desktop.desktop.getDesktopHeight() + "px";
 		
@@ -496,66 +496,69 @@ else {
 						//_attemptedLoginWithCert,Debug.LOW_PRIORITY);				
 					
 				//set and keep feedback text
-				if(cookieCode == "1") //invalid uuid
+				if(!_keepFeedbackText)
 				{
-//					_keptFeedbackText = "Sorry, your login session was invalid.<br>" +
-//						"A new session is being started - please try again.";
-					
-					//instead of giving error, attempt to get new session and relogin
-
-					Debug.log("Attempting auto session renewal");
-					
-					//refresh session id
-					_uid = _getUniqueUserId();
-					Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
-							"uuid="+_uid,
-							//model handler after _handleGetSessionId()
-							function(req)
-							{
-
-						_sessionId = 0; //clear
-						if(!req || req.responseText.length != _DEFAULT_SESSION_STRING_LEN) 
-						{ //sessionId failed
-							Debug.log("Invalid auto session ID",Debug.HIGH_PRIORITY);
-							_keptFeedbackText = "Sorry, your login session was invalid.<br>" +
-									"A new session is being started - please try again.";
-							_loginPrompt();
-		                	_killLogoutInfiniteLoop = true;
-							return;
-						} 
-						//else good sessionId
-
-						Debug.log("Attempting auto re-login");
-											
-						_attemptedLoginWithCert = true; //do not attempt CERT again
-						_badSessionIdCount = 0; //clear
-
-						//successfully received session ID			
-						_sessionId = req.responseText;	
-
-						Desktop.desktop.login.attemptLogin();
+					if(cookieCode == "1") //invalid uuid
+					{
+	//					_keptFeedbackText = "Sorry, your login session was invalid.<br>" +
+	//						"A new session is being started - please try again.";
 						
-							}); //end sessionId handler
+						//instead of giving error, attempt to get new session and relogin
+
+						Debug.log("Attempting auto session renewal");
+						
+						//refresh session id
+						_uid = _getUniqueUserId();
+						Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
+								"uuid="+_uid,
+								//model handler after _handleGetSessionId()
+								function(req)
+								{
+
+							_sessionId = 0; //clear
+							if(!req || req.responseText.length != _DEFAULT_SESSION_STRING_LEN) 
+							{ //sessionId failed
+								Debug.log("Invalid auto session ID",Debug.HIGH_PRIORITY);
+								_keptFeedbackText = "Sorry, your login session was invalid.<br>" +
+										"A new session is being started - please try again.";
+								_loginPrompt();
+								_killLogoutInfiniteLoop = true;
+								return;
+							} 
+							//else good sessionId
+
+							Debug.log("Attempting auto re-login");
+												
+							_attemptedLoginWithCert = true; //do not attempt CERT again
+							_badSessionIdCount = 0; //clear
+
+							//successfully received session ID			
+							_sessionId = req.responseText;	
+
+							Desktop.desktop.login.attemptLogin();
+							
+								}); //end sessionId handler
+						
+						return;
+					} //end handle invalid user id session
+					else if(req && document.getElementById('loginInput3') && 
+							document.getElementById('loginInput3').value != "")	
+						_keptFeedbackText = "New Account Code (or Username/Password) not valid.";
+					else if(req)
+					{
+						var err = Desktop.getXMLValue(req,"Error");
+						_keptFeedbackText = "Username/Password not correct." + (err?("<br>" + err):"");
+					}
+					else
+						_keptFeedbackText = "ots Server failed.";
 					
-					return;
-				} //end handle invalid user id session
-				else if(req && document.getElementById('loginInput3') && 
-						document.getElementById('loginInput3').value != "")	
-					_keptFeedbackText = "New Account Code (or Username/Password) not valid.";
-				else if(req)
-				{
-					var err = Desktop.getXMLValue(req,"Error");
-					_keptFeedbackText = "Username/Password not correct." + (err?("<br>" + err):"");
-				}
-				else
-					_keptFeedbackText = "ots Server failed.";
-				
-				_keepFeedbackText = true;
-				
-				if(_attemptedLoginWithCert)
-				{
-					Debug.log("Hiding feedback after CERT attempt.");
-					_keepFeedbackText = false;
+					_keepFeedbackText = true;
+					
+					if(_attemptedLoginWithCert)
+					{
+						Debug.log("Hiding feedback after CERT attempt.");
+						_keepFeedbackText = false;
+					}
 				}
 				
 	      		for(var i=1;i<3;++i) 
@@ -817,11 +820,16 @@ else {
        			Desktop.XMLHttpRequest("LoginRequest?RequestType=logout"); //server logout
 			_deleteCookies(); //local logout			
 			
+			_keepFeedbackText = true;
+			_keptFeedbackText = "You were logged out.";
+
        		//start new session
 			if(!_killLogoutInfiniteLoop)
 			{
 	     		_uid = _getUniqueUserId();
-				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId);
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
+					"uuid="+_uid,
+					_handleGetSessionId);
 				Debug.log("UUID: " + _uid)
 			}
 			

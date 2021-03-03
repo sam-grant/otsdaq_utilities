@@ -52,18 +52,20 @@ Debug.BROWSER_TYPE_FIREFOX 	= 2;
 Debug.BROWSER_TYPE = Debug.BROWSER_TYPE_OTHER;
 {
 	var tmp = (new Error).stack; 
-	if(tmp[0] == 'E')
+	if(tmp[0] == 'E') 
 		Debug.BROWSER_TYPE = Debug.BROWSER_TYPE_CHROME;
 	else if(tmp[0] == '@')
 		Debug.BROWSER_TYPE = Debug.BROWSER_TYPE_FIREFOX;
 }
-console.log("Browser type = ", Debug.BROWSER_TYPE);
+console.log("Browser type = ", Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_CHROME?"Chrome":
+	(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX?"Firefox":"Other"));
 
 //determine if Linux OS or other (Linux Firefox seems to be a bad combo)
 //	0:other, 1:linux
 Debug.OS_TYPE_OTHER 	= 0;
 Debug.OS_TYPE_LINUX 	= 1;
 Debug.OS_TYPE_WINDOWS 	= 2;
+Debug.OS_TYPE_MAC 		= 3;
 Debug.OS_TYPE = Debug.OS_TYPE_OTHER;
 {
 	var tmp = (navigator && navigator.userAgent)?
@@ -72,8 +74,11 @@ Debug.OS_TYPE = Debug.OS_TYPE_OTHER;
 		Debug.OS_TYPE = Debug.OS_TYPE_LINUX;
 	else if(tmp.indexOf("Windows") >= 0)
 		Debug.OS_TYPE = Debug.OS_TYPE_WINDOWS;
+		else if(tmp.indexOf("Mac") >= 0)
+			Debug.OS_TYPE = Debug.OS_TYPE_MAC;
 }
-console.log("OS type = ", Debug.OS_TYPE);
+console.log("OS type = ", Debug.OS_TYPE == Debug.OS_TYPE_LINUX?"Linux":
+	(Debug.OS_TYPE == Debug.OS_TYPE_WINDOWS?"Windows":(Debug.OS_TYPE == Debug.OS_TYPE_MAC?"MacOS":"Other")), " <== ", tmp);
 
 
 if (Debug.mode) //IF DEBUG MODE IS ON!
@@ -462,7 +467,7 @@ Debug.errorPopConditionString = function(str) {
 		else
 			rstr += str[i];
 	if(str.length > Debug._ERR_TRUNCATION_LENGTH)
-		rstr += "...&lt;&lt;&lt; MESSAGE TRUNCATED &gt;&gt;&gt;";
+		rstr += "<br>...&lt;&lt;&lt; MESSAGE TRUNCATED &gt;&gt;&gt;";
 	
 	return rstr; 
 } //end errorPopConditionString()
@@ -626,6 +631,11 @@ Debug.errorPop = function(err,severity)
 					"{" +
 					"font-weight: bold;" +
 					"color: rgb(255, 231, 187);" +
+					"}\n\n";
+			css += "#" + Debug._errBoxId + " th" +
+					"{" +
+					"font-weight: bold;" +
+					"text-align: center;" +
 					"}\n\n";
 			
 			//error box style
@@ -817,17 +827,19 @@ Debug._errBoxLastContent = "";
 //Close the error popup on the window
 Debug.closeErrorPop = function() 
 {
-	document.getElementById(Debug._errBoxId).style.display = "none";
+	var el = document.getElementById(Debug._errBoxId);
+	if(!el) return;
+	el.style.display = "none";
 	Debug._errBoxLastContent = document.getElementById(Debug._errBoxId + "-err").innerHTML;
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = ""; //clear string
-}
+} //end closeErrorPop()
 //=====================================================================================
 //Bring the error popup back
 Debug.bringBackErrorPop = function() 
 {
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = Debug._errBoxLastContent; //bring back string
 	document.getElementById(Debug._errBoxId).style.display = "block";
-}
+} //end bringBackErrorPop()
 
 
 Debug._errBoxOffMoveStartX = -1;

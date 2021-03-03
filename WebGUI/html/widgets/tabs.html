@@ -4,51 +4,11 @@
 		<title>Tabs</title>
 		<style type="text/css">
 
-			body {
-				font: 10px arial;
-				background-color: rgba(255, 255, 255, 1);
-				width: 30;
-				height: 30;
-				//margin: 0px !important;
-			}
-
-			div {
-				font-size: 14px;
-			}
-
-			/* Style tab links */
-			.tablink {
-			  background-color: #555;
-			  color: white;
-			  float: left;
-			  border: none;
-			  outline: none;
-			  cursor: pointer;
-			  padding: 5px 5px;
-			  font-size: 17px;
-			  width: 33%;
-			}
-			
-			.tablink:hover {
-			  background-color: #777;
-			}
-
-			/* Style the tab content (and add height:100% for full page content) */
-			.tabcontent {
-			  color: grey;
-			  border: 2px solid #ccc;
-			  display: none;
-			  padding: 100px 20px;
-			  height: 100%;
-			}
-
 		</style>
 
 		<script>
 
 			var parameters_ = {"class": "", "tabs_num":"3"};
-			var tabLinks = [];
-			var tabs = [];
 			//functions:
 			//init()
 
@@ -68,62 +28,6 @@
 			function drawWidget(widget, parameters)
 			{
 				if (parameters) parameters_ = parameters;
-				var div = document.getElementById("display");
-				var div1 = document.createElement('div');
-				var div2 = document.createElement('div');
-				div.innerHTML = "";
-				
-				var tabs_num = parameters_["tabs_num"];
-				tabLinks = [];
-				tabs = [];
-				for (var i = 1; i <= tabs_num; i++)
-				{
-					var pageName = "Page"+i;
-
-					//Tab links
-					tabLinks[i-1] = document.createElement('button');
-					tabLinks[i-1].className = "tablink";
-					tabLinks[i-1].id = "Tab"+i
-					tabLinks[i-1].innerHTML = pageName;
-					tabLinks[i-1].onclick = function(){openPage(this)};
-					tabLinks[i-1].style.width = 100.0/tabs_num + "%";
-					div1.appendChild(tabLinks[i-1]);
-
-					//Tab content
-					tabs[i-1] = document.createElement('div');
-					tabs[i-1].className = "tabcontent";
-					tabs[i-1].id = pageName;
-					tabs[i-1].innerHTML = "<h1>"+pageName+"</h1>";
-					tabs[i-1].style.width = (parseInt(window.innerWidth) - 16) + "px";
-					tabs[i-1].style.height = (parseInt(window.innerHeight) - 16) + "px";
-					div2.appendChild(tabs[i-1]);
-				}
-
-				div.appendChild(div1);
-				div.appendChild(div2);
-
-				// Get the element with id="Page1" and click on it
-				document.getElementById("Page1").click();
-			}
-
-			function openPage(elmnt) {
-				var i, tabcontent, tablinks;
-
-				// Hide all elements with class="tabcontent" by default */
-				tabcontent = document.getElementsByClassName("tabcontent");
-				for (i = 0; i < tabcontent.length; i++) {
-					tabcontent[i].style.display = "none";
-				}
-
-				// Show the specific tab content
-				document.getElementById(elmnt.innerHTML).style.display = "block";
-
-				tablinks = document.getElementsByClassName("tablink");
-				for (i = 0; i < tablinks.length; i++) {
-					tablinks[i].style.backgroundColor = "";
-				}
-				elmnt.style.backgroundColor = "#777";
-				console.log("Tabs openPage()", elmnt.innerHTML);
 			}
 
 			function getAttributes()
@@ -138,18 +42,6 @@
 			}
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity) {}
-
-			window.onresize = function() {
-				document.getElementById("display").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("display").style.height = (parseInt(window.innerHeight) - 16) + "px";
-
-				document.getElementById("Page1").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("Page1").style.height = (parseInt(window.innerHeight) - 16) + "px";
-				document.getElementById("Page2").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("Page2").style.height = (parseInt(window.innerHeight) - 16) + "px";
-				document.getElementById("Page3").style.width = (parseInt(window.innerWidth) - 16) + "px";
-				document.getElementById("Page3").style.height = (parseInt(window.innerHeight) - 16) + "px";
-			}
 
 		</script>
 

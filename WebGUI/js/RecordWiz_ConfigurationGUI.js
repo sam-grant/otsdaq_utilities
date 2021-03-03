@@ -84,8 +84,8 @@
 
 	//		localPrevButtonHandler() switch
 	
-	//htmlOpen(tag,attObj,innerHTML,closeTag)
-	//htmlClearDiv()
+	//DesktopContent.htmlOpen(tag,attObj,innerHTML,closeTag)
+	//DesktopContent.htmlClearDiv()
 
 	//getApp()
 	//getAppClass()	
@@ -434,7 +434,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{ // new app input
 					str += "<tr><td><b>New Buffer:</b></td><td>";
 
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"type" : 	"text",	
 									"id" : 		stepString + "bufferName",	
@@ -443,7 +443,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 													paramObj["allBuffers"])),
 							}, "" /*innerHTML*/, true /*closeTag*/);
 
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"id": stepString + "addToNew",
 									"type": "button",
@@ -459,20 +459,20 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{
 					str += "<tr><td><b>Existing Buffers:</b></td><td>";
 					{ //start apps
-						str += htmlOpen("select",
+						str += DesktopContent.htmlOpen("select",
 								{
 										"id" :		stepString + "buffers",
 								});
 
 						for(var i=0;i<paramObj["buffers"].length;++i)
 						{
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{		
 									},
 									paramObj["buffers"][i] /*innerHTML*/, true /*closeTag*/);
 						}
 						str += "</select>"; //end dropdown
-						str += htmlOpen("input",
+						str += DesktopContent.htmlOpen("input",
 								{
 										"id": stepString + "addToExisting",
 										"type": "button",
@@ -492,15 +492,15 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{
 					///////////////////////
 					// existing addresses
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "Here is a dropdown of all existing Buffers " + 
 							" to help you in creating standardized names (Note: shown above are " +
 							"only the Buffers in the chosen Data Manager '" + 
 							_paramObjMap[_STEP_WHICH_APP]["appName"] + 
 							"':";
 
-					str += htmlClearDiv();
-					str += htmlOpen("select",
+					str += DesktopContent.htmlClearDiv();
+					str += DesktopContent.htmlOpen("select",
 							{
 									"id" :		stepString + "allBuffers",
 									"style" :	"margin-bottom: 16px;"
@@ -508,7 +508,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 					for(var i=0;i<paramObj["allBuffers"].length;++i)
 					{
-						str += htmlOpen("option",
+						str += DesktopContent.htmlOpen("option",
 								{		
 								},
 								paramObj["allBuffers"][i] /*innerHTML*/, true /*closeTag*/);
@@ -531,14 +531,14 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				str += "Please edit the fields for your record and then click 'Done!' to save " +
 						" your new " + _recordAlias + " named '" + recordName + "':";
 				
-				str += htmlClearDiv();
-				str += htmlOpen("div",
+				str += DesktopContent.htmlClearDiv();
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id" :		stepString + "fields",
 								"style" :	"margin: 20px;",
 								
 						}, "" /*innerHTML*/, true /*closeTag*/);
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				
 				break; //end _STEP_SET_RECORD_FIELDS
 				
@@ -567,7 +567,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{ // new app input
 					str += "<tr><td><b>New XDAQ App:</b></td><td>";
 
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"type" : 	"text",	
 									"id" : 		stepString + "appName",	
@@ -575,7 +575,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 											ConfigurationAPI.createNewRecordName(getApp(),paramObj["allApps"])),
 							}, "" /*innerHTML*/, true /*closeTag*/);
 
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"id": stepString + "addToNew",
 									"type": "button",
@@ -590,20 +590,20 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{
 					str += "<tr><td><b>Existing Apps:</b></td><td>";
 					{ //start apps
-						str += htmlOpen("select",
+						str += DesktopContent.htmlOpen("select",
 								{
 										"id" :		stepString + "apps",
 								});
 
 						for(var i=0;i<paramObj["apps"].length;++i)
 						{
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{		
 									},
 									paramObj["apps"][i] /*innerHTML*/, true /*closeTag*/);
 						}
 						str += "</select>"; //end dropdown
-						str += htmlOpen("input",
+						str += DesktopContent.htmlOpen("input",
 								{
 										"id": stepString + "addToExisting",
 										"type": "button",
@@ -622,15 +622,15 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{
 					///////////////////////
 					// existing addresses
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "Here is a dropdown of all existing XDAQ Applications " + 
 							" to help you in creating standardized names (Note: shown above are " +
 							"only apps with class " + getAppClass() + " and in the chosen context '" + 
 							_paramObjMap[_STEP_WHICH_CONTEXT]["contextName"] + 
 							"'):";
 					
-					str += htmlClearDiv();
-					str += htmlOpen("select",
+					str += DesktopContent.htmlClearDiv();
+					str += DesktopContent.htmlOpen("select",
 							{
 									"id" :		stepString + "allApps",
 									"style" :	"margin-bottom: 16px;"
@@ -638,7 +638,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 						for(var i=0;i<paramObj["allApps"].length;++i)
 						{
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{		
 									},
 									paramObj["allApps"][i] /*innerHTML*/, true /*closeTag*/);
@@ -669,7 +669,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{ // address input
 					str += "<tr><td><b>Address:</b></td><td>";
 
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"type" : 	"text",	
 									"id" : 		stepString + "address",	
@@ -682,7 +682,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{ // port input
 					str += "<tr><td><b>Port:</b></td><td>";
 
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"type" : 	"text",	
 									"id" : 		stepString + "port",	
@@ -697,11 +697,11 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 				///////////////////////
 				// existing addresses
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "Here is a dropdown of existing Host Addresses " + 
 						" to help you in creating standardized addresses:";
-				str += htmlClearDiv();
-				str += htmlOpen("select",
+				str += DesktopContent.htmlClearDiv();
+				str += DesktopContent.htmlOpen("select",
 						{
 								"id" :		stepString + "addresses",
 								"style" :	"margin-bottom: 16px;"
@@ -710,7 +710,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 				for(var i=0;i<paramObj["hostAddresses"].length;++i)
 				{
-					str += htmlOpen("option",
+					str += DesktopContent.htmlOpen("option",
 							{		
 							},paramObj["hostAddresses"][i] /*innerHTML*/, true /*closeTag*/);
 				}
@@ -718,11 +718,11 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 				///////////////////////
 				// existing ports
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "Here is a dropdown of existing Host Ports " + 
 						" to help you in creating standardized ports:";
-				str += htmlClearDiv();
-				str += htmlOpen("select",
+				str += DesktopContent.htmlClearDiv();
+				str += DesktopContent.htmlOpen("select",
 						{
 								"id" :		stepString + "ports",
 								"style" :	""
@@ -731,7 +731,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 				for(var i=0;i<paramObj["hostPorts"].length;++i)
 				{
-					str += htmlOpen("option",
+					str += DesktopContent.htmlOpen("option",
 							{		
 							},paramObj["hostPorts"][i] /*innerHTML*/, true /*closeTag*/);
 				}
@@ -761,14 +761,14 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{ // new context input
 					str += "<tr><td><b>New XDAQ Context:</b></td><td>";
 
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"type" : 	"text",	
 									"id" : 		stepString + "contextName",	
 									"value":	(paramObj["contextName"]?paramObj["contextName"]:""),
 							}, "" /*innerHTML*/, true /*closeTag*/);
 
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"id": stepString + "addToNew",
 									"type": "button",
@@ -783,20 +783,20 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{
 					str += "<tr><td><b>Existing Contexts:</b></td><td>";
 					{ //start contexts
-						str += htmlOpen("select",
+						str += DesktopContent.htmlOpen("select",
 								{
 										"id" :		stepString + "contexts",
 								});
 
 						for(var i=0;i<paramObj["contexts"].length;++i)
 						{
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{		
 									},
 									paramObj["contexts"][i] /*innerHTML*/, true /*closeTag*/);
 						}
 						str += "</select>"; //end aliases dropdown
-						str += htmlOpen("input",
+						str += DesktopContent.htmlOpen("input",
 								{
 										"id": stepString + "addToExisting",
 										"type": "button",
@@ -823,7 +823,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				str += "Choose a '" + paramObj["groupType"] +
 						"' group to activate (either a System Alias or specific group):";
 
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 
 				str += "<center>"; 
 				str += "<table style='margin-bottom: 10px;'>";
@@ -831,21 +831,21 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{
 					str += "<tr><td><b>System Aliases:</b></td><td>";
 					{ //start aliases
-						str += htmlOpen("select",
+						str += DesktopContent.htmlOpen("select",
 								{
 										"id" :		stepString + "aliases",
 								});
 
 						for(var i=0;i<_systemGroups.aliases[paramObj["groupType"]].length;++i)
 						{
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{		
 									},
 									_systemGroups.aliases[paramObj["groupType"]]
 														  [i].alias /*innerHTML*/, true /*closeTag*/);
 						}
 						str += "</select>"; //end aliases dropdown
-						str += htmlOpen("input",
+						str += DesktopContent.htmlOpen("input",
 								{
 										"id": stepString + "activateAlias",
 										"type": "button",
@@ -864,14 +864,14 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{
 					str += "<tr><td><b>Group Names:</b></td><td>";
 					{ //start groups
-						str += htmlOpen("select",
+						str += DesktopContent.htmlOpen("select",
 								{
 										"id" :		stepString + "groupNames",
 								});
 
 						for(var i=0;i<groupNames.length;++i)
 						{
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{		
 									},
 									groupNames[i] /*innerHTML*/, true /*closeTag*/);
@@ -888,7 +888,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				{
 					str += "<tr><td><b>Group Keys:</b></td><td>";
 					{ //start keys
-						str += htmlOpen("select",
+						str += DesktopContent.htmlOpen("select",
 								{
 										"id" :		stepString + "groupKeys",
 								});
@@ -896,14 +896,14 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 						for(var i=0;i<_systemGroups.groups[paramObj["groupType"]]
 														   [groupNames[0]].keys.length;++i)
 						{
-							str += htmlOpen("option",
+							str += DesktopContent.htmlOpen("option",
 									{		
 									},
 									_systemGroups.groups[paramObj["groupType"]]
 														 [groupNames[0]].keys[i] /*innerHTML*/, true /*closeTag*/);
 						}
 						str += "</select>"; //end group keys dropdown
-						str += htmlOpen("input",
+						str += DesktopContent.htmlOpen("input",
 								{
 										"id": stepString + "activateGroup",
 										"type": "button",
@@ -926,7 +926,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 				///////////////////////
 				// header
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"style" : "font-weight:bold; margin: 6px 0 20px 0;"		
 						}, 
@@ -934,13 +934,13 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 								("Would you like to create another " + _recordAlias + "?"):
 						("Welcome to the " + _recordAlias + " creation Wizard!")) /*innerHTML*/,
 						true /*closeTag*/);
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				
 				///////////////////////
 				// prompt
 				str += "Enter the unique record name for your " + _recordAlias + ": ";
-				str += htmlClearDiv();
-				str += htmlOpen("input",
+				str += DesktopContent.htmlClearDiv();
+				str += DesktopContent.htmlOpen("input",
 						{
 								"type" : 	"text",	
 								"id" : 		stepString + "recordName",	
@@ -952,13 +952,13 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 				///////////////////////
 				// existing records
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "Here is a dropdown of existing " + _recordAlias + 
 						" records to help you in creating standardized record names:";
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				
 				
-				str += htmlOpen("select",
+				str += DesktopContent.htmlOpen("select",
 						{
 								"id" :		stepString + "records",
 								"style" :	"margin-bottom: 16px;",
@@ -967,14 +967,14 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 				for(var i=0;i<_subsetUIDs.length;++i)
 				{
-					str += htmlOpen("option",
+					str += DesktopContent.htmlOpen("option",
 							{		
 							},_subsetUIDs[i] /*innerHTML*/, true /*closeTag*/);
 				}
 				str += "</select>"; //end existing records dropdown
 
 
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id" : 		stepString + "deleteRecordIcon",	
 								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-deleteIcon",
@@ -984,13 +984,13 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 
 				//preload hover images
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id" : 		ConfigurationAPI._POP_UP_DIALOG_ID + 
 									"-preloadImage-editIconHover",	
 								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-preloadImage",								
 						}, 0 /*innerHTML*/, true /*closeTag*/);
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id" : 		ConfigurationAPI._POP_UP_DIALOG_ID + 
 									"-preloadImage-treeEditTrashIconHover",	
@@ -1000,7 +1000,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 				///////////////////////
 				// active groups
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "Note you are currently editing these active groups:";
 				str += "<center>"; 
 				str += "<table style='margin-bottom: 10px;'>";
@@ -1008,7 +1008,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				str += ConfigurationAPI._activeGroups.Context.groupName + " (" + ConfigurationAPI._activeGroups.Context.groupKey + ")";
 						//_systemGroups.activeGroups.Context.groupName + " (" + _systemGroups.activeGroups.Context.groupKey + ")";
 
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id":		stepString + "editContext",
 								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-editIcon",
@@ -1021,7 +1021,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				str += "<tr><td><b>Active Configuration:</b></td><td>";
 				str += _systemGroups.activeGroups.Configuration.groupName + " (" + _systemGroups.activeGroups.Configuration.groupKey + ")";
 
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"id":		stepString + "editConfig",
 								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-editIcon",
@@ -1042,21 +1042,21 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 				
 				///////////////////////
 				// header
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 						{
 								"style" : "font-weight:bold; margin: 6px 0 20px 0;"		
 						}, 
 						"Welcome to the record creation Wizard!" /*innerHTML*/,
 						true /*closeTag*/);
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				
 				///////////////////////
 				// existing record types
-				str += htmlClearDiv();
+				str += DesktopContent.htmlClearDiv();
 				str += "Below is a dropdown of record types that this Wizard can help you create. " + 
 						" Choose one and proceed through the steps to create your new record:";
-				str += htmlClearDiv();
-				str += htmlOpen("select",
+				str += DesktopContent.htmlClearDiv();
+				str += DesktopContent.htmlOpen("select",
 						{
 								"id" :		stepString + "recordTypes",
 								"style" :	"margin-bottom: 16px;"
@@ -1064,7 +1064,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 				for(var i=0;i<_validRecordTypes.length;++i)
 				{
-					str += htmlOpen("option",
+					str += DesktopContent.htmlOpen("option",
 							{		
 							},_validRecordTypes[i] /*innerHTML*/, true /*closeTag*/);
 				}
@@ -1082,7 +1082,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 			var ctrlStr = "";
 
 			if(stepIndex && showPrevButton)
-				ctrlStr += htmlOpen("input",
+				ctrlStr += DesktopContent.htmlOpen("input",
 						{
 								"class": "prevButton " + stepString + "prevButton",
 								"type": "button",
@@ -1091,7 +1091,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 						},
 						0 /*html*/, true /*closeTag*/);	
 			if(showNextButton)
-				ctrlStr += htmlOpen("input",
+				ctrlStr += DesktopContent.htmlOpen("input",
 						{
 								"class": "nextButton " + stepString + "nextButton",
 								"type": "button",
@@ -1107,7 +1107,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 			
 			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
 			
-			el.innerHTML = ctrlStr + htmlClearDiv() + str + htmlClearDiv() + ctrlStr;
+			el.innerHTML = ctrlStr + DesktopContent.htmlClearDiv() + str + DesktopContent.htmlClearDiv() + ctrlStr;
 			document.body.appendChild(el);	
 		} //end localAddContent()
 
@@ -1760,7 +1760,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 					for(var i=0;i<_systemGroups.groups[paramObj["groupType"]]
 													   [this.value].keys.length;++i)
 					{
-						str += htmlOpen("option",
+						str += DesktopContent.htmlOpen("option",
 								{		
 								},
 								_systemGroups.groups[paramObj["groupType"]]
@@ -3088,31 +3088,6 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 		return retVal;		
 	} //end getParentFilter()
 	
-	//=====================================================================================
-	//htmlOpen ~~		
-	//	tab name and attribute/value map object
-	function htmlOpen(tag,attObj,innerHTML,doCloseTag)
-	{
-		var str = "";
-		var attKeys = Object.keys(attObj); 
-		str += "<" + tag + " ";
-		for(var i=0;i<attKeys.length;++i)
-			str += " " + attKeys[i] + "='" +
-			attObj[attKeys[i]] + "' ";
-		str += ">";
-		if(innerHTML) str += innerHTML;
-		if(doCloseTag)
-			str += "</" + tag + ">";
-		return str;
-	} // end htmlOpen()
-
-	//=====================================================================================
-	//htmlClearDiv ~~		
-	function htmlClearDiv()
-	{
-		return "<div id='clearDiv'></div>";
-	} //end htmlClearDiv()
-
 
 }; //end RecordWiz.createWiz()
 

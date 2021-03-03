@@ -340,6 +340,10 @@
 				margin: 			2px 0 4px 22px;
 				height: 			12px;
 		    }
+
+			#chatText {
+				border-bottom: 		3px solid rgb(123 13 13);
+			}
 		</style>
 				
 
@@ -350,35 +354,7 @@
 		<script src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
 		<script>		
-		
-			//=====================================================================================
-			//htmlOpen ~~		
-			//	tab name and attribute/value map object
-			function htmlOpen(tag,attObj,innerHTML,doCloseTag)
-			{
-				var str = "";
-				var attKeys = Object.keys(attObj); 
-				str += "<" + tag + " ";
-				for(var i=0;i<attKeys.length;++i)
-					if(attKeys[i] == "selected") str += (attObj[attKeys[i]]|0)?" selected ":""; //no value
-					else if(attKeys[i] == "checked") str += (attObj[attKeys[i]]|0)?" checked ":""; //no value
-					else if(attKeys[i] == "") continue; //skip empty key
-					else
-						str += " " + attKeys[i] + "='" +
-						attObj[attKeys[i]] + "' ";
-				str += ">";
-				if(innerHTML) str += innerHTML;
-				if(doCloseTag)
-					str += "</" + tag + ">";
-				return str;
-			} // end htmlOpen()
-	
-			//=====================================================================================
-			//htmlClearDiv ~~		
-			function htmlClearDiv()
-			{
-				return "<div id='clearDiv'></div>";
-			} //end htmlClearDiv()
+					
 			
 			//functions:		
 				//init()	
@@ -454,7 +430,7 @@
 			var _displayName;
 			
 			var _consoleHistoryFields = ["chat_entry","chat_author","chat_time"];
-			var _CONSOLE_HISTORY_MAX_LENGTH = 500000;
+			var _CONSOLE_HISTORY_MAX_LENGTH = 1000000;
 						
 			var _chatUsersTitle = "<div class='userTitle'>Chatting:</div>";
 			var _activeUsersTitle = "<div class='userTitle'>Logged In:</div>";
@@ -463,9 +439,7 @@
 			var _displaySidePane = false;
 			var _scrollWithNewChats = true; //true if following new chats, false if user has scrolled up into history
 			var _userMouseInput = false; //use flag to determine if scrolling is due to user mouse input
-			
-			
-			
+									
 			
 			
 			var _lastUpdateCount = 0; //0 is for initial request
@@ -479,6 +453,7 @@
 									"Time",
 									"File",
 									"Line",
+									"SequenceID",
 									//"Count" //not needed
 								  ];
 			var _MESSAGE_FIELD_LEVEL = _consoleMessageFields.indexOf("Level"),
@@ -487,6 +462,7 @@
 					_MESSAGE_FIELD_MSG = _consoleMessageFields.indexOf("Msg"), 
 					_MESSAGE_FIELD_TIME = _consoleMessageFields.indexOf("Time"), 
 					_MESSAGE_FIELD_FILE = _consoleMessageFields.indexOf("File"), 
+					_MESSAGE_FIELD_ID = _consoleMessageFields.indexOf("SequenceID"), 
 					_MESSAGE_FIELD_LINE = _consoleMessageFields.indexOf("Line");
 
 			var _consoleMessageArray; 			
@@ -1227,8 +1203,7 @@
 			//updateConsoleHistory ~
 			// 	add console history from _consoleMessageArray
 			function updateConsoleHistory() 
-			{
-				
+			{				
 				if(!_consoleMessageArray || //if _consoleMessageArray incomplete, do nothing (should never happpen?)
 						_consoleMessageArray.length != _consoleMessageFields.length) return;
 			    
@@ -1249,6 +1224,7 @@
 				{		 			
 					tmp.Label = _consoleMessageArray[_MESSAGE_FIELD_LABEL][i].getAttribute('value');
 					tmp.Level = _consoleMessageArray[_MESSAGE_FIELD_LEVEL][i].getAttribute('value');
+					tmp.ID = _consoleMessageArray[_MESSAGE_FIELD_ID][i].getAttribute('value');
 					
 					firstMsg = _consoleMessageArray[_MESSAGE_FIELD_FILE][i].getAttribute('value') +
 							"[" + _consoleMessageArray[_MESSAGE_FIELD_LINE][i].getAttribute('value') + "]\t";
@@ -1259,7 +1235,8 @@
 					secondMsg = convertForClient(secondMsg);
 					
 					//important to only have one /div> per entry for truncate
-					str += "<div class='consoleEntry' style='color:" + 
+					str += "<div class='consoleEntry consoleEntryId-" +
+						tmp.ID + "' style='color:" + 
 						getColorForLevel(tmp.Level) + "'>" +
 						"<span class='" + tmp.Label + "_LabelEntry'>" + 
 						"<span class='" + tmp.Level + "_LevelEntry'>" + //open label level span (for filtering)
@@ -1292,6 +1269,18 @@
 				//				for(var i in _observedLabels)					
 				//					Debug.log(i + ": " + _observedLabels[i]);	
 				
+				var startPosition = 0;
+				var startIndex = -1;
+				if(_consoleEl.children.length)
+				{
+					startPosition = _consoleEl.children[_consoleEl.children.length-1].
+						offsetTop;
+					startIndex = _consoleEl.children[_consoleEl.children.length-1].
+						className.split('-')[1]|0;
+					// Debug.logv({startPosition});
+					// Debug.logv({startIndex});
+				}
+							
 				str = _consoleEl.innerHTML + str;	
 				var lendiff = str.length - _CONSOLE_HISTORY_MAX_LENGTH;	
 				if(lendiff > 0) //truncate chat history at entry div start
@@ -1301,6 +1290,14 @@
 				
 				if(_scrollWithNewChats)
 					_historyEl.scrollTop = _historyEl.scrollHeight;
+				else if(startIndex > 0)					
+				{					
+					var els = _consoleEl.getElementsByClassName("consoleEntryId-" + startIndex);					
+					var endPosition = els[els.length-1].offsetTop;
+					// Debug.log("endPosition ",endPosition,endPosition-startPosition);
+					_historyEl.scrollTop += endPosition-startPosition;
+				}
+				
 			} //end updateConsoleHistory()
 			
 			//=====================================================================================
@@ -1465,10 +1462,11 @@
 			function handleUserScroll(e) 
 			{							    
 				if(_userMouseInput) //only mess with scroll if user did something with mouse recently
-				{
-					_scrollWithNewChats = (_historyEl.scrollTop >=_historyEl.scrollHeight - _historyEl.offsetHeight - 2);
+				{					
+					_scrollWithNewChats = (_historyEl.scrollTop >= (_historyEl.scrollHeight - _historyEl.offsetHeight)*0.99 - 2);
 					DesktopContent.handleScroll(e);
-							     _userMouseInput = false; //clear
+					_userMouseInput = false; //clear
+					Debug.logv({_scrollWithNewChats});
 				}
 			} //end handleUserScroll()
 			
@@ -1765,12 +1763,12 @@
 
 					str += "</select>";
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					
 					var options = ["One row per label","Only show labels present on all hosts","One row per label-host pair"];
 
 					str += "Label settings: ";
-					str += htmlOpen("select",
+					str += DesktopContent.htmlOpen("select",
 							{
 									"class" : 	"ac_menuLink",
 									"onchange":	"_traceHostSelect.mode = this.selectedIndex;"
@@ -1781,7 +1779,7 @@
 							">" + options[i] + "</option>";
 					str += "</select>";
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "<div style='margin:11px 0 0 0;'>Host filter: </div>";
 
 					str += "</div>"; //end advancedControlsMenu tag
@@ -1791,7 +1789,7 @@
 
 					str += "</div>"; //end advancedControlsTable tag
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "<div id='advancedControlsTableRows' oncontextmenu='_advancedContextMenuBlock=true;'>"; //scroll rows vertically
 
 					str += "</div>"; //end advancedControlsTable tag
@@ -1803,7 +1801,7 @@
 
 					var COL_NAMES = ["Select","Host","Labels"];
 					var COL_DISPLAY_NAMES = [										 
-						 htmlOpen("input",
+						 DesktopContent.htmlOpen("input",
 								 {
 										 "type"	: 	"checkbox",
 										 "class" : 	"ac_checkboxSelect",
@@ -1939,48 +1937,48 @@
 
 					str += "</select>";
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					
 
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Get the status of the TRACE trigger environment.",
 									"onclick":	"advancedGetTriggerStatus();",
 							},"Get Trigger Status",true);
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Set the status of the TRACE trigger environment.",
 									"onclick":	"advancedSetTriggerStatus();",
 							},"Set Trigger Status",true);
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Reset the TRACE buffer to empty.",
 									"onclick":	"advancedReset();",
 							},"Reset TRACE",true);
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Disable the TRACE buffer.",
 									"onclick":	"advancedPause();",
 							},"Pause TRACE",true);
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Enable the TRACE buffer.",
 									"onclick":	"advancedResume();",
 							},"Resume TRACE",true);
-					str += htmlClearDiv();
-					str += htmlOpen("button",
+					str += DesktopContent.htmlClearDiv();
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Get a snapshot of the current TRACE buffer.",
 									"onclick":	"advancedGetSnapshot();",
 							},"Get Snapshot",true);
-					str += htmlClearDiv();
-					str += htmlOpen("input",
+					str += DesktopContent.htmlClearDiv();
+					str += DesktopContent.htmlOpen("input",
 							{
 									"style" : 	"margin: 8px 10px 3px -2px; float:left;",
 									"type"	: 	"checkbox",
@@ -1992,15 +1990,15 @@
 					selectedStr += "Filter for " + _advancedLabelSelectSave.length + " selected label(s): ";
 					for(var i=0;i<_advancedLabelSelectSave.length;++i)
 						selectedStr += (i?", ":"") +  _advancedLabelSelectSave[i];
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 							{
 									"style" : 	"margin: 8px 10px 3px -2px; float:left; overflow-x: auto; " +
 										"overflow-y: hidden; width:250px; white-space: nowrap;",
 									
 							},selectedStr,true);
 
-					str += htmlClearDiv();
-					str += htmlOpen("input",
+					str += DesktopContent.htmlClearDiv();
+					str += DesktopContent.htmlOpen("input",
 							{
 									"style" : 	"margin: 8px 10px 3px -2px; float:left;",
 									"type"	: 	"checkbox",
@@ -2012,13 +2010,13 @@
 					selectedStr += "Filter out " + _advancedLabelSelectSave.length + " selected label(s): ";
 					for(var i=0;i<_advancedLabelSelectSave.length;++i)
 						selectedStr += (i?", ":"") +  _advancedLabelSelectSave[i];
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 							{
 									"style" : 	"margin: 8px 10px 3px -2px; float:left; overflow-x: auto; " +
 										"overflow-y: hidden; width:250px; white-space: nowrap;",
 									
 							},selectedStr,true);
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					
 					str += "<div id='ac_snapshot'></div>";
 					_advancedEl.innerHTML = str;
@@ -2044,13 +2042,13 @@
 					
 					
 					str += "<div id='advancedControlsMenu' oncontextmenu='_advancedContextMenuBlock=true;'>";
-					str += htmlOpen("img",
+					str += DesktopContent.htmlOpen("img",
 							{
 									"src" : 	"/WebPath/images/windowContentImages/magnifying-glass.png",
 									"style": 	"margin: -7px 0 -10px -14px; width: 30px;",
 							});
 
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 							{
 									"id" 	: 	"ac_searchBox", 
 									"type" 	: 	"text",
@@ -2083,16 +2081,16 @@
 
 					str += "</select>";
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 
-					str += htmlOpen("button",
+					str += DesktopContent.htmlOpen("button",
 							{
 									"style" : 	"margin: 4px 10px 3px -2px; float:left;", 
 									"title" : 	"Apply the editable bit mask to all checked/selected labels.",
 									"onclick":	"advancedSetBitMask();",
 							},"Set",true);
 
-					str += htmlOpen("select",
+					str += DesktopContent.htmlOpen("select",
 							{
 									"class" : 	"ac_menuLink",
 									"id"	:	"ac_maskPresetSelect",
@@ -2109,7 +2107,7 @@
 					str += "<option>All Preset</option>";
 					str += "</select>"; //end set type select
 
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 							{
 									"id"	: 	"ac_selectedCaption",
 									"style" : 	"margin: 8px 0 0 -2px;" +
@@ -2118,7 +2116,7 @@
 									"title" : 	"Click a label to include, and right-click to exclued from the selected labels.",
 							},"No checkboxes selected.",true);
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 
 					str += createEditableBitMask(
 							_advancedEditBitMask,
@@ -2134,13 +2132,13 @@
 
 					str += "</div>"; //end advancedControlsTable tag
 
-					str += htmlClearDiv();
+					str += DesktopContent.htmlClearDiv();
 					str += "<div id='advancedControlsTableRows' oncontextmenu='_advancedContextMenuBlock=true;'>"; //scroll rows vertically
 
 					str += "</div>"; //end advancedControlsTable tag
 					str += "</div>";
 
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 							{
 									"id" : 	"ac_popupBox"
 							});
@@ -2182,7 +2180,7 @@
 			    
 				var COL_NAMES = ["Select","Label","SeverityMask","HostPresence"];
 				var COL_DISPLAY_NAMES = [										 
-					 htmlOpen("input",
+					 DesktopContent.htmlOpen("input",
 							 {
 								 "type"	: 	"checkbox",
 								 "class" : 	"ac_checkboxSelect",
@@ -2875,7 +2873,7 @@
 					//if(j%8 == 0) str += " ";
 					//str += (val >> (31-j))&1;
 
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"class" : 			"ac_maskbit ac_maskbit" + 
 								(((val >> (j))&1)?"ON":"OFF"),
@@ -2901,7 +2899,7 @@
 				var val = val64[0]|0;
 				for(var j=0;j<32;++j)
 				{
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"class" : 			"ac_maskbit ac_maskbit" + 
 								(((val >> (j))&1)?"ON":"OFF"),
@@ -3298,12 +3296,14 @@
 			//=====================================================================================
 			function handleMouseUp(e) 
 			{
-				Debug.log("Body handleMouseUp and Leave",_advancedButtonDown,"=",e.button);
+				// Debug.log("Body handleMouseUp and Leave",_advancedButtonDown,"=",e.button);
 				_advancedButtonDown = -1;
 				_advancedLastBitDown = [-1 /*labeli*/,-1 /*bit*/];
 				if(_advancedPopup)		
 					_advancedPopup.style.display = "none";
 				
+				_scrollWithNewChats = (_historyEl.scrollTop >= (_historyEl.scrollHeight - _historyEl.offsetHeight)*0.99 - 2);
+				// Debug.logv({_scrollWithNewChats});
 			} //end handleMouseUp()
 			
 			

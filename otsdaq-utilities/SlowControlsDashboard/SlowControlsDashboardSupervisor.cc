@@ -79,12 +79,23 @@ void SlowControlsDashboardSupervisor::init(void)
 
 	__COUTV__(pluginType);
 
-	interface_ =
-	    makeSlowControls(pluginType,
-	                     CorePropertySupervisorBase::getSupervisorUID(),
-	                     CorePropertySupervisorBase::getContextTreeNode(),
-	                     CorePropertySupervisorBase::getSupervisorConfigurationPath());
-	__COUT__ << __E__;
+	try
+	{
+		interface_ =
+			makeSlowControls(pluginType,
+							CorePropertySupervisorBase::getSupervisorUID(),
+							CorePropertySupervisorBase::getContextTreeNode(),
+							CorePropertySupervisorBase::getSupervisorConfigurationPath());
+	}
+	catch(...)
+	{
+	}
+
+	if(interface_ == nullptr)
+	{
+		__SS__ << "Slow Control interface plugin construction failed of type " << pluginType << __E__;
+		__SS_THROW__;
+	}
 
 	//
 	// interface_->initialize();

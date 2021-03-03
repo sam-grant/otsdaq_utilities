@@ -33,36 +33,6 @@ CodeEditor.editor; //this is THE CodeEditor variable
 
 
 
-//htmlOpen(tag,attObj,innerHTML,closeTag)
-//htmlClearDiv()
-
-//=====================================================================================
-//htmlOpen ~~		
-//	tab name and attribute/value map object
-function htmlOpen(tag,attObj,innerHTML,doCloseTag)
-{
-	var str = "";
-	var attKeys = attObj?Object.keys(attObj):[]; 
-	str += "<" + tag + " ";
-	for(var i=0;i<attKeys.length;++i)
-		str += " " + attKeys[i] + "='" +
-		attObj[attKeys[i]] + "' ";
-	str += ">";
-	if(innerHTML) str += innerHTML;
-	if(doCloseTag)
-		str += "</" + tag + ">";
-	return str;
-} // end htmlOpen()
-
-//=====================================================================================
-//htmlClearDiv ~~		
-function htmlClearDiv()
-{
-	return "<div id='clearDiv'></div>";
-} //end htmlClearDiv()
-
-
-
 //=====================================================================================
 //define scrollIntoViewIfNeeded for Firefox
 // NOTE: Chrome broke this functionality in Version 76.0.3809.100 (Official Build) (64-bit)
@@ -652,13 +622,13 @@ CodeEditor.create = function(standAlone) {
 				str = "";
 				
 				//local pane controls
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 					{
 						"class":"controlsPane",
 					},"" /*innerHTML*/, 0 /*doCloseTag*/);
 				{
 					//folder
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"id":"directoryNavToggle",
 							"class":"controlsButton",
@@ -669,12 +639,12 @@ CodeEditor.create = function(standAlone) {
 							"title": "Open a file... (Ctrl + D)",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
 					{
-						str += htmlOpen("div",
+						str += DesktopContent.htmlOpen("div",
 							{
 								"id":"directoryNavToggleTop",
 								
 							},"" /*innerHTML*/, 1 /*doCloseTag*/);
-						str += htmlOpen("div",
+						str += DesktopContent.htmlOpen("div",
 							{
 								"id":"directoryNavToggleBottom",
 								
@@ -683,7 +653,7 @@ CodeEditor.create = function(standAlone) {
 					str += "</div>"; //close directoryNavToggle
 					
 					//save
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"id": "saveFile",
 							"class": "controlsButton",
@@ -694,17 +664,17 @@ CodeEditor.create = function(standAlone) {
 							"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
 						}, "" /*innerHTML*/, 0 /*doCloseTag*/);
 					{
-						str += htmlOpen("div",
+						str += DesktopContent.htmlOpen("div",
 							{
 								"id":"saveFileMain",
 								
 							},"" /*innerHTML*/, 1 /*doCloseTag*/);
-						str += htmlOpen("div",
+						str += DesktopContent.htmlOpen("div",
 							{
 								"id":"saveFileMainTop",
 								
 							},"" /*innerHTML*/, 1 /*doCloseTag*/);
-						str += htmlOpen("div",
+						str += DesktopContent.htmlOpen("div",
 							{
 								"id":"saveFileMainBottom",
 								
@@ -729,7 +699,7 @@ CodeEditor.create = function(standAlone) {
 				str = "";
 				
 				//view toggle
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 					
 						{
 							"id":"viewToggle",
@@ -741,17 +711,17 @@ CodeEditor.create = function(standAlone) {
 					
 				{
 					
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"id":"viewToggleRight",
 							
 						},"" /*innerHTML*/, 1 /*doCloseTag*/);
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"id":"viewToggleLeftTop",
 							
 						},"" /*innerHTML*/, 1 /*doCloseTag*/);
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"id":"viewToggleLeftBottom",
 							
@@ -761,7 +731,7 @@ CodeEditor.create = function(standAlone) {
 				
 				//incremental compile
 			
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 					{
 						"id": "incrementalBuild",
 						"class": "controlsButton",
@@ -773,7 +743,7 @@ CodeEditor.create = function(standAlone) {
 					}, "" /*innerHTML*/, 0 /*doCloseTag*/);			
 				{
 					
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"style":"margin:11px 0 0 13px;",
 						},"b" /*innerHTML*/, 1 /*doCloseTag*/);
@@ -781,7 +751,7 @@ CodeEditor.create = function(standAlone) {
 				str += "</div>"; //close incrementalBuild
 				
 				//clean compile
-				str += htmlOpen("div",
+				str += DesktopContent.htmlOpen("div",
 					{
 						"id": "cleanBuild",
 						"class": "controlsButton",
@@ -793,7 +763,7 @@ CodeEditor.create = function(standAlone) {
 					}, "" /*innerHTML*/, 0 /*doCloseTag*/);			
 				{
 					
-					str += htmlOpen("div",
+					str += DesktopContent.htmlOpen("div",
 						{
 							"style":"margin:10px 0 0 13px;",
 						},"z" /*innerHTML*/, 1 /*doCloseTag*/);
@@ -1074,7 +1044,7 @@ CodeEditor.create = function(standAlone) {
 		
 		var str = "";
 		
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"class":"textEditor",
 				"id":"textEditor" + forPrimary,
@@ -1087,14 +1057,14 @@ CodeEditor.create = function(standAlone) {
 		//add editorBox
 		
 		
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"class":"textEditorHeader",
 				"id":"textEditorHeader" + forPrimary,
 			},0 /*"<div>File</div><div>Save Date</div>"*/ /*innerHTML*/, 
 			true /*doCloseTag*/);
 		
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"class":"textEditorBody",
 				"id":"textEditorBody" + forPrimary,
@@ -1102,13 +1072,13 @@ CodeEditor.create = function(standAlone) {
 		
 		str += "<table class='editableBoxTable' style='margin-bottom:200px'>" + //add white space to bottom for expected scroll behavior
 			"<tr><td valign='top'>";
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"class":"editableBoxLeftMargin",
 				"id":"editableBoxLeftMargin" + forPrimary,
 			},"0\n1\n2" /*html*/,true /*closeTag*/);
 		str += "</td><td valign='top'>";
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"class":"editableBox",
 				"id":"editableBox" + forPrimary,	
@@ -1137,7 +1107,7 @@ CodeEditor.create = function(standAlone) {
 		
 		var str = "";
 		
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"class":"directoryNav",
 				"id":"directoryNav" + forPrimary,
@@ -1506,7 +1476,7 @@ CodeEditor.create = function(standAlone) {
 		var str = "";
 		var i;
 		var name;
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"style":"margin:20px;" +
 				"white-space: nowrap;",
@@ -1547,7 +1517,7 @@ CodeEditor.create = function(standAlone) {
 			str += "/"; 
 			
 			//open in other pane
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{	
 					"title":"Open folder in the other editor pane of the split-view: \n" +
 					"srcs" + buildPath,
@@ -1560,7 +1530,7 @@ CodeEditor.create = function(standAlone) {
 				/*innerHTML*/, true /*doCloseTag*/);
 			
 			//open in new window
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"title":"Open folder in a new browser tab: \n" +
 					"srcs" + buildPath,	
@@ -1586,7 +1556,7 @@ CodeEditor.create = function(standAlone) {
 			name = specials[i].getAttribute('value');
 			
 			//open in new window
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"title":"Open folder in a new browser tab: \n" +
 					"srcs" + path + "/" + name,	
@@ -1602,7 +1572,7 @@ CodeEditor.create = function(standAlone) {
 				/*innerHTML*/, true /*doCloseTag*/);
 			
 			//open in other pane
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{	
 					"title":"Open folder in the other editor pane of the split-view: \n" +
 					"srcs" + path + "/" + name,
@@ -1654,7 +1624,7 @@ CodeEditor.create = function(standAlone) {
 			str += "<tr><td>";
 						
 			//open in new window
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"title":"Open file in a new browser tab: \n" +
 					"srcs" + name,	
@@ -1670,7 +1640,7 @@ CodeEditor.create = function(standAlone) {
 				/*innerHTML*/, true /*doCloseTag*/);			
 			
 			//open in other pane
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{	
 					"title":"Open file in the other editor pane of the split-view: \n" +
 					"srcs" + name,
@@ -1709,7 +1679,7 @@ CodeEditor.create = function(standAlone) {
 			name = dirs[i].getAttribute('value');
 			
 			//open in new window
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"title":"Open folder in a new browser tab: \n" +
 					"srcs" + path + "/" + name,	
@@ -1725,7 +1695,7 @@ CodeEditor.create = function(standAlone) {
 				/*innerHTML*/, true /*doCloseTag*/);
 			
 			//open in other pane
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{	
 					"title":"Open folder in the other editor pane of the split-view: \n" +
 					"srcs" + path + "/" + name,
@@ -1769,7 +1739,7 @@ CodeEditor.create = function(standAlone) {
 			}
 
 			//open in new window
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"title":"Open file in a new browser tab: \n" +
 					"srcs" + path + "/" + name,	
@@ -1785,7 +1755,7 @@ CodeEditor.create = function(standAlone) {
 				/*innerHTML*/, true /*doCloseTag*/);
 			
 			//open in other pane
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{	
 					"title":"Open file in the other editor pane of the split-view: \n" +
 					"srcs" + path + "/" + name,
@@ -2746,6 +2716,15 @@ CodeEditor.create = function(standAlone) {
 			"CMAKE_MINIMUM_REQUIRED": _DECORATION_RED,
 			"include"				: _DECORATION_RED,
 			"create_doxygen_documentation": _DECORATION_RED,
+			"Not"					: _DECORATION_RED,
+			"FAILED"				: _DECORATION_RED,
+			"FAIL"					: _DECORATION_RED,
+			"ERROR"					: _DECORATION_RED,
+			"BAD"					: _DECORATION_RED,
+			"OK"					: _DECORATION_GREEN,
+			"DONE"					: _DECORATION_GREEN,
+			"GOOD"					: _DECORATION_GREEN,
+			"LOCKED"				: _DECORATION_GREEN,
 		},
 		"c++": {
 			"#define" 				: _DECORATION_RED,
@@ -3082,7 +3061,7 @@ CodeEditor.create = function(standAlone) {
 						}
 							
 						//open in this pane
-						str += htmlOpen("a",
+						str += DesktopContent.htmlOpen("a",
 								{	
 										"title":"Open file in this editor pane: \n" +
 										"srcs" + name,
@@ -3099,7 +3078,7 @@ CodeEditor.create = function(standAlone) {
 								"height: 9px;  '></div></div>" 
 								/*innerHTML*/, true /*doCloseTag*/);
 						//open in other pane
-						str += htmlOpen("a",
+						str += DesktopContent.htmlOpen("a",
 								{	
 										"title":"Open file in the other editor pane of the split-view: \n" +
 										"srcs" + name,
@@ -3115,7 +3094,7 @@ CodeEditor.create = function(standAlone) {
 								"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'></div>" 
 								/*innerHTML*/, true /*doCloseTag*/);
 						//open in new window
-						str += htmlOpen("a",
+						str += DesktopContent.htmlOpen("a",
 								{
 										"title":"Open file in a new browser tab: \n" +
 										"srcs" + name,
@@ -4325,7 +4304,7 @@ CodeEditor.create = function(standAlone) {
 		str += "<table><td>"
 			str += "Outline: ";
 		str += "</td><td>"; //do select in table so that width plays nice
-		str += htmlOpen("select",
+		str += DesktopContent.htmlOpen("select",
 			{
 				"class":"textEditorOutlineSelect",
 				"id":"textEditorOutlineSelect" + forPrimary,
@@ -5909,7 +5888,7 @@ CodeEditor.create = function(standAlone) {
 		
 		//create input box and ok | cancel
 		var str = "";
-		str += htmlOpen("input",
+		str += DesktopContent.htmlOpen("input",
 			{
 				"type":"text",
 				"style":"text-align:center;margin:-4px -2px -4px -1px;width:100%;" + 
@@ -6020,7 +5999,7 @@ CodeEditor.create = function(standAlone) {
 			
 			currentFile = _filePath[forPrimary] + "." + _fileExtension[forPrimary];
 			str = "";
-			str += htmlOpen("select",
+			str += DesktopContent.htmlOpen("select",
 				{
 					"class":"fileNameHistorySelect",
 					"id":"fileNameHistorySelect" + forPrimary,
@@ -6144,7 +6123,7 @@ CodeEditor.create = function(standAlone) {
 		str += "<tr><td style='text-align:right'>"; //col 1
 		str += "Find:";
 		str += "</td><td>"; //col 2
-		str += htmlOpen("input",
+		str += DesktopContent.htmlOpen("input",
 			{
 				"type":"text",
 				"id":"findAndReplaceFind" + forPrimary,
@@ -6161,7 +6140,7 @@ CodeEditor.create = function(standAlone) {
 		str += "</td><td>"; //col 3
 		
 		//Scope options
-		str += htmlOpen("select",
+		str += DesktopContent.htmlOpen("select",
 			{
 				"id":"findAndReplaceScope" + forPrimary,
 				"style":"width:100%;" + 
@@ -6182,7 +6161,7 @@ CodeEditor.create = function(standAlone) {
 		str += "</td><td>"; //col 4
 		
 		//Option case-sensitive
-		str += htmlOpen("input",
+		str += DesktopContent.htmlOpen("input",
 			{
 				"type":"checkbox",
 				"id":"findAndReplaceCaseSensitive" + forPrimary,
@@ -6195,7 +6174,7 @@ CodeEditor.create = function(standAlone) {
 					forPrimary + ");",
 					
 			},
-			htmlOpen("a",
+			DesktopContent.htmlOpen("a",
 				{
 				"title":"Toggle case sensitive search",
 				"style":"margin-left:5px;",
@@ -6217,7 +6196,7 @@ CodeEditor.create = function(standAlone) {
 		str += "<tr><td style='text-align:right'>"; //col 1
 		str += "Replace with:";
 		str += "</td><td>"; //col 2
-		str += htmlOpen("input",
+		str += DesktopContent.htmlOpen("input",
 			{
 				"type":"text",
 				"id":"findAndReplaceReplace" + forPrimary,
@@ -6234,7 +6213,7 @@ CodeEditor.create = function(standAlone) {
 		str += "</td><td>"; //col 3
 		
 		//Direction options
-		str += htmlOpen("select",
+		str += DesktopContent.htmlOpen("select",
 			{
 				"id":"findAndReplaceDirection" + forPrimary,
 				"style":"width:100%;" + 
@@ -6256,7 +6235,7 @@ CodeEditor.create = function(standAlone) {
 		str += "</td><td>"; //col 4
 		
 		//Option whole word
-		str += htmlOpen("input",
+		str += DesktopContent.htmlOpen("input",
 			{
 				"type":"checkbox",
 				"id":"findAndReplaceWholeWord" + forPrimary,
@@ -6269,7 +6248,7 @@ CodeEditor.create = function(standAlone) {
 					forPrimary + ");",
 					
 			},
-			htmlOpen("a",
+			DesktopContent.htmlOpen("a",
 				{
 				"style":"margin-left:5px;",
 				"title":"Toggle whole word search",
@@ -6289,14 +6268,14 @@ CodeEditor.create = function(standAlone) {
 		
 		//Buttons row
 		str += "<tr><td colspan='4' style='text-align:center'>";
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"id":		"findAndReplaceWrapped" + forPrimary,
 				"style":	"text-align:right; margin: 4px; width:115px;" +
 				"color: red; float: left;",						
 			},0 /*innerHTML*/, true /*doCloseTag*/);
 		str += "<div style='float:left;'>";
-		str += htmlOpen("input",
+		str += DesktopContent.htmlOpen("input",
 			{
 				"type":		"button",
 				"value": 	"Find",
@@ -6306,7 +6285,7 @@ CodeEditor.create = function(standAlone) {
 				"CodeEditor.editor.doFindAndReplaceAction(" + forPrimary + ",1)",
 			},0 /*innerHTML*/, true /*doCloseTag*/);
 		
-		str += htmlOpen("input",
+		str += DesktopContent.htmlOpen("input",
 			{
 				"type":		"button",
 				"value": 	"Replace",
@@ -6316,7 +6295,7 @@ CodeEditor.create = function(standAlone) {
 				"CodeEditor.editor.doFindAndReplaceAction(" + forPrimary + ",2)",
 			},0 /*innerHTML*/, true /*doCloseTag*/);
 		
-		str += htmlOpen("input",
+		str += DesktopContent.htmlOpen("input",
 			{
 				"type":		"button",
 				"value": 	"Replace & Find",
@@ -6326,7 +6305,7 @@ CodeEditor.create = function(standAlone) {
 				"CodeEditor.editor.doFindAndReplaceAction(" + forPrimary + ",3)",
 			},0 /*innerHTML*/, true /*doCloseTag*/);
 		
-		str += htmlOpen("input",
+		str += DesktopContent.htmlOpen("input",
 			{
 				"type":		"button",
 				"value": 	"Replace All",
@@ -6336,7 +6315,7 @@ CodeEditor.create = function(standAlone) {
 				"CodeEditor.editor.doFindAndReplaceAction(" + forPrimary + ",4)",
 			},0 /*innerHTML*/, true /*doCloseTag*/);
 		
-		str += htmlOpen("input",
+		str += DesktopContent.htmlOpen("input",
 			{
 				"type":		"button",
 				"value": 	"Cancel",
@@ -6694,7 +6673,7 @@ CodeEditor.create = function(standAlone) {
 		var str = "";
 		
 		//add file name div		
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"onmousemove" : 
 				"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + ");",
@@ -6702,7 +6681,7 @@ CodeEditor.create = function(standAlone) {
 		str += "<center>";
 		
 		
-		str += htmlOpen("div", //this is place holder, that keeps height spacing
+		str += DesktopContent.htmlOpen("div", //this is place holder, that keeps height spacing
 				{
 
 						"style": "width: 172px;", //_READ_ONLY make different width
@@ -6711,7 +6690,7 @@ CodeEditor.create = function(standAlone) {
 
 				}, 0 /*innerHTML*/, false /*doCloseTag*/);	
 
-		str += htmlOpen("div", //this is el that gets hide/show toggle
+		str += DesktopContent.htmlOpen("div", //this is el that gets hide/show toggle
 			{
 				"class":"fileButtonContainerShowHide",
 				"id":"fileButtonContainerShowHide" + forPrimary,
@@ -6725,7 +6704,7 @@ CodeEditor.create = function(standAlone) {
 		//add rename button		
 		if (!_READ_ONLY)
 		{		
-			str += htmlOpen("div", 
+			str += DesktopContent.htmlOpen("div", 
 					{
 							"class":"fileButton",
 							"id":"fileRenameButton" + forPrimary,
@@ -6735,7 +6714,7 @@ CodeEditor.create = function(standAlone) {
 							"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
 					},0 /*innerHTML*/, true /*doCloseTag*/);
 		}
-		str += htmlOpen("div", 
+		str += DesktopContent.htmlOpen("div", 
 			{
 				"class":"fileButton",
 				"id":"fileDownloadButton" + forPrimary,
@@ -6750,7 +6729,7 @@ CodeEditor.create = function(standAlone) {
 			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 2px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
 			/*innerHTML*/, true /*doCloseTag*/);
 		if (!_READ_ONLY) {	
-			str += htmlOpen("div", 
+			str += DesktopContent.htmlOpen("div", 
 				{
 					"class":"fileButton",
 					"id":"fileUploadButton" + forPrimary,
@@ -6767,7 +6746,7 @@ CodeEditor.create = function(standAlone) {
 			/*innerHTML*/, true /*doCloseTag*/);
 		}
 		if (!_READ_ONLY) {	
-			str += htmlOpen("div",
+			str += DesktopContent.htmlOpen("div",
 				{
 					"class":"fileButton fileUndoButton",
 					"id":"fileUndoButton" + forPrimary,
@@ -6784,7 +6763,7 @@ CodeEditor.create = function(standAlone) {
 				"&#8617;"
 				/*innerHTML*/, true /*doCloseTag*/);
 			
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"class":"fileButton fileUndoButton",
 				"id":"fileRedoButton" + forPrimary,
@@ -6802,7 +6781,7 @@ CodeEditor.create = function(standAlone) {
 			/*innerHTML*/, true /*doCloseTag*/);
 		}
 		
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"class":"fileButton openRelatedFileButton",
 				"id":"openRelatedFileButton" + forPrimary,
@@ -6820,7 +6799,7 @@ CodeEditor.create = function(standAlone) {
 			":"
 			/*innerHTML*/, true /*doCloseTag*/);
 		
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"class":"fileButton refreshFileButton",
 				"id":"refreshFileButton" + forPrimary,
@@ -6844,14 +6823,14 @@ CodeEditor.create = function(standAlone) {
 		str += "</div>"; //end fileButtonContainerShowHide
 		str += "</div>"; //end fileButtonContainer
 		
-		str += htmlClearDiv();
+		str += DesktopContent.htmlClearDiv();
 		
 		var nameArr = path.split('/');
 		
 		//table for open icons and filename select
 		str += "<table><tr><td>";	
 		//open in new window
-		str += htmlOpen("a",
+		str += DesktopContent.htmlOpen("a",
 			{
 				"title":"Open file in a new browser tab: \n" +
 				"srcs" + path + "." + extension,	
@@ -6867,7 +6846,7 @@ CodeEditor.create = function(standAlone) {
 			/*innerHTML*/, true /*doCloseTag*/);			
 		
 		//open in other pane
-		str += htmlOpen("a",
+		str += DesktopContent.htmlOpen("a",
 			{	
 				"title":"Open file in the other editor pane of the split-view: \n" +
 				"srcs" + path + "." + extension,
@@ -6883,7 +6862,7 @@ CodeEditor.create = function(standAlone) {
 		str += "</td><td style='width:90%'>";	
 		
 		//add path div		
-		str += htmlOpen("div",
+		str += DesktopContent.htmlOpen("div",
 			{
 				"class":"fileNameDiv",
 				"id":"fileNameDiv" + forPrimary,
@@ -6900,13 +6879,13 @@ CodeEditor.create = function(standAlone) {
 		str += "</center>";	
 		str += "</div>"; //end file name div
 		
-		str += htmlClearDiv();		
+		str += DesktopContent.htmlClearDiv();		
 		
 		//last modified div
 		str += "<div class='textEditorLastSave' id='textEditorLastSave" + 
 			forPrimary + "'>Unmodified</div>";
 		
-		str += htmlClearDiv();
+		str += DesktopContent.htmlClearDiv();
 		//outline div
 		str += "<div class='textEditorOutline' id='textEditorOutline" + 
 			forPrimary + "'>Outline:</div>";

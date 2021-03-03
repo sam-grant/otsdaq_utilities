@@ -141,6 +141,9 @@
 		//configIncrementByReplace()
 		//versionHasChanged()
 
+		//togglePaintCellValue()
+		//tableVersionDiff()
+		//setupTableVersionDiff()
 		//setupCopyAndMoveRows()
 		//configCopyView(sourceVersion)
 		//tableCopyOrMoveRow(deleteSrc)					//copy/move row from source to destination row			
@@ -174,36 +177,13 @@
 		//ConfigurationAPI._DEFAULT_COMMENT
 		//end ConfigurationAPI constants =========
 
-		//htmlOpen(tag,attObj,innerHTML,closeTag)
-		//htmlClearDiv()
+		//DesktopContent.htmlOpen(tag,attObj,innerHTML,closeTag)
+		//DesktopContent.htmlClearDiv()
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 
-		//=====================================================================================
-		//htmlOpen ~~		
-		//	tab name and attribute/value map object
-		function htmlOpen(tag, attObj, innerHTML, doCloseTag) {
-			var str = "";
-			var attKeys = attObj ? Object.keys(attObj) : [];
-			str += "<" + tag + " ";
-			for (var i = 0; i < attKeys.length; ++i)
-				str += " " + attKeys[i] + "='" +
-					attObj[attKeys[i]] + "' ";
-			str += ">";
-			if (innerHTML) str += innerHTML;
-			if (doCloseTag)
-				str += "</" + tag + ">";
-			return str;
-		} // end htmlOpen()
-
-		//=====================================================================================
-		//htmlClearDiv ~~		
-		function htmlClearDiv() {
-			return "<div id='clearDiv'></div>";
-		} //end htmlClearDiv()
-
-
+		
 	</script>
 
 	<title>ConfigurationGUI</title>
@@ -430,6 +410,15 @@
 			border-left: 		2px solid rgb(140, 86, 86);
 			padding-bottom:		5px;
 		}
+
+		.noUserSelect {
+			-webkit-touch-callout: 	none;
+			-webkit-user-select: 	none;
+			-khtml-user-select: 	none;
+			-moz-user-select: 		none;
+			-ms-user-select: 		none;
+			user-select: 			none;
+		}
 	</style>
 
 
@@ -466,8 +455,8 @@
 
 		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
 		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
-		var _CONTEXT_MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
-		var _CONTEXT_MENU_SECONDARY_COLOR = "rgb(130, 51, 51)";
+		var _CONTEXT_MENU_PRIMARY_COLOR = "rgb(241, 233, 233)";
+		var _CONTEXT_MENU_SECONDARY_COLOR = "rgb(50, 0, 0)";
 
 		var _SCRATCH_VIEW_NAME = "Scratch-View";
 		var _MOCKUP_VIEW_NAME = "Mockup-View";
@@ -689,7 +678,7 @@
 			//============================
 			//		for debugging
 
-			//setupSpecificTable("DesktopIconTable","2",""); return;
+			// setupSpecificTable("DTCInterfaceTable","27",""); return;
 			//setupSpecificTable("XDAQContextTable","2","setupTableViewMode('anchorTag-XDAQContextTable');"); return;
 
 			//setupSpecificTableGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerTable"); return;			
@@ -947,7 +936,6 @@
 		//	undefined version gives latest
 		function setupSpecificTable(tableName, version, backLinkStr, allowIllegalColumns) 
 		{
-
 			var el;
 			if (_displayTargetEl && backLinkStr == "special display target") {
 				el = _displayTargetEl;
@@ -1102,7 +1090,10 @@
 					//if (i == activeConfigHeaders.length - 1) //for last configured 
 					//	str += "Last Activated " + activeConfigHeaders[i] + ": ";
 					//else	//for backbone, iterate
-					str += "Currently Active " + activeConfigHeaders[i] + ": ";
+					if(i != 3)
+						str += "Currently Active " + activeConfigHeaders[i] + ": ";
+					else
+						str += "Current Editor " + activeConfigHeaders[i] + ": ";
 
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
 
@@ -1164,7 +1155,7 @@
 								str += "Last Run Started by FSM: ";
 								break;
 							case 2:
-								str += "Last Activated Config: ";
+								str += "Last Editor Config: ";
 								break;
 							case 3:
 								str += "Last Activated Iterate Group: ";
@@ -2194,7 +2185,7 @@
 
 			//add Download link
 			str += "<br>";
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"onclick": "popUpGroupUploadDownloadForm(\"" + groupName +
 						"\",\"" + groupKey + "\", false /*isUpload*/);",
@@ -2204,7 +2195,7 @@
 				true /*doCloseTag*/);
 			//add Upload link
 			str += "<br>";
-			str += htmlOpen("a",
+			str += DesktopContent.htmlOpen("a",
 				{
 					"onclick": "popUpGroupUploadDownloadForm(\"" + groupName +
 						"\",\"" + groupKey + "\", true /*isUpload*/);",
@@ -2471,7 +2462,9 @@
 			var colTypeEls = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
 			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
 			var colChoices = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnChoices");
-
+			var colMinValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMinValue");
+			var colMaxValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMaxValue");
+			
 			//fill fixed choice structure
 			_tableFixedChoiceData = {};
 			var fixedChoiceArr;
@@ -2622,7 +2615,8 @@
 				var tableVersion;
 				var aliasString;
 				var versionAliases;
-				for (var j = 0; j < tableVersions.length; ++j) {
+				for (var j = 0; j < tableVersions.length; ++j)
+				{
 					tableVersion = tableVersions[j].getAttribute("value");
 
 					aliasString = "";
@@ -2645,7 +2639,7 @@
 
 			str += "<div id='clearDiv'></div>";
 			str += "<div id='findAndReplace'></div>";
-			str += "<div id='copyAndMoveRows'></div>";
+			str += "<div id='aboveTableDialog'></div>";
 
 			//create table details
 			str += "<div id='tableDetails' style='display:none'>Table Details:";
@@ -2720,15 +2714,18 @@
 
 					cols.push([]);
 					//init pre-data columns
-					for (var c = 0; c < _CONFIG_DATA_COL_OFFSET; ++c) {
+					for (var c = 0; c < _CONFIG_DATA_COL_OFFSET; ++c) 
+					{
 						cols[cols.length - 1].push("");
 						colTypes.push("Header");
 					}
 					//handle data columns
-					for (var c = 0; c < colHdrs.length; ++c) {
+					for (var c = 0; c < colHdrs.length; ++c) 
+					{
 						colType = colTypeEls[c].getAttribute("value");
 						colDataType = colDataTypes[c].getAttribute("value");
-
+						colMinValue = colMinValues[c].getAttribute("value");
+						colMaxValue = colMaxValues[c].getAttribute("value");
 
 						typeDivStr = "";
 						typeDivStr += "<div style='font-size:12px' title='";
@@ -2736,15 +2733,29 @@
 						typeDivStr += " &#60;" + colDataType + "&#62;";
 						typeDivStr += "'>";
 						typeDivStr += colType;
-						typeDivStr += "<br>&#60;" + colDataType + "&#62;";
+						typeDivStr += "<br>&#60;" + colDataType + "&#62;" ;
+						if (colDataType == "NUMBER") 
+						{
+							if (colMinValue != "")
+								typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue;
+							if (colMaxValue != "")
+								typeDivStr += "<br>MAX VALUE ALLOWED: " + colMaxValue;
+							// if (colMinValues[c] != "" && colMaxValues[c] != "") 
+							// {
+							// 	// if (colMinValue == 0 && colMaxValue == -1) {}
+							// 	// else
+							// 		typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue + "<br>MAX VALUE ALLOWED: " + colMaxValue ;
+							// }
+						}
+
 						typeDivStr += "</div>";
 
 						cols[cols.length - 1].push(typeDivStr);
 
 						isStatusType = false;
 						for (var i = 0; i < boolTypes.length; ++i)
-							if (boolTypes[i] ==
-								colType) {
+							if (boolTypes[i] == colType) 
+							{
 								isStatusType = true; break;
 							}
 						colTypes.push(isStatusType ? "Bool" : colType);
@@ -2762,7 +2773,8 @@
 				//add data
 				{
 					var rowEntries;
-					for (var r = 0; r < rows.length; ++r) {
+					for (var r = 0; r < rows.length; ++r) 
+					{
 						rowEntries = rows[r].getElementsByTagName("Entry");
 
 						cols.push([]);
@@ -5109,6 +5121,9 @@
 		//activateSystemConfigHandler ~
 		function activateSystemConfigHandler(req, displayErrors)
 		{
+			//reset (could be silly play in table view value painter)
+			document.body.style.cursor = "default";
+
 			var withWarningsStr = "";
 			var name, key; //only filled in if withWarningsStr != ""
 			if (displayErrors)
@@ -5160,6 +5175,12 @@
 				DesktopContent.getXMLValue(req, "Iterate-ActiveGroupKey"),
 				DesktopContent.getXMLValue(req, "Configuration-ActiveGroupName"),
 				DesktopContent.getXMLValue(req, "Configuration-ActiveGroupKey")];
+			
+			var activeTableGroupAliases = [
+				DesktopContent.getXMLValue(req, "Context-ActiveGroupAlias"),
+				DesktopContent.getXMLValue(req, "Backbone-ActiveGroupAlias"),
+				DesktopContent.getXMLValue(req, "Iterate-ActiveGroupAlias"),
+				DesktopContent.getXMLValue(req, "Configuration-ActiveGroupAlias")];
 
 			var activeConfigHeaders = ["Context", "Backbone", "Iterate Group", "Configuration"];
 			Debug.log("activeConfigGroups: " + _activeTableGroups);
@@ -5176,7 +5197,17 @@
 				
 				str += "<tr><td style='text-align:left'>";
 
-				str += "Active " + activeConfigHeaders[i] + ": ";
+				if(i != 3) //not config		
+					str += "Active ";
+				else
+					str += "Editor ";
+
+				str += activeConfigHeaders[i] + ": ";
+
+				str += "</td><td style='text-align:left; padding-left:20px;'>";
+
+				if(activeTableGroupAliases[i] && activeTableGroupAliases[i] != "")
+					str += "&quot;" + activeTableGroupAliases[i] + "&quot; ";
 
 				str += "</td><td style='text-align:left; padding-left:20px;'>";
 
@@ -6060,16 +6091,222 @@
 		} //end createTableGroupHandler()
 
 		//==============================================================================
+		//togglePaintCellValue
+		function togglePaintCellValue() 
+		{			
+			Debug.log("togglePaintCellValue",document.body.style.cursor);
+
+			var painterSource = 'url("/WebPath/images/iconImages/cursor-PaintRoller.png"), auto';
+			var selectorSource = "crosshair";
+
+			var vpel = document.getElementById("valuePainterButton");
+			if(!vpel) return;	
+			if(document.body.style.cursor == painterSource || 
+				document.body.style.cursor == selectorSource)
+			{
+				document.body.style.cursor = "default";
+				vpel.value = "Copy and Paint a Cell";
+				vpel.title = "Click to enable choosing a cell value to copy and paint into other cells by dragging the mouse cursor.";
+
+				//return table to selectable text
+				var tel = document.getElementById("SubSystemTable");
+				tel.className = "";
+			}
+			else
+			{
+				vpel.value = "Cancel Cell Value Selection";
+				vpel.title = "Click to cancel cell value selection mode.";
+				document.body.style.cursor = selectorSource;
+			}
+		} //end togglePaintCellValue()
+
+		//==============================================================================
+		//tableVersionDiff
+		function tableVersionDiff() 
+		{			
+			var vA = document.getElementById("tableVersionDiffA").value;
+			var vB = document.getElementById("tableVersionDiffB").value;
+			
+			Debug.log("tableVersionDiff vA=" + vA + " vB=" + vB);
+
+			var allowIllegalColumns = false;
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable" +
+				"&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +
+				(allowIllegalColumns?"&allowIllegalColumns=1":"") +
+				"&tableName=" + _currentTableName +
+				"&version=" + vA,
+				"",
+				function(reqA)
+				{
+					
+					DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable" +
+						"&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +
+						(allowIllegalColumns?"&allowIllegalColumns=1":"") +
+						"&tableName=" + _currentTableName +
+						"&version=" + vB,
+						"",
+						function(reqB)
+						{
+
+							var errA = DesktopContent.getXMLValue(reqA, "Error");
+							var errB = DesktopContent.getXMLValue(reqB, "Error");
+							
+							if (errA) 
+							{
+								Debug.log("Error A:",errA, Debug.HIGH_PRIORITY);
+
+								Debug.log("There were errors loading version A='" + vA + 
+									"'.\n\n(You may want to try loading this version again " +
+									"to see what was partially loaded into the cache before failure. " +
+									"If you think, the failure is due to a column name change, " +
+									"you can also try to Copy the failing view to the new column names using the " +
+									"'Copy and Move' functionality.) " +
+									"\n\nPlease see the detailed Errors below:", Debug.HIGH_PRIORITY);
+								//try to power through
+							}
+
+							if (errB) 
+							{
+								Debug.log("Error B:",errB, Debug.HIGH_PRIORITY);
+
+								Debug.log("There were errors loading version B='" + vB + 
+									"'.\n\n(You may want to try loading this version again " +
+									"to see what was partially loaded into the cache before failure. " +
+									"If you think, the failure is due to a column name change, " +
+									"you can also try to Copy the failing view to the new column names using the " +
+									"'Copy and Move' functionality.) " +
+									"\n\nPlease see the detailed Errors below:", Debug.HIGH_PRIORITY);
+								//try to power through
+							}
+
+
+							var rowsA = reqA.responseXML.getElementsByTagName(
+								"CurrentVersionRows")[0].getElementsByTagName("Row");
+							var rowsB = reqB.responseXML.getElementsByTagName(
+								"CurrentVersionRows")[0].getElementsByTagName("Row");
+							
+							var displayTableRow = 0;
+							var firstRowValueDifference = true;
+							var rowEntriesA;
+							var rowEntriesB;
+							var diffStr = "";
+							if(rowsA.length != rowsB.length)
+								diffStr += "<tr" + 
+									(displayTableRow++ % 2?" style='background-color:rgb(95 27 27);' ":"") +
+									"><td colspan='2'>Row count mismatch in vA v" + vA + " = " + rowsA.length + 
+									"</td><td colspan='2'>Row count mismatch in vB" + vB + " = " + rowsB.length + 
+									"</td></tr>";
+
+							for (var rA = 0, rB = 0; rA < rowsA.length && rB < rowsB.length; ++rA, ++rB) 
+							{
+								rowEntriesA = rowsA[rA].getElementsByTagName("Entry");
+								rowEntriesB = rowsB[rB].getElementsByTagName("Entry");
+
+								Debug.log("r" + " " + rA + " " + rB,rowEntriesA.length,rowEntriesB.length);
+
+								if(rA == 0 && rB == 0 && rowEntriesA.length != rowEntriesB.length)
+									diffStr += "<tr" + 
+										(displayTableRow++ % 2?" style='background-color:rgb(95 27 27);' ":"") +
+										"><td colspan='2'>Column count mismatch in vA v" + vA + " = " + columns.A.length + 
+										"</td><td colspan='2'>Column count mismatch in vB" + vB + " = " + rowEntriesB.length + 
+										"</td></tr>";
+										
+								for (var cA = 0, cB = 0; cA < rowEntriesA.length && cB < rowEntriesB.length; ++cA, ++cB)
+								{
+									Debug.log("rc",rA,cA,rowEntriesA[cA].getAttribute("value"),
+										"vs",rB,cB,rowEntriesB[cB].getAttribute("value"));
+									if(rowEntriesA[cA].getAttribute("value") != rowEntriesB[cB].getAttribute("value"))
+									{
+										if(firstRowValueDifference)
+										{
+											//first time give header columns
+											firstRowValueDifference = false;
+											diffStr += "<tr" + 
+												" style='background-color:rgb(82 0 0);' " + 
+												"><th>v" + vA + " [row,col]</th><th>v" + vA + " value" +
+												"</th><th>v" + vB + " [row,col]</th><th>v" + vB + " value" +
+												"</th></tr>";									
+										}
+										diffStr += "<tr" + 
+											(displayTableRow++ % 2?" style='background-color:rgb(95 27 27);' ":"") +
+											"><td style='text-align:center'>[" + rA + "," + cA + "]:</td><td style='white-space: nowrap'>" + rowEntriesA[cA].getAttribute("value") +
+											"</td><td style='text-align:center'>[" + rB + "," + cB + "]:</td><td style='white-space: nowrap'>" + rowEntriesB[cB].getAttribute("value") +
+											"</td></tr>";
+									}
+								} //end vA-vB col loop
+							} //end vA-vB row loop
+
+							if(diffStr != "")
+							{
+								var tmp = Debug._ERR_TRUNCATION_LENGTH;
+								Debug._ERR_TRUNCATION_LENGTH = diffStr.length + 200;
+								Debug.log("Differences were found between tables v" + vA + 
+									" and v" + vB + ". Here are the results:\n" + 
+									"<table>" +
+									diffStr + "</table>", Debug.WARN_PRIORITY);
+								Debug._ERR_TRUNCATION_LENGTH = tmp; //replace original truncation value
+							}
+							else if(rowsA.length == 0 && rowsB.length == 0)
+								Debug.log("Both tables v" + vA + " and v" + vB + " were empty!", Debug.WARN_PRIORITY);
+							else
+								Debug.log("This should be impossible? No differences found between v" + 
+									vA + " and v" + vB,Debug.INFO_PRIORITY);
+						}, 
+						0, //parameter 
+						0, true  //progressHandler, callHandlerOnErr
+					);
+
+				}, 
+				0, //parameter 
+				0, true  //progressHandler, callHandlerOnErr
+			);
+
+		} //end tableVersionDiff()
+
+		//==============================================================================
+		//setupTableVersionDiff
+		function setupTableVersionDiff() 
+		{
+			Debug.log("setupTableVersionDiff()");
+			
+			var el = document.getElementById('findAndReplace');
+			el.innerHTML = ""; //clear the other type of controls
+			el = document.getElementById('aboveTableDialog'); //share with copyAndMove
+			var i =  el.innerText.indexOf("Table");
+			if ( i >= 0 && i < 5) { el.innerHTML = ""; return; } //hide if already shown
+
+			var str = "";
+			str += "<br>Table Version A to compare... ";
+			str += "<input type='text' id='tableVersionDiffA' style='margin:0;width:" +
+				(el.offsetWidth - 6) + "px; height:" + (17) + "px' value='" + _version + "'>";
+			str += "<br>";
+			str += "Table Version B to compare... ";
+			str += "<input type='text' id='tableVersionDiffB' style='margin:0;width:" +
+				(el.offsetWidth - 6) + "px; height:" + (17) + "px' value='" + ((_version|0)-1) + "'>";
+			str += "<br>";		
+			str += "<br>";
+			str += "<input type='button' onmouseup='tableVersionDiff()' value='Diff A and B' title='" +
+				"Create a report of differences between Table Version A and B which can be downloaded." +
+				"'/>";
+			str += "<br><br>";
+			el.innerHTML = str;
+		} //end setupTableVersionDiff()
+
+		//==============================================================================
 		//setupCopyAndMoveRows
 		function setupCopyAndMoveRows() 
 		{
+			Debug.log("setupCopyAndMoveRows()");
+
 			var el = document.getElementById('findAndReplace');
 			el.innerHTML = ""; //clear the other type of controls
-			el = document.getElementById('copyAndMoveRows');
-			if (el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
+			el = document.getElementById('aboveTableDialog'); //share with tableVersionDiff
+			var i =  el.innerText.indexOf("Source");
+			if ( i >= 0 && i < 5) { el.innerHTML = ""; return; } //hide if already shown
 
 			var str = "";
-			str += "Source starting row or Source Version... ";
+			str += "<br>Source starting row or Source Version... ";
 			str += "<input type='text' id='copyAndMoveRowsSrc' style='margin:0;width:" +
 				(el.offsetWidth - 6) + "px; height:" + (17) + "px' value='0'>";
 			str += "<br>";
@@ -6098,6 +6335,10 @@
 				"Copy Source Version (with possibly different column names) to a new Temporary Version with current column names." +
 				"'/>";
 			str += "<br><br>";
+			str += "<input id='valuePainterButton' type='button' onmouseup='togglePaintCellValue()' value='Copy and Paint a Cell' title='" +
+				"Click to enable choosing a cell value to copy and paint into other cells by dragging the mouse cursor." +
+				"'/>";
+			str += "<br><br>";
 			el.innerHTML = str;
 		} //end setupCopyAndMoveRows()
 
@@ -6122,6 +6363,20 @@
 		//tableCopyOrMoveRow
 		function tableCopyOrMoveRow(deleteSrc) 
 		{
+			var numberOfCopies = 1;
+			if(!deleteSrc)
+			{
+				//propmpt for number of copies
+				numberOfCopies = prompt("How many copy instances would you like (default: 1)?",1);
+				if (numberOfCopies)
+					numberOfCopies = numberOfCopies|0;
+				else //prompt was cancelled
+				{
+					Debug.warn("The copy operation was cancelled by the user.");
+					return;
+				}
+				Debug.logv({numberOfCopies});
+			}
 			var src = document.getElementById("copyAndMoveRowsSrc").value | 0;
 			var dest = document.getElementById("copyAndMoveRowsDest").value | 0;
 			var srcCount = document.getElementById("copyAndMoveRowsSrcCount").value | 0;
@@ -6158,7 +6413,7 @@
 
 					//handle adding new rows
 					if (newr - _CONFIG_DATA_ROW_OFFSET >= dest &&
-						newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount)
+						newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount * numberOfCopies)
 					{
 						//add new empty TD row
 						var newRowArr = [];
@@ -6169,7 +6424,7 @@
 						++newr;
 
 						//if this is not last row added, continue adding
-						if (newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount)
+						if (newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount * numberOfCopies)
 						{
 							--r;
 							continue;
@@ -6191,16 +6446,18 @@
 
 				//copy source values to dest values
 				if (src >= dest) //account for source index being pushed back
-					src += srcCount;
+					src += srcCount * numberOfCopies;
 
-				for (var r = 0; r < srcCount; ++r) 
+				for (var r = 0; r < srcCount * numberOfCopies; ++r) 
 				{
 					for (var c = 0; c < rows[0].childNodes.length; ++c) 
 					{
-						val = cols[_CONFIG_DATA_ROW_OFFSET + src + r][c].innerHTML;
+						val = cols[_CONFIG_DATA_ROW_OFFSET + src + (r % srcCount)][c].innerHTML;
 
-						if (colTypes[c] == "UID" || colTypes[c] == "UniqueData") 
+						//if copying, keep unique columns unique
+						if (!deleteSrc &&  (colTypes[c] == "UID" || colTypes[c] == "UniqueData"))
 						{
+							
 							//create array for existing unique values
 							uniqueVals = [];
 							for (var rr = _CONFIG_DATA_ROW_OFFSET; rr < cols.length; ++rr)
@@ -6236,14 +6493,14 @@
 					for (var r = 0, newr = 0, tmpColsIndex = 0; r < tmpCols.length + 1 + 1; ++r) //+1 for th, and +1 for new block of rows
 					{
 						if (newr - _CONFIG_DATA_ROW_OFFSET >= dest &&
-							newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount) 
+							newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount * numberOfCopies) 
 						{
 							//create default col cell to new row
 							cols[c][newr] = document.createElement("td");
 							++newr;
 
 							//if this is not last row added, continue adding
-							if (newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount) 
+							if (newr - _CONFIG_DATA_ROW_OFFSET < dest + srcCount * numberOfCopies) 
 							{
 								--r;
 								continue;
@@ -6263,15 +6520,16 @@
 
 				//copy source values to dest values
 				if (src >= dest) //account for source index being pushed back
-					src += srcCount;
-				for (var r = 0; r < srcCount; ++r) 
+					src += srcCount * numberOfCopies;
+
+				for (var r = 0; r < srcCount * numberOfCopies; ++r) 
 				{
 					for (var c = 0; c < rows.length; ++c) 
 					{
-						val = cols[c][_CONFIG_DATA_ROW_OFFSET + src + r].innerHTML;
+						val = cols[c][_CONFIG_DATA_ROW_OFFSET + src + (r % srcCount)].innerHTML;
 
-
-						if (colTypes[c] == "UID" || colTypes[c] == "UniqueData")
+						//if copying, keep unique columns unique
+						if (!deleteSrc &&  (colTypes[c] == "UID" || colTypes[c] == "UniqueData"))
 						{
 							//create array for existing unique values
 							uniqueVals = [];
@@ -6337,14 +6595,14 @@
 		//setupFindAndReplace
 		function setupFindAndReplace()
 		{
-			var el = document.getElementById('copyAndMoveRows');
+			var el = document.getElementById('aboveTableDialog');
 			el.innerHTML = ""; //clear the other type of controls
 			el = document.getElementById('findAndReplace');
 			if (el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
 
 			_lastFindRow = _lastFindCol = -1; //initialize find location
 			var str = "";
-			str += "Search in column ('*' for all)... <br>";
+			str += "<br>Search in column ('*' for all)... <br>";
 			str += "<input type='text' id='findAndReplaceTarget' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth - 6) + "px; height:" + (el.offsetHeight - 8) + "px' value='*'>";
 			str += "<br>";
 			str += "For text... <br>";
@@ -6378,7 +6636,7 @@
 				"Increment the trailing number in all fields, uniquely from row to row, in the Column(s) specified by &apos;Search in column&apos; by the signed integer number specified in &apos;Replace with...&apos; The starting number comes from the first cell encountered; if there is no trailing number, a zero is inferred." +
 				"'/>";
 			str += "</div>";
-			str += "<br><br>";
+			str += "<br>";
 			el.innerHTML = str;
 		} //end setupFindAndReplace()
 
@@ -7605,8 +7863,108 @@
 
 		//==============================================================================
 		//selectThisCell ~~
-		function selectThisCell(r, c, el, event)
+		function selectThisCell(r, c, el, event, paintMode)
 		{
+			var painterSource = 'url("/WebPath/images/iconImages/cursor-PaintRoller.png"), auto';
+			var selectorSource = "crosshair";
+			
+			if(paintMode)
+			{
+				if(event.buttons && document.body.style.cursor == painterSource)
+				{
+					if(el.innerText == _editingCellElOldValue)
+						return; //already same value
+
+					Debug.log(r,c,"paint mode",event.buttons);
+					el.innerHTML = "";
+					el.appendChild(document.createTextNode(_editingCellElOldValue));				
+
+					var selVal = _editingCellElOldValue;
+					//assume coloring yes/no is good enough until table is saved
+					var boolTypeTrues = ["On", "True", "Yes"];
+					var statusTypeFalses = ["Off", "False", "No"];
+
+					//determine if true value
+					var isTrue = false;
+					var isFalse = false;
+					for (var i = 0; i < boolTypeTrues.length; ++i)
+						if (boolTypeTrues[i] == selVal) 
+						{
+							isTrue = true; break;
+						}
+					for (var i = 0; !isTrue && i < statusTypeFalses.length; ++i)
+						if (statusTypeFalses[i] == selVal) 
+						{
+							isFalse = true; break;
+						}
+
+					if (isTrue)
+						el.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
+					else if (isFalse)
+						el.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+
+					versionHasChanged();
+				}
+				return;
+			}
+			else if(document.body.style.cursor == selectorSource)
+			{
+				//start painting mode
+				var vpel = document.getElementById("valuePainterButton");
+				if(vpel)
+				{
+					_editingCellElOldValue = el.textContent;
+					document.body.style.cursor = painterSource;
+					vpel.value = "End Cell Value Painting";
+					vpel.title = "Click to end cell value painting mode.";
+					Debug.log("Value-to-paint",_editingCellElOldValue);
+				}
+				else 
+					document.body.style.cursor = "default";
+
+				var tel = document.getElementById("SubSystemTable");
+				tel.className = "noUserSelect";
+				return;
+			}
+			else if(document.body.style.cursor == painterSource)
+			{
+				if(el.innerText == _editingCellElOldValue)
+					return; //already same value
+				//do painting
+				Debug.log("Painting value",_editingCellElOldValue);
+
+				el.innerHTML = "";
+				el.appendChild(document.createTextNode(_editingCellElOldValue));
+				var selVal = _editingCellElOldValue;
+
+				//assume coloring yes/no is good enough until table is saved
+				var boolTypeTrues = ["On", "True", "Yes"];
+				var statusTypeFalses = ["Off", "False", "No"];
+
+				//determine if true value
+				var isTrue = false;
+				var isFalse = false;
+				for (var i = 0; i < boolTypeTrues.length; ++i)
+					if (boolTypeTrues[i] == selVal) 
+					{
+						isTrue = true; break;
+					}
+				for (var i = 0; !isTrue && i < statusTypeFalses.length; ++i)
+					if (statusTypeFalses[i] == selVal) 
+					{
+						isFalse = true; break;
+					}
+
+				if (isTrue)
+					el.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
+				else if (isFalse)
+					el.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+
+			versionHasChanged();
+				return;
+			}
+
+
 			_editingCellElOldTitle = el.title; //originally only used by tree, but 
 			//table cells have title now too
 
@@ -8308,6 +8666,7 @@
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 					"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
 					">";
+
 			}
 
 			localFinishUpSelectCell();
@@ -12425,7 +12784,7 @@
 						str += "<option value= ';'>Semicolon ;</option>";
 						str += "</select><br><br>";
 
-						str += htmlOpen("a",
+						str += DesktopContent.htmlOpen("a",
 							{
 								"onclick": "var el = document.getElementsByClassName(\"uploadDownloadCheckbox\");" +
 									"for(var i in el){var forFirefox = (el[i].checked = true);}",
@@ -12433,7 +12792,7 @@
 							"Select All" /*innerHTML*/,
 							true /*doCloseTag*/);
 						str += " ";
-						str += htmlOpen("a",
+						str += DesktopContent.htmlOpen("a",
 							{
 								"onclick": "var el = document.getElementsByClassName(\"uploadDownloadCheckbox\");" +
 									"for(var i in el){var forFirefox = (el[i].checked = false);}",
@@ -12445,8 +12804,8 @@
 					}
 
 					var tableName, tableVersion;
-					str += htmlOpen("center");
-					str += htmlOpen("table");
+					str += DesktopContent.htmlOpen("center");
+					str += DesktopContent.htmlOpen("table");
 
 					_memberMapForGroupSave = {}; //clear global variable
 					for (var i = 0; i < tableNames.length && i < tableVersions.length; ++i) 
@@ -12455,8 +12814,8 @@
 						tableVersion = tableVersions[i].getAttribute("value");
 						_memberMapForGroupSave[tableName] = tableVersion;
 
-						str += htmlOpen("tr");
-						str += htmlOpen("td", {
+						str += DesktopContent.htmlOpen("tr");
+						str += DesktopContent.htmlOpen("td", {
 							"style": "white-space:nowrap;text-align:left;" +
 								(i % 2 ? "background-color:rgb(218, 194, 194);" : "")
 						});
@@ -12466,7 +12825,7 @@
 							str += tableName + "-v" + tableVersion;
 
 							str += "</td>";
-							str += htmlOpen("td", {
+							str += DesktopContent.htmlOpen("td", {
 								"style": "text-align:left;" +
 									(i % 2 ? "background-color:rgb(218, 194, 194);" : "")
 							});
@@ -12477,12 +12836,12 @@
 						}
 						else //is download
 						{
-							str += htmlOpen("input",
+							str += DesktopContent.htmlOpen("input",
 								{
 									"type": "checkbox",
 									"class": "uploadDownloadCheckbox",
 								},
-								htmlOpen("a",
+								DesktopContent.htmlOpen("a",
 									{
 										"style": "text-decoration:none;color:black;",
 										"onclick": "var el = document.getElementsByClassName(\"uploadDownloadCheckbox\");" +
@@ -12500,7 +12859,7 @@
 					str += "</center>";
 
 					str += "<br><br>";
-					str += htmlOpen("input",
+					str += DesktopContent.htmlOpen("input",
 						{
 							"type": "button",
 							"id": "uploadDownloadButton",
@@ -14369,7 +14728,14 @@
 			onmouseupJS += "document.getElementById(\"delimiterSubmit\").disabled = true;";
 			onmouseupJS += "uploadTableFromCSV();";
 
-			str += "<button id='downloadCSV' class='downloadCSV' title='Download file with your chosen delimiter'>Download file</button>";
+			str += "<button id='downloadCSV' class='downloadCSV' title='Download current table values with your chosen delimiter'>Download current table values</button>";
+
+			str += "<br><br>Or select a table version to download:<br>" +
+				"<input style='margin: 5px;' type='text' " +
+				"id='downloadCSVtableVersion' value='" +
+				_version + "'><br>";
+			
+			str += "<button id='downloadVersionedCSV' class='downloadCSV' title='Download versioned tabled with your chosen delimiter'>Download versioned table</button>";
 
 			el.innerHTML = str;
 			document.getElementById("display").appendChild(el); //add element to display div
@@ -14454,7 +14820,110 @@
 				
 				document.getElementById("popUpDialog").style.display = "none";
 
+				Debug.info("File '" + "download", _currentTableName + "-v" +
+					_version + "_download.csv" + "' was successfully downloaded");
+
 			}; //end downloadCSV handler
+
+			document.getElementById("downloadVersionedCSV").onclick = 
+				function()
+			{
+				var v = document.getElementById("downloadCSVtableVersion").value;
+				Debug.log("downloadVersionedCSV() v",v);
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable" +
+					"&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +
+					"&rawData=1" +
+					"&tableName=" + _currentTableName +
+					"&version=" + v,
+					"",
+					function(req)
+					{
+						//Debug.log("req",req.responseText);
+
+						var rawData = DesktopContent.getXMLValue(req, "TableRawData");
+						Debug.logv({rawData});
+						var columns = req.responseXML.getElementsByTagName("ColumnHeader");
+
+						var dataStr = "data:text/csv;charset=utf-8,";
+
+						var rowDel = '\n'; //document.getElementById("recordSelect").value;
+						var colDel = document.getElementById("fieldSelect").value;		
+
+						var colNames = {}; //make column name map to verify column sanity		
+						for(var i=0;i<columns.length;++i)
+						{
+							colNames[columns[i].getAttribute("value")] = -1; //init, and then determine column in table from data													
+						} //end column name header loop
+
+						var dataArr = rawData.split(',');
+						//format of raw data CSV:
+						//	- first columns.length entries are column pairs<name,type> in order	
+						//	- then pairs<column name, value> .. for all table data
+						//	-- it can be inferred when column names repeat, a new record/row has started
+						for(var i=0;i<columns.length && i*2 < dataArr.length;++i)
+						{
+							var decodedColumnName = decodeURIComponent(dataArr[i*2]);
+							if(colNames[decodedColumnName] === undefined)
+							{
+								Debug.warn("Header field " + colCount + " with column name '" +
+									decodedColumnName +	"' is not found in source column list (" +
+									columns.length + " source columns found)."); 
+							}			
+							colNames[decodedColumnName] = i; //set column in table
+							if(i) dataStr += encodeURI(colDel);
+							dataStr += decodedColumnName;	
+						} //end leading column name in data loop
+						dataStr += encodeURI(rowDel); //encoded \n
+
+						var colCount = 0, rowCount = 0;
+						for(var i=columns.length*2;i+1<dataArr.length;i+=2)
+						{				
+							var decodedColumnName = decodeURIComponent(dataArr[i]);
+							if(colNames[decodedColumnName] === undefined)
+							{
+								Debug.warn("Column " + colCount + " with column name '" +
+									decodedColumnName +	"' in row " + 
+									rowCount + " is not found in source column list (" +
+									columns.length + " source columns found)."); 
+							}			
+							else if(colNames[decodedColumnName] != colCount)
+							{
+								Debug.warn("Column " + colCount + " with column name '" +
+									decodedColumnName + "' in row " + 
+									rowCount + " is not at expected column position of " + colCount + "."); 
+							}			
+
+							if(colCount) dataStr += encodeURI(colDel);
+							dataStr += encodeURIComponent(decodeURIComponent(dataArr[i+1]).
+									replace(new RegExp(rowDel,'g'),"${OTS_RECORD_DELIMETER}").
+									replace(new RegExp(colDel,'g'),"${OTS_FIELD_DELIMETER}")); //comes from server already encoded
+							
+							if(++colCount == columns.length)
+							{
+								//new record starting
+								dataStr += encodeURI(rowDel); //encoded \n
+								colCount = 0; //reset column counter
+								++rowCount;
+							}
+						} //end data string contruction loop
+
+						var link = document.createElement("a");
+						link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
+						link.setAttribute("style", "display:none");
+						link.setAttribute("download", _currentTableName + "-v" +
+							v + "_raw.csv");
+						document.body.appendChild(link); // Required for FF
+
+						link.click(); // This will download the data file with filename *_download.csv
+
+						link.parentNode.removeChild(link);
+
+						Debug.info("File '" + "download", _currentTableName + "-v" +
+							v + "_raw.csv" + "' was successfully downloaded");
+
+					} //end downloadCSVtableVersion request handler
+				); //end downloadCSVtableVersion request call
+			}; // end downloadVersionedCSV handler
 
 		} //end downloadTableAsCSV()
 		
@@ -15586,6 +16055,7 @@
 			var menuItems = [
 				"Find and Replace",
 				"Copy and Move",
+				"Diff Table Versions",
 				_showTableDetails ?
 					"Hide Table Details" :
 					"Show Table Details",
@@ -15614,6 +16084,7 @@
 			var menuItemHandlers = [
 				"setupFindAndReplace()",
 				"setupCopyAndMoveRows()",
+				"setupTableVersionDiff()",
 				"toggleTableDetails()",
 				"transposeTableView()",
 				"DesktopContent.openNewBrowserTab(" +
@@ -15635,9 +16106,10 @@
 				menuItems,
 				menuItemHandlers,
 				"editTableMenu",					//element ID
-				event.pageX - 1, event.pageY - 1, 		//top left position
+				event.pageX - 1, event.pageY - 1, 	//top left position
 				_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
-				_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
+				_CONTEXT_MENU_SECONDARY_COLOR,		//secondary color
+				true /*useDefaultHighlightColors*/
 			);
 		} //end createEditTableMenu
 
@@ -15695,12 +16167,13 @@
 				menuItemHandlers.push(newwindowJS);
 				
 				SimpleContextMenu.createMenu(
-						menuItems,
-						menuItemHandlers,
-						"editTableMenu",					//element ID
-						x, event.pageY - 10, 				//top left position
-						_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
-						_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
+					menuItems,
+					menuItemHandlers,
+					"editTableMenu",					//element ID
+					x, event.pageY - 10, 				//top left position
+					_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
+					_CONTEXT_MENU_SECONDARY_COLOR,		//secondary color
+					true /*useDefaultHighlightColors*/
 				);
 				return;
 			} //end special second level menu handling
@@ -15734,7 +16207,8 @@
 				"editTableMenu",					//element ID
 				e.pageX - 1, e.pageY - 1, 		//top left position
 				_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
-				_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
+				_CONTEXT_MENU_SECONDARY_COLOR,		//secondary color
+				true /*useDefaultHighlightColors*/
 			);
 		} //end createSystemViewMenu()
 
@@ -16259,10 +16733,11 @@
 			SimpleContextMenu.createMenu(
 				menuItems,
 				menuItemHandlers,
-				"editTableMenu",				//element ID
+				"editTableMenu",					//element ID
 				event.pageX - 1, event.pageY - 1, 	//top left position
-				_CONTEXT_MENU_PRIMARY_COLOR, 	//primary color
-				_CONTEXT_MENU_SECONDARY_COLOR	//secondary color
+				_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
+				_CONTEXT_MENU_SECONDARY_COLOR,		//secondary color
+				true /*useDefaultHighlightColors*/
 			);
 		} //end createTreeViewMenu()
 
@@ -16466,7 +16941,11 @@
 						str += "<td onmouseup='selectThisCell(" + (r - _CONFIG_DATA_ROW_OFFSET) + "," +
 							(c - _CONFIG_DATA_COL_OFFSET) + ",this,event);' " +
 							tdStyle +
-
+							//paint mode is use for cell value painter
+							" onmouseover='selectThisCell(" + (r - _CONFIG_DATA_ROW_OFFSET) + "," +
+							(c - _CONFIG_DATA_COL_OFFSET) + ",this,event,true /*paintMode*/);' " +
+							" onmousemove='selectThisCell(" + (r - _CONFIG_DATA_ROW_OFFSET) + "," +
+							(c - _CONFIG_DATA_COL_OFFSET) + ",this,event,true /*paintMode*/);' " +
 							" title='UID : " + uidVal + "\n" +
 							colHdr +
 							" : " +
