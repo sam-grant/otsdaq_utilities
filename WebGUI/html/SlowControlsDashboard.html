@@ -1204,7 +1204,7 @@
 			//=====================================================================================
 			function loadPageNewWindow(fullPathToPage)
 			{
-				var newWindowStr = location.pathname + location.search
+				var newWindowStr = location.origin + location.pathname + location.search
 				+ "&page_name=" + fullPathToPage;
 
 				DesktopContent.openNewWindow("Controls Dashboard", "", newWindowStr, false /*unique*/);
@@ -1214,7 +1214,7 @@
 			//=====================================================================================
 			function loadPageNewBrowserTab(fullPathToPage)
 			{
-				var newWindowStr = location.pathname + location.search
+				var newWindowStr = location.origin + location.pathname + location.search
 				+ "&page_name=" + fullPathToPage;
 
 				DesktopContent.openNewBrowserTab("Controls Dashboard","", newWindowStr ,false /*unique*/);

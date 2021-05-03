@@ -447,7 +447,7 @@ Desktop.createDesktop = function(security) {
 		//other things besides opening windows
 	    //....
 	    
-	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true))
+	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true /*doNotRefresh*/))
 	    {
 	    	//if(_needToLoginMailbox.innerHTML == "1") 
 	    	//	 _needToLoginMailbox.innerHTML = ""; //reset
