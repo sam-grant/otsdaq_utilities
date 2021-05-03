@@ -185,8 +185,11 @@ function displayVersionsAndQualifiers
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
 	echo
 
-	ALL_RELEASES=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//') )
-	LATEST_RELEASE=${ALL_RELEASES[${#ALL_RELEASES[@]}-1]}
+	#ALL_RELEASES=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//') )
+	ALL_RELEASES=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep \>v  | sed -e 's/<\/a.*//' | sed -e 's/.*v/v/') )
+	#the above should be a clean array of v##_##_##, as of April 2021, the latest release is now first (instead of last)
+	#LATEST_RELEASE=${ALL_RELEASES[${#ALL_RELEASES[@]}-1]}
+	LATEST_RELEASE=${ALL_RELEASES[0]}
 	echo -e "UpdateOTS.sh [${LINENO}]  \t The latest otsdaq release is $LATEST_RELEASE"	
 
 	echo
