@@ -1,7 +1,6 @@
 #ifndef _ots_VisualSupervisor_h
 #define _ots_VisualSupervisor_h
 
-#include "otsdaq-utilities/Visualization/VisualDataManager.h"
 #include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 //================ new Dario
 #include <dirent.h>
@@ -30,6 +29,7 @@
 
 namespace ots
 {
+	class VisualDataManager;
 // VisualSupervisor
 //	This class handles the web user interface to a VisualDataManager with reqgard to the
 // web desktop Visualizer. 	The Visualizer can display ROOT object in real-time, as well
