@@ -10,7 +10,6 @@ cet_make(LIBRARY_NAME Visualization
          ${Boost_REGEX_LIBRARY}
 		 CoreSupervisors
 		 RootUtilities
-		 DataManager
 		 CgiDataUtilities
 		 FiniteStateMachine
 		 WebUsersUtilities
