@@ -210,20 +210,23 @@
 			//==== END Context Menu
 
 
-			var WIDGET_TYPE_TEXT	= 0;
-			var WIDGET_TYPE_TABLE	= 1;
-			var WIDGET_TYPE_METER	= 2;
-			var WIDGET_TYPE_CHART	= 3;
-			var WIDGET_TYPE_XYCHART	= 4;
-			var WIDGET_TYPE_THERMO	= 5;
-			var WIDGET_TYPE_SIREN	= 6;
-			var WIDGET_TYPE_LABEL	= 7;
-			var WIDGET_TYPE_LED		= 8;
-			var WIDGET_TYPE_PICTURE	= 9;
-			var WIDGET_TYPE_2DLIGHTS= 10;
-			var WIDGET_TYPE_ROOT	= 11;
-			var WIDGET_TYPE_TAB		= 12;
-			var WIDGET_TYPE_NAVTAB	= 13;
+			var WIDGET_TYPE_TEXT		= 0;
+			var WIDGET_TYPE_TABLE		= 1;
+			var WIDGET_TYPE_METER		= 2;
+			var WIDGET_TYPE_CHART		= 3;
+			var WIDGET_TYPE_XYCHART		= 4;
+			var WIDGET_TYPE_THERMO		= 5;
+			var WIDGET_TYPE_SIREN		= 6;
+			var WIDGET_TYPE_LABEL		= 7;
+			var WIDGET_TYPE_LED			= 8;
+			var WIDGET_TYPE_PICTURE		= 9;
+			var WIDGET_TYPE_2DLIGHTS	= 10;
+			var WIDGET_TYPE_ROOT		= 11;
+			var WIDGET_TYPE_TAB			= 12;
+			var WIDGET_TYPE_NAVTAB		= 13;
+			var WIDGET_TYPE_PROGRESS_BAR= 13;
+			var WIDGET_TYPE_TANK		= 13;
+			
 
 			var nav_;
 			var gridColor_;
@@ -518,7 +521,7 @@
 								, "table":		WIDGET_TYPE_TABLE
 								, "meter":		WIDGET_TYPE_METER
 								, "stripchart":	WIDGET_TYPE_CHART
-								, "xychart":	WIDGET_TYPE_XYCHART
+								, "xyplot":		WIDGET_TYPE_XYCHART
 								, "thermometer":WIDGET_TYPE_THERMO
 								, "siren":		WIDGET_TYPE_SIREN
 								, "label":		WIDGET_TYPE_LABEL
@@ -527,7 +530,10 @@
 								, "2dstoplight":WIDGET_TYPE_2DLIGHTS
 								, "root":		WIDGET_TYPE_ROOT
 								, "tabs":		WIDGET_TYPE_TAB
-								, "navtabs":	WIDGET_TYPE_NAVTAB};
+								, "navtabs":	WIDGET_TYPE_NAVTAB
+								, "progressbar":WIDGET_TYPE_PROGRESS_BAR
+								, "tank":		WIDGET_TYPE_TANK};
+
 			function loadPhoebusPageReqHandler(req, targetTabBodyId)
 			{
 				Debug.log("loadPhoebusPageReqHandler() was called. Req: " + req.responseText);
