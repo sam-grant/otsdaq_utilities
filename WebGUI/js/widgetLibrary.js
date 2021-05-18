@@ -26,7 +26,9 @@ widgetLibrary.typeToSrc =		{
 									"10" :"2d_stop-light.html",
 									"11" :"root_visualizer.html",
 									"12" :"tabs.html",
-									"13" :"navtabs.html"
+									"13" :"navtabs.html",
+									"14" :"progress_bar.html",
+									"15" :"tank.html"
 								}
 
 widgetLibrary.typeToImgSrc =	{
@@ -43,7 +45,9 @@ widgetLibrary.typeToImgSrc =	{
 		   					 		"10" :"2d_stop-light.png",
 		   					 		"11" :"root-icon.png",
 		   					 		"12" :"tabs-icon.png",
-		   					 		"13" :"navtabs-icon.png"
+		   					 		"13" :"navtabs-icon.png",
+		   							"14" :"progress_bar-icon.png",
+		   							"15" :"tank-icon.png"
 								}
 
 widgetLibrary.typeToName =		{
@@ -60,7 +64,9 @@ widgetLibrary.typeToName =		{
 									"10" : "Basic 2D stop-light viewer",
 									"11" : "Basic Root file widget",
 									"12" : "Basic tabs widget",
-									"13" : "Basic nav tabs widget"
+									"13" : "Basic nav tabs widget",
+									"14" : "Basic progress bar widget",
+									"15" : "Basic tank widget"
 								}
 
 widgetLibrary.typeToPurpose =	{
@@ -76,8 +82,10 @@ widgetLibrary.typeToPurpose =	{
 									"9" : "Picture",
 									"10" : "2D stop-light",
 									"11" : "Root file",
-									"12" : "Tabs",									
-									"13" : "NavTabs"									
+									"12" : "Tabs",
+									"13" : "NavTabs",
+									"14" : "Progress bar",
+									"15" : "Tank"
 								}
 
 widgetLibrary.dimensions =		{
