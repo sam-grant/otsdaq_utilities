@@ -3,28 +3,28 @@ include_directories($ENV{XERCES_C_INC})
 
 cet_make(LIBRARY_NAME VisualizationV2
 		 LIBRARIES
-		 artdaq-core_Utilities
+		 artdaq_core::artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
 		 ${ROOT_GUI_LIB_LIST}
 		 ${ROOTSYS}/lib/libRHTTP.so
          ${Boost_REGEX_LIBRARY}
-		 CoreSupervisors
-		 RootUtilities
-		 DataManager
-		 CgiDataUtilities
-		 FiniteStateMachine
-		 WebUsersUtilities
+		 otsdaq::CoreSupervisors
+		 otsdaq::RootUtilities
+		 otsdaq::DataManager
+		 otsdaq::CgiDataUtilities
+		 otsdaq::FiniteStateMachine
+		 otsdaq::WebUsersUtilities
 		 #MonicelliInterface
-		 SupervisorInfo
-		 ConfigurationInterface
-		 Macros
-		 TableCore
+		 otsdaq::SupervisorInfo
+		 otsdaq::ConfigurationInterface
+		 otsdaq::Macros
+		 otsdaq::TableCore
 		 #otsdaq_TablePlugins_DataManagerConfiguration_table
 		 #otsdaq_TablePlugins_DataBufferConfiguration_table
 		 otsdaq_TablePlugins_XDAQContextTable_table
 		 otsdaq_DataProcessorPlugins_RawDataVisualizerConsumer_processor
-		 XmlUtilities
-		 SOAPUtilities
+		 otsdaq::XmlUtilities
+		 otsdaq::SOAPUtilities
 		 MF_MessageLogger
 
 )

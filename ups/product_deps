@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent otsdaq_utilities	v2_05_08_indev
-defaultqual	e19:s97
+parent otsdaq_utilities
+defaultqual	e20:s108
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -18,8 +18,8 @@ fcldir      -
 
 #
 product			version		optional
-otsdaq			v2_05_07
-cetbuildtools	v7_17_01	-	only_for_build
+otsdaq			v2_06_00
+cetbuildtools	v8_08_00	-	only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
@@ -28,45 +28,19 @@ end_product_list
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
 qualifier			otsdaq				notes
-e20:s106:prof		e20:s106:prof		-std=c++17
-e20:s106:debug		e20:s106:debug		-std=c++17
-e19:s106:prof		e19:s106:prof		-std=c++17
-e19:s106:debug		e19:s106:debug		-std=c++17
-c7:s106:debug		c7:s106:debug		-std=c++17
-c7:s106:prof		c7:s106:prof		-std=c++17
+e20:s108:prof		e20:s108:prof		-std=c++17
+e20:s108:debug		e20:s108:debug		-std=c++17
+e19:s108:prof		e19:s108:prof		-std=c++17
+e19:s108:debug		e19:s108:debug		-std=c++17
+c7:s108:debug		c7:s108:debug		-std=c++17
+c7:s108:prof		c7:s108:prof		-std=c++17
 
-e20:s105:prof		e20:s105:prof		-std=c++17
-e20:s105:debug		e20:s105:debug		-std=c++17
-e19:s105:prof		e19:s105:prof		-std=c++17
-e19:s105:debug		e19:s105:debug		-std=c++17
-c7:s105:debug		c7:s105:debug		-std=c++17
-c7:s105:prof		c7:s105:prof		-std=c++17
-
-e20:s104:prof		e20:s104:prof		-std=c++17
-e20:s104:debug		e20:s104:debug		-std=c++17
-e19:s104:prof		e19:s104:prof		-std=c++17
-e19:s104:debug		e19:s104:debug		-std=c++17
-c7:s104:debug		c7:s104:debug		-std=c++17
-c7:s104:prof		c7:s104:prof		-std=c++17
-
-e19:s103:prof		e19:s103:prof		-std=c++17
-e19:s103:debug		e19:s103:debug		-std=c++17
-e19:s103:py2:prof	e19:s103:py2:prof	-std=c++17
-e19:s103:py2:debug	e19:s103:py2:debug	-std=c++17
-c7:s103:debug		c7:s103:debug		-std=c++17
-c7:s103:prof		c7:s103:prof		-std=c++17
-c7:s103:py2:prof	c7:s103:py2:prof	-std=c++17
-c7:s103:py2:debug	c7:s103:py2:debug	-std=c++17
-
-e19:s97:prof		e19:s97:prof		-std=c++17
-e19:s97:debug		e19:s97:debug		-std=c++17
-e19:s97:py2:prof	e19:s97:py2:prof	-std=c++17
-e19:s97:py2:debug	e19:s97:py2:debug	-std=c++17
-
-c7:s97:debug		c7:s97:debug		-std=c++17
-c7:s97:prof			c7:s97:prof			-std=c++17
-c7:s97:py2:prof		c7:s97:py2:prof		-std=c++17
-c7:s97:py2:debug	c7:s97:py2:debug	-std=c++17
+e20:s107:prof		e20:s107:prof		-std=c++17
+e20:s107:debug		e20:s107:debug		-std=c++17
+e19:s107:prof		e19:s107:prof		-std=c++17
+e19:s107:debug		e19:s107:debug		-std=c++17
+c7:s107:debug		c7:s107:debug		-std=c++17
+c7:s107:prof		c7:s107:prof		-std=c++17
 
 end_qualifier_list
 

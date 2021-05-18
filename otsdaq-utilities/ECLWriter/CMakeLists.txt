@@ -32,7 +32,7 @@ if(CURL_FOUND)
 #endif(CURL_FOUND)
 cet_make( LIBRARY_NAME ECLWriterCore EXCLUDE ECLSupervisor.cc ECLTest.cc
 	LIBRARIES
-	artdaq-core_Utilities
+	artdaq_core::artdaq-core_Utilities
         ${XDAQ_XERCES-C}
         pthread
     crypto
@@ -42,18 +42,18 @@ cet_make( LIBRARY_NAME ECLWriterCore EXCLUDE ECLSupervisor.cc ECLTest.cc
 cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx ECLTest.cc
 	LIBRARIES
 	ECLWriterCore
-	artdaq-core_Utilities
+	artdaq_core::artdaq-core_Utilities
 	${XDAQ_BASIC_LIB_LIST}
 	#XmlUtilities
-	Macros
-	CoreSupervisors
-		 SupervisorInfo
-		 WebUsersUtilities
+	otsdaq::Macros
+	otsdaq::CoreSupervisors
+		 otsdaq::SupervisorInfo
+		 otsdaq::WebUsersUtilities
 		 #CgiDataUtilities
-		 SOAPUtilities
-		 FiniteStateMachine
-		 ConfigurationInterface
-		 TableCore
+		 otsdaq::SOAPUtilities
+		 otsdaq::FiniteStateMachine
+		 otsdaq::ConfigurationInterface
+		 otsdaq::TableCore
 		 otsdaq_TablePlugins_XDAQContextTable_table
 		 MF_MessageLogger
     crypto
