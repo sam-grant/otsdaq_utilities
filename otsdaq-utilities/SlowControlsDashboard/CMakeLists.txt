@@ -1,6 +1,4 @@
 
-include_directories($ENV{XERCES_C_INC})
-
 cet_make(LIBRARY_NAME SlowControlsDashboard
 		 LIBRARIES
 		 artdaq_core::artdaq-core_Utilities

@@ -1,5 +1,3 @@
-include_directories(${MPI_INCLUDE_PATH})
-include_directories($ENV{XERCES_C_INC})
 
 cet_make(LIBRARY_NAME VisualizationV2
 		 LIBRARIES

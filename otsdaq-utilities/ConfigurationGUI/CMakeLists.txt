@@ -1,4 +1,3 @@
-include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME ConfigurationGUI
 		 LIBRARIES
 		 artdaq_core::artdaq-core_Utilities
