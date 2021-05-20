@@ -4,7 +4,7 @@ cet_make(LIBRARY_NAME Visualization
 		 artdaq_core::artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
 		 ${ROOT_GUI_LIB_LIST}
-		 ${ROOTSYS}/lib/libRHTTP.so
+		 ${ROOT_RHTTP}
          ${Boost_REGEX_LIBRARY}
 		 otsdaq::CoreSupervisors
 		 otsdaq::RootUtilities
