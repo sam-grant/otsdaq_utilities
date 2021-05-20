@@ -1,0 +1,229 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>Progress Bar</title>
+		<style type="text/css">
+
+			body {
+				font: 10px arial;
+				background-color:  rgb(255, 255, 255);
+			}
+			.wrapper {
+				display: grid;
+			 	grid-template-columns: repeat(2, 1fr);
+				//grid-template-columns: repeat(auto-fill,minmax(120px, 1fr));
+				grid-gap: 20px;
+				//grid-auto-rows: minmax(100px, auto);
+				//grid-auto-columns: 200px 200px;
+			}
+
+		</style>
+
+		<script src="https://d3js.org/d3.v3.min.js"></script>
+		<script type="text/javascript" src="/WebPath/html/widgets/libraries/progressBar.js"></script>
+		<script>
+
+			//functions:
+			//init()
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			var progressBars = [];
+			var labelContainers = [];
+			var pv_settings_ = [];
+			var parameters_ = {class: "", "show_labels": "false", "old_value_foreground_color": "grey", "old_value_background_color": "lightgrey", "background_color": "transparent"};
+			var widget_;
+			var options_ = {
+  				className:'.d3-progress',
+ 				height:20,
+				width:200,
+				progressStartWidth:0,
+				progressEndWidth:200,
+				barColor:'black',
+				progressColor:'blue',
+				animationDuration:2000
+			};
+			
+			//init called once body has loaded
+			function init()
+			{
+				console.log("ProgressBar: init()");
+				console.log(window.frameElement.id)
+				window.parent.setupWidget(window.frameElement.id, getAttributes());
+			}
+
+			function setupPVs(settings)
+			{
+				console.log("ProgressBar: setupPVs()" , settings);
+				pv_settings_ = settings;
+			}
+
+			function drawWidget(widget, parameters)
+			{
+				widget_ = widget;
+				if (parameters) parameters_ = parameters;
+				document.getElementsByTagName("body")[0].style.backgroundColor = parameters_["background_color"];
+
+				progressBars = [];
+				labelContainers = [];
+				svgContainers = [];
+
+				var div = document.createElement('div');
+				div.className = "wrapper";
+				div.id = "display-div";
+				var display = document.getElementById("display");
+				display.innerHTML = "";
+				if (!Object.getOwnPropertyNames(widget.pvList).length)
+					display.innerHTML = "<center>ProgressBar: <br/> No associated PVs to display.</center>";
+				display.appendChild(div);
+
+				var i=0;
+				for(var pv in widget.pvList)
+				{
+					var labeldiv = document.getElementById('label-div-' + pv)
+					var divtemp = document.createElement('div');
+					if (labeldiv == null)
+					{
+						labeldiv = document.createElement('div');
+						labeldiv.id = "label-div-" + pv;
+					}
+
+					if (parameters_["show_labels"] == "true")
+						labeldiv.innerHTML = "<center>" + pv.replace(/[&\/\\#,+()$~%.:*?<>{}]/g, "<br />") + "<br />WAITING FOR A NEW PV VALUE...";
+					else
+						labeldiv.innerHTML = "WAITING FOR A NEW PV VALUE...";
+
+					div.appendChild(divtemp);
+					divtemp.appendChild(labeldiv);
+					labelContainers[pv] = labeldiv;
+
+					var wdth = (parseInt(window.innerWidth) - 16) / Object.keys(widget.pvList).length | 0;
+					var hght = (parseInt(window.innerHeight) - 56) / Object.keys(widget.pvList).length | 0;
+
+					if(wdth < 100) wdth = 100;
+					if(hght < 100) hght = 100;
+
+					var min   = pv_settings_[pv] !== undefined ? pv_settings_[pv].Lower_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pv].Lower_Display_Limit) : 0 : 0;
+					var max   = pv_settings_[pv] !== undefined ? pv_settings_[pv].Upper_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pv].Upper_Display_Limit) : 0 : 0;
+					max = max == "DC'd" || max <= min ? 100 : max;
+
+					drawProgressBar(++i, pv, divtemp, wdth, hght, 50, min, max);
+				}
+				console.log("ProgressBar: drawWidget()", document.body);
+			}
+
+			function getAttributes()
+			{
+				return parameters_;
+			}
+
+			function setAttributes(attributes)
+			{
+				parameters_ = attributes;
+				console.log("ProgressBar: setAttributes()", parameters_);
+			}
+
+			function drawNewValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+				console.log("ProgressBar: drawNewValue() reached", pvName, pvValue);
+				window.parent.setWidgetPVinfo(
+									  window.frameElement.id
+									, pvName
+									, pvValue
+									, pvTime
+									, pvStatus
+									, pvSeverity
+									, parameters_["show_labels"]
+									, labelContainers
+									, parameters_["old_value_foreground_color"]
+									, parameters_["old_value_background_color"]
+									, ""
+									, labelContainers[pvName]
+									);
+
+				var min   = pv_settings_[pvName] !== undefined ? pv_settings_[pvName].Lower_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pvName].Lower_Display_Limit) : 0 : 0;
+				var max   = pv_settings_[pvName] !== undefined ? pv_settings_[pvName].Upper_Display_Limit !== "DC'd" ? parseInt(pv_settings_[pvName].Upper_Display_Limit) : 0 : 0;
+				max = max == "DC'd" || max <= min ? 100 : max;
+
+				options_.progressEndWidth = pvValue;
+				progressBars[pvName].innerHTML = "";
+				renderProgressBar(progressBars[pvName].id, options_);
+				progressBars[pvName].parentElement.title = window.parent.setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pv_settings_);
+			}
+
+			function drawProgressBar(position, name, container, wdth, hght, val, min, max)
+			{
+				var progressBar = document.createElement('progressBar');
+				progressBar.className = "d3-progress";
+				progressBar.id = "d3-progress" + position;
+				container.appendChild(progressBar);
+				progressBars[name] = progressBar;
+				options_.width = wdth;
+				options_.height = hght;
+				var _progress = renderProgressBar(progressBar.id, options_);
+			}
+
+			function renderProgressBar(id, options ){
+			  //var progress = d3.select(options.className)
+			  var progress = d3.select("#" + id)
+			                  .append("svg")
+			                    .attr("width",options.width)
+			                    .attr("height",options.height);
+			  progress.append("rect")
+			          .attr("class","progressBar")
+			          .attr("width",options.width)
+			          .attr("height",options.height - 10)
+			          .style("fill",options.barColor);
+			  animateProgressBar(progress,options);
+			  return progress;
+			}
+
+			function animateProgressBar(element, options){
+			  //d3.selectAll(options.className + " .progress").remove();
+			  element.append("rect")
+			          .attr("class","progress")
+			          .attr("height",options.height - 10)
+			          .style("fill",options.progressColor)
+			          .attr("width",options.progressStartWidth)
+			          .transition()
+			          .duration(options.animationDuration)
+			          .ease("bounce")
+			          .attr("width",options.progressEndWidth);
+			  element.append("text")
+			          .attr("y",options.height)
+			          .style("text-anchor","middle")
+			          .text("" + options.progressEndWidth)
+			          .attr("x",options.progressStartWidth)
+			          .transition()
+			          .duration(options.animationDuration)
+			          .ease("bounce")
+		              .attr("x",options.progressEndWidth);
+			}
+
+			function resizeWidget()
+			{
+				console.log("ProgressBar: resizeWidget()");
+			}
+
+			window.onresize = function() {
+				for(var pvName in progressBars)
+				{
+					options_.width = (parseInt(window.innerWidth) - 16) / Object.keys(widget_.pvList).length | 0;
+					options_.height = (parseInt(window.innerHeight) - 56) / Object.keys(widget_.pvList).length | 0;
+					progressBars[pvName].innerHTML = "";
+					renderProgressBar(progressBars[pvName].id, options_);
+				}
+				console.log("ProgressBar: window.onresize()");
+			};
+
+		</script>
+
+</head>
+
+	<body onload="Javascript:init()">	
+		<div id="display" width="100%" height="100%">
+		</div>
+	</body>
+
+</html>
