@@ -18,8 +18,8 @@ fcldir      -
 
 #
 product			version		optional
-otsdaq			v2_06_00
-cetbuildtools	v8_08_00	-	only_for_build
+otsdaq			v2_06_01
+cetbuildtools	v8_08_02	-	only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
@@ -28,19 +28,19 @@ end_product_list
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
 qualifier			otsdaq				notes
+e20:s109:prof		e20:s109:prof		-std=c++17
+e20:s109:debug		e20:s109:debug		-std=c++17
+e19:s109:prof		e19:s109:prof		-std=c++17
+e19:s109:debug		e19:s109:debug		-std=c++17
+c7:s109:debug		c7:s109:debug		-std=c++17
+c7:s109:prof		c7:s109:prof		-std=c++17
+
 e20:s108:prof		e20:s108:prof		-std=c++17
 e20:s108:debug		e20:s108:debug		-std=c++17
 e19:s108:prof		e19:s108:prof		-std=c++17
 e19:s108:debug		e19:s108:debug		-std=c++17
 c7:s108:debug		c7:s108:debug		-std=c++17
 c7:s108:prof		c7:s108:prof		-std=c++17
-
-e20:s107:prof		e20:s107:prof		-std=c++17
-e20:s107:debug		e20:s107:debug		-std=c++17
-e19:s107:prof		e19:s107:prof		-std=c++17
-e19:s107:debug		e19:s107:debug		-std=c++17
-c7:s107:debug		c7:s107:debug		-std=c++17
-c7:s107:prof		c7:s107:prof		-std=c++17
 
 end_qualifier_list
 
