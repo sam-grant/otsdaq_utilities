@@ -1,17 +1,16 @@
-include_directories($ENV{XERCES_C_INC})
 
 cet_make(LIBRARY_NAME Logbook
 		 LIBRARIES
-		 artdaq-core_Utilities
+		 artdaq_core::artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
-         Macros
-		 CoreSupervisors
-		 CgiDataUtilities
-		 XmlUtilities
-		 SOAPUtilities
-		 SupervisorInfo
-		 WebUsersUtilities
-		 FiniteStateMachine
+        otsdaq::Macros
+		 otsdaq::CoreSupervisors
+		 otsdaq::CgiDataUtilities
+		 otsdaq::XmlUtilities
+		 otsdaq::SOAPUtilities
+		 otsdaq::SupervisorInfo
+		 otsdaq::WebUsersUtilities
+		 otsdaq::FiniteStateMachine
 		 MF_MessageLogger
 )
 

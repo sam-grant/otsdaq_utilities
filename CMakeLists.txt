@@ -10,8 +10,9 @@
 # use cmake 3.17 or later
 cmake_minimum_required (VERSION 3.17)
 
+find_package(cetbuildtools)
 
-project(otsdaq-utilities)
+project(otsdaq_utilities VERSION 2.06.01)
 # cetbuildtools contains our cmake modules
 SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
 IF (NOT CETBUILDTOOLS_VERSION)
@@ -28,7 +29,6 @@ message(STATUS "CMAKE_MODULE_PATH is ${CMAKE_MODULE_PATH}")
 
 include(CetCMakeEnv)
 cet_cmake_env()
-include(FindUpsXdaq)
 
 cet_set_compiler_flags(
  DIAGS 
@@ -51,27 +51,32 @@ find_ups_product( artdaq_core v1_00_00 )
 find_ups_product( artdaq_utilities v1_00_00 )
 find_ups_product( art v1_06_00 )
 #find_ups_product( python v2_7_14)
-#include_directories($ENV{PYTHON_INCLUDE})
 find_ups_product( TRACE v3_03_00 )
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )
 find_ups_product( cetlib v1_03_00 )
-find_ups_xdaq( v11_2_7 )
+find_ups_product( xdaq v16_7_0_1)
 find_ups_root( v5_34_00 )
 find_ups_boost( v1_50_0 filesystem
                         program_options
                         unit_test_framework
  )
+ 
+ # XDAQ Extra setup
+ include_directories($ENV{XDAQ_INC}/linux)
+link_directories($ENV{XDAQ_LIB})
+link_directories($ENV{ARTDAQ_DATABASE_LIB})
+ set(XDAQ_BASIC_LIB_LIST 
+   xcept
+   xoap
+   xdaq
+   toolbox
+   xerces-c
+   cgicc
+ )
+ set(XDAQ_XERCES-C xerces-c)
 
-
-##find_package(MPI QUIET)
-
-check_ups_version(xdaq "$ENV{XDAQ_VERSION}" v14_0_0 PRODUCT_OLDER_VAR slf6_xdaq)
-if(slf6_xdaq)
-	message("Building on SLF6, defining NOCONST")
-  add_definitions(-DXDAQ_NOCONST)
-endif()
-
+ 
 string(REGEX MATCHALL "[0-9][0-9]?[0-9]?" MESSAGEFACILITY_VERSION_LIST "$ENV{MESSAGEFACILITY_VERSION}")
 list(GET MESSAGEFACILITY_VERSION_LIST 0 MESSAGEFACILITY_MAJOR_VERSION)
 list(GET MESSAGEFACILITY_VERSION_LIST 1 MESSAGEFACILITY_MINOR_VERSION)

@@ -1,22 +1,21 @@
-include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME MacroMaker
 		 LIBRARIES
-		 artdaq-core_Utilities
+		 artdaq_core::artdaq-core_Utilities
 		 artdaq_DAQdata
 		 ${XDAQ_BASIC_LIB_LIST}
-		 ConfigurationInterface
-		 TableCore
-		 CoreSupervisors
-		 CgiDataUtilities
-		 SOAPUtilities
-		 FiniteStateMachine
-		 XmlUtilities
+		otsdaq::ConfigurationInterface
+		 otsdaq::TableCore
+		 otsdaq::CoreSupervisors
+		 otsdaq::CgiDataUtilities
+		 otsdaq::SOAPUtilities
+		 otsdaq::FiniteStateMachine
+		 otsdaq::XmlUtilities
          MF_MessageLogger
-         CodeEditor
-		 WebUsersUtilities
-		 SupervisorInfo
-		 FECore
-         Macros
+         otsdaq::CodeEditor
+		 otsdaq::WebUsersUtilities
+		 otsdaq::SupervisorInfo
+		 otsdaq::FECore
+         otsdaq::Macros
          ${Boost_SYSTEM_LIBRARY}
 )
 

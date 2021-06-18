@@ -1,20 +1,18 @@
 
-include_directories($ENV{XERCES_C_INC})
-
 cet_make(LIBRARY_NAME SlowControlsDashboard
 		 LIBRARIES
-		 artdaq-core_Utilities
+		 artdaq_core::artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
-		 ConfigurationInterface
-		 TableCore		 
-		 PluginMakers
-		 XmlUtilities
-		 NetworkUtilities
-		 CgiDataUtilities
-		 FiniteStateMachine
-		 CoreSupervisors
-         Macros
-		 WebUsersUtilities
+		 otsdaq::ConfigurationInterface
+		 otsdaq::TableCore		 
+		 otsdaq::PluginMakers
+		 otsdaq::XmlUtilities
+		 otsdaq::NetworkUtilities
+		 otsdaq::CgiDataUtilities
+		 otsdaq::FiniteStateMachine
+		 otsdaq::CoreSupervisors
+        otsdaq::Macros
+		 otsdaq::WebUsersUtilities
 		 otsdaq_TablePlugins_XDAQContextTable_table
 	     ${MF_MESSAGELOGGER}
 	     ${MF_UTILITIES}
