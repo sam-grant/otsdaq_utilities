@@ -14,7 +14,7 @@ cet_make(LIBRARY_NAME SlowControlsDashboard
         otsdaq::Macros
 		 otsdaq::WebUsersUtilities
 		 otsdaq_TablePlugins_XDAQContextTable_table
-	     ${MF_MESSAGELOGGER}
+	     MF_MessageLogger
 	     ${MF_UTILITIES}
 		 ${Boost_REGEX_LIBRARY}
 )

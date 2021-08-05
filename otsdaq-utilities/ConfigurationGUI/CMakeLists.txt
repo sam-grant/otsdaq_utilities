@@ -2,7 +2,7 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 LIBRARIES
 		 artdaq_core::artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
-		 ${CETLIB_EXCEPT}
+		 cetlib_except
 		 otsdaq::ConfigurationInterface
 		 otsdaq::TableCore
 		 otsdaq_TablePlugins_IterateTable_table

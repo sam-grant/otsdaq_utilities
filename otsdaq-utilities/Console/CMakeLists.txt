@@ -7,7 +7,7 @@ cet_make(LIBRARY_NAME Console
 		 artdaq_core::artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
 		 otsdaq::SupervisorInfo
-		${MF_MESSAGELOGGER}
+		MF_MessageLogger
 		${MF_UTILITIES}
 		otsdaq::FiniteStateMachine
 		otsdaq::CoreSupervisors
