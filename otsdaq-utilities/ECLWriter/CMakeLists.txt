@@ -33,6 +33,7 @@ if(CURL_FOUND)
 cet_make( LIBRARY_NAME ECLWriterCore EXCLUDE ECLSupervisor.cc ECLTest.cc
 	LIBRARIES
 	artdaq_core::artdaq-core_Utilities
+	otsdaq::Macros
         ${XDAQ_XERCES-C}
         pthread
     crypto
