@@ -552,23 +552,24 @@ else
 				_fullScreenRefreshBtn.style.height = "16px";
 				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
 			}
-    		else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX &&
-    				Debug.OS_TYPE == Debug.OS_TYPE_WINDOWS) //Windows firefox
+    		else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //&&
+    				//Debug.OS_TYPE == Debug.OS_TYPE_WINDOWS) //Windows firefox
+			//As of Sept 2021: Mac firefox now shows circle-arrow bigger like windows 
     		{
     			//windows shows circle-arrow bigger
 				_fullScreenRefreshBtn.innerHTML = 
-						"<div style='font-size:27px;margin-top:-12px;' title='Click to reload the desktop and all windows'>↻</div>";        	
+						"<div style='font-size:25px;margin-top:-10px;' title='Click to reload the desktop and all windows'>↻</div>";        	
 				_fullScreenRefreshBtn.style.height = "16px";
 				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
     		}
-        	else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
-        	{
-        		//firefox shows circle-arrow character smaller
-				_fullScreenRefreshBtn.innerHTML = 
-						"<div style='font-size:32px;margin-top:-12px;' title='Click to reload the desktop and all windows'>↻</div>";        	
-				_fullScreenRefreshBtn.style.height = "16px";
-				_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
-        	}
+        	// else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
+        	// {
+        	// 	//firefox shows circle-arrow character smaller
+			// 	_fullScreenRefreshBtn.innerHTML = 
+			// 			"<div style='font-size:32px;margin-top:-12px;' title='Click to reload the desktop and all windows'>↻</div>";        	
+			// 	_fullScreenRefreshBtn.style.height = "16px";
+			// 	_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
+        	// }
         	else //chrome
         	{
 				_fullScreenRefreshBtn.innerHTML = 
