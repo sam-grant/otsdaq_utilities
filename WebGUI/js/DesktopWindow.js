@@ -424,21 +424,22 @@ else {
 					"<div style='font-size:21px; margin: -2px 0 0 1px; color:inherit;' " +
 					"title='Click to refresh only this window'>↻</div>";  
 		}
-		else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX &&
-				Debug.OS_TYPE == Debug.OS_TYPE_WINDOWS) //Windows firefox
+		else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX)// &&
+				// Debug.OS_TYPE == Debug.OS_TYPE_WINDOWS) //Windows firefox
+			//As of Sept 2021: Mac firefox now shows circle-arrow bigger like windows 
 		{
 			//windows shows circle-arrow bigger
 			tmpEl.innerHTML = 
-					"<div style='font-size:21px; margin: -2px 0 0 -2px; color:inherit;' " +
+					"<div style='font-size:19px; margin: -3px 0 0 -2px; color:inherit;' " +
 					"title='Click to refresh only this window'>↻</div>";    
 		}
-		else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
-		{
-			//firefox shows circle-arrow character smaller
-			tmpEl.innerHTML = 
-					"<div style='font-size:28px; margin: -4px 0 0 -1px; color:inherit;' " +
-					"title='Click to refresh only this window'>↻</div>";   
-		}		
+		// else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX) //firefox
+		// {
+		// 	//firefox shows circle-arrow character smaller
+		// 	tmpEl.innerHTML = 
+		// 			"<div style='font-size:28px; margin: -4px 0 0 -1px; color:inherit;' " +
+		// 			"title='Click to refresh only this window'>↻</div>";   
+		// }		
 		else //chrome
 		{
 			tmpEl.innerHTML = 
