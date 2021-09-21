@@ -1,7 +1,7 @@
 cet_make(LIBRARY_NAME MacroMaker
 		 LIBRARIES
 		 artdaq_core::artdaq-core_Utilities
-		 artdaq_DAQdata
+		 artdaq::DAQdata
 		 ${XDAQ_BASIC_LIB_LIST}
 		otsdaq::ConfigurationInterface
 		 otsdaq::TableCore

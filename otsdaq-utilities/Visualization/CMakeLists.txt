@@ -18,8 +18,8 @@ cet_make(LIBRARY_NAME Visualization
 		 otsdaq::TableCore
 		 #otsdaq_TablePlugins_DataManagerConfiguration_table
 		 #otsdaq_TablePlugins_DataBufferConfiguration_table
-		 otsdaq_TablePlugins_XDAQContextTable_table
-		 otsdaq_DataProcessorPlugins_RawDataVisualizerConsumer_processor
+		 otsdaq::TablePlugins_XDAQContextTable_table
+		 otsdaq::DataProcessorPlugins_RawDataVisualizerConsumer_processor
 		 otsdaq::XmlUtilities
 		 otsdaq::SOAPUtilities
 		 MF_MessageLogger

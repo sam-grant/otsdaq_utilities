@@ -5,8 +5,8 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 cetlib_except
 		 otsdaq::ConfigurationInterface
 		 otsdaq::TableCore
-		 otsdaq_TablePlugins_IterateTable_table
-		 otsdaq_TablePlugins_XDAQContextTable_table
+		 otsdaq::TablePlugins_IterateTable_table
+		 otsdaq::TablePlugins_XDAQContextTable_table
 		 otsdaq::ARTDAQTableBase
 		 otsdaq::FiniteStateMachine
 		 otsdaq::CoreSupervisors
