@@ -75,6 +75,7 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	INIT_MF("VisualSupervisor");
 
 	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
+	ROOT::EnableThreadSafety();
 
 	__SUP_COUT__ << "Constructed." << __E__;
 }  // end constructor
@@ -577,6 +578,11 @@ void VisualSupervisor::request(const std::string&               requestType,
 			// it is a directory
 			if((tObject = rootFile->Get(rootDirectoryName.c_str())) != nullptr)
 			{
+				if(tObject->IsA() == TCanvas::Class())
+				{
+					static_cast<TCanvas*>(tObject)->Modified();
+					static_cast<TCanvas*>(tObject)->Update();
+				}
 				TString     json = TBufferJSON::ConvertToJSON(tObject);
 				TBufferFile tBuffer(TBuffer::kWrite);
 				tObject->Streamer(tBuffer);
