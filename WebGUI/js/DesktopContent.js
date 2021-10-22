@@ -95,7 +95,8 @@
 //	Additional Functionality:
 //		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], 
 //			textColor [optional], borderColor [optional], getUserInput [optional], 
-//			dialogWidth [optional], cancelFunc [optional], yesButtonText [optional])
+//			dialogWidth [optional], cancelFunc [optional], yesButtonText [optional],
+//			noAutoComplete [optional], defaultUserInputValue [optional], cancelButtonText [optional])
 //		DesktopContent.tooltip(uid,tip)
 //		DesktopContent.setWindowTooltip(tip)
 //		DesktopContent.getWindowWidth()
@@ -1816,7 +1817,7 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,neverShow,temp
 //		Default is yellow bg with black text if nothing passed.
 DesktopContent.popUpVerification = function(prompt, func, val, bgColor, 
 		textColor, borderColor, getUserInput, dialogWidth, cancelFunc, 
-		yesButtonText, noAutoComplete, defaultUserInputValue) {		
+		yesButtonText, noAutoComplete, defaultUserInputValue, cancelButtonText) {	
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1905,7 +1906,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor,
 			"&nbsp;&nbsp;&nbsp;" + 
 			"<input type='submit' " +
 			"onclick='event.stopPropagation();' " +
-			"value='Cancel'>";
+			"value='" + (cancelButtonText?cancelButtonText:"Cancel") + "'>";
 	el.innerHTML = str;
 
 	//onmouseup for "Yes" button
