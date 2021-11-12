@@ -33,10 +33,16 @@ cet_set_compiler_flags(
  NO_UNDEFINED
  EXTRA_FLAGS -pedantic -D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES=1
  )
+ 
+string(TOUPPER ${CMAKE_BUILD_TYPE} BTYPE_UC )
+set(DEBUG_MODE 0)
+if( ${BTYPE_UC} MATCHES "DEBUG" )
+  set(DEBUG_MODE 1)
+endif()
 
 cet_remove_compiler_flags(-std=c++98)
 
-cet_report_compiler_flags()
+#cet_report_compiler_flags()
 
 # these are minimum required versions, not the actual product versions
 #find_ups_product( epics v3_15_4)
@@ -107,8 +113,10 @@ if( $ENV{OTS_DOXY} MATCHES "DOIT" )
 endif()
 
 # WebGUI
-FILE(COPY WebGUI DESTINATION .)
-INSTALL(DIRECTORY WebGUI DESTINATION . FILE_PERMISSIONS USE_SOURCE_PERMISSIONS)
+configure_file(${CMAKE_SOURCE_DIR}/WebGUI/js/Debug.js.in ${CMAKE_BINARY_DIR}/WebGUI/js/Debug.js @ONLY)
+FILE(COPY WebGUI DESTINATION . PATTERN "*.in" EXCLUDE)
+INSTALL(FILES ${CMAKE_BINARY_DIR}/WebGUI/js/Debug.js DESTINATION WebGUI/js)
+INSTALL(DIRECTORY WebGUI DESTINATION . FILE_PERMISSIONS USE_SOURCE_PERMISSIONS PATTERN "*.in" EXCLUDE)
 
 # tools
 FILE(COPY tools DESTINATION .)
