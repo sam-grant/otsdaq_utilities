@@ -40,7 +40,7 @@ else {
 		
 		//all units in pixels unless otherwise specified
 		
-		var _defaultWindowMinWidth = 100;	
+		var _defaultWindowMinWidth = 140;	
 		var _defaultWindowMinHeight = 100;	
 		
 		var _defaultHeaderHeight = 30;  	
@@ -300,6 +300,7 @@ else {
 		//	resize and position of window and its elements
 		//	do not allow weird re-size effects
 		//		+1 because of borders, and content width vs set value
+		//	return difference between set values and actual values
 		this.resizeAndPositionWindow = function(x,y,w,h) 
 		{		
 			

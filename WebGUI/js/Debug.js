@@ -25,7 +25,7 @@
 
 var Debug = Debug || {}; //define Debug namespace
 
-Debug.mode = 1; 		//0 - debug off, 1 - debug on
+Debug.mode = 0; 		//0 - debug off, 1 - debug on
 Debug.simple = 0; 		//0 - use priority (more detail in printout), 1 - simple, no priority
 Debug.level = 100;		//priority level, (100 should be all, 0 only high priority)
 							//all logs with lower priority level are printed
