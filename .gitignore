@@ -8,3 +8,4 @@ WebGUI/*Path
 .vscode*.tmp
 *.bk
 *.tmp
+WebGUI/js/Debug.js
