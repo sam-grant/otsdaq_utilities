@@ -180,7 +180,8 @@ function displayVersionsAndQualifiers
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
 	echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
 	#-s for silent, sed to remove closing </a>
-	curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//'
+	#curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//'
+	curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep \>v | sed -e 's/<.*\">/\t\t\t\t\t\t\t/' | sed -e 's/<\/td><\/tr>.*//' | sed -e 's/<.*>/    /'
 	echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
 	echo
@@ -213,11 +214,6 @@ function displayVersionsAndQualifiers
 	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t ...and replace '$LATEST_RELEASE' with your target version. and '$LATEST_QUAL:prof' with your qualifiers"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t ...a new localProducts directory will be created, which you should use when you setup ots."
-	echo
-	echo
-
-	echo
-	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
 	echo
 	ls ${MRB_SOURCE}/../ | grep localProducts
@@ -413,16 +409,16 @@ if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 	#copy tutorial launching scripts
 	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t updating tutorial launch scripts..."
-	chmod 755 $MRB_SOURCE/../get_tutorial_data.sh #make sure permissions allow deleting
-	chmod 755 $MRB_SOURCE/../get_tutorial_database.sh #make sure permissions allow deleting
-	chmod 755 $MRB_SOURCE/../reset_ots_tutorial.sh #make sure permissions allow deleting
+	chmod 755 $MRB_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #make sure permissions allow deleting
+	chmod 755 $MRB_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #make sure permissions allow deleting
+	chmod 755 $MRB_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #make sure permissions allow deleting
 	rm $MRB_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #hide output
 	rm $MRB_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #hide output
 	rm $MRB_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output
 	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
-	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $MRB_SOURCE/../ --no-check-certificate	
-	chmod 644 $MRB_SOURCE/../reset_ots_tutorial.sh
+	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $MRB_SOURCE/../ --no-check-certificate	 &>/dev/null 2>&1
+	chmod 644 $MRB_SOURCE/../reset_ots_tutorial.sh 
 	
 	rm $MRB_SOURCE/../reset_ots_artdaq_tutorial.sh &>/dev/null 2>&1 #hide output
 	#now there is only one reset_tutorial script (that includes the artdaq tutorial), so do not get script
@@ -430,11 +426,6 @@ if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	#wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../ --no-check-certificate	
 	#chmod 755 $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
-	
-	echo
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
-	#end copy tables
 	
 	
 	
@@ -479,19 +470,19 @@ if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 
 	
 	
-	echo
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################" 
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################" 
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Upgrading database (if needed)..."
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
-	echo
+	# echo
+	# echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################" 
+	# echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################" 
+	# echo -e "UpdateOTS.sh [${LINENO}]  \t Upgrading database (if needed)..."
+	# echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	# echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	# echo
 	
-	#TODO by lukhanin
+	# #TODO by lukhanin
 
-	echo
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	# echo
+	# echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	# echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
 		
 
 	
@@ -562,16 +553,34 @@ fi
 
 
 echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$GIT_COMMENT'"
-echo -e "UpdateOTS.sh [${LINENO}]  \t Check-in status was logged here: $CHECKIN_LOG_PATH"
-echo -e "UpdateOTS.sh [${LINENO}]  \t Update status was logged here: $UPDATE_LOG_PATH"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Git actions were logged here: $CHECKIN_LOG_PATH"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Product update was logged here: $UPDATE_LOG_PATH"
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t log dump in 2 seconds... #######################################################"
 sleep 2s
 echo
-cat $CHECKIN_LOG_PATH
+#print checkin log but hide gratuitous Data_ and databases_ lines
+
+
+COUNT_OF_DATA=`cat $CHECKIN_LOG_PATH | grep -c Data_`
+COUNT_OF_DATABASES=`cat $CHECKIN_LOG_PATH | grep -c databases_`
+HIDING_COUNT_MESSAGE=`echo -e "UpdateOTS.sh [${LINENO}]  \t Hiding verbose Data_* and databases_* entries of counts respectively: $COUNT_OF_DATA and $COUNT_OF_DATABASES"`
+#echo -e "UpdateOTS.sh [${LINENO}]  \t Hiding verbose Data_* entries in log of count: $COUNT_OF_DATA"
+#echo -e "UpdateOTS.sh [${LINENO}]  \t Hiding verbose databases_* entries in log of count: $COUNT_OF_DATABASE"
+echo $HIDING_COUNT_MESSAGE
+#cat $CHECKIN_LOG_PATH | grep -v Data_ | grep -v databases_
+
+cp $CHECKIN_LOG_PATH ${CHECKIN_LOG_PATH}.bk; 
+sed -i ':a;N;$!ba;s/databases_.*\n.*databases_/HIDING_COUNT_MESSAGE/g' ${CHECKIN_LOG_PATH}.bk; 
+sed -i ':a;N;$!ba;s/Data_.*\n.*HIDING_COUNT_MESSAGE/HIDING_COUNT_MESSAGE/g' ${CHECKIN_LOG_PATH}.bk; 
+sed -i ':a;N;$!ba;s/Data_.*\n.*Data_/HIDING_COUNT_MESSAGE/g' ${CHECKIN_LOG_PATH}.bk; 
+sed -i "s/.*HIDING_COUNT_MESSAGE.*/${HIDING_COUNT_MESSAGE}/g" ${CHECKIN_LOG_PATH}.bk; 
+cat ${CHECKIN_LOG_PATH}.bk; 
+rm ${CHECKIN_LOG_PATH}.bk 
+
 echo -e "UpdateOTS.sh [${LINENO}]  \t end log dump... #######################################################"
-echo -e "UpdateOTS.sh [${LINENO}]  \t Check-in status was logged here: $CHECKIN_LOG_PATH"
-echo -e "UpdateOTS.sh [${LINENO}]  \t Update status (not shown above) was logged here: $UPDATE_LOG_PATH"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Git actions were logged here: $CHECKIN_LOG_PATH"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Product update was logged here: $UPDATE_LOG_PATH"
 
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
@@ -600,6 +609,7 @@ displayVersionsAndQualifiers
 
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 echo -e "UpdateOTS.sh [${LINENO}]  \t ots update script done"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Note: if you have issues with this script, logging into redmine may fix access issues, otherwise please notify us by opening a ticket."
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
 
