@@ -422,7 +422,7 @@ else {
 		{
 			//chrome on Mac shows circle-arrow smaller than Windows and Linux
 			tmpEl.innerHTML = 
-					"<div style='font-size:21px; margin: -2px 0 0 1px; color:inherit;' " +
+					"<div style='font-size:22px; margin: -3px 0 0 1px; color:inherit;' " +
 					"title='Click to refresh only this window'>↻</div>";  
 		}
 		else if(Debug.BROWSER_TYPE == Debug.BROWSER_TYPE_FIREFOX)// &&
@@ -464,7 +464,9 @@ else {
 		tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
 		var tmpEl = document.createElement("div");
 		tmpEl.setAttribute("class", "DesktopWindowButtonGraphicHelp");
-		tmpEl.innerHTML = "?";
+		tmpEl.innerHTML = 
+			"<div style='font-size:18px; color:inherit;' " +
+			"title='Click to show the help tooltip for this window'>?</div>";   //"?";
 		tmpBtn.appendChild(tmpEl);
 		tmpContainer.appendChild(tmpBtn); //add button to window 
 
