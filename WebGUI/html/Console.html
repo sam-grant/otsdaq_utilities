@@ -1159,6 +1159,7 @@
 					if(!selects[i])
 					{
 						Debug.log("Hiding " + tmpKeys[i]);
+						tmpKeys[i] = tmpKeys[i].replace(".","\\.");
 						css += "." + tmpKeys[i] + "_" + 
 								field + "Entry " +
 								"{" +					
@@ -1166,6 +1167,8 @@
 								"}\n\n";
 					}				
 				
+	            Debug.logv({css});
+
 				//add style element to HEAD tag
 				_filterStyleEl[field] = document.createElement('style');
 
