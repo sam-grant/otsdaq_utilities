@@ -20,51 +20,61 @@ echo -e "change_ots_qualifiers.sh [${LINENO}]  "
 echo -e "change_ots_qualifiers.sh [${LINENO}]  "
 
 
-#############################
-#############################
-# function to display otsdaq versions and qualifiers
-function displayVersionsAndQualifiers 
-{	
+# Need this source local scripts
+SCRIPT_DIR="$( 
+ cd "$(dirname "$(readlink "$0" || printf %s "$0")")"
+ pwd -P 
+)"
+
+# get function from a single place (also used by UpdateOTS.sh, for example)
+source "${SCRIPT_DIR}"/displayVersionsAndQualifiers.sh
+
+ 
+# #############################
+# #############################
+# # function to display otsdaq versions and qualifiers
+# function displayVersionsAndQualifiers 
+# {	
 	
 
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ----------------------------"
-	#-s for silent, sed to remove closing </a>
-	curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//'
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ----------------------------"
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
-	echo
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ----------------------------"
+# 	#-s for silent, sed to remove closing </a>
+# 	curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//'
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ----------------------------"
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
+# 	echo
 
-	ALL_RELEASES=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//') )
-	LATEST_RELEASE=${ALL_RELEASES[${#ALL_RELEASES[@]}-1]}
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t The latest otsdaq release is $LATEST_RELEASE"	
+# 	ALL_RELEASES=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//') )
+# 	LATEST_RELEASE=${ALL_RELEASES[${#ALL_RELEASES[@]}-1]}
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t The latest otsdaq release is $LATEST_RELEASE"	
 
-	echo
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t Note: below are the available qualifiers for $LATEST_RELEASE.."
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ----------------------------"
-	#-s for silent, sed to remove closing </a>
-	curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/$LATEST_RELEASE/manifest/ | grep \<\/a\> | grep MANIFEST | sed -e 's/-d.*//' |  sed -e 's/-p.*//' |  sed -e 's/.*-s/                                                        s/' | sed -e 's/-/:/'
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ----------------------------"
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t Note: above are the available qualifiers for $LATEST_RELEASE.."
-	echo
-	ALL_QUALS=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/$LATEST_RELEASE/manifest/ | grep \<\/a\> | grep MANIFEST | sed -e 's/-d.*//' |  sed -e 's/-p.*//' |  sed -e 's/.*-s/ s/' | sed -e 's/-/:/') )
-	LATEST_QUAL=${ALL_QUALS[${#ALL_QUALS[@]}-1]}
-	echo
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t To explore the available qualifiers go here in your browser:"
-	echo
-	echo -e "\t\t\t\t https://scisoft.fnal.gov/scisoft/bundles/otsdaq"
-	echo
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
-	echo
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t To switch qualifiers, do the following: \n\n\t\t\t\t ./change_ots_qualifiers.sh   $LATEST_RELEASE   $LATEST_QUAL:prof"
-	echo
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ...and replace '$LATEST_RELEASE' with your target version. and '$LATEST_QUAL:prof' with your qualifiers"
-	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ...a new localProducts directory will be created, which you should use when you setup ots."
-	echo
-	echo
+# 	echo
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t Note: below are the available qualifiers for $LATEST_RELEASE.."
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ----------------------------"
+# 	#-s for silent, sed to remove closing </a>
+# 	curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/$LATEST_RELEASE/manifest/ | grep \<\/a\> | grep MANIFEST | sed -e 's/-d.*//' |  sed -e 's/-p.*//' |  sed -e 's/.*-s/                                                        s/' | sed -e 's/-/:/'
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ----------------------------"
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t Note: above are the available qualifiers for $LATEST_RELEASE.."
+# 	echo
+# 	ALL_QUALS=( $(curl -s https://scisoft.fnal.gov/scisoft/bundles/otsdaq/$LATEST_RELEASE/manifest/ | grep \<\/a\> | grep MANIFEST | sed -e 's/-d.*//' |  sed -e 's/-p.*//' |  sed -e 's/.*-s/ s/' | sed -e 's/-/:/') )
+# 	LATEST_QUAL=${ALL_QUALS[${#ALL_QUALS[@]}-1]}
+# 	echo
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t To explore the available qualifiers go here in your browser:"
+# 	echo
+# 	echo -e "\t\t\t\t https://scisoft.fnal.gov/scisoft/bundles/otsdaq"
+# 	echo
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
+# 	echo
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t To switch qualifiers, do the following: \n\n\t\t\t\t ./change_ots_qualifiers.sh   $LATEST_RELEASE   $LATEST_QUAL:prof"
+# 	echo
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ...and replace '$LATEST_RELEASE' with your target version. and '$LATEST_QUAL:prof' with your qualifiers"
+# 	echo -e "change_ots_qualifiers.sh [${LINENO}]  \t ...a new localProducts directory will be created, which you should use when you setup ots."
+# 	echo
+# 	echo
 
 	
-} #end displayVersionsAndQualifiers
+# } #end displayVersionsAndQualifiers
 
 #check parameters
 if [[ "x$1" == "x"  || "x$2" == "x" ]]; then
