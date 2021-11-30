@@ -254,10 +254,10 @@ for p in ${REPO_DIR[@]}; do
 done
 
 #setup qualifiers
-rm -rf change_ots_qualifiers.sh
-cp srcs/otsdaq_utilities/tools/change_ots_qualifiers.sh .
-chmod 755 change_ots_qualifiers.sh
-./change_ots_qualifiers.sh DEFAULT DEFAULT
+#rm -rf change_ots_qualifiers.sh
+#cp srcs/otsdaq_utilities/tools/change_ots_qualifiers.sh .
+# chmod 755 change_ots_qualifiers.sh
+./srcs/otsdaq_utilities/tools/change_ots_qualifiers.sh DEFAULT DEFAULT
 
 echo "" >> setup_ots.sh
 echo "alias UpdateOTS.sh='${MRB_SOURCE}/otsdaq_utilities/tools/UpdateOTS.sh'" >> setup_ots.sh
@@ -315,7 +315,7 @@ echo -e "quick_ots_install.sh [${LINENO}]  \t\t ots                     ########
 echo -e "quick_ots_install.sh [${LINENO}]  \t *******************************"
 echo -e "quick_ots_install.sh [${LINENO}]  \t *******************************"
 
-cd $INSTALL_DIR
+# cd $INSTALL_DIR
 
 
 

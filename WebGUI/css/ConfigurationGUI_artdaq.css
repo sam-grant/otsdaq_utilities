@@ -231,6 +231,10 @@
 			font-size: 				30px;
 			font-weight: 			bold;
 			color: 					rgb(15, 152, 76);
+
+			-webkit-user-select: 	none;
+			-moz-user-select: 		none;
+			user-select:			none;
 		}
 		
 		#selectionBoxDiv {

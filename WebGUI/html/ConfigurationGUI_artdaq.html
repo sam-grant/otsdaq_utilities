@@ -4341,11 +4341,15 @@
 					
 				}
 				
-				//subsystem change liekly affects arrows, so update
+				//subsystem change likely affects arrows, so update
 				initArrows();
 
 				console.log("_nodes",_nodes);
 				nodesHaveChanged();				
+
+				//undo hover node, if any
+				if(_mouseHoverNode != -1)
+					doNodeHover(_mouseHoverNode,true /*undoHover*/);
 
 				paint();
 			} //end localDeleteNode()

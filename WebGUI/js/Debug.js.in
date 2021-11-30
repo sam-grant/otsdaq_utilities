@@ -25,9 +25,9 @@
 
 var Debug = Debug || {}; //define Debug namespace
 
-Debug.mode = @DEBUG_MODE@; 		//0 - debug off, 1 - debug on
+Debug.mode = 1; 		//0 - debug off, 1 - debug on (note: all popups will turn off)
 Debug.simple = 0; 		//0 - use priority (more detail in printout), 1 - simple, no priority
-Debug.level = 100;		//priority level, (100 should be all, 0 only high priority)
+Debug.level = 4 + @DEBUG_MODE@ * 96; //100;		//priority level, (100 should be all, 0 only high priority)
 							//all logs with lower priority level are printed
 
 Debug.lastLog = "";
@@ -645,7 +645,7 @@ Debug.errorPop = function(err,severity)
 					"background-color: rgba(153,0,51, " + errBoxAlpha + "); overflow-y: hidden;" +
 					"overflow-x: hidden;	padding: 5px; -moz-border-radius: 2px;" +
 					"-webkit-border-radius: 2px;	border-radius: 2px;" +
-					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
+					"font-size: 18px; z-index: 2147483646;" + //max 32 bit number z-index (minus 1 .. so Loading can be on top)
 					"font-family: 'Comfortaa', arial; text-align: center;" +
 					"left: 8px; top: 8px; margin-right: 8px; " +
 					"}\n\n";			
