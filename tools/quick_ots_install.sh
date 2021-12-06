@@ -35,7 +35,7 @@ site=https://cdcvs.fnal.gov/redmine
 listf=/tmp/list_p$$
 cookief=/tmp/cookies_p$$
 rlverbose=${rlverbose:=false}
-trap 'rm -f /tmp/postdata$$ /tmp/at_p$$ $cookief $listf' EXIT
+trap 'rm -f /tmp/postdata$$ /tmp/at_p$$ $cookief $listf*' EXIT
 #
 # login form
 #
@@ -234,7 +234,7 @@ rm -rf ots
 rm quick_ots_install.zip &>/dev/null
 
 # wget https://otsdaq.fnal.gov/downloads/quick_ots_install.zip  \
-wget https://cdcvs.fnal.gov/redmine/attachments/download/65920/quick_ots_install.zip \
+wget https://cdcvs.fnal.gov/redmine/attachments/download/65976/quick_ots_install.zip \
     --no-check-certificate \
 	--load-cookies=${cookief} \
 	--save-cookies=${cookief} \
@@ -268,8 +268,6 @@ done
 # chmod 755 change_ots_qualifiers.sh
 ./srcs/otsdaq_utilities/tools/change_ots_qualifiers.sh DEFAULT DEFAULT
 
-echo "" >> setup_ots.sh
-echo "alias UpdateOTS.sh='${MRB_SOURCE}/otsdaq_utilities/tools/UpdateOTS.sh'" >> setup_ots.sh
 source setup_ots.sh
 
 #update all (need to do again, after setup, or else ninja does not do mrbsetenv correctly(?))
@@ -326,7 +324,7 @@ echo -e "quick_ots_install.sh [${LINENO}]  \t *******************************"
 echo -e "quick_ots_install.sh [${LINENO}]  \t *******************************"
 
 # cd $INSTALL_DIR
-
+rm -f /tmp/postdata$$ /tmp/at_p$$ $cookief $listf*
 
 
 
