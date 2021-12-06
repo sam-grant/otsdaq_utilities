@@ -17,9 +17,22 @@
 called=$_
 if [[ $called != $0 ]]; then
     echo "This script must be executed and not sourced!"
+
+	
+	echo -e "quick_ots_install.sh [${LINENO}]  "
+	echo -e "quick_ots_install.sh [${LINENO}]  \t ~~ quick_ots_install ~~ "
+	echo -e "quick_ots_install.sh [${LINENO}]  "
+	echo -e "quick_ots_install.sh [${LINENO}]  \t usage: ./quick_ots_install.sh"
+	echo -e "quick_ots_install.sh [${LINENO}]  "
     return 1
 fi
 
+	
+echo -e "quick_ots_install.sh [${LINENO}]  "
+echo -e "quick_ots_install.sh [${LINENO}]  \t ~~ quick_ots_install ~~ "
+echo -e "quick_ots_install.sh [${LINENO}]  "
+echo -e "quick_ots_install.sh [${LINENO}]  \t usage: ./quick_ots_install.sh"
+echo -e "quick_ots_install.sh [${LINENO}]  "
 
 ####################################### start redmine login code
 ####################################### start redmine login code
@@ -176,12 +189,6 @@ USER=$(whoami)
 FOR_USER=$(stat -c "%U" $INSTALL_DIR)
 FOR_GROUP=$(stat -c "%G" $INSTALL_DIR)
 
-	
-echo -e "quick_ots_install.sh [${LINENO}]  "
-echo -e "quick_ots_install.sh [${LINENO}]  \t ~~ quick_ots_install ~~ "
-echo -e "quick_ots_install.sh [${LINENO}]  "
-echo -e "quick_ots_install.sh [${LINENO}]  \t usage: source quick_ots_install.sh"
-echo -e "quick_ots_install.sh [${LINENO}]  "
 echo -e "quick_ots_install.sh [${LINENO}]  \t Identified user '$USER' installing ots with permissions for group:user '$FOR_GROUP:$FOR_USER'"
 echo -e "quick_ots_install.sh [${LINENO}]  \t (note: target user is set based on the owner of $INSTALL_DIR)"
 echo -e "quick_ots_install.sh [${LINENO}]  "
