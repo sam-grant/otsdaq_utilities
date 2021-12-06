@@ -1,15 +1,24 @@
 #!/bin/bash
 #
-# This script is expected to be sourced as root from the directory into which you want ots installed.
+# This script is expected to be run as root from the directory into which you want ots installed.
 #
 # Note: you can try to install as a standard user, but the yum install commands will probably fail
 # 	(this might be ok, if the system has already been setup).
 #
-# cd my/install/path
-# wget https://cdcvs.fnal.gov/redmine/projects/otsdaq-utilities/repository/revisions/develop/raw/tools/quick_ots_install.sh -O quick_ots_install.sh --no-check-certificate
-# chmod 755 quick_ots_install.sh
-# source quick_ots_install.sh
+# download https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/utilities/revisions/develop/raw/tools/quick_ots_install.sh
+# cd my/install/path						# e.g. cd ~/
+# mv /where/you/downloaded/the/script .   	# move the downloaded quick_ots_install.sh script to this folder
+# ksu  										# to become root superuser, if you can
+# chmod 755 quick_ots_install.sh			# to make the installer executable
+# ./quick_ots_install.sh					# to run the installer
 #
+
+
+called=$_
+if [[ $called != $0 ]]; then
+    echo "This script must be executed and not sourced!"
+    return 1
+fi
 
 
 ####################################### start redmine login code
@@ -151,7 +160,7 @@ do_login https://cdcvs.fnal.gov/redmine
 
 if [ $LOGIN_WORKED == 0 ]; then
 	echo -e "quick_ots_install.sh [${LINENO}]  \t Check your Fermilab Services name and password!"
-	return 
+	exit 1 
 fi
 
 echo -e "quick_ots_install.sh [${LINENO}]  \t Login successful."
@@ -189,7 +198,7 @@ if [ $DO_INSTALL == "y" ]; then
 	echo -e "quick_ots_install.sh [${LINENO}]  \t Proceeding with ots install..."
 else	
 	echo -e "quick_ots_install.sh [${LINENO}]  \t User chose not to proceed with ots install."
-	return
+	exit
 fi
 
 # at this point, there must have been valid parameters
@@ -284,17 +293,18 @@ for p in ${REPO_DIR[@]}; do
 	fi	   
 done
 
-#clean compile
-mrb z
-
-# 
-# mz 
-
 
 if [ $USER == "root" ]; then
 	chown -R $FOR_USER ../ots
 	chgrp -R $FOR_GROUP ../ots
 fi
+
+#clean compile
+mrb z
+mrb uc
+source setup_ots.sh
+mrb b
+
 
 # #remove self so users do not install twice!
 rm -rf ../quick_ots_install.sh
