@@ -234,7 +234,7 @@ rm -rf ots
 rm quick_ots_install.zip &>/dev/null
 
 # wget https://otsdaq.fnal.gov/downloads/quick_ots_install.zip  \
-wget https://cdcvs.fnal.gov/redmine/attachments/download/65976/quick_ots_install.zip \
+wget https://cdcvs.fnal.gov/redmine/attachments/download/65977/quick_ots_install.zip \
     --no-check-certificate \
 	--load-cookies=${cookief} \
 	--save-cookies=${cookief} \
