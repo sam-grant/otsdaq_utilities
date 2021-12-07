@@ -34,6 +34,11 @@ echo -e "quick_ots_install.sh [${LINENO}]  "
 echo -e "quick_ots_install.sh [${LINENO}]  \t usage: ./quick_ots_install.sh"
 echo -e "quick_ots_install.sh [${LINENO}]  "
 
+#clear environment
+unsetup_all >/dev/null 2>&1
+unalias kx >/dev/null 2>&1
+unalias ots >/dev/null 2>&1
+
 ####################################### start redmine login code
 ####################################### start redmine login code
 ####################################### start redmine login code
@@ -213,8 +218,15 @@ fi
 if [ $USER == "root" ]; then
 
 	#install ots dependencies
-	yum install -y libuuid-devel openssl-devel python-devel elfutils-libelf-devel
-	
+	# yum install -y libuuid-devel openssl-devel python-devel elfutils-libelf-devel
+	yum install -y git libuuid-devel openssl-devel curl-devel #as root for basic tools
+	yum install -y gcc kernel-devel make #as root for compiling
+	yum install -y lsb #as root for lsb_release
+	yum install -y kde-baseapps #as root for kdialog
+	yum install -y python2-devel elfutils-devel 
+	yum install -y epel-release #repository to find libzstd and xxhash
+	yum install -y libzstd xxhash xxhash-devel
+
 	#install cvmfs
 	yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
 	yum clean all
@@ -277,28 +289,6 @@ done
 
 source setup_ots.sh
 
-#update all (need to do again, after setup, or else ninja does not do mrbsetenv correctly(?))
-REPO_DIR="$(find srcs/ -maxdepth 1 -iname 'otsdaq*')"
-		
-for p in ${REPO_DIR[@]}; do
-	if [ -d $p ]; then
-		if [ -d $p/.git ]; then
-		
-			bp=$(basename $p)
-						
-			echo -e "quick_ots_install.sh [${LINENO}]  \t Repo directory found as: $bp"
-			
-			cd $p
-			if [ $bp == "otsdaq_utilities" ]; then
-			    git checkout WebGUI 
-			fi
-			git pull
-			cd -
-		fi
-	fi	   
-done
-
-
 if [ $USER == "root" ]; then
 	chown -R $FOR_USER ../ots
 	chgrp -R $FOR_GROUP ../ots
@@ -310,20 +300,30 @@ mrb uc
 source setup_ots.sh
 mrb b
 
+UpdateOTS.sh --tables #update tables and get reset_ots_tutorial.sh
 
 # #remove self so users do not install twice!
 rm -rf ../quick_ots_install.sh
+rm -rf ../quick_ots_install.zip
+
+wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh \
+    --no-check-certificate \
+	--load-cookies=${cookief} \
+	--save-cookies=${cookief} \
+	--keep-session-cookies
+chmod 755 reset_ots_tutorial.sh
+./reset_ots_tutorial
+UpdateOTS.sh --tables
 
 echo -e "quick_ots_install.sh [${LINENO}]  \t =================="
 echo -e "quick_ots_install.sh [${LINENO}]  \t quick_ots_install script done!"
 echo -e "quick_ots_install.sh [${LINENO}]  \t"
-echo -e "quick_ots_install.sh [${LINENO}]  \t Next time, cd to ${PWD}:"
+echo -e "quick_ots_install.sh [${LINENO}]  \t Next time, cd to ${INSTALL_DIR}:"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t source setup_ots.sh     #########################################   #to setup ots"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t mrb b                   #########################################   #for incremental build"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t mrb z                   #########################################   #for clean build"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t UpdateOTS.sh            #########################################   #to see update options"
-echo -e "quick_ots_install.sh [${LINENO}]  \t\t ./change_ots_qualifiers.sh           ############################   #to see qualifier options"
-echo -e "quick_ots_install.sh [${LINENO}]  \t\t chmod 755 reset_ots_tutorial.sh; ./reset_ots_tutorial.sh --list     #to see tutorial options"
+echo -e "quick_ots_install.sh [${LINENO}]  \t\t ./reset_ots_tutorial.sh --list     	 ############################	#to see tutorial options"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t ots -w                  #########################################   #to run ots in wiz(safe) mode"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t ots                     #########################################   #to run ots in normal mode"
 
@@ -331,6 +331,8 @@ echo -e "quick_ots_install.sh [${LINENO}]  \t *******************************"
 echo -e "quick_ots_install.sh [${LINENO}]  \t *******************************"
 
 # cd $INSTALL_DIR
+
+#cleanup any remaining credentials
 rm -f /tmp/postdata$$ /tmp/at_p$$ $cookief $listf*
 
 
