@@ -289,10 +289,6 @@ done
 
 source setup_ots.sh
 
-if [ $USER == "root" ]; then
-	chown -R $FOR_USER ../ots
-	chgrp -R $FOR_GROUP ../ots
-fi
 
 #clean compile
 mrb z
@@ -312,13 +308,15 @@ wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/de
 	--save-cookies=${cookief} \
 	--keep-session-cookies
 chmod 755 reset_ots_tutorial.sh
-./reset_ots_tutorial
+export KDIALOG_ALWAYS_YES=1 #for reset tutorial to not use kdialog
+./reset_ots_tutorial.sh
+unset KDIALOG_ALWAYS_YES
 UpdateOTS.sh --tables
 
 echo -e "quick_ots_install.sh [${LINENO}]  \t =================="
 echo -e "quick_ots_install.sh [${LINENO}]  \t quick_ots_install script done!"
 echo -e "quick_ots_install.sh [${LINENO}]  \t"
-echo -e "quick_ots_install.sh [${LINENO}]  \t Next time, cd to ${INSTALL_DIR}:"
+echo -e "quick_ots_install.sh [${LINENO}]  \t Next time, cd to ${INSTALL_DIR}/ots:"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t source setup_ots.sh     #########################################   #to setup ots"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t mrb b                   #########################################   #for incremental build"
 echo -e "quick_ots_install.sh [${LINENO}]  \t\t mrb z                   #########################################   #for clean build"
@@ -330,7 +328,14 @@ echo -e "quick_ots_install.sh [${LINENO}]  \t\t ots                     ########
 echo -e "quick_ots_install.sh [${LINENO}]  \t *******************************"
 echo -e "quick_ots_install.sh [${LINENO}]  \t *******************************"
 
+
+if [ $USER == "root" ]; then
+	chown -R $FOR_USER ../ots
+	chgrp -R $FOR_GROUP ../ots
+fi
+
 # cd $INSTALL_DIR
+
 
 #cleanup any remaining credentials
 rm -f /tmp/postdata$$ /tmp/at_p$$ $cookief $listf*
