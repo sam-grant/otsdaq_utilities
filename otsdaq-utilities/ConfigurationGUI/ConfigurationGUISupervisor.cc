@@ -100,7 +100,7 @@ void ConfigurationGUISupervisor::destroy(void)
 	// shared_ptr??]
 	if(ConfigurationInterface::getInstance(true) != 0)
 		delete ConfigurationInterface::getInstance(true);
-}
+} //end destroy()
 
 //==============================================================================
 void ConfigurationGUISupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
@@ -120,7 +120,7 @@ void ConfigurationGUISupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
 		        "src='/WebPath/html/ConfigurationGUI.html?urn="
 		     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
-}
+} //end defaultPage()
 
 //==============================================================================
 // When overriding, setup default property values here
@@ -134,7 +134,7 @@ void ConfigurationGUISupervisor::setSupervisorPropertyDefaults(void)
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.RequireUserLockRequestTypes,
 	    "*");  // all
-}
+} //end setSupervisorPropertyDefaults()
 
 //==============================================================================
 // forceSupervisorPropertyValues
@@ -147,7 +147,7 @@ void ConfigurationGUISupervisor::forceSupervisorPropertyValues()
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.CheckUserLockRequestTypes,
 	    "*");  // all
-}
+} //end forceSupervisorPropertyValues()
 
 //==============================================================================
 void ConfigurationGUISupervisor::request(const std::string&               requestType,
@@ -4392,7 +4392,8 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 		else if(type == "table-newRow" || type == "table-newUIDRow")
 		{
 			// add row
-			unsigned int row = cfgView->addRow(author, true /*incrementUniqueData*/);
+			unsigned int row = cfgView->addRow(author, true /*incrementUniqueData*/, 
+				newValue /*baseNameAutoUID*/);
 
 			// if TableViewColumnInfo::COL_NAME_STATUS exists, set it to true
 			try
@@ -4409,9 +4410,6 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 		}
 		else if(type == "table-newGroupRow")
 		{
-			// add row
-			unsigned int row = cfgView->addRow(author, true /*incrementUniqueData*/);
-
 			// get index value and group id value
 			unsigned int csvIndex = newValue.find(',');
 
@@ -4425,6 +4423,10 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 
 			__SUP_COUT__ << "newValue " << linkIndex << "," << groupId << "," << newRowUID
 			             << __E__;
+
+			// add row
+			unsigned int row = cfgView->addRow(author, true /*incrementUniqueData*/,
+				newRowUID /*baseNameAutoID*/);
 
 			// set UID value
 			cfgView->setURIEncodedValue(newRowUID, row, cfgView->getColUID());

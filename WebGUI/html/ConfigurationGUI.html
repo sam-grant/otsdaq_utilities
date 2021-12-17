@@ -2727,28 +2727,36 @@
 						colMinValue = colMinValues[c].getAttribute("value");
 						colMaxValue = colMaxValues[c].getAttribute("value");
 
-						typeDivStr = "";
-						typeDivStr += "<div style='font-size:12px' title='";
-						typeDivStr += colType;
-						typeDivStr += " &#60;" + colDataType + "&#62;";
-						typeDivStr += "'>";
-						typeDivStr += colType;
-						typeDivStr += "<br>&#60;" + colDataType + "&#62;" ;
-						if (colDataType == "NUMBER") 
-						{
-							if (colMinValue != "")
-								typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue;
-							if (colMaxValue != "")
-								typeDivStr += "<br>MAX VALUE ALLOWED: " + colMaxValue;
-							// if (colMinValues[c] != "" && colMaxValues[c] != "") 
-							// {
-							// 	// if (colMinValue == 0 && colMaxValue == -1) {}
-							// 	// else
-							// 		typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue + "<br>MAX VALUE ALLOWED: " + colMaxValue ;
-							// }
-						}
+						typeDivStr = ConfigurationAPI.createTableColumnHeaderHTML(
+							colType, colDataType, _tableFixedChoiceData[c],
+							_tableDefaultRowValues[c], colMinValue, colMaxValue
+						);
+						// typeDivStr = "";
+						// typeDivStr += "<div style='font-size:12px' title='";
+						// typeDivStr += colType;
+						// typeDivStr += " &#60;" + colDataType + "&#62;";
+						// typeDivStr += "'>";
+						// typeDivStr += colType;
+						// typeDivStr += "<br>&#60;" + colDataType + "&#62;" ;
 
-						typeDivStr += "</div>";
+						// str += "<br>[Default: " + colDefaultValues[c];
+						
+				
+						// if (colDataType == "NUMBER") 
+						// {
+						// 	if (colMinValue != "")
+						// 		typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue;
+						// 	if (colMaxValue != "")
+						// 		typeDivStr += "<br>MAX VALUE ALLOWED: " + colMaxValue;
+						// 	// if (colMinValues[c] != "" && colMaxValues[c] != "") 
+						// 	// {
+						// 	// 	// if (colMinValue == 0 && colMaxValue == -1) {}
+						// 	// 	// else
+						// 	// 		typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue + "<br>MAX VALUE ALLOWED: " + colMaxValue ;
+						// 	// }
+						// }
+
+						// typeDivStr += "</div>";
 
 						cols[cols.length - 1].push(typeDivStr);
 
@@ -16913,7 +16921,7 @@
 					}
 
 
-					//handle bool style
+					//handle bool style and fixed choice default value display
 					tdStyle = "";
 					if (colTypes[c] == "Bool") //use r/c depending on source data
 					{
@@ -16927,7 +16935,15 @@
 						tdStyle += (isTrue) ? _TABLE_BOOL_TYPE_TRUE_COLOR : _TABLE_BOOL_TYPE_FALSE_COLOR;
 						tdStyle += "'";
 					}
+					else if (colTypes[c] == "FixedChoiceData") 
+					{
+						//_tableFixedChoiceData is a map.. c-1 is pointer into map (skipping first empty column)
+						if(_tableFixedChoiceData[c-1] !== undefined && 
+							_tableFixedChoiceData[c-1].length > 1 && val == _tableDefaultRowValues[c-1])
+							val = ConfigurationAPI.encodeHTML(_tableFixedChoiceData[c-1][1]); //skip arbitrary bool entry [0]
+					}
 
+					// Debug.log("Table r,c",r,c,"cType",colTypes[c],"val",val);
 
 					//open table cell
 					if (r == _CONFIG_DATA_ROW_OFFSET - 1) //col names are headers

@@ -78,6 +78,7 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.extractActiveGroups(req)
 //	ConfigurationAPI.incrementName(name)
 //	ConfigurationAPI.createNewRecordName(startingName,existingArr)
+//	ConfigurationAPI.createTableColumnHeaderHTML(colType,colDataType,colDefaultValue,colMinValue,colMaxValue)
 //	ConfigurationAPI.encodeHTML(s)
 
 
@@ -88,6 +89,19 @@ ConfigurationAPI._activeTables = {}; //to fill, call ConfigurationAPI.getFieldsO
 //"public" constants:
 ConfigurationAPI._DEFAULT_COMMENT = "No comment.";
 ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
+
+
+ConfigurationAPI._STRING_TYPE 	= "STRING";
+ConfigurationAPI._NUMBER_TYPE 	= "NUMBER";
+ConfigurationAPI._DATE_TYPE 	= "TIMESTAMP WITH TIMEZONE";
+
+ConfigurationAPI._BOOL_DATA_TYPE 				= "Bool";
+ConfigurationAPI._BOOL_YES_NO_DATA_TYPE 		= "YesNo";
+ConfigurationAPI._BOOL_TRUE_FALSE_DATA_TYPE 	= "TrueFalse";
+ConfigurationAPI._BOOL_ON_OFF_DATA_TYPE 		= "OnOff";
+ConfigurationAPI._FIXED_CHOICE_DATA_TYPE 		= "FixedChoiceData";
+ConfigurationAPI._LINK_FIXED_CHOICE_DATA_TYPE 	= "ChildLinkFixedChoice";
+ConfigurationAPI._BITMAP_DATA_TYPE 				= "BitMap";
 
 //"private" function list:
 //	ConfigurationAPI.handleGroupCommentToggle(groupName,setHideVal)
@@ -4571,7 +4585,7 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	var childLinkFixedChoice = false; //init, but if it is, then change type handling to fixed choice style
 	var isChildLink = valueType.indexOf("ChildLink") == 0;
 	
-	if(valueType == "FixedChoiceData" ||
+	if(valueType == ConfigurationAPI._FIXED_CHOICE_DATA_TYPE ||
 			(isChildLink && choices.length > 1))
 	{
 		//track if this is a child link with fixed choice
@@ -4900,9 +4914,9 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 				var optionIndex = -1;
 				
 				
-				if(colType == "YesNo" || 
-						colType == "TrueFalse" || 
-						colType == "OnOff")  //if column type is boolean, use dropdown
+				if(colType == ConfigurationAPI._BOOL_YES_NO_DATA_TYPE || 
+						colType == ConfigurationAPI._BOOL_TRUE_FALSE_DATA_TYPE || 
+						colType == ConfigurationAPI._BOOL_ON_OFF_DATA_TYPE)  //if column type is boolean, use dropdown
 				{
 					type += "-bool";
 					ConfigurationAPI.editableFieldEditingOldValue_ = el.innerHTML;
@@ -4911,11 +4925,11 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 					ConfigurationAPI.editableFieldEditingInitValue_ = initVal;
 					
 					var boolVals = [];
-					if(colType == "YesNo")
+					if(colType == ConfigurationAPI._BOOL_YES_NO_DATA_TYPE)
 						boolVals = ["No","Yes"];
-					else if(colType == "TrueFalse")
+					else if(colType == ConfigurationAPI._BOOL_TRUE_FALSE_DATA_TYPE)
 						boolVals = ["False","True"];
-					else if(colType == "OnOff")
+					else if(colType == ConfigurationAPI._BOOL_ON_OFF_DATA_TYPE)
 						boolVals = ["Off","On"];
 
 
@@ -4935,10 +4949,10 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 					str += "</select>";
 					if(optionIndex == -1) optionIndex = 0; //use False option by default					
 				}
-				else if(colType == "FixedChoiceData" || 
-						colType == "ChildLinkFixedChoice")
+				else if(colType == ConfigurationAPI._FIXED_CHOICE_DATA_TYPE || 
+						colType == ConfigurationAPI._LINK_FIXED_CHOICE_DATA_TYPE)
 				{
-					if(colType == "ChildLinkFixedChoice")
+					if(colType == ConfigurationAPI._LINK_FIXED_CHOICE_DATA_TYPE)
 						type += "-childLink";
 					
 					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
@@ -5590,7 +5604,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 //encodeHTML ~~
 ConfigurationAPI.encodeHTML = function(s)
 {
-	Debug.log("encodeHTML()",s);
+	// Debug.log("encodeHTML()",s);
 	var el = document.createElement("div");
 	el.innerText = el.textContent = s;
 	s = el.innerHTML;
@@ -6463,8 +6477,63 @@ ConfigurationAPI.createNewRecordName = function(startingName,existingArr)
 	return retVal;		
 } //end createNewRecordName()
 
+//=====================================================================================
+//createTableColumnHeaderHTML ~~		
+ConfigurationAPI.createTableColumnHeaderHTML = function(colType,colDataType,colChoices,colDefaultValue,colMinValue,colMaxValue)
+{
+	var str = "";
+	str += "<div style='font-size:12px' title='";		
+	str += colType;
+	str += " &#60;" + colDataType + "&#62;";
+	str += " [Default: " + colDefaultValue;
 
 
+	// added min and max in the same way as default values, making it only visible if it is a number type				
+	if (colDataType == ConfigurationAPI._NUMBER_TYPE)
+	{
+		if (colMinValue && colMinValue != "")
+			str += "<br>Minimum: " + colMinValue;
+		if (colMaxValue && colMaxValue != "")
+			str += "<br>Maximum: " + colMaxValue;
+
+	}
+	str += "]";
+	str += "'><label style='font-weight:bold;color:black;font-size:12px;'>";
+	str += colType;
+	str += "</label><br>&#60;" + colDataType + "&#62;";
+	str += "<br>[Default: " + colDefaultValue;
+	
+	//if fixed choice, then show that Default= the first choice
+	if(colType == ConfigurationAPI._FIXED_CHOICE_DATA_TYPE) 
+	{
+		var colChoicesArr;
+
+		if(colChoices)
+		{
+			if(Array.isArray(colChoices)) //if input is an array
+				colChoicesArr = colChoices;
+			else //else create the array from string
+				colChoicesArr = colChoices.split(',');
+		}
+		else //no column choices, so create empty array
+			colChoicesArr = [];
+
+		//colChoices is an array (not a map).. 
+		if(colChoicesArr.length > 1)
+			str += " = " + decodeURIComponent(colChoicesArr[1]); //skip arbitrary bool entry [0]
+	}
+
+	if (colDataType == ConfigurationAPI._NUMBER_TYPE) 
+	{
+		if (colMinValue && colMinValue != "")
+			str += "<br>Minimum: " + colMinValue;
+		if (colMaxValue && colMaxValue != "")
+			str += "<br>Maximum: " + colMaxValue;
+	}
+	str += "]";
+	str += "</div>";
+	return str;		
+} //end createTableColumnHeaderHTML()
 
 
 

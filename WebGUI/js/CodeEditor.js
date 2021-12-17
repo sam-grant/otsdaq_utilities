@@ -428,9 +428,9 @@ CodeEditor.create = function(standAlone) {
 			if(!_READ_ONLY && !req)
 			{
 				if(DesktopContent._sequence)
-					Debug.log("Assuming invalid permissions (remember the wiz mode sequence access code must be at least 8 characters to allow write access)!\n\nReverting to read-only mode.", Debug.WARN_PRIORITY);
+					Debug.log("Assuming read-only access (remember the wiz mode sequence access code must be at least 8 characters to allow write access)!\n\nReverting to read-only mode.", Debug.WARN_PRIORITY);
 				else
-					Debug.log("Assuming invalid permissions (remember only named users can have write access, not the anonymous admin user)!\n\nReverting to read-only mode.", Debug.WARN_PRIORITY);
+					Debug.log("Assuming read-only access (remember only named users can have write access, not the anonymous admin user)!\n\nReverting to read-only mode.", Debug.WARN_PRIORITY);
 				_READ_ONLY = true;
 				init();
 				return;

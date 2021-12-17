@@ -225,7 +225,7 @@ if [ $USER == "root" ]; then
 	yum install -y kde-baseapps #as root for kdialog
 	yum install -y python2-devel elfutils-devel 
 	yum install -y epel-release #repository to find libzstd and xxhash
-	yum install -y libzstd xxhash xxhash-devel
+	yum install -y libzstd xxhash xxhash-devel pcre2
 
 	#install cvmfs
 	yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm

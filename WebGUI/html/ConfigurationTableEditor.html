@@ -71,12 +71,9 @@
 		
 
 		var _typeArray = []; //filled by request to getColumnTypes, e.g.: ["Data", "UniqueData", "FixedChoiceData", "MultilineData", "BitMap", "OnOff", "TrueFalse", "YesNo", "ChildLinkUID", "ChildLinkGroupID", "ChildLink", "GroupID"]
+		// Defined in ConfigurationAPI.js, for example: ConfigurationAPI._BITMAP_DATA_TYPE		
 		
-		var _STRING_TYPE = "STRING";
-		var _NUMBER_TYPE = "NUMBER";
-		var _DATE_TYPE = "TIMESTAMP WITH TIMEZONE";
-		
-		var _dataTypeArray = [_STRING_TYPE, _NUMBER_TYPE, _DATE_TYPE];
+		var _dataTypeArray = [ConfigurationAPI._STRING_TYPE, ConfigurationAPI._NUMBER_TYPE, ConfigurationAPI._DATE_TYPE];
 		var _defaultArray = {};
 		var _minArray = {};
 		var _maxArray = {};
@@ -172,7 +169,6 @@
 			//popUpUploadFixedChoicesForm(c)
 			//uploadFixedChoices(c)
 		
-			//encodeHTML(s)
 			
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -340,11 +336,11 @@
 				}
 				
 				//set UID and specials to that of Data
-				_defaultArray[_STRING_TYPE]["UID"] = _defaultArray[_STRING_TYPE]["Data"];
-				_defaultArray[_NUMBER_TYPE]["UID"] = _defaultArray[_NUMBER_TYPE]["Data"];
-				_defaultArray[_STRING_TYPE]["Comment"] = _defaultArray[_STRING_TYPE]["Data"];
-				_defaultArray[_STRING_TYPE]["Author"] = _defaultArray[_STRING_TYPE]["Data"];
-				_defaultArray[_DATE_TYPE]["Timestamp"] = _defaultArray[_DATE_TYPE]["Data"];
+				_defaultArray[ConfigurationAPI._STRING_TYPE]["UID"] = _defaultArray[ConfigurationAPI._STRING_TYPE]["Data"];
+				_defaultArray[ConfigurationAPI._NUMBER_TYPE]["UID"] = _defaultArray[ConfigurationAPI._NUMBER_TYPE]["Data"];
+				_defaultArray[ConfigurationAPI._STRING_TYPE]["Comment"] = _defaultArray[ConfigurationAPI._STRING_TYPE]["Data"];
+				_defaultArray[ConfigurationAPI._STRING_TYPE]["Author"] = _defaultArray[ConfigurationAPI._STRING_TYPE]["Data"];
+				_defaultArray[ConfigurationAPI._DATE_TYPE]["Timestamp"] = _defaultArray[ConfigurationAPI._DATE_TYPE]["Data"];
 				
 				Debug.log("default array = ",_defaultArray);
 				Debug.log("min array = ",_minArray);
@@ -537,47 +533,24 @@
 			//	write new info file for tableName based CSV column info
 			//			data="type,name,dataType;type,name,dataType;..."
 			
-			// create a string with all the values that will get converted in the server to a table, than then will return to this script to show it.
-			//trim does not process null values and then the other options were needed
+			// create a string with all the values that will get converted in the server to a table, than then will return to this script to show it.			
 			var data = "";
 			for(var i=0;i<_colHdrArr.length;++i)
 			{
-				if (_colDataTypeArr[i] == _NUMBER_TYPE) {
-					if (_colMinValueArr[i] != undefined && _colMaxValueArr[i] != undefined) {
-						data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
-							_colDataTypeArr[i] + "," +
-							encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
-							encodeURIComponent(_colMinValueArr[i].trim()) + "," +
-							encodeURIComponent(_colMaxValueArr[i].trim()) + ";";
-					}
-
-					else if (_colMinValueArr[i] != undefined && _colMaxValueArr[i] == undefined) {
-						data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
-							_colDataTypeArr[i] + "," +
-							encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
-							encodeURIComponent(_colMinValueArr[i].trim()) + "," +
-							encodeURIComponent(null) + ";";
-					}
-					else if (_colMinValueArr[i] == undefined && _colMaxValueArr[i] != undefined)
-						data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
-							_colDataTypeArr[i] + "," +
-							encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
-							encodeURIComponent(null) + "," +
-							encodeURIComponent(_colMaxValueArr[i].trim()) + ";";
-
-					else if (_colMinValueArr[i] == undefined && _colMaxValueArr[i] == undefined)
-						data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
-							_colDataTypeArr[i] + "," +
-							encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
-							encodeURIComponent(null) + "," +
-							encodeURIComponent(null) + ";";
+				if (_colDataTypeArr[i] == ConfigurationAPI._NUMBER_TYPE) 
+				{
+					data += _colTypeArr[i] + "," + 
+						encodeURIComponent(_colHdrArr[i].trim()) + "," +
+						_colDataTypeArr[i] + "," +
+						encodeURIComponent(_colDefaultValueArr[i].trim()) + "," +
+						encodeURIComponent(_colMinValueArr[i]?_colMinValueArr[i].trim():"") + "," +
+						encodeURIComponent(_colMaxValueArr[i]?_colMaxValueArr[i].trim():"") + ";";
 				}
-				else {
+				else 
+				{
 					data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," +
 						_colDataTypeArr[i] + "," +
-						encodeURIComponent(_colDefaultValueArr[i].trim()) + ";"
-						// encodeURIComponent("f") + "," +
-						// encodeURIComponent("f") + ";";
+						encodeURIComponent(_colDefaultValueArr[i].trim()) + ";";
 				}
 			}
 			//handle table description
@@ -691,27 +664,27 @@
 		{
 			var colHdrs = ["UID","CommentDescription","Author","RecordInsertionTime"];
 			var colTypes = ["UID","Comment","Author","Timestamp"];
-			var colDataTypes = [_STRING_TYPE, _STRING_TYPE, _STRING_TYPE, _DATE_TYPE];
+			var colDataTypes = [ConfigurationAPI._STRING_TYPE, ConfigurationAPI._STRING_TYPE, ConfigurationAPI._STRING_TYPE, ConfigurationAPI._DATE_TYPE];
 			var colDefaultValues = [
-				_defaultArray[_STRING_TYPE][colTypes[0]],
-				_defaultArray[_STRING_TYPE][colTypes[1]],
-				_defaultArray[_STRING_TYPE][colTypes[2]],
-				_defaultArray[_DATE_TYPE][colTypes[3]]];
+				_defaultArray[ConfigurationAPI._STRING_TYPE][colTypes[0]],
+				_defaultArray[ConfigurationAPI._STRING_TYPE][colTypes[1]],
+				_defaultArray[ConfigurationAPI._STRING_TYPE][colTypes[2]],
+				_defaultArray[ConfigurationAPI._DATE_TYPE][colTypes[3]]];
 				// included min and max values starting points, same as default. Originally they were empty
 			var colMinValues =
 				[ //colDefaultValues;
-					//	_defaultArray[_STRING_TYPE][colTypes[0]],
-					//_defaultArray[_STRING_TYPE][colTypes[1]],
-					//	_defaultArray[_STRING_TYPE][colTypes[2]],
-					//	_defaultArray[_DATE_TYPE][colTypes[3]]
+					//	_defaultArray[ConfigurationAPI._STRING_TYPE][colTypes[0]],
+					//_defaultArray[ConfigurationAPI._STRING_TYPE][colTypes[1]],
+					//	_defaultArray[ConfigurationAPI._STRING_TYPE][colTypes[2]],
+					//	_defaultArray[ConfigurationAPI._DATE_TYPE][colTypes[3]]
 				]
 				;
 			var colMaxValues =
 				[ //colDefaultValues;
-					//	_defaultArray[_STRING_TYPE][colTypes[0]],
-					//_defaultArray[_STRING_TYPE][colTypes[1]],
-					//	_defaultArray[_STRING_TYPE][colTypes[2]],
-					//	_defaultArray[_DATE_TYPE][colTypes[3]]
+					//	_defaultArray[ConfigurationAPI._STRING_TYPE][colTypes[0]],
+					//_defaultArray[ConfigurationAPI._STRING_TYPE][colTypes[1]],
+					//	_defaultArray[ConfigurationAPI._STRING_TYPE][colTypes[2]],
+					//	_defaultArray[ConfigurationAPI._DATE_TYPE][colTypes[3]]
 				]
 				;
 			var colHdrs = ["UID","CommentDescription","Author","RecordInsertionTime"];
@@ -807,7 +780,7 @@
 				{
 					if(csvStr.length) csvStr += ",";
 					
-					if(colTypesArr[i] != "BitMap" && //for fields with choices, except BitMap (BitMap does not use arbitraryBool)...
+					if(colTypesArr[i] != ConfigurationAPI._BITMAP_DATA_TYPE && //for fields with choices, except BitMap (BitMap does not use arbitraryBool)...
 							!j)//force first to be arbitraryBool flag 							
 					{
 						if(colChoiceArr[j].getAttribute("value").indexOf("arbitraryBool=") != 0)
@@ -835,7 +808,7 @@
 		function setupTable(srcName,colHdrs,colTypes,colDataTypes,colDefaultValues,
 				colChoices, colMinValues, colMaxValues, tableDescription)
 		{
-			Debug.log("colChoices " + colChoices);
+			Debug.log("colChoices ",colChoices);
 			
 			//handle use of cached _srcName
 			if(!srcName)
@@ -1132,43 +1105,59 @@
 					}
 				}
 				str += "</td>";
-			}
+			} //end localInsertAddDeleteCell()
 
 			//:::::
 			function localInsertTypeCell(c)
 			{
 				str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
 						c + ",this,event);' style='width:100px'>";
-				str += "<div style='font-size:12px' title='";		
-				str += colTypes[c];
-				str += " &#60;" + colDataTypes[c] + "&#62;";
-				str += " [Default: " + colDefaultValues[c];
-				// added min and max in the same way as default values, making it only visible if it is a number type
-				
-				if (colDataTypes[c] == _NUMBER_TYPE)
-				{
-					if (colMinValues[c] != "")
-						str += "<br>Minimum: " + colMinValues[c];
-					if (colMaxValues[c] != "")
-						str += "<br>Maximum: " + colMaxValues[c];
+				str += ConfigurationAPI.createTableColumnHeaderHTML(
+					colTypes[c], colDataTypes[c], colChoices[c],
+					colDefaultValues[c], colMinValues[c], colMaxValues[c]
+				);
+				// str += "<div style='font-size:12px' title='";		
+				// str += colTypes[c];
+				// str += " &#60;" + colDataTypes[c] + "&#62;";
+				// str += " [Default: " + colDefaultValues[c];
+		
 
-				}
-				str += "]";
-				str += "'><label style='font-weight:bold;color:black;font-size:12px;'>";
-				str += colTypes[c];
-				str += "</label><br>&#60;" + colDataTypes[c] + "&#62;";
-				str += "<br>[Default: " + colDefaultValues[c];
-				if (colDataTypes[c] == _NUMBER_TYPE) 
-				{
-					if (colMinValues[c] != "")
-						str += "<br>Minimum: " + colMinValues[c];
-					if (colMaxValues[c] != "")
-						str += "<br>Maximum: " + colMaxValues[c];
-				}
-				str += "]";
-				str += "</div>";
+				// // added min and max in the same way as default values, making it only visible if it is a number type				
+				// if (colDataTypes[c] == ConfigurationAPI._NUMBER_TYPE)
+				// {
+				// 	if (colMinValues[c] != "" && colMinValues[c] != "null")
+				// 		str += "<br>Minimum: " + colMinValues[c];
+				// 	if (colMaxValues[c] != "" && colMinValues[c] != "null")
+				// 		str += "<br>Maximum: " + colMaxValues[c];
+
+				// }
+				// str += "]";
+				// str += "'><label style='font-weight:bold;color:black;font-size:12px;'>";
+				// str += colTypes[c];
+				// str += "</label><br>&#60;" + colDataTypes[c] + "&#62;";
+				// str += "<br>[Default: " + colDefaultValues[c];
+				
+				// //if fixed choice, then show that Default= the first choice
+				// if(colTypes[c] == ConfigurationAPI._FIXED_CHOICE_DATA_TYPE) 
+				// {
+				// 	var colChoicesArr = colChoices[c]?colChoices[c].split(','):[];
+
+				// 	//colChoices is an array (not a map).. 
+				// 	if(colChoicesArr.length > 1)
+				// 		str += " = " + decodeURIComponent(colChoicesArr[1]); //skip arbitrary bool entry [0]
+				// }
+
+				// if (colDataTypes[c] == ConfigurationAPI._NUMBER_TYPE) 
+				// {
+				// 	if (colMinValues[c] != "")
+				// 		str += "<br>Minimum: " + colMinValues[c];
+				// 	if (colMaxValues[c] != "")
+				// 		str += "<br>Maximum: " + colMaxValues[c];
+				// }
+				// str += "]";
+				// str += "</div>";
 				str += "</td>";	
-			}
+			} //end localInsertTypeCell()
 			
 			//:::::
 			function localInsertColumnNameCell(c)
@@ -1186,7 +1175,7 @@
 				//add bitmap info fields if type = BitMap
 				//add link table options if type = ChildLink
 				
-				if(colTypes[c] == "BitMap")
+				if(colTypes[c] == ConfigurationAPI._BITMAP_DATA_TYPE)
 				{
 					localDisplayPixelMaskInputs();
 				}
@@ -1226,12 +1215,12 @@
 
 					//always show default first
 					str += "<option>" +
-							encodeHTML(colDefaultValues[c]) + 
+							ConfigurationAPI.encodeHTML(colDefaultValues[c]) + 
 							"</option>";					
 
 					for(var f=1;f<colChoicesArr.length;++f)	
 						str += "<option>" +
-							encodeHTML(decodeURIComponent(colChoicesArr[f])) +
+							ConfigurationAPI.encodeHTML(decodeURIComponent(colChoicesArr[f])) +
 							"</option>";		
 
 					str += "</select>";
@@ -1394,7 +1383,7 @@
 		} //end setupTable()
 		
 
-
+		//=====================================================================================
 		//selectThisCell ~~
 		function selectThisCell(r,c,el,event) 
 		{		
@@ -1501,7 +1490,7 @@
 						str += "</option>";
 						
 						if(typeOptionIndex == -1 && //only take first match
-								colDataType == _typeArray[i]) 
+							colType == _typeArray[i]) 
 							typeOptionIndex = i; //get starting sel index for type
 					}				
 					str += "</select>";
@@ -1540,17 +1529,17 @@
 				str += "Default: ";
 				var encodedDefaultValue;
 				if(_colDefaultValueArr[c] !== undefined)
-					encodedDefaultValue = encodeHTML(_colDefaultValueArr[c]);
+					encodedDefaultValue = ConfigurationAPI.encodeHTML(_colDefaultValueArr[c]);
 
 				// new additions min and max, check if they work, no error founds yet
 
 				else if(_colDefaultMinArr[c]!== undefined)
-					encodedMinValue = encodeHTML(_colDefaultValueArr[c]);
+					encodedMinValue = ConfigurationAPI.encodeHTML(_colDefaultValueArr[c]);
 				else if(_colDefaultMaxArr[c]!== undefined)
-					encodedMaxValue = encodeHTML(_colDefaultValueArr[c]);
+					encodedMaxValue = ConfigurationAPI.encodeHTML(_colDefaultValueArr[c]);
 
-				else if(dataTypeOptionIndex != -1) //encodeHTML(decodeURIComponent(
-					encodedDefaultValue = encodeHTML(_defaultArray[_dataTypeArray[dataTypeOptionIndex]][colType]);
+				else if(dataTypeOptionIndex != -1) //ConfigurationAPI.encodeHTML(decodeURIComponent(
+					encodedDefaultValue = ConfigurationAPI.encodeHTML(_defaultArray[_dataTypeArray[dataTypeOptionIndex]][colType]);
 								
 				str += "<input type='text' id='selectCellSpecTypeDefaultInput' onkeydown='keyHandler(event)' " +
 					"style='width:" + 
@@ -1570,7 +1559,7 @@
 				// render min value
 				var encodedMinValue = "";
 				if(_colMinValueArr[c] !== undefined)
-					encodedMinValue = encodeHTML(_colMinValueArr[c]);
+					encodedMinValue = ConfigurationAPI.encodeHTML(_colMinValueArr[c]);
 				str += "<input type='text' id='selectCellSpecTypeMinInput' onkeydown='keyHandler(event)' " +
 					"style='width:" + 
 					(100 > (el.offsetWidth-8-160 /*160=width of type-dropdown*/)?100: //min of 100
@@ -1584,7 +1573,7 @@
 				str += "Maximum: ";
 				var encodedMaxValue = "";
 				if(_colMaxValueArr[c] !== undefined)
-					encodedMaxValue = encodeHTML(_colMaxValueArr[c]);
+					encodedMaxValue = ConfigurationAPI.encodeHTML(_colMaxValueArr[c]);
 
 				//  render max value
 				str += "<input type='text' id='selectCellSpecTypeMaxInput' onkeydown='keyHandler(event)' " +
@@ -1899,7 +1888,7 @@
 					setupTable();
 					
 					//show tooltips
-					if(colType == "BitMap")
+					if(colType == ConfigurationAPI._BITMAP_DATA_TYPE)
 						DesktopContent.tooltip("BitMap Field Type",
 								"The BitMap type represents a 2-dimensional array of cells, " +
 								"where each cell has a bit-field. The aspect ratio is optional. " +
@@ -2006,7 +1995,7 @@
 			
 			_editingCell = false;
 			_editingCellEl = 0;
-		}		
+		} //end editCellCancel()
 
 		//==============================================================================
 		//addColumn ~~
@@ -2018,21 +2007,21 @@
 			
 			_colHdrArr.splice(c,0,"DefaultColumnName");
 			_colTypeArr.splice(c,0,"Data");
-			_colDataTypeArr.splice(c,0, _STRING_TYPE);
-			_colDefaultValueArr.splice(c,0, encodeHTML(decodeURIComponent(
+			_colDataTypeArr.splice(c,0, ConfigurationAPI._STRING_TYPE);
+			_colDefaultValueArr.splice(c,0, ConfigurationAPI.encodeHTML(decodeURIComponent(
 					_defaultArray[_colDataTypeArr[c]][_colTypeArr[c]])));
 					
-			_colMinValueArr.splice(c,0, encodeHTML(decodeURIComponent(
+			_colMinValueArr.splice(c,0, ConfigurationAPI.encodeHTML(decodeURIComponent(
 					_minArray[_colDataTypeArr[c]][_colTypeArr[c]])));
 
-			_colMaxValueArr.splice(c,0, encodeHTML(decodeURIComponent(
+			_colMaxValueArr.splice(c,0, ConfigurationAPI.encodeHTML(decodeURIComponent(
 					_maxArray[_colDataTypeArr[c]][_colTypeArr[c]])));
 
 			_colChoicesArr.splice(c,0,"");
 			
 			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colDefaultValueArr, 
-			_colChoicesArr, _colMinValueArr, _colMaxValueArr, null);
-		}
+				_colChoicesArr, _colMinValueArr, _colMaxValueArr, undefined /* to restore tableDescription */);
+		} //end addColumn()
 
 		//==============================================================================
 		//deleteColumn ~~
@@ -2053,8 +2042,8 @@
 			_colChoicesArr.splice(c,1);
 			
 			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colDefaultValueArr, 
-			_colChoicesArr, _colMinValueArr, _colMaxValueArr, null);
-		}
+				_colChoicesArr, _colMinValueArr, _colMaxValueArr, undefined /* to restore tableDescription */);
+		} //end deleteColumn()
 
 		//==============================================================================
 		//transposeTable ~~
@@ -2064,7 +2053,7 @@
 			Debug.log("CfgTBL transposeTable " + _tableIsTransposed);
 			
 			setupTable();
-		}
+		} //end transposeTable()
 
 		//==============================================================================
 		//createEditTableMenu ~~
@@ -2089,7 +2078,7 @@
 					"rgb(220, 187, 165)", 			//primary color
 					"rgb(130, 51, 51)"				//secondary color
 			);
-		}
+		} //end createEditTableMenu()
 
 		//==============================================================================
 		//setupFindAndReplace
@@ -2229,8 +2218,8 @@
 				}	// end delete field loop
 				
 			setupTable(0, _colHdrArr,_colTypeArr,_colDataTypeArr,_colDefaultValueArr,
-			_colChoicesArr, _colMinValueArr, _colMaxValueArr, 
-			null);
+				_colChoicesArr, _colMinValueArr, _colMaxValueArr, 
+				undefined /* to restore tableDescription */);
 						
 		} //end tableCopyOrMoveRow()
 
@@ -2641,17 +2630,7 @@
 			Debug.log("Fixed choices were successfully uploaded!",
 					Debug.INFO_PRIORITY);
 		} //end uploadFixedChoices()
-
-		//==============================================================================
-		//encodeHTML ~~
-		function encodeHTML(s)
-		{
-			Debug.log("encodeHTML()",s);
-			var el = document.createElement("div");
-			el.innerText = el.textContent = s;
-			s = el.innerHTML;
-			return s.replace(/'/g, '&apos;');
-		} //end encodeHTML()
+		
 		
 	</script>
 		
