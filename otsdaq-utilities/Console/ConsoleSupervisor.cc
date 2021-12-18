@@ -89,7 +89,7 @@ void ConsoleSupervisor::destroy(void)
 //	Note: Uses std::mutex to avoid conflict with reading thread.
 void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) try
 {
-	__COUT__ << "Starting workloop" << __E__;
+	__COUT__ << "Starting workloop based on config file: " << QUIET_CFG_FILE << __E__;
 
 	std::string configFile = QUIET_CFG_FILE;
 	FILE*       fp         = fopen(configFile.c_str(), "r");

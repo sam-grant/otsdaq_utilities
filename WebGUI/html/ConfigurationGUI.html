@@ -114,7 +114,7 @@
 		//addMemberToConfigGroup(groupName,backLinkStr) 
 
 		//activateSystemConfig(groupName, groupKey, ignoreWarnings, doneHandler)
-		//activateSystemConfigHandler(req)
+		//activateTableGroupHandler(req)
 		//versionTrackingHandler(req)
 		//selectForCreateTableGroup(i)
 		//versionsForCreateTableGroup(i, alias)		
@@ -124,7 +124,7 @@
 		//setVersionAliasInActiveBackbone(versionAlias,tableName,version,newBackboneNameAdd,doneHandler,doReturnParams)			
 		//wizToLatestTableGroup(groupAlias, ignoreWarnings, groupType)
 		//wizToActiveTableGroup(groupAlias, groupType)
-		//saveGroupAndActivate(groupName,tableMap,doneHandler,doReturnParams)
+		//saveGroupAndActivate(groupName,tableMap,doneHandler,doReturnParams) ==> replaced with ConfigurationAPI version
 
 
 
@@ -506,7 +506,7 @@
 		var _lastFindRow, _lastFindCol;
 		var _cachedTableComment, _cachedGroupComment;
 
-		var _activeTableGroups = []; //sz 6 (each 2) := holds the group name,key for currently active (could be none on failure) Context, Backbone, Config
+		var _activeTableGroups = []; //sz 8 (each 2) := holds the group name,key for currently active (could be none on failure) Context, Backbone, Iterator, Config
 		var _lastTableGroups = []; //sz 18 (each 3):= holds the group name,key,TIME for last successfully Configured, Started, activated-Config, activated-Context, activated-Backbone, activated-Iterator 
 
 		var _versionTrackingIsOn = true;
@@ -518,15 +518,13 @@
 		var _tableLinkDropdownChoices = [];
 		var _tableFixedChoiceData = {};
 		var _tableDefaultRowValues = [];
+		var _tableColumnMinValues = [];
+		var _tableColumnMaxValues = [];
 		var _tableViewBackLinkStr;
 		var _tableUploadStr = "";
+		var _doCopyAndPaintIncrementally = false;
 
 		var _displayTargetEl = 0;
-
-		var _contextMemberNames = [];
-		var _backboneMemberNames = [];
-		var _iterateMemberNames = [];
-
 
 		var _contextMenuEl = 0;
 
@@ -641,39 +639,6 @@
 			//be careful to not override the window.onmousemove DesktopContent action
 			DesktopContent.mouseMoveSubscriber(bodyMouseMoveHandler);
 
-			//get context, backbone, and iterate member list 
-			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "",
-				function (req) {
-					var memberNames = req.responseXML.getElementsByTagName("ContextMember");
-					_contextMemberNames = []; //reset
-					for (var i = 0; i < memberNames.length; ++i)
-						_contextMemberNames[i] = memberNames[i].getAttribute("value");
-					Debug.log(_contextMemberNames);
-					if (_contextMemberNames.length == 0)
-						Debug.log("Empty context member list found!", Debug.HIGH_PRIORITY);
-				}); //end request handler
-
-			DesktopContent.XMLHttpRequest("Request?RequestType=getBackboneMemberNames", "",
-				function (req) {
-					var memberNames = req.responseXML.getElementsByTagName("BackboneMember");
-					_backboneMemberNames = []; //reset
-					for (var i = 0; i < memberNames.length; ++i)
-						_backboneMemberNames[i] = memberNames[i].getAttribute("value");
-					Debug.log(_backboneMemberNames);
-					if (_backboneMemberNames.length == 0)
-						Debug.log("Empty backbone member list found!", Debug.HIGH_PRIORITY);
-				}); //end request handler
-
-			DesktopContent.XMLHttpRequest("Request?RequestType=getIterateMemberNames", "",
-				function (req) {
-					var memberNames = req.responseXML.getElementsByTagName("IterateMember");
-					_iterateMemberNames = []; //reset
-					for (var i = 0; i < memberNames.length; ++i)
-						_iterateMemberNames[i] = memberNames[i].getAttribute("value");
-					Debug.log(_iterateMemberNames);
-					if (_iterateMemberNames.length == 0)
-						Debug.log("Empty iterate member list found!", Debug.HIGH_PRIORITY);
-				}); //end request handler
 
 			//============================
 			//		for debugging
@@ -682,9 +647,9 @@
 			//setupSpecificTable("XDAQContextTable","2","setupTableViewMode('anchorTag-XDAQContextTable');"); return;
 
 			//setupSpecificTableGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerTable"); return;			
-			//setupSpecificTableGroup("TableEditWizBackbone","0"); 
+			//setupSpecificTableGroup("GroupAliasWizBackbone","0"); 
 
-			//mergeGroups("TableEditWizBackbone","0","TableEditWizBackbone","3","rename");
+			//mergeGroups("GroupAliasWizBackbone","0","GroupAliasWizBackbone","3","rename");
 			//mergeGroups("  ","2","testContext","3","defaultConfig","1","defaultConfig","4","Rename");
 
 			//mergeGroupsDialog();
@@ -1038,7 +1003,7 @@
 				"click the question mark at the top of the page.\n\n"
 			);
 
-			activateSystemConfigHandler(req); //display active config groups			
+			activateTableGroupHandler(req); //display active config groups			
 
 			var groupAliases = req.responseXML.getElementsByTagName("GroupAlias");
 			var groupNames = req.responseXML.getElementsByTagName("GroupName");
@@ -1416,7 +1381,7 @@
 				//return;
 			}
 
-			activateSystemConfigHandler(req);
+			activateTableGroupHandler(req);
 
 			var groupNames = req.responseXML.getElementsByTagName("TableGroupName");
 			var keys = req.responseXML.getElementsByTagName("TableGroupKey");
@@ -2419,7 +2384,7 @@
 				showSaveButtons = true; //allow user to try to save and have server fix
 			}
 
-			activateSystemConfigHandler(req); //display active config groups
+			activateTableGroupHandler(req); //display active config groups
 
 			var tableName = DesktopContent.getXMLValue(req, "TableName");
 			var version = DesktopContent.getXMLValue(req, "TableVersion");
@@ -2462,15 +2427,15 @@
 			var colTypeEls = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
 			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
 			var colChoices = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnChoices");
-			var colMinValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMinValue");
-			var colMaxValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMaxValue");
 			
 			//fill fixed choice structure
 			_tableFixedChoiceData = {};
 			var fixedChoiceArr;
-			for (var i = 0; i < colChoices.length; ++i) {
+			for (var i = 0; i < colChoices.length; ++i) 
+			{
 				fixedChoiceArr = colChoices[i].getElementsByTagName("ColumnChoice");
-				if (fixedChoiceArr.length) {
+				if (fixedChoiceArr.length) 
+				{
 					_tableFixedChoiceData[i] = [];
 					for (var j = 0; j < fixedChoiceArr.length; ++j)
 						_tableFixedChoiceData[i].push(fixedChoiceArr[j].getAttribute("value"));
@@ -2481,6 +2446,17 @@
 			var defaultRowValues = req.responseXML.getElementsByTagName("DefaultRowValue");
 			for (var i = 0; i < defaultRowValues.length; ++i)
 				_tableDefaultRowValues.push(decodeURIComponent(defaultRowValues[i].getAttribute("value")));
+
+			_tableColumnMinValues = [];
+			var colMinValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMinValue");
+			for (var i = 0; i < colMinValues.length; ++i)
+				_tableColumnMinValues.push(decodeURIComponent(colMinValues[i].getAttribute("value")));
+
+			_tableColumnMaxValues = [];
+			var colMaxValues = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnMaxValue");
+			for (var i = 0; i < colMaxValues.length; ++i)
+				_tableColumnMaxValues.push(decodeURIComponent(colMaxValues[i].getAttribute("value")));			
+			
 
 			//reset globals
 
@@ -2731,33 +2707,7 @@
 							colType, colDataType, _tableFixedChoiceData[c],
 							_tableDefaultRowValues[c], colMinValue, colMaxValue
 						);
-						// typeDivStr = "";
-						// typeDivStr += "<div style='font-size:12px' title='";
-						// typeDivStr += colType;
-						// typeDivStr += " &#60;" + colDataType + "&#62;";
-						// typeDivStr += "'>";
-						// typeDivStr += colType;
-						// typeDivStr += "<br>&#60;" + colDataType + "&#62;" ;
-
-						// str += "<br>[Default: " + colDefaultValues[c];
 						
-				
-						// if (colDataType == "NUMBER") 
-						// {
-						// 	if (colMinValue != "")
-						// 		typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue;
-						// 	if (colMaxValue != "")
-						// 		typeDivStr += "<br>MAX VALUE ALLOWED: " + colMaxValue;
-						// 	// if (colMinValues[c] != "" && colMaxValues[c] != "") 
-						// 	// {
-						// 	// 	// if (colMinValue == 0 && colMaxValue == -1) {}
-						// 	// 	// else
-						// 	// 		typeDivStr += "<br>MIN VALUE ALLOWED: " + colMinValue + "<br>MAX VALUE ALLOWED: " + colMaxValue ;
-						// 	// }
-						// }
-
-						// typeDivStr += "</div>";
-
 						cols[cols.length - 1].push(typeDivStr);
 
 						isStatusType = false;
@@ -3380,7 +3330,7 @@
 			applyTreeFilter("", 1); //reapplyFilter
 			toggleGroupDetails(_showGroupDetails);
 
-			activateSystemConfigHandler(req); //display active config groups
+			activateTableGroupHandler(req); //display active config groups
 
 
 
@@ -5063,7 +5013,7 @@
 				"",
 				function (req) {
 					//call normal handler and return handler
-					activateSystemConfigHandler(req, true /*display errors*/);
+					activateTableGroupHandler(req, true /*display errors*/);
 					if (doneHandler !== undefined) doneHandler(req);
 				},
 				0, 0, true); //reqIndex, progressHandler, callHandlerOnErr					
@@ -5126,8 +5076,8 @@
 		} //end versionTrackingHandler()
 
 		//==============================================================================
-		//activateSystemConfigHandler ~
-		function activateSystemConfigHandler(req, displayErrors)
+		//activateTableGroupHandler ~
+		function activateTableGroupHandler(req, displayErrors)
 		{
 			//reset (could be silly play in table view value painter)
 			document.body.style.cursor = "default";
@@ -5174,6 +5124,7 @@
 			//update version tracking
 			versionTrackingHandler(req);
 
+			ConfigurationAPI.extractActiveGroups(req); //also capture active groups in API members for future compatibility
 			_activeTableGroups = [
 				DesktopContent.getXMLValue(req, "Context-ActiveGroupName"),
 				DesktopContent.getXMLValue(req, "Context-ActiveGroupKey"),
@@ -5312,7 +5263,7 @@
 			}
 			catch (e) { ; }
 
-		} // end activateSystemConfigHandler()
+		} // end activateTableGroupHandler()
 
 		//==============================================================================
 		//wizToActiveTableGroup ~~
@@ -5335,7 +5286,7 @@
 			DesktopContent.XMLHttpRequest("Request?RequestType=getActiveTableGroups",
 				"", function (req) 
 				{
-					activateSystemConfigHandler(req);
+					activateTableGroupHandler(req);
 
 					var name = DesktopContent.getXMLValue(req,
 						groupTypeName + "-ActiveGroupName");
@@ -5391,9 +5342,9 @@
 
 					Debug.log("tableNames.length " + tableNames.length);
 
-					var context = _contextMemberNames;
-					var backbone = _backboneMemberNames;
-					var iterate = _iterateMemberNames;
+					var context = ConfigurationAPI._contextMemberNames;
+					var backbone = ConfigurationAPI._backboneMemberNames;
+					var iterate = ConfigurationAPI._iterateMemberNames;
 					var tableMap = "tableList=";
 					var found;
 					for (var i = 0; i < tableNames.length; ++i)
@@ -5536,77 +5487,77 @@
 				});	//end of getTables handler
 		} //end wizToLatestTableGroup()
 
-		//==============================================================================
-		//saveGroupAndActivate
-		function saveGroupAndActivate(groupName, tableMap, doneHandler, doReturnParams) 
-		{
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewTableGroup" +
-				"&groupName=" + groupName +
-				"&allowDuplicates=0" +
-				"&lookForEquivalent=1" +
-				"", //end get data
-				tableMap, //end post data
-				function (req) 
-				{
-					var err = DesktopContent.getXMLValue(req, "Error");
-					var name = DesktopContent.getXMLValue(req, "TableGroupName");
-					var key = DesktopContent.getXMLValue(req, "TableGroupKey");
-					var newBackbone = true;
-					if (err) 
-					{
-						if (!name || !key) 
-						{
-							Debug.log(err, Debug.HIGH_PRIORITY);
-							Debug.log("Process interrupted. Failed to create a new Backbone group!" +
-								" Please see details below.",
-								Debug.HIGH_PRIORITY);
+		// //==============================================================================
+		// //saveGroupAndActivate  ... as of Dec 18, 2021 .. RAR replaced with ConfigurationAPI.saveGroupAndActivate
+		// function saveGroupAndActivate(groupName, tableMap, doneHandler, doReturnParams) 
+		// {
+		// 	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewTableGroup" +
+		// 		"&groupName=" + groupName +
+		// 		"&allowDuplicates=0" +
+		// 		"&lookForEquivalent=1" +
+		// 		"", //end get data
+		// 		tableMap, //end post data
+		// 		function (req) 
+		// 		{
+		// 			var err = DesktopContent.getXMLValue(req, "Error");
+		// 			var name = DesktopContent.getXMLValue(req, "TableGroupName");
+		// 			var key = DesktopContent.getXMLValue(req, "TableGroupKey");
+		// 			var newBackbone = true;
+		// 			if (err) 
+		// 			{
+		// 				if (!name || !key) 
+		// 				{
+		// 					Debug.log(err, Debug.HIGH_PRIORITY);
+		// 					Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+		// 						" Please see details below.",
+		// 						Debug.HIGH_PRIORITY);
 
-							if (doneHandler)
-								doneHandler(); //error so call done handler
-							return;
-						}
-						else 
-						{
-							Debug.log(err, Debug.WARN_PRIORITY);
-							Debug.log("Process interrupted. Failed to create a new Backbone group!" +
-								" (Likely the currently active Backbone already represents what is being requested)\n\n" +
-								"Going on with existing backbone group, name=" + name + " & key=" + key,
-								Debug.WARN_PRIORITY);
-							newBackbone = false;
-						}
-					}
+		// 					if (doneHandler)
+		// 						doneHandler(); //error so call done handler
+		// 					return;
+		// 				}
+		// 				else 
+		// 				{
+		// 					Debug.log(err, Debug.WARN_PRIORITY);
+		// 					Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+		// 						" (Likely the currently active Backbone already represents what is being requested)\n\n" +
+		// 						"Going on with existing backbone group, name=" + name + " & key=" + key,
+		// 						Debug.WARN_PRIORITY);
+		// 					newBackbone = false;
+		// 				}
+		// 			}
 
-					//now activate the new backbone group
+		// 			//now activate the new backbone group
 
-					DesktopContent.XMLHttpRequest("Request?RequestType=activateTableGroup" +
-						"&groupName=" + name +
-						"&groupKey=" + key, "",
-						function (req) 
-						{
+		// 			DesktopContent.XMLHttpRequest("Request?RequestType=activateTableGroup" +
+		// 				"&groupName=" + name +
+		// 				"&groupKey=" + key, "",
+		// 				function (req) 
+		// 				{
 
-							activateSystemConfigHandler(req);
+		// 					activateTableGroupHandler(req);
 
-							if (doneHandler) 
-							{
-								//done so call done handler (and indicate success)
-								if (!doReturnParams)
-									doneHandler(); //done so call done handler
-								else
-								{
-									var retParams = {
-										"groupName": name,
-										"groupKey": key,
-										"newBackbone": newBackbone
-									}
-									doneHandler(retParams); 	 //(and indicate success)
-								}
-							}
+		// 					if (doneHandler) 
+		// 					{
+		// 						//done so call done handler (and indicate success)
+		// 						if (!doReturnParams)
+		// 							doneHandler(); //done so call done handler
+		// 						else
+		// 						{
+		// 							var retParams = {
+		// 								"groupName": name,
+		// 								"groupKey": key,
+		// 								"newBackbone": newBackbone
+		// 							}
+		// 							doneHandler(retParams); 	 //(and indicate success)
+		// 						}
+		// 					}
 
-						});	//end of activate new backbone handler
+		// 				});	//end of activate new backbone handler
 
-				}, 0, 0, true  //reqParam, progressHandler, callHandlerOnErr
-			); //end of backbone saveNewTableGroup handler
-		} //end saveGroupAndActivate()
+		// 		}, 0, 0, true  //reqParam, progressHandler, callHandlerOnErr
+		// 	); //end of backbone saveNewTableGroup handler
+		// } //end saveGroupAndActivate()
 
 		//==============================================================================
 		//setupGroupCreator ~
@@ -5634,7 +5585,7 @@
 				return;
 			}
 
-			activateSystemConfigHandler(req);
+			activateTableGroupHandler(req);
 
 			var backLinkStr = "";
 			//if backLinkStr is present parse it out
@@ -5806,9 +5757,9 @@
 			var els = document.getElementsByClassName("memberTableCheckbox");
 
 			//use list of context/backbone configuration from server
-			var context = _contextMemberNames;
-			var backbone = _backboneMemberNames;
-			var iterate = _iterateMemberNames;
+			var context = ConfigurationAPI._contextMemberNames;
+			var backbone = ConfigurationAPI._backboneMemberNames;
+			var iterate = ConfigurationAPI._iterateMemberNames;
 
 			switch (i) 
 			{
@@ -6100,7 +6051,7 @@
 
 		//==============================================================================
 		//togglePaintCellValue
-		function togglePaintCellValue() 
+		function togglePaintCellValue(doIncrement) 
 		{			
 			Debug.log("togglePaintCellValue",document.body.style.cursor);
 
@@ -6108,13 +6059,21 @@
 			var selectorSource = "crosshair";
 
 			var vpel = document.getElementById("valuePainterButton");
-			if(!vpel) return;	
+			var ivpel = document.getElementById("valuePainterButtonInc");
+
+			if(!vpel || !ivpel) return;	
+
 			if(document.body.style.cursor == painterSource || 
 				document.body.style.cursor == selectorSource)
 			{
 				document.body.style.cursor = "default";
 				vpel.value = "Copy and Paint a Cell";
-				vpel.title = "Click to enable choosing a cell value to copy and paint into other cells by dragging the mouse cursor.";
+				vpel.title = "Click to enable choosing a cell value to copy" +
+					" and paint into other cells by dragging the mouse cursor.";
+				ivpel.value = "Copy and Paint a Cell" + " Incrementally";
+				ivpel.title = "Click to enable choosing a cell value to copy" +
+					", increment," +
+					" and paint into other cells by dragging the mouse cursor.";
 
 				//return table to selectable text
 				var tel = document.getElementById("SubSystemTable");
@@ -6124,7 +6083,10 @@
 			{
 				vpel.value = "Cancel Cell Value Selection";
 				vpel.title = "Click to cancel cell value selection mode.";
+				ivpel.value = "Cancel Cell Value Selection";
+				ivpel.title = "Click to cancel cell value selection mode.";
 				document.body.style.cursor = selectorSource;
+				_doCopyAndPaintIncrementally = doIncrement;
 			}
 		} //end togglePaintCellValue()
 
@@ -6345,6 +6307,10 @@
 			str += "<br><br>";
 			str += "<input id='valuePainterButton' type='button' onmouseup='togglePaintCellValue()' value='Copy and Paint a Cell' title='" +
 				"Click to enable choosing a cell value to copy and paint into other cells by dragging the mouse cursor." +
+				"'/>";
+			str += " ";
+			str += "<input id='valuePainterButtonInc' type='button' onmouseup='togglePaintCellValue(1)' value='Copy and Paint a Cell Incrementally' title='" +
+				"Click to enable choosing a cell value to copy, increment, and paint into other cells by dragging the mouse cursor." +
 				"'/>";
 			str += "<br><br>";
 			el.innerHTML = str;
@@ -7880,7 +7846,9 @@
 			{
 				if(event.buttons && document.body.style.cursor == painterSource)
 				{
-					if(el.innerText == _editingCellElOldValue)
+					if(el.innerText == _editingCellElOldValue || 
+						(_doCopyAndPaintIncrementally && 
+						ConfigurationAPI.incrementName(el.innerText) == _editingCellElOldValue))
 						return; //already same value
 
 					Debug.log(r,c,"paint mode",event.buttons);
@@ -7888,6 +7856,10 @@
 					el.appendChild(document.createTextNode(_editingCellElOldValue));				
 
 					var selVal = _editingCellElOldValue;
+
+					if(_doCopyAndPaintIncrementally)
+						_editingCellElOldValue = ConfigurationAPI.incrementName(_editingCellElOldValue);	
+
 					//assume coloring yes/no is good enough until table is saved
 					var boolTypeTrues = ["On", "True", "Yes"];
 					var statusTypeFalses = ["Off", "False", "No"];
@@ -7919,12 +7891,19 @@
 			{
 				//start painting mode
 				var vpel = document.getElementById("valuePainterButton");
-				if(vpel)
+				var ivpel = document.getElementById("valuePainterButtonInc");
+				if(vpel && ivpel)
 				{
 					_editingCellElOldValue = el.textContent;
 					document.body.style.cursor = painterSource;
 					vpel.value = "End Cell Value Painting";
 					vpel.title = "Click to end cell value painting mode.";
+					ivpel.value = "End Cell Value Painting";
+					ivpel.title = "Click to end cell value painting mode.";
+
+					if(_doCopyAndPaintIncrementally)
+						_editingCellElOldValue = ConfigurationAPI.incrementName(_editingCellElOldValue);
+
 					Debug.log("Value-to-paint",_editingCellElOldValue);
 				}
 				else 
@@ -7936,7 +7915,9 @@
 			}
 			else if(document.body.style.cursor == painterSource)
 			{
-				if(el.innerText == _editingCellElOldValue)
+				if(el.innerText == _editingCellElOldValue || 
+					(_doCopyAndPaintIncrementally && 
+					ConfigurationAPI.incrementName(el.innerText) == _editingCellElOldValue))
 					return; //already same value
 				//do painting
 				Debug.log("Painting value",_editingCellElOldValue);
@@ -7944,6 +7925,8 @@
 				el.innerHTML = "";
 				el.appendChild(document.createTextNode(_editingCellElOldValue));
 				var selVal = _editingCellElOldValue;
+				if(_doCopyAndPaintIncrementally)
+					_editingCellElOldValue = ConfigurationAPI.incrementName(_editingCellElOldValue);	
 
 				//assume coloring yes/no is good enough until table is saved
 				var boolTypeTrues = ["On", "True", "Yes"];
@@ -7968,7 +7951,7 @@
 				else if (isFalse)
 					el.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
 
-			versionHasChanged();
+				versionHasChanged();
 				return;
 			}
 
@@ -8002,9 +7985,9 @@
 			//if column type is Author or Timestamp, don't allow select
 			var colType;
 			if (_tableViewIsTransposed) 	//type is at col 0
-				colType = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
+				colType = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td")[0].childNodes[0].childNodes[0].innerText;
 			else						//type is at row 0
-				colType = rows[0].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET + c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
+				colType = rows[0].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET + c].childNodes[0].childNodes[0].innerText; //type text is in a div for smaller font, then label for bold
 
 			if (colType == "Author" ||
 				colType == "Timestamp")
@@ -8044,9 +8027,9 @@
 				while (pairCol != c) 
 				{
 					if (_tableViewIsTransposed) 	//type is at col 0
-						pairColType = rows[_CONFIG_DATA_COL_OFFSET + pairCol].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
+						pairColType = rows[_CONFIG_DATA_COL_OFFSET + pairCol].getElementsByTagName("td")[0].childNodes[0].childNodes[0].innerText; //type text is in a div for smaller font, then label for bold
 					else						//type is at row 0
-						pairColType = rows[0].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET + pairCol].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
+						pairColType = rows[0].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET + pairCol].childNodes[0].childNodes[0].innerText; //type text is in a div for smaller font, then label for bold
 
 					Debug.log("pairColType=" + pairColType);
 
@@ -9558,7 +9541,7 @@
 					); //end of getGroupAliases handler
 
 				}, 0, 0, true //reqParam, progressHandler, callHandlerOnErr
-			); //end of getActiveTableGroups handler			
+			); //end of getAffectedActiveGroups call			
 
 
 			document.getElementById("display").appendChild(el); //add element to display div
@@ -10638,7 +10621,7 @@
 							treeEditingTargetTable_ = initTargetTable;
 
 						}, 0, 0, true //reqParam, progressHandler, callHandlerOnErr
-					); //end of getActiveTableGroups handler
+					); //end of saveTreeNodeEdit call
 				}
 				else	//unrecognized type!?
 				{
@@ -13794,7 +13777,7 @@
 						); //end of getGroupAliases handler
 
 					}, 0, 0, true //reqParam, progressHandler, callHandlerOnErr
-				); //end of getActiveTableGroups handler			
+				); //end of getAffectedActiveGroups call			
 
 			}
 
@@ -15272,8 +15255,7 @@
 										}
 										Debug.log(tableMap);
 
-										//FIXME -- use config API version of setGroupAliasInActiveBackbone
-										saveGroupAndActivate("TableEditWizBackbone", tableMap,
+										ConfigurationAPI.saveGroupAndActivate("GroupAliasWizBackbone", tableMap,
 											function (retParams) 
 											{
 												Debug.log("Save and activate is done.");
@@ -15294,7 +15276,8 @@
 												treeHasChanged(true); // reset
 												return;
 											},	//end of done handler for saveGroupAndActivate
-											true //request return parameters
+											true, //request return parameters
+											true  //lookForEquivalent
 										);
 										return;
 									}
@@ -15447,7 +15430,7 @@
 				return;
 			}
 
-			activateSystemConfigHandler(req);
+			activateTableGroupHandler(req);
 
 			var tableName = DesktopContent.getXMLValue(req, "savedName");
 			var version = DesktopContent.getXMLValue(req, "savedVersion");
@@ -15912,8 +15895,7 @@
 										}
 										Debug.log(tableMap);
 
-										//FIXME use API 
-										saveGroupAndActivate("TableEditWizBackbone", tableMap,
+										ConfigurationAPI.saveGroupAndActivate("GroupAliasWizBackbone", tableMap,
 											function (retParams) 
 											{
 												Debug.log("Save and activate is done.");
@@ -15934,8 +15916,8 @@
 												treeHasChanged(true); // reset
 												return;
 											},	//end of done handler for saveGroupAndActivate
-											true //request return parameters
-										);
+											true, //request return parameters
+											true /*lookForEquivalent*/);
 										return;
 									}
 
@@ -16226,8 +16208,37 @@
 		{
 			Debug.log("createAppStatusDesktopIcon()");
 			
-			
-			DesktopContent.addDesktopIcon(
+			//if no active backbone, create it
+			if(ConfigurationAPI._activeGroups.Backbone.groupName == "")
+			{
+				var tableMap = "tableList=";
+				for (var i = 0; i < ConfigurationAPI._backboneMemberNames.length; ++i)				
+					tableMap += ConfigurationAPI._backboneMemberNames[i] + ",-1,";
+					
+				Debug.log("Identified missing backbone, attempting to create it.");
+				ConfigurationAPI.saveGroupAndActivate("GroupAliasWizBackbone",tableMap,
+					function(retParams)
+					{
+						Debug.log("Save and activate is done.");
+
+						DesktopContent.addDesktopIcon(
+							"App Status" /*caption*/,
+							"STAT" /*altText*/,
+							"" /*folderPath*/,
+							true /*unique*/,
+							1 /*permissionString*/,
+							"icon-SystemStatus.png" /*imageURL*/,
+							"/WebPath/html/SystemStatus.html" /*windowURL*/,
+							200 /*linked app*/, //always link to Gateway
+							"" /*parameters*/
+							);	
+					},	//end of done handler for saveGroupAndActivate
+					true, //request return parameters
+					true  //lookForEquivalent
+				);
+			}
+			else //backbone is already in place			
+				DesktopContent.addDesktopIcon(
 					"App Status" /*caption*/,
 					"STAT" /*altText*/,
 					"" /*folderPath*/,
@@ -16235,7 +16246,7 @@
 					1 /*permissionString*/,
 					"icon-SystemStatus.png" /*imageURL*/,
 					"/WebPath/html/SystemStatus.html" /*windowURL*/,
-					DesktopContent._serverUrnLid /*linked app*/,
+					200 /*linked app*/, //always link to Gateway
 					"" /*parameters*/
 					);
 					
@@ -16790,7 +16801,7 @@
 				{
 					for (var c = _CONFIG_DATA_COL_OFFSET; c < rows.length; ++c)
 					{
-						colType = rows[c].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
+						colType = rows[c].getElementsByTagName("td")[0].childNodes[0].childNodes[0].innerText; //type text is in a div for smaller font, then label for bold
 						isStatusType = false;
 						for (var i = 0; i < boolTypes.length; ++i)
 							if (boolTypes[i] == colType) 
@@ -16805,7 +16816,7 @@
 					var firstRowEls = rows[0].getElementsByTagName("td");
 					for (var c = _CONFIG_DATA_COL_OFFSET; c < firstRowEls.length; ++c) 
 					{
-						colType = firstRowEls[c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font
+						colType = firstRowEls[c].childNodes[0].childNodes[0].innerText; //type text is in a div for smaller font, then label for bold
 						isStatusType = false;
 						for (var i = 0; i < boolTypes.length; ++i)
 							if (boolTypes[i] == colType)
@@ -16833,7 +16844,7 @@
 			var rowsSz = transposeOutput ? cols[0].length : cols.length;
 			var colsSz = transposeOutput ? cols.length : cols[0].length;
 			var uidCol, uidVal, colHdr;
-			var r, c;
+			var r, c, ro, co;
 
 			//determine colUID
 			{
@@ -16882,9 +16893,11 @@
 			}
 
 			//create output string based on cols
-			for (var rr = 0; rr < rowsSz; ++rr) {
+			for (var rr = 0; rr < rowsSz; ++rr) 
+			{
 				str += "<tr>";
-				for (var cc = 0; cc < colsSz; ++cc) {
+				for (var cc = 0; cc < colsSz; ++cc) 
+				{
 					//choose proper value based on situation
 					if (!_tableViewIsTransposed && !transposeOutput) //normal source and leaving normal
 					{
@@ -16920,6 +16933,8 @@
 						colHdr = colsIsArray ? cols[cc][_CONFIG_DATA_ROW_OFFSET - 1] : cols[cc][_CONFIG_DATA_ROW_OFFSET - 1].innerHTML;
 					}
 
+					ro = r - _CONFIG_DATA_ROW_OFFSET;
+					co = c - _CONFIG_DATA_COL_OFFSET;
 
 					//handle bool style and fixed choice default value display
 					tdStyle = "";
@@ -16935,39 +16950,56 @@
 						tdStyle += (isTrue) ? _TABLE_BOOL_TYPE_TRUE_COLOR : _TABLE_BOOL_TYPE_FALSE_COLOR;
 						tdStyle += "'";
 					}
-					else if (colTypes[c] == "FixedChoiceData") 
-					{
-						//_tableFixedChoiceData is a map.. c-1 is pointer into map (skipping first empty column)
-						if(_tableFixedChoiceData[c-1] !== undefined && 
-							_tableFixedChoiceData[c-1].length > 1 && val == _tableDefaultRowValues[c-1])
-							val = ConfigurationAPI.encodeHTML(_tableFixedChoiceData[c-1][1]); //skip arbitrary bool entry [0]
-					}
-
+				
 					// Debug.log("Table r,c",r,c,"cType",colTypes[c],"val",val);
 
 					//open table cell
 					if (r == _CONFIG_DATA_ROW_OFFSET - 1) //col names are headers
 						str += "<th>";
 					else if (r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
-						c >= _CONFIG_DATA_COL_OFFSET) {
+						c >= _CONFIG_DATA_COL_OFFSET) 
+					{
 						titleVal = (val.replace(/"/g, "&quot;").replace(/'/g, "&apos;"));
 						if (titleVal.length > 50)
 							titleVal = titleVal.substr(0, 50) + "...";
 
-						str += "<td onmouseup='selectThisCell(" + (r - _CONFIG_DATA_ROW_OFFSET) + "," +
-							(c - _CONFIG_DATA_COL_OFFSET) + ",this,event);' " +
+						str += "<td onmouseup='selectThisCell(" + ro + "," +
+							co + ",this,event);' " +
 							tdStyle +
 							//paint mode is use for cell value painter
-							" onmouseover='selectThisCell(" + (r - _CONFIG_DATA_ROW_OFFSET) + "," +
-							(c - _CONFIG_DATA_COL_OFFSET) + ",this,event,true /*paintMode*/);' " +
-							" onmousemove='selectThisCell(" + (r - _CONFIG_DATA_ROW_OFFSET) + "," +
-							(c - _CONFIG_DATA_COL_OFFSET) + ",this,event,true /*paintMode*/);' " +
-							" title='UID : " + uidVal + "\n" +
+							" onmouseover='selectThisCell(" + ro + "," +
+							co + ",this,event,true /*paintMode*/);' " +
+							" onmousemove='selectThisCell(" + ro + "," +
+							co + ",this,event,true /*paintMode*/);' " +
+							" title='" + 
+							"[row,col] = [" + ro + "," + co +
+							"]\nUID : " + uidVal + "\n" +
 							colHdr +
-							" : " +
-							titleVal +
-							"' " +
+							" value: " +
+							titleVal;
 
+						if (colTypes[c] == "FixedChoiceData") 
+						{
+							//_tableFixedChoiceData is a map
+							if(_tableFixedChoiceData[co] !== undefined && 
+								_tableFixedChoiceData[co].length > 1 && val == _tableDefaultRowValues[co])
+							{
+								titleVal = ConfigurationAPI.encodeHTML(_tableFixedChoiceData[c-1][1]); //skip arbitrary bool entry [0]
+								if (titleVal.length > 50)
+									titleVal = titleVal.substr(0, 50) + "...";
+								str += " (which tranlates to fixed choice value &apos;" + titleVal + "&apos;)";
+							}
+						}
+						str += "\n[Default: " + _tableDefaultRowValues[c-1];
+
+						// if any, show min and max
+						if (_tableColumnMinValues[co] && _tableColumnMinValues[co] != "")
+							str += "\nMinimum: " + _tableColumnMinValues[co];
+						if (_tableColumnMaxValues[co] && _tableColumnMaxValues[co] != "")
+							str += "\nMaximum: " + _tableColumnMaxValues[co];
+						str += "]";
+
+						str += "' " +
 							">";
 					}
 					else
@@ -16978,19 +17010,19 @@
 					if (c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
 					{
 						str += "<center>";
-						str += (_dataOffset + (r - _CONFIG_DATA_ROW_OFFSET));	//insert row index column
+						str += (_dataOffset + ro);	//insert row index column
 						str += "<br>";
 
 						//add +/- row controls
 						str += "<a class='tableAddRowButton' " +
 							"title='Add a row before this row.' " +
-							"onclick='addRow(" + (r - _CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+							"onclick='addRow(" + ro + "); return false;'>";
 						str += "+";
 						str += "</a>";
 						str += "/";
 						str += "<a  class='tableDeleteRowButton' " +
 							"title='Delete this row.' " +
-							"onclick='deleteRow(" + (r - _CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+							"onclick='deleteRow(" + ro + "); return false;'>";
 						str += "-";
 						str += "</a>";
 						str += "</center>";

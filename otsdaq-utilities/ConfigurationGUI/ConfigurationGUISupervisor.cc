@@ -5412,7 +5412,7 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 
 	std::istringstream columnChoicesISS(columnChoicesCSV);
 	std::string        columnChoicesString;
-	std::string        columnType, columnDataType, columnDefaultValue, columnMinValue, columnMaxValue;
+	std::string        columnDefaultValue, columnMinValue, columnMaxValue;
 	std::vector<std::string> columnParameters;
 	std::vector<std::string> columnData = StringMacros::getVectorFromString(data,{';'} /*delimiter*/);
 
@@ -5428,8 +5428,11 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 		}
 		__COUT__ << "\t creating the new xml" << __E__;
 
-		outss << "\t\t\t\t<COLUMN Type=\"";
-		outss << columnParameters[0];
+		std::string &columnType = columnParameters[0];
+		std::string &columnDataType = columnParameters[2];
+
+		outss << "\t\t\t\t<COLUMN Type=\"";		
+		outss << columnType; 
 		outss << "\" \t Name=\"";
 	 	outss << columnParameters[1];
 		outss << "\" \t StorageName=\"";
@@ -5444,11 +5447,14 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 			return;
 		}
 		outss << "\" \t	DataType=\"";
-		outss << columnParameters[2];
-		if(StringMacros::decodeURIComponent(columnParameters[3]) !=
-				TableViewColumnInfo::getDefaultDefaultValue(columnParameters[0],columnParameters[2]))
+		outss << columnDataType;
+
+		columnDefaultValue = StringMacros::decodeURIComponent(columnParameters[3]);
+
+		if(columnDefaultValue !=
+				TableViewColumnInfo::getDefaultDefaultValue(columnType,columnDataType))
 		{
-			__SUP_COUT__ << "FOUND user spec'd default value = " << columnParameters[3] << __E__;
+			__SUP_COUT__ << "FOUND user spec'd default value '" << columnDefaultValue << "'" << __E__;
 			outss << "\" \t	DefaultValue=\"";
 			outss << columnParameters[3];
 		}
@@ -5458,31 +5464,41 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 		outss << columnChoicesString;
 
 
-		if (columnParameters.size() > 4)
+		if (columnParameters.size() > 4 && columnDataType == TableViewColumnInfo::DATATYPE_NUMBER)
 		{
-			if (StringMacros::decodeURIComponent(columnParameters[4]) != "")
+			columnMinValue = StringMacros::decodeURIComponent(columnParameters[4]);
+			if (columnMinValue != "")
 			{
-				if(StringMacros::decodeURIComponent(columnParameters[4]) !=
-				   TableViewColumnInfo::getMinDefaultValue(columnParameters[2]))
+				if(columnMinValue != TableViewColumnInfo::getMinDefaultValue(columnDataType))
 				{
-					__SUP_COUT__
-					    << "FOUND user spec'd min default value = " << columnParameters[4]
-					    << __E__;
-					outss << "\" \t	MinValue=\"";
-					outss << columnParameters[4];
+					__SUP_COUT__ << "FOUND user spec'd min value '" << columnParameters[4] << "'" << __E__;
+					if(!StringMacros::isNumber(
+						StringMacros::convertEnvironmentVariables(columnMinValue)))
+					{
+						__SS__ <<  "Inavlid user spec'd min value '" << columnParameters[4] << 
+							"' which evaluates to '" << columnMinValue << 
+							"' and is not a valid number. The minimum value must be a number (environment variables and math operations are allowed)." << __E__;
+						__SS_THROW__;
+					}
+					outss << "\" \t	MinValue=\"" << columnParameters[4];
 				}
 			}
 			
-			if (StringMacros::decodeURIComponent(columnParameters[5]) != "")
+			columnMaxValue = StringMacros::decodeURIComponent(columnParameters[5]);
+			if (columnMaxValue != "")
 			{
-				if(StringMacros::decodeURIComponent(columnParameters[5]) !=
-				   TableViewColumnInfo::getMaxDefaultValue(columnParameters[2]))
+				if(columnMaxValue != TableViewColumnInfo::getMaxDefaultValue(columnDataType))
 				{
-					__SUP_COUT__
-					    << "FOUND user spec'd max default value = " << columnParameters[5]
-					    << __E__;
-					outss << "\" \t	MaxValue=\"";
-					outss << columnParameters[5];
+					__SUP_COUT__ << "FOUND user spec'd max value = " << columnMaxValue << __E__;
+					if(!StringMacros::isNumber(
+						StringMacros::convertEnvironmentVariables(columnMaxValue)))
+					{
+						__SS__ <<  "Inavlid user spec'd max value '" << columnParameters[5] << 
+							"' which evaluates to '" << columnMaxValue << 
+							"' and is not a valid number. The maximum value must be a number (environment variables and math operations are allowed)." << __E__;
+						__SS_THROW__;
+					}
+					outss << "\" \t	MaxValue=\"" << columnParameters[5];
 				}
 			}
 		}

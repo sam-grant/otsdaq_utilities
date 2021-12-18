@@ -902,7 +902,7 @@ DesktopContent.showLoading = function(nextFunction)
 				if(!body) //maybe page not loaded yet.. so wait to report
 				{
 					//try again in 1 second
-					window.setTimeout(function() { Debug.errorPop(err,severity)}, 1000);
+					window.setTimeout(function() { --DesktopContent._loadBoxRequestStack /*revert inc*/; localDoIt(); }, 1000);
 					return;
 				}
 
@@ -1027,7 +1027,8 @@ DesktopContent.hideLoading = function()
 		
 		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
 	    //console.log("DesktopContent.hideLoading");
-		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
+		var el = document.getElementById(DesktopContent._loadBoxId);
+		if(el) el.style.display = "none";
 		
 	} //end localHideLoadBox
 

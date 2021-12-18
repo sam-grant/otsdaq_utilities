@@ -86,6 +86,11 @@ if (typeof DesktopContent == 'undefined' &&
 ConfigurationAPI._activeGroups = {}; //to fill, call ConfigurationAPI.getActiveGroups() or ConfigurationAPI.extractActiveGroups()
 ConfigurationAPI._activeTables = {}; //to fill, call ConfigurationAPI.getFieldsOfRecords() among others
 
+
+ConfigurationAPI._contextMemberNames 	= [];
+ConfigurationAPI._backboneMemberNames 	= [];
+ConfigurationAPI._iterateMemberNames 	= [];
+
 //"public" constants:
 ConfigurationAPI._DEFAULT_COMMENT = "No comment.";
 ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
@@ -144,6 +149,41 @@ ConfigurationAPI._OK_CANCEL_DIALOG_STR += "<a class='popUpOkCancel' onclick='jav
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 ConfigurationAPI._OK_CANCEL_DIALOG_STR += "</div>";	
 
+
+//get context, backbone, and iterate member list 
+DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "",
+	function (req) {
+		var memberNames = req.responseXML.getElementsByTagName("ContextMember");
+		ConfigurationAPI._contextMemberNames = []; //reset
+		for (var i = 0; i < memberNames.length; ++i)
+			ConfigurationAPI._contextMemberNames[i] = memberNames[i].getAttribute("value");
+		Debug.log("ConfigurationAPI._contextMemberNames =",ConfigurationAPI._contextMemberNames);
+		if (ConfigurationAPI._contextMemberNames.length == 0)
+			Debug.log("Empty context member list found!", Debug.HIGH_PRIORITY);
+	}); //end request handler
+
+DesktopContent.XMLHttpRequest("Request?RequestType=getBackboneMemberNames", "",
+	function (req) {
+		var memberNames = req.responseXML.getElementsByTagName("BackboneMember");
+		ConfigurationAPI._backboneMemberNames = []; //reset
+		for (var i = 0; i < memberNames.length; ++i)
+			ConfigurationAPI._backboneMemberNames[i] = memberNames[i].getAttribute("value");
+		Debug.log("ConfigurationAPI._backboneMemberNames =",ConfigurationAPI._backboneMemberNames);
+		if (ConfigurationAPI._backboneMemberNames.length == 0)
+			Debug.log("Empty backbone member list found!", Debug.HIGH_PRIORITY);
+	}); //end request handler
+
+DesktopContent.XMLHttpRequest("Request?RequestType=getIterateMemberNames", "",
+	function (req) {
+		var memberNames = req.responseXML.getElementsByTagName("IterateMember");
+		ConfigurationAPI._iterateMemberNames = []; //reset
+		for (var i = 0; i < memberNames.length; ++i)
+			ConfigurationAPI._iterateMemberNames[i] = memberNames[i].getAttribute("value");
+		Debug.log("ConfigurationAPI._iterateMemberNames =",ConfigurationAPI._iterateMemberNames);
+		if (ConfigurationAPI._iterateMemberNames.length == 0)
+			Debug.log("Empty iterate member list found!", Debug.HIGH_PRIORITY);
+	}); //end request handler
+
 //=====================================================================================
 //getActiveGroups ~~
 //	get currently active groups
@@ -175,14 +215,14 @@ ConfigurationAPI.extractActiveGroups = function(req)
 	try
 	{
 		var activeConfigGroups = [
-								  DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
-								  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
-								  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
-								  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
-								  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupName"),
-								  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey"),
-								  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
-								  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
+			DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
+			DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
+			DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
+			DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
+			DesktopContent.getXMLValue(req,"Iterate-ActiveGroupName"),
+			DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey"),
+			DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
+			DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
 		var i=0;
 		var retObj = {};		
 		retObj.Context = {};
@@ -208,7 +248,7 @@ ConfigurationAPI.extractActiveGroups = function(req)
 	ConfigurationAPI._activeGroups = retObj;
 	
 	return retObj;
-}
+} // end extractActiveGroups()
 
 
 //=====================================================================================
@@ -2436,15 +2476,43 @@ ConfigurationAPI.setGroupAliasInActiveBackbone = function(groupAlias,groupName,g
 	newBackboneNameAdd += "Backbone";
 	Debug.log("setGroupAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
 
-	DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
+	//if no active backbone, create it
+	if(ConfigurationAPI._activeGroups.Backbone.groupName == "")
+	{
+		var tableMap = "tableList=";
+		for (var i = 0; i < ConfigurationAPI._backboneMemberNames.length; ++i)				
+			tableMap += ConfigurationAPI._backboneMemberNames[i] + ",-1,";
+			
+		Debug.log("Identified missing backbone, attempting to create it.");
+		ConfigurationAPI.saveGroupAndActivate(("GroupAlias" + newBackboneNameAdd),
+			tableMap,
+			function(retParams)
+			{
+				Debug.log("Save and activate is done.");
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
+					"&groupAlias=" + groupAlias + 
+					"&groupName=" + groupName +
+					"&groupKey=" + groupKey, "", 
+					ConfigurationAPI.newWizBackboneMemberHandler,
+					[("GroupAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
+					0,true  //progressHandler, callHandlerOnErr
+				);				
+			},	//end of done handler for saveGroupAndActivate
+			true, //request return parameters
+			true  //lookForEquivalent
+		); //end saveGroupAndActivate call
+	}
+	else //backbone is already in place	
+		DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
 			"&groupAlias=" + groupAlias + 
 			"&groupName=" + groupName +
 			"&groupKey=" + groupKey, "", 
 			ConfigurationAPI.newWizBackboneMemberHandler,
 			[("GroupAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
-			0,true  //progressHandler, callHandlerOnErr
-	);					
-}
+			0,true  //progressHandler, callHandlerOnErr		
+		);
+} //end setGroupAliasInActiveBackbone()
 
 //=====================================================================================
 //newWizBackboneMemberHandler
@@ -2549,9 +2617,9 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,tableMap,
 				{
 			try
 			{
-				activateSystemConfigHandler(req);
+				activateTableGroupHandler(req);
 			}
-			catch(err) {} //ignore error, this is only used by ConfigurationGUI (or anyone implementing this extra handler)
+			catch(err) {} //ignore error, this is a place holder for users to define a handler for updating displays when the active groups changed (e.g used by ConfigurationGUI)
 
 			if(doneHandler)
 			{
@@ -6485,16 +6553,15 @@ ConfigurationAPI.createTableColumnHeaderHTML = function(colType,colDataType,colC
 	str += "<div style='font-size:12px' title='";		
 	str += colType;
 	str += " &#60;" + colDataType + "&#62;";
-	str += " [Default: " + colDefaultValue;
+	str += "\n[Default: " + colDefaultValue;
 
-
-	// added min and max in the same way as default values, making it only visible if it is a number type				
+	// if any, show min and max				
 	if (colDataType == ConfigurationAPI._NUMBER_TYPE)
 	{
 		if (colMinValue && colMinValue != "")
-			str += "<br>Minimum: " + colMinValue;
+			str += "\nMinimum: " + colMinValue;
 		if (colMaxValue && colMaxValue != "")
-			str += "<br>Maximum: " + colMaxValue;
+			str += "\nMaximum: " + colMaxValue;
 
 	}
 	str += "]";
