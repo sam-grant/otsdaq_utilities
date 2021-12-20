@@ -419,16 +419,16 @@
 			// 	handles chat input
 			function handleKeyInput(e) {	
 
-			    //Debug.log("Chat handleKeyInput  " + e.keyCode);
-				if(!e.shiftKey && !e.ctrlKey && !e.altKey && e.keyCode == 13) {sendChat(); return false;} //if enter, login				
-				else if(e.keyCode == 38) //up arrow brings back last chat
+			    //Debug.log("Chat handleKeyInput  " + e.key);
+				if(!e.shiftKey && !e.ctrlKey && !e.altKey && e.key == "Enter") {sendChat(); return false;} //if enter, login				
+				else if(e.key == "ArrowUp") //up arrow brings back last chat
 				{
 					//swap current with last chat
 					var tmp = _inputEl.value;
 				    _inputEl.value = _lastTypedChat;
 				    _lastTypedChat = tmp;
 				}
-				else if(e.keyCode == 9)
+				else if(e.key == "Tab")
 					return false; //to stop tab from propagating to window
 				
 				return true;

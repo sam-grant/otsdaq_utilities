@@ -1005,7 +1005,7 @@
 						"' onclick='handlefixedChoiceArbitraryCheckbox(" + c + ",true)' " +
 						(colChoicesArr[0] == "arbitraryBool=0"?"checked":"") + //note arbitrary check is inverted compared to fixedChoice field
 						">";
-				str += "Force table link to one or many table(s)<br>(Include 'NO_LINK' to allow disconnected links):";
+				str += "Force table link to one or many table(s)<br>(Include '" + ConfigurationAPI._DATATYPE_LINK_DEFAULT + "' to allow disconnected links):";
 				str += "</input>";
 
 				str += "<br>";
@@ -1021,7 +1021,7 @@
 				//always include default first in selection list
 				//shall be max and min included in these options??				
 				str += "<option>" +
-						"NO_LINK" +
+						ConfigurationAPI._DATATYPE_LINK_DEFAULT +
 						"</option>";		
 				for(var i=0;i<_tableName.length;++i)
 				{
@@ -1664,12 +1664,12 @@
 		//	enter and tab key adds to list without popup success message
 		function fixedChoiceKeyHandler(e,c) 
 		{
-			var TABKEY = 9;
-			var ENTERKEY = 13;
+			// var TABKEY = 9;
+			// var ENTERKEY = 13;
 			
 			//handle special keys for text area
-			if(e.keyCode == TABKEY || 
-					e.keyCode == ENTERKEY)
+			if(e.key == "Tab" || 
+					e.key == "Enter")
 			{
 				Debug.log("tab/enter for column " + c);
 				if(e.preventDefault) 
@@ -1685,9 +1685,9 @@
 		//	add tab character to textareal element value
 		function descriptionKeyHandler(e,tel) 
 		{
-			var TABKEY = 9;
+			// var TABKEY = 9;
 			//handle special keys for text area
-			if(e.keyCode == TABKEY)
+			if(e.key == "Tab")
 			{
 				Debug.log("tab.");
 				if(e.preventDefault) 
@@ -1706,22 +1706,24 @@
 		//keyHandler
 		function keyHandler(e) 
 		{
-			var TABKEY = 9;
-			var ENTERKEY = 13;
-			var UPKEY = 38;
-			var DNKEY = 40;
-			var ESCKEY = 27;
+			// var TABKEY = 9;
+			// var ENTERKEY = 13;
+			// var UPKEY = 38;
+			// var DNKEY = 40;
+			// var ESCKEY = 27;
 			//Debug.log("key " + e.keyCode);
+			//keyCode is deprecated, switching to key
 			
 			var shiftIsDown;
+			// var key;
 			if (window.event) 
 			{
-				key = window.event.keyCode;
+				// key = window.event.keyCode;
 				shiftIsDown = !!window.event.shiftKey; // typecast to boolean
 			} 
 			else
 			{
-				key = e.which;
+				// key = e.which;
 				shiftIsDown = !!e.shiftKey;	// typecast to boolean
 			}
 			//Debug.log("shift=" + shiftIsDown);
@@ -1729,8 +1731,8 @@
 			//tab key jumps to next cell with a CANCEL
 			//	(enter key does same except saves/OKs value)
 			//	shift is reverse jump
-			if(e.keyCode == TABKEY || e.keyCode == ENTERKEY || 
-					e.keyCode == UPKEY || e.keyCode == DNKEY) 				
+			if(e.key == "Tab" || e.key == "Enter" || 
+					e.key == "ArrowUp" || e.key == "ArrowDown") 				
 			{
 				//this.value += "    ";
 				if(e.preventDefault) 
@@ -1738,7 +1740,7 @@
 
 				editCellOK();
 
-				if(e.keyCode == ENTERKEY) //dont move to new cell
+				if(e.key == "Enter") //dont move to new cell
 					return false;
 							
 				//jump forward (tab/enter) or backward (tab/enter+shift)
@@ -1757,11 +1759,11 @@
 				var cols;
 				do
 				{					
-					if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
+					if(e.key == "Tab" || e.key == "Enteer")
 						newCol += (shiftIsDown?-1:1);
-					else if(e.keyCode == UPKEY)
+					else if(e.key == "ArrowUp")
 						--newRow;
-					else if(e.keyCode == DNKEY)
+					else if(e.key == "ArrowDown")
 						++newRow;
 					
 					//new position is chosen! now make it happen (in a clean way)	
@@ -1806,7 +1808,7 @@
 				
 				return false;
 			}
-			else if(e.keyCode == ESCKEY) 
+			else if(e.key == "Escape") 
 			{				
 				if(e.preventDefault) 
 					e.preventDefault();
@@ -1925,7 +1927,7 @@
 								
 								"Note that you can force users to link to fixed list of tables by checking the box in the field parameters. " +
 								"Users will then be forced to choose from the tables in list of choices.\n\n " +
-								"It is important to remember to include 'NO_LINK' as a choice if you want users to be able to leave your link disconnected."
+								"It is important to remember to include '" + ConfigurationAPI._DATATYPE_LINK_DEFAULT + "' as a choice if you want users to be able to leave your link disconnected."
 								);
 					else if(colType.indexOf("ChildLinkUID-") == 0)
 						DesktopContent.tooltip("ChildLinkUID Field Type",

@@ -326,6 +326,9 @@
             var _STATE_ANGLE_OFFSET = 0;
             
             var _TRANSITION_PARAMETERS = ["ConfigurationAlias"];
+
+			var _LOGBOOK_TRANSITIONS = []; //default to no log entries on state transitonis, but e.g. ["Start"]
+			var _last_logbook_entry = {}; //map to last logbook entry
             
             
             var _altStateDrawingMode = false;
@@ -391,7 +394,33 @@
 			//=====================================================================================
 			//init called once body has loaded
 			function init() 
-			{						
+			{		
+				DesktopContent.setWindowTooltip(
+					"Welcome to the State Machine web app!\n\n" +
+					"This web app allows users to control and monitor the <i>ots</i> State Machine. This tooltip will explain the basics for new users and, also, additional details for advanced users." +
+					"\n\n" +
+					"<b>The Basics:</b>\n<INDENT>" +
+					"The State Machine web app always show you the <b>current state</b> (in blue) and any states that are valid transitions from the current state. " +
+					"To <b>transition</b> to a another state, hover your mouse over the new state or the desired transition arrow and then click. " +
+					"\n\nIf you prefer to see the full State Machine topology at all times, you can toggle views by clicking <b>Toggle View</b> in the bottom-right. " +
+					"\n\nTransitioning to the <b>Configure</b> state requires selecting a parameter called the <b>ConfigurationAlias</b>. The ConfigurationAlias parameter can be accessed by clicking the <b>Parameter Setup</b> box in the bottom-left. " +
+					"The ConfigurationAlias is an alias for the Configuration you want to activate during the Configure transition (for example, an alias might be 'DefaultConfig' or 'EmulateHardwareConfig'). The alias must be setup in advance; the <b>Configuration GUI</b> can be used to create and modify configuration aliases. " +
+					"For more information on <i>ots</i> Configuration concepts, see the <a href='https://otsdaq.fnal.gov/tutorials/first_demo/topics/configuration_primer.html' target='_blank'>otsdaq Configuration Primer</a>. " +
+					"\n\n<b>Starting a Run</b> does not require an input parameter, but does have a read-only <b>Run Number</b> parameter. When not in a run, the <b>Next Run Number</b> is shown in the bottom-right; when in a run, the <b>Current Run Number</b> is shown in the bottom-right." +
+					"\n\n" +
+					"</INDENT><b>Advanced:</b>\n<INDENT>" +
+					"<li><u>Alarms:</u>\n<INDENT>If you would like a reminder alarm (for example, to start or stop a run), click <b>Setup Alarm</b> in the bottom-right. You can then enter the desired countdown duration in minutes (fractional minutes are allowed with a decimal point), and click <b>Start</b> to begin the countdown. " +
+					"The countdown will be visible in the bottom-right of the State Machine web app. You can click <b>Close</b> while the countdown is runnning, to hide the Setup Alarm dialog box. You can click Setup Alarm at any time to re-open the alarm controls to <b>Pause</b> or <b>Stop</b> the countdown timer. When the timer reaches 0:00:00, a loud repeating tone is generated. " +
+					"\n\nIf you get tired of manually controlling the State Machine, consider using the <b>Iterator</b>. The Iterator tool allows for arbitrary run planning with predefined durations and iterations. Checkout the <a href='https://otsdaq.fnal.gov/tutorials_v2/tutorialPages/iterator_.php' target='_blank'>tutorial</a> for more info!" +
+					"</INDENT>\n\n<li><u>The State Machine in the Configuration Tree:</u>\n<INDENT>" +
+					"By default, no State Machine record is needed in the Configuration Tree, but to fully utilize the <i>ots</i> State Machine, you will need to use the Configuration Tree. " +
+					"The root of the State Machine configuration tree is your Gateway Supervisor. Locate your Gateway Superivsor app in the XDAQApplicationTable, and make sure it has a link to the GatewaySupervisor table. Here there are 3 important features: " + 
+					"\n<INDENT>" + 
+						"1. <b>NumberOfStateMachineBroadcastThreads:</b>\n<INDENT>A value greater than one will use extra threads, in parallel, to notify components in your <i>otsdaq</i> system that follow the State Machine. For example, If you have many components, notifying them in parallel to 'Configure' can save a lot of time. " +
+						"</INDENT>\n2. <b>EnableStateChangesOverUDP:</b>\n<INDENT>Setting this field to true will open a UDP port that accepts state machine transition commands (The IP : Port address is specified by the fields <b>IPAddressForStateChangesOverUDP</b> : <b>PortForStateChangesOverUDP</b>). You can also enable an acknowledgement UDP reply by setting <b>EnableAckForStateChangesOverUDP</b> to true. This may be useful, for example, for synchronizing multiple seperated DAQ systems. " +
+						"</INDENT>\n3. <b>LinkToStateMachineTable:</b>\n<INDENT>Linking to the <b>StateMachineTable</b>
+					"</INDENT></INDENT>" +
+					"</INDENT>"	);				
 								
 				_currState = -1;
 				_prevState = -1;
@@ -415,6 +444,14 @@
 					Debug.log("_fsmWindowName=" + _fsmWindowName);
 				else
 					_fsmWindowName = "";	
+
+				var logbookTransitions = DesktopContent.getParameter(0,"logbook_transitions");
+				if(logbookTransitions && logbookTransitions != "")
+				{
+					Debug.log("_LOGBOOK_TRANSITIONS logbookTransitions=" + logbookTransitions);
+					_LOGBOOK_TRANSITIONS = logbookTransitions.split(',');					
+				}
+
 				
 				DesktopContent._loginNotifyHandler = function()
 			    {    	
@@ -1189,6 +1226,51 @@
                 	
                 	return;
                 }
+
+				//check if this transition requires user logbook input
+				var transitionActionName = _transitionActions[_currStateTransArr[_selectedTransition]];
+				for(var i=0;i<_LOGBOOK_TRANSITIONS.length;++i)
+					if(transitionActionName.toLowerCase() == _LOGBOOK_TRANSITIONS[i].trim().toLowerCase())
+					{
+						Debug.log("Found logbook entry required " + transitionActionName);
+						DesktopContent.popUpVerification(
+							/* prompt */
+							"Please enter a logbook entry for '" + transitionActionName + "':"
+							, 
+							/* continueFunc [optional] */
+							function(entry)
+							{
+								Debug.log("User entered logbook entry " + entry);
+
+								//save last entry
+								_last_logbook_entry[transitionActionName] = entry;
+							} //end continueFunc handlere
+							, 
+							/* val [optional] */ undefined,
+							/* bgColor [optional] */ "rgb(191 199 196)", 
+							/* textColor [optional] */ undefined, 
+							/* borderColor [optional] */ "rgb(62 82 75)", 
+							/* getUserInput [optional] */ true, 
+							/* dialogWidth [optional] */ 250,
+							/* cancelFunc [optional] */ 
+							function(entry)
+							{
+								Debug.log("User cancelled transition action");
+
+								//save last entry
+								_last_logbook_entry[transitionActionName] = entry;
+							} //end cancelFunc handler
+							,
+							/* yesButtonText [optional] */ transitionActionName,
+							/* noAutoComplete [optional] */ true, 
+							/* defaultUserInputValue [optional] */ (_last_logbook_entry[transitionActionName]?_last_logbook_entry[transitionActionName]:""),							
+							/* cancelButtonText [optional] */ undefined,							
+							/* wantMultilineInput [optional] */ true
+						);
+
+						return;
+					}
+
                     
                 _inAnimation = true; //indicates transition animation starting
                 
@@ -1196,10 +1278,10 @@
         		window.clearTimeout(_verifyStateTimeout);
         		
 				var transitionPostData = getTransitionParameterData(_transitionParameters[_currStateTransArr[_selectedTransition]]);
-                Debug.log("Physics handleMouseUp to state " + _transitionActions[_currStateTransArr[_selectedTransition]] +
+                Debug.log("Physics handleMouseUp to state " + transitionActionName +
                     "?" + transitionPostData);
                 DesktopContent.XMLHttpRequest("StateMachineXgiHandler?StateMachine=" + 
-						_transitionActions[_currStateTransArr[_selectedTransition]] + 
+						transitionActionName + 
 						"&fsmName=" + _fsmName + 
 						"&fsmWindowName=" + _fsmWindowName, 
 						transitionPostData, physicsLaunchHandler, //end request handler

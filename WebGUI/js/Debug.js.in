@@ -435,7 +435,7 @@ else	//IF DEBUG MODE IS OFF!
 
 // living and breathing examples:
 Debug.log("Debug mode is on at level: " + Debug.level);
-Debug.log("This is an example for posterity that is not printed due to debug priority.",Debug.level+1);
+Debug.log("This is an example for posterity that is not printed due to debug priority.", {"DEBUG_PRIORITY": Debug.level + 1 });
 
 
 

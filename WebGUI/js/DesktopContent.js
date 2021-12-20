@@ -93,10 +93,11 @@
 //
 //
 //	Additional Functionality:
-//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], 
+//		DesktopContent.popUpVerification(prompt, continueFunc [optional], replaceVal [optional], bgColor [optional], 
 //			textColor [optional], borderColor [optional], getUserInput [optional], 
 //			dialogWidth [optional], cancelFunc [optional], yesButtonText [optional],
-//			noAutoComplete [optional], defaultUserInputValue [optional], cancelButtonText [optional])
+//			noAutoComplete [optional], defaultUserInputValue [optional], 
+//			cancelButtonText [optional], wantMultilineInput [optional])
 //		DesktopContent.tooltip(uid,tip)
 //		DesktopContent.setWindowTooltip(tip)
 //		DesktopContent.getWindowWidth()
@@ -135,7 +136,11 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getXMLChildren(req, nodeName)
 //	DesktopContent.getXMLRequestErrors(req)
 //	DesktopContent.systemBlackout(doBlackout)
-//	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth, cancelFunc)
+//	DesktopContent.popUpVerification(prompt, continueFunc [optional], replaceVal [optional], bgColor [optional], 
+//			textColor [optional], borderColor [optional], getUserInput [optional], 
+//			dialogWidth [optional], cancelFunc [optional], yesButtonText [optional],
+//			noAutoComplete [optional], defaultUserInputValue [optional], 
+//			cancelButtonText [optional], wantMultilineInput [optional])
 //	DesktopContent.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	DesktopContent.tooltip(uid,tip)
 //  DesktopContent.setWindowTooltip(tip)
@@ -1811,14 +1816,15 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,neverShow,temp
 //=====================================================================================
 //popUpVerification ~~
 //	asks user if sure
-//	replace REPLACE in prompt with value passed as val (e.g. pass document.getElementById("myElementId").value)
-//	call func (if exists) when user selects "Yes" 
+//	replace REPLACE in prompt with value passed as replaceVal (e.g. pass document.getElementById("myElementId").value)
+//	calls continueFunc (if exists) when user selects "Yes" 
 //
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
-DesktopContent.popUpVerification = function(prompt, func, val, bgColor, 
+DesktopContent.popUpVerification = function(prompt, continueFunc, replaceVal, bgColor, 
 		textColor, borderColor, getUserInput, dialogWidth, cancelFunc, 
-		yesButtonText, noAutoComplete, defaultUserInputValue, cancelButtonText) {	
+		yesButtonText, noAutoComplete, defaultUserInputValue, 
+		cancelButtonText, wantMultilineInput) {	
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1830,9 +1836,9 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor,
 	if(DesktopContent._verifyPopUp) 
 		DesktopContent._verifyPopUp.parentNode.removeChild(DesktopContent._verifyPopUp);
 
-	//replace REPLACE with val
-	if(val != undefined)
-		prompt = prompt.replace(/REPLACE/g, val); 
+	//replace REPLACE with replaceVal
+	if(replaceVal != undefined)
+		prompt = prompt.replace(/REPLACE/g, replaceVal); 
 
 
 	//create popup and add to body
@@ -1889,32 +1895,41 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor,
 	
 	var userInputStr = "";
 	if(getUserInput)
+	{
 		userInputStr +=
-				"<input type='text' id='DesktopContent_popUpUserInput' " +
+				(wantMultilineInput?"<textarea style='width: 95%; margin-top:5px; height:110px;'":
+					"<input ") +
+				"type='text' id='DesktopContent_popUpUserInput' " +
 				"onclick='event.stopPropagation();'" +
 				(noAutoComplete?"autocomplete='off' ":"") + 
 				" value='" + 
-				(defaultUserInputValue!==undefined?defaultUserInputValue:"") + "' " +
-				">";
+				(wantMultilineInput?"":(defaultUserInputValue!==undefined?defaultUserInputValue:"")) + 
+				"' " +
+				">" +
+				(wantMultilineInput?(
+					(defaultUserInputValue!==undefined?defaultUserInputValue:"") + "</textarea>"
+					):"</input>")
+				;
+	}
 							
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
 			prompt + "<br>" + userInputStr + "</div>" +
-			"<input type='submit' value='" + 
+			"<input class='DesktopContent_popUpUserInputButton' type='submit' value='" + 
 			(yesButtonText?yesButtonText:"Yes") + 
 			"' " +
 			"onclick='event.stopPropagation();' " + 
-			"> " + //onmouseup added below so func can be a function object (and not a string)
+			"> " + //onmouseup added below so continueFunc can be a function object (and not a string)
 			"&nbsp;&nbsp;&nbsp;" + 
-			"<input type='submit' " +
+			"<input class='DesktopContent_popUpUserInputButton' type='submit' " +
 			"onclick='event.stopPropagation();' " +
 			"value='" + (cancelButtonText?cancelButtonText:"Cancel") + "'>";
 	el.innerHTML = str;
 
 	//onmouseup for "Yes" button
-	el.getElementsByTagName('input')[0 + (getUserInput?1:0)].onmouseup = 
-			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(func);};
+	el.getElementsByClassName('DesktopContent_popUpUserInputButton')[0].onmouseup = 
+			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(continueFunc);};
 	//onmouseup for "Cancel" button
-	el.getElementsByTagName('input')[1 + (getUserInput?1:0)].onmouseup = 
+	el.getElementsByClassName('DesktopContent_popUpUserInputButton')[1].onmouseup = 
 			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(cancelFunc);};
 
 	
@@ -1926,45 +1941,62 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor,
 
 	if(getUserInput) //place cursor
 	{
-		var tel = el.getElementsByTagName('input')[0];
+		var tel = document.getElementById('DesktopContent_popUpUserInput');
 		tel.focus();
 		tel.setSelectionRange(0,tel.value.length);	
 		
-		//accept enter to close
-		tel.onkeydown = 
-				function(event) 
-				{
-			if(event.keyCode == 13) // ENTER
-			{	
-				Debug.log("Accepting enter key");
-				event.preventDefault();
-				event.stopPropagation(); 
-				DesktopContent.clearPopUpVerification(func);
-			}
-			else if(event.keyCode == 27) // ESC
-			{	
-				Debug.log("Accepting escape key");
-				event.preventDefault();
-				event.stopPropagation(); 
-				DesktopContent.clearPopUpVerification(cancelFunc);				
-			}
-				}; //end keydown handler
+		//accept enter to close if not multiline input
+		if(!wantMultilineInput)
+		{
+			tel.onkeydown = 
+					function(event) 
+					{
+				if(event.key == "Enter") // ENTER
+				{	
+					Debug.log("Accepting enter key");
+					event.preventDefault();
+					event.stopPropagation(); 
+					DesktopContent.clearPopUpVerification(continueFunc);
+				}
+				else if(event.key == "Escape") // ESC
+				{	
+					Debug.log("Accepting escape key");
+					event.preventDefault();
+					event.stopPropagation(); 
+					DesktopContent.clearPopUpVerification(cancelFunc);				
+				}
+					}; //end keydown handler
+		}
+		else //allow newlinie behavior for multiline input
+		{
+			tel.onkeydown = 
+					function(event) 
+					{
+				if(event.key == "Enter") // ENTER
+				{	
+					Debug.log("Accepting enter key");
+					// event.preventDefault();
+					event.stopPropagation(); 
+				}
+					};
+		}
+		
 	}	
 	else //focus on button, since no text
-		el.getElementsByTagName('input')[0].focus(); 
+		el.getElementsByClassName('DesktopContent_popUpUserInputButton')[0].focus(); 
 	
 	//add key handler to body too for enter & esc
 	el.onkeydown = 
 			function(event) 
 			{
-		if(event.keyCode == 13) // ENTER
+		if(event.key == "Enter") // ENTER
 		{	
 			Debug.log("Accepting enter key");
 			event.preventDefault();
 			event.stopPropagation(); 
-			DesktopContent.clearPopUpVerification(func);
+			DesktopContent.clearPopUpVerification(continueFunc);
 		}
-		else if(event.keyCode == 27) // ESC
+		else if(event.key == "Escape") // ESC
 		{	
 			Debug.log("Accepting escape key");
 			event.preventDefault();
@@ -2636,11 +2668,12 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 				"!'",Debug.INFO_PRIORITY);
 		
 		//if available update active system configuration handler, to display changes
-		if(activateSystemConfigHandler)
+		try
 		{
-			activateSystemConfigHandler(req);
+			activateTableGroupHandler(req);
 		}
-		
+		catch(err) {} //ignore error, this is a place holder for users to define a handler for updating displays when the active groups changed (e.g used by ConfigurationGUI)
+
 //		if(!DesktopContent._blockSystemCheckMailbox &&
 //				DesktopContent._blockSystemCheckMailbox.innerHTML == "")
 //		{

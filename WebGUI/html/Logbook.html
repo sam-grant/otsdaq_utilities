@@ -718,13 +718,13 @@
 			//	if allowSpace is set, then spaces also allowed
 			function handleExperimentInputKeyDown(e, allowSpace) {	
 				//Debug.log("Logbook handleExperimentInputKeyDown " + e.keyCode);
-				if(e.keyCode == 9) return true;		//if tab focus on next box
+				if(e.key == "Tab") return true;		//if tab focus on next box
 				else if((!e.shiftKey && (e.keyCode >= 48 && e.keyCode <= 57)) || //accept numbers but not shifted numbers
 					(e.keyCode >= 96 && e.keyCode <= 105) ||	//accept keypad numbers
 					(e.keyCode >= 65 && e.keyCode <= 90) || //accept letters and shifted letters
-					e.keyCode == 46 || e.keyCode == 8 || //delete, backspace
-					e.keyCode == 35 || e.keyCode == 36 ||  //home and end
-					e.keyCode == 189 ||  //dashes and underscores
+					e.key == "Delete" || e.key == "Backspace" || //delete, backspace
+					e.key == "Home" || e.key == "End" ||  //home and end
+					e.key == '-' || e.key == '_' ||  //dashes and underscores
 					(e.keyCode == 32 && allowSpace) ||  //spaces in special case
 					(e.keyCode >= 37 && e.keyCode <= 40))  //arrows are accepted 
 					return true;

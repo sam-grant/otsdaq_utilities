@@ -47,6 +47,7 @@ if (typeof DesktopContent == 'undefined' &&
 
 
 //"public" function list: 
+//	ConfigurationAPI.init()
 //	ConfigurationAPI.getDateString(date)
 //	ConfigurationAPI.getActiveGroups(responseHandler)
 //	ConfigurationAPI.getAliasesAndGroups(responseHandler,optionForNoAliases,optionForNoGroups)
@@ -108,6 +109,8 @@ ConfigurationAPI._FIXED_CHOICE_DATA_TYPE 		= "FixedChoiceData";
 ConfigurationAPI._LINK_FIXED_CHOICE_DATA_TYPE 	= "ChildLinkFixedChoice";
 ConfigurationAPI._BITMAP_DATA_TYPE 				= "BitMap";
 
+ConfigurationAPI._DATATYPE_LINK_DEFAULT			= "NO_LINK";
+
 //"private" function list:
 //	ConfigurationAPI.handleGroupCommentToggle(groupName,setHideVal)
 //	ConfigurationAPI.handlePopUpHeightToggle(h,gh)
@@ -149,40 +152,44 @@ ConfigurationAPI._OK_CANCEL_DIALOG_STR += "<a class='popUpOkCancel' onclick='jav
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 ConfigurationAPI._OK_CANCEL_DIALOG_STR += "</div>";	
 
+//=====================================================================================
+//init ~~
+ConfigurationAPI.init = function()
+{
+	//get context, backbone, and iterate member list 
+	DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "",
+		function (req) {
+			var memberNames = req.responseXML.getElementsByTagName("ContextMember");
+			ConfigurationAPI._contextMemberNames = []; //reset
+			for (var i = 0; i < memberNames.length; ++i)
+				ConfigurationAPI._contextMemberNames[i] = memberNames[i].getAttribute("value");
+			Debug.log("ConfigurationAPI._contextMemberNames =",ConfigurationAPI._contextMemberNames);
+			if (ConfigurationAPI._contextMemberNames.length == 0)
+				Debug.log("Empty context member list found!", Debug.HIGH_PRIORITY);
+		}); //end request handler
 
-//get context, backbone, and iterate member list 
-DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "",
-	function (req) {
-		var memberNames = req.responseXML.getElementsByTagName("ContextMember");
-		ConfigurationAPI._contextMemberNames = []; //reset
-		for (var i = 0; i < memberNames.length; ++i)
-			ConfigurationAPI._contextMemberNames[i] = memberNames[i].getAttribute("value");
-		Debug.log("ConfigurationAPI._contextMemberNames =",ConfigurationAPI._contextMemberNames);
-		if (ConfigurationAPI._contextMemberNames.length == 0)
-			Debug.log("Empty context member list found!", Debug.HIGH_PRIORITY);
-	}); //end request handler
+	DesktopContent.XMLHttpRequest("Request?RequestType=getBackboneMemberNames", "",
+		function (req) {
+			var memberNames = req.responseXML.getElementsByTagName("BackboneMember");
+			ConfigurationAPI._backboneMemberNames = []; //reset
+			for (var i = 0; i < memberNames.length; ++i)
+				ConfigurationAPI._backboneMemberNames[i] = memberNames[i].getAttribute("value");
+			Debug.log("ConfigurationAPI._backboneMemberNames =",ConfigurationAPI._backboneMemberNames);
+			if (ConfigurationAPI._backboneMemberNames.length == 0)
+				Debug.log("Empty backbone member list found!", Debug.HIGH_PRIORITY);
+		}); //end request handler
 
-DesktopContent.XMLHttpRequest("Request?RequestType=getBackboneMemberNames", "",
-	function (req) {
-		var memberNames = req.responseXML.getElementsByTagName("BackboneMember");
-		ConfigurationAPI._backboneMemberNames = []; //reset
-		for (var i = 0; i < memberNames.length; ++i)
-			ConfigurationAPI._backboneMemberNames[i] = memberNames[i].getAttribute("value");
-		Debug.log("ConfigurationAPI._backboneMemberNames =",ConfigurationAPI._backboneMemberNames);
-		if (ConfigurationAPI._backboneMemberNames.length == 0)
-			Debug.log("Empty backbone member list found!", Debug.HIGH_PRIORITY);
-	}); //end request handler
-
-DesktopContent.XMLHttpRequest("Request?RequestType=getIterateMemberNames", "",
-	function (req) {
-		var memberNames = req.responseXML.getElementsByTagName("IterateMember");
-		ConfigurationAPI._iterateMemberNames = []; //reset
-		for (var i = 0; i < memberNames.length; ++i)
-			ConfigurationAPI._iterateMemberNames[i] = memberNames[i].getAttribute("value");
-		Debug.log("ConfigurationAPI._iterateMemberNames =",ConfigurationAPI._iterateMemberNames);
-		if (ConfigurationAPI._iterateMemberNames.length == 0)
-			Debug.log("Empty iterate member list found!", Debug.HIGH_PRIORITY);
-	}); //end request handler
+	DesktopContent.XMLHttpRequest("Request?RequestType=getIterateMemberNames", "",
+		function (req) {
+			var memberNames = req.responseXML.getElementsByTagName("IterateMember");
+			ConfigurationAPI._iterateMemberNames = []; //reset
+			for (var i = 0; i < memberNames.length; ++i)
+				ConfigurationAPI._iterateMemberNames[i] = memberNames[i].getAttribute("value");
+			Debug.log("ConfigurationAPI._iterateMemberNames =",ConfigurationAPI._iterateMemberNames);
+			if (ConfigurationAPI._iterateMemberNames.length == 0)
+				Debug.log("Empty iterate member list found!", Debug.HIGH_PRIORITY);
+		}); //end request handler
+} //end ConfigurationAPI.init()
 
 //=====================================================================================
 //getActiveGroups ~~
@@ -200,6 +207,12 @@ DesktopContent.XMLHttpRequest("Request?RequestType=getIterateMemberNames", "",
 //
 ConfigurationAPI.getActiveGroups = function(responseHandler)
 {	
+	if(ConfigurationAPI._contextMemberNames.length == 0)
+	{
+		Debug.log("Identified ConfigurationAPI was not initialized... calling init");
+		ConfigurationAPI.init();
+	}
+
 	//get active configuration group
 	DesktopContent.XMLHttpRequest("Request?RequestType=getActiveTableGroups",
 			"", function(req) 
@@ -5783,22 +5796,24 @@ ConfigurationAPI.handleEditableFieldBodyMouseMove = function(e)
 //	copied from ConfigurationGUI keyHandler but modified for only value cells
 ConfigurationAPI.handleEditableFieldKeyDown = function(e,keyEl)
 {
-	var TABKEY = 9;
-	var ENTERKEY = 13;
-	var UPKEY = 38;
-	var DNKEY = 40;
-	var ESCKEY = 27;
+	// var TABKEY = 9;
+	// var ENTERKEY = 13;
+	// var UPKEY = 38;
+	// var DNKEY = 40;
+	// var ESCKEY = 27;
 	//Debug.log("key " + e.keyCode);
+	//keyCode is deprecated, switching to key
 	
 	var shiftIsDown;
+	// var key;
 	if (window.event) 
 	{
-		key = window.event.keyCode;
+		// key = window.event.keyCode;
 		shiftIsDown = !!window.event.shiftKey; // typecast to boolean
 	} 
 	else
 	{
-		key = e.which;
+		// key = e.which;
 		shiftIsDown = !!e.shiftKey;	// typecast to boolean
 	}
 	//Debug.log("shift=" + shiftIsDown);
@@ -5813,7 +5828,7 @@ ConfigurationAPI.handleEditableFieldKeyDown = function(e,keyEl)
 		{
 			tel = tel[0];
 			//handle special keys for text area
-			if(e.keyCode == TABKEY)
+			if(e.key == "Tab")
 			{
 				Debug.log("tab.");
 				if(e.preventDefault) 
@@ -5832,8 +5847,8 @@ ConfigurationAPI.handleEditableFieldKeyDown = function(e,keyEl)
 	//tab key jumps to next cell with a CANCEL
 	//	(enter key does same except saves/OKs value)
 	//	shift is reverse jump
-	if(e.keyCode == TABKEY || e.keyCode == ENTERKEY || 
-			e.keyCode == UPKEY || e.keyCode == DNKEY) 				
+	if(e.key == "Tab" || e.key == "Enter" || 
+			e.key == "ArrowUp" || e.key == "ArrowDown") 				
 	{
 		//this.value += "    ";
 		if(e.preventDefault) 
@@ -5850,15 +5865,15 @@ ConfigurationAPI.handleEditableFieldKeyDown = function(e,keyEl)
 		//down/up	:= move to next field at depth
 		
 		
-		if(e.keyCode == ENTERKEY) //dont move to new cell
+		if(e.key == "Enter") //dont move to new cell
 			return false;
 
 		var depth = idString.split('-')[0];
 		var uid = idString.split('-')[1];
 				
-		if((!shiftIsDown && e.keyCode == TABKEY) || e.keyCode == DNKEY) //move to next field
+		if((!shiftIsDown && e.key == "Tab") || e.key == "ArrowDown") //move to next field
 			++uid;
-		else if((shiftIsDown && e.keyCode == TABKEY) || e.keyCode == UPKEY) //move to prev field
+		else if((shiftIsDown && e.key == "Tab") || e.key == "ArrowUp") //move to prev field
 			--uid;
 		if(uid < 0) return false; //no more fields, do nothing
 		
@@ -5868,15 +5883,15 @@ ConfigurationAPI.handleEditableFieldKeyDown = function(e,keyEl)
 		
 		return false;
 	}
-	else if(e.keyCode == ESCKEY) 
+	else if(e.key == "Escape") 
 	{				
 		if(e.preventDefault) 
 			e.preventDefault();
 		ConfigurationAPI.handleEditableFieldEditCancel();
 		return false;
 	}
-	else if((e.keyCode >= 48 && e.keyCode <= 57) || 
-			(e.keyCode >= 96 && e.keyCode <= 105))// number 0-9
+	else if(e.key == "0" || // numbers 0-9
+		((e.key|0) >= 1 && (e.key|0) <= 9))
 	{
 		//if child link cell or boolean cell			
 		var sel;
@@ -5888,11 +5903,7 @@ ConfigurationAPI.handleEditableFieldKeyDown = function(e,keyEl)
 				sel = sel[sel.length-1]; //assume the last select in the cell is the select
 			
 			//select based on number
-			var selNum;
-			if(e.keyCode >= 96)
-				selNum = e.keyCode - 96;
-			else
-				selNum = e.keyCode - 48;
+			var selNum = (e.key|0);
 			
 			sel.selectedIndex = selNum % (sel.options.length);
 			sel.focus();	
@@ -6567,37 +6578,41 @@ ConfigurationAPI.createTableColumnHeaderHTML = function(colType,colDataType,colC
 	str += "]";
 	str += "'><label style='font-weight:bold;color:black;font-size:12px;'>";
 	str += colType;
-	str += "</label><br>&#60;" + colDataType + "&#62;";
-	str += "<br>[Default: " + colDefaultValue;
-	
-	//if fixed choice, then show that Default= the first choice
-	if(colType == ConfigurationAPI._FIXED_CHOICE_DATA_TYPE) 
+	str += "</label><br>&#60;" + colDataType + "&#62;<br>";
+	if(colDataType != ConfigurationAPI._DATE_TYPE)
 	{
-		var colChoicesArr;
-
-		if(colChoices)
+		str += "[Default: " + colDefaultValue;
+		
+		//if fixed choice, then show that Default= the first choice
+		if(colType == ConfigurationAPI._FIXED_CHOICE_DATA_TYPE) 
 		{
-			if(Array.isArray(colChoices)) //if input is an array
-				colChoicesArr = colChoices;
-			else //else create the array from string
-				colChoicesArr = colChoices.split(',');
+			var colChoicesArr;
+
+			if(colChoices)
+			{
+				if(Array.isArray(colChoices)) //if input is an array
+					colChoicesArr = colChoices;
+				else //else create the array from string
+					colChoicesArr = colChoices.split(',');
+			}
+			else //no column choices, so create empty array
+				colChoicesArr = [];
+
+			//colChoices is an array (not a map).. 
+			if(colChoicesArr.length > 1)
+				str += " = " + decodeURIComponent(colChoicesArr[1]); //skip arbitrary bool entry [0]
 		}
-		else //no column choices, so create empty array
-			colChoicesArr = [];
 
-		//colChoices is an array (not a map).. 
-		if(colChoicesArr.length > 1)
-			str += " = " + decodeURIComponent(colChoicesArr[1]); //skip arbitrary bool entry [0]
+		if (colDataType == ConfigurationAPI._NUMBER_TYPE) 
+		{
+			if (colMinValue && colMinValue != "")
+				str += "<br>Minimum: " + colMinValue;
+			if (colMaxValue && colMaxValue != "")
+				str += "<br>Maximum: " + colMaxValue;
+		}
+		str += "]";
 	}
-
-	if (colDataType == ConfigurationAPI._NUMBER_TYPE) 
-	{
-		if (colMinValue && colMinValue != "")
-			str += "<br>Minimum: " + colMinValue;
-		if (colMaxValue && colMaxValue != "")
-			str += "<br>Maximum: " + colMaxValue;
-	}
-	str += "]";
+	else str += "&nbsp;"; //force matching vertical height
 	str += "</div>";
 	return str;		
 } //end createTableColumnHeaderHTML()

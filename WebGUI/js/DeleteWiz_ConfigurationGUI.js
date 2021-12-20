@@ -769,7 +769,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 						/////////////////////////////////
 						function localRecurseDeleteChildren(children, table, depth)
 						{
-							if(table == "NO_LINK") return; //skip disconnected links 
+							if(table == ConfigurationAPI._DATATYPE_LINK_DEFAULT) return; //skip disconnected links 
 
 							console.log(depth,table,children);
 

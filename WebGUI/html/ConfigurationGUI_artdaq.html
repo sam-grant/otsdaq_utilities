@@ -3076,7 +3076,7 @@
 						
 						//check if no link, and prompt user to make one
 						if(retObj.length != 2 ||
-								retObj[0].fieldValue == "NO_LINK" ||
+								retObj[0].fieldValue == ConfigurationAPI._DATATYPE_LINK_DEFAULT ||
 								retObj[1].fieldValue == "DEFAULT")
 						{
 							//remake field path with spaces so it displays better in
@@ -3791,14 +3791,14 @@
 					//		this.id);
 
 					//enter is OK, and escape is CANCEL
-					if(event.keyCode == 13) // ENTER
+					if(event.key == "Enter") // ENTER
 					{	
 						Debug.log("Accepting enter key");
 						event.preventDefault();
 						event.stopPropagation(); 
 						localOKButtonHandler();
 					}
-					else if(event.keyCode == 27) // ESC
+					else if(event.key == "Escape") // ESC
 					{	
 						Debug.log("Accepting escape key");
 						event.preventDefault();
