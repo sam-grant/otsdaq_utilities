@@ -107,8 +107,8 @@ LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub* stub)
 	// xgi::bind (this, &LogbookSupervisor::LogReport,             	"LogReport" );
 
 	xoap::bind(this,
-	           &LogbookSupervisor::MakeSystemLogbookEntry,
-	           "MakeSystemLogbookEntry",
+	           &LogbookSupervisor::MakeSystemLogEntry,
+	           "MakeSystemLogEntry",
 	           XDAQ_NS_URI);
 
 	init();
@@ -470,10 +470,10 @@ void LogbookSupervisor::nonXmlRequest(const std::string&               requestTy
 }
 
 //==============================================================================
-// xoap::MakeSystemLogbookEntry
+// xoap::MakeSystemLogEntry
 //	make a system logbook entry into active experiment's logbook from Supervisor only
 //	TODO: (how to enforce?)
-xoap::MessageReference LogbookSupervisor::MakeSystemLogbookEntry(
+xoap::MessageReference LogbookSupervisor::MakeSystemLogEntry(
     xoap::MessageReference msg)
 {
 	SOAPParameters parameters("EntryText");
@@ -552,7 +552,7 @@ XOAP_CLEANUP:
 	//	retParameters[0].setName("Status");
 	//	retParameters[0].setValue(retStr);
 
-	return SOAPUtilities::makeSOAPMessageReference("LogbookEntryStatusResponse",
+	return SOAPUtilities::makeSOAPMessageReference("SystemLogEntryStatusResponse",
 	                                               retParameters);
 }
 
@@ -639,7 +639,7 @@ void LogbookSupervisor::setActiveExperiment(std::string experiment)
 
 	if(activeExperiment_ != "" &&
 	   activeExperiment_ != experiment)  // old active experiment is on its way out
-		theRemoteWebUsers_.makeSystemLogbookEntry(
+		theRemoteWebUsers_.makeSystemLogEntry(
 		    "Experiment was made inactive.");  // make system logbook entry
 
 	bool entryNeeded = false;
@@ -651,7 +651,7 @@ void LogbookSupervisor::setActiveExperiment(std::string experiment)
 	__COUT__ << "Active Experiment set to " << activeExperiment_ << std::endl;
 
 	if(entryNeeded)
-		theRemoteWebUsers_.makeSystemLogbookEntry(
+		theRemoteWebUsers_.makeSystemLogEntry(
 		    "Experiment was made active.");  // make system logbook entry
 }
 

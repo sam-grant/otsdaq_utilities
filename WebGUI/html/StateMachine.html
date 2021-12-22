@@ -370,6 +370,7 @@
             	_transitionResultingState;
             	
 			var _fsmName, _fsmWindowName;
+			var _hideShutdownState;
 
 			var _suppressReloginPopups = false;
 			
@@ -418,8 +419,17 @@
 					"\n<INDENT>" + 
 						"1. <b>NumberOfStateMachineBroadcastThreads:</b>\n<INDENT>A value greater than one will use extra threads, in parallel, to notify components in your <i>otsdaq</i> system that follow the State Machine. For example, If you have many components, notifying them in parallel to 'Configure' can save a lot of time. " +
 						"</INDENT>\n2. <b>EnableStateChangesOverUDP:</b>\n<INDENT>Setting this field to true will open a UDP port that accepts state machine transition commands (The IP : Port address is specified by the fields <b>IPAddressForStateChangesOverUDP</b> : <b>PortForStateChangesOverUDP</b>). You can also enable an acknowledgement UDP reply by setting <b>EnableAckForStateChangesOverUDP</b> to true. This may be useful, for example, for synchronizing multiple seperated DAQ systems. " +
-						"</INDENT>\n3. <b>LinkToStateMachineTable:</b>\n<INDENT>Linking to the <b>StateMachineTable</b>" +							
-					"</INDENT></INDENT>" +
+						"</INDENT>\n3. <b>LinkToStateMachineTable:</b>\n<INDENT>Linking to the <b>StateMachineTable</b> allows you to setup the parameters for one or more State Machine instances. Each instance in the <b>StateMachineTable</b> should map to a State Machine web app defined in the <b>DesktopIconsTable</b>. " +
+						"The mapping is DesktopIconsTable/LinkToParameterTable/fsm_name to StatMachineTable UID. Why would you want more than one State Machine? For example, you might want one State Machine behavior and web app for 'Physics' and one for 'Calibrations.'" +							
+					"</INDENT>" +
+					"</INDENT>\n\n<li><u>Parameters for the State Machine Web App:</u>\n<INDENT>" +
+					"There are 3 parameters to optionally configure for each State Machine web app. The parameters are accessible through <b>DesktopIconsTable</b> by creating a child group link from the State Machine desktop icon through the <b>LinkToParameterTable</b>:" +
+					"\n<INDENT>" + 
+						"1. <b>fsm_name:</b>\n<INDENT>The fsm_name is the most important parameter. It is the name of the Finite Stat Machine web app which maps to the UID in the State Machine Table that specifies State Machine behavior." +
+						"</INDENT>\n2. <b>logbook_transitions:</b>\n<INDENT>logbook_transitions is the next most important web app parameter. It is a comma-separated list of the states to require user log input. For example, if you want to prompt users to enter some information each time they configure or start a run, then set this value to 'Configure, Start' and the a popup promppt will greet the users on those transitions." +
+						"</INDENT>\n3. <b>hex_color:</b>\n<INDENT>hex_color is the least important parameter... but the coolest! Use this parameter to set the background color of the State Machine web app. Any web color format should work (e.g. 'rgb(250,0,0)' for red, or 'white' for white). This might be useful, for example, to visually cue users that 'Physics' runs are run by one color State Machine, and 'Calibration' runs are another color." +
+						"</INDENT>\n4. <b>hide_shutdown_state:</b>\n<INDENT>When hide_shutdown_state is set to '1' the Shutdown state (single letter state 'X') will be hidden from the user of the State Machine web app. This might be useful to shield non-expert users from triggering a shutdown by accident." +
+					"</INDENT>" +					
 					"</INDENT>"	);				
 								
 				_currState = -1;
@@ -444,6 +454,12 @@
 					Debug.log("_fsmWindowName=" + _fsmWindowName);
 				else
 					_fsmWindowName = "";	
+				
+				_hideShutdownState = (DesktopContent.getParameter(0,"hide_shutdown_state")|0);
+				if(_hideShutdownState)
+					Debug.logv({_hideShutdownState});
+				else //default to showing shutdown state
+ 					_hideShutdownState = false;	
 
 				var logbookTransitions = DesktopContent.getParameter(0,"logbook_transitions");
 				if(logbookTransitions && logbookTransitions != "")
@@ -710,6 +726,8 @@
                 //get all states and state names
                 for(var i=0;i<states.length;++i)
                 {
+					if(_hideShutdownState && states[i].getAttribute("value") == 'X') continue; //if hiding 'Shutdown' state, then hide from user
+
                 	_states[i] = states[i].getAttribute("value");
                 	_stateNames[i] = states[i].getElementsByTagName("state_name")[0].getAttribute("value");
                 }
@@ -718,6 +736,7 @@
                 //get all transitions, names, and actions
                 for(var i=0;i<states.length;++i)
                 {
+
                 	var transArr = states[i].getElementsByTagName("state_transition");
                 	var transNamesArr = states[i].getElementsByTagName("state_transition_name");
                 	var transParametersArr = states[i].getElementsByTagName("state_transition_parameter");
@@ -729,7 +748,8 @@
 						var startTrans = transArr[t].getAttribute("value");
 						//Debug.log("startTrans",startTrans);
 						for(var j=0;j<_states.length;++j) //determine the transition state index for each transition 
-							if(_states[j] == 'F') continue;
+							if(_states[j] == 'F') continue; //skip transitions to Failed (the user should not initiate Failure)
+							// else if(_hideShutdownState && _states[j] == 'X') continue; //if hiding 'Shutdown' state then hide from user
 							else
 							if(_states[j] == startTrans)	//transArr[t].getAttribute("value"))
 							{ 
@@ -1227,8 +1247,11 @@
                 	return;
                 }
 
+
+
 				//check if this transition requires user logbook input
-				var transitionActionName = _transitionActions[_currStateTransArr[_selectedTransition]];
+				var localSelectedTransition = _selectedTransition; //mouse may move around while getting user log entry, so capture locally
+				var transitionActionName = _transitionActions[_currStateTransArr[localSelectedTransition]];
 				for(var i=0;i<_LOGBOOK_TRANSITIONS.length;++i)
 					if(transitionActionName.toLowerCase() == _LOGBOOK_TRANSITIONS[i].trim().toLowerCase())
 					{
@@ -1244,6 +1267,7 @@
 
 								//save last entry
 								_last_logbook_entry[transitionActionName] = entry;
+								localCompleteTransition(entry);
 							} //end continueFunc handlere
 							, 
 							/* val [optional] */ undefined,
@@ -1271,22 +1295,38 @@
 						return;
 					}
 
-                    
-                _inAnimation = true; //indicates transition animation starting
-                
-                //stop verifying state during transition
-        		window.clearTimeout(_verifyStateTimeout);
-        		
-				var transitionPostData = getTransitionParameterData(_transitionParameters[_currStateTransArr[_selectedTransition]]);
-                Debug.log("Physics handleMouseUp to state " + transitionActionName +
-                    "?" + transitionPostData);
-                DesktopContent.XMLHttpRequest("StateMachineXgiHandler?StateMachine=" + 
-						transitionActionName + 
-						"&fsmName=" + _fsmName + 
-						"&fsmWindowName=" + _fsmWindowName, 
-						transitionPostData, physicsLaunchHandler, //end request handler
-						0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
-						true /*doNoShowLoadingOverlay*/);
+				localCompleteTransition();
+
+				//================
+				function localCompleteTransition(logEntry)
+				{                    
+					_inAnimation = true; //indicates transition animation starting
+					
+					//stop verifying state during transition
+					window.clearTimeout(_verifyStateTimeout);
+					
+					var transitionPostData = getTransitionParameterData(_transitionParameters[_currStateTransArr[localSelectedTransition]]);
+					if(logEntry && transitionPostData.length)
+						transitionPostData += "&";
+					if(logEntry)
+						transitionPostData += "logEntry=" + encodeURIComponent(logEntry);
+
+					Debug.log("Physics handleMouseUp to state " + transitionActionName +
+						"?" + transitionPostData);
+					DesktopContent.XMLHttpRequest("StateMachineXgiHandler?StateMachine=" + 
+							transitionActionName + 
+							"&fsmName=" + _fsmName + 
+							"&fsmWindowName=" + _fsmWindowName, 
+							transitionPostData, 
+							function(req)
+							{
+								_selectedTransition = localSelectedTransition; //return selection to overwrite any user mouse moves
+								physicsLaunchHandler(req, true /* transitionAttempted */);
+							}, //end request handler
+							0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+							true /*doNoShowLoadingOverlay*/);
+				} //end localCompleteTransition()
+
             } //end handleMouseUp()
                     
             //=====================================================================================

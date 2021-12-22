@@ -44,19 +44,22 @@ cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx ECLTest.cc
 	LIBRARIES
 	ECLWriterCore
 	artdaq_core::artdaq-core_Utilities
+	artdaq::DAQdata
 	${XDAQ_BASIC_LIB_LIST}
-	#XmlUtilities
-	otsdaq::Macros
+	otsdaq::ConfigurationInterface
+	otsdaq::TableCore
 	otsdaq::CoreSupervisors
-		 otsdaq::SupervisorInfo
-		 otsdaq::WebUsersUtilities
-		 #CgiDataUtilities
-		 otsdaq::SOAPUtilities
-		 otsdaq::FiniteStateMachine
-		 otsdaq::ConfigurationInterface
-		 otsdaq::TableCore
-		 otsdaq::TablePlugins_XDAQContextTable_table
-		 MF_MessageLogger
+	otsdaq::CgiDataUtilities
+	otsdaq::SOAPUtilities
+	otsdaq::FiniteStateMachine
+	otsdaq::XmlUtilities
+	MF_MessageLogger
+	otsdaq::CodeEditor
+	otsdaq::WebUsersUtilities
+	otsdaq::SupervisorInfo
+	otsdaq::FECore
+	otsdaq::Macros
+	${Boost_SYSTEM_LIBRARY}
     crypto
     ${CURL_LIBRARIES}
 	)

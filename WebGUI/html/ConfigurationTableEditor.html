@@ -1391,11 +1391,11 @@
 			{
 				event.stopPropagation();
 
-				Debug.log(_mouseIsSelecting);
+				Debug.logv({_mouseIsSelecting});
 				if(_mouseIsSelecting) //block select if mouse is selecting text currently 
 				{
 					_mouseIsSelecting = false;
-					Debug.log(_mouseIsSelecting);
+					Debug.logv({_mouseIsSelecting});
 					return; 							
 				}
 			}
@@ -1469,9 +1469,14 @@
 			_editingCellElOldValue = el.innerHTML;
 			
 			var startingLinkId = "0";
-			if(colType.indexOf('-') != -1)
-				startingLinkId = colType.substr(colType.indexOf('-')+1);
-			Debug.log("startingLinkId=" + startingLinkId);
+			var colTypeIndexOfDash = colType.indexOf('-');
+			if(colTypeIndexOfDash != -1)
+			{
+				startingLinkId = colType.substr(colTypeIndexOfDash+1);
+				colType = colType.substr(0,colTypeIndexOfDash);
+				Debug.logv({colType});
+				Debug.logv({startingLinkId});
+			}
 			
 			var str = "";			
 			var typeOptionIndex = -1;

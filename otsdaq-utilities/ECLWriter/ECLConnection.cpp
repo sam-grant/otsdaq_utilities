@@ -38,7 +38,7 @@ bool ECLConnection::Get(std::string s, std::string& response)
 	response = "NULL";
 
 	char        errorBuffer[CURL_ERROR_SIZE];
-	std::string buffer;
+	std::string responseBuffer;
 	CURL*       curl_handle;
 
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -59,7 +59,7 @@ bool ECLConnection::Get(std::string s, std::string& response)
 	    curl_handle, CURLOPT_WRITEFUNCTION, ECLConnection::WriteMemoryCallback);
 
 	/* we pass our 'chunk' struct to the callback function */
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &buffer);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &responseBuffer);
 
 	/* some servers don't like requests that are made without a user-agent
    field, so we provide one */
@@ -72,10 +72,10 @@ bool ECLConnection::Get(std::string s, std::string& response)
 	curl_easy_cleanup(curl_handle);
 
 	if(result == CURLE_OK)
-		response = buffer;
+		response = responseBuffer;
 	else
 	{
-		std::cerr << "Error: [" << result << "] - " << errorBuffer << std::endl;
+		__COUT_ERR__ << "Error: [" << result << "] - " << errorBuffer << std::endl;
 		return false;
 	}
 
@@ -138,7 +138,9 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	}
 	boost::trim(eclString);
 	myData += eclString;
-	__COUT__ << "ECL Hash string is: " << myData << std::endl;
+
+	// myData is now the ECL Hash string -- DO NOT PRINT contains pw
+
 	unsigned char resultMD5[MD5_DIGEST_LENGTH];
 	MD5((unsigned char*)myData.c_str(), myData.size(), resultMD5);
 
@@ -180,6 +182,12 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	curl_easy_setopt(curl_handle, CURLOPT_URL, fullURL.c_str());
 	//      curl_easy_setopt(curl_handle, CURLOPT_VERBOSE,1);
 
+	// send all data to this function
+	std::string responseBuffer;
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, ECLConnection::WriteMemoryCallback);
+	// we pass our 'memoryspace' struct to the callback function
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&responseBuffer);
+
 	// post it!
 
 	__COUT__ << "ECL Posting message" << std::endl;
@@ -187,10 +195,15 @@ bool ECLConnection::Post(ECLEntry_t& e)
 
 	if(result != CURLE_OK)
 	{
-		std::cerr << "Error: [" << result << "] - " << errorBuffer << std::endl;
+		__COUT_ERR__ << "Error: [" << result << "] - " << errorBuffer << std::endl;
 		return false;
 	}
-
+	else if(responseBuffer.find("Error") != std::string::npos)
+	{
+		__COUT__ << "Error found in request: " << responseBuffer << __E__;
+		return false;
+	}
+	__COUTV__(responseBuffer);
 	__COUT__ << "ECL Cleanup" << std::endl;
 	// cleanup curl stuff
 	curl_easy_cleanup(curl_handle);

@@ -28,235 +28,98 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(ECLSupervisor)
 
 //==============================================================================
-ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub* s)
-    : CoreSupervisorBase(s)
-    , theConfigurationManager_(
-          new ConfigurationManager)  //(Singleton<ConfigurationManager>::getInstance())
-                                     ////I always load the full config but if I want to
-                                     // load a partial configuration (new
-                                     // ConfigurationManager)
-    , supervisorContextUID_(
-          theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
-              ->getContextUID(getApplicationContext()->getContextDescriptor()->getURL()))
-    , supervisorApplicationUID_(
-          theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
-              ->getApplicationUID(
-                  getApplicationContext()->getContextDescriptor()->getURL(),
-                  getApplicationDescriptor()->getLocalId()))
-    , supervisorConfigurationPath_("/" + supervisorContextUID_ +
-                                   "/LinkToApplicationTable/" +
-                                   supervisorApplicationUID_ + "/LinkToSupervisorTable")
+ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub* stub)
+    : CoreSupervisorBase(stub)
 {
-	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__SUP_COUT__ << "Constructor." << __E__;
 
-	__COUT__ << __PRETTY_FUNCTION__ << "done data manager" << std::endl;
+	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
+	
+	xoap::bind(this,
+	           &ECLSupervisor::MakeSystemLogEntry,
+	           "MakeSystemLogEntry",
+	           XDAQ_NS_URI);
 
 	init();
-}
 
-//==============================================================================
-ECLSupervisor::~ECLSupervisor(void) { destroy(); }
+	__SUP_COUT__ << "Constructed." << __E__;
+} //end constructor
+
 //==============================================================================
 void ECLSupervisor::init(void)
 {
 	// called by constructor
 	// allSupervisorInfo_.init(getApplicationContext());
-}
 
+	// do not put username/pw in saved/committed text files
+	ECLUser_        = __ENV__("ECL_USER_NAME"); 
+	ECLHost_        = __ENV__("ECL_URL"); // e.g. https://dbweb6.fnal.gov:8443/ECL/test_beam
+	ECLPwd_         = __ENV__("ECL_PASSWORD"); 
+	ECLCategory_	   = __ENV__("ECL_CATEGORY");
+	ExperimentName_ = __ENV__("OTS_OWNER") + std::string(" ots");
+
+} //end init()
+
+//==============================================================================
+ECLSupervisor::~ECLSupervisor(void) { destroy(); }
 //==============================================================================
 void ECLSupervisor::destroy(void)
 {
-	// called by destructor
-	delete theConfigurationManager_;
-}
+	// // called by destructor
+	// delete theConfigurationManager_;
+
+	__SUP_COUT__ << "Destructed." << __E__;
+} //end destroy()
 
 //==============================================================================
-void ECLSupervisor::defaultPage(xgi::Input* /*in*/, xgi::Output* out)
-
-{
-	//__COUT__ << this->getApplicationContext()->getURL() << __E__;
-
-	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
-	        "src='/WebPath/html/ECL.html?urn="
-	     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
-}
-
-//==============================================================================
-void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference /*e*/)
-
-{
-	// try
-	{
-		// theConfigurationTableGroupKey_ =
-		// theConfigurationManager_->makeTheTableGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("TableGroupKey").c_str()));
-		// theConfigurationManager_->activateTableGroupKey(theConfigurationTableGroupKey_,0);
-
-		std::pair<std::string /*group name*/, TableGroupKey> theGroup(
-		    SOAPUtilities::translate(theStateMachine_.getCurrentMessage())
-		        .getParameters()
-		        .getValue("ConfigurationTableGroupName"),
-		    TableGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage())
-		                      .getParameters()
-		                      .getValue("ConfigurationTableGroupKey")));
-
-		__COUT__ << "Configuration table group name: " << theGroup.first
-		         << " key: " << theGroup.second << std::endl;
-
-		theConfigurationManager_->loadTableGroup(theGroup.first, theGroup.second, true);
-
-		ConfigurationTree configLinkNode =
-		    theConfigurationManager_->getSupervisorTableNode(supervisorContextUID_,
-		                                                     supervisorApplicationUID_);
-
-		ECLUser        = configLinkNode.getNode("ECLUserName").getValue<std::string>();
-		ECLHost        = configLinkNode.getNode("ECLInstanceURL").getValue<std::string>();
-		ECLPwd         = configLinkNode.getNode("ECLPassword").getValue<std::string>();
-		ExperimentName = configLinkNode.getNode("ExperimentName").getValue<std::string>();
-	}
-	// catch(...)
-	//{
-	//	{__SS__;__THROW__(ss.str()+"Error configuring the visual supervisor most likely a
-	// plugin name is wrong or your configuration table is outdated and doesn't match the
-	// new plugin definition!");}
-	//}
-}
-
-//==============================================================================
-void ECLSupervisor::transitionStarting(toolbox::Event::Reference /*e*/)
-
-{
-	try
-	{
-		__COUT_INFO__ << "ECLSupervisor sending Start Run log message to ECL"
-		              << std::endl;
-		run = SOAPUtilities::translate(theStateMachine_.getCurrentMessage())
-		          .getParameters()
-		          .getValue("RunNumber");
-		run_start   = std::chrono::steady_clock::now();
-		duration_ms = 0;
-		Write(WriteState::kStart);
-	}
-	catch(...)
-	{
-		__COUT_INFO__ << "ERROR! Couldn't Start the ECLSupervisor" << std::endl;
-	}
-}
-
-//==============================================================================
-void ECLSupervisor::transitionStopping(toolbox::Event::Reference /*e*/)
-
-{
-	try
-	{
-		__COUT_INFO__ << "ECLSupervisor sending Stop Run log message to ECL" << std::endl;
-		Write(WriteState::kStop);
-	}
-	catch(...)
-	{
-		__COUT_INFO__ << "ERROR! Couldn't Stop the ECLSupervisor" << std::endl;
-	}
-}
-
-//==============================================================================
-void ECLSupervisor::transitionPausing(toolbox::Event::Reference /*e*/)
-
-{
-	try
-	{
-		__COUT_INFO__ << "ECLSupervisor sending Pause Run log message to ECL"
-		              << std::endl;
-		Write(WriteState::kPause);
-		duration_ms += std::chrono::duration_cast<std::chrono::milliseconds>(
-		                   std::chrono::steady_clock::now() - run_start)
-		                   .count();
-	}
-	catch(...)
-	{
-		__COUT_INFO__ << "ERROR! Couldn't Pause the ECLSupervisor" << std::endl;
-	}
-}
-
-//==============================================================================
-void ECLSupervisor::transitionResuming(toolbox::Event::Reference /*e*/)
-
-{
-	try
-	{
-		__COUT_INFO__ << "ECLSupervisor sending Resume Run log message to ECL"
-		              << std::endl;
-		run_start = std::chrono::steady_clock::now();
-		Write(WriteState::kResume);
-	}
-	catch(...)
-	{
-		__COUT_INFO__ << "ERROR! Couldn't Resume the ECLSupervisor" << std::endl;
-	}
-}
-
-void ECLSupervisor::enteringError(toolbox::Event::Reference /*e*/)
-{
-	try
-	{
-		__COUT_INFO__ << "ECLSupervisor sending Error log message to ECL" << std::endl;
-		Write(WriteState::kError);
-	}
-	catch(...)
-	{
-		__COUT_INFO__ << "ERROR! Couldn't Error the ECLSupervisor" << std::endl;
-	}
-}
-
-//==============================================================================
-// xoap::MakeSystemLogbookEntry
+// xoap::MakeSystemLogEntry
 //	make a system logbook entry into active experiment's logbook from Supervisor only
 //	TODO: (how to enforce?)
-xoap::MessageReference ECLSupervisor::MakeSystemLogbookEntry(xoap::MessageReference msg)
-
+xoap::MessageReference ECLSupervisor::MakeSystemLogEntry(xoap::MessageReference msg)
 {
 	SOAPParameters parameters("EntryText");
 	//	SOAPParametersV parameters(1);
 	//	parameters[0].setName("EntryText");
 	SOAPUtilities::receive(msg, parameters);
-	std::string EntryText = parameters.getValue("EntryText");
+	std::string EntryText = StringMacros::decodeURIComponent(parameters.getValue("EntryText"));
 
 	__COUT__ << "Received External Supervisor System Entry " << EntryText << std::endl;
 
 	std::string retStr = "Success";
 
 	ECLEntry_t eclEntry;
-	eclEntry.author(ECLUser);
-	eclEntry.category("Facility/DAQ");
+	eclEntry.author(StringMacros::escapeString(ECLUser_));
+	eclEntry.category(StringMacros::escapeString(ECLCategory_));
+
 	Form_t                 form;
 	Field_t                field;
 	Form_t::field_sequence fields;
 	std::string            users =
 	    theRemoteWebUsers_.getActiveUserList();
 
-	form.name("OTSDAQ System Logbook Entry");
+	form.name("default"); //these form names must be created in advance? ... default seems to have one field and be generic: 'text' field
 
-	field = Field_t(EscapeECLString(ExperimentName), "Experiment");
-	fields.push_back(field);
+	{
+		std::stringstream ss;
+		ss << "System Generated Log Entry from '" 	<< ExperimentName_ << "'" << __E__;
+		ss << "Active ots users: " 	<< users << __E__;
+		ss << "Message: " 		<< __E__ << EntryText << __E__ << __E__;
+		field = Field_t(StringMacros::escapeString(ss.str(), true /* keep white space */), "text");
+		fields.push_back(field);
+	}
+	
+	// field = Field_t(EscapeECLString(ExperimentName_), "Experiment");
+	// fields.push_back(field);
 
-	field = Field_t(EscapeECLString(run), "RunNumber");
-	fields.push_back(field);
+	// field = Field_t(EscapeECLString(users), "ActiveUsers");
+	// fields.push_back(field);
 
-	field = Field_t(EscapeECLString(users), "ActiveUsers");
-	fields.push_back(field);
+	// field = Field_t(EscapeECLString(EntryText), "Entry");
+	// fields.push_back(field);
 
-	field = Field_t(EscapeECLString(EntryText), "Entry");
-	fields.push_back(field);
-
-	ECLConnection eclConn(ECLUser, ECLPwd, ECLHost);
+	form.field(fields);
+	eclEntry.form(form);
+	ECLConnection eclConn(ECLUser_, ECLPwd_, ECLHost_);
 	if(!eclConn.Post(eclEntry))
 	{
 		retStr = "Failure";
@@ -265,123 +128,7 @@ xoap::MessageReference ECLSupervisor::MakeSystemLogbookEntry(xoap::MessageRefere
 	// fill return parameters
 	SOAPParameters retParameters("Status", retStr);
 
-	return SOAPUtilities::makeSOAPMessageReference("LogbookEntryStatusResponse",
+	return SOAPUtilities::makeSOAPMessageReference("SystemLogEntryStatusResponse",
 	                                               retParameters);
-}
+} //end MakeSystemLogEntry()
 
-int ECLSupervisor::Write(WriteState state)
-{
-	ECLEntry_t eclEntry;
-	eclEntry.author(ECLUser);
-	eclEntry.category("Facility/DAQ");
-	Form_t                 form;
-	Field_t                field;
-	Form_t::field_sequence fields;
-	std::string            users =
-	    theRemoteWebUsers_.getActiveUserList();
-
-	switch(state)
-	{
-	case WriteState::kStart:
-		form.name("OTSDAQ Start Run");
-		break;
-	case WriteState::kStop:
-		form.name("OTSDAQ Stop Run");
-		break;
-	case WriteState::kResume:
-		form.name("OTSDAQ Resume Run");
-		break;
-	case WriteState::kPause:
-		form.name("OTSDAQ Pause Run");
-		break;
-	case WriteState::kError:
-		form.name("OTSDAQ Run Error");
-		break;
-	}
-
-	field = Field_t(EscapeECLString(ExperimentName), "Experiment");
-	fields.push_back(field);
-
-	field = Field_t(EscapeECLString(run), "RunNumber");
-	fields.push_back(field);
-
-	field = Field_t(EscapeECLString(users), "ActiveUsers");
-	fields.push_back(field);
-
-	if(state != WriteState::kStart && state != WriteState::kResume)
-	{
-		int dur = std::chrono::duration_cast<std::chrono::milliseconds>(
-		              std::chrono::steady_clock::now() - run_start)
-		              .count() +
-		          duration_ms;
-		int dur_s = dur / 1000;
-		dur       = dur % 1000;
-		int dur_m = dur_s / 60;
-		dur_s     = dur_s % 60;
-		int dur_h = dur_m / 60;
-		dur_m     = dur_m % 60;
-
-		std::ostringstream dur_ss;
-		dur_ss << std::setw(2) << std::setfill('0') << dur_h << ":" << std::setw(2)
-		       << std::setfill('0') << dur_m << ":" << std::setw(2) << std::setfill('0')
-		       << dur_s << "." << dur;
-
-		field = Field_t(EscapeECLString(dur_ss.str()), "Duration");
-		fields.push_back(field);
-	}
-
-	form.field(fields);
-
-	eclEntry.form(form);
-
-	ECLConnection eclConn(ECLUser, ECLPwd, ECLHost);
-	if(!eclConn.Post(eclEntry))
-	{
-		return -1;
-	}
-
-	return 0;
-}
-
-//************************************************************
-
-std::string ECLSupervisor::EscapeECLString(std::string input)
-{
-	std::string output = input;
-	size_t      pos    = output.find('&');
-	while(pos != std::string::npos)
-	{
-		output = output.replace(pos, 1, "&amp;");
-		pos    = output.find('&', pos + 2);
-	}
-
-	pos = output.find('"');
-	while(pos != std::string::npos)
-	{
-		output = output.replace(pos, 1, "&quot;");
-		pos    = output.find('"', pos + 1);
-	}
-
-	pos = output.find('\'');
-	while(pos != std::string::npos)
-	{
-		output = output.replace(pos, 1, "&apos;");
-		pos    = output.find('\'', pos + 1);
-	}
-
-	pos = output.find('<');
-	while(pos != std::string::npos)
-	{
-		output = output.replace(pos, 1, "&lt;");
-		pos    = output.find('<', pos + 1);
-	}
-
-	pos = output.find('>');
-	while(pos != std::string::npos)
-	{
-		output = output.replace(pos, 1, "&gt;");
-		pos    = output.find('>', pos + 1);
-	}
-
-	return output;
-}

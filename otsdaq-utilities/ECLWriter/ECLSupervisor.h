@@ -31,6 +31,7 @@
 #include <string>
 #include "otsdaq/CoreSupervisors/CoreSupervisorBase.h"
 
+// clang-format off
 namespace ots
 {
 class ConfigurationManager;
@@ -41,49 +42,25 @@ class ECLSupervisor : public CoreSupervisorBase
   public:
 	XDAQ_INSTANTIATOR();
 
-	ECLSupervisor(xdaq::ApplicationStub* s);
-	virtual ~ECLSupervisor(void);
-	void init(void);
-	void destroy(void);
+											ECLSupervisor			(xdaq::ApplicationStub* s);
+	virtual 								~ECLSupervisor			(void);
+	void 									init					(void);
+	void 									destroy					(void);
 
-	void defaultPage(xgi::Input* in, xgi::Output* out);
-
-	void transitionConfiguring(toolbox::Event::Reference e);
-	void transitionStarting(toolbox::Event::Reference e);
-	void transitionStopping(toolbox::Event::Reference e);
-	void transitionPausing(toolbox::Event::Reference e);
-	void transitionResuming(toolbox::Event::Reference e);
-	void enteringError(toolbox::Event::Reference e);
-
-	xoap::MessageReference MakeSystemLogbookEntry(xoap::MessageReference msg);
+	xoap::MessageReference 					MakeSystemLogEntry		(xoap::MessageReference msg);
 
   private:
-	ConfigurationManager* theConfigurationManager_;
-	const std::string     supervisorContextUID_;
-	const std::string     supervisorApplicationUID_;
-	const std::string     supervisorConfigurationPath_;
 
-	std::string                           ECLUser;
-	std::string                           ECLHost;
-	std::string                           ECLPwd;
-	std::string                           ExperimentName;
-	std::string                           run;
-	std::chrono::steady_clock::time_point run_start;
-	int duration_ms;  // For paused runs, don't count time spend in pause state
+	std::string                           	ECLUser_;
+	std::string                           	ECLHost_;
+	std::string                           	ECLPwd_;
+	std::string                           	ECLCategory_;
+	std::string                           	ExperimentName_;
 
-	std::string EscapeECLString(std::string input = "");
+	const std::string						EscapeECLString			(const std::string& input = "");
 
-	enum class WriteState
-	{
-		kStart,
-		kStop,
-		kPause,
-		kResume,
-		kError
-	};
-
-	int Write(WriteState state);
 };
 }
+// clang-format on
 
 #endif

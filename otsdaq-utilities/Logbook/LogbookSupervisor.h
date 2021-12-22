@@ -36,7 +36,7 @@ class LogbookSupervisor : public CoreSupervisorBase
 	                                                            // settings)
 
 	// External Supervisor XOAP handlers
-	xoap::MessageReference MakeSystemLogbookEntry(xoap::MessageReference msg);
+	xoap::MessageReference MakeSystemLogEntry(xoap::MessageReference msg);
 
   private:
 	bool        validateExperimentName(std::string& experiment);
