@@ -424,6 +424,13 @@ else {
 		var _handleLoginAttempt = function(req) 
 		{
 			Debug.log("Received login attempt back",Debug.LOW_PRIORITY);
+
+			var error = Desktop.getXMLValue(req,"Error");
+			if(error && error != "")
+			{
+				Debug.err(error);
+				return;
+			}
 			
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
 			_displayName = Desktop.getXMLValue(req,"DisplayName");

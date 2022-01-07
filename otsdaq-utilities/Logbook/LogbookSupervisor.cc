@@ -499,7 +499,7 @@ xoap::MessageReference LogbookSupervisor::MakeSystemLogEntry(
 
 	if(activeExperiment_ == "")
 	{
-		retStr = "Warning - Currently, no Active Experiment.";
+		retStr = "Warning - Currently, no Active Experiment. Turn off the Logbook XDAQ Application to suppress this message.";
 		__COUT__ << retStr << std::endl;
 		goto XOAP_CLEANUP;
 	}
