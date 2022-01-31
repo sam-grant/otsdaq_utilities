@@ -116,7 +116,7 @@ fi
 
 
 mkdir oldLocalProducts
-mv localProducts* oldLocalProducts/
+mv localProducts* oldLocalProducts/ >/dev/null 2>&1
 source setup_ots.sh >/dev/null 2>&1
 mrb newDev -f -v $VERSION -q $QUAL
 
