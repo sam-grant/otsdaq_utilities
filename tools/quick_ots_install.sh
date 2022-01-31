@@ -413,12 +413,13 @@ if [ $USER == "root" ]; then
 fi
 
 #install ots
-mv ots oldOts/ && mkdir oldOts && rm -rf oldOts/ots && mv ots oldOts/  &>/dev/null
-rm -rf ots
+OLD_OTS=$( date | awk -v "SCRIPTNAME=oldOts" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4".script"}' )
+mkdir $OLD_OTS && rm -rf $OLD_OTS/ots && mv ots $OLD_OTS/  &>/dev/null
+rm -rf ots  &>/dev/null
 rm quick_ots_install.zip &>/dev/null
 
 # wget https://otsdaq.fnal.gov/downloads/quick_ots_install.zip  \
-wget https://cdcvs.fnal.gov/redmine/attachments/download/65977/quick_ots_install.zip \
+wget https://cdcvs.fnal.gov/redmine/attachments/download/66419/quick_ots_install.zip \
     --no-check-certificate \
 	--load-cookies=${REDMINE_LOGIN_COOKIEF} \
 	--save-cookies=${REDMINE_LOGIN_COOKIEF} \
