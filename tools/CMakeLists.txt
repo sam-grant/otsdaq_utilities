@@ -1,4 +1,7 @@
-cet_script( 
+include(CetTest)
+cet_enable_asserts()
+
+cet_script(ALWAYS_COPY 
 	ProductsUpdate.py
 	UpdateOTS.sh
 	AddNewInterface.py
@@ -6,3 +9,6 @@ cet_script(
 	ots_get_and_fix_repo.sh
 	ots_add_qualifiers_to_repo_product_deps.sh
 )
+
+install_headers()
+install_source()
