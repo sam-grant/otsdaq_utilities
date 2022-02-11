@@ -5159,53 +5159,6 @@ try
 		__SUP_SS__ << "\n\nThere were warnings found when loading the table " << tableName
 		           << ":v" << version << ". Please see the details below:\n\n"
 		           << tableViewPtr->getMismatchColumnInfo();
-		// 		   "The source column size was found to be " << srcColNames.size()
-		//            << ", and the current number of columns for this table is "
-		//            << tableViewPtr->getNumberOfColumns() << ". This resulted in a count of "
-		//            << tableViewPtr->getSourceColumnMismatch()
-		//            << " source column mismatches, and a count of "
-		//            << tableViewPtr->getSourceColumnMissing() << " table entries missing in "
-		//            << tableViewPtr->getNumberOfRows() << " row(s) of data." << __E__;
-
-
-		// std::set<std::string> destColNames = tableViewPtr->getColumnStorageNames();
-
-		// ss << "\n\nSource column names in ALPHABETICAL order were as follows:\n";
-		// char        index       = 'a';
-		// std::string preIndexStr = "";
-		// for(auto& srcColName : srcColNames)
-		// {
-		// 	ss << "\n\t" << preIndexStr << index << ". " << srcColName;
-		// 	if(destColNames.find(srcColName) == destColNames.end())
-		// 		ss << " *";
-		// 	if(index == 'z')  // wrap-around
-		// 	{
-		// 		preIndexStr += 'a';  // keep adding index 'digits' for wrap-around
-		// 		index = 'a';
-		// 	}
-		// 	else
-		// 		++index;
-		// }
-		// ss << __E__;
-
-		// ss << "\n\nCurrent table column names in ALPHABETICAL order are as follows:\n";
-		// index       = 'a';
-		// preIndexStr = "";
-		// for(auto& destColName : destColNames)
-		// {
-		// 	ss << "\n\t" << preIndexStr << index << ". " << destColName;
-		// 	if(srcColNames.find(destColName) == srcColNames.end())
-		// 		ss << " *";
-
-		// 	if(index == 'z')  // wrap-around
-		// 	{
-		// 		preIndexStr += 'a';  // keep adding index 'digits' for wrap-around
-		// 		index = 'a';
-		// 	}
-		// 	else
-		// 		++index;
-		// }
-		// ss << __E__;
 
 		__SUP_COUT__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("TableWarnings", ss.str());
