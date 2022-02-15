@@ -581,7 +581,9 @@
 
 			Debug.log("CfgGUI init ");
 			Debug.logv({firstInit_});
-			
+			ConfigurationAPI.getActiveGroups(function (activeGroups) {
+				Debug.logv({activeGroups});
+			});
 
 //			ConfigurationAPI.getActiveGroups(function(activeGroups)
 //					{
