@@ -1917,6 +1917,7 @@
 		//	backLinkStr is defined to call functions one after the other
 		function specificGroupRequestHandler(req, param)
 		{
+			Debug.log("specificGroupRequestHandler()",param);
 
 			//remove all previous buttons
 			var el;
@@ -1995,10 +1996,12 @@
 				"Open in new Desktop Window",
 				"Open in new Browser Tab"];
 
-			if (param) {
+			if (param) 
+			{
 				Debug.log("param= " + param);
 				param = param.split("&");
-				for (var i = 1; i < param.length; i += 2) {
+				for (var i = 1; i < param.length; i += 2) 
+				{
 					var pi;
 					if ((pi = param[i].indexOf("backLinkStr=")) >= 0)
 						backLinkStr = param[i].substr(param[i].indexOf("=") + 1);
@@ -2021,7 +2024,8 @@
 
 			var tableExistingVersions;
 
-			if (backLinkStr != "") {
+			if (backLinkStr != "") 
+			{
 				//Note: be careful with the source of backLinkStr.. don't use both quote styles!
 				if (backLinkStr.indexOf("'") >= 0)
 					backLinkStr = backLinkStr.replace(/'/g, "\\\"");
