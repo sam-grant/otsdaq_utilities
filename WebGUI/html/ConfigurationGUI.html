@@ -581,37 +581,17 @@
 
 			Debug.log("CfgGUI init ");
 			Debug.logv({firstInit_});
-			ConfigurationAPI.getActiveGroups(function (activeGroups) {
-				Debug.logv({activeGroups});
-			});
 
-//			ConfigurationAPI.getActiveGroups(function(activeGroups)
-//					{
-//				Debug.logv({activeGroups});		
-//				
-//				var tableName = "ARTDAQParamTable";
-//				if(!activeGroups.Configuration || 
-//						!activeGroups.Configuration.groupName || 
-//						!activeGroups.Configuration.groupKey || 
-//						activeGroups.Configuration.groupName.length < 2 || 
-//						(activeGroups.Configuration.groupKey|0) < 0)
-//					{
-//						Debug.err("Could not find an active Configuration group to which to add table '" + 
-//								tableName + ".'");
-//						return;
-//					}
-//				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTableGroup" +
-//								"&groupName=" + activeGroups.Configuration.groupName +
-//								"&groupKey=" + activeGroups.Configuration.groupKey,
-//								"", function(req)
-//								{
-//					
-//					
-//								}); //end getSpecificTableGroup call
-//				
-//					}); //end ConfigurationAPI.getActiveGroups() call
-//			
-//			return;
+			
+
+
+			//FIXME -- COMMENT THIS OUT WHEN NOT DOING TESTS
+			// setupSpecificTableGroup("testContext",3,
+			// undefined /*backLinkStr*/, undefined /*anchorTarget*/, 
+			// "GatewaySupervisorTable,4,StateMachineTable,5" /* modifiedTables */ );
+			//FIXME -- END COMMENT THIS OUT WHEN NOT DOING TESTS
+			// return;
+
 			
 			var windowTooltip = "Welcome to the <b>Configuration GUI</b>. Here you can manipulate every configuration " +
 				"parameter in your entire <i>otsdaq</i> system. \n\n" +
@@ -670,23 +650,56 @@
 			//setupGroupCreator(); return;
 
 
+			//			ConfigurationAPI.getActiveGroups(function(activeGroups)
+			//					{
+			//				Debug.logv({activeGroups});		
+			//				
+			//				var tableName = "ARTDAQParamTable";
+			//				if(!activeGroups.Configuration || 
+			//						!activeGroups.Configuration.groupName || 
+			//						!activeGroups.Configuration.groupKey || 
+			//						activeGroups.Configuration.groupName.length < 2 || 
+			//						(activeGroups.Configuration.groupKey|0) < 0)
+			//					{
+			//						Debug.err("Could not find an active Configuration group to which to add table '" + 
+			//								tableName + ".'");
+			//						return;
+			//					}
+			//				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTableGroup" +
+			//								"&groupName=" + activeGroups.Configuration.groupName +
+			//								"&groupKey=" + activeGroups.Configuration.groupKey,
+			//								"", function(req)
+			//								{
+			//					
+			//					
+			//								}); //end getSpecificTableGroup call
+			//				
+			//					}); //end ConfigurationAPI.getActiveGroups() call
+			//			
+			//			return;
 			//============================
 
 
+			//Note: this call is needed to fill Context Table list 
+			ConfigurationAPI.getActiveGroups(function (activeGroups) {
+				Debug.logv({activeGroups});
 
+				//get command string if opening a new window
+				var cmdStr = DesktopContent.getParameter(1); //from  location.search
+				if (cmdStr && cmdStr != "") 
+				{
+					//do incoming commands!
+					Debug.log("cmdStr=" + cmdStr);
+					//replace %22 with "
+					cmdStr = cmdStr.replace(/%22/g, "\"");
 
-			//get command string if opening a new window
-			var cmdStr = DesktopContent.getParameter(1); //from  location.search
-			if (cmdStr && cmdStr != "") {
-				//do incoming commands!
-				Debug.log("cmdStr=" + cmdStr);
-				//replace %22 with "
-				cmdStr = cmdStr.replace(/%22/g, "\"");
+					evaluateJS(cmdStr);
+				}
+				else
+					setupSystemViewMode();
 
-				evaluateJS(cmdStr);
-			}
-			else
-				setupSystemViewMode();
+			}); //end ConfigurationAPI.getActiveGroups() call
+			
 			
 
 			//fill in CodeEditor appId
@@ -695,8 +708,8 @@
 					"", //end post data, 
 					function(req) 
 					{			
-				_codeEditorAppId = DesktopContent.getXMLValue(req,"id") | 0;
-				Debug.log("_codeEditorAppId " + _codeEditorAppId);
+						_codeEditorAppId = DesktopContent.getXMLValue(req,"id") | 0;
+						Debug.log("_codeEditorAppId " + _codeEditorAppId);
 					}, //end handler
 					0, 0, true,//reqParam, progressHandler, callHandlerOnErr, 
 					false,//doNotShowLoadingOverlay,
@@ -879,27 +892,6 @@
 			}// end localCountDown
 		} //end handleOtsRelaunchResponse()
 
-		//==============================================================================
-		//setupSpecificTableGroup ~		
-		function setupSpecificTableGroup(groupName, groupKey, backLinkStr, anchorTarget) {
-
-			Debug.log("setupSpecificTableGroup");
-
-			var el = document.getElementById("display");
-			el.innerHTML = "Loading...";
-			var param = "";
-			if (backLinkStr && backLinkStr != "")
-				param += "&backLinkStr=" + backLinkStr;
-			if (anchorTarget && anchorTarget != "")
-				param += "&anchorTarget=" + anchorTarget;
-
-			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTableGroup" +
-				"&groupName=" + groupName +
-				"&groupKey=" + groupKey,
-				"", specificGroupRequestHandler, param,
-				0, true  //progressHandler, callHandlerOnErr
-			);
-		} //end setupSpecificTableGroup()
 
 		//==============================================================================
 		//setupSpecificTable ~
@@ -1915,6 +1907,30 @@
 		} //end showTableTooltip
 		
 		//==============================================================================
+		//setupSpecificTableGroup ~		
+		function setupSpecificTableGroup(groupName, groupKey, backLinkStr, anchorTarget, modifiedTables) 
+		{
+			Debug.log("setupSpecificTableGroup",groupName, groupKey, backLinkStr, anchorTarget, modifiedTables);
+
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
+			var param = "";
+			if (backLinkStr && backLinkStr != "")
+				param += "&backLinkStr=" + backLinkStr;
+			if (anchorTarget && anchorTarget != "")
+				param += "&anchorTarget=" + anchorTarget;
+			if (modifiedTables && modifiedTables != "")
+				param += "&modifiedTables=" + modifiedTables;
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTableGroup" +
+				"&groupName=" + groupName +
+				"&groupKey=" + groupKey,
+				"", specificGroupRequestHandler, param,
+				0, true  //progressHandler, callHandlerOnErr
+			);
+		} //end setupSpecificTableGroup()
+
+		//==============================================================================
 		//specificGroupRequestHandler ~~
 		//	backLinkStr is defined to call functions one after the other
 		function specificGroupRequestHandler(req, param)
@@ -1992,6 +2008,8 @@
 
 			var backLinkStr = "";
 			var anchorTarget = "";
+			var modifiedTablesArr = [];
+			var modifiedTables = "";
 
 			var DEFAULT_groupNavContextMenuItems = [
 				"Go-to Table View",
@@ -2002,13 +2020,19 @@
 			{
 				Debug.log("param= " + param);
 				param = param.split("&");
-				for (var i = 1; i < param.length; i += 2) 
+				for (var i = 1; i < param.length; ++i) 
 				{
 					var pi;
 					if ((pi = param[i].indexOf("backLinkStr=")) >= 0)
 						backLinkStr = param[i].substr(param[i].indexOf("=") + 1);
 					if ((pi = param[i].indexOf("anchorTarget=")) >= 0)
 						anchorTarget = param[i].substr(param[i].indexOf("=") + 1);
+					if ((pi = param[i].indexOf("modifiedTables=")) >= 0)
+					{
+						modifiedTables = param[i].substr(param[i].indexOf("=") + 1);
+						modifiedTablesArr = modifiedTables.split(',');
+						Debug.logv({modifiedTablesArr});
+					}
 				}
 			}
 
@@ -2203,7 +2227,7 @@
 
 				backLinkStr = "setupSpecificTableGroup(\\\"" + groupName + "\\\",\\\"" +
 					groupKey + "\\\",undefined,\\\"anchorTag-" +
-					tableName + "\\\");";
+					tableName + "\\\",\\\"" + modifiedTables + "\\\");";
 				//make replace screen js
 				replaceScreenJS = "setupSpecificTable(\"" +
 					tableName + "\",\"" +
@@ -2218,12 +2242,15 @@
 
 				str += "</td><td style='background-color: rgb(218, 194, 194); width:10px;'>"; //open "curren version" link
 
-				str += "<div style='float:left;white-space:nowrap;'>";	//open name div
-				str += "<a id='" + tableName + "-currentVersionLink' " +
-					"href='javascript:" + replaceScreenJS + "'>"; //FIXME .. back to onclick, but L12808  changeMemberVersionForTableGroup()!!
+				str += "<div id='" + tableName + "-currentVersionLink' class='currentMemberVersionLink' " + 
+					"style='float:left;white-space:nowrap;'>";	//open name div
+				str += "<a  " +
+					// "href='javascript:" + replaceScreenJS + "'>"; //FIXME .. back to onclick, but L12808  changeMemberVersionForTableGroup()!!
+					"onclick='" + replaceScreenJS + "'>";
 				str += "(Member version: ";
 				str += "<label id='" + tableName + "-currentVersion'>";
-				str += ((version | 0) == ConfigurationAPI._SCRATCH_VERSION ? _SCRATCH_VIEW_NAME : version);
+				str += ((version | 0) == ConfigurationAPI._SCRATCH_VERSION ? 
+					_SCRATCH_VIEW_NAME : version);
 				str += "</label>";
 
 				str += ")";
@@ -2355,8 +2382,19 @@
 
 			el.innerHTML = str;
 
+
+			//if there modified tables, modify them
+			if(modifiedTablesArr.length && modifiedTablesArr.length % 2 == 0)
+			{
+				for(var i=0; i<modifiedTablesArr.length; i+=2)				
+					changeMemberVersionForTableGroup(groupName, groupKey, 
+						modifiedTablesArr[i] /*tableName*/,
+						modifiedTablesArr[i+1] /*newVersion*/); 
+			}
+
 			//if there is a target to jump to, do it
-			if (anchorTarget && anchorTarget != "") {
+			if (anchorTarget && anchorTarget != "")
+			{
 				Debug.log("anchorTarget = " + anchorTarget);
 				jump(anchorTarget);
 			}
@@ -2372,7 +2410,8 @@
 			var showSaveButtons = false;
 
 			var err = DesktopContent.getXMLValue(req, "Error");
-			if (err) {
+			if (err) 
+			{
 				Debug.log(err, Debug.HIGH_PRIORITY);
 
 				Debug.log("There were errors loading this version.\n\n(You may want to try loading this version again " +
@@ -2388,7 +2427,8 @@
 			}
 
 			var warns = DesktopContent.getXMLValue(req, "TableWarnings");
-			if (warns) {
+			if (warns) 
+			{
 				Debug.log("There were warnings found when loading this table " +
 					"(you can treat them as informational):\n\n" +
 					warns, Debug.WARN_PRIORITY);
@@ -2412,14 +2452,16 @@
 			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
 
 			var kocVersionHdr = req.responseXML.getElementsByTagName("TableVersions");
-			if (!kocVersionHdr.length) {	//should never happen (tag can be empty, but must be there)
+			if (!kocVersionHdr.length) 
+			{	//should never happen (tag can be empty, but must be there)
 				Debug.log("Error?! No tag for versions returned for tableName: " + tableName, Debug.HIGH_PRIORITY);
 				return;
 			}
 			var tableVersions = kocVersionHdr[0].getElementsByTagName("Version");
 
 			var xmlRows = req.responseXML.getElementsByTagName("CurrentVersionRows");
-			if (!xmlRows.length) {
+			if (!xmlRows.length) 
+			{
 				var el;
 				if (_displayTargetEl)
 					el = _displayTargetEl;
@@ -2498,7 +2540,8 @@
 					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 				Debug.log("Back-link = " + backLinkStr);
 
-				str += "<a href='#' onclick='evaluateJS(\"" + backLinkStr + "\"); return false;'>Back</a>";
+				str += "<a href='#' onclick='evaluateJS(\"" + backLinkStr + 
+					"\"); return false;'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 
 				var backLinkStrSplit = backLinkStr.split('"');
@@ -15469,23 +15512,117 @@
 
 			//change link
 			el = document.getElementById(tableName + "-currentVersionLink");
-			//			el.onclick = function()
-			//					{
-			//							
-			//					}
-			var str;
-			str = el.href;
-			var linkSplitArr = str.split(',');
-			str = ""; //build link href str back up with new version
-			for (var i = 0; i < linkSplitArr.length; ++i)
+			Debug.log("original el.innerHTML",el.innerHTML);
+
+			//extract current modifiedTables
+			var modifiedTables = el.innerHTML;
+			var modifiedTablesArr = [];
 			{
-				if (i) str += ",";
-				if (i == 1)
-					str += "\"" + newVersion + "\"";
-				else
-					str += linkSplitArr[i];
+				var needle = "anchorTag-" + tableName + "\\&quot;,\\&quot;";
+				var i = modifiedTables.indexOf(needle);
+				var j = modifiedTables.indexOf("\\&quot;);&quot;);",i + needle.length);
+
+				modifiedTables = modifiedTables.substr(i + needle.length,j - i - needle.length);
+				Debug.logv({modifiedTables});
+				modifiedTablesArr = modifiedTables.split(',');
+				if(modifiedTablesArr.length%2 == 1) //if odd, then destroy and fix
+				modifiedTablesArr = [];
+				Debug.logv({modifiedTablesArr});
+
+				var found = false;
+				for(var i=0; i<modifiedTablesArr.length; i+=2)
+					if(modifiedTablesArr[i] == tableName)
+					{
+						found = true;
+						modifiedTablesArr[i+1] = newVersion;
+					}
+				if(!found)
+				{
+					modifiedTablesArr.push(tableName);
+					modifiedTablesArr.push(newVersion);
+				}
+				Debug.logv({modifiedTablesArr});
+
+				//reconstruct modifiedTables
+				modifiedTables = "";
+				for(var i=0; i<modifiedTablesArr.length; i+=2)
+				{
+					if(i) modifiedTables += ",";
+					modifiedTables += modifiedTablesArr[i] + "," + modifiedTablesArr[i+1];
+				}
+				Debug.logv({modifiedTables});
+			} //end extract current modifiedTables
+
+			//modify all member table links
+			var els = document.getElementsByClassName("currentMemberVersionLink");
+			for (var e = 0; e < els.length; ++e)
+			{
+				var memberTableName = els[e].id.split('-')[0];
+				// Debug.logv({memberTableName});
+				
+				var memberTableVersion =  els[e].innerHTML;
+				var needle = "setupSpecificTable(&quot;" + 
+					memberTableName + "&quot;,&quot;";
+				var i = memberTableVersion.indexOf(needle);
+				var j = memberTableVersion.indexOf("&quot;,&quot;",i + needle.length);
+				memberTableVersion = memberTableVersion.substr(i + needle.length,j - i - needle.length);				
+				memberTableVersion |= 0;
+				// Debug.logv({memberTableVersion});
+
+				var backLinkStr = "setupSpecificTableGroup(\\\"" + groupName + "\\\",\\\"" +
+						groupKey + "\\\",undefined,\\\"anchorTag-" +
+						memberTableName + "\\\",\\\"" + modifiedTables + "\\\");";
+				var replaceScreenJS = "setupSpecificTable(\"" +
+				memberTableName + "\",\"" +
+						memberTableVersion + "\",\"" + backLinkStr + "\");";
+				var str = "";			
+				str += "<a  " +
+					"onclick='" + replaceScreenJS + "'>";
+				str += "(Member version: ";
+				str += "<label id='" + memberTableName + "-currentVersion'>";
+				str += ((memberTableVersion | 0) == ConfigurationAPI._SCRATCH_VERSION ?
+					_SCRATCH_VIEW_NAME : memberTableVersion);
+				str += "</label>";
+
+				str += ")";
+				str += "</a>";
+				els[e].innerHTML = str;
 			}
-			el.href = str;
+
+			//modify new table member version link
+
+			var backLinkStr = "setupSpecificTableGroup(\\\"" + groupName + "\\\",\\\"" +
+					groupKey + "\\\",undefined,\\\"anchorTag-" +
+					tableName + "\\\",\\\"" + modifiedTables + "\\\");";
+			var replaceScreenJS = "setupSpecificTable(\"" +
+					tableName + "\",\"" +
+					newVersion + "\",\"" + backLinkStr + "\");";
+			var str = "";			
+			str += "<a  " +
+				"onclick='" + replaceScreenJS + "'>";
+			str += "(Member version: ";
+			str += "<label id='" + tableName + "-currentVersion'>";
+			str += ((newVersion | 0) == ConfigurationAPI._SCRATCH_VERSION ? 
+				_SCRATCH_VIEW_NAME : newVersion);
+			str += "</label>";
+
+			str += ")";
+			str += "</a>";
+			
+
+			// str = el.href;
+			// var linkSplitArr = str.split(',');
+			// str = ""; //build link href str back up with new version
+			// for (var i = 0; i < linkSplitArr.length; ++i)
+			// {
+			// 	if (i) str += ",";
+			// 	if (i == 1)
+			// 		str += "\"" + newVersion + "\"";
+			// 	else
+			// 		str += linkSplitArr[i];
+			// }
+			// el.href = str;
+			el.innerHTML = str;
 
 			//update existing
 			el = document.getElementById(tableName + "-versions");
@@ -15552,7 +15689,7 @@
 						"//" + tableComment;
 				},
 				0, 0, true  //reqParam, progressHandler, callHandlerOnErr
-			);
+			); //end getSpecificTable request
 
 
 
