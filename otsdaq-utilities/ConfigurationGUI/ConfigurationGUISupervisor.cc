@@ -4501,6 +4501,8 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 			// change target table in two parts
 			unsigned int row     = cfgView->findRow(cfgView->getColUID(), uid);
 			bool         changed = false;
+			bool 	     needSecondaryChange = (type == "link-GroupID");
+
 			if(!cfgView->setURIEncodedValue(newTable, row, linkPair.first, author))
 			{
 				// no change
@@ -4508,8 +4510,12 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 				             << "' is the same as the current value." << __E__;
 			}
 			else
+			{
 				changed = true;
+				//do NOT need secondary change for UID
+			}
 
+			std::string originalValue = cfgView->getValueAsString(row,linkPair.second);			
 			if(!cfgView->setURIEncodedValue(newLinkId, row, linkPair.second, author))
 			{
 				// no change
@@ -4517,14 +4523,17 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 				             << "' is the same as the current value." << __E__;
 			}
 			else
-				changed = true;
-
-			// handle groupID links slightly differently
-			//	have to look at changing link table too!
-			// if group ID set all in member list to be members of group
-			if(type == "link-GroupID")
 			{
+				if(!changed)
+					needSecondaryChange = true; //if table was unchanged, then need secondary change for UID (groupID is already assumed needed)
+				changed = true;
+			}
+
+			if(needSecondaryChange) //do secondary changes to child table target
+			{						
 				bool secondaryChanged = false;
+				bool        defaultIsInGroup =
+						false;  // use to indicate if a recent new member was created
 
 				// first close out main target table
 				if(!changed)  // if no changes throw out new version
@@ -4574,6 +4583,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 				// check if the value is new
 				// if new edit value (in a temporary version only)
 
+				__SUP_COUTV__(newValue);
 				csvIndexStart = csvIndex + 1;
 				csvIndex      = newValue.find(',', csvIndexStart);
 				version       = TableVersion(newValue.substr(
@@ -4596,12 +4606,12 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 				catch(...)
 				{
 					__SUP_COUT__ << "Failed to find stored version, so attempting to "
-					                "load version: "
-					             << version << __E__;
+					                "load version: " <<
+									newTable << " v" << version << __E__;
 					cfgMgr->getVersionedTableByName(newTable, version);
 				}
 
-				__SUP_COUT__ << "Active version is " << table->getViewVersion() << __E__;
+				__SUP_COUT__ << newTable << " active version is " << table->getViewVersion() << __E__;
 
 				if(version != table->getViewVersion())
 				{
@@ -4639,76 +4649,119 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 
 				cfgView = table->getTemporaryView(temporaryVersion);
 
-				cfgView->init();  // prepare group ID map
-				col = cfgView->getLinkGroupIDColumn(linkIndex);
+				cfgView->init();  // prepare column lookup map
 
-				__SUP_COUT__ << "target col " << col << __E__;
-
-				// extract vector of members to be
-				std::vector<std::string> memberUIDs;
-				do
+				if(type == "link-UID")
 				{
-					csvIndexStart = csvIndex + 1;
-					csvIndex      = newValue.find(',', csvIndexStart);
-					memberUIDs.push_back(
-					    newValue.substr(csvIndexStart, csvIndex - csvIndexStart));
-					__SUP_COUT__ << "memberUIDs: " << memberUIDs.back() << __E__;
-				} while(csvIndex != (unsigned int)std::string::npos);  // no more commas
+					// handle UID links slightly differently
+					//	when editing link-UID,.. if specified name does not exist in child table,
+					//	then change the UID in the child table (rename target record).
+					//  Otherwise, it is impossible to rename unique links targets in the tree-view GUI.
 
-				// for each row,
-				//	check if should be in group
-				//		if should be but is not
-				//			add to group, CHANGE
-				//		if should not be but is
-				//			remove from group, CHANGE
-				//
+					col = cfgView->getColUID();
+					__SUP_COUT__ << "target col " << col << __E__;
 
-				std::string targetUID;
-				bool        shouldBeInGroup;
-				bool        defaultIsInGroup =
-				    false;  // use to indicate if a recent new member was created
-				bool isInGroup;
-
-				for(unsigned int row = 0; row < cfgView->getNumberOfRows(); ++row)
-				{
-					targetUID = cfgView->getDataView()[row][cfgView->getColUID()];
-					__SUP_COUT__ << "targetUID: " << targetUID << __E__;
-
-					shouldBeInGroup = false;
-					for(unsigned int i = 0; i < memberUIDs.size(); ++i)
-						if(targetUID == memberUIDs[i])
-						{
-							// found in member uid list
-							shouldBeInGroup = true;
-							break;
-						}
-
-					isInGroup = cfgView->isEntryInGroup(row, linkIndex, newLinkId);
-
-					// if should be but is not
-					if(shouldBeInGroup && !isInGroup)
+					unsigned int row = -1;
+					try
 					{
-						__SUP_COUT__ << "Changed YES: " << row << __E__;
-						secondaryChanged = true;
-
-						cfgView->addRowToGroup(row, col, newLinkId);
-
-					}  // if should not be but is
-					else if(!shouldBeInGroup && isInGroup)
-					{
-						__SUP_COUT__ << "Changed NO: " << row << __E__;
-						secondaryChanged = true;
-
-						cfgView->removeRowFromGroup(row, col, newLinkId);
+						row = cfgView->findRow(col, newLinkId);
 					}
-					else if(targetUID ==
-					            cfgView->getDefaultRowValues()[cfgView->getColUID()] &&
-					        isInGroup)
+					catch(...) //ignore not found error
+					{						
+					}
+					if(row == (unsigned int)-1)  // if row not found then add a row
 					{
-						// use to indicate if a recent new member was created
-						defaultIsInGroup = true;
+						__SUP_COUT__ << "New link UID '" << newLinkId << "' was not found, so attempting to change UID of target record '" << 
+							originalValue << "'" << __E__;
+						try
+						{
+							row = cfgView->findRow(col, originalValue);
+							if(cfgView->setURIEncodedValue(newLinkId, row, col, author))
+							{
+								secondaryChanged = true;
+								__SUP_COUT__ << "Original target record '" << originalValue << "' was changed to '" << newLinkId << "'" << __E__;	
+							}
+						}
+						catch(...) //ignore not found error
+						{		
+							__SUP_COUT__ << "Original target record '" << originalValue << "' not found." << __E__;				
+						}
 					}
 				}
+				else if(type == "link-GroupID")
+				{
+					// handle groupID links slightly differently
+					//	have to look at changing link table too!
+					// 	if group ID, set all in member list to be members of group				
+
+					col = cfgView->getLinkGroupIDColumn(linkIndex);
+
+					__SUP_COUT__ << "target col " << col << __E__;
+
+					// extract vector of members to be
+					std::vector<std::string> memberUIDs;
+					do
+					{
+						csvIndexStart = csvIndex + 1;
+						csvIndex      = newValue.find(',', csvIndexStart);
+						memberUIDs.push_back(
+							newValue.substr(csvIndexStart, csvIndex - csvIndexStart));
+						__SUP_COUT__ << "memberUIDs: " << memberUIDs.back() << __E__;
+					} while(csvIndex != (unsigned int)std::string::npos);  // no more commas
+
+					// for each row,
+					//	check if should be in group
+					//		if should be but is not
+					//			add to group, CHANGE
+					//		if should not be but is
+					//			remove from group, CHANGE
+					//
+
+					std::string targetUID;
+					bool        shouldBeInGroup;
+					bool isInGroup;
+
+					for(unsigned int row = 0; row < cfgView->getNumberOfRows(); ++row)
+					{
+						targetUID = cfgView->getDataView()[row][cfgView->getColUID()];
+						__SUP_COUT__ << "targetUID: " << targetUID << __E__;
+
+						shouldBeInGroup = false;
+						for(unsigned int i = 0; i < memberUIDs.size(); ++i)
+							if(targetUID == memberUIDs[i])
+							{
+								// found in member uid list
+								shouldBeInGroup = true;
+								break;
+							}
+
+						isInGroup = cfgView->isEntryInGroup(row, linkIndex, newLinkId);
+
+						// if should be but is not
+						if(shouldBeInGroup && !isInGroup)
+						{
+							__SUP_COUT__ << "Changed to YES: " << row << __E__;
+							secondaryChanged = true;
+
+							cfgView->addRowToGroup(row, col, newLinkId);
+
+						}  // if should not be but is
+						else if(!shouldBeInGroup && isInGroup)
+						{
+							__SUP_COUT__ << "Changed to NO: " << row << __E__;
+							secondaryChanged = true;
+
+							cfgView->removeRowFromGroup(row, col, newLinkId);
+						}
+						else if(targetUID ==
+									cfgView->getDefaultRowValues()[cfgView->getColUID()] &&
+								isInGroup)
+						{
+							// use to indicate if a recent new member was created
+							defaultIsInGroup = true;
+						}
+					}
+				} //end (type == "link-GroupID")
 
 				// first close out main target table
 				if(!secondaryChanged)  // if no changes throw out new version
@@ -4753,8 +4806,8 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 					}
 				}
 
-				// block error message if default is in group, assume new member was just
-				// created 	RAR: block because its hard to detect if changes were recently
+				// Block error message if default is in group, assume new member was just
+				// created. Blocked because its hard to detect if changes were recently
 				// made (one idea: to check if all other values are defaults, to assume it
 				// was just created)
 				if(0 && !changed && !secondaryChanged && !defaultIsInGroup)
@@ -4769,10 +4822,10 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 
 				return;  // exit since table inits were already tested
 			}
-			else if(0 && !changed)  // block error message because sometimes things get
+			else if(0 && !changed)  // '0 &&' to block error message because sometimes things get
 			                        // setup twice depending on the path of the user (e.g.
 			                        // when editing links in tree-view)
-			{  // RAR: block also becuase versions are temporary at this point anyway,
+			{  // '0 &&' to block error message also because versions are temporary at this point anyway,
 			   // might as well abuse temporary versions
 				__SUP_SS__ << "Link to table '" << newTable << "' and linkID '"
 				           << newLinkId
@@ -5714,7 +5767,7 @@ void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(
 		{
 			row = configView->findRow(col, groupAlias);
 		}
-		catch(...)
+		catch(...) //ignore not found error
 		{
 		}
 		if(row == (unsigned int)-1)  // if row not found then add a row
