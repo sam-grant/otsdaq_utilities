@@ -4017,7 +4017,7 @@
 
 				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open pre/comment table row 
 				if (treeNavContextMenuItemHandlers.length) //fix width if this is a config node so comments show up aligned
-					treeViewHandlerStr_ += "<td><div style='width:470px'>"; //open pre-comment td and div
+					treeViewHandlerStr_ += "<td><div style='min-width:470px'>"; //open pre-comment td and div
 				else
 					treeViewHandlerStr_ += "<td><div>"; //open pre-comment td and div
 
@@ -7610,7 +7610,7 @@
 							"id='editTree-groupIdFreeform-editIcon' " +
 							"onmouseup='event.stopPropagation();'" +
 							"onclick='handleEditTreeGroupIDEditFreeformToggle();event.stopPropagation();' " +
-							"title='Toggle free-form GroupID editing' " +
+							"title='Toggle free-form " + linkIdType + " editing' " +
 							"></div>";
 						str += "</td></tr></table>"; //end select and editIcon table
 
@@ -10350,11 +10350,10 @@
 								newValue += sel.options[sel.selectedIndex].value;
 						}
 
-						if (treeEditingNodeType_ == "link-GroupID")
-						{
-							//make csv newValue := linkTable,linkGroupID,linkTableVersion,groupMemberUID,...
-
-							//add link target table version and chosen group members						
+						//For links, add link target table version 
+						if (treeEditingNodeType_.indexOf("link-") == 0) //UID or GroupID
+						{				
+							//make csv newValue := linkTable,linkUID,linkTableVersion								
 							var linkTargetTable = _editingCellEl.getElementsByTagName("select")[0].value;
 							var tableVersion = -1;
 							var tableIndex = -1;
@@ -10372,7 +10371,13 @@
 							//								return;					
 							//							}
 							newValue += "," + tableVersion;
+						} //end add link target table version 
 
+						//For GroupID links, add chosen group members to CSV	
+						if (treeEditingNodeType_ == "link-GroupID")
+						{
+							//make csv newValue := linkTable,linkGroupID,linkTableVersion,groupMemberUID,...
+			
 							//save new group members 
 							// if different from treeEditingInitGroupMembers_
 
@@ -10388,7 +10393,7 @@
 								newValue += "," +
 									MultiSelectBox.getSelectionElementByIndex(el, s).textContent;
 							}
-						}
+						} //end add chosen group members to CSV
 					}
 					else if (treeEditingNodeType_ == "table-newGroupRow") 
 					{
