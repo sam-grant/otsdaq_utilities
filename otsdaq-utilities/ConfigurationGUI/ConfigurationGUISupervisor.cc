@@ -10,7 +10,7 @@
 
 #include "otsdaq/GatewaySupervisor/GatewaySupervisor.h"  //for saveModifiedVersionXML()
 #include "otsdaq/TablePlugins/ARTDAQTableBase/ARTDAQTableBase.h"  //for artdaq extraction
-#include "otsdaq/TablePlugins/XDAQContextTable.h"                 //for context relaunch
+#include "otsdaq/TablePlugins/XDAQContextTable/XDAQContextTable.h"                 //for context relaunch
 
 #include <xdaq/NamespaceURI.h>
 

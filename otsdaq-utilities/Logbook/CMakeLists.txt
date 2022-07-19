@@ -1,17 +1,8 @@
 
-cet_make(LIBRARY_NAME Logbook
-		 LIBRARIES
-		 artdaq_core::artdaq-core_Utilities
-		 ${XDAQ_BASIC_LIB_LIST}
-        otsdaq::Macros
+cet_make_library(LIBRARY_NAME Logbook
+SOURCE LogbookSupervisor.cc version.cc
+		 LIBRARIES PUBLIC
 		 otsdaq::CoreSupervisors
-		 otsdaq::CgiDataUtilities
-		 otsdaq::XmlUtilities
-		 otsdaq::SOAPUtilities
-		 otsdaq::SupervisorInfo
-		 otsdaq::WebUsersUtilities
-		 otsdaq::FiniteStateMachine
-		 MF_MessageLogger
 )
 
 install_headers()

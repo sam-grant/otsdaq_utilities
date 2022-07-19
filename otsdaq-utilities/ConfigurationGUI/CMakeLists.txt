@@ -1,24 +1,9 @@
-cet_make(LIBRARY_NAME ConfigurationGUI
-		 LIBRARIES
-		 artdaq_core::artdaq-core_Utilities
-		 ${XDAQ_BASIC_LIB_LIST}
-		 cetlib_except
-		 otsdaq::ConfigurationInterface
-		 otsdaq::TableCore
-		 otsdaq::TablePlugins_IterateTable_table
-		 otsdaq::TablePlugins_XDAQContextTable_table
-		 otsdaq::ARTDAQTableBase
-		 otsdaq::FiniteStateMachine
+cet_make_library(LIBRARY_NAME ConfigurationGUI
+SOURCE ConfigurationGUISupervisor.cc version.cc 
+		 LIBRARIES PUBLIC
 		 otsdaq::CoreSupervisors
-		 otsdaq::SupervisorInfo
-		 otsdaq::GatewaySupervisor
-		 otsdaq::ARTDAQSupervisor
 		 otsdaq::CgiDataUtilities
-		 otsdaq::WebUsersUtilities
-		 otsdaq::XmlUtilities
-		 otsdaq::Macros
-		cetlib
-	 	 MF_MessageLogger
+		 otsdaq::IterateTable
 )
 
 install_headers()

@@ -6,7 +6,7 @@
 #include "otsdaq/SOAPUtilities/SOAPCommand.h"
 #include "otsdaq/SOAPUtilities/SOAPParameters.h"
 #include "otsdaq/SOAPUtilities/SOAPUtilities.h"
-#include "otsdaq/TablePlugins/XDAQContextTable.h"
+#include "otsdaq/TablePlugins/XDAQContextTable/XDAQContextTable.h"
 #include "otsdaq/XmlUtilities/HttpXmlDocument.h"
 
 #include "otsdaq-utilities/ECLWriter/ECLConnection.h"

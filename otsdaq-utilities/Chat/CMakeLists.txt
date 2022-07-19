@@ -1,15 +1,7 @@
-cet_make(LIBRARY_NAME Chat
-		 LIBRARIES
-         artdaq_core::artdaq-core_Utilities
-		 ${XDAQ_BASIC_LIB_LIST}
-		 otsdaq::FiniteStateMachine
+cet_make_library(LIBRARY_NAME Chat
+SOURCE ChatSupervisor.cc version.cc
+		 LIBRARIES PUBLIC
 		 otsdaq::CoreSupervisors
-		 otsdaq::SupervisorInfo
-		 otsdaq::CgiDataUtilities
-		 otsdaq::XmlUtilities
-		 otsdaq::WebUsersUtilities
-         otsdaq::SOAPUtilities
-	 MF_MessageLogger
 )
 
 install_headers()

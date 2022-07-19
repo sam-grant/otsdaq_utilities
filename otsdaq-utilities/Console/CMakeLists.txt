@@ -1,24 +1,13 @@
-cet_make_exec(otsConsoleFwd SOURCE MF_ReceiveAndForward.cpp)
+cet_make_exec(NAME otsConsoleFwd SOURCE MF_ReceiveAndForward.cpp)
 
 
 #For Console Supervisor
-cet_make(LIBRARY_NAME Console
-		 LIBRARIES
-		 artdaq_core::artdaq-core_Utilities
-		 ${XDAQ_BASIC_LIB_LIST}
-		 otsdaq::SupervisorInfo
-		MF_MessageLogger
-		${MF_UTILITIES}
-		otsdaq::FiniteStateMachine
-		otsdaq::CoreSupervisors
-		 otsdaq::XmlUtilities
-		 otsdaq::SOAPUtilities
-		 otsdaq::CgiDataUtilities
-		 otsdaq::WebUsersUtilities
-#		 MessageFacility
+cet_make_library(LIBRARY_NAME Console
+SOURCE ConsoleSupervisor.cc version.cc
+		 LIBRARIES PUBLIC
+		 otsdaq::CoreSupervisors
 		 otsdaq::NetworkUtilities
-         otsdaq::Macros
-		 ${Boost_REGEX_LIBRARY}
+		 Boost::regex
 )
 
 install_headers()

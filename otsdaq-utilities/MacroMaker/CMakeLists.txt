@@ -1,22 +1,10 @@
-cet_make(LIBRARY_NAME MacroMaker
-		 LIBRARIES
-		 artdaq_core::artdaq-core_Utilities
-		 artdaq::DAQdata
-		 ${XDAQ_BASIC_LIB_LIST}
-		otsdaq::ConfigurationInterface
-		 otsdaq::TableCore
+cet_make_library(LIBRARY_NAME MacroMaker
+SOURCE MacroMakerSupervisor.cc version.cc
+		 LIBRARIES PUBLIC
 		 otsdaq::CoreSupervisors
-		 otsdaq::CgiDataUtilities
-		 otsdaq::SOAPUtilities
-		 otsdaq::FiniteStateMachine
-		 otsdaq::XmlUtilities
-         MF_MessageLogger
-         otsdaq::CodeEditor
-		 otsdaq::WebUsersUtilities
-		 otsdaq::SupervisorInfo
-		 otsdaq::FECore
-         otsdaq::Macros
-         ${Boost_SYSTEM_LIBRARY}
+		 PRIVATE
+		 artdaq::DAQdata
+		 otsdaq::CodeEditor
 )
 
 install_headers()

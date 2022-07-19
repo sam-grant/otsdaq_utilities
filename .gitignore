@@ -9,3 +9,5 @@ WebGUI/*Path
 *.bk
 *.tmp
 WebGUI/js/Debug.js
+CMakePresets.json
+

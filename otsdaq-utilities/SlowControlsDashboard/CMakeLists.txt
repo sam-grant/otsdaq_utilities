@@ -1,22 +1,9 @@
 
-cet_make(LIBRARY_NAME SlowControlsDashboard
-		 LIBRARIES
-		 artdaq_core::artdaq-core_Utilities
-		 ${XDAQ_BASIC_LIB_LIST}
-		 otsdaq::ConfigurationInterface
-		 otsdaq::TableCore		 
-		 otsdaq::PluginMakers
-		 otsdaq::XmlUtilities
-		 otsdaq::NetworkUtilities
-		 otsdaq::CgiDataUtilities
-		 otsdaq::FiniteStateMachine
+cet_make_library(LIBRARY_NAME SlowControlsDashboard
+SOURCE SlowControlsDashboardSupervisor.cc
+		 LIBRARIES PRIVATE
 		 otsdaq::CoreSupervisors
-        otsdaq::Macros
-		 otsdaq::WebUsersUtilities
-		 otsdaq::TablePlugins_XDAQContextTable_table
-	     MF_MessageLogger
-	     ${MF_UTILITIES}
-		 ${Boost_REGEX_LIBRARY}
+		 otsdaq_plugin_support::slowControlsMaker
 )
 
 install_headers()

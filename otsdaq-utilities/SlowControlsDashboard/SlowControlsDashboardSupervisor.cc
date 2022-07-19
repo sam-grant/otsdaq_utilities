@@ -3,7 +3,7 @@
 #include <sys/stat.h>  //for stat() quickly checking if file exists
 #include <thread>      //for std::thread
 
-#include "otsdaq/PluginMakers/MakeSlowControls.h"
+#include "otsdaq/SlowControlsCore/MakeSlowControls.h"
 #include "otsdaq/SlowControlsCore/SlowControlsVInterface.h"
 
 #include <boost/regex.hpp>

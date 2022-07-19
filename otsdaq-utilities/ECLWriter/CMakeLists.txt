@@ -30,41 +30,23 @@ find_package(CURL)
 if(CURL_FOUND)
   include_directories(${CURL_INCLUDE_DIRS})
 #endif(CURL_FOUND)
-cet_make( LIBRARY_NAME ECLWriterCore EXCLUDE ECLSupervisor.cc ECLTest.cc
-	LIBRARIES
-	artdaq_core::artdaq-core_Utilities
-	otsdaq::Macros
-        ${XDAQ_XERCES-C}
-        pthread
-    crypto
+cet_make_library( LIBRARY_NAME ECLWriterCore 
+SOURCE ECLConnection.cpp  ECL.cxx 
+	LIBRARIES PUBLIC
+    ${XDAQ_XERCES-C}
+    PRIVATE
     ${CURL_LIBRARIES}
-    MF_MessageLogger
+    Boost::regex
+    otsdaq::MessageFacility
 	)
-cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx ECLTest.cc
-	LIBRARIES
-	ECLWriterCore
-	artdaq_core::artdaq-core_Utilities
-	artdaq::DAQdata
-	${XDAQ_BASIC_LIB_LIST}
-	otsdaq::ConfigurationInterface
-	otsdaq::TableCore
-	otsdaq::CoreSupervisors
-	otsdaq::CgiDataUtilities
-	otsdaq::SOAPUtilities
-	otsdaq::FiniteStateMachine
-	otsdaq::XmlUtilities
-	MF_MessageLogger
-	otsdaq::CodeEditor
-	otsdaq::WebUsersUtilities
-	otsdaq::SupervisorInfo
-	otsdaq::FECore
-	otsdaq::Macros
-	${Boost_SYSTEM_LIBRARY}
-    crypto
-    ${CURL_LIBRARIES}
+cet_make_library( LIBRARY_NAME ECLWriter SOURCE ECLSupervisor.cc 
+	LIBRARIES PUBLIC
+		 otsdaq::CoreSupervisors
+         PRIVATE
+	otsdaq_utilities::ECLWriterCore
 	)
 
-	cet_make_exec(ECLTest LIBRARIES ECLWriterCore ${Boost_PROGRAM_OPTIONS_LIBRARY})
+	cet_make_exec(NAME ECLTest LIBRARIES PRIVATE otsdaq_utilities::ECLWriterCore TRACE::TRACE Boost::program_options)
 endif(CURL_FOUND)
 
 endif(XSD_FOUND)

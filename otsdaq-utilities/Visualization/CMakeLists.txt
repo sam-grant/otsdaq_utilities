@@ -1,29 +1,12 @@
 
-cet_make(LIBRARY_NAME Visualization
-		 LIBRARIES
-		 artdaq_core::artdaq-core_Utilities
-		 ${XDAQ_BASIC_LIB_LIST}
-		 ${ROOT_GUI_LIB_LIST}
-		 ${ROOT_RHTTP}
-         ${Boost_REGEX_LIBRARY}
+cet_make_library(LIBRARY_NAME Visualization
+SOURCE version.cc VisualSupervisor.cc
+		 LIBRARIES PRIVATE
 		 otsdaq::CoreSupervisors
+		 ROOT::RIO
+		 ROOT::Gui
 		 otsdaq::RootUtilities
-		 otsdaq::CgiDataUtilities
-		 otsdaq::FiniteStateMachine
-		 otsdaq::WebUsersUtilities
-		 #MonicelliInterface
-		 otsdaq::SupervisorInfo
-		 otsdaq::ConfigurationInterface
-		 otsdaq::Macros
-		 otsdaq::TableCore
-		 #otsdaq_TablePlugins_DataManagerConfiguration_table
-		 #otsdaq_TablePlugins_DataBufferConfiguration_table
-		 otsdaq::TablePlugins_XDAQContextTable_table
-		 otsdaq::DataProcessorPlugins_RawDataVisualizerConsumer_processor
-		 otsdaq::XmlUtilities
-		 otsdaq::SOAPUtilities
-		 MF_MessageLogger
-
+		 Boost::regex
 )
 
 
