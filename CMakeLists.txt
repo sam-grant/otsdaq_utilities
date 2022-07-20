@@ -35,11 +35,7 @@ cet_remove_compiler_flags(-std=c++98)
 
 #cet_report_compiler_flags()
 
-find_package(otsdaq 2.06.06 REQUIRED)
-find_package(artdaq_core 3.08.00 REQUIRED)
-find_package(TRACE 3.17.04 REQUIRED)
-find_package(artdaq 3.12.00 REQUIRED)
-find_package(Boost COMPONENTS date_time program_options regex thread REQUIRED EXPORT)
+find_package(otsdaq 2.06.06 REQUIRED EXPORT)
 
  # XDAQ Extra setup
  include_directories($ENV{XDAQ_INC}/linux $ENV{XDAQ_INC})
