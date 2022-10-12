@@ -3581,7 +3581,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 				__COUT__ << "Table pair..." << __E__;
 
 			__COUT__ << "Starting member map B scan." << __E__;
-			for(const auto bkey : memberMapBref)
+			for(const auto& bkey : memberMapBref)
 			{
 				__SUP_COUTV__(bkey.first);
 
