@@ -18,7 +18,7 @@ fcldir      -
 
 #
 product			version		optional
-otsdaq			v2_06_06
+otsdaq			v2_06_07
 cetmodules	    v3_19_02	-	only_for_build
 end_product_list
 
