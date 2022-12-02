@@ -382,6 +382,20 @@ else {
 	   	this.windiv.style.position = "absolute";
 	   	this.windiv.style.zIndex = _z;
 	   	
+		//same color code as Desktop.js this.setDefaultWindowColor = function(color) L1000
+		//check if color is dark or light to determine text color
+		//assume rgba format (.9 alpha)
+		var rgbArr = Desktop.desktop.defaultWindowFrameColor.split('(')[1].split(',');
+		var brightVal = rgbArr[0]*rgbArr[0] + rgbArr[1]*rgbArr[1] + rgbArr[2]*rgbArr[2];
+		var blueVal = (rgbArr[2]-rgbArr[0]) + 
+			(rgbArr[2]-rgbArr[1]);
+		Debug.logv({brightVal});
+		Debug.logv({blueVal});
+		var lightText = false;
+		//if too dark or too blue, make text light
+		if(brightVal < 40000 || blueVal > 90)
+			lightText = true;
+
 			//create header
 		_winhdr = document.createElement("div"); 
 		_winhdr.setAttribute("class", "DesktopWindowHeader");
@@ -389,7 +403,8 @@ else {
 	   	_winhdr.style.height = _defaultHeaderHeight+"px";
 	   	_winhdr.style.marginLeft = _defaultHeaderLeftMargin+"px";
 	   	_winhdr.style.marginRight = (-100)+"px";
-		_winhdr.style.fontSize = _defaultHeaderFontSize+"px"; 	 		
+		_winhdr.style.fontSize = _defaultHeaderFontSize+"px"; 
+		_winhdr.style.color = lightText?"white":"#0f2269";	 		
 	   	this.setWindowNameAndSubName(name, subname); // set name and subname		   	
 	   	this.windiv.appendChild(_winhdr); //add header to window	   	
 	   	
@@ -397,7 +412,9 @@ else {
 
 
 		var tmpContainer = document.createElement("div");
-		tmpContainer.setAttribute("style", "float:right;white-space:nowrap;height:" + _defaultHeaderHeight + "px;overflow:auto;");
+		tmpContainer.setAttribute("style", "float:right;margin-right:" + 
+			_defaultButtonLeftMargin + "px;white-space:nowrap;height:" + 
+			_defaultHeaderHeight + "px;overflow:auto;");
 		var tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopWindowButton");
 		tmpBtn.setAttribute("id", "DesktopWindowButtonRefresh-" + _id);

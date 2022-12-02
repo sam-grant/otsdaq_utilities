@@ -2185,7 +2185,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 	// unsigned int feSupervisorID = CgiDataUtilities::getDataAsInt(cgi,
 	// "feSupervisorID");
 	std::string feClassSelected = CgiDataUtilities::getData(cgi, "feClassSelected");
-	std::string feUIDSelected   = CgiDataUtilities::getData(cgi, "feUIDSelected");
+	std::string feUIDSelected   = CgiDataUtilities::getData(cgi, "feUIDSelected"); //allow CSV multi-selection
 	std::string macroType       = CgiDataUtilities::getData(cgi, "macroType");
 	std::string macroName       = StringMacros::decodeURIComponent(CgiDataUtilities::getData(cgi, "macroName"));
 	std::string inputArgs       = CgiDataUtilities::postData(cgi, "inputArgs");
@@ -2214,7 +2214,9 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 		__SUP_SS_THROW__;
 	}
 	else if(feUIDSelected != "*")
-		feUIDs.emplace(feUIDSelected);
+	{
+		StringMacros::getSetFromString(feUIDSelected,feUIDs);
+	}
 	else  // * all case
 	{
 		// add all FEs for type

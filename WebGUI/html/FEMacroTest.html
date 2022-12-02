@@ -13,10 +13,10 @@
 
 	<style type="text/css">			
 
-		/*fix margin for this page in Multi-Select (must have changed because of font/font-size)*/ 
+		/* fix margin for this page in Multi-Select (must have changed because of font/font-size) 
 		.multiselectbox input, textarea {
 			margin: 			14px 5px 5px 12px;
-		}
+		} */
 
 		/* make buttons and inputs have a hand cursor */
 		input, button, select, a {
@@ -101,7 +101,10 @@
 			//runMacro(r,c)
 			//getDateString(date)
 			//redraw()
+			//checkForAnyFrontends()
 			//handleSelectedFEClass(r,c)
+			//multiFESelectionHandler(el)
+			//feUIDMultiSelectToggle(r,c)
 			//handleSelectedFEUID(r,c)
 			//handleSelectedMacroType(r,c)
 			//handleSelectedMacroName(r,c)
@@ -151,6 +154,7 @@
 		MAP_FROM_LAYOUT_TO_MACRO_TYPES_[MACRO_TYPE_PRIVATE_] 	= 2;
 
 		var inputValueHistory_ = {}; //keep last input values, and recall for quick launches
+		var multiSelectToggleSetting_ = {}; //true for multiselect display
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -377,6 +381,8 @@
 		{
 			Debug.log("runMacro(" + r + "," + c + ")");
 			
+			Debug.log("feUID target",macroModules_[r][c].feUIDSelected);
+
 			var scrollTop = DesktopContent.getWindowScrollTop();
 			Debug.log("Starting scroll position", scrollTop);
 
@@ -510,6 +516,7 @@
 							.replace(/LOCKED/g,"<label class='goodValue'>LOCKED</label>")
 
 							.replace(/Not/g,"<label class='badValue'>Not</label>")
+							.replace(/DEAD/g,"<label class='badValue'>DEAD</label>")
 							.replace(/FAILED/g,"<label class='badValue'>FAILED</label>")
 							.replace(/FAIL/g,"<label class='badValue'>FAIL</label>")
 							.replace(/ERROR/g,"<label class='badValue'>ERROR</label>")									.replace(/MISSING/g,"<label class='badValue'>MISSING</label>")
@@ -593,6 +600,7 @@
 								.replace(/LOCKED/g,"<label class='goodValue'>LOCKED</label>")
 
 								.replace(/Not/g,"<label class='badValue'>Not</label>")
+								.replace(/DEAD/g,"<label class='badValue'>DEAD</label>")
 								.replace(/FAILED/g,"<label class='badValue'>FAILED</label>")
 								.replace(/FAIL/g,"<label class='badValue'>FAIL</label>")
 								.replace(/ERROR/g,"<label class='badValue'>ERROR</label>")									.replace(/MISSING/g,"<label class='badValue'>MISSING</label>")
@@ -745,16 +753,47 @@
 						str += DesktopContent.htmlOpen("tr"); //start row for FE UID
 						str += DesktopContent.htmlOpen("td",{},"<b>FE Target UID:</b>" /*innerHTML*/,true /*doCloseTag*/);
 						str += DesktopContent.htmlOpen("td");
-						{
+						{							
 							str += DesktopContent.htmlOpen(
 									"select",
 									{
 											"id": "feUIDSelect-row-" + r + "-col-" + c,
 											"class":"feUIDSelect",
+											"onclick":"checkForAnyFrontends();",
 											"onchange":"handleSelectedFEUID(" +
 											r + "," + c + ");",
 									});
 							str += "</select>";
+
+							str += DesktopContent.htmlOpen(
+									"input",
+									{
+											"type": "checkbox",
+											"id": "feUIDMultiSelectToggle-row-" + r + "-col-" + c,
+											"class":"feUIDMultiSelectToggle",
+											"onchange":"feUIDMultiSelectToggle(" +
+												r + "," + c + ");",
+											"style" : "margin: 0 4px 0 0;"
+									});
+							str += "<a onclick='" +
+								"var el = document.getElementById(\"feUIDMultiSelectToggle-row-" + r + "-col-" + c + "\");" +
+								"var forFirefox = (el.checked = !el.checked);" +
+								" feUIDMultiSelectToggle(" + r + "," + c + "); return false;'>";
+							str += "Toggle Multi-select";
+							str += "</a>";
+							str += "</input>";
+
+							str += DesktopContent.htmlOpen(
+									"div",
+									{
+											"id": "feUIDMultiSelect-row-" + r + "-col-" + c,
+											"class":"feUIDMultiSelect",
+											"onchange":"handleSelectedFEUID(" +
+											r + "," + c + ", 1 /*multiSelect*/);",
+											"style": "margin-top:6px;",
+									});
+							str += "</div>";
+
 						}
 						str += "</td></tr>"; //end row for FE Class
 					} //end FE Class html
@@ -825,6 +864,16 @@
 		} //end redraw()
 
 		//=====================================================================================
+		//checkForAnyFrontends ~~		
+		function checkForAnyFrontends()
+		{
+			if(Object.keys(feClassToFEsMap_).length == 0)
+			{
+				init();				
+			}
+		} //end checkForAnyFrontends()
+
+		//=====================================================================================
 		//handleSelectedFEClass ~~		
 		function handleSelectedFEClass(r,c)
 		{
@@ -870,6 +919,7 @@
 					{},
 					"*" /*innerHTML*/,true /*doCloseTag*/);
 			
+			var multiSelectArr = [];
 			var selectedIndex = 0;
 			var i = 1;
 			var feUIDObject = feClassSelected == "*"?
@@ -879,7 +929,8 @@
 				var feUID = feClassSelected == "*"?
 						feUIDptr:feClassToFEsMap_[feClassSelected][feUIDptr];
 				
-				console.log(feUID);
+				Debug.logv({feUID});
+				multiSelectArr.push(feUID);
 				str +=  DesktopContent.htmlOpen(
 						"option" ,
 						{},
@@ -889,31 +940,128 @@
 					selectedIndex = i;
 				++i;
 			} //end FE UID loop		
+			Debug.logv({multiSelectArr});
 			
-			if(feUIDSelected != "*" && selectedIndex == 0)
-			{
-				Debug.log("Invalid FE UID '" + feUIDSelected + "' specified for layout module.",
-						Debug.WARN_PRIORITY);
-				console.log("feUIDObject",feUIDObject);
-			}			
+			// ignore errors now, because of multiselect complication
+			// if(feUIDSelected != "*" && selectedIndex == 0)
+			// {
+			// 	Debug.log("Invalid FE UID '" + feUIDSelected + "' specified for layout module.",
+			// 			Debug.WARN_PRIORITY);
+			// 	console.log("feUIDObject",feUIDObject);
+			// }			
 			
 			el = document.getElementById("feUIDSelect-row-" + 
 					r + "-col-" + c);
 			el.innerHTML = str;			
+
+			var el1 = document.getElementById("feUIDMultiSelect-row-" + r + "-col-" + c);  
+			MultiSelectBox.createSelectBox(el1,
+					"box-" + r + "-" + c,
+					"",
+					multiSelectArr,multiSelectArr,multiSelectArr,
+					multiFESelectionHandler,false /*noMultiSelect*/,
+					undefined, undefined, undefined, undefined, /*mouseOverHandler,iconURLs,mouseDownHandler,mouseUpHandler*/
+					true /*requireCtrlMultiClick*/,
+					/*titles*/
+					);
+
 			
 			el.selectedIndex =  selectedIndex;
 			
+			feUIDMultiSelectToggle(r,c, true /*redraw*/); //handle proper hiding
+			MultiSelectBox.initMySelectBoxes(false); //setup selections	
+
 			handleSelectedFEUID(r,c);
 		} //end handleSelectedFEClass()
 
+		
+		//=====================================================================================
+		//multiFESelectionHandler ~~
+        function multiFESelectionHandler(el)
+        {
+			Debug.log("multiFESelectionHandler ID",el.id);
+            // var i = MultiSelectBox.getSelectedIndex(el); 
+            var selArr = MultiSelectBox.getSelectionArray(el);
+            // if(selArr[i])
+            // 	MultiSelectBox.dbg("box 1 Chosen element index:",i,            		
+            // 		" value:",el.textContent,
+            // 		" key:",el.getAttribute("key-value"),
+            // 		" type:",el.getAttribute("type-value"));
+
+			var uidSelStr = "";
+            for(var s in selArr)
+			{
+				if(!selArr[s]) continue;
+
+				if(uidSelStr.length) uidSelStr += ",";
+
+                MultiSelectBox.dbg("box 1 selected [" + s + "]: ",
+                		selArr[s]);
+				uidSelStr += MultiSelectBox.getSelectionElementByIndex(
+					el,s).getAttribute("key-value");
+				
+			}
+			Debug.logv({uidSelStr});
+			var splitArr = el.id.split('-');
+	
+			handleSelectedFEUID(splitArr[2]|0 /*r*/,
+				splitArr[3]|0 /*c*/,
+				uidSelStr);
+            	
+        } //end multiFESelectionHandler()
+
+		//=====================================================================================
+		//feUIDMultiSelectToggle ~~				
+		function feUIDMultiSelectToggle(r,c,redraw)
+		{
+			if(!redraw && Object.keys(feClassToFEsMap_).length == 0)
+			{
+				init();				
+			}
+
+			if(multiSelectToggleSetting_[r] === undefined)
+				multiSelectToggleSetting_[r] = {};
+			if(multiSelectToggleSetting_[r][c] === undefined)
+				multiSelectToggleSetting_[r][c] = redraw?0:1; //first time toggle to multi-select
+			
+			if(!redraw) //only toggle if not redrawing
+				multiSelectToggleSetting_[r][c] = !multiSelectToggleSetting_[r][c];
+			Debug.log("feUIDMultiSelectToggle(" + r + "," + c + ")",multiSelectToggleSetting_[r][c]);
+
+			if(multiSelectToggleSetting_[r][c]) //show multiselect
+			{
+				document.getElementById("feUIDSelect-row-" + 
+					r + "-col-" + c).style.display = "none";
+				document.getElementById("feUIDMultiSelect-row-" + 
+					r + "-col-" + c).style.display = "block";
+			}
+			else //show single select
+			{
+				document.getElementById("feUIDSelect-row-" + 
+					r + "-col-" + c).style.display = "block";
+				document.getElementById("feUIDMultiSelect-row-" + 
+					r + "-col-" + c).style.display = "none";
+			}
+
+		} //end feUIDMultiSelectToggle()
+
 		//=====================================================================================
 		//handleSelectedFEUID ~~		
-		function handleSelectedFEUID(r,c)
+		function handleSelectedFEUID(r,c,multiSelectCSV)
 		{
-			Debug.log("handleSelectedFEUID(" + r + "," + c + ")");
+			Debug.log("handleSelectedFEUID(" + r + "," + c + 
+				")multi",multiSelectCSV);
+
+			Debug.log("feUID target",macroModules_[r][c].feUIDSelected);
 			
-			var feUIDSelected = document.getElementById("feUIDSelect-row-" + 
+			
+			var feUIDSelected;
+			
+			if(multiSelectCSV === undefined)
+				feUIDSelected = document.getElementById("feUIDSelect-row-" + 
 					r + "-col-" + c).value;
+			else
+				feUIDSelected = multiSelectCSV;
 			console.log("feUIDSelected",feUIDSelected);
 
 			if(!macroModules_[r])
@@ -930,17 +1078,29 @@
 				console.log("macroModules_",macroModules_);
 				return;
 			}
-			if(feUIDSelected != "*" && !feToMacrosMap_[feUIDSelected])
+			if(feUIDSelected != "*")
 			{
-				Debug.log("Invalid FE UID '" + feUIDSelected + "' specified for layout module.",
-						Debug.HIGH_PRIORITY);
-				console.log("feToMacrosMap_",feToMacrosMap_);
-				return;
+				var feUIDarr = feUIDSelected.split(',');
+				for(var i=0;i<feUIDarr.length;++i)
+				{
+					if(feUIDarr[i].length == 0) continue;
+
+					if(!feToMacrosMap_[feUIDarr[i]])
+					{
+						Debug.log("Invalid FE UID '" + feUIDSelected + "' specified for layout module.",
+								Debug.HIGH_PRIORITY);
+						console.log("feToMacrosMap_",feToMacrosMap_);
+						return;
+					}
+				}
 			}
 			
 			macroModules_[r][c].feUIDSelected = feUIDSelected;
 			var feMacroTypeSelected = macroModules_[r][c].feMacroTypeSelected;
 			var feMacroNameSelected = macroModules_[r][c].feMacroNameSelected;
+
+			Debug.log("feUID target",macroModules_[r][c].feUIDSelected);
+			
 
 			console.log("feMacroTypeSelected",feMacroTypeSelected);
 			console.log("feMacroNameSelected",feMacroNameSelected);
@@ -963,6 +1123,8 @@
 			el.selectedIndex =  selectedIndex;
 
 			handleSelectedMacroType(r,c);
+			Debug.log("feUID target",macroModules_[r][c].feUIDSelected);
+			
 
 		} //end handleSelectedFEUID
 
@@ -1018,7 +1180,43 @@
 			else if(feMacroTypeSelected == MACRO_TYPE_PRIVATE_)
 				macroNameObject = privateMacros_;
 			else if(feUIDSelected != "*")
-				macroNameObject = feToMacrosMap_[feUIDSelected];
+			{
+				//old way, before multi-select added
+				// macroNameObject = feToMacrosMap_[feUIDSelected];
+
+				//do not assume all instances of a class are the same
+				//	it may be true.. but instances have control of their registered macros
+				//Need to explicitly check for set of common functions
+				var macroNameCounter = {};	
+				var countToMatch = 0;
+				var feUIDarr = feUIDSelected.split(',');
+				for(var i=0;i<feUIDarr.length;++i)
+				{
+					if(feUIDarr[i].length == 0) continue;
+					
+					for(var macroName in feToMacrosMap_[feUIDarr[i]])
+						if(macroNameCounter[macroName])
+							macroNameCounter[macroName].count++;
+						else //init
+							macroNameCounter[macroName] = {  
+									"count":1,
+									"macroObj":feToMacrosMap_[feUIDarr[i]][macroName]								
+							};
+					
+					console.log("macroNameCounter",macroNameCounter);
+					++countToMatch;
+				}
+				
+				macroNameObject = {}; //make obj and set keys if count indicates common macro name
+
+				for(var macroName in macroNameCounter)
+				{
+					if(macroNameCounter[macroName].count == countToMatch)
+						macroNameObject[macroName] = 
+								macroNameCounter[macroName].macroObj; //point to macro object
+				}				
+
+			}
 			else if(feClassSelected != "*" && feClassToFEsMap_[feClassSelected])
 			{
 				//do not assume all instances of a class are the same
@@ -1129,7 +1327,6 @@
 		function handleSelectedMacroName(r,c)
 		{
 			Debug.log("handleSelectedMacroName(" + r + "," + c + ")");
-
 			
 			if(!macroModules_[r])
 			{

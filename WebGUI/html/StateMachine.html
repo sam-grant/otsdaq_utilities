@@ -579,6 +579,9 @@
 			{
 				if (!req) //first time
 				{
+					_parameterSetup.innerHTML = //clear
+					"<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a><br><br>"; 
+					
 					_parameterInitCount = 0;
 					_transitionParameterValues = [];
 
@@ -2640,6 +2643,8 @@
 				_parameterSetupMinimized = !_parameterSetupMinimized;
                 Debug.log("Physics toggleParameterSetup " + _parameterSetupMinimized); 
                 
+				if(_parameterSetupMinimized)
+					initTransitionParameters();
                 
                 redrawPhysics();
 			} //end toggleParameterSetup()
@@ -2724,8 +2729,7 @@
 <canvas id="physicsCanvas"></canvas>
 		
 <div id='parameter-setup'>
-	<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a>
-	<br><br>	
+	
 </div>
 <!--	FIXME comeback to defining a proper refresh...	
 <div id='refresh-box'>

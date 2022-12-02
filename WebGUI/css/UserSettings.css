@@ -43,13 +43,13 @@
 	}
 	
 	#colorInputs {
-		width: 400px;
+		width: 470px;
 		padding: 8px;
 		
 	}		
 				
 	#colorInputs input {
-		width: 30px;
+		width: 40px;
 		text-align: center;
 	}				
 	
@@ -175,7 +175,7 @@
 		padding-top: 10px;
 		padding-bottom: 10px;
 		text-align: center;
-		background: rgb(167, 224, 250);
+		background: #dddddd;
 	}
 	.winLayoutText {
 		border: 1 px solid red;
