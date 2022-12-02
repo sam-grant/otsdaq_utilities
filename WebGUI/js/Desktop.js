@@ -975,7 +975,8 @@ Desktop.createDesktop = function(security) {
 	//==============================================================================
     //clickedWindowDashboard ~~~
 	//	Handle window selection using dashboard
-	this.clickedWindowDashboard = function(id) {
+	this.clickedWindowDashboard = function(id) 
+	{
         var win = this.getWindowById(id);
 		if(win == -1) return -1;
         if(_getForeWindow() != win) { //if not currently foreground window, set as only
@@ -991,20 +992,43 @@ Desktop.createDesktop = function(security) {
 	//==============================================================================
 	//setDefaultWindowColor() ~~~
 	//	set background color for all windows
-	this.setDefaultWindowColor = function(color) {
+	this.setDefaultWindowColor = function(color) 
+	{
 		this.defaultWindowFrameColor = color;
 	    //_windowColorPostbox.innerHTML = this.defaultWindowFrameColor; //set to color string
 		
+		//same color code as DesktopWindow.js Creation constructor L385
+		//check if color is dark or light to determine text color
+		//assume rgba format (.9 alpha)
+		var rgbArr = color.split('(')[1].split(',');
+		var brightVal = rgbArr[0]*rgbArr[0] + rgbArr[1]*rgbArr[1] + rgbArr[2]*rgbArr[2];
+		var blueVal = (rgbArr[2]-rgbArr[0]) + 
+			(rgbArr[2]-rgbArr[1]);
+		Debug.logv({brightVal});
+		Debug.logv({blueVal});
+		var lightText = false;
+		//if too dark or too blue, make text light
+		if(brightVal < 40000 || blueVal > 90)
+			lightText = true;
+		
 		for(var i=0;i<_windows.length;++i)
+		{
 			_windows[i].windiv.style.backgroundColor = this.defaultWindowFrameColor;
-	}
+			//1st child node is the window header text
+			if(_windows[i].windiv.childNodes.length)
+				_windows[i].windiv.childNodes[0].style.color = lightText?"white":"#0f2269";
+		}
 
-	 	//defaultLayoutSelect() ~~~
-		//	set default layout of windows
-		//	0-1 are system defaults
-		//	3-5 are user defaults
-		//	6 is last saved layout checkpoint 
-	this.defaultLayoutSelect = function(i) {
+	} //end setDefaultWindowColor()
+
+	//==============================================================================
+	//defaultLayoutSelect() ~~~
+	//	set default layout of windows
+	//	0-1 are system defaults
+	//	3-5 are user defaults
+	//	6 is last saved layout checkpoint 
+	this.defaultLayoutSelect = function(i) 
+	{
 		Debug.log("Desktop defaultLayoutSelect " + i);
 			
 		var layoutStr;
