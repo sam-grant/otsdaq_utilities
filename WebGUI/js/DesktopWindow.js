@@ -302,14 +302,16 @@ else {
 		//		+1 because of borders, and content width vs set value
 		//	return difference between set values and actual values
 		this.resizeAndPositionWindow = function(x,y,w,h) 
-		{		
-			
-			//Debug.log("Resizing",_x-x,_y-y,_w-w,_h-h,x,y,w,h,_defaultWindowMinWidth,_defaultWindowMinHeight);			
+		{					
+			// if((_x-x) == 0 && (_w-w))
+			// Debug.log("Resizing","'" + _name + "'",_x-x,_y-y,_w-w,_h-h,x,y,w,h,_defaultWindowMinWidth,_defaultWindowMinHeight);			
 			if((w <= _defaultWindowMinWidth + 1 && x > _x) ||
 				(h <= _defaultWindowMinHeight + 1 && y > _y)) return [x-_x,y-_y,w-_w,h-_h];
-            if(x < Desktop.desktop.getDesktopContentX()) return [x-_x,y-_y,w-_w,h-_h];//x = Desktop.desktop.getDesktopContentX();
-            if(y < Desktop.desktop.getDesktopContentY()) return [x-_x,y-_y,w-_w,h-_h];//y = Desktop.desktop.getDesktopContentY();            
+            if(x < _x && x < Desktop.desktop.getDesktopContentX()) return [x-_x,y-_y,w-_w,h-_h];//x = Desktop.desktop.getDesktopContentX();
+            if(y < _y && y < Desktop.desktop.getDesktopContentY()) return [x-_x,y-_y,w-_w,h-_h];//y = Desktop.desktop.getDesktopContentY();            
+			
 			this.setWindowSizeAndPosition(x,y,w,h);
+			
 			return [x-_x,y-_y,w-_w,h-_h];
 		} //end resizeAndPositionWindow()
 				

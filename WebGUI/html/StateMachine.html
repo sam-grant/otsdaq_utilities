@@ -497,7 +497,9 @@
 				_alarmBox.onmousemove = eatParameterMouseEvent;
 				_alarmBox.onmouseup = eatParameterMouseEvent;	
 				_errorBox = document.getElementById("error-box");
-				initTransitionParameters();
+				// initTransitionParameters();				
+
+				
 				
 				_canvas = document.getElementById("physicsCanvas");
 				_canvas.style.backgroundColor = _CANVAS_COLOR;
@@ -533,6 +535,8 @@
 						toggleViewMode(altViewMode|0);  //treat as integer
 					else //default to js default
 						toggleViewMode(_altStateDrawingMode);
+					
+					initTransitionParameters();
 				});
 			} //end init()
 
@@ -575,14 +579,23 @@
             //	user code should call with null input parameters
             //	then code launches requests to fill parameters, _transitionParameterValues
             var _transParamsHtmlStr;
+			var _previousTransitionParameterValues = [];
 			function initTransitionParameters(req) 
-			{
+			{				
 				if (!req) //first time
 				{
 					_parameterSetup.innerHTML = //clear
 					"<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a><br><br>"; 
 					
 					_parameterInitCount = 0;
+
+					if (_transitionParameterValues !== undefined)
+					{ 	//save last selections
+						for(var i=0;i<_transitionParameterValues.length;++i)
+							_previousTransitionParameterValues[i] = _transitionParameterValues[i];
+
+					}
+					//then clear to make sure, only valid selections get filled
 					_transitionParameterValues = [];
 
 					_transParamsHtmlStr = "<table width='100%'><tr><td><b><u>Parameter</u></b></td><td width='50%'><b><u>Value</u></b></td></tr>";
@@ -610,7 +623,11 @@
                         
             			var userLastConfigAlias = 
             					DesktopContent.getXMLValue(req,"UserLastConfigAlias");
+								
+						//take last configured alias, if user has not selected anything yet
             			if(!userLastConfigAlias) userLastConfigAlias = "";
+						if(_previousTransitionParameterValues[0] === undefined)
+							_previousTransitionParameterValues[0] = userLastConfigAlias;
             			
             			var lastIndex = -1;
             			var alias;
@@ -629,12 +646,12 @@
 																   aliasGroupCommentArr[i].getAttribute('value')
 																   ];
 														 
-                            //choose the first system alias by default
+                            //choose the first system alias by default (the first init)
                             if(!i) _transitionParameterValues[_parameterInitCount] = alias;
                             _transParamsHtmlStr += "<option value='" + alias + "' ";
 
-                            //otherwise choose last alias
-                            if(userLastConfigAlias == alias)
+                            //otherwise, as priority, choose last alias (the first init)
+                            if(_previousTransitionParameterValues[0] == alias)
                             {
                             	_transitionParameterValues[_parameterInitCount] = alias;
                             	_transParamsHtmlStr += "selected";
@@ -974,31 +991,30 @@
 								_prevState = -1; //invalidate previous state
 
 								if(_stateNames[i] == "Failed")
-									Debug.log("State was changed unexpectedly from " + 
+									Debug.warn("State was changed unexpectedly from " + 
 											_stateNames[_currState] + " to " + _stateNames[i] +
-											". (Likely there was a error transitioning a Supervisor)",Debug.HIGH_PRIORITY);
+											". (Likely there was a error transitioning a Supervisor)");
 								else if(_stateNames[i] == "Paused")
 								{
 									var softError = DesktopContent.getXMLValue(req,"soft_error"); 
 									
 									if(softError && softError != "")
 									{
-										Debug.log("State was changed unexpectedly from " + 
+										Debug.warn("State was changed unexpectedly from " + 
 											_stateNames[_currState] + " to " + _stateNames[i] +
-											". There was a State Machine Soft Error:\n\n" + softError, 
-				            				Debug.HIGH_PRIORITY);									
+											". There was a State Machine Soft Error:\n\n" + softError);									
 									}
 									else										
-										Debug.log("State was changed unexpectedly from " + 
+										Debug.warn("State was changed unexpectedly from " + 
 											_stateNames[_currState] + " to " + _stateNames[i] +
-											". (Likely there was a error transitioning a Supervisor)",Debug.HIGH_PRIORITY);
+											". (Likely there was a error transitioning a Supervisor)");
 								}
 								else
 								{
 									if(!_suppressReloginPopups)
-										Debug.log("State was changed unexpectedly from " + 
+										Debug.warn("State was changed unexpectedly from " + 
 											_stateNames[_currState] + " to " + _stateNames[i] +
-											". (Likely the server was restarted or another user changed the state)",Debug.HIGH_PRIORITY);
+											". (Likely the server was restarted or another user changed the state)");
 									
 								}
 								_suppressReloginPopups = false;
@@ -1010,8 +1026,7 @@
 							    			"Request?RequestType=getErrorInStateMatchine", "",
 											function(req) {
 							    		var err = DesktopContent.getXMLValue(req,"FSM_Error");
-					            		Debug.log("State Machine Error:\n\n" + err, 
-					            				Debug.HIGH_PRIORITY);
+					            		Debug.err("State Machine Error:\n\n" + err);
 							    	});
 							    }
 							}
@@ -1339,7 +1354,9 @@
 			{
                 for(var i=0;i<_TRANSITION_PARAMETERS.length;++i)
                     if(_TRANSITION_PARAMETERS[i] == param)
-                        return param + "=" + _transitionParameterValues[i];
+                        return param + "=" + 
+							(_transitionParameterValues[i] !== undefined?_transitionParameterValues[i]:
+								_previousTransitionParameterValues[i]);
                 return "";
             }  //end getTransitionParameterData()
             
@@ -1395,7 +1412,7 @@
             			    
                             if(unanticipated || _transitionResultingState != _stateNames[_currState]) 
                             {
-                            	Debug.log("Error! State result not anticipated. Attempting to re-align with server.",Debug.HIGH_PRIORITY);
+                            	Debug.warn("State result not anticipated. Attempting to re-align with server.");
                             	//alert("Error! State result not anticipated. Attempting to re-align with server.");
                 				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", 
                 						smRequestHandler, //end request handler
