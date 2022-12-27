@@ -196,7 +196,7 @@
 				{
 					macroVar = feMacros[i].getAttribute("value");
 					Debug.log(macroVar);
-					macroVar = macroVar.split(":");
+					macroVar = macroVar.split(";");
 
 					var supervisor = macroVar[0];
 					var lid = macroVar[1];
@@ -729,6 +729,7 @@
 									{
 											"id": "feClassSelect-row-" + r + "-col-" + c,
 											"class":"feClassSelect",
+											"onclick":"checkForAnyFrontends();",
 											"onchange":"handleSelectedFEClass(" +
 											r + "," + c + ");",
 									});
@@ -1014,7 +1015,9 @@
 		//feUIDMultiSelectToggle ~~				
 		function feUIDMultiSelectToggle(r,c,redraw)
 		{
-			if(!redraw && Object.keys(feClassToFEsMap_).length == 0)
+			if(!redraw && 
+				(Object.keys(feClassToFEsMap_).length == 0 ||
+				Object.keys(feClassToFEsMap_)[0] == "undefined"))				
 			{
 				init();				
 			}
@@ -1286,6 +1289,7 @@
 			
 			console.log("macroNameObject",macroNameObject);
 			
+			var i = 0;
 			for(var macroName in macroNameObject) //go through Macro Names
 			{
 //				var macroName = feMacroTypeSelected == MACRO_TYPE_FE_?

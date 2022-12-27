@@ -42,7 +42,7 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	void handleRequest(const std::string  Command,
 	                   HttpXmlDocument&   xmldoc,
 	                   cgicc::Cgicc&      cgi,
-	                   const std::string& username);
+	                   const WebUsers::RequestUserInfo& userInfo);
 
 	xoap::MessageReference frontEndCommunicationRequest(xoap::MessageReference message);
 
@@ -87,7 +87,7 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	                   const std::string& username);
 	void runFEMacro(HttpXmlDocument&   xmldoc,
 	                cgicc::Cgicc&      cgi,
-	                const std::string& username);
+	                const WebUsers::RequestUserInfo& username);
 
 	std::string generateHexArray(const std::string& sourceHexString, int& numOfBytes);
 	bool        isArgumentVariable(const std::string& argumentString);
