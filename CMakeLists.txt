@@ -17,12 +17,19 @@ project(otsdaq_utilities VERSION 2.06.07)
 include(CetCMakeEnv)
 cet_cmake_env()
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL Clang AND
+     CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0.0)
+  set(DT_FLAG -Wno-dtor-name)
+else()
+  set(DT_FLAG)
+endif()
+
 cet_set_compiler_flags(
  DIAGS 
  VIGILANT
  WERROR
  NO_UNDEFINED
- EXTRA_FLAGS -pedantic -D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES=1
+ EXTRA_FLAGS -pedantic -D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES=1 ${DT_FLAG}
  )
  
 string(TOUPPER ${CMAKE_BUILD_TYPE} BTYPE_UC )
@@ -30,8 +37,6 @@ set(DEBUG_MODE 0)
 if( ${BTYPE_UC} MATCHES "DEBUG" )
   set(DEBUG_MODE 1)
 endif()
-
-cet_remove_compiler_flags(-std=c++98)
 
 #cet_report_compiler_flags()
 
