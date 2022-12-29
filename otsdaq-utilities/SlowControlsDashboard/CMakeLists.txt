@@ -1,6 +1,6 @@
 
 cet_make_library(LIBRARY_NAME SlowControlsDashboard
-SOURCE SlowControlsDashboardSupervisor.cc
+SOURCE SlowControlsDashboardSupervisor.cc version.cc
 		 LIBRARIES PRIVATE
 		 otsdaq::CoreSupervisors
 		 otsdaq_plugin_support::slowControlsMaker
