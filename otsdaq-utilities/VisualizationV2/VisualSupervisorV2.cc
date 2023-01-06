@@ -5,13 +5,13 @@
 #include "otsdaq/DataManager/DataManagerSingleton.h"
 #include "otsdaq/Macros/BinaryStringMacros.h"
 //#include "otsdaq/otsdaq/Macros/MessageTools.h"
-#include "otsdaq/DataManager/DQMHistosConsumerBase.h"
 #include <boost/regex.hpp>
+#include "otsdaq/DataManager/DQMHistosConsumerBase.h"
 #include "otsdaq/Macros/MessageTools.h"
 #include "otsdaq/RootUtilities/RootFileExplorer.h"
 
 // ROOT documentation
-// http://root.cern.ch/root/html/index.html 
+// http://root.cern.ch/root/html/index.html
 
 #include <TBranchElement.h>
 #include <TBuffer.h>
@@ -37,8 +37,8 @@
 
 #include <xdaq/NamespaceURI.h>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <mutex>
 
 #define ROOT_BROWSER_PATH __ENV__("ROOT_BROWSER_PATH")
@@ -74,7 +74,7 @@ VisualSupervisorV2::VisualSupervisorV2(xdaq::ApplicationStub* stub)
 	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
 
 	__SUP_COUT__ << "Constructed." << __E__;
-} //end constructor
+}  // end constructor
 
 //========================================================================================================================
 VisualSupervisorV2::~VisualSupervisorV2(void)
@@ -82,7 +82,7 @@ VisualSupervisorV2::~VisualSupervisorV2(void)
 	__SUP_COUT__ << "Destructor." << __E__;
 	destroy();
 	__SUP_COUT__ << "Destructed." << __E__;
-} //end destructor
+}  // end destructor
 
 //========================================================================================================================
 void VisualSupervisorV2::destroy(void)
@@ -99,61 +99,74 @@ void VisualSupervisorV2::destroy(void)
 		theStateMachineImplementation_.pop_back();
 	else
 		__COUT_WARN__ << "No visual data manager was pushed." << __E__;
-} //end destroy()
+}  // end destroy()
 
 //==============================================================================
 void VisualSupervisorV2::transitionConfiguring(toolbox::Event::Reference /*e*/)
 {
 	__SUP_COUT__ << "Configuring..." << __E__;
 
-	{ //do like start of CoreSupervisorBase::transitionConfiguring
+	{  // do like start of CoreSupervisorBase::transitionConfiguring
 		// activate the configuration tree (the first iteration)
-		if(RunControlStateMachine::getIterationIndex() == 0 && RunControlStateMachine::getSubIterationIndex() == 0)
+		if(RunControlStateMachine::getIterationIndex() == 0 &&
+		   RunControlStateMachine::getSubIterationIndex() == 0)
 		{
 			std::pair<std::string /*group name*/, TableGroupKey> theGroup(
-					SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationTableGroupName"),
-					TableGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationTableGroupKey")));
+			    SOAPUtilities::translate(theStateMachine_.getCurrentMessage())
+			        .getParameters()
+			        .getValue("ConfigurationTableGroupName"),
+			    TableGroupKey(
+			        SOAPUtilities::translate(theStateMachine_.getCurrentMessage())
+			            .getParameters()
+			            .getValue("ConfigurationTableGroupKey")));
 
-			__SUP_COUT__ << "Configuration table group name: " << theGroup.first << " key: " << theGroup.second << __E__;
+			__SUP_COUT__ << "Configuration table group name: " << theGroup.first
+			             << " key: " << theGroup.second << __E__;
 
-			theConfigurationManager_->loadTableGroup(theGroup.first, theGroup.second, true /*doActivate*/);
+			theConfigurationManager_->loadTableGroup(
+			    theGroup.first, theGroup.second, true /*doActivate*/);
 		}
-	} //end start like CoreSupervisorBase::transitionConfiguring
+	}  // end start like CoreSupervisorBase::transitionConfiguring
 
 	__COUTV__(theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName());
-	__COUTV__(theConfigurationManager_->getNode(
-			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()).getValueAsString());
+	__COUTV__(theConfigurationManager_
+	              ->getNode(theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
+	                            ->getTableName())
+	              .getValueAsString());
 
-	__COUTV__("/" + theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() + CorePropertySupervisorBase::getSupervisorConfigurationPath());
+	__COUTV__("/" +
+	          theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() +
+	          CorePropertySupervisorBase::getSupervisorConfigurationPath());
 
-
-	ConfigurationTree appLink = theConfigurationManager_->getNode("/" +
-			theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() +
-					CorePropertySupervisorBase::getSupervisorConfigurationPath());
+	ConfigurationTree appLink = theConfigurationManager_->getNode(
+	    "/" + theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() +
+	    CorePropertySupervisorBase::getSupervisorConfigurationPath());
 
 	__COUTV__(appLink.getValueAsString());
-
 
 	if(!appLink.isDisconnected())
 	{
 		theDataManager_ = DataManagerSingleton::getInstance<VisualDataManagerV2>(
-				theConfigurationManager_->getNode(
-						theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()),
-						CorePropertySupervisorBase::getSupervisorConfigurationPath(),
-						CorePropertySupervisorBase::getSupervisorUID());
+		    theConfigurationManager_->getNode(
+		        theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
+		            ->getTableName()),
+		    CorePropertySupervisorBase::getSupervisorConfigurationPath(),
+		    CorePropertySupervisorBase::getSupervisorUID());
 
 		CoreSupervisorBase::theStateMachineImplementation_.push_back(theDataManager_);
 
 		__SUP_COUT__ << "Done instantiating Visual data manager." << __E__;
 	}
 	else
-		__SUP_COUT__ << "No Visual Supervisor configuration link, so skipping Visual data manager instantiation." << __E__;
+		__SUP_COUT__ << "No Visual Supervisor configuration link, so skipping Visual "
+		                "data manager instantiation."
+		             << __E__;
 
-	//just handle FSMs
+	// just handle FSMs
 	CoreSupervisorBase::transitionConfiguringFSMs();
 
 	__SUP_COUT__ << "Configured." << __E__;
-} //end transitionConfiguring()
+}  // end transitionConfiguring()
 
 //==============================================================================
 void VisualSupervisorV2::transitionHalting(toolbox::Event::Reference e)
@@ -164,7 +177,7 @@ void VisualSupervisorV2::transitionHalting(toolbox::Event::Reference e)
 	destroy();
 
 	__SUP_COUT__ << "Halted." << __E__;
-} //end transitionHalting()
+}  // end transitionHalting()
 
 //==============================================================================
 // setSupervisorPropertyDefaults
@@ -173,15 +186,13 @@ void VisualSupervisorV2::transitionHalting(toolbox::Event::Reference e)
 void VisualSupervisorV2::setSupervisorPropertyDefaults()
 {
 	CorePropertySupervisorBase::setSupervisorProperty(
-			CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AllowNoLoginRequestTypes,
-			"setUserPreferences |  getUserPreferences | getDirectoryContents | getRoot | "
-			"getEvents"
-	);
+	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AllowNoLoginRequestTypes,
+	    "setUserPreferences |  getUserPreferences | getDirectoryContents | getRoot | "
+	    "getEvents");
 
 	CorePropertySupervisorBase::setSupervisorProperty(
-			CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.UserPermissionsThreshold,
-			"*=1 | rootAdminControls=100"
-	);
+	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.UserPermissionsThreshold,
+	    "*=1 | rootAdminControls=100");
 }
 
 //========================================================================================================================
@@ -190,13 +201,11 @@ void VisualSupervisorV2::setSupervisorPropertyDefaults()
 void VisualSupervisorV2::forceSupervisorPropertyValues()
 {
 	CorePropertySupervisorBase::setSupervisorProperty(
-			CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
-			"getRoot | getEvents"
-	);
+	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
+	    "getRoot | getEvents");
 	CorePropertySupervisorBase::setSupervisorProperty(
-			CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.NoXmlWhiteSpaceRequestTypes,
-			"getRoot | getEvents"
-	);
+	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.NoXmlWhiteSpaceRequestTypes,
+	    "getRoot | getEvents");
 	// json data in ROOTJS library expects no funny
 	// characters
 	// CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.NeedUsernameRequestTypes,
@@ -204,10 +213,10 @@ void VisualSupervisorV2::forceSupervisorPropertyValues()
 }
 
 //========================================================================================================================
-void VisualSupervisorV2::request(const std::string               & requestType,
-		                     cgicc::Cgicc              & cgiIn      ,
-		                     HttpXmlDocument           & xmlOut     ,
-		               const WebUsers::RequestUserInfo & userInfo)
+void VisualSupervisorV2::request(const std::string&               requestType,
+                                 cgicc::Cgicc&                    cgiIn,
+                                 HttpXmlDocument&                 xmlOut,
+                                 const WebUsers::RequestUserInfo& userInfo)
 {
 	// Commands
 	//	getRawData
@@ -230,10 +239,11 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 	//        //TProfile* profile  = theDataManager_->getFileDQMHistos().getProfile();
 	//
 	//    }
-// 	std::stringstream ss;
-// 	ss << "Request type: |" << requestType << "|";
-// 	STDLINE(ss.str(),"") ;
-	if(requestType == "getRawData")  //################################################################################################################
+	// 	std::stringstream ss;
+	// 	ss << "Request type: |" << requestType << "|";
+	// 	STDLINE(ss.str(),"") ;
+	if(requestType ==
+	   "getRawData")  //################################################################################################################
 	{
 		__SUP_COUT__ << __E__;
 		try
@@ -252,32 +262,35 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		catch(std::exception const& e)
 		{
 			__SUP_COUT__
-			<< "ERROR! Exception while getting raw data. Incoming exception data..."
-			<< __E__;
+			    << "ERROR! Exception while getting raw data. Incoming exception data..."
+			    << __E__;
 			__SUP_COUT__ << e.what() << __E__;
 			__SUP_COUT__ << "End Exception Data" << __E__;
 		}
 		catch(...)
 		{
 			__SUP_COUT__ << "ERROR! Something went wrong trying to get raw data."
-					<< __E__;
+			             << __E__;
 			__SUP_COUT_INFO__ << "ERROR! Something went wrong trying to get raw data."
-					<< __E__;
+			                  << __E__;
 		}
 	}
-	else if(requestType == "setUserPreferences" &&
-			userInfo.username_ != "" /*from allow no user*/) //################################################################################################################
+	else if(
+	    requestType == "setUserPreferences" &&
+	    userInfo.username_ !=
+	        "" /*from allow no user*/)  //################################################################################################################
 	{
 		__SUP_COUT__ << "userInfo.username_: " << userInfo.username_ << __E__;
 		std::string fullPath =
-				(std::string)PREFERENCES_PATH + userInfo.username_ + PREFERENCES_FILE_EXT;
+		    (std::string)PREFERENCES_PATH + userInfo.username_ + PREFERENCES_FILE_EXT;
 		__SUP_COUT__ << "fullPath: " << fullPath << __E__;
 
-		std::string radioSelect       = CgiDataUtilities::getData(cgiIn, "radioSelect"      );
-		std::string autoRefresh       = CgiDataUtilities::getData(cgiIn, "autoRefresh"      );
-		std::string autoHide          = CgiDataUtilities::getData(cgiIn, "autoHide"         );
-		std::string hardRefresh       = CgiDataUtilities::getData(cgiIn, "hardRefresh"      );
-		std::string autoRefreshPeriod = CgiDataUtilities::getData(cgiIn, "autoRefreshPeriod");
+		std::string radioSelect = CgiDataUtilities::getData(cgiIn, "radioSelect");
+		std::string autoRefresh = CgiDataUtilities::getData(cgiIn, "autoRefresh");
+		std::string autoHide    = CgiDataUtilities::getData(cgiIn, "autoHide");
+		std::string hardRefresh = CgiDataUtilities::getData(cgiIn, "hardRefresh");
+		std::string autoRefreshPeriod =
+		    CgiDataUtilities::getData(cgiIn, "autoRefreshPeriod");
 
 		__SUP_COUT__ << "radioSelect: " << radioSelect << __E__;
 		__SUP_COUT__ << "autoRefresh: " << autoRefresh << __E__;
@@ -333,13 +346,15 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		}
 		else
 			__SUP_COUT_ERR__ << "Failure writing preferences to file: " << fullPath
-			<< __E__;
+			                 << __E__;
 	}
-	else if(requestType == "getUserPreferences") //################################################################################################################
+	else if(
+	    requestType ==
+	    "getUserPreferences")  //################################################################################################################
 	{
 		__SUP_COUT__ << "userInfo.username_: " << userInfo.username_ << __E__;
 		std::string fullPath =
-				(std::string)PREFERENCES_PATH + userInfo.username_ + PREFERENCES_FILE_EXT;
+		    (std::string)PREFERENCES_PATH + userInfo.username_ + PREFERENCES_FILE_EXT;
 		__SUP_COUT__ << "fullPath: " << fullPath << __E__;
 
 		FILE* fp = fopen(fullPath.c_str(), "r");
@@ -378,14 +393,18 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 			xmlOut.addTextElementToData("autoRefreshPeriod", "");
 		}
 	}
-	else if(requestType == "getDirectoryContents") //################################################################################################################
+	else if(
+	    requestType ==
+	    "getDirectoryContents")  //################################################################################################################
 	{
 		// return directory structure for requested path, types are "dir" and "file"
 
-		std::string rootpath = std::string(ROOT_BROWSER_PATH) + "/";
-		std::string path     = CgiDataUtilities::postData(cgiIn, "Path");
-		boost::regex re("%2F") ;
-		path = boost::regex_replace(path,re,"/") ; // Dario: should be transparent for Ryan's purposes but required by Extjs
+		std::string  rootpath = std::string(ROOT_BROWSER_PATH) + "/";
+		std::string  path     = CgiDataUtilities::postData(cgiIn, "Path");
+		boost::regex re("%2F");
+		path =
+		    boost::regex_replace(path, re, "/");  // Dario: should be transparent for
+		                                          // Ryan's purposes but required by Extjs
 
 		////STDLINE(std::string("rootpath                 : ")+rootpath,"") ;
 		////STDLINE(std::string("path                     : ")+    path,"") ;
@@ -393,10 +412,10 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		// return 1 if user has access to admin controls, else 0
 		char permStr[10];
 		sprintf(permStr,
-				"%d",
-				userInfo.permissionLevel_ >=
-				CoreSupervisorBase::getSupervisorPropertyUserPermissionsThreshold(
-						"rootAdminControls"));
+		        "%d",
+		        userInfo.permissionLevel_ >=
+		            CoreSupervisorBase::getSupervisorPropertyUserPermissionsThreshold(
+		                "rootAdminControls"));
 		xmlOut.addTextElementToData("permissions", permStr);  // add permissions
 		////STDLINE(std::string("permStr                  : ")+permStr,"") ;
 		////STDLINE(std::string("PRE_MADE_ROOT_CFG_DIR    : ")+PRE_MADE_ROOT_CFG_DIR,"") ;
@@ -406,9 +425,9 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 			dirpath = ROOT_DISPLAY_CONFIG_PATH;
 
 		if(path.find("/" + PRE_MADE_ROOT_CFG_DIR + "/") ==
-				0)  // ROOT config path must start the path
+		   0)  // ROOT config path must start the path
 			dirpath = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" +
-			path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2);
+			          path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2);
 
 		////STDLINE(std::string("dirpath                  : ")+ dirpath,"") ;
 		__SUP_COUT__ << "full path: " << dirpath << __E__;
@@ -419,8 +438,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		bool           isDir;
 		if((pDIR = opendir(dirpath.c_str())))
 		{
-			xmlOut.addTextElementToData("path"        , path);
-			xmlOut.addTextElementToData("headOfSearch","located") ;
+			xmlOut.addTextElementToData("path", path);
+			xmlOut.addTextElementToData("headOfSearch", "located");
 
 			// add LIVE if path is / and DQM is active
 			// add Pre-made Views if path is / and ROOT_DISPLAY_CONFIG_PATH isnt already
@@ -428,10 +447,9 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 			if(path == "/")
 			{
 				////STDLINE(std::string("--> LIVEDQM_DIR          : ")+LIVEDQM_DIR,"") ;
-				if(theDataManager_ != nullptr &&
-						theDataManager_->getLiveDQMHistos() != 0)
+				if(theDataManager_ != nullptr && theDataManager_->getLiveDQMHistos() != 0)
 					xmlOut.addTextElementToData("dir",
-							LIVEDQM_DIR + ".root");  // add to xml
+					                            LIVEDQM_DIR + ".root");  // add to xml
 
 				// check for ROOT_DISPLAY_CONFIG_PATH
 				DIR* pRtDIR  = opendir(ROOT_DISPLAY_CONFIG_PATH);
@@ -440,19 +458,20 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 				{
 					recheck = true;
 					if(mkdir(ROOT_DISPLAY_CONFIG_PATH,
-							S_IRWXU | (S_IRGRP | S_IXGRP) |
-							(S_IROTH | S_IXOTH)))  // mode = drwx r-x r-x
+					         S_IRWXU | (S_IRGRP | S_IXGRP) |
+					             (S_IROTH | S_IXOTH)))  // mode = drwx r-x r-x
 						__SUP_COUT__ << "Failed to make directory for pre made views: "
-						<< ROOT_DISPLAY_CONFIG_PATH << __E__;
+						             << ROOT_DISPLAY_CONFIG_PATH << __E__;
 				}
 				else
 					closedir(pRtDIR);  // else close and display
 
 				if(!recheck || (pRtDIR = opendir(ROOT_DISPLAY_CONFIG_PATH)))
 				{
-					////STDLINE(std::string("--> PRE_MADE_ROOT_CFG_DIR: ")+LIVEDQM_DIR,"") ;
+					////STDLINE(std::string("--> PRE_MADE_ROOT_CFG_DIR: ")+LIVEDQM_DIR,"")
+					///;
 					xmlOut.addTextElementToData("dir",
-							PRE_MADE_ROOT_CFG_DIR);  // add to xml
+					                            PRE_MADE_ROOT_CFG_DIR);  // add to xml
 					if(recheck)
 						closedir(pRtDIR);
 				}
@@ -463,15 +482,15 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 				//__SUP_COUT__ << int(entry->d_type) << " " << entry->d_name << "\n" <<
 				// __E__;
 				if(entry->d_name[0] != '.' &&
-						(entry->d_type ==
-								0 ||  // 0 == UNKNOWN (which can happen - seen in SL7 VM)
-								entry->d_type == 4 ||
-								entry->d_type == 8))
+				   (entry->d_type ==
+				        0 ||  // 0 == UNKNOWN (which can happen - seen in SL7 VM)
+				    entry->d_type == 4 ||
+				    entry->d_type == 8))
 				{
 					//__SUP_COUT__ << int(entry->d_type) << " " << entry->d_name << "\n"
 					//<< __E__;
 					isNotRtCfg =
-							std::string(entry->d_name).find(".rcfg") == std::string::npos;
+					    std::string(entry->d_name).find(".rcfg") == std::string::npos;
 					isDir = false;
 
 					if(entry->d_type == 0)
@@ -489,42 +508,53 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 					}
 
 					if((entry->d_type == 8 ||
-							(!isDir && entry->d_type == 0))  // file type
-							&& std::string(entry->d_name).find(".root") == std::string::npos &&
-							isNotRtCfg)
+					    (!isDir && entry->d_type == 0))  // file type
+					   && std::string(entry->d_name).find(".root") == std::string::npos &&
+					   isNotRtCfg)
 						continue;  // skip if not a root file or a config file
 					else if(entry->d_type == 4)
 						isDir = true;  // flag directory types
 
 					xmlOut.addTextElementToData(
-							isDir ? "dir" : (isNotRtCfg ? "dir" : "file"), entry->d_name);
+					    isDir ? "dir" : (isNotRtCfg ? "dir" : "file"), entry->d_name);
 				}
 			}
 			closedir(pDIR);
 		}
 		else
 			__SUP_COUT__ << "Failed to access directory contents!" << __E__;
-		//std::ostringstream* out ;
-		//xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+		// std::ostringstream* out ;
+		// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
 	}
-	else if(requestType == "getRoot") //################################################################################################################
+	else if(
+	    requestType ==
+	    "getRoot")  //################################################################################################################
 	{
 		// return directory structure for requested ROOT path, types are "dir" and "file"
 
-                ss.str("") ; ss << "PID: " << ::getpid() ;
-//                STDLINE(ss.str(),ACCyan) ;
-		std::string path     = CgiDataUtilities::postData(cgiIn, "RootPath");
-		boost::regex re1("%2F") ;
-		path = boost::regex_replace(path,re1,"/") ;// Dario: should be transparent for Ryan's purposes but required by Extjs
-		boost::regex re2("%20") ;
-		path = boost::regex_replace(path,re2," ") ;// Dario: should be transparent for Ryan's purposes but required by Extjs
-		boost::regex re3("%3A") ;
-		path = boost::regex_replace(path,re3,"" ) ;// Dario: should be transparent for Ryan's purposes but required by Extjs
- 		ss.str("") ; ss << "path    : " << path ;
- 		STDLINE(ss.str(),ACCyan) ;
+		ss.str("");
+		ss << "PID: " << ::getpid();
+		//                STDLINE(ss.str(),ACCyan) ;
+		std::string  path = CgiDataUtilities::postData(cgiIn, "RootPath");
+		boost::regex re1("%2F");
+		path = boost::regex_replace(
+		    path, re1, "/");  // Dario: should be transparent for Ryan's purposes but
+		                      // required by Extjs
+		boost::regex re2("%20");
+		path = boost::regex_replace(
+		    path, re2, " ");  // Dario: should be transparent for Ryan's purposes but
+		                      // required by Extjs
+		boost::regex re3("%3A");
+		path =
+		    boost::regex_replace(path, re3, "");  // Dario: should be transparent for
+		                                          // Ryan's purposes but required by Extjs
+		ss.str("");
+		ss << "path    : " << path;
+		STDLINE(ss.str(), ACCyan);
 		std::string fullPath = std::string(__ENV__("ROOT_BROWSER_PATH")) + path;
- 		ss.str("") ; ss << "fullPath: " << fullPath ;
- 		STDLINE(ss.str(),"") ;
+		ss.str("");
+		ss << "fullPath: " << fullPath;
+		STDLINE(ss.str(), "");
 
 		__SUP_COUTV__(fullPath);
 
@@ -534,10 +564,9 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		std::string rootFileName = fullPath.substr(0, rootExtensionEnd);
 
 		__SUP_COUTV__(rootFileName);
-		std::string rootDirectoryName = rootFileName + 
-                                                ":"          +
-		                                fullPath.substr(rootExtensionEnd, fullPath.size() - rootExtensionEnd + 1);
-		    
+		std::string rootDirectoryName =
+		    rootFileName + ":" +
+		    fullPath.substr(rootExtensionEnd, fullPath.size() - rootExtensionEnd + 1);
 
 		__SUP_COUTV__(rootDirectoryName);
 		std::string::size_type LDQM_pos = path.find("/" + LIVEDQM_DIR + ".root/");
@@ -557,7 +586,7 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		else
 		{
 			if(theDataManager_ != nullptr &&
-					theDataManager_->getLiveDQMHistos() != nullptr)
+			   theDataManager_->getLiveDQMHistos() != nullptr)
 			{
 				__SUP_COUT__ << "Attempting to get LIVE ROOT object." << __E__;
 				__SUP_COUTV__(rootDirectoryName);
@@ -590,7 +619,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 
 		// at this point initial ROOT object has been successfully opened
 
-		xmlOut.addTextElementToData("path", path);STDLINE(string("######## getting directory from ")+rootDirectoryName,"") ;
+		xmlOut.addTextElementToData("path", path);
+		STDLINE(string("######## getting directory from ") + rootDirectoryName, "");
 		TDirectory* directory = rootFile->GetDirectory(rootDirectoryName.c_str());
 		TObject*    tobject   = nullptr;
 
@@ -627,7 +657,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 			__SUP_COUTV__(tobject->ClassName());
 
 			if(std::string(tobject->ClassName()) == "TTree" ||
-			   std::string(tobject->ClassName()).find("TBranch")    != std::string::npos || // == "TBranchElement" ||
+			   std::string(tobject->ClassName()).find("TBranch") !=
+			       std::string::npos ||  // == "TBranchElement" ||
 			   std::string(tobject->ClassName()).find("TDirectory") != std::string::npos)
 			{
 				// continue traversing name split
@@ -644,13 +675,15 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 					if(std::string(tobject->ClassName()) == "TTree")
 						tobject = (TObject*)((TTree*)tobject)
 						              ->GetBranch(splitTTreePath[spliti].c_str());
-					else if(std::string(tobject->ClassName()).find("TBranch") != std::string::npos)
+					else if(std::string(tobject->ClassName()).find("TBranch") !=
+					        std::string::npos)
 						tobject = (TObject*)((TBranchElement*)tobject)
 						              ->FindBranch(splitTTreePath[spliti].c_str());
-					else if(std::string(tobject->ClassName()).find("TDirectory") != std::string::npos)
+					else if(std::string(tobject->ClassName()).find("TDirectory") !=
+					        std::string::npos)
 						tobject = (TObject*)((TDirectoryFile*)tobject)
 						              ->Get(splitTTreePath[spliti].c_str());
-					
+
 					++spliti;  // search for next non-empty
 				} while(tobject);
 
@@ -671,7 +704,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 
 				if(std::string(tobject->ClassName()) == "TTree")
 					objects = ((TTree*)tobject)->GetListOfBranches();
-				else if(std::string(tobject->ClassName()).find("TBranch") != std::string::npos)//== "TBranchElement")
+				else if(std::string(tobject->ClassName()).find("TBranch") !=
+				        std::string::npos)  //== "TBranchElement")
 					objects = ((TBranchElement*)tobject)->GetListOfBranches();
 
 				if(objects != nullptr && !objects->IsEmpty())
@@ -692,7 +726,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 						__SUP_COUT__ << "Child class Name: " << obj->IsA()->GetName()
 						             << " " << name << __E__;
 
-						if(std::string(obj->IsA()->GetName()).find("TBranch") != std::string::npos)// == "TBranchElement")
+						if(std::string(obj->IsA()->GetName()).find("TBranch") !=
+						   std::string::npos)  // == "TBranchElement")
 						{
 							// decide if leave based on children branches
 							__SUP_COUT__
@@ -744,36 +779,38 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 				__SUP_SS_THROW__;
 			}
 
-			//TObject* tobjectClone = nullptr;
+			// TObject* tobjectClone = nullptr;
 
 			if(tobject != nullptr)  // turns out was a root object path
 			{
-				//ignore lock, because Lore says only crashed with Canvas
-				
-				//FIXME -- check this new histo and gDirectory->Get for memory leak!
-				bool doJSONobject = false;
-				TH1F* h8 = nullptr;
-				std::string tmpClassName =  tobject->ClassName();
+				// ignore lock, because Lore says only crashed with Canvas
+
+				// FIXME -- check this new histo and gDirectory->Get for memory leak!
+				bool        doJSONobject = false;
+				TH1F*       h8           = nullptr;
+				std::string tmpClassName = tobject->ClassName();
 				if(tmpClassName.find("TBranch") != std::string::npos)
 				{
-					__COUT__ << "Attempting to plot '" << tobject->ClassName() << "' type." << __E__;
-					
-					h8=new TH1F();
-					TTree * t3 = ((TBranch*)tobject)->GetTree();
+					__COUT__ << "Attempting to plot '" << tobject->ClassName()
+					         << "' type." << __E__;
+
+					h8        = new TH1F();
+					TTree* t3 = ((TBranch*)tobject)->GetTree();
 					//__COUT__ << "Attempting to plot '" << t3 << "' type." << __E__;
-					//__COUT__ << "JSON=" << TBufferJSON::ConvertToJSON(h8).Data() << __E__;
-					t3->Draw("Value>>h8","", "goff");					
+					//__COUT__ << "JSON=" << TBufferJSON::ConvertToJSON(h8).Data() <<
+					//__E__;
+					t3->Draw("Value>>h8", "", "goff");
 					tobject = gDirectory->Get("h8");
-					
-					__COUT__ << "Attempting to plot '" << tobject->ClassName() << "' type." << __E__;
+
+					__COUT__ << "Attempting to plot '" << tobject->ClassName()
+					         << "' type." << __E__;
 					doJSONobject = true;
 				}
-				
+
 				TString     json;
 				TBufferFile tBuffer(TBuffer::kWrite);
 				if(theDataManager_ != nullptr &&
-						theDataManager_->getLiveDQMHistos() != nullptr &&
-						LDQM_pos == 0)
+				   theDataManager_->getLiveDQMHistos() != nullptr && LDQM_pos == 0)
 				{
 					if(tobject->IsA() == TCanvas::Class())
 					{
@@ -784,32 +821,34 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 					    static_cast<DQMHistosConsumerBase*>(
 					        theDataManager_->getLiveDQMHistos())
 					        ->getFillHistoMutex());
-                                        if(std::string(tobject->ClassName()) == "TCanvas")
-                                         {
-                                           //tobject->Draw();
-                                           //__SUP_COUT__ << "Updating canvas!" << __E__;
-                                           dynamic_cast<TCanvas*>(tobject)->Update();
-                                           dynamic_cast<TCanvas*>(tobject)->Modified();
-                                         }
+					if(std::string(tobject->ClassName()) == "TCanvas")
+					{
+						// tobject->Draw();
+						//__SUP_COUT__ << "Updating canvas!" << __E__;
+						dynamic_cast<TCanvas*>(tobject)->Update();
+						dynamic_cast<TCanvas*>(tobject)->Modified();
+					}
 					json = TBufferJSON::ConvertToJSON(tobject);
 					tobject->Streamer(tBuffer);
 					//	__SUP_COUT__ << json.Data() << __E__;
 				}
 				else
 				{
-					//No need to lock from file!
+					// No need to lock from file!
 					json = TBufferJSON::ConvertToJSON(tobject);
 					tobject->Streamer(tBuffer);
 				}
-				
+
 				std::string hexString = BinaryStringMacros::binaryStringToHexString(
 				    tBuffer.Buffer(), tBuffer.Length());
 
 				//__SUP_COUT__ << "Returning object '" << tobject->GetName()
 				//             << "' of class '" << tobject->ClassName() << __E__;
-				
-				//cout << __LINE__ << "] Data: \n-->|" << json.Data() << "|<--" << std::endl;
-				xmlOut.addTextElementToData("rootType", doJSONobject?"JSON":tobject->ClassName());
+
+				// cout << __LINE__ << "] Data: \n-->|" << json.Data() << "|<--" <<
+				// std::endl;
+				xmlOut.addTextElementToData("rootType",
+				                            doJSONobject ? "JSON" : tobject->ClassName());
 				xmlOut.addTextElementToData("rootData", hexString);
 				xmlOut.addTextElementToData("rootJSON", json.Data());
 
@@ -841,7 +880,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 					    (std::string(obj->IsA()->GetName()).find("Directory") !=
 					         std::string::npos ||
 					     std::string(obj->IsA()->GetName()) == "TTree" ||
-					     std::string(obj->IsA()->GetName()).find("TBranch") != std::string::npos)// == "TBranchElement")
+					     std::string(obj->IsA()->GetName()).find("TBranch") !=
+					         std::string::npos)  // == "TBranchElement")
 					        ? "dir"
 					        : "file",
 					    obj->GetName());
@@ -863,7 +903,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 					    (std::string(key->GetClassName()).find("Directory") !=
 					         std::string::npos ||
 					     std::string(key->GetClassName()) == "TTree" ||
-					     std::string(key->GetClassName()).find("TBranch") != std::string::npos)// == "TBranchElement")
+					     std::string(key->GetClassName()).find("TBranch") !=
+					         std::string::npos)  // == "TBranchElement")
 					        ? "dir"
 					        : "file",
 					    key->GetName());
@@ -876,7 +917,9 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 			rootFile->Close();
 
 	}  // end getRoot handling
-	else if(  requestType == "getEvents")  //################################################################################################################
+	else if(
+	    requestType ==
+	    "getEvents")  //################################################################################################################
 	{
 		if(theDataManager_ == nullptr)
 		{
@@ -894,9 +937,9 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 			loadedRunNumber_ = Run;
 		}
 
-		/*DOMElement* eventsParent =*/ xmlOut.addTextElementToData("events", "");
-		//DOMElement* eventParent;
-		//char        str[40];
+		/*DOMElement* eventsParent =*/xmlOut.addTextElementToData("events", "");
+		// DOMElement* eventParent;
+		// char        str[40];
 
 		//		const Visual3DEvents& events = theDataManager_->getVisual3DEvents();
 		//		__SUP_COUT__ << "Preparing hits xml" << __E__;
@@ -939,7 +982,9 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		//		}
 		__SUP_COUT__ << "Done hits xml" << __E__;
 	}
-	else if(requestType == "getGeometry") //################################################################################################################
+	else if(
+	    requestType ==
+	    "getGeometry")  //################################################################################################################
 	{
 		__SUP_COUT__ << "getGeometry" << __E__;
 
@@ -954,7 +999,7 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 
 		__SUP_COUT__ << "getGeometry" << __E__;
 
-		/*DOMElement* geometryParent =*/ xmlOut.addTextElementToData("geometry", "");
+		/*DOMElement* geometryParent =*/xmlOut.addTextElementToData("geometry", "");
 		//		const Visual3DShapes& shapes =
 		// theDataManager_->getVisual3DGeometry().getShapes();
 		//
@@ -985,16 +1030,18 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		//			}
 		//		}
 	}
-	else if(requestType == "getRootConfig") //################################################################################################################
+	else if(
+	    requestType ==
+	    "getRootConfig")  //################################################################################################################
 	{
 		std::string path = CgiDataUtilities::postData(cgiIn, "RootConfigPath");
 		__SUP_COUT__ << "path " << path << __E__;
 
 		if(path.find("/" + PRE_MADE_ROOT_CFG_DIR + "/") ==
-				0)  // ROOT config path must start the path
+		   0)  // ROOT config path must start the path
 		{
 			path = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" +
-					path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2);
+			       path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2);
 			__SUP_COUT__ << "mod path " << path << __E__;
 		}
 
@@ -1007,9 +1054,11 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		}
 		else
 			xmlOut.addTextElementToData("status",
-					"Failed. File to properly load config file.");
+			                            "Failed. File to properly load config file.");
 	}
-	else if(requestType == "rootAdminControls") //################################################################################################################
+	else if(
+	    requestType ==
+	    "rootAdminControls")  //################################################################################################################
 	{
 		//		if(userPermissions < ROOT_VIEWER_PERMISSIONS_THRESHOLD)
 		//		{
@@ -1033,19 +1082,19 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		__SUP_COUT__ << "name " << name << __E__;
 
 		if(path.find("/" + PRE_MADE_ROOT_CFG_DIR + "/") ==
-				0)  // ROOT config path must start the path
+		   0)  // ROOT config path must start the path
 		{
 			path = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" +
-					path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2) + name;
+			       path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2) + name;
 			__SUP_COUT__ << "mod path " << path << __E__;
 
 			if(cmd == "mkdir")
 			{
 				if(mkdir(path.c_str(),
-						S_IRWXU | (S_IRGRP | S_IXGRP) |
-						(S_IROTH | S_IXOTH)))  // mode = drwx r-x r-x
+				         S_IRWXU | (S_IRGRP | S_IXGRP) |
+				             (S_IROTH | S_IXOTH)))  // mode = drwx r-x r-x
 					xmlOut.addTextElementToData("status",
-							"Failed. Directory create rejected.");
+					                            "Failed. Directory create rejected.");
 				else
 					xmlOut.addTextElementToData("status", "1");  // success
 			}
@@ -1054,8 +1103,8 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 				path += PRE_MADE_ROOT_CFG_FILE_EXT;  // add file extension
 
 				bool useRunWildCard =
-						atoi(CgiDataUtilities::postData(cgiIn, "useRunWildCard")
-				.c_str());  // 0 or 1
+				    atoi(CgiDataUtilities::postData(cgiIn, "useRunWildCard")
+				             .c_str());  // 0 or 1
 				std::string config = CgiDataUtilities::postData(cgiIn, "config");
 				__SUP_COUT__ << "config " << config << __E__;
 				__SUP_COUT__ << "useRunWildCard " << useRunWildCard << __E__;
@@ -1090,11 +1139,11 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 					else  // failed to load properly
 					{
 						xmlOut.addTextElementToData(
-								"status", "Failed. Fatal. Improper file format.");
+						    "status", "Failed. Fatal. Improper file format.");
 						if(remove(path.c_str()) != 0)
 							__SUP_COUT__ << "Failed. Could not remove poorly formed Root "
-							"config file!"
-							<< __E__;
+							                "config file!"
+							             << __E__;
 					}
 				}
 			}
@@ -1102,11 +1151,11 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 			{
 				// guess first directory and then file
 				if(rmdir(path.c_str()) == 0 ||
-						remove((path + PRE_MADE_ROOT_CFG_FILE_EXT).c_str()) == 0)
+				   remove((path + PRE_MADE_ROOT_CFG_FILE_EXT).c_str()) == 0)
 					xmlOut.addTextElementToData("status", "1");  // success
 				else
 					xmlOut.addTextElementToData("status",
-							"Failed. Target could not be deleted.");
+					                            "Failed. Target could not be deleted.");
 			}
 			else
 				xmlOut.addTextElementToData("status", "Failed. Unrecognized command.");
@@ -1116,7 +1165,9 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 
 		//}
 	}
-	else if( requestType == "getMeDirs")  //################################################################################################################
+	else if(
+	    requestType ==
+	    "getMeDirs")  //################################################################################################################
 	{
 		xmlOut.setDarioStyle(true);  // workaround for XML formatting....
 		std::string  fSystemPath = std::string(ROOT_BROWSER_PATH) + "/";
@@ -1135,106 +1186,109 @@ void VisualSupervisorV2::request(const std::string               & requestType,
 		std::ostringstream* out = new std::ostringstream();
 		xmlOut.outputXmlDocument((std::ostringstream*)out, true);
 	}
-        else if(requestType == "getMeRootFile") //################################################################################################################
-        {
-               xmlOut.setDarioStyle(true) ; // workaround for XML formatting....
-	       std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
-	       std::string fRootPath     = CgiDataUtilities::postData(cgiIn, "fRootPath"    );
-	       std::string fFoldersPath  = CgiDataUtilities::postData(cgiIn, "fFoldersPath" );
-	       std::string fHistName     = CgiDataUtilities::postData(cgiIn, "fHistName"    );
-	       std::string fRFoldersPath = CgiDataUtilities::postData(cgiIn, "fRFoldersPath");
-	       std::string fFileName     = CgiDataUtilities::postData(cgiIn, "fFileName"    );
-               boost::regex re("%2F") ;
-               fRootPath    = boost::regex_replace(fRootPath   ,re,"/") ;
-               fFoldersPath = boost::regex_replace(fFoldersPath,re,"/") ;
-	       STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
-	       STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
-	       STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
-	       STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
-	       STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
- 	       STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
-               RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, 
-                                                                     fRootPath, 
-                                                                     fFoldersPath, 
-                                                                     fHistName, 
-                                                                     fRFoldersPath, 
-                                                                     fFileName) ;
-               xmlOut.setDocument(theExplorer->initialize(false)) ;
-               std::ostringstream* out = NULL ;
-	       xmlOut.outputXmlDocument((std::ostringstream*) out, true);
-        }
-	else if(requestType == "getMeLIVE-DQMFile") //################################################################################################################
-        {
-               xmlOut.setDarioStyle(true) ; // workaround for XML formatting....
-	       std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
-	       std::string fRootPath     = CgiDataUtilities::postData(cgiIn, "fRootPath"    );
-	       std::string fFoldersPath  = CgiDataUtilities::postData(cgiIn, "fFoldersPath" );
-	       std::string fHistName     = CgiDataUtilities::postData(cgiIn, "fHistName"    );
-	       std::string fRFoldersPath = CgiDataUtilities::postData(cgiIn, "fRFoldersPath");
-	       std::string fFileName     = CgiDataUtilities::postData(cgiIn, "fFileName"    );
-	       STDLINE(std::string("fSystemPath  : ")+fSystemPath  ,ACCyan);
-	       STDLINE(std::string("fRootPath    : ")+fRootPath    ,ACCyan);
-	       STDLINE(std::string("fFoldersPath : ")+fFoldersPath ,ACCyan);
-	       STDLINE(std::string("fHistName    : ")+fHistName    ,ACCyan);
-	       STDLINE(std::string("fRFoldersPath: ")+fRFoldersPath,ACCyan);
- 	       STDLINE(std::string("fFileName    : ")+fFileName    ,ACCyan);
-               boost::regex re("%2F") ;
-               fRootPath     = boost::regex_replace(fRootPath    ,re,"/") ;
-               fFoldersPath  = boost::regex_replace(fFoldersPath ,re,"/") ;
-               fRFoldersPath = boost::regex_replace(fRFoldersPath,re,"/") ;
+	else if(
+	    requestType ==
+	    "getMeRootFile")  //################################################################################################################
+	{
+		xmlOut.setDarioStyle(true);  // workaround for XML formatting....
+		std::string  fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
+		std::string  fRootPath     = CgiDataUtilities::postData(cgiIn, "fRootPath");
+		std::string  fFoldersPath  = CgiDataUtilities::postData(cgiIn, "fFoldersPath");
+		std::string  fHistName     = CgiDataUtilities::postData(cgiIn, "fHistName");
+		std::string  fRFoldersPath = CgiDataUtilities::postData(cgiIn, "fRFoldersPath");
+		std::string  fFileName     = CgiDataUtilities::postData(cgiIn, "fFileName");
+		boost::regex re("%2F");
+		fRootPath    = boost::regex_replace(fRootPath, re, "/");
+		fFoldersPath = boost::regex_replace(fFoldersPath, re, "/");
+		STDLINE(std::string("fSystemPath  : ") + fSystemPath, ACCyan);
+		STDLINE(std::string("fRootPath    : ") + fRootPath, ACCyan);
+		STDLINE(std::string("fFoldersPath : ") + fFoldersPath, ACCyan);
+		STDLINE(std::string("fHistName    : ") + fHistName, ACCyan);
+		STDLINE(std::string("fRFoldersPath: ") + fRFoldersPath, ACCyan);
+		STDLINE(std::string("fFileName    : ") + fFileName, ACCyan);
+		RootFileExplorer* theExplorer = new RootFileExplorer(
+		    fSystemPath, fRootPath, fFoldersPath, fHistName, fRFoldersPath, fFileName);
+		xmlOut.setDocument(theExplorer->initialize(false));
+		std::ostringstream* out = NULL;
+		xmlOut.outputXmlDocument((std::ostringstream*)out, true);
+	}
+	else if(
+	    requestType ==
+	    "getMeLIVE-DQMFile")  //################################################################################################################
+	{
+		xmlOut.setDarioStyle(true);  // workaround for XML formatting....
+		std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
+		std::string fRootPath     = CgiDataUtilities::postData(cgiIn, "fRootPath");
+		std::string fFoldersPath  = CgiDataUtilities::postData(cgiIn, "fFoldersPath");
+		std::string fHistName     = CgiDataUtilities::postData(cgiIn, "fHistName");
+		std::string fRFoldersPath = CgiDataUtilities::postData(cgiIn, "fRFoldersPath");
+		std::string fFileName     = CgiDataUtilities::postData(cgiIn, "fFileName");
+		STDLINE(std::string("fSystemPath  : ") + fSystemPath, ACCyan);
+		STDLINE(std::string("fRootPath    : ") + fRootPath, ACCyan);
+		STDLINE(std::string("fFoldersPath : ") + fFoldersPath, ACCyan);
+		STDLINE(std::string("fHistName    : ") + fHistName, ACCyan);
+		STDLINE(std::string("fRFoldersPath: ") + fRFoldersPath, ACCyan);
+		STDLINE(std::string("fFileName    : ") + fFileName, ACCyan);
+		boost::regex re("%2F");
+		fRootPath     = boost::regex_replace(fRootPath, re, "/");
+		fFoldersPath  = boost::regex_replace(fFoldersPath, re, "/");
+		fRFoldersPath = boost::regex_replace(fRFoldersPath, re, "/");
 
- 	       TFile * rootFile; 
- 	       if(theDataManager_->getLiveDQMHistos() != nullptr )
-               {
-                rootFile  = theDataManager_->getLiveDQMHistos()->getFile();
-                fRootPath = "LIVE_DQM.root" ;
-               } 
-               else
-               {
-                rootFile = TFile::Open(fRootPath.c_str());
-               }
-               RootFileExplorer * theExplorer = new RootFileExplorer(fSystemPath, 
-                                                                     fRootPath, 
-                                                                     fFoldersPath, 
-                                                                     fHistName, 
-                                                                     fRFoldersPath, 
-                                                                     fFileName, 
-                                                                     rootFile) ;
-               xmlOut.setDocument(theExplorer->initialize(true)) ;
-               std::ostringstream* out = NULL;
-	       xmlOut.outputXmlDocument((std::ostringstream*) out, true);
-        }
-	else if(requestType == "saveConfiguration") //################################################################################################################
-        {
-	       std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
-               STDLINE("configPayload: ",ACRed   ) ;
-               STDLINE(configPayload    ,ACYellow) ;
-               
-               fstream outFile;
-               outFile.open("/tmp/configPayload.json", ios::out | ios::app);
-               outFile << configPayload << endl ;
-               outFile.close() ;
-        }
-	else if(requestType == "getConfiguration") //################################################################################################################
-        {
-	       std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
-               std::string JSONPayLoad   = "" ;
-               std::string line          = "" ;
-         
-               ifstream JSONFile("/tmp/configPayload.json");
+		TFile* rootFile;
+		if(theDataManager_->getLiveDQMHistos() != nullptr)
+		{
+			rootFile  = theDataManager_->getLiveDQMHistos()->getFile();
+			fRootPath = "LIVE_DQM.root";
+		}
+		else
+		{
+			rootFile = TFile::Open(fRootPath.c_str());
+		}
+		RootFileExplorer* theExplorer = new RootFileExplorer(fSystemPath,
+		                                                     fRootPath,
+		                                                     fFoldersPath,
+		                                                     fHistName,
+		                                                     fRFoldersPath,
+		                                                     fFileName,
+		                                                     rootFile);
+		xmlOut.setDocument(theExplorer->initialize(true));
+		std::ostringstream* out = NULL;
+		xmlOut.outputXmlDocument((std::ostringstream*)out, true);
+	}
+	else if(
+	    requestType ==
+	    "saveConfiguration")  //################################################################################################################
+	{
+		std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
+		STDLINE("configPayload: ", ACRed);
+		STDLINE(configPayload, ACYellow);
 
-               if( JSONFile.is_open() )
-               {
-                while( getline(JSONFile,line) )
-                {
-                 JSONPayLoad += line ;
-                }
-                JSONFile.close() ;
-               }
+		fstream outFile;
+		outFile.open("/tmp/configPayload.json", ios::out | ios::app);
+		outFile << configPayload << endl;
+		outFile.close();
+	}
+	else if(
+	    requestType ==
+	    "getConfiguration")  //################################################################################################################
+	{
+		std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
+		std::string JSONPayLoad   = "";
+		std::string line          = "";
 
-	       xmlOut.addTextElementToData("JSONPayLoad", JSONPayLoad);
-//               std::ostringstream* out = NULL;
-//	       xmlOut.outputXmlDocument((std::ostringstream*) out, true);
-        }
+		ifstream JSONFile("/tmp/configPayload.json");
+
+		if(JSONFile.is_open())
+		{
+			while(getline(JSONFile, line))
+			{
+				JSONPayLoad += line;
+			}
+			JSONFile.close();
+		}
+
+		xmlOut.addTextElementToData("JSONPayLoad", JSONPayLoad);
+		//               std::ostringstream* out = NULL;
+		//	       xmlOut.outputXmlDocument((std::ostringstream*) out, true);
+	}
 }
-

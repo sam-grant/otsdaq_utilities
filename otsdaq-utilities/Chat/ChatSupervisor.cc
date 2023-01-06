@@ -35,7 +35,7 @@ void ChatSupervisor::destroy(void)
 }
 
 ////==============================================================================
-//void ChatSupervisor::defaultPage(xgi::Input* cgiIn, xgi::Output* out)
+// void ChatSupervisor::defaultPage(xgi::Input* cgiIn, xgi::Output* out)
 //{
 //	out->getHTTPResponseHeader().addHeader("Access-Control-Allow-Origin","http://correlator2.fnal.gov");
 //	out->getHTTPResponseHeader().addHeader("Pragma", "no-cache");
@@ -45,7 +45,7 @@ void ChatSupervisor::destroy(void)
 //	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
 //	        "src='/WebPath/html/Chat.html?urn="
 //	     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
-//} //end defaultPage()
+// } //end defaultPage()
 
 //==============================================================================
 // forceSupervisorPropertyValues
@@ -55,15 +55,15 @@ void ChatSupervisor::forceSupervisorPropertyValues()
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
 	    "RefreshChat");
-} ///end forceSupervisorPropertyValues()
+}  /// end forceSupervisorPropertyValues()
 
 //==============================================================================
 //	request
 //		Handles Web Interface requests to chat supervisor.
 //		Does not refresh cookie for automatic update checks.
-void ChatSupervisor::request(const std::string&               requestType,
-                             cgicc::Cgicc&                    cgiIn,
-                             HttpXmlDocument&                 xmlOut,
+void ChatSupervisor::request(const std::string& requestType,
+                             cgicc::Cgicc&      cgiIn,
+                             HttpXmlDocument&   xmlOut,
                              const WebUsers::RequestUserInfo& /*userInfo*/)
 {
 	//__COUT__ << "requestType: " << requestType << std::endl;
@@ -100,9 +100,9 @@ void ChatSupervisor::request(const std::string&               requestType,
 	}
 	else if(requestType == "PageUser")
 	{
-		std::string topage = CgiDataUtilities::postData(cgiIn, "topage");
+		std::string  topage   = CgiDataUtilities::postData(cgiIn, "topage");
 		unsigned int topageId = CgiDataUtilities::postDataAsInt(cgiIn, "topageId");
-		std::string user   = CgiDataUtilities::postData(cgiIn, "user");
+		std::string  user     = CgiDataUtilities::postData(cgiIn, "user");
 
 		__COUT__ << "Paging = " << topage.substr(0, 10)
 		         << "... from user = " << user.substr(0, 10) << std::endl;
@@ -128,16 +128,14 @@ void ChatSupervisor::escapeChat(std::string& /*chat*/)
 	//	for(uint64_t i=0;i<chat.size();++i)
 	//		for(uint64_t j=0;j<chat.size();++j)
 	//		if(chat[i] ==
-} //end escapeChat()
+}  // end escapeChat()
 
 //==============================================================================
 // ChatSupervisor::insertActiveUsers()
 void ChatSupervisor::insertActiveUsers(HttpXmlDocument* xmlOut)
 {
-	xmlOut->addTextElementToData(
-	    "active_users",
-	    theRemoteWebUsers_.getActiveUserList());
-} //end insertActiveUsers()
+	xmlOut->addTextElementToData("active_users", theRemoteWebUsers_.getActiveUserList());
+}  // end insertActiveUsers()
 
 //==============================================================================
 // ChatSupervisor::insertChatRefresh()
@@ -146,9 +144,9 @@ void ChatSupervisor::insertActiveUsers(HttpXmlDocument* xmlOut)
 //	if lastUpdateIndex is current, return nothing
 //	else return full chat user list and new chats
 //	(note: lastUpdateIndex==0 first time and returns only user list. no chats)
-void ChatSupervisor::insertChatRefresh(HttpXmlDocument* xmlOut,
-                                       uint64_t         lastUpdateIndex,
-                                       const std::string&      user)
+void ChatSupervisor::insertChatRefresh(HttpXmlDocument*   xmlOut,
+                                       uint64_t           lastUpdateIndex,
+                                       const std::string& user)
 {
 	newUser(user);
 
@@ -185,7 +183,7 @@ void ChatSupervisor::insertChatRefresh(HttpXmlDocument* xmlOut,
 		sprintf(tempStr, "%lu", ChatHistoryTime_[i]);
 		xmlOut->addTextElementToParent("chat_time", tempStr, "chat_history");
 	}
-} //end insertChatRefresh()
+}  // end insertChatRefresh()
 
 //==============================================================================
 // ChatSupervisor::newUser()
@@ -205,7 +203,7 @@ void ChatSupervisor::newUser(const std::string& user)
 	ChatUsersTime_.push_back(time(0));
 	newChat(user + " joined the chat.",
 	        "ots");  // add status message to chat, increment update
-} //end newUser()
+}  // end newUser()
 
 //==============================================================================
 // ChatSupervisor::newChat()

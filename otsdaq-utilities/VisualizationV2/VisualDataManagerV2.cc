@@ -15,8 +15,9 @@
 using namespace ots;
 
 //==============================================================================
-VisualDataManagerV2::VisualDataManagerV2(const ConfigurationTree& theXDAQContextConfigTree,
-                                     const std::string&       supervisorConfigurationPath)
+VisualDataManagerV2::VisualDataManagerV2(
+    const ConfigurationTree& theXDAQContextConfigTree,
+    const std::string&       supervisorConfigurationPath)
     : DataManager(theXDAQContextConfigTree, supervisorConfigurationPath)
     , theLiveDQMHistos_(nullptr)
     , theRawDataConsumer_(nullptr)

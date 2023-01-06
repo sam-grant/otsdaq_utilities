@@ -39,9 +39,9 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	void requestWrapper(xgi::Input* in, xgi::Output* out);
 	// end MacroMaker only functions
 
-	void handleRequest(const std::string  Command,
-	                   HttpXmlDocument&   xmldoc,
-	                   cgicc::Cgicc&      cgi,
+	void handleRequest(const std::string                Command,
+	                   HttpXmlDocument&                 xmldoc,
+	                   cgicc::Cgicc&                    cgi,
 	                   const WebUsers::RequestUserInfo& userInfo);
 
 	xoap::MessageReference frontEndCommunicationRequest(xoap::MessageReference message);
@@ -85,8 +85,8 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	void exportFEMacro(HttpXmlDocument&   xmldoc,
 	                   cgicc::Cgicc&      cgi,
 	                   const std::string& username);
-	void runFEMacro(HttpXmlDocument&   xmldoc,
-	                cgicc::Cgicc&      cgi,
+	void runFEMacro(HttpXmlDocument&                 xmldoc,
+	                cgicc::Cgicc&                    cgi,
 	                const WebUsers::RequestUserInfo& username);
 
 	std::string generateHexArray(const std::string& sourceHexString, int& numOfBytes);
@@ -110,6 +110,6 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 
 };  // end MacroMakerSupervisor declaration
 
-}  // end ots namespace
+}  // namespace ots
 
 #endif

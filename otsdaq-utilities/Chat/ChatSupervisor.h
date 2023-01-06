@@ -18,7 +18,7 @@ class ChatSupervisor : public CoreSupervisorBase
 
 	void destroy(void);
 
-	//virtual void defaultPage(xgi::Input* in, xgi::Output* out) override;
+	// virtual void defaultPage(xgi::Input* in, xgi::Output* out) override;
 	virtual void request(const std::string&               requestType,
 	                     cgicc::Cgicc&                    cgiIn,
 	                     HttpXmlDocument&                 xmlOut,
@@ -60,13 +60,13 @@ class ChatSupervisor : public CoreSupervisorBase
 	void removeChatUserEntry(uint64_t i);
 	void cleanupExpiredChats(void);
 
-	void insertActiveUsers(HttpXmlDocument* 	xmldoc);
-	void insertChatRefresh(HttpXmlDocument* 	xmldoc,
-	                       uint64_t         	lastUpdateIndex,
-	                       const std::string&   user);
+	void insertActiveUsers(HttpXmlDocument* xmldoc);
+	void insertChatRefresh(HttpXmlDocument*   xmldoc,
+	                       uint64_t           lastUpdateIndex,
+	                       const std::string& user);
 
 	void escapeChat(std::string& chat);
 };
-}
+}  // namespace ots
 
 #endif

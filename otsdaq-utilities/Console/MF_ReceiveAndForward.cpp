@@ -82,10 +82,10 @@ void* get_in_addr(struct sockaddr* sa)
 
 int makeSocket(const char* ip, int port, struct addrinfo*& p)
 {
-	int                     sockfd;
-	struct addrinfo         hints, *servinfo;
-	int                     rv;
-	//char                    s[INET6_ADDRSTRLEN];
+	int             sockfd;
+	struct addrinfo hints, *servinfo;
+	int             rv;
+	// char                    s[INET6_ADDRSTRLEN];
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family   = AF_UNSPEC;
@@ -118,8 +118,6 @@ int makeSocket(const char* ip, int port, struct addrinfo*& p)
 
 	freeaddrinfo(servinfo);
 
-	
-
 	return sockfd;
 }
 
@@ -127,9 +125,9 @@ int main(int argc, char** argv)
 {
 	__COUT__ << "Starting...\n\n" << __E__;
 
-	std::string myPort_("3000");        // set default
-	std::string myFwdPort_("3001");     // set default
-	std::string myFwdIP_("127.0.0.1");  // set default
+	std::string myPort_("3000");             // set default
+	std::string myFwdPort_("3001");          // set default
+	std::string myFwdIP_("127.0.0.1");       // set default
 	std::string enablePrintouts_("do not");  // set default
 	if(argc >= 2)
 	{
@@ -175,7 +173,7 @@ int main(int argc, char** argv)
 	struct sockaddr_storage their_addr;
 	char                    buff[MAXBUFLEN * 3];
 	socklen_t               addr_len;
-	//char                    s[INET6_ADDRSTRLEN];
+	// char                    s[INET6_ADDRSTRLEN];
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family   = AF_UNSPEC;  // set to AF_INET to force IPv4
@@ -198,7 +196,7 @@ int main(int argc, char** argv)
 			continue;
 		}
 
-		if(bind(sockfd, p->ai_addr, p->ai_addrlen) < 0 )
+		if(bind(sockfd, p->ai_addr, p->ai_addrlen) < 0)
 		{
 			close(sockfd);
 			__COUT__ << "listener: bind.\n\n" << __E__;
@@ -234,29 +232,28 @@ int main(int argc, char** argv)
 
 	int       socketLength       = 0;
 	socklen_t sizeOfSocketLength = sizeof(socketLength);
-	if(getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF,
-		&socketLength, &sizeOfSocketLength) < 0)
+	if(getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &socketLength, &sizeOfSocketLength) < 0)
 		__COUT_ERR__ << "Failed to set socket receive size to 0x" << std::hex
 		             << socketReceiveBufferSize << std::dec
 		             << ". Attempting to revert to default." << std::endl;
 	else
 		__COUT__ << "set socket receive size verified at 0x" << std::hex << socketLength
-				<< std::dec << "." << __E__;	
+		         << std::dec << "." << __E__;
 
 	//////////////////////////////////////////////////////////////////////
 	////////////// ready to go //////////////
 	//////////////////////////////////////////////////////////////////////
 
 	// hardware "registers"
-	//uint64_t data_gen_cnt  = 0;
-	//uint64_t data_gen_rate = 1 << 16;
-	//uint8_t  dataEnabled   = 0;
+	// uint64_t data_gen_cnt  = 0;
+	// uint64_t data_gen_rate = 1 << 16;
+	// uint8_t  dataEnabled   = 0;
 
-	//const unsigned int RX_ADDR_OFFSET = 2;
-	//const unsigned int RX_DATA_OFFSET = 10;
-	//const unsigned int TX_DATA_OFFSET = 2;
+	// const unsigned int RX_ADDR_OFFSET = 2;
+	// const unsigned int RX_DATA_OFFSET = 10;
+	// const unsigned int TX_DATA_OFFSET = 2;
 
-	//unsigned int packetSz;
+	// unsigned int packetSz;
 	unsigned int pingCounter = 0;
 
 	// for timeout/select
@@ -267,20 +264,20 @@ int main(int argc, char** argv)
 	FD_ZERO(&masterfds);
 	FD_SET(sockfd, &masterfds);
 
-	//time_t count = 0;
+	// time_t count = 0;
 
-	int       mf_p, mf_i, mf_j;  // for extracting message
-	const int MF_POS_OF_ID  = 2;
-	const int MF_POS_OF_TYPE = 5;
-	const int MF_POS_OF_MSG  = 11;
-	bool      firstPartPresent;
+	int          mf_p, mf_i, mf_j;  // for extracting message
+	const int    MF_POS_OF_ID   = 2;
+	const int    MF_POS_OF_TYPE = 5;
+	const int    MF_POS_OF_MSG  = 11;
+	bool         firstPartPresent;
 	unsigned int buffi = 0, buffStarti = 0, packCount = 1;
-	char	saveChar = '\0', saveChar2;
-	
-	int		mf_labeli, mf_labelsi;
-	unsigned int 	newSequenceId;
+	char         saveChar = '\0', saveChar2;
+
+	int          mf_labeli, mf_labelsi;
+	unsigned int newSequenceId;
 	unsigned int processId;
-	
+
 	std::map<unsigned int, unsigned int>
 	    sourceLastSequenceID;  // map from sourceID to
 	                           // lastSequenceID to
@@ -303,11 +300,11 @@ int main(int argc, char** argv)
 
 			addr_len = sizeof their_addr;
 			if((recvBytes = recvfrom(sockfd,
-			                        &buff[buffi],
-			                        MAXBUFLEN - 1,
-			                        0,
-			                        (struct sockaddr*)&their_addr,
-			                        &addr_len)) == -1)
+			                         &buff[buffi],
+			                         MAXBUFLEN - 1,
+			                         0,
+			                         (struct sockaddr*)&their_addr,
+			                         &addr_len)) == -1)
 			{
 				__COUT__ << "error: recvfrom...\n\n" << __E__;
 				perror("recvfrom");
@@ -346,75 +343,74 @@ int main(int argc, char** argv)
 			// count markers to find message
 
 			if(enablePrintouts)
-				std::cout << "|||" << &buff[buffi] << __E__; // show all
+				std::cout << "|||" << &buff[buffi] << __E__;  // show all
 			// e.g. UDPMFMESSAGE7370|01-Jul-2019 11:12:44
 			// CDT|3|correlator2.fnal.gov|131.225.52.45|Info|_TCPConnect|xdaq.exe|7370|Booted|DAQ|TCPConnect.cc|241|Resolving
 			// ip correlator2.fnal.gov
 
 			if(1)
 			{
-				//get sequence ID
-				mf_labeli = 0;
+				// get sequence ID
+				mf_labeli  = 0;
 				mf_labelsi = 0;
 				for(mf_p = 0, mf_i = 0; mf_i < recvBytes && mf_p < MF_POS_OF_ID; ++mf_i)
-						if(buff[buffi + mf_i] == '|')
-						{
-							++mf_p;  // count markers
-							if(!mf_labeli)
-								mf_labeli = mf_i;
-						}
-						else if(!mf_labeli && 
-							!(buff[buffi + mf_i] >= '0' && buff[buffi + mf_i] <= '9'))
-							mf_labelsi = mf_i;
+					if(buff[buffi + mf_i] == '|')
+					{
+						++mf_p;  // count markers
+						if(!mf_labeli)
+							mf_labeli = mf_i;
+					}
+					else if(!mf_labeli &&
+					        !(buff[buffi + mf_i] >= '0' && buff[buffi + mf_i] <= '9'))
+						mf_labelsi = mf_i;
 				for(mf_j = mf_i; mf_j < recvBytes; ++mf_j)
 					if(buff[buffi + mf_j] == '|')
 					{
 						break;
 					}
 
-				saveChar2 = buff[buffi + mf_labeli];
+				saveChar2               = buff[buffi + mf_labeli];
 				buff[buffi + mf_labeli] = '\0';
 				if(mf_j < recvBytes)
 				{
-					saveChar = buff[buffi + mf_j];
+					saveChar           = buff[buffi + mf_j];
 					buff[buffi + mf_j] = '\0';
 				}
 				newSequenceId = atoi(&buff[buffi + mf_i]);
-				processId = atoi(&buff[buffi + mf_labelsi + 1]);
-				
-				// std::cout << processId << ": " << 
+				processId     = atoi(&buff[buffi + mf_labelsi + 1]);
+
+				// std::cout << processId << ": " <<
 				// 	&buff[buffi + mf_i] << " ==> " << newSequenceId << __E__;
-				//avoid startup sequencing problem with MF
-				if(//(newSequenceId == 1 && sourceLastSequenceID[processId] == 5) && 
-					//!(newSequenceId == 5 && sourceLastSequenceID[processId] == 2) && 
-						sourceLastSequenceID.find(processId) !=
-							sourceLastSequenceID.end() &&  // ensure not first packet received
-						((newSequenceId == 0 && sourceLastSequenceID[processId] !=
-													(unsigned int)-1) ||  // wrap around case
-							newSequenceId !=
-								sourceLastSequenceID[processId] + 1))  // normal sequence case
+				// avoid startup sequencing problem with MF
+				if(  //(newSequenceId == 1 && sourceLastSequenceID[processId] == 5) &&
+				     //!(newSequenceId == 5 && sourceLastSequenceID[processId] == 2) &&
+				    sourceLastSequenceID.find(processId) !=
+				        sourceLastSequenceID.end() &&  // ensure not first packet received
+				    ((newSequenceId == 0 && sourceLastSequenceID[processId] !=
+				                                (unsigned int)-1) ||  // wrap around case
+				     newSequenceId !=
+				         sourceLastSequenceID[processId] + 1))  // normal sequence case
 				{
 					// missed some messages!
-					std::cout << "MFfwd missed " << 						
-						newSequenceId << " vs " << sourceLastSequenceID[processId] + 1 <<
-						" " << 
-						(newSequenceId - 1) - (sourceLastSequenceID[processId] + 1) + 1 <<
-						" packet(s) from " << processId
-						<< "!" << __E__;
+					std::cout << "MFfwd missed " << newSequenceId << " vs "
+					          << sourceLastSequenceID[processId] + 1 << " "
+					          << (newSequenceId - 1) -
+					                 (sourceLastSequenceID[processId] + 1) + 1
+					          << " packet(s) from " << processId << "!" << __E__;
 				}
-				// std::cout << &buff[buffi + mf_i - 1] << "|" << newSequenceId << " vs " <<
-				// 	sourceLastSequenceID[&buff[buffi + 0]] << "[" <<
-				// 	&buff[buffi + 0] << "]||" << &buff[buffi + mf_j + 1] << __E__; // show all w/sequence ID
-				
+				// std::cout << &buff[buffi + mf_i - 1] << "|" << newSequenceId << " vs "
+				// << 	sourceLastSequenceID[&buff[buffi + 0]] << "[" << 	&buff[buffi + 0]
+				// <<
+				// "]||" << &buff[buffi + mf_j + 1] << __E__; // show all w/sequence ID
+
 				// save the new last sequence ID
 				sourceLastSequenceID[processId] = newSequenceId;
 
-				//resolve nullchars
+				// resolve nullchars
 				if(mf_j < recvBytes)
 					buff[buffi + mf_j] = saveChar;
 				buff[buffi + mf_labeli] = saveChar2;
 			}
-			
 
 			if(1 || packCount > 10000)
 			{
@@ -429,7 +425,7 @@ int main(int argc, char** argv)
 				// print first part (message type)
 				if(mf_i < mf_j && mf_j < recvBytes)
 				{
-					saveChar = buff[buffi + mf_j - 1];
+					saveChar               = buff[buffi + mf_j - 1];
 					buff[buffi + mf_j - 1] = '\0';
 					// std::cout << &buff[buffi + mf_i - 1];
 					buff[buffi + mf_j - 1] = saveChar;
@@ -450,8 +446,9 @@ int main(int argc, char** argv)
 				if(packCount > 10000)
 				{
 					// print second part
-					if(mf_i < recvBytes)                         // if valid find, show message
-						std::cout << &buff[buffi + mf_i - 1] << __E__;  // show msg after '|'
+					if(mf_i < recvBytes)  // if valid find, show message
+						std::cout << &buff[buffi + mf_i - 1]
+						          << __E__;  // show msg after '|'
 					else if(firstPartPresent)
 						std::cout << __E__;
 				}
@@ -459,16 +456,18 @@ int main(int argc, char** argv)
 
 			// forward packet onto sendSockfd
 
-			//forward when we have a full packet
+			// forward when we have a full packet
 			if(buffi + recvBytes - buffStarti > MAXBUFLEN)
 			{
-				__COUT__ << "Pack count ==> " << packCount << " sz=" << 
-					buffi - buffStarti - 1 << __E__;
-				//send buffer without closing null character
-				if((sentBytes = sendto(
-						sendSockfd, &buff[buffStarti], 
-						buffi - buffStarti - 1, 
-						0, p->ai_addr, p->ai_addrlen)) == -1)
+				__COUT__ << "Pack count ==> " << packCount
+				         << " sz=" << buffi - buffStarti - 1 << __E__;
+				// send buffer without closing null character
+				if((sentBytes = sendto(sendSockfd,
+				                       &buff[buffStarti],
+				                       buffi - buffStarti - 1,
+				                       0,
+				                       p->ai_addr,
+				                       p->ai_addrlen)) == -1)
 				{
 					__COUT__ << "error: sendto...\n\n" << __E__;
 					perror("hw: sendto");
@@ -476,58 +475,63 @@ int main(int argc, char** argv)
 				}
 				// printf("hw: sent %d bytes on\n", sentBytes);
 
-				//now setup for next buffer
+				// now setup for next buffer
 				buffStarti = buffi;
-				buffi += recvBytes + 1; //go past null character
+				buffi += recvBytes + 1;  // go past null character
 				packCount = 1;
 
-				//if past point for safe receive of next packet, then lets bail on it now and send
-				if(buffi > MAXBUFLEN * 2) 				
+				// if past point for safe receive of next packet, then lets bail on it now
+				// and send
+				if(buffi > MAXBUFLEN * 2)
 				{
-					__COUT__ << "Wrap Pack count ==> " << packCount << " sz=" << 
-						buffi - buffStarti - 1 << __E__;
-					if((sentBytes = sendto(
-						sendSockfd, &buff[buffStarti], 
-						buffi - buffStarti - 1, 
-						0, p->ai_addr, p->ai_addrlen)) == -1)
+					__COUT__ << "Wrap Pack count ==> " << packCount
+					         << " sz=" << buffi - buffStarti - 1 << __E__;
+					if((sentBytes = sendto(sendSockfd,
+					                       &buff[buffStarti],
+					                       buffi - buffStarti - 1,
+					                       0,
+					                       p->ai_addr,
+					                       p->ai_addrlen)) == -1)
 					{
 						__COUT__ << "error: sendto...\n\n" << __E__;
 						perror("hw: sendto");
 						exit(1);
 					}
-					//reset for next buffer
+					// reset for next buffer
 					buffStarti = 0;
-					buffi = 0;
-					packCount = 1;
+					buffi      = 0;
+					packCount  = 1;
 				}
-			} //end handle full packet
-			else //we do not have a full packet, so setup buff for next packet
+			}     // end handle full packet
+			else  // we do not have a full packet, so setup buff for next packet
 			{
-				buffi += recvBytes + 1; //go past null character
+				buffi += recvBytes + 1;  // go past null character
 				++packCount;
 
-				//bail on decent sized packet, so buffer can return to start efficiently
-				if(buffi > MAXBUFLEN && packCount > 12) 				
+				// bail on decent sized packet, so buffer can return to start efficiently
+				if(buffi > MAXBUFLEN && packCount > 12)
 				{
-					__COUT__ << "WrapAvoid Pack count ==> " << packCount << " sz=" << 
-						buffi - buffStarti - 1 << __E__;
-					if((sentBytes = sendto(
-						sendSockfd, &buff[buffStarti], 
-						buffi - buffStarti - 1, 
-						0, p->ai_addr, p->ai_addrlen)) == -1)
+					__COUT__ << "WrapAvoid Pack count ==> " << packCount
+					         << " sz=" << buffi - buffStarti - 1 << __E__;
+					if((sentBytes = sendto(sendSockfd,
+					                       &buff[buffStarti],
+					                       buffi - buffStarti - 1,
+					                       0,
+					                       p->ai_addr,
+					                       p->ai_addrlen)) == -1)
 					{
 						__COUT__ << "error: sendto...\n\n" << __E__;
 						perror("hw: sendto");
 						exit(1);
 					}
-					//reset for next buffer
+					// reset for next buffer
 					buffStarti = 0;
-					buffi = 0;
-					packCount = 1;
+					buffi      = 0;
+					packCount  = 1;
 				}
 			}
 
-		} //end received packet case
+		}  // end received packet case
 		else
 		{
 			sleep(1);                   // one second
@@ -545,26 +549,28 @@ int main(int argc, char** argv)
 			}
 			else if(pingCounter > 1 && packCount > 1)
 			{
-				//forward partial packet while idle
-				__COUT__ << "Partial Pack count ==> " << packCount-1 << " sz=" << 
-						buffi - buffStarti - 1 << __E__;
+				// forward partial packet while idle
+				__COUT__ << "Partial Pack count ==> " << packCount - 1
+				         << " sz=" << buffi - buffStarti - 1 << __E__;
 
-				if((sentBytes = sendto(
-					sendSockfd, &buff[buffStarti], 
-					buffi - buffStarti - 1, 
-					0, p->ai_addr, p->ai_addrlen)) == -1)
+				if((sentBytes = sendto(sendSockfd,
+				                       &buff[buffStarti],
+				                       buffi - buffStarti - 1,
+				                       0,
+				                       p->ai_addr,
+				                       p->ai_addrlen)) == -1)
 				{
 					__COUT__ << "error: sendto...\n\n" << __E__;
 					perror("hw: sendto");
 					exit(1);
 				}
-				//reset for next buffer
+				// reset for next buffer
 				buffStarti = 0;
-				buffi = 0;
-				packCount = 1;
+				buffi      = 0;
+				packCount  = 1;
 			}
-		} //end no packet case
-	} //end main loop
+		}  // end no packet case
+	}      // end main loop
 
 	close(sockfd);
 	close(sendSockfd);
