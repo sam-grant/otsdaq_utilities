@@ -183,8 +183,13 @@
 						el.setAttribute("id", "Settings-colorInput"+i+j);
 						el.setAttribute("class", "Settings-el");	
 						el.setAttribute("spellcheck", "false");	
-						el.setAttribute("type", "text");	
+						el.setAttribute("type", "number");	
+						el.setAttribute("min", "0");	
+						el.setAttribute("max", "255");	
+						el.setAttribute("step", "5");	
 						el.onkeyup = colorEditHandler;
+						// el.onchange = colorEditHandler;
+						el.oninput = colorEditHandler;
 						colorDiv.appendChild(el); //add inputs						
 					}			
 					
@@ -1175,7 +1180,7 @@
 		<table><td>
 		<div id='colorInputs'></div>		
 		<div id='clearDiv'></div>
-		<a target='_blank' href='http://www.colorschemer.com/online.html'>RGB Generator</a> 
+		<a target='_blank' href='http://www.colorschemer.com/online'>RGB Generator</a> 
 		<a onmouseup='defaultColors(); return false;'>Default Colors</a>
 		</td></table>
 		<h3>Desktop Window Arrangement Presets:</h3>		

@@ -975,7 +975,8 @@ Desktop.createDesktop = function(security) {
 	//==============================================================================
     //clickedWindowDashboard ~~~
 	//	Handle window selection using dashboard
-	this.clickedWindowDashboard = function(id) {
+	this.clickedWindowDashboard = function(id) 
+	{
         var win = this.getWindowById(id);
 		if(win == -1) return -1;
         if(_getForeWindow() != win) { //if not currently foreground window, set as only
@@ -991,20 +992,43 @@ Desktop.createDesktop = function(security) {
 	//==============================================================================
 	//setDefaultWindowColor() ~~~
 	//	set background color for all windows
-	this.setDefaultWindowColor = function(color) {
+	this.setDefaultWindowColor = function(color) 
+	{
 		this.defaultWindowFrameColor = color;
 	    //_windowColorPostbox.innerHTML = this.defaultWindowFrameColor; //set to color string
 		
+		//same color code as DesktopWindow.js Creation constructor L385
+		//check if color is dark or light to determine text color
+		//assume rgba format (.9 alpha)
+		var rgbArr = color.split('(')[1].split(',');
+		var brightVal = rgbArr[0]*rgbArr[0] + rgbArr[1]*rgbArr[1] + rgbArr[2]*rgbArr[2];
+		var blueVal = (rgbArr[2]-rgbArr[0]) + 
+			(rgbArr[2]-rgbArr[1]);
+		Debug.logv({brightVal});
+		Debug.logv({blueVal});
+		var lightText = false;
+		//if too dark or too blue, make text light
+		if(brightVal < 40000 || blueVal > 90)
+			lightText = true;
+		
 		for(var i=0;i<_windows.length;++i)
+		{
 			_windows[i].windiv.style.backgroundColor = this.defaultWindowFrameColor;
-	}
+			//1st child node is the window header text
+			if(_windows[i].windiv.childNodes.length)
+				_windows[i].windiv.childNodes[0].style.color = lightText?"white":"#0f2269";
+		}
 
-	 	//defaultLayoutSelect() ~~~
-		//	set default layout of windows
-		//	0-1 are system defaults
-		//	3-5 are user defaults
-		//	6 is last saved layout checkpoint 
-	this.defaultLayoutSelect = function(i) {
+	} //end setDefaultWindowColor()
+
+	//==============================================================================
+	//defaultLayoutSelect() ~~~
+	//	set default layout of windows
+	//	0-1 are system defaults
+	//	3-5 are user defaults
+	//	6 is last saved layout checkpoint 
+	this.defaultLayoutSelect = function(i) 
+	{
 		Debug.log("Desktop defaultLayoutSelect " + i);
 			
 		var layoutStr;
@@ -2070,6 +2094,7 @@ Desktop.handleWindowManipulation = function(delta)
 		{
 			if(Math.abs(w.getWindowX() + w.getWindowWidth() - win.getWindowX()) <= TOLERANCE)
 			{
+				// Debug.log("left",w.getWindowName());
 				followTiledLeft.push(w);
 
 				// //fix matching edge within tolerance
@@ -2082,6 +2107,7 @@ Desktop.handleWindowManipulation = function(delta)
 			// OR if left edge aligned then grow with it
 			else if(Math.abs(w.getWindowX() - win.getWindowX()) <= TOLERANCE)
 			{
+				// Debug.log("right",w.getWindowName());
 				followTiledRight.push(w);
 
 				// //fix matching edge within tolerance
@@ -2101,20 +2127,27 @@ Desktop.handleWindowManipulation = function(delta)
 		)
 		{
 			if(Math.abs(w.getWindowX() - (win.getWindowX() + win.getWindowWidth())) <= TOLERANCE)
+			{
+				// Debug.log("right",w.getWindowName());
 				followTiledRight.push(w);
-			else if(Math.abs(w.getWindowX() - win.getWindowX()) <= TOLERANCE)
+			}
+			// OR if right edge aligned then grow with it
+			else if(Math.abs((w.getWindowX() + w.getWindowWidth()) - (win.getWindowX() + win.getWindowWidth())) <= TOLERANCE)
+			{
+				// Debug.log("left",w.getWindowName());
 				followTiledLeft.push(w);
+			}
 		}
 
 	} //end tiled prep loop
 
 	if(delta[0] || delta[1])
-	Debug.log("keepTile",keepTile,Desktop.winManipMode,
-		"followTiledRight",followTiledRight.length,
-		"followTiledTop",followTiledTop.length,
-		"followTiledLeft",followTiledLeft.length,
-		"followTiledBottom",followTiledBottom.length,
-		delta);
+		Debug.log("keepTile",keepTile,Desktop.winManipMode,
+			"followTiledRight",followTiledRight.length,(followTiledRight.length?followTiledRight[0].getWindowName():""),
+			"followTiledTop",followTiledTop.length,(followTiledTop.length?followTiledTop[0].getWindowName():""),
+			"followTiledLeft",followTiledLeft.length,(followTiledLeft.length?followTiledLeft[0].getWindowName():""),
+			"followTiledBottom",followTiledBottom.length,(followTiledBottom.length?followTiledBottom[0].getWindowName():""),
+			delta);
 
 	if(!keepTile)
 		Desktop.desktop.lastTileWinPositions = {}; //clear to avoid future checks
@@ -2199,176 +2232,179 @@ Desktop.handleWindowManipulation = function(delta)
 		default:
 	}
 	if(delta[0] || delta[1])
-	Debug.log(deltaResidual,delta);
+		Debug.log(deltaResidual,delta);
 
 	var winChangeStack = [];
 	if(delta[1])
-	for(var i=0;i<followTiledTop.length;++i)
-	{		
-		winChangeStack.push([followTiledTop[i],followTiledTop[i].resizeAndPositionWindow(
-			followTiledTop[i].getWindowX(),
-			followTiledTop[i].getWindowY(),
-			followTiledTop[i].getWindowWidth(),
-			followTiledTop[i].getWindowHeight() + delta[1] - deltaResidual[1] - deltaResidual[3])]);
-		lastPositions[followTiledTop[i].getWindowId()][3] = followTiledTop[i].getWindowHeight();
+		for(var i=0;i<followTiledTop.length;++i)
+		{		
+			winChangeStack.push([followTiledTop[i],followTiledTop[i].resizeAndPositionWindow(
+				followTiledTop[i].getWindowX(),
+				followTiledTop[i].getWindowY(),
+				followTiledTop[i].getWindowWidth(),
+				followTiledTop[i].getWindowHeight() + delta[1] - deltaResidual[1] - deltaResidual[3])]);
+			lastPositions[followTiledTop[i].getWindowId()][3] = followTiledTop[i].getWindowHeight();
 
-		//if affected window is in an illegal state, then stop movement in that direction
-		if(winChangeStack[winChangeStack.length-1][1][1] || winChangeStack[winChangeStack.length-1][1][3])
-		{
-			Debug.log("Halt Y!");
+			//if affected window is in an illegal state, then stop movement in that direction
+			if(winChangeStack[winChangeStack.length-1][1][1] || winChangeStack[winChangeStack.length-1][1][3])
+			{
+				Debug.log("Halt Y!");
 
-			//revert all affected windows
-			var j=i;
-			for(var i=0;i<j;++i)
-			{		
-				followTiledTop[i],followTiledTop[i].resizeAndPositionWindow(
-					followTiledTop[i].getWindowX(),
-					followTiledTop[i].getWindowY(),
-					followTiledTop[i].getWindowWidth(),
-					followTiledTop[i].getWindowHeight() - delta[1] + deltaResidual[1] + deltaResidual[3]);
-				lastPositions[followTiledTop[i].getWindowId()][3] = followTiledTop[i].getWindowHeight();
+				//revert all affected windows
+				var j=i;
+				for(var i=0;i<j;++i)
+				{		
+					followTiledTop[i],followTiledTop[i].resizeAndPositionWindow(
+						followTiledTop[i].getWindowX(),
+						followTiledTop[i].getWindowY(),
+						followTiledTop[i].getWindowWidth(),
+						followTiledTop[i].getWindowHeight() - delta[1] + deltaResidual[1] + deltaResidual[3]);
+					lastPositions[followTiledTop[i].getWindowId()][3] = followTiledTop[i].getWindowHeight();
+				}
+
+				//revert triggering window
+				delta[1] = 0;
+				win.resizeAndPositionWindow(
+					winOriginal[0],
+					winOriginal[1],
+					winOriginal[2],
+					winOriginal[3]);
+				break;
 			}
-
-			//revert triggering window
-			delta[1] = 0;
-			win.resizeAndPositionWindow(
-				winOriginal[0],
-				winOriginal[1],
-				winOriginal[2],
-				winOriginal[3]);
-			break;
 		}
-	}
+
 	if(delta[0])
-	for(var i=0;i<followTiledLeft.length;++i)
-	{
-		winChangeStack.push([followTiledLeft[i],followTiledLeft[i].resizeAndPositionWindow(
-			followTiledLeft[i].getWindowX(),
-			followTiledLeft[i].getWindowY(),
-			followTiledLeft[i].getWindowWidth() + delta[0] - deltaResidual[0] - deltaResidual[2],
-			followTiledLeft[i].getWindowHeight())]);
-		lastPositions[followTiledLeft[i].getWindowId()][2] = followTiledLeft[i].getWindowWidth();
-
-		//if affected window is in an illegal state, then stop movement in that direction
-		if(winChangeStack[winChangeStack.length-1][1][0] || winChangeStack[winChangeStack.length-1][1][2])
+		for(var i=0;i<followTiledLeft.length;++i)
 		{
-			Debug.log("Halt X!");
-			//revert all affected windows
-			var j=i;
-			for(var i=0;i<j;++i)
-			{		
-				followTiledLeft[i],followTiledLeft[i].resizeAndPositionWindow(
-					followTiledLeft[i].getWindowX(),
-					followTiledLeft[i].getWindowY(),
-					followTiledLeft[i].getWindowWidth() - delta[0] + deltaResidual[0] + deltaResidual[2],
-					followTiledLeft[i].getWindowHeight());
-				lastPositions[followTiledLeft[i].getWindowId()][2] = followTiledLeft[i].getWindowWidth();
-			}
+			winChangeStack.push([followTiledLeft[i],followTiledLeft[i].resizeAndPositionWindow(
+				followTiledLeft[i].getWindowX(),
+				followTiledLeft[i].getWindowY(),
+				followTiledLeft[i].getWindowWidth() + delta[0] - deltaResidual[0] - deltaResidual[2],
+				followTiledLeft[i].getWindowHeight())]);
+			lastPositions[followTiledLeft[i].getWindowId()][2] = followTiledLeft[i].getWindowWidth();
 
-			//revert triggering window
-			delta[0] = 0;
-			win.resizeAndPositionWindow(
-				winOriginal[0],
-				winOriginal[1],
-				winOriginal[2],
-				winOriginal[3]);
-			break;
+			//if affected window is in an illegal state, then stop movement in that direction
+			if(winChangeStack[winChangeStack.length-1][1][0] || winChangeStack[winChangeStack.length-1][1][2])
+			{
+				Debug.log("Halt X!");
+				//revert all affected windows
+				var j=i;
+				for(var i=0;i<j;++i)
+				{		
+					followTiledLeft[i],followTiledLeft[i].resizeAndPositionWindow(
+						followTiledLeft[i].getWindowX(),
+						followTiledLeft[i].getWindowY(),
+						followTiledLeft[i].getWindowWidth() - delta[0] + deltaResidual[0] + deltaResidual[2],
+						followTiledLeft[i].getWindowHeight());
+					lastPositions[followTiledLeft[i].getWindowId()][2] = followTiledLeft[i].getWindowWidth();
+				}
+
+				//revert triggering window
+				delta[0] = 0;
+				win.resizeAndPositionWindow(
+					winOriginal[0],
+					winOriginal[1],
+					winOriginal[2],
+					winOriginal[3]);
+				break;
+			}
 		}
-	}
+
 	if(delta[0])
-	for(var i=0;i<followTiledRight.length;++i)
-	{
-		winChangeStack.push([followTiledRight[i],followTiledRight[i].resizeAndPositionWindow(
-			followTiledRight[i].getWindowX() + delta[0]  - deltaResidual[0] - deltaResidual[2],
-			followTiledRight[i].getWindowY(),
-			followTiledRight[i].getWindowWidth() - delta[0] + deltaResidual[0] + deltaResidual[2],
-			followTiledRight[i].getWindowHeight())]);
-		lastPositions[followTiledRight[i].getWindowId()][0] = followTiledRight[i].getWindowX();
-		lastPositions[followTiledRight[i].getWindowId()][2] = followTiledRight[i].getWindowWidth();
-
-		//if affected window is in an illegal state, then stop movement in that direction
-		if(winChangeStack[winChangeStack.length-1][1][0] || winChangeStack[winChangeStack.length-1][1][2])
+		for(var i=0;i<followTiledRight.length;++i)
 		{
-			Debug.log("Halt X!");
-			//revert all affected windows
-			var j=i;
-			for(var i=0;i<j;++i)
-			{		
-				followTiledRight[i].resizeAndPositionWindow(
-					followTiledRight[i].getWindowX() - delta[0]  + deltaResidual[0] + deltaResidual[2],
-					followTiledRight[i].getWindowY(),
-					followTiledRight[i].getWindowWidth() + delta[0] - deltaResidual[0] - deltaResidual[2],
-					followTiledRight[i].getWindowHeight());
-				lastPositions[followTiledRight[i].getWindowId()][0] = followTiledRight[i].getWindowX();
-				lastPositions[followTiledRight[i].getWindowId()][2] = followTiledRight[i].getWindowWidth();
-			}
-			for(var i=0;i<followTiledLeft.length;++i)
-			{		
-				followTiledLeft[i],followTiledLeft[i].resizeAndPositionWindow(
-					followTiledLeft[i].getWindowX(),
-					followTiledLeft[i].getWindowY(),
-					followTiledLeft[i].getWindowWidth() - delta[0] + deltaResidual[0] + deltaResidual[2],
-					followTiledLeft[i].getWindowHeight());
-				lastPositions[followTiledLeft[i].getWindowId()][2] = followTiledLeft[i].getWindowWidth();
-			}
+			winChangeStack.push([followTiledRight[i],followTiledRight[i].resizeAndPositionWindow(
+				followTiledRight[i].getWindowX() + delta[0]  - deltaResidual[0] - deltaResidual[2],
+				followTiledRight[i].getWindowY(),
+				followTiledRight[i].getWindowWidth() - delta[0] + deltaResidual[0] + deltaResidual[2],
+				followTiledRight[i].getWindowHeight())]);
+			lastPositions[followTiledRight[i].getWindowId()][0] = followTiledRight[i].getWindowX();
+			lastPositions[followTiledRight[i].getWindowId()][2] = followTiledRight[i].getWindowWidth();
 
-			//revert triggering window
-			delta[0] = 0;
-			win.resizeAndPositionWindow(
-				winOriginal[0],
-				winOriginal[1],
-				winOriginal[2],
-				winOriginal[3]);
-			break;
+			//if affected window is in an illegal state, then stop movement in that direction
+			if(winChangeStack[winChangeStack.length-1][1][0] || winChangeStack[winChangeStack.length-1][1][2])
+			{
+				Debug.log("Halt X!");
+				//revert all affected windows
+				var j=i;
+				for(var i=0;i<j;++i)
+				{		
+					followTiledRight[i].resizeAndPositionWindow(
+						followTiledRight[i].getWindowX() - delta[0]  + deltaResidual[0] + deltaResidual[2],
+						followTiledRight[i].getWindowY(),
+						followTiledRight[i].getWindowWidth() + delta[0] - deltaResidual[0] - deltaResidual[2],
+						followTiledRight[i].getWindowHeight());
+					lastPositions[followTiledRight[i].getWindowId()][0] = followTiledRight[i].getWindowX();
+					lastPositions[followTiledRight[i].getWindowId()][2] = followTiledRight[i].getWindowWidth();
+				}
+				for(var i=0;i<followTiledLeft.length;++i)
+				{		
+					followTiledLeft[i],followTiledLeft[i].resizeAndPositionWindow(
+						followTiledLeft[i].getWindowX(),
+						followTiledLeft[i].getWindowY(),
+						followTiledLeft[i].getWindowWidth() - delta[0] + deltaResidual[0] + deltaResidual[2],
+						followTiledLeft[i].getWindowHeight());
+					lastPositions[followTiledLeft[i].getWindowId()][2] = followTiledLeft[i].getWindowWidth();
+				}
+
+				//revert triggering window
+				delta[0] = 0;
+				win.resizeAndPositionWindow(
+					winOriginal[0],
+					winOriginal[1],
+					winOriginal[2],
+					winOriginal[3]);
+				break;
+			}
 		}
-	}
+
 	if(delta[1])
-	for(var i=0;i<followTiledBottom.length;++i)
-	{
-		winChangeStack.push([followTiledBottom[i],followTiledBottom[i].resizeAndPositionWindow(
-			followTiledBottom[i].getWindowX(),
-			followTiledBottom[i].getWindowY() + delta[1] - deltaResidual[1] - deltaResidual[3],
-			followTiledBottom[i].getWindowWidth(),
-			followTiledBottom[i].getWindowHeight() - delta[1] + deltaResidual[1] + deltaResidual[3])]);
-		lastPositions[followTiledBottom[i].getWindowId()][1] = followTiledBottom[i].getWindowY();
-		lastPositions[followTiledBottom[i].getWindowId()][3] = followTiledBottom[i].getWindowHeight();
-
-		//if affected window is in an illegal state, then stop movement in that direction
-		if(winChangeStack[winChangeStack.length-1][1][1] || winChangeStack[winChangeStack.length-1][1][3])
+		for(var i=0;i<followTiledBottom.length;++i)
 		{
-			Debug.log("Halt Y!");
-			//revert all affected windows
-			var j=i;
-			for(var i=0;i<j;++i)
-			{		
-				followTiledBottom[i].resizeAndPositionWindow(
-					followTiledBottom[i].getWindowX(),
-					followTiledBottom[i].getWindowY() - delta[1] + deltaResidual[1] + deltaResidual[3],
-					followTiledBottom[i].getWindowWidth(),
-					followTiledBottom[i].getWindowHeight() + delta[1] - deltaResidual[1] - deltaResidual[3]);
-				lastPositions[followTiledBottom[i].getWindowId()][1] = followTiledBottom[i].getWindowY();
-				lastPositions[followTiledBottom[i].getWindowId()][3] = followTiledBottom[i].getWindowHeight();
-			}
-			for(var i=0;i<followTiledTop.length;++i)
-			{		
-				followTiledTop[i],followTiledTop[i].resizeAndPositionWindow(
-					followTiledTop[i].getWindowX(),
-					followTiledTop[i].getWindowY(),
-					followTiledTop[i].getWindowWidth(),
-					followTiledTop[i].getWindowHeight() - delta[1] + deltaResidual[1] + deltaResidual[3]);
-				lastPositions[followTiledTop[i].getWindowId()][3] = followTiledTop[i].getWindowHeight();
-			}
+			winChangeStack.push([followTiledBottom[i],followTiledBottom[i].resizeAndPositionWindow(
+				followTiledBottom[i].getWindowX(),
+				followTiledBottom[i].getWindowY() + delta[1] - deltaResidual[1] - deltaResidual[3],
+				followTiledBottom[i].getWindowWidth(),
+				followTiledBottom[i].getWindowHeight() - delta[1] + deltaResidual[1] + deltaResidual[3])]);
+			lastPositions[followTiledBottom[i].getWindowId()][1] = followTiledBottom[i].getWindowY();
+			lastPositions[followTiledBottom[i].getWindowId()][3] = followTiledBottom[i].getWindowHeight();
 
-			//revert triggering window
-			delta[1] = 0;
-			win.resizeAndPositionWindow(
-				winOriginal[0],
-				winOriginal[1],
-				winOriginal[2],
-				winOriginal[3]);
-			break;
+			//if affected window is in an illegal state, then stop movement in that direction
+			if(winChangeStack[winChangeStack.length-1][1][1] || winChangeStack[winChangeStack.length-1][1][3])
+			{
+				Debug.log("Halt Y!");
+				//revert all affected windows
+				var j=i;
+				for(var i=0;i<j;++i)
+				{		
+					followTiledBottom[i].resizeAndPositionWindow(
+						followTiledBottom[i].getWindowX(),
+						followTiledBottom[i].getWindowY() - delta[1] + deltaResidual[1] + deltaResidual[3],
+						followTiledBottom[i].getWindowWidth(),
+						followTiledBottom[i].getWindowHeight() + delta[1] - deltaResidual[1] - deltaResidual[3]);
+					lastPositions[followTiledBottom[i].getWindowId()][1] = followTiledBottom[i].getWindowY();
+					lastPositions[followTiledBottom[i].getWindowId()][3] = followTiledBottom[i].getWindowHeight();
+				}
+				for(var i=0;i<followTiledTop.length;++i)
+				{		
+					followTiledTop[i],followTiledTop[i].resizeAndPositionWindow(
+						followTiledTop[i].getWindowX(),
+						followTiledTop[i].getWindowY(),
+						followTiledTop[i].getWindowWidth(),
+						followTiledTop[i].getWindowHeight() - delta[1] + deltaResidual[1] + deltaResidual[3]);
+					lastPositions[followTiledTop[i].getWindowId()][3] = followTiledTop[i].getWindowHeight();
+				}
+
+				//revert triggering window
+				delta[1] = 0;
+				win.resizeAndPositionWindow(
+					winOriginal[0],
+					winOriginal[1],
+					winOriginal[2],
+					winOriginal[3]);
+				break;
+			}
 		}
-	}
 
 	if(keepTile)
 		lastPositions[win.getWindowId()] = [

@@ -158,7 +158,7 @@
 		//createAppStatusDesktopIcon()
 		//mergeGroups(groupANameContext, groupAKeyContext, groupBNameContext, groupBKeyContext,groupANameConfig, groupAKeyConfig, groupBNameConfig, groupBKeyConfig, mergeApproach)
 		//mergeGroupsDialog()
-		//popUpGroupUploadDownloadForm(groupName,groupKey,isUpload)
+		//popUpGroupUploadDownloadUpdateForm(groupName,groupKey,isUpload)
 
 		//tableLinkTooltip(prependString)
 
@@ -1939,10 +1939,13 @@
 
 			//remove all previous buttons
 			var el;
-			do {
+			do 
+			{
 				el = document.getElementById("saveGroupWithWarningsIgnored");
 				if (el) el.parentNode.removeChild(el);
 			} while (el);
+
+			activateTableGroupHandler(req);
 
 			var attemptedNewGroupName = DesktopContent.getXMLValue(req, "AttemptedNewGroupName");
 
@@ -1959,14 +1962,16 @@
 			}
 
 			var err = DesktopContent.getXMLValue(req, "Error");
-			if (err) {
+			if (err) 
+			{
 				Debug.log(err, Debug.HIGH_PRIORITY);
 
 				var el = document.getElementById("display");
 				var str = "";
 				str += "Failed.<br><br>" + err;
 
-				if (groupName && groupKey) {
+				if (groupName && groupKey) 
+				{
 					str += "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;";
 					str += "<a href='#' onclick='setupSpecificTableGroup(\"" + groupName +
 						"\",\"" + groupKey + "\"); return false;'>";
@@ -1974,7 +1979,8 @@
 				}
 
 				var errSplit = err.split('"');
-				if (errSplit.length > 1) {
+				if (errSplit.length > 1) 
+				{
 					str += "<br><br>It seems like there was trouble with a specific table, " +
 						"&quot;" + errSplit[1] + "&quot;. Try using the Table Editor " +
 						"in ots wiz to verify the column info is valid; or you can try " +
@@ -2185,7 +2191,7 @@
 			str += "<br>";
 			str += DesktopContent.htmlOpen("a",
 				{
-					"onclick": "popUpGroupUploadDownloadForm(\"" + groupName +
+					"onclick": "popUpGroupUploadDownloadUpdateForm(\"" + groupName +
 						"\",\"" + groupKey + "\", false /*isUpload*/);",
 					"title": "Download a selection of member tables from the current group &apos;" + groupName + "(" + groupKey + ").&apos;",
 				},
@@ -2195,11 +2201,21 @@
 			str += "<br>";
 			str += DesktopContent.htmlOpen("a",
 				{
-					"onclick": "popUpGroupUploadDownloadForm(\"" + groupName +
+					"onclick": "popUpGroupUploadDownloadUpdateForm(\"" + groupName +
 						"\",\"" + groupKey + "\", true /*isUpload*/);",
 					"title": "Upload a selection of member tables from the current group &apos;" + groupName + "(" + groupKey + ").&apos;",
 				},
 				"Upload a selection of member tables" /*innerHTML*/,
+				true /*doCloseTag*/);
+			//add Update link
+			str += "<br>";
+			str += DesktopContent.htmlOpen("a",
+				{
+					"onclick": "popUpGroupUploadDownloadUpdateForm(\"" + groupName +
+						"\",\"" + groupKey + "\", false /*isUpload*/, true /*isUpdate*/);",
+					"title": "Update a selection of member tables from the current group &apos;" + groupName + "(" + groupKey + ").&apos;",
+				},
+				"Update a selection of member tables" /*innerHTML*/,
 				true /*doCloseTag*/);
 
 			str += "<br><br>";
@@ -4543,7 +4559,8 @@
 				treeEditingNodeParentIdString_ =
 					document.getElementById("treeNode-ParentId-" + idString).textContent;
 
-				if (type == "uid") {
+				if (type == "uid") 
+				{
 					//edit UID mode 
 					if (depth == 1)
 						treeEditingTargetTable_ = splitArr[splitArr.length - 2]; //table should be before last slash in path
@@ -6347,7 +6364,7 @@
 			str += "<div id='copyAndMoveRowsHTML' style='display:none'></div>";
 
 			str += "<br><br>";
-			str += "<input type='button' onmouseup='tableCopyOrMoveRow(0)' value='Copy Row' title='" +
+			str += "<input type='button' onmouseup='tableCopyOrMoveRow(0)' value='Copy Row N Times' title='" +
 				"Copy Source Row and paste at Destination Row, pushing previously existing rows down." +
 				"'/>";
 			str += " ";
@@ -6359,6 +6376,7 @@
 				"Copy Source Version to new Temporary Version' title='" +
 				"Copy Source Version (with possibly different column names) to a new Temporary Version with current column names." +
 				"'/>";
+
 			str += "<br><br>";
 			str += "<input id='valuePainterButton' type='button' onmouseup='togglePaintCellValue()' value='Copy and Paint a Cell' title='" +
 				"Click to enable choosing a cell value to copy and paint into other cells by dragging the mouse cursor." +
@@ -12758,13 +12776,13 @@
 		} //end deleteRow()
 
 		//==============================================================================
-		//popUpVersionAliasSpecificGroupForm
-		function popUpGroupUploadDownloadForm(groupName, groupKey, isUpload) 
+		//popUpGroupUploadDownloadUpdateForm
+		function popUpGroupUploadDownloadUpdateForm(groupName, groupKey, isUpload, isUpdate) 
 		{
-			Debug.log("CfgGUI popUpGroupUploadDownloadForm " + isUpload);
+			Debug.log("CfgGUI popUpGroupUploadDownloadUpdateForm ",isUpload,isUpdate);
 
-			var type = isUpload ? "upload" : "download";
-			var capType = isUpload ? "Upload" : "Download";
+			var type = isUpload ? "upload" : (isUpdate? "update" : "download");
+			var capType = isUpload ? "Upload" : (isUpdate? "Update" : "Download");
 
 			var str = "";
 
@@ -12825,15 +12843,19 @@
 						str += "<br><br>";
 						str += "<b>(b) Choose invidual files:</b><br>";
 					}
-					else //is download
+					else //is download or update
 					{
-						str += "Default field delimiters (in Excel and Numbers) vary based " +
-								"on keyboard settings, so please select your field delimiter: <br><br>";
-						str += "<select id='fieldSelect'>";
 
-						str += "<option value= ',' selected>Comma ,</option>";
-						str += "<option value= ';'>Semicolon ;</option>";
-						str += "</select><br><br>";
+						if(!isUpdate)
+						{	
+							str += "Default field delimiters (in Excel and Numbers) vary based " +
+									"on keyboard settings, so please select your field delimiter: <br><br>";
+							str += "<select id='fieldSelect'>";
+
+							str += "<option value= ',' selected>Comma ,</option>";
+							str += "<option value= ';'>Semicolon ;</option>";
+							str += "</select><br><br>";
+						}
 
 						str += DesktopContent.htmlOpen("a",
 							{
@@ -12936,7 +12958,7 @@
 						{
 							localDoUpload();
 						}
-						else //is download
+						else //is download or update
 						{
 							var checkboxes = document.getElementsByClassName("uploadDownloadCheckbox");
 
@@ -12953,25 +12975,61 @@
 
 								}
 
-							localDownloadMembers();
+							localDownloadUpdateMembers();
 
 							////////////////////
-							//localDownloadMembers ~~
-							//	recursively download all selected tables
-							function localDownloadMembers() 
+							//localDownloadUpdateMembers ~~
+							//	recursively download/update all selected tables
+							function localDownloadUpdateMembers() 
 							{
-
 								var targetTable = selectedTables.pop();
-								console.log("localDownloadMembers", targetTable);
+								console.log("localDownloadUpdateMembers", targetTable);
 
-								DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable" +
+								if(isUpdate)
+									DesktopContent.XMLHttpRequest("Request?RequestType=saveSpecificTable" +
+										"&sourceTableAsIs=1" +
+										"&tableName=" + targetTable[0] +
+										"&version=" + targetTable[1],
+										"", function (req)
+										{
+
+									Debug.log("update req back for ", targetTable);
+									
+									var tableName = DesktopContent.getXMLValue(req, "savedName");
+									var version = DesktopContent.getXMLValue(req, "savedVersion");
+									
+									if (_memberMapForGroupSave[tableName] != version)
+										Debug.info("Modifying member map for table '" +
+											tableName + "' from v" + _memberMapForGroupSave[tableName] +
+											" to v" + version);
+									else
+										Debug.info("Updated member was equivalent for table '" +
+											tableName + "' v" + version);
+									_memberMapForGroupSave[tableName] = version;
+									console.log("_memberMapForGroupSave", _memberMapForGroupSave);
+
+									if (selectedTables.length) //if still more tables, continue
+										localDownloadUpdateMembers();
+									else //done so save group
+									{
+										Debug.info("New members have been created... now see dialog box to create group");
+
+										popUpSaveNewGroupForm(
+											groupName,
+											groupKey /*sourceGroupKey*/,
+											2 /*sourceType*/);
+									}
+
+									}); //end update request and handling
+								else //is download
+									DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable" +
 										"&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +
 										"&tableName=" + targetTable[0] +
 										"&version=" + targetTable[1],
 										"", function (req)
 										{
 
-									console.log("localDownloadMembers have data for ", targetTable);
+									console.log("localDownloadUpdateMembers have data for ", targetTable);
 
 									//Note: copied download code from downloadTableAsCSV()
 
@@ -13001,7 +13059,7 @@
 														replace(new RegExp(colDel,'g'),"${OTS_FIELD_DELIMETER}"));
 											}
 										}
-										Debug.log("localDownloadMembers dataStr=" + dataStr);
+										Debug.log("localDownloadUpdateMembers dataStr=" + dataStr);
 										var link = document.createElement("a");
 										link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
 										link.setAttribute("style", "display:none");
@@ -13023,9 +13081,9 @@
 									}
 
 									if (selectedTables.length) //if still more tables, continue
-										localDownloadMembers();
-								}); //end tableVersion request
-							} //end localDownloadMembers()	
+										localDownloadUpdateMembers();
+									}); //end download request and handling
+							} //end localDownloadUpdateMembers()	
 						} //end download section
 
 							}; //end button onmouseup handler
@@ -13261,7 +13319,7 @@
 			); //end getSpecificTableGroup request
 
 
-		} //end popUpGroupUploadDownloadForm()
+		} //end popUpGroupUploadDownloadUpdateForm()
 
 		//==============================================================================
 		//popUpVersionAliasSpecificGroupForm
@@ -14264,7 +14322,7 @@
 			Debug.log("CfgGUI uploadTableFromCSV doReplace = " + doReplace);
 			Debug.log("CfgGUI uploadTableFromCSV doAppend = " + doAppend);
 
-			//Note: if this upload code changes, apply to popUpGroupUploadDownloadForm() => localDoUpload() => localUploadMembers()
+			//Note: if this upload code changes, apply to popUpGroupUploadDownloadUpdateForm() => localDoUpload() => localUploadMembers()
 			
 			var colDel, rowDel = '\n'; //row/record and column/field delimeters
 			
@@ -14801,7 +14859,7 @@
 				el = document.getElementById("SubSystemTable");
 				var rows = el.getElementsByTagName("tr");
 				
-				//Note: changes to download code to propagate to localDownloadMembers()
+				//Note: changes to download code to propagate to localDownloadUpdateMembers()
 				
 				var rowDel = '\n'; //document.getElementById("recordSelect").value;
 				var colDel = document.getElementById("fieldSelect").value;

@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
 parent otsdaq_utilities
-defaultqual	e20:s112
+defaultqual	c7:s112
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -32,9 +32,15 @@ e20:s118:prof		e20:s118:prof		-std=c++17
 e20:s118:debug		e20:s118:debug		-std=c++17
 e26:s118:prof		e26:s118:prof		-std=c++17
 e26:s118:debug		e26:s118:debug		-std=c++17
+c7:s118:prof		c7:s118:prof		-std=c++17
+c7:s118:debug		c7:s118:debug		-std=c++17
+c14:s118:prof		c14:s118:prof		-std=c++17
+c14:s118:debug		c14:s118:debug		-std=c++17
 
 e20:s112:prof		e20:s112:prof		-std=c++17
 e20:s112:debug		e20:s112:debug		-std=c++17
+c7:s112:prof		c7:s112:prof		-std=c++17
+c7:s112:debug		c7:s112:debug		-std=c++17
 
 end_qualifier_list
 

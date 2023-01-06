@@ -496,7 +496,7 @@ void MacroMakerSupervisor::request(const std::string&               requestType,
 		mkdir(exportPath.c_str(), 0755);
 	}
 	else
-		handleRequest(requestType, xmlOut, cgiIn, userInfo.username_);
+		handleRequest(requestType, xmlOut, cgiIn, userInfo);
 }  // end request()
 catch(const std::runtime_error& e)
 {
@@ -516,36 +516,36 @@ catch(...)
 void MacroMakerSupervisor::handleRequest(const std::string  Command,
                                          HttpXmlDocument&   xmldoc,
                                          cgicc::Cgicc&      cgi,
-                                         const std::string& username)
+                                         const WebUsers::RequestUserInfo& userInfo)
 {
 	if(Command == "FElist")  // called by MacroMaker GUI
 		getFElist(xmldoc);
 	else if(Command == "writeData")  // called by MacroMaker GUI
-		writeData(xmldoc, cgi, username);
+		writeData(xmldoc, cgi, userInfo.username_);
 	else if(Command == "readData")  // called by MacroMaker GUI
-		readData(xmldoc, cgi, username);
+		readData(xmldoc, cgi, userInfo.username_);
 	else if(Command == "createMacro")  // called by MacroMaker GUI
-		createMacro(xmldoc, cgi, username);
+		createMacro(xmldoc, cgi, userInfo.username_);
 	else if(Command == "loadMacros")  // called by MacroMaker GUI
-		loadMacros(xmldoc, username);
+		loadMacros(xmldoc, userInfo.username_);
 	else if(Command == "loadHistory")  // called by MacroMaker GUI
-		loadHistory(xmldoc, username);
+		loadHistory(xmldoc, userInfo.username_);
 	else if(Command == "deleteMacro")  // called by MacroMaker GUI
-		deleteMacro(xmldoc, cgi, username);
+		deleteMacro(xmldoc, cgi, userInfo.username_);
 	else if(Command == "editMacro")  // called by MacroMaker GUI
-		editMacro(xmldoc, cgi, username);
+		editMacro(xmldoc, cgi, userInfo.username_);
 	else if(Command == "clearHistory")  // called by MacroMaker GUI
-		clearHistory(username);
+		clearHistory(userInfo.username_);
 	else if(Command == "exportMacro")  // called by MacroMaker GUI
-		exportMacro(xmldoc, cgi, username);
+		exportMacro(xmldoc, cgi, userInfo.username_);
 	else if(Command == "exportFEMacro")  // called by MacroMaker GUI
-		exportFEMacro(xmldoc, cgi, username);
+		exportFEMacro(xmldoc, cgi, userInfo.username_);
 	else if(Command == "getFEMacroList")  // called by FE Macro Test and returns FE Macros
 	                                      // and Macro Maker Macros
-		getFEMacroList(xmldoc, username);
+		getFEMacroList(xmldoc, userInfo.username_);
 	else if(Command == "runFEMacro")  // called by FE Macro Test returns FE Macros and
 	                                  // Macro Maker Macros
-		runFEMacro(xmldoc, cgi, username);
+		runFEMacro(xmldoc, cgi, userInfo);
 	else
 		xmldoc.addTextElementToData("Error", "Unrecognized command '" + Command + "'");
 }  // end handleRequest()
@@ -2178,14 +2178,14 @@ std::string MacroMakerSupervisor::generateHexArray(const std::string& sourceHexS
 //==============================================================================
 void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
                                       cgicc::Cgicc&      cgi,
-                                      const std::string& username) try
+                                      const WebUsers::RequestUserInfo& userInfo) try
 {
 	__SUP_COUT__ << __E__;
 
 	// unsigned int feSupervisorID = CgiDataUtilities::getDataAsInt(cgi,
 	// "feSupervisorID");
 	std::string feClassSelected = CgiDataUtilities::getData(cgi, "feClassSelected");
-	std::string feUIDSelected   = CgiDataUtilities::getData(cgi, "feUIDSelected");
+	std::string feUIDSelected   = CgiDataUtilities::getData(cgi, "feUIDSelected"); //allow CSV multi-selection
 	std::string macroType       = CgiDataUtilities::getData(cgi, "macroType");
 	std::string macroName       = StringMacros::decodeURIComponent(CgiDataUtilities::getData(cgi, "macroName"));
 	std::string inputArgs       = CgiDataUtilities::postData(cgi, "inputArgs");
@@ -2214,7 +2214,9 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 		__SUP_SS_THROW__;
 	}
 	else if(feUIDSelected != "*")
-		feUIDs.emplace(feUIDSelected);
+	{
+		StringMacros::getSetFromString(feUIDSelected,feUIDs);
+	}
 	else  // * all case
 	{
 		// add all FEs for type
@@ -2245,7 +2247,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 	if(macroType == "public")
 		loadMacro(macroName, macroString);
 	else if(macroType == "private")
-		loadMacro(macroName, macroString, username);
+		loadMacro(macroName, macroString, userInfo.username_);
 
 	__SUP_COUTV__(macroString);
 
@@ -2326,6 +2328,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&   xmldoc,
 			}
 			txParameters.addParameter("inputArgs", inputArgs);
 			txParameters.addParameter("outputArgs", outputArgs);
+			txParameters.addParameter("userPermissions", StringMacros::mapToString(userInfo.getGroupPermissionLevels()));	
 
 			SOAPParameters rxParameters;  // params for xoap to recv
 			// rxParameters.addParameter("success");
