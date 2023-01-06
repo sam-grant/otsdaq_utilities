@@ -184,9 +184,10 @@ bool ECLConnection::Post(ECLEntry_t& e)
 
 	// send all data to this function
 	std::string responseBuffer;
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, ECLConnection::WriteMemoryCallback);
+	curl_easy_setopt(
+	    curl_handle, CURLOPT_WRITEFUNCTION, ECLConnection::WriteMemoryCallback);
 	// we pass our 'memoryspace' struct to the callback function
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&responseBuffer);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void*)&responseBuffer);
 
 	// post it!
 

@@ -14,7 +14,8 @@ void SlowControlsDashboard::checkPackageDependencies()
 }
 
 //==============================================================================
-std::set<std::string, std::less<std::string> > SlowControlsDashboard::getPackageDependencies()
+std::set<std::string, std::less<std::string> >
+SlowControlsDashboard::getPackageDependencies()
 {
 	std::set<std::string, std::less<std::string> > dependencies;
 

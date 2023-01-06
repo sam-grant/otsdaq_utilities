@@ -21,7 +21,7 @@ class VisualDataManagerV2 : public DataManager
 {
   public:
 	VisualDataManagerV2(const ConfigurationTree& theXDAQContextConfigTree,
-	                  const std::string&       supervisorConfigurationPath);
+	                    const std::string&       supervisorConfigurationPath);
 	virtual ~VisualDataManagerV2(void);
 
 	void configure(void) override;
@@ -49,6 +49,6 @@ class VisualDataManagerV2 : public DataManager
 
 	RawDataVisualizerConsumer* theRawDataConsumer_;
 };
-}
+}  // namespace ots
 
 #endif

@@ -83,6 +83,6 @@ class LogbookSupervisor : public CoreSupervisorBase
 	std::string  activeExperiment_;
 	unsigned int mostRecentDayIndex_;
 };
-}
+}  // namespace ots
 
 #endif

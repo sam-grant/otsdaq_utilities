@@ -1,39 +1,32 @@
 #include "TRACE/trace.h"
 #define TRACE_NAME "ECLTest"
 
-#define __E__ 				std::endl
+#define __E__ std::endl
 #define QQQQ(X) #X
 #define QUOTE(X) QQQQ(X)
-#define __COUTV__(X) 		std::cout << QUOTE(X) << " = " << X << __E__
+#define __COUTV__(X) std::cout << QUOTE(X) << " = " << X << __E__
 
 #include "otsdaq-utilities/ECLWriter/ECLConnection.h"
 
 #include <boost/program_options.hpp>
 namespace bpo = boost::program_options;
 
-
-//IMPORTANT NOTE!!! avoid posting passwords to copied areas or repositories!
-// consider adding this to a setup script and using environment variables for your passwords!
-// 			#setup environment for eLOG ECL writing
-// 			# NOTE! do not put username/pw in saved/committed text files
-// 			export ECL_USER_NAME="emdaq"
-// 			export ECL_CATEGORY="general"
-// 			export ECL_URL="https://dbweb9.fnal.gov:8443/ECL/emphatic"
-// 			if [ "x$ECL_PASSWORD" == "x" ]; then #when ECL password is not setup, prompt user
-// 					stty -echo
-// 					printf "Please enter the ECL eLOG password for $ECL_USER_NAME: "
-// 					read eclpass
-// 					stty echo
-// 					export ECL_PASSWORD=$eclpass
-// 			fi
-
+// IMPORTANT NOTE!!! avoid posting passwords to copied areas or repositories!
+//  consider adding this to a setup script and using environment variables for your
+//  passwords! 			#setup environment for eLOG ECL writing 			# NOTE! do not put username/pw in
+//  saved/committed text files 			export ECL_USER_NAME="emdaq" 			export ECL_CATEGORY="general"
+//  			export ECL_URL="https://dbweb9.fnal.gov:8443/ECL/emphatic"
+//  			if [ "x$ECL_PASSWORD" == "x" ]; then #when ECL password is not setup,
+//  prompt user 					stty -echo 					printf "Please enter the ECL eLOG password for $ECL_USER_NAME:
+//  " 					read eclpass 					stty echo 					export ECL_PASSWORD=$eclpass 			fi
 
 // use option -h or --help for help
 int main(int argc, char* argv[])
 {
 	std::ostringstream descstr;
 	descstr << argv[0]
-	        << " --host <ECL host> --user <Username> --pwd <Password> [--cat <Category name>] [--title <Message "
+	        << " --host <ECL host> --user <Username> --pwd <Password> [--cat <Category "
+	           "name>] [--title <Message "
 	           "title>] [message]";
 	bpo::options_description desc(descstr.str());
 	desc.add_options()("host,i", bpo::value<std::string>(), "ECL Instance Address")(
@@ -54,8 +47,8 @@ int main(int argc, char* argv[])
 	}
 	catch(bpo::error const& e)
 	{
-		std::cout << "Exception from command line processing in " << argv[0]
-		                 << ": " << e.what() << "\n";
+		std::cout << "Exception from command line processing in " << argv[0] << ": "
+		          << e.what() << "\n";
 		exit(-1);
 	}
 	if(vm.count("help"))
@@ -64,8 +57,9 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-	std::string ECLUser = "", ECLPwd = "", ECLHost = "", ECLCategory = "general" /* e.g. "TDAQ" */, 
-		title = "ECL Test Message", message = "";
+	std::string ECLUser = "", ECLPwd = "", ECLHost = "",
+	            ECLCategory = "general" /* e.g. "TDAQ" */, title = "ECL Test Message",
+	            message = "";
 	if(vm.count("user"))
 	{
 		ECLUser = vm["user"].as<std::string>();

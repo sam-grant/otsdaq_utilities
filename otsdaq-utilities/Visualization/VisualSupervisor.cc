@@ -1,8 +1,8 @@
 #include "otsdaq-utilities/Visualization/VisualSupervisor.h"
-#include "otsdaq/RootUtilities/VisualDataManager.h"
-#include "otsdaq/XmlUtilities/XmlDocument.h"
 #include "otsdaq/DataManager/DataManagerSingleton.h"
 #include "otsdaq/Macros/BinaryStringMacros.h"
+#include "otsdaq/RootUtilities/VisualDataManager.h"
+#include "otsdaq/XmlUtilities/XmlDocument.h"
 //#include "otsdaq/otsdaq/Macros/MessageTools.h"
 #include <boost/regex.hpp>
 #include "otsdaq/DataManager/DQMHistosConsumerBase.h"
@@ -262,10 +262,11 @@ void VisualSupervisor::request(const std::string&               requestType,
 				__SS_THROW__;
 			}
 			__SUP_COUT__ << "Getting Raw data and converting to binary string" << __E__;
-//			xmlOut.addBinaryStringToData("rawData", theDataManager_->getRawData());
+			//			xmlOut.addBinaryStringToData("rawData",
+			//theDataManager_->getRawData());
 			__SUP_COUT__ << __E__;
-				__SUP_SS__ << "Raw data visualizion is deprecated!" << __E__;
-				__SUP_SS_THROW__;
+			__SUP_SS__ << "Raw data visualizion is deprecated!" << __E__;
+			__SUP_SS_THROW__;
 		}
 		catch(std::exception const& e)
 		{
@@ -442,8 +443,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 			          path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2);
 
 		////STDLINE(std::string("dirpath                  : ")+ dirpath,"") ;
-		__SUP_COUT__ << "rootpath:-" << rootpath << "-path:-" << path
-		             << "-dirpath:-" << dirpath << "-" << __E__;
+		__SUP_COUT__ << "rootpath:-" << rootpath << "-path:-" << path << "-dirpath:-"
+		             << dirpath << "-" << __E__;
 
 		DIR*           pDIR;
 		struct dirent* entry;
@@ -458,11 +459,13 @@ void VisualSupervisor::request(const std::string&               requestType,
 			// add Pre-made Views if path is / and ROOT_DISPLAY_CONFIG_PATH isnt already
 			// there
 			if(theDataManager_ != nullptr)
-				__COUT__ << "path-" << path << "-DM: " << theDataManager_ << " Live: " << theDataManager_->getLiveDQMHistos() << std::endl;
+				__COUT__ << "path-" << path << "-DM: " << theDataManager_
+				         << " Live: " << theDataManager_->getLiveDQMHistos() << std::endl;
 			if(path == "/")
 			{
 				// Add live histos if I am in the main dir.
-				if(theDataManager_ != nullptr && theDataManager_->getLiveDQMHistos() == true)
+				if(theDataManager_ != nullptr &&
+				   theDataManager_->getLiveDQMHistos() == true)
 					xmlOut.addTextElementToData("dir",
 					                            LIVEDQM_DIR + ".root");  // add to xml
 
@@ -739,7 +742,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 	}  // END LORENZO GET ROOT
 	// else if(
 	//     requestType ==
-	//     "RyangetRoot")  //################################################################################################################
+	//     "RyangetRoot")
+	//     //################################################################################################################
 	// {
 	// 	// return directory structure for requested ROOT path, types are "dir" and "file"
 	// 	std::string path = CgiDataUtilities::postData(cgiIn, "RootPath");
@@ -1431,7 +1435,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 	}
 	// else if(
 	//     requestType ==
-	//     "getMeLIVE-DQMFile")  //################################################################################################################
+	//     "getMeLIVE-DQMFile")
+	//     //################################################################################################################
 	// {
 	// 	xmlOut.setDarioStyle(true);  // workaround for XML formatting....
 	// 	std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
