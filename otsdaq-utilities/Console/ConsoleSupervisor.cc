@@ -557,8 +557,8 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 
 			// traceList 		  += ";" + appInfo.first; //insert xdaq context version of
 			// name
-			//						//FIXME and create mapp from user's typed in xdaq context name
-			//to TRACE hostname resolution
+			//						//FIXME and create mapp from user's typed in xdaq context
+			//name to TRACE hostname resolution
 
 			traceList += rxParameters.getValue("TRACEList");
 

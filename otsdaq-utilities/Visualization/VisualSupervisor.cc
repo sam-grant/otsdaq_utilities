@@ -263,7 +263,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 			}
 			__SUP_COUT__ << "Getting Raw data and converting to binary string" << __E__;
 			//			xmlOut.addBinaryStringToData("rawData",
-			//theDataManager_->getRawData());
+			// theDataManager_->getRawData());
 			__SUP_COUT__ << __E__;
 			__SUP_SS__ << "Raw data visualizion is deprecated!" << __E__;
 			__SUP_SS_THROW__;
