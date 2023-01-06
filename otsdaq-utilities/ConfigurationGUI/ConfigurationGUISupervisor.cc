@@ -4682,8 +4682,8 @@ try
 				{
 					// handle UID links slightly differently
 					//	when editing link-UID,.. if specified name does not exist in child
-					//table, 	then change the UID in the child table (rename target
-					//record).
+					// table, 	then change the UID in the child table (rename target
+					// record).
 					//  Otherwise, it is impossible to rename unique links targets in the
 					//  tree-view GUI.
 
