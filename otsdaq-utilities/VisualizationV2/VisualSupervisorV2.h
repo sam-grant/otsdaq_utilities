@@ -66,8 +66,8 @@ class VisualSupervisorV2 : public CoreSupervisorBase
 	// fsm)
 	// ;
 
-	virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) override;
-	virtual void 			transitionHalting 				(toolbox::Event::Reference e) override;
+	virtual void transitionConfiguring(toolbox::Event::Reference e) override;
+	virtual void transitionHalting(toolbox::Event::Reference e) override;
 	// virtual void 			transitionInitializing (toolbox::Event::Reference e) ;
 	//    virtual void 			transitionPausing     			(toolbox::Event::Reference
 	//    e) ; virtual void 			transitionResuming (toolbox::Event::Reference e) ;
@@ -81,10 +81,10 @@ class VisualSupervisorV2 : public CoreSupervisorBase
 	// void						binaryBufferToHexString		(char *buff, unsigned int len,
 	// std::string& dest);
 
-    std::stringstream   ss ;
+	std::stringstream    ss;
 	VisualDataManagerV2* theDataManager_;
 	unsigned int         loadedRunNumber_;
 };
-}
+}  // namespace ots
 
 #endif

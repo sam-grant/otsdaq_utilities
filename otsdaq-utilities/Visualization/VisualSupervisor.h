@@ -29,7 +29,7 @@
 
 namespace ots
 {
-	class VisualDataManager;
+class VisualDataManager;
 // VisualSupervisor
 //	This class handles the web user interface to a VisualDataManager with reqgard to the
 // web desktop Visualizer. 	The Visualizer can display ROOT object in real-time, as well
@@ -66,8 +66,8 @@ class VisualSupervisor : public CoreSupervisorBase
 	// fsm)
 	// ;
 
-	virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) override;
-	virtual void 			transitionHalting 				(toolbox::Event::Reference e) override;
+	virtual void transitionConfiguring(toolbox::Event::Reference e) override;
+	virtual void transitionHalting(toolbox::Event::Reference e) override;
 	// virtual void 			transitionInitializing (toolbox::Event::Reference e) ;
 	//    virtual void 			transitionPausing     			(toolbox::Event::Reference
 	//    e) ; virtual void 			transitionResuming (toolbox::Event::Reference e) ;
@@ -80,10 +80,10 @@ class VisualSupervisor : public CoreSupervisorBase
   private:
 	// void						binaryBufferToHexString		(char *buff, unsigned int len,
 	// std::string& dest);
-        std::stringstream   ss ;
-	VisualDataManager * theDataManager_;
-	unsigned int        loadedRunNumber_;
+	std::stringstream  ss;
+	VisualDataManager* theDataManager_;
+	unsigned int       loadedRunNumber_;
 };
-}
+}  // namespace ots
 
 #endif

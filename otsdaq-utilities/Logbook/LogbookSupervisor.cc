@@ -91,13 +91,9 @@ LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub* stub)
                                "application/pdf",
                                "application/zip",
                                "text/plain"})  // init allowed file upload types
-    , matchingFileUploadTypes_({"png",
-                                "jpeg",
-                                "gif",
-                                "bmp",
-                                "pdf",
-                                "zip",
-                                "txt"})  // init allowed file upload types
+    , matchingFileUploadTypes_(
+          {"png", "jpeg", "gif", "bmp", "pdf", "zip", "txt"})  // init allowed file upload
+                                                               // types
 {
 	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
 
@@ -106,15 +102,14 @@ LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub* stub)
 	// xgi::bind (this, &LogbookSupervisor::LogImage,               	"LogImage" );
 	// xgi::bind (this, &LogbookSupervisor::LogReport,             	"LogReport" );
 
-	xoap::bind(this,
-	           &LogbookSupervisor::MakeSystemLogEntry,
-	           "MakeSystemLogEntry",
-	           XDAQ_NS_URI);
+	xoap::bind(
+	    this, &LogbookSupervisor::MakeSystemLogEntry, "MakeSystemLogEntry", XDAQ_NS_URI);
 
 	init();
 
-	// TODO allow admins to subscribe to active experiment alerts using System messages (and email)
-} //end constructor()
+	// TODO allow admins to subscribe to active experiment alerts using System messages
+	// (and email)
+}  // end constructor()
 
 //==============================================================================
 LogbookSupervisor::~LogbookSupervisor(void) { destroy(); }
@@ -434,9 +429,9 @@ void LogbookSupervisor::request(const std::string&               requestType,
 //	request
 //		Handles Web Interface requests to Logbook supervisor.
 //		Does not refresh cookie for automatic update checks.
-void LogbookSupervisor::nonXmlRequest(const std::string&               requestType,
-                                      cgicc::Cgicc&                    cgiIn,
-                                      std::ostream&                    out,
+void LogbookSupervisor::nonXmlRequest(const std::string& requestType,
+                                      cgicc::Cgicc&      cgiIn,
+                                      std::ostream&      out,
                                       const WebUsers::RequestUserInfo& /*userInfo*/)
 {
 	// Commands
@@ -473,8 +468,7 @@ void LogbookSupervisor::nonXmlRequest(const std::string&               requestTy
 // xoap::MakeSystemLogEntry
 //	make a system logbook entry into active experiment's logbook from Supervisor only
 //	TODO: (how to enforce?)
-xoap::MessageReference LogbookSupervisor::MakeSystemLogEntry(
-    xoap::MessageReference msg)
+xoap::MessageReference LogbookSupervisor::MakeSystemLogEntry(xoap::MessageReference msg)
 {
 	SOAPParameters parameters("EntryText");
 	//	SOAPParametersV parameters(1);
@@ -499,7 +493,9 @@ xoap::MessageReference LogbookSupervisor::MakeSystemLogEntry(
 
 	if(activeExperiment_ == "")
 	{
-		retStr = "Warning - Currently, no Active Experiment. Turn off the Logbook XDAQ Application to suppress this message.";
+		retStr =
+		    "Warning - Currently, no Active Experiment. Turn off the Logbook XDAQ "
+		    "Application to suppress this message.";
 		__COUT__ << retStr << std::endl;
 		goto XOAP_CLEANUP;
 	}
@@ -1263,8 +1259,8 @@ void LogbookSupervisor::savePostPreview(std::string&                        subj
 //          move entry to current active logbook
 //      if not approve
 //          delete directory
-void LogbookSupervisor::movePreviewEntry(std::string      previewNumber,
-                                         bool             approve,
+void LogbookSupervisor::movePreviewEntry(std::string previewNumber,
+                                         bool        approve,
                                          HttpXmlDocument* /*xmlOut*/)
 {
 	__COUT__ << "previewNumber " << previewNumber

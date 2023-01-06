@@ -249,6 +249,6 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 };
 
 // clang-format on
-}  // end ots namespace
+}  // namespace ots
 
 #endif

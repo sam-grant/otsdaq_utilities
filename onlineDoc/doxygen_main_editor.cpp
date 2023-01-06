@@ -117,8 +117,7 @@ int main(int argc, char** argv)
 
 			switch(injectIndex)
 			{
-			case 1:
-			{
+			case 1: {
 				// get one more line and modify it, ie, clip ugly start and delete close
 				// tag for content div 				fgets(line,1000,mainSrc);
 				//				__COUT__ << "MOD " << line << (line[strlen(line)-1] ==
@@ -145,8 +144,7 @@ int main(int argc, char** argv)
 
 				break;
 			}
-			case 2:
-			{
+			case 2: {
 				while(fgets(line, 1000, inject2Src))
 				{
 					fputs(line, mainDest);  // output inject line to file

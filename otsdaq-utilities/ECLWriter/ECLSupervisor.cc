@@ -28,22 +28,19 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(ECLSupervisor)
 
 //==============================================================================
-ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub* stub)
-    : CoreSupervisorBase(stub)
+ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub* stub) : CoreSupervisorBase(stub)
 {
 	__SUP_COUT__ << "Constructor." << __E__;
 
 	INIT_MF("." /*directory used is USER_DATA/LOG/.*/);
-	
-	xoap::bind(this,
-	           &ECLSupervisor::MakeSystemLogEntry,
-	           "MakeSystemLogEntry",
-	           XDAQ_NS_URI);
+
+	xoap::bind(
+	    this, &ECLSupervisor::MakeSystemLogEntry, "MakeSystemLogEntry", XDAQ_NS_URI);
 
 	init();
 
 	__SUP_COUT__ << "Constructed." << __E__;
-} //end constructor
+}  // end constructor
 
 //==============================================================================
 void ECLSupervisor::init(void)
@@ -52,13 +49,13 @@ void ECLSupervisor::init(void)
 	// allSupervisorInfo_.init(getApplicationContext());
 
 	// do not put username/pw in saved/committed text files
-	ECLUser_        = __ENV__("ECL_USER_NAME"); 
-	ECLHost_        = __ENV__("ECL_URL"); // e.g. https://dbweb6.fnal.gov:8443/ECL/test_beam
-	ECLPwd_         = __ENV__("ECL_PASSWORD"); 
-	ECLCategory_	   = __ENV__("ECL_CATEGORY");
+	ECLUser_     = __ENV__("ECL_USER_NAME");
+	ECLHost_     = __ENV__("ECL_URL");  // e.g. https://dbweb6.fnal.gov:8443/ECL/test_beam
+	ECLPwd_      = __ENV__("ECL_PASSWORD");
+	ECLCategory_ = __ENV__("ECL_CATEGORY");
 	ExperimentName_ = __ENV__("OTS_OWNER") + std::string(" ots");
 
-} //end init()
+}  // end init()
 
 //==============================================================================
 ECLSupervisor::~ECLSupervisor(void) { destroy(); }
@@ -69,7 +66,7 @@ void ECLSupervisor::destroy(void)
 	// delete theConfigurationManager_;
 
 	__SUP_COUT__ << "Destructed." << __E__;
-} //end destroy()
+}  // end destroy()
 
 //==============================================================================
 // xoap::MakeSystemLogEntry
@@ -81,7 +78,8 @@ xoap::MessageReference ECLSupervisor::MakeSystemLogEntry(xoap::MessageReference 
 	//	SOAPParametersV parameters(1);
 	//	parameters[0].setName("EntryText");
 	SOAPUtilities::receive(msg, parameters);
-	std::string EntryText = StringMacros::decodeURIComponent(parameters.getValue("EntryText"));
+	std::string EntryText =
+	    StringMacros::decodeURIComponent(parameters.getValue("EntryText"));
 
 	__COUT__ << "Received External Supervisor System Entry " << EntryText << std::endl;
 
@@ -94,20 +92,21 @@ xoap::MessageReference ECLSupervisor::MakeSystemLogEntry(xoap::MessageReference 
 	Form_t                 form;
 	Field_t                field;
 	Form_t::field_sequence fields;
-	std::string            users =
-	    theRemoteWebUsers_.getActiveUserList();
+	std::string            users = theRemoteWebUsers_.getActiveUserList();
 
-	form.name("default"); //these form names must be created in advance? ... default seems to have one field and be generic: 'text' field
+	form.name("default");  // these form names must be created in advance? ... default
+	                       // seems to have one field and be generic: 'text' field
 
 	{
 		std::stringstream ss;
-		ss << "System Generated Log Entry from '" 	<< ExperimentName_ << "'" << __E__;
-		ss << "Active ots users: " 	<< users << __E__;
-		ss << "Message: " 		<< __E__ << EntryText << __E__ << __E__;
-		field = Field_t(StringMacros::escapeString(ss.str(), true /* keep white space */), "text");
+		ss << "System Generated Log Entry from '" << ExperimentName_ << "'" << __E__;
+		ss << "Active ots users: " << users << __E__;
+		ss << "Message: " << __E__ << EntryText << __E__ << __E__;
+		field = Field_t(StringMacros::escapeString(ss.str(), true /* keep white space */),
+		                "text");
 		fields.push_back(field);
 	}
-	
+
 	// field = Field_t(EscapeECLString(ExperimentName_), "Experiment");
 	// fields.push_back(field);
 
@@ -130,5 +129,4 @@ xoap::MessageReference ECLSupervisor::MakeSystemLogEntry(xoap::MessageReference 
 
 	return SOAPUtilities::makeSOAPMessageReference("SystemLogEntryStatusResponse",
 	                                               retParameters);
-} //end MakeSystemLogEntry()
-
+}  // end MakeSystemLogEntry()

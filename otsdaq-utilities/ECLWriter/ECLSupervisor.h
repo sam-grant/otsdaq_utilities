@@ -19,11 +19,11 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
-#include <xgi/Method.h>  //for cgicc::Cgicc
 #include <cgicc/HTMLClasses.h>
 #include <cgicc/HTMLDoctype.h>
 #include <cgicc/HTTPCookie.h>
 #include <cgicc/HTTPHeader.h>
+#include <xgi/Method.h>  //for cgicc::Cgicc
 #pragma GCC diagnostic pop
 
 #include <chrono>
