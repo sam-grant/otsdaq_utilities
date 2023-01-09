@@ -16,11 +16,10 @@ namespace bpo = boost::program_options;
 //  passwords! 			#setup environment for eLOG ECL writing 			# NOTE! do not
 //  put username/pw in saved/committed text files 			export ECL_USER_NAME="emdaq"
 //  export ECL_CATEGORY="general" 			export
-//  ECL_URL="https://dbweb9.fnal.gov:8443/ECL/emphatic" 			if [ "x$ECL_PASSWORD" == "x" ];
-//  then #when ECL password is not setup, prompt user 					stty -echo
-//  printf "Please enter the ECL eLOG password for $ECL_USER_NAME:
-//  " 					read eclpass 					stty echo export
-//  ECL_PASSWORD=$eclpass 			fi
+//  ECL_URL="https://dbweb9.fnal.gov:8443/ECL/emphatic" 			if [ "x$ECL_PASSWORD"
+//  == "x" ]; then #when ECL password is not setup, prompt user 					stty
+//  -echo printf "Please enter the ECL eLOG password for $ECL_USER_NAME: "
+//  read eclpass 					stty echo export ECL_PASSWORD=$eclpass 			fi
 
 // use option -h or --help for help
 int main(int argc, char* argv[])
