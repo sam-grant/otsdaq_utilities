@@ -1,10 +1,22 @@
 {
   "name": "tabulator-tables",
-  "version": "4.5.3",
+  "version": "5.4.3",
   "description": "Interactive table generation JavaScript library",
+  "style": "dist/css/tabulator.css",
   "main": "dist/js/tabulator.js",
+  "module": "dist/js/tabulator_esm.js",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint src --fix",
+    "prebuild": "eslint src --fix",
+    "build": "rollup -c build/rollup.js",
+    "dev": "rollup -c build/rollup.js -w --environment TARGET:dev",
+    "dev:css": "rollup -c build/rollup.js -w --environment TARGET:css",
+    "dev:esm": "rollup -c build/rollup.js -w --environment TARGET:esm",
+    "dev:umd": "rollup -c build/rollup.js -w --environment TARGET:umd"
   },
   "repository": {
     "type": "git",
@@ -16,7 +28,6 @@
     "datagrid",
     "tabulator",
     "editable",
-    "cookie",
     "sort",
     "format",
     "resizable",
@@ -37,28 +48,18 @@
   },
   "homepage": "http://tabulator.info/",
   "devDependencies": {
-    "babel-preset-env": "^1.4.0",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-stage-2": "^6.24.1",
-    "del": "^2.2.2",
-    "gulp": "^3.9.1",
-    "gulp-autoprefixer": "^3.1.1",
-    "gulp-babel": "^6.1.2",
-    "gulp-cache": "^0.4.6",
-    "gulp-concat": "^2.6.1",
-    "gulp-cssnano": "^2.1.2",
-    "gulp-imagemin": "^3.2.0",
-    "gulp-include": "^2.3.1",
-    "gulp-insert": "^0.5.0",
-    "gulp-jshint": "^2.0.4",
-    "gulp-livereload": "^3.8.1",
-    "gulp-notify": "^3.0.0",
-    "gulp-plumber": "^1.1.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-sass": "^3.1.0",
-    "gulp-sourcemaps": "^2.6.0",
-    "gulp-uglify": "^2.1.2",
-    "gulp-util": "^3.0.8",
-    "jshint": "^2.9.4"
-  }
+    "@rollup/plugin-node-resolve": "^11.0.1",
+    "eslint": "^8.10.0",
+    "eslint-plugin-only-warn": "^1.0.3",
+    "fs-extra": "^9.0.1",
+    "globby": "^11.0.2",
+    "node-sass": "^7.0.3",
+    "postcss": "^8.2.4",
+    "postcss-prettify": "^0.3.4",
+    "rollup": "^2.36.1",
+    "rollup-plugin-license": "^2.2.0",
+    "rollup-plugin-postcss": "^4.0.0",
+    "rollup-plugin-terser": "^7.0.2"
+  },
+  "dependencies": {}
 }
