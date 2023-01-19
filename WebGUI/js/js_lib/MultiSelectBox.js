@@ -414,7 +414,9 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
     		el.style.width = 200 + "px"; 
     }
 	// //setup search box
-	var searchBox=$(name + "search");
+	var searchBox=document.createElement(name + "search");
+	//var searchBox=$(name + "search");
+	
 	var onchange='MultiSelectBox.searchSelect("' + name + '",this)';
 	
 	searchBox.setAttribute( "class","hidden");
