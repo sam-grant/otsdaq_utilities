@@ -107,6 +107,7 @@ void VisualSupervisor::destroy(void)
 
 //==============================================================================
 void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference /*e*/)
+try
 {
 	__SUP_COUT__ << "Configuring..." << __E__;
 
@@ -141,11 +142,26 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference /*e*/)
 	__COUTV__("/" +
 	          theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() +
 	          CorePropertySupervisorBase::getSupervisorConfigurationPath());
+			
+	try
+	{
+		ConfigurationTree testAppLink = theConfigurationManager_->getNode(
+			"/" + theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() +
+			CorePropertySupervisorBase::getSupervisorConfigurationPath());
+	}
+	catch(const std::runtime_error& e)
+	{
+		__SS__ << "The link to the Visual Supervisor configuration seems to be broken. Please check this path: " <<
+			"/" +
+	          theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() +
+	          CorePropertySupervisorBase::getSupervisorConfigurationPath() << __E__ << __E__ << e.what() << __E__;
+		__SS_THROW__;		
+	}
 
 	ConfigurationTree appLink = theConfigurationManager_->getNode(
 	    "/" + theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() +
 	    CorePropertySupervisorBase::getSupervisorConfigurationPath());
-
+	
 	__COUTV__(appLink.getValueAsString());
 
 	if(!appLink.isDisconnected())
@@ -171,6 +187,18 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference /*e*/)
 
 	__SUP_COUT__ << "Configured." << __E__;
 }  // end transitionConfiguring()
+catch(const std::runtime_error& e)
+{
+	__SS__ << "Error with VisualSupervisor::transitionConfiguring(): " << e.what() << __E__;
+	__COUT_ERR__ << ss.str();
+	// ExceptionHandler(ExceptionHandlerRethrow::no, ss.str());
+
+	//__SS_THROW_ONLY__;
+	theStateMachine_.setErrorMessage(ss.str());
+	throw toolbox::fsm::exception::Exception(
+		"Transition Error" /*name*/, ss.str() /* message*/, "VisualSupervisor::transitionConfiguring" /*module*/, __LINE__ /*line*/, __FUNCTION__ /*function*/
+	);
+}
 
 //==============================================================================
 void VisualSupervisor::transitionHalting(toolbox::Event::Reference e)
