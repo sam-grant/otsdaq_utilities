@@ -110,7 +110,6 @@
 			//handleSelectedMacroName(r,c)
 			//setCaretPosition(el, caretPos, endPos)
 
-		var verticalOrientation_ = true;
 
 		var feClassToFEsMap_; 	//map of FE Classes to FE UIDs
 		var feToMacrosMap_;		//map of FE UIDs to FE Macro structure 
@@ -130,11 +129,9 @@
 		//macroModuleLayoutString_ += "1,0,DTCFrontEndInterface,*,private,testPrivate;";
 		
 		macroModuleLayoutString_ += "0,0,*,*,fe,;";
-		// macroModuleLayoutString_ += "1,0,*,*,fe,;";
+		macroModuleLayoutString_ += "1,0,*,*,fe,;";
 		macroModuleLayoutString_ += "0,1,*,*,fe,;";
-		// macroModuleLayoutString_ += "1,1,*,*,fe,;";
-		macroModuleLayoutString_ += "0,2,*,*,fe,;";
-		macroModuleLayoutString_ += "0,3,*,*,fe,;";
+		macroModuleLayoutString_ += "1,1,*,*,fe,;";
 		
 		var macroModules_; //row col to module struct
 			//			macroModules_[r][c]["feClassSelected"] = feClassSelected;
@@ -171,30 +168,6 @@
 		{			
 			Debug.closeErrorPop(); //close any debug pop-ups to start a blank slate 
 			Debug.log("CfgGUI init ");
-
-			macroModuleLayoutString_ = "" ; //row,
-											//col,
-											//class or *,
-											//UID or *,
-											//macroType:=fe|public|private:username,
-											//macroName;
-			//macroModuleLayoutString_ += "0,1,DTCFrontEndInterface,ExampleInterface0,fe,ROC_Read;";
-			//macroModuleLayoutString_ += "1,0,DTCFrontEndInterface,*,private,testPrivate;";
-			
-			if(verticalOrientation_)
-			{
-				macroModuleLayoutString_ += "0,0,*,*,fe,;";
-				macroModuleLayoutString_ += "0,1,*,*,fe,;";
-				macroModuleLayoutString_ += "0,2,*,*,fe,;";
-				macroModuleLayoutString_ += "0,3,*,*,fe,;";
-			}
-			else
-			{
-				macroModuleLayoutString_ += "0,0,*,*,fe,;";
-				macroModuleLayoutString_ += "1,0,*,*,fe,;";
-				macroModuleLayoutString_ += "0,1,*,*,fe,;";
-				macroModuleLayoutString_ += "1,1,*,*,fe,;";
-			}
 	
 	
 			//get FE Macros
@@ -472,13 +445,7 @@
 			var str = "";
 			str += "Launched... " + getDateString(new Date) + 
 					".. waiting for response...";
-			var el;
-			
-			if(verticalOrientation_)
-				el = document.getElementById(
-					"macroModule-output");			
-			else
-				el = document.getElementById(
+			var el = document.getElementById(
 					"macroResults-row-" + r + "-col-" + c);
 			el.innerHTML = str;
 
@@ -716,18 +683,7 @@
 							},
 						"" /*innerHTML*/,true /*doCloseTag*/);
 				}
-				if(c == 0 && verticalOrientation_) //create output area
-				{
-					str += DesktopContent.htmlOpen(
-							"td",
-							{
-								"id": "macroModule-output",
-								"class":"macroModule",
-								"rowspan": maxRow,
-								"width":"400px",
-							},
-						"Macro output will be displayed here." /*innerHTML*/,true /*doCloseTag*/);
-				}
+				
 				str += "</tr>";
 			}
 			str += "</table>";
@@ -1570,7 +1526,7 @@
 
 <body onload='//init() called by DesktopContent.js'>	
 		
-	<!-- <center> -->
+	<center>
 	
 	
 		<div style='width:550px'></div>		
@@ -1578,7 +1534,7 @@
 	<!--<a onclick='init();'>Refresh</a>
 		<br>-->
 	<div id='display'></div>
-	<!-- </center> -->
+	</center>
 </body>
 	
 </html>
