@@ -110,7 +110,7 @@
 			//handleSelectedMacroName(r,c)
 			//setCaretPosition(el, caretPos, endPos)
 
-		var verticalOrientation_ = true;
+		var verticalOrientation_ = false;
 
 		var feClassToFEsMap_; 	//map of FE Classes to FE UIDs
 		var feToMacrosMap_;		//map of FE UIDs to FE Macro structure 
@@ -163,6 +163,15 @@
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 		
+		//=====================================================================================
+		//toggleView ~~
+		//toggleView called when user clicks to change view style
+		function toggleView() 
+		{			
+			verticalOrientation_ = !verticalOrientation_;
+			Debug.log("feMacroTest toggleView ",verticalOrientation_);
+			init();
+		} //end toggleView()
 		
 		//=====================================================================================
 		//init ~~
@@ -170,7 +179,7 @@
 		function init() 
 		{			
 			Debug.closeErrorPop(); //close any debug pop-ups to start a blank slate 
-			Debug.log("CfgGUI init ");
+			Debug.log("feMacroTest init ");
 
 			macroModuleLayoutString_ = "" ; //row,
 											//col,
@@ -1572,7 +1581,7 @@
 		
 	<!-- <center> -->
 	
-	
+		<a href="#" onclick="toggleView()">Toggle View</a><br>
 		<div style='width:550px'></div>		
 
 	<!--<a onclick='init();'>Refresh</a>
