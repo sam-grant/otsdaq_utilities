@@ -446,6 +446,14 @@
 			var macroName = macroModules_[r][c].feMacroNameSelected;
 			
 			var macroObj = macroModules_[r][c].feMacroNameObject[macroName];
+			if(!macroObj)
+			{
+				Debug.log("Invalid Macro Name '" + macroName + "' - please select a valid Macro Name.",
+						Debug.HIGH_PRIORITY);
+				console.log("macroModules_",macroModules_);
+				return;
+			}
+
 			
 			var saveOutputs = document.getElementById("outputMacroToFile-row-" + r + "-col-" + c).checked?1:0;
 			var inputsArr 	= macroObj.inputs;
