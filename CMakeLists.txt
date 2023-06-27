@@ -118,14 +118,22 @@ if( $ENV{OTS_DOXY} MATCHES "DOIT" )
 endif()
 
 if( NOT DEBUG_MODE )
-	if(DEFINED $ENV{DEBUG_MODE})
+	message("otsdaq_utilities checking WebGUI Debug Mode $ENV{DEBUG_MODE}")
+	if(DEFINED ENV{DEBUG_MODE})
+		message("otsdaq_utilities found WebGUI Debug Mode = $ENV{DEBUG_MODE}")
 		set(DEBUG_MODE $ENV{DEBUG_MODE})
 	else()
 		set(DEBUG_MODE 0)
 	endif()
 endif()
+message("otsdaq_utilities WebGUI Debug Mode = ${DEBUG_MODE}")
+
+message("otsdaq_utilities WebGUI create Debug.js at ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js}")
+message("otsdaq_utilities WebGUI create Debug.js at ${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js}")
 
 # WebGUI
+FILE(REMOVE [ ${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js ])
+FILE(REMOVE [ ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js ])
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js.in ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js @ONLY)
 FILE(COPY WebGUI DESTINATION . PATTERN "*.in" EXCLUDE)
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js DESTINATION WebGUI/js)
