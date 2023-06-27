@@ -161,6 +161,8 @@
 		var multiSelectToggleSetting_ = {}; //true for multiselect display
 
 		var focusedMacroCell = [-1,-1]; //when enter is pressed which macro to run
+
+		var firstTime = true;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -180,6 +182,11 @@
 		//init called once body has loaded
 		function init() 
 		{			
+			if(firstTime)
+			{
+				firstTime = false;
+			}
+			
 			Debug.closeErrorPop(); //close any debug pop-ups to start a blank slate 
 			Debug.log("feMacroTest init ");
 
@@ -416,8 +423,20 @@
 	
 		//=====================================================================================
 		//runMacro ~~
+		var verticalOutputDivSize_ = [600,1000];
 		function runMacro(r, c)
 		{
+			//get any user resize of output element
+			var el = document.getElementById("verticalLayoutOutputDiv");
+			if(el)
+			{
+				Debug.log("Found output div at size ",el.offsetWidth,el.offsetHeight);
+				verticalOutputDivSize_ = [el.offsetWidth,el.offsetHeight];
+				el = document.getElementById("macroModule-output");
+				el.style.width = (verticalOutputDivSize_[0] + 30) + "px";
+			}
+
+
 			Debug.log("runMacro(" + r + "," + c + ")");
 			
 			Debug.log("feUID target",macroModules_[r][c].feUIDSelected);
@@ -533,6 +552,17 @@
 				var feMacroRunArgValues = req.responseXML.getElementsByTagName("feMacroRunArgs_value");	
 				
 				Debug.log("feExecs .length = " + feExecs .length);	
+
+				if(verticalOrientation_)
+					str += DesktopContent.htmlOpen("div", //start macro module table
+								{
+									"id"		: "verticalLayoutOutputDiv",
+									"style"		: "overflow:auto; width:" + 
+										verticalOutputDivSize_[0] + "px; height:" + 
+										verticalOutputDivSize_[1] + "px; resize: both;",									
+								},
+								"" /*innerHTML*/,
+								false /*doCloseTag*/);
 
 				var outputFileFound = false;
 				for(var i=0;i<feMacroRunArgNames.length;++i)
@@ -666,7 +696,8 @@
 					}
 					str += "<br>";
 				}
-				
+				if(verticalOrientation_)
+					str += "</div>"; //close scrolling div
 				el.innerHTML = str;
 
 				Debug.log("Returning scroll position", 
@@ -856,8 +887,8 @@
 									{
 											"id": "feUIDMultiSelect-row-" + r + "-col-" + c,
 											"class":"feUIDMultiSelect",
-											"onchange":"handleSelectedFEUID(" +
-											r + "," + c + ", 1 /*multiSelect*/);",
+											// "onchange":"handleSelectedFEUID(" +
+											// r + "," + c + ", 1 /*multiSelect*/);",
 											"style": "margin-top:6px;",
 									});
 							str += "</div>";
@@ -1055,6 +1086,7 @@
             // 		" value:",el.textContent,
             // 		" key:",el.getAttribute("key-value"),
             // 		" type:",el.getAttribute("type-value"));
+			console.log(selArr);
 
 			var uidSelStr = "";
             for(var s in selArr)
@@ -1104,6 +1136,10 @@
 					r + "-col-" + c).style.display = "none";
 				document.getElementById("feUIDMultiSelect-row-" + 
 					r + "-col-" + c).style.display = "block";
+				
+				MultiSelectBox.initMySelectBoxes();
+				multiFESelectionHandler(document.getElementById("feUIDMultiSelect-row-" + 
+					r + "-col-" + c));
 			}
 			else //show single select
 			{
@@ -1111,6 +1147,7 @@
 					r + "-col-" + c).style.display = "block";
 				document.getElementById("feUIDMultiSelect-row-" + 
 					r + "-col-" + c).style.display = "none";
+				handleSelectedFEUID(r,c);
 			}
 
 		} //end feUIDMultiSelectToggle()
@@ -1598,16 +1635,18 @@
 		function handleKeyInput(e) 
 		{
 			if(e.key == "Enter")
+			{
 				Debug.log("Enter on ",focusedMacroCell[0],focusedMacroCell[1]);
+				runMacro(focusedMacroCell[0],focusedMacroCell[1]);
+			}
 		} //end handleKeyInput()
 
-		
 		</script>
 		
 </head>
 	
 
-<body onload='//init() called by DesktopContent.js' onkeydown='handleKeyInput(event);'>	
+<body onload='//init() called by DesktopContent.js' > <!--</body>onkeydown='handleKeyInput(event);'>	-->
 		
 	<!-- <center> -->
 	
