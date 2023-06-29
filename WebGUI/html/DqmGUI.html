@@ -3,121 +3,20 @@
 	<head>
 		<title>DQM GUI</title>
 
-		<link rel="stylesheet" type="text/css" href="/WebPath/css/SlowControlsDashboard.css">
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/DqmPagesCss/DqmHome.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
-		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
-		<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
-
-		<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
-		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
-		<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
 		<script>
 
 			//functions:
 			//	init()
+			//	manageMenu()
+			//	openPage()
 			//
-			//	indicateUserActivityToServer()
-			//
-			//	pagesReqHandler(req)
-			//	isUserAdminHandler(req)
-			//	pvListReqHandler(req)
-			//	pollServerHandlerFunction(req)
-			//	generateUIDHandlerFunction(req)
-			//	settingsReqHandler(req, passParams)
-			//	pvHistoryReqHandler(req, passParams)
-			//	createControlsPageHandler(req)
-			//	handlerFunction(req)
-			//	lastAlarmsReqHandler(req, passParams)
-			//	getLastAlarms(id, parameters)
-			//	pollServer()
-			//	generateUID()
-			//	updateRefreshInterval()
-			//	setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_)
-			//	getPVHistory(id, parameters)
-			//	makeHandlerWithID(id)
-			//	setBackgroundColor(color)
-			//	evaluateJS(str)
-			//	setRefreshRate(keyField,rateField)
-			//	isEmpty(obj)
-
-
-			//top-level scope (global) variables:
-
-			var page_ = page_ || {}; 	//define the page object if needed
-										//	page_.widgets = {
-										//		<widgetID> : <widget object := x, y, 
-										//			w, h, pvList{}, attributes{},
-										//			displayName, loaded,
-										//			el /*iframe element*/
-										//	} 
-
-			//====================== start high-level behavior description
-			//
-			//	High-level description of page-widget interactions:
-			//
-			//	- widget's init() is called by 2: 
-			//		1. widget's own onload() 
-			//		2. top-level addPVToWidget()
-			//	- In edit mode, user draws a widget square...		
-			//		* immediately onload, widget should call init()
-			//		* widget should call setupWidget() like this from init: 
-			//				function init() { 	
-			//					window.parent.setupWidget(window.frameElement.id, 
-			//						getAttributes());   
-			//				}
-			//		* getAttributes() is defined by user widget and
-			//			should describe user-editable fields for widget:
-			//			- like { "param1" : "DEFAULT_VAL", "param2" : "" }
-			//		* calling setupWidget() propagates parameters to the high-level page object
-			//	- parent.setupWidget(): 
-			//		* Note: this gets called by widget's init() (e.g. from onload)
-			//		* setupWidget gives Top-level parameters that become user-editable
-			//		* Then top-level gets PV settings (e.g. alarm thresholds) through server request based on widgets pvList
-			//			and then propagates settings back to widget by calling... 
-			//				- contentWindow.setupPVs(settings)
-			//				- contentWindow.drawWidget(object)
-			//	
-			//
-			//	- contentWindow.setupPVs(settings)
-			//		* Pass alarm thresholds, etc associated with pvList to widget content
-			//	- contentWindow.setAttributes(attributes)
-			//		* Notify widget attributes have been changed
-			//	- contentWindow.drawWidget(object, attributes)			
-			//		* (re)Draw widget elements, based on attributes.
-			//		* Note: called by window resize
-			//
-			//	Once we go Live, all widgets get PV values as available:
-			//	- contentWindow.drawNewValue()
-			//		* Update widget drawing based on new value (and append to history if needed)
-			//
-			//====================== end high-level behavior description
-
-			var windowWidth_, windowHeight_;
-
-			var mainBlock_ = {name:"", isHidden:false, el:""}; // = ["mainBlock", false ];
-
-			var refreshRate_ = 15000; //set default to refresh every 15 seconds (ms)
-			var timerVariable_;
-			//var lastAlarmsTimerVariable_;
-			//var alarmsLogTimerVariable_;
-			var UID_ = 0;
-			var timeToPoll_ = false;
-
-			var isReadOnly_;
-
-			page_.createPage = function(){
-
-				this.name = "MyPage";
-				this.widgets = {};
-				this.addPV = function(pv){
-					console.log("Reached " + pv);
-				}
-			}
-
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 
@@ -127,396 +26,122 @@
 			function init() 
 			{
 				Debug.log("init() was called");
-
-				mainBlock_.el = document.getElementById('mainBlock');//yellow
-
-				mainBlock_.name = mainBlock_.el.id;
-
-				page_.createPage();
-
-				var datalist = document.getElementById("pvDatalist");//document.createElement("datalist");
-				isReadOnly_ = false;
-
-				DesktopContent.XMLHttpRequest(
-				                    "Request?RequestType=isUserAdmin",
-				                    "",
-				                    isUserAdminHandler);
-
-				//get command string if opening a new window
-				var cmdStr = DesktopContent.getParameter(2); //from  location.search
-				if (cmdStr && cmdStr != "") {
-					//do incoming commands!
-					Debug.log("cmdStr=" + cmdStr);
-					//replace %22 with "
-					cmdStr = cmdStr.replace(/%22/g, "\"");
-					//evaluateJS(cmdStr);
-				}
-
-				mainBlock_.el.style["background-color"] = "rgb(255, 255, 255)";
-
-				//Make sure pv list is up-to-date
-				DesktopContent.XMLHttpRequest(
-						"Request?RequestType=getList",
-						"", 
-						pvListReqHandler /*returnHandler*/, 
-						0 /*reqParam*/, 
-						0 /*progressHandler*/, 
-						0 /*callHandlerOnErr*/, 
-						false /*doNoShowLoadingOverlay*/);
-
-				UID_ = 0;
-
-				window.clearTimeout(timerVariable_);
-				//window.clearTimeout(lastAlarmsTimerVariable_);
-				//window.clearTimeout(alarmsLogTimerVariable_);
-
-				makeMainPage();
-				generateUID();
-				pollServer();
-				//timerVariable_ = window.setTimeout(pollServer, refreshRate_);
-				//getLastAlarms();
-				//lastAlarmsTimerVariable_ = window.setTimeout(pollLastAlarms, refreshRate_);
-				//getAlarmsLog();
-				//alarmsLogTimerVariable_ = window.setTimeout(pollAlarmsLog, refreshRate_);
+				manageMenu();
+				openPage('/WebPath/html/DqmPages/DqmHome.html');
 			} //end init()
 
-			//=====================================================================================
-			//main page here
-			function makeMainPage()
-			{
-				var pvToUse = [{"Mu2e:RackProt:1E:state": 0},{"Mu2e:RackProt:1W:state":0},{"Mu2e:RackProt:2E:state":0},{"Mu2e:RackProt:2W:state":0}];
-
-				for (i = 0; i < 4; i++)
-				{
-					document.getElementById("pvName-"+i).innerHTML = Object.keys(pvToUse[i])[0];
-					var widgetObject 		= {};
-					widgetObject.pvList 	= pvToUse[i];
-					widgetObject.pvSettings = {};
-					widgetObject.el = document.getElementById("pvValue-"+i);
-					page_.widgets[i] = widgetObject;
-					setupPvParams(i);
-				}
-			}
-
 
 			//=====================================================================================
-			//write a new value of a PV
-			function drawNewValue(widget, pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			function manageMenu(obj)
 			{
-				console.log("Text newValue() reached", pvName, pvValue);
+				//* Loop through all dropdown buttons to toggle between hiding and showing its dropdown content - This allows the user to have multiple dropdowns without any conflict */
+				var dropdown = document.getElementsByClassName("dropdown-btn");
+				var i;
 
-				var units = page_.widgets[widget].pvSettings != undefined ? page_.widgets[widget].pvSettings[pvName].Units : "";
-
-				page_.widgets[widget].el.innerHTML = pvValue + " " + units;
-
-				page_.widgets[widget].el.title = setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, page_.widgets[widget].pvSettings);
-			}
-
-			//=====================================================================================
-			//indicate that login should be kept alive
-			function indicateUserActivityToServer() 
-			{
-				Debug.log("indicateUserActivityToServer()");
-				DesktopContent.XMLHttpRequest(
-						"Request?RequestType=userActivityHeartbeat",
-						"", 
-						undefined /*returnHandler*/, 
-						0 /*reqParam*/, 
-						0 /*progressHandler*/, 
-						0 /*callHandlerOnErr*/, 
-						true /*doNoShowLoadingOverlay*/);	
-			} //end indicateUserActivityToServer()
-
-
-			//=====================================================================================
-			function isUserAdminHandler(req)
-			{
-				Debug.log("getPermissionHandler() was called. " + req.responseText);//Req: " + req.responseText);
-
-				isAdmin = JSON.parse(decodeURIComponent(DesktopContent.getXMLValue(req, "JSON")))["message"];
-				console.log("User Permission: " + isAdmin);
-				console.log(isAdmin);
-
-				if(isAdmin == "Yes")
-				{
-					isReadOnly_ = false;
-				}
-				else
-				{
-					isReadOnly_ = true;
-				}
-
-				console.log("Interface isReadOnly=" + isReadOnly_);
-			} //end isUserAdminHandler()
-
-
-			//=====================================================================================
-			function pvListReqHandler(req)
-			{
-				console.log("pvListReqHandler: response received!");	
-				console.log(req.responseText);
-				var datalist = document.getElementById("pvDatalist");
-				datalist.innerHTML = "";
-
-				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
-				if(!jsonStr || jsonStr == "") return;				
-				var pvListJSON;
-
-				//if invalid JSON return
-				//jsonStr.replace(/\"/g,"");
-				try {pvListJSON = JSON.parse(jsonStr); }
-				catch(e){console.log("Invalid JSON!"); return;}
-
-				console.log("pvListJSON:", pvListJSON);
-				for (var x in pvListJSON)
-				{
-					var option = document.createElement("option");
-					option.value = pvListJSON[x];
-					datalist.appendChild(option);
-				}
-			} //end pvListReqHandler()
-
-			//=====================================================================================
-			function pollServer()
-			{
-				timeToPoll_ = false;
-				Debug.log("pollServer: polling server!");
-				console.log("pollServer(): ",page_.widgets);
-				//console.log("UID is ", UID_);
-				if(page_.widgets)
-				{
-					DesktopContent.XMLHttpRequest(
-						"Request?RequestType=poll&uid=" + UID_,
-						"", 
-						pollServerHandlerFunction /*returnHandler*/, 
-						0 /*reqParam*/, 
-						0 /*progressHandler*/, 
-						0 /*callHandlerOnErr*/, 
-						true /*doNoShowLoadingOverlay*/);	
-				}
-			} //end pollServer()
-
-
-			//=====================================================================================
-			function generateUID()
-			{
-				//BEGIN Put all pvs in a JSON and send to server
-				var pvList = "";
-				//console.log("page: ", page_);
-				for (var widget in page_.widgets)
-				{
-					console.log("generateUID: " +  page_.widgets[widget] + " " +  page_.widgets[widget].pvList);
-
-					for(var pv in page_.widgets[widget].pvList)
-					{
-						//pvList += pv + ":"  + page_.widgets[widget].pvList.valueOf()[pv] + ",";
-						pvList += pv + ",";
-					}
-				}
-
-				timeToPoll_ = true;
-
-				//END Put all pvs in a JSON and send to server
-				DesktopContent.XMLHttpRequest(
-					"Request?RequestType=generateUID",
-					"pvList=" + pvList,
-					generateUIDHandlerFunction);//, undefined, undefined, "sequence");
-			} //end generateUID()
-
-
-			//=====================================================================================
-			function updateRefreshInterval()
-			{
-				console.log("updateRefreshInterval.refreshRate_ (ms): " + refreshRate_);
-				window.clearInterval(timerVariable_);
-				timerVariable_ = setInterval(pollServer, refreshRate_);
-			} //end updateRefreshInterval()
-
-
-			//=====================================================================================
-			function pollServerHandlerFunction(req)
-			{
-				Debug.log("pollServerHandlerFunction() was called. Req: " + req.responseText);
-
- 				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
-				jsonStr = jsonStr.replace(/\s/g, ''); //hack for removing whitespace 
-    			if(!jsonStr || jsonStr == "") 
-					return;
-
-				Debug.log(jsonStr);
-
-				var serverResponse;
-
-				serverResponse = JSON.parse(jsonStr);
-
-				Debug.log(serverResponse);
-
-				if(serverResponse.message == "NOT_FOUND")
-				{
-					console.log("Have to generate new UID!");
-					generateUID();
-					timeToPoll_ = true;
-				}
-				else
-				{
-					for(var pv in serverResponse)//have to use each pv and then loop through
-					{	
-						console.log("pollServerHandlerFunction: pv" + pv);						
-						for (var widget in page_.widgets)
-						{
-							console.log("pollServerHandlerFunction: " + page_.widgets[widget]);
-							for(var dependendentPV in page_.widgets[widget].pvList)
-							{
-								console.log("poll: " + dependendentPV);
-								if(pv == dependendentPV && page_.widgets[widget].loaded != "false")
-								{
-									console.log("Widget*************", widget, pv);
-									try
-									{
-										drawNewValue(
-												widget,
-												pv, 
-												serverResponse[pv].Value, 
-												serverResponse[pv].Timestamp, 
-												serverResponse[pv].Status, 
-												serverResponse[pv].Severity);
-									}
-									catch(e)
-									{
-										Debug.log("Error was caught updating new value to widget 'widget-" +
-											widget + "': " + e);											
-									}
-								}
-							}
+				for (i = 0; i < dropdown.length; i++) {
+					dropdown[i].addEventListener("click", function() {
+						this.classList.toggle("active");
+						var dropdownContent = this.nextElementSibling;
+						if (dropdownContent.style.display === "block") {
+							dropdownContent.style.display = "none";
+						} else {
+							dropdownContent.style.display = "block";
 						}
-					}
+					});
 				}
-
-				timerVariable_ = window.setTimeout(pollServer, refreshRate_);
-			} //end pollServerHandlerFunction()
+			} //end manageMenu()
 
 
 			//=====================================================================================
-			function generateUIDHandlerFunction(req)
+			function openPage(url)
 			{
-				var uid = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
-
-				if(uid.message != "-1")
-					UID_ = uid.message;
-				else
-				{
-					UID_ = "";
-					Debug.log("Unable to generate UID!", Debug.HIGH_PRIORITY);
-				}
-
-				if(timeToPoll_)
-				{
-					pollServer();
-				}
-			} //end generateUIDHandlerFunction()
-
-
-			//=====================================================================================
-			//	expecting id as 'widget-#' ..and this function extracts the 
-			//	widget UID as integer #
-			function setupPvParams(id)
-			{
-				console.log("setting up widget! " + id);
-
-				var pvListCSV = "";
-
-				for(var pv in page_.widgets[id].pvList)
-				{
-					pvListCSV += pv + ",";
-				}
-
-				DesktopContent.XMLHttpRequest("Request?RequestType=getPVSettings",
-							//post data 
-    						"pvList=" + pvListCSV + 
-							"&id=" + id,
-							settingsReqHandler /*handler*/,
-							id /*parameter*/);
-
-			} //end setupWidget()
-
-
-			//=====================================================================================
-			function settingsReqHandler(req, id)
-			{
-				page_.widgets[id].pvSettings = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));				
-
-				console.log(req);
-				console.log("pvSettings", page_.widgets[id].pvSettings);
-				console.log("id", id);
-
-			} //end settingsReqHandler()
-
-
-			//=====================================================================================
-			function setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pvSettings)
-			{
-				var toolTip =
-				pvName
-				+ "\nLast value: "
-				+ pvValue
-				+ " "
-				+ pvSettings[pvName].Units
-				
-				+ "\nTime: "
-				+ ConfigurationAPI.getDateString(new Date((pvTime | 0) * 1000))
-				+ "\nStatus: "
-				+ pvStatus
-				+ "\nSeverity: "
-				+ pvSeverity
-				+ "\nLower Warning Limit:  " + Number.parseFloat(pvSettings[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
-			  	+ "Upper Warning Limit:  "   + Number.parseFloat(pvSettings[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
-			  	+ "Lower Alarm Limit:    "   + Number.parseFloat(pvSettings[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
-			  	+ "Upper Alarm Limit:    "   + Number.parseFloat(pvSettings[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
-			  	+ "Lower Control Limit:   "  + Number.parseFloat(pvSettings[pvName].Lower_Control_Limit).toExponential(2) + "\n"
-			  	+ "Upper Control Limit:   "  + Number.parseFloat(pvSettings[pvName].Upper_Control_Limit).toExponential(2) + "\n"
-			  	+ "Lower Display Limit:   "  + Number.parseFloat(pvSettings[pvName].Lower_Display_Limit).toExponential(2) + "\n"
-			  	+ "Upper Display Limit:   "  + Number.parseFloat(pvSettings[pvName].Upper_Display_Limit).toExponential(2) + "\n";
-			  	return toolTip;
-			} //end setWidgetToolTip()
-
-
-			//=====================================================================================
-			function setBackgroundColor(color)
-			{
-				mainBlock_.el.style["background-color"] = color;
-			} //end setBackgroundColor()
-
-
-			//=====================================================================================
-			//evaluateJS ~~
-			function evaluateJS(str)
-			{
-				Debug.log("evaluateJS = " + str);
-				eval(str);
-			} //end evaluateJS()
-
-
-			//=====================================================================================
-			function isEmpty(obj)
-			{
-				return (Object.getOwnPropertyNames(obj).length === 0);
-			} //end isEmpty()
+				var frame = document.getElementById('mainFrame');
+				frame.src = url;
+			}// end openPage()
 
 		</script>
 	</head>
 
 	<body onload='//init() called by DesktopContent.js'>
-		
-		<div id="mainBlockContainer" height="auto" width="auto">
-			<div class='mainBlock '	id='mainBlock' >
-				<table>
-					<tr><td id="pvName-0">No data</td><td id="pvValue-0">No data</td></tr>
-					<tr><td id="pvName-1">No data</td><td id="pvValue-1">No data</td></tr>
-					<tr><td id="pvName-2">No data</td><td id="pvValue-2">No data</td></tr>
-					<tr><td id="pvName-3">No data</td><td id="pvValue-3">No data</td></tr>
-				</table>
-			</div> <!-- end main block -->
-		</div> <!-- end main block container -->
-		<datalist id="pvDatalist"></datalist>
+
+		<div class="navbar">
+			<a href="#">Link</a>
+			<a href="#">Link</a>
+			<a href="#">Link</a>
+			<a href="#" class="right">Link</a>
+		</div>
+
+		<div class="row">
+			<!-- The sidenav -->
+			<div class="side">
+				<div class="sidenav">
+					<div class="logo">
+						Online monitoring
+						<img src="/WebPath/images/iconImages/mu2e_logo_oval_small.png" alt="" 	width="50%">
+						<img src="/WebPath/images/otsdaqIcons/logo.png" alt="" 	width="46%">
+					</div>
+					<button class="open-page-btn" onmousedown="openPage('/WebPath/html/DqmPages/DqmHome.html')"><i class="fa fa-fw fa-home"></i> HOME</button>
+					<a href="#"><i class="fa fa-fw fa-search"></i> Search</a>
+					<a href="#"><i class="fa fa-fw fa-envelope"></i> Contact</a>
+					<button class="dropdown-btn">DAQ
+						<i class="fa fa-caret-down"></i>
+					</button>
+					<div class="dropdown-container">
+						<a href="#">Link 1</a>
+						<a href="#">Link 2</a>
+						<a href="#">Link 3</a>
+					</div>
+					<button class="dropdown-btn">DCS
+						<i class="fa fa-caret-down"></i>
+					</button>
+					<div class="dropdown-container">
+						<button class="open-page-btn" onmousedown="openPage('/WebPath/html/SlowControlsDashboard.html')"><i class="fa fa-fw fa-gear"></i> Dashboard</button>
+						<a href="#">Link 4</a>
+						<a href="#">Link 5</a>
+						<a href="#">Link 6</a>
+					</div>
+					<button class="dropdown-btn">STM
+						<i class="fa fa-caret-down"></i>
+					</button>
+					<div class="dropdown-container">
+						<a href="#">Link 7</a>
+						<a href="#">Link 8</a>
+						<a href="#">Link 9</a>
+					</div>
+					<button class="dropdown-btn">CRV
+						<i class="fa fa-caret-down"></i>
+					</button>
+					<div class="dropdown-container">
+						<a href="#">Link 10</a>
+						<a href="#">Link 11</a>
+						<a href="#">Link 12</a>
+					</div>
+					<button class="dropdown-btn">ECAL
+						<i class="fa fa-caret-down"></i>
+					</button>
+					<div class="dropdown-container">
+						<a href="#">Link 13</a>
+						<a href="#">Link 14</a>
+						<a href="#">Link 15</a>
+					</div>
+					<button class="dropdown-btn">TRK
+						<i class="fa fa-caret-down"></i>
+					</button>
+					<div class="dropdown-container">
+						<a href="#">Link 16</a>
+						<a href="#">Link 17</a>
+						<a href="#">Link 18</a>
+					</div>
+				</div> <!-- end sidenav -->
+			</div> <!-- end side block -->
+			<div class="main">
+				<iframe class="mainFrame"	id="mainFrame" src="">
+				</iframe>
+			</div> <!-- end main frame block -->
+		</div> <!-- end row block container -->
+
+		<div class="footer">
+			<h2>Footer</h2>
+		</div>
 	</body>
 </html>

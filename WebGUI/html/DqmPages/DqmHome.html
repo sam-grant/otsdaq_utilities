@@ -1,0 +1,731 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>DQM GUI</title>
+
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/DqmGUI.css">
+
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+
+		<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
+		<script>
+
+			//functions:
+			//	init()
+			//
+			//	indicateUserActivityToServer()
+			//
+			//	pagesReqHandler(req)
+			//	isUserAdminHandler(req)
+			//	pvListReqHandler(req)
+			//	pollServerHandlerFunction(req)
+			//	generateUIDHandlerFunction(req)
+			//	settingsReqHandler(req, passParams)
+			//	pvHistoryReqHandler(req, passParams)
+			//	createControlsPageHandler(req)
+			//	handlerFunction(req)
+			//	lastAlarmsReqHandler(req, passParams)
+			//	getLastAlarms(id, parameters)
+			//	pollServer()
+			//	generateUID()
+			//	updateRefreshInterval()
+			//	setWidgetToolTip(pvName, pvValue, pvTime, pv_settings_)
+			//	getPVHistory(id, parameters)
+			//	makeHandlerWithID(id)
+			//	setBackgroundColor(color)
+			//	evaluateJS(str)
+			//	setRefreshRate(keyField,rateField)
+			//	isEmpty(obj)
+
+
+			//top-level scope (global) variables:
+
+			var page_ = page_ || {}; 	//define the page object if needed
+										//	page_.widgets = {
+										//		<widgetID> : <widget object := x, y, 
+										//			w, h, pvList{}, attributes{},
+										//			displayName, loaded,
+										//			el /*iframe element*/
+										//	} 
+
+			//====================== start high-level behavior description
+			//
+			//	High-level description of page-widget interactions:
+			//
+			//	- widget's init() is called by 2: 
+			//		1. widget's own onload() 
+			//		2. top-level addPVToWidget()
+			//	- In edit mode, user draws a widget square...		
+			//		* immediately onload, widget should call init()
+			//		* widget should call setupWidget() like this from init: 
+			//				function init() { 	
+			//					window.parent.setupWidget(window.frameElement.id, 
+			//						getAttributes());   
+			//				}
+			//		* getAttributes() is defined by user widget and
+			//			should describe user-editable fields for widget:
+			//			- like { "param1" : "DEFAULT_VAL", "param2" : "" }
+			//		* calling setupWidget() propagates parameters to the high-level page object
+			//	- parent.setupWidget(): 
+			//		* Note: this gets called by widget's init() (e.g. from onload)
+			//		* setupWidget gives Top-level parameters that become user-editable
+			//		* Then top-level gets PV settings (e.g. alarm thresholds) through server request based on widgets pvList
+			//			and then propagates settings back to widget by calling... 
+			//				- contentWindow.setupPVs(settings)
+			//				- contentWindow.drawWidget(object)
+			//	
+			//
+			//	- contentWindow.setupPVs(settings)
+			//		* Pass alarm thresholds, etc associated with pvList to widget content
+			//	- contentWindow.setAttributes(attributes)
+			//		* Notify widget attributes have been changed
+			//	- contentWindow.drawWidget(object, attributes)			
+			//		* (re)Draw widget elements, based on attributes.
+			//		* Note: called by window resize
+			//
+			//	Once we go Live, all widgets get PV values as available:
+			//	- contentWindow.drawNewValue()
+			//		* Update widget drawing based on new value (and append to history if needed)
+			//
+			//====================== end high-level behavior description
+
+			var windowWidth_, windowHeight_;
+
+			var mainBlock_ = {name:"", isHidden:false, el:""}; // = ["mainBlock", false ];
+
+			var refreshRate_ = 15000; //set default to refresh every 15 seconds (ms)
+			var timerVariable_;
+			//var lastAlarmsTimerVariable_;
+			//var alarmsLogTimerVariable_;
+			var UID_ = 0;
+			var timeToPoll_ = false;
+
+			var isReadOnly_;
+			var datalist_;
+
+			page_.createPage = function(){
+
+				this.name = "MyPage";
+				this.widgets = {};
+				this.addPV = function(pv){
+					console.log("Reached " + pv);
+				}
+			}
+
+			var pvToUse_1 = [
+				{"Mu2e:RackProt:1E:state": 0}
+				,{"Mu2e:RackProt:1W:state": 0}
+				,{"Mu2e:RackProt:2E:state": 0}
+				,{"Mu2e:RackProt:2W:state": 0}
+				,{"Mu2e:RackProt:3E:state": 0}
+				,{"Mu2e:RackProt:3W:state": 0}
+				,{"Mu2e:RackProt:4E:state": 0}
+				,{"Mu2e:RackProt:4W:state": 0}
+				,{"Mu2e:RackProt:5E:state": 0}
+				,{"Mu2e:RackProt:5W:state": 0}
+				,{"Mu2e:RackProt:6E:state": 0}
+				,{"Mu2e:RackProt:6W:state": 0}
+				,{"Mu2e:RackProt:7E:state": 0}
+				,{"Mu2e:RackProt:7W:state": 0}
+				,{"Mu2e:RackTemp:1E:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:1E:0:T_trip": 0}
+				,{"Mu2e:RackTemp:1E:0:configbyte": 0}
+				,{"Mu2e:RackTemp:1E:0:temperature": 0}
+				,{"Mu2e:RackTemp:1E:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:1E:1:T_trip": 0}
+				,{"Mu2e:RackTemp:1E:1:configbyte": 0}
+				,{"Mu2e:RackTemp:1E:1:temperature": 0}
+				,{"Mu2e:RackTemp:1E:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:1E:2:T_trip": 0}
+				,{"Mu2e:RackTemp:1E:2:configbyte": 0}
+				,{"Mu2e:RackTemp:1E:2:temperature": 0}
+				,{"Mu2e:RackTemp:1W:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:1W:0:T_trip": 0}
+				,{"Mu2e:RackTemp:1W:0:configbyte": 0}
+				,{"Mu2e:RackTemp:1W:0:temperature": 0}
+				,{"Mu2e:RackTemp:1W:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:1W:1:T_trip": 0}
+				,{"Mu2e:RackTemp:1W:1:configbyte": 0}
+				,{"Mu2e:RackTemp:1W:1:temperature": 0}
+				,{"Mu2e:RackTemp:1W:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:1W:2:T_trip": 0}
+				,{"Mu2e:RackTemp:1W:2:configbyte": 0}
+				,{"Mu2e:RackTemp:1W:2:temperature": 0}
+				,{"Mu2e:RackTemp:2E:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:2E:0:T_trip": 0}
+				,{"Mu2e:RackTemp:2E:0:configbyte": 0}
+				,{"Mu2e:RackTemp:2E:0:temperature": 0}
+				,{"Mu2e:RackTemp:2E:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:2E:1:T_trip": 0}
+				,{"Mu2e:RackTemp:2E:1:configbyte": 0}
+				,{"Mu2e:RackTemp:2E:1:temperature": 0}
+				,{"Mu2e:RackTemp:2E:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:2E:2:T_trip": 0}
+				,{"Mu2e:RackTemp:2E:2:configbyte": 0}
+				,{"Mu2e:RackTemp:2E:2:temperature": 0}
+				,{"Mu2e:RackTemp:2W:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:2W:0:T_trip": 0}
+				,{"Mu2e:RackTemp:2W:0:configbyte": 0}
+				,{"Mu2e:RackTemp:2W:0:temperature": 0}
+				,{"Mu2e:RackTemp:2W:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:2W:1:T_trip": 0}
+				,{"Mu2e:RackTemp:2W:1:configbyte": 0}
+				,{"Mu2e:RackTemp:2W:1:temperature": 0}
+				,{"Mu2e:RackTemp:2W:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:2W:2:T_trip": 0}
+				,{"Mu2e:RackTemp:2W:2:configbyte": 0}
+				,{"Mu2e:RackTemp:2W:2:temperature": 0}
+				,{"Mu2e:RackTemp:3E:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:3E:0:T_trip": 0}
+				,{"Mu2e:RackTemp:3E:0:configbyte": 0}
+				,{"Mu2e:RackTemp:3E:0:temperature": 0}
+				,{"Mu2e:RackTemp:3E:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:3E:1:T_trip": 0}
+				,{"Mu2e:RackTemp:3E:1:configbyte": 0}
+				,{"Mu2e:RackTemp:3E:1:temperature": 0}
+				,{"Mu2e:RackTemp:3E:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:3E:2:T_trip": 0}
+				,{"Mu2e:RackTemp:3E:2:configbyte": 0}
+				,{"Mu2e:RackTemp:3E:2:temperature": 0}
+				,{"Mu2e:RackTemp:3W:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:3W:0:T_trip": 0}
+				,{"Mu2e:RackTemp:3W:0:configbyte": 0}
+				,{"Mu2e:RackTemp:3W:0:temperature": 0}
+				,{"Mu2e:RackTemp:3W:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:3W:1:T_trip": 0}
+				,{"Mu2e:RackTemp:3W:1:configbyte": 0}
+				,{"Mu2e:RackTemp:3W:1:temperature": 0}
+				,{"Mu2e:RackTemp:3W:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:3W:2:T_trip": 0}
+				,{"Mu2e:RackTemp:3W:2:configbyte": 0}
+				,{"Mu2e:RackTemp:3W:2:temperature": 0}
+				,{"Mu2e:RackTemp:4E:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:4E:0:T_trip": 0}
+				,{"Mu2e:RackTemp:4E:0:configbyte": 0}
+				,{"Mu2e:RackTemp:4E:0:temperature": 0}
+				,{"Mu2e:RackTemp:4E:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:4E:1:T_trip": 0}
+				,{"Mu2e:RackTemp:4E:1:configbyte": 0}
+				,{"Mu2e:RackTemp:4E:1:temperature": 0}
+				,{"Mu2e:RackTemp:4E:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:4E:2:T_trip": 0}
+				,{"Mu2e:RackTemp:4E:2:configbyte": 0}
+				,{"Mu2e:RackTemp:4E:2:temperature": 0}
+				,{"Mu2e:RackTemp:4W:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:4W:0:T_trip": 0}
+				,{"Mu2e:RackTemp:4W:0:configbyte": 0}
+				,{"Mu2e:RackTemp:4W:0:temperature": 0}
+				,{"Mu2e:RackTemp:4W:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:4W:1:T_trip": 0}
+				,{"Mu2e:RackTemp:4W:1:configbyte": 0}
+				,{"Mu2e:RackTemp:4W:1:temperature": 0}
+				,{"Mu2e:RackTemp:4W:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:4W:2:T_trip": 0}
+				,{"Mu2e:RackTemp:4W:2:configbyte": 0}
+				,{"Mu2e:RackTemp:4W:2:temperature": 0}
+				,{"Mu2e:RackTemp:5E:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:5E:0:T_trip": 0}
+				,{"Mu2e:RackTemp:5E:0:configbyte": 0}
+				,{"Mu2e:RackTemp:5E:0:temperature": 0}
+				,{"Mu2e:RackTemp:5E:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:5E:1:T_trip": 0}
+				,{"Mu2e:RackTemp:5E:1:configbyte": 0}
+				,{"Mu2e:RackTemp:5E:1:temperature": 0}
+				,{"Mu2e:RackTemp:5E:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:5E:2:T_trip": 0}
+				,{"Mu2e:RackTemp:5E:2:configbyte": 0}
+				,{"Mu2e:RackTemp:5E:2:temperature": 0}
+				,{"Mu2e:RackTemp:5W:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:5W:0:T_trip": 0}
+				,{"Mu2e:RackTemp:5W:0:configbyte": 0}
+				,{"Mu2e:RackTemp:5W:0:temperature": 0}
+				,{"Mu2e:RackTemp:5W:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:5W:1:T_trip": 0}
+				,{"Mu2e:RackTemp:5W:1:configbyte": 0}
+				,{"Mu2e:RackTemp:5W:1:temperature": 0}
+				,{"Mu2e:RackTemp:5W:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:5W:2:T_trip": 0}
+				,{"Mu2e:RackTemp:5W:2:configbyte": 0}
+				,{"Mu2e:RackTemp:5W:2:temperature": 0}
+				,{"Mu2e:RackTemp:6E:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:6E:0:T_trip": 0}
+				,{"Mu2e:RackTemp:6E:0:configbyte": 0}
+				,{"Mu2e:RackTemp:6E:0:temperature": 0}
+				,{"Mu2e:RackTemp:6E:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:6E:1:T_trip": 0}
+				,{"Mu2e:RackTemp:6E:1:configbyte": 0}
+				,{"Mu2e:RackTemp:6E:1:temperature": 0}
+				,{"Mu2e:RackTemp:6E:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:6E:2:T_trip": 0}
+				,{"Mu2e:RackTemp:6E:2:configbyte": 0}
+				,{"Mu2e:RackTemp:6E:2:temperature": 0}
+				,{"Mu2e:RackTemp:6W:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:6W:0:T_trip": 0}
+				,{"Mu2e:RackTemp:6W:0:configbyte": 0}
+				,{"Mu2e:RackTemp:6W:0:temperature": 0}
+				,{"Mu2e:RackTemp:6W:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:6W:1:T_trip": 0}
+				,{"Mu2e:RackTemp:6W:1:configbyte": 0}
+				,{"Mu2e:RackTemp:6W:1:temperature": 0}
+				,{"Mu2e:RackTemp:6W:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:6W:2:T_trip": 0}
+				,{"Mu2e:RackTemp:6W:2:configbyte": 0}
+				,{"Mu2e:RackTemp:6W:2:temperature": 0}
+				,{"Mu2e:RackTemp:7E:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:7E:0:T_trip": 0}
+				,{"Mu2e:RackTemp:7E:0:configbyte": 0}
+				,{"Mu2e:RackTemp:7E:0:temperature": 0}
+				,{"Mu2e:RackTemp:7E:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:7E:1:T_trip": 0}
+				,{"Mu2e:RackTemp:7E:1:configbyte": 0}
+				,{"Mu2e:RackTemp:7E:1:temperature": 0}
+				,{"Mu2e:RackTemp:7E:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:7E:2:T_trip": 0}
+				,{"Mu2e:RackTemp:7E:2:temperature": 0}
+				,{"Mu2e:RackTemp:7W:0:T_hyst": 0}
+				,{"Mu2e:RackTemp:7W:0:T_trip": 0}
+				,{"Mu2e:RackTemp:7W:0:configbyte": 0}
+				,{"Mu2e:RackTemp:7W:0:temperature": 0}
+				,{"Mu2e:RackTemp:7W:1:T_hyst": 0}
+				,{"Mu2e:RackTemp:7W:1:T_trip": 0}
+				,{"Mu2e:RackTemp:7W:1:configbyte": 0}
+				,{"Mu2e:RackTemp:7W:1:temperature": 0}
+				,{"Mu2e:RackTemp:7W:2:T_hyst": 0}
+				,{"Mu2e:RackTemp:7W:2:T_trip": 0}
+				,{"Mu2e:RackTemp:7W:2:configbyte": 0}
+				,{"Mu2e:RackTemp:7W:2:temperature": 0}
+				];
+
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+
+			//=====================================================================================
+			//init called once body has loaded
+			function init() 
+			{
+				Debug.log("init() was called");
+
+				mainBlock_.el = document.getElementById('mainBlock');//yellow
+
+				mainBlock_.name = mainBlock_.el.id;
+
+				page_.createPage();
+
+				var datalist = document.getElementById("pvDatalist");//document.createElement("datalist");
+				isReadOnly_ = false;
+
+				DesktopContent.XMLHttpRequest(
+				                    "Request?RequestType=isUserAdmin",
+				                    "",
+				                    isUserAdminHandler);
+
+				//get command string if opening a new window
+				var cmdStr = DesktopContent.getParameter(2); //from  location.search
+				if (cmdStr && cmdStr != "") {
+					//do incoming commands!
+					Debug.log("cmdStr=" + cmdStr);
+					//replace %22 with "
+					cmdStr = cmdStr.replace(/%22/g, "\"");
+					//evaluateJS(cmdStr);
+				}
+
+				mainBlock_.el.style["background-color"] = "rgb(255, 255, 255)";
+
+				//Make sure pv list is up-to-date
+				DesktopContent.XMLHttpRequest(
+						"Request?RequestType=getList",
+						"", 
+						pvListReqHandler /*returnHandler*/, 
+						0 /*reqParam*/, 
+						0 /*progressHandler*/, 
+						0 /*callHandlerOnErr*/, 
+						false /*doNoShowLoadingOverlay*/);
+
+				UID_ = 0;
+
+				window.clearTimeout(timerVariable_);
+				//window.clearTimeout(lastAlarmsTimerVariable_);
+				//window.clearTimeout(alarmsLogTimerVariable_);
+
+				makeMainPage();
+				generateUID();
+				pollServer();
+				//timerVariable_ = window.setTimeout(pollServer, refreshRate_);
+				//getLastAlarms();
+				//lastAlarmsTimerVariable_ = window.setTimeout(pollLastAlarms, refreshRate_);
+				//getAlarmsLog();
+				//alarmsLogTimerVariable_ = window.setTimeout(pollAlarmsLog, refreshRate_);
+			} //end init()
+
+
+
+
+			var pvToUse_;
+			//=====================================================================================
+			//get set of PVs ti show
+			function getpvSet()
+			{
+				pvToUse_ = pvToUse_1;
+			}
+
+			//=====================================================================================
+			//Make main page here
+			function makeMainPage()
+			{
+				getpvSet();
+				var table = document.getElementById("rackTable");
+
+				for (i = 0; i < Object.keys(pvToUse_).length; i++)
+				{
+					var row = table.insertRow(i);
+					var cell1 = row.insertCell(0);
+					cell1.id = "pvName-"+i;
+					cell1.innerHTML = Object.keys(pvToUse_[i])[0];
+					var cell2 = row.insertCell(1);
+					cell2.id = "pvValue-"+i;
+
+					var widgetObject 		= {};
+					widgetObject.pvList 	= pvToUse_[i];
+					widgetObject.pvSettings = {};
+					widgetObject.el = cell2;
+					page_.widgets[i] = widgetObject;
+					setupPvParams(i);
+				}
+				var header = table.insertRow(0);
+				var headerCell1 = document.createElement("TH");
+            	headerCell1.innerHTML = "Parameter";
+				var headerCell2 = document.createElement("TH");
+            	headerCell2.innerHTML = "Status";
+            	header.appendChild(headerCell1);
+            	header.appendChild(headerCell2);
+			}
+
+
+			//=====================================================================================
+			//write a new value of a PV
+			function drawNewValue(widget, pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+				console.log("Text newValue() reached", pvName, pvValue);
+
+				var units = page_.widgets[widget].pvSettings != undefined ? page_.widgets[widget].pvSettings[pvName].Units : "";
+
+				page_.widgets[widget].el.innerHTML = pvValue + " " + units;
+
+				page_.widgets[widget].el.title = setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, page_.widgets[widget].pvSettings);
+			}
+
+			//=====================================================================================
+			//indicate that login should be kept alive
+			function indicateUserActivityToServer() 
+			{
+				Debug.log("indicateUserActivityToServer()");
+				DesktopContent.XMLHttpRequest(
+						"Request?RequestType=userActivityHeartbeat",
+						"", 
+						undefined /*returnHandler*/, 
+						0 /*reqParam*/, 
+						0 /*progressHandler*/, 
+						0 /*callHandlerOnErr*/, 
+						true /*doNoShowLoadingOverlay*/);	
+			} //end indicateUserActivityToServer()
+
+
+			//=====================================================================================
+			function isUserAdminHandler(req)
+			{
+				Debug.log("getPermissionHandler() was called. " + req.responseText);//Req: " + req.responseText);
+
+				isAdmin = JSON.parse(decodeURIComponent(DesktopContent.getXMLValue(req, "JSON")))["message"];
+				console.log("User Permission: " + isAdmin);
+				console.log(isAdmin);
+
+				if(isAdmin == "Yes")
+				{
+					isReadOnly_ = false;
+				}
+				else
+				{
+					isReadOnly_ = true;
+				}
+
+				console.log("Interface isReadOnly=" + isReadOnly_);
+			} //end isUserAdminHandler()
+
+
+			//=====================================================================================
+			function pvListReqHandler(req)
+			{
+				console.log("pvListReqHandler: response received!");	
+				console.log(req.responseText);
+				datalist_ = document.createElement('datalist');
+				datalist_.id = "pvDatalist";
+				datalist_.innerHTML = "";
+
+				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
+				if(!jsonStr || jsonStr == "") return;				
+				var pvListJSON;
+
+				//if invalid JSON return
+				//jsonStr.replace(/\"/g,"");
+				try {pvListJSON = JSON.parse(jsonStr); }
+				catch(e){console.log("Invalid JSON!"); return;}
+
+				console.log("pvListJSON:", pvListJSON);
+				for (var x in pvListJSON)
+				{
+					var option = document.createElement("option");
+					option.value = pvListJSON[x];
+					datalist_.appendChild(option);
+				}
+			} //end pvListReqHandler()
+
+			//=====================================================================================
+			function pollServer()
+			{
+				timeToPoll_ = false;
+				Debug.log("pollServer: polling server!");
+				console.log("pollServer(): ",page_.widgets);
+				//console.log("UID is ", UID_);
+				if(page_.widgets)
+				{
+					DesktopContent.XMLHttpRequest(
+						"Request?RequestType=poll&uid=" + UID_,
+						"", 
+						pollServerHandlerFunction /*returnHandler*/, 
+						0 /*reqParam*/, 
+						0 /*progressHandler*/, 
+						0 /*callHandlerOnErr*/, 
+						true /*doNoShowLoadingOverlay*/);	
+				}
+			} //end pollServer()
+
+
+			//=====================================================================================
+			function generateUID()
+			{
+				//BEGIN Put all pvs in a JSON and send to server
+				var pvList = "";
+				//console.log("page: ", page_);
+				for (var widget in page_.widgets)
+				{
+					console.log("generateUID: " +  page_.widgets[widget] + " " +  page_.widgets[widget].pvList);
+
+					for(var pv in page_.widgets[widget].pvList)
+					{
+						//pvList += pv + ":"  + page_.widgets[widget].pvList.valueOf()[pv] + ",";
+						pvList += pv + ",";
+					}
+				}
+
+				timeToPoll_ = true;
+
+				//END Put all pvs in a JSON and send to server
+				DesktopContent.XMLHttpRequest(
+					"Request?RequestType=generateUID",
+					"pvList=" + pvList,
+					generateUIDHandlerFunction);//, undefined, undefined, "sequence");
+			} //end generateUID()
+
+
+			//=====================================================================================
+			function updateRefreshInterval()
+			{
+				console.log("updateRefreshInterval.refreshRate_ (ms): " + refreshRate_);
+				window.clearInterval(timerVariable_);
+				timerVariable_ = setInterval(pollServer, refreshRate_);
+			} //end updateRefreshInterval()
+
+
+			//=====================================================================================
+			function pollServerHandlerFunction(req)
+			{
+				Debug.log("pollServerHandlerFunction() was called. Req: " + req.responseText);
+
+ 				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
+				jsonStr = jsonStr.replace(/\s/g, ''); //hack for removing whitespace 
+    			if(!jsonStr || jsonStr == "") 
+					return;
+
+				Debug.log(jsonStr);
+
+				var serverResponse;
+
+				serverResponse = JSON.parse(jsonStr);
+
+				Debug.log(serverResponse);
+
+				if(serverResponse.message == "NOT_FOUND")
+				{
+					console.log("Have to generate new UID!");
+					generateUID();
+					timeToPoll_ = true;
+				}
+				else
+				{
+					for(var pv in serverResponse)//have to use each pv and then loop through
+					{	
+						console.log("pollServerHandlerFunction: pv" + pv);						
+						for (var widget in page_.widgets)
+						{
+							console.log("pollServerHandlerFunction: " + page_.widgets[widget]);
+							for(var dependendentPV in page_.widgets[widget].pvList)
+							{
+								console.log("poll: " + dependendentPV);
+								if(pv == dependendentPV && page_.widgets[widget].loaded != "false")
+								{
+									console.log("Widget*************", widget, pv);
+									try
+									{
+										drawNewValue(
+												widget,
+												pv, 
+												serverResponse[pv].Value, 
+												serverResponse[pv].Timestamp, 
+												serverResponse[pv].Status, 
+												serverResponse[pv].Severity);
+									}
+									catch(e)
+									{
+										Debug.log("Error was caught updating new value to widget 'widget-" +
+											widget + "': " + e);											
+									}
+								}
+							}
+						}
+					}
+				}
+
+				timerVariable_ = window.setTimeout(pollServer, refreshRate_);
+			} //end pollServerHandlerFunction()
+
+
+			//=====================================================================================
+			function generateUIDHandlerFunction(req)
+			{
+				var uid = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+
+				if(uid.message != "-1")
+					UID_ = uid.message;
+				else
+				{
+					UID_ = "";
+					Debug.log("Unable to generate UID!", Debug.HIGH_PRIORITY);
+				}
+
+				if(timeToPoll_)
+				{
+					pollServer();
+				}
+			} //end generateUIDHandlerFunction()
+
+
+			//=====================================================================================
+			//	expecting id as 'widget-#' ..and this function extracts the 
+			//	widget UID as integer #
+			function setupPvParams(id)
+			{
+				console.log("setting up widget! " + id);
+
+				var pvListCSV = "";
+
+				for(var pv in page_.widgets[id].pvList)
+				{
+					pvListCSV += pv + ",";
+				}
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=getPVSettings",
+							//post data 
+    						"pvList=" + pvListCSV + 
+							"&id=" + id,
+							settingsReqHandler /*handler*/,
+							id /*parameter*/);
+
+			} //end setupWidget()
+
+
+			//=====================================================================================
+			function settingsReqHandler(req, id)
+			{
+				page_.widgets[id].pvSettings = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));				
+
+				console.log(req);
+				console.log("pvSettings", page_.widgets[id].pvSettings);
+				console.log("id", id);
+
+			} //end settingsReqHandler()
+
+
+			//=====================================================================================
+			function setWidgetToolTip(pvName, pvValue, pvTime, pvStatus, pvSeverity, pvSettings)
+			{
+				var toolTip =
+				pvName
+				+ "\nLast value: "
+				+ pvValue
+				+ " "
+				+ pvSettings[pvName].Units
+				
+				+ "\nTime: "
+				+ ConfigurationAPI.getDateString(new Date((pvTime | 0) * 1000))
+				+ "\nStatus: "
+				+ pvStatus
+				+ "\nSeverity: "
+				+ pvSeverity
+				+ "\nLower Warning Limit:  " + Number.parseFloat(pvSettings[pvName].Lower_Warning_Limit).toExponential(2) + "\n"
+			  	+ "Upper Warning Limit:  "   + Number.parseFloat(pvSettings[pvName].Upper_Warning_Limit).toExponential(2) + "\n"
+			  	+ "Lower Alarm Limit:    "   + Number.parseFloat(pvSettings[pvName].Lower_Alarm_Limit).toExponential(2)   + "\n"
+			  	+ "Upper Alarm Limit:    "   + Number.parseFloat(pvSettings[pvName].Upper_Alarm_Limit).toExponential(2)   + "\n"
+			  	+ "Lower Control Limit:   "  + Number.parseFloat(pvSettings[pvName].Lower_Control_Limit).toExponential(2) + "\n"
+			  	+ "Upper Control Limit:   "  + Number.parseFloat(pvSettings[pvName].Upper_Control_Limit).toExponential(2) + "\n"
+			  	+ "Lower Display Limit:   "  + Number.parseFloat(pvSettings[pvName].Lower_Display_Limit).toExponential(2) + "\n"
+			  	+ "Upper Display Limit:   "  + Number.parseFloat(pvSettings[pvName].Upper_Display_Limit).toExponential(2) + "\n";
+			  	return toolTip;
+			} //end setWidgetToolTip()
+
+
+			//=====================================================================================
+			function setBackgroundColor(color)
+			{
+				mainBlock_.el.style["background-color"] = color;
+			} //end setBackgroundColor()
+
+
+			//=====================================================================================
+			//evaluateJS ~~
+			function evaluateJS(str)
+			{
+				Debug.log("evaluateJS = " + str);
+				eval(str);
+			} //end evaluateJS()
+
+
+			//=====================================================================================
+			function isEmpty(obj)
+			{
+				return (Object.getOwnPropertyNames(obj).length === 0);
+			} //end isEmpty()rackTable
+
+		</script>
+	</head>
+
+	<body onload='//init() called by DesktopContent.js'>
+		
+		<div id="mainBlockContainer" height="auto" width="auto">
+			<div class='mainBlock'	id='mainBlock' >
+				<h2 align="center">Rack Status</h2>
+				<table id="rackTable" align="center" border="1px">
+
+				</table>
+			</div> <!-- end main block -->
+		</div> <!-- end main block container -->
+	</body>
+</html>
