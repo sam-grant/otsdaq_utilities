@@ -3,7 +3,7 @@
 	<head>
 		<title>DQM GUI</title>
 
-		<link rel="stylesheet" type="text/css" href="/WebPath/css/DqmGUI.css">
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/DqmPagesCss/DqmHome.css">
 
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
@@ -121,7 +121,7 @@
 			}
 
 			var pvToUse_1 = [
-				{"Mu2e:RackProt:1E:state": 0}
+				 {"Mu2e:RackProt:1E:state": 0}
 				,{"Mu2e:RackProt:1W:state": 0}
 				,{"Mu2e:RackProt:2E:state": 0}
 				,{"Mu2e:RackProt:2W:state": 0}
@@ -370,10 +370,19 @@
 
 
 			var pvToUse_;
+			async function requestApi(url) {
+				const response = await fetch(url);
+				const json = await response.json();
+				console.log(json); //This prints the objects I need and gets called second
+				globalThis.pvToUse_ = json;
+				return json;
+			}
+
 			//=====================================================================================
 			//get set of PVs ti show
 			function getpvSet()
 			{
+				//requestApi('/WebPath/JSONFiles/pvToUse_home.json');
 				pvToUse_ = pvToUse_1;
 			}
 

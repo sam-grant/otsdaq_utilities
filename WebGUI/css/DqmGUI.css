@@ -16,7 +16,7 @@ body {
 	overflow: hidden;
 	background-color: #111;
 }
-  
+
 	/* Style the navigation bar links */
 	.navbar a {
 		float: left;
@@ -51,7 +51,7 @@ body {
 	overflow-x: hidden;
 	padding-top: 20px;
 }
-  
+
 	/* Style the sidenav links and the dropdown button */
 	.sidenav a, .dropdown-btn {
 		padding: 6px 8px 6px 16px;
@@ -90,7 +90,7 @@ body {
 	.sidenav a:hover, .open-page-btn:hover {
 		color: #f1f1f1;
 	}
-  
+
 	/* Add an active class to the active dropdown button */
 	.active {
 		background-color: green;
@@ -124,7 +124,7 @@ body {
 	-ms-flex-wrap: wrap; /* IE10 */
 	flex-wrap: wrap;
   }
-  
+
   /* Create two unequal columns that sits next to each other */
   /* Sidebar/left column */
   .side {
@@ -133,20 +133,21 @@ body {
 	background-color: #111;
 	padding: 0px;
   }
-  
+
   /* Main column */
   .main {   
 	-ms-flex: 80%; /* IE10 */
 	flex: 80%;
-	background-color: #111;
+	background-color: rgb(213, 227, 245);
 	padding: 0px;
   }
 
 /*mainFrame*/
 .mainFrame {
-	height: 1000px;
+	height: 100%;
 	width: 100%;
 	border: none;
+	min-height: 800px;
 }
 
 /* Footer */
