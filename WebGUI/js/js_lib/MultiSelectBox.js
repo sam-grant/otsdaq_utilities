@@ -414,7 +414,9 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
     		el.style.width = 200 + "px"; 
     }
 	// //setup search box
-	var searchBox=$(name + "search");
+	var searchBox=document.getElementById(name + "search"); //document.createElement(name + "search");
+	//var searchBox=$(name + "search");
+	
 	var onchange='MultiSelectBox.searchSelect("' + name + '",this)';
 	
 	searchBox.setAttribute( "class","hidden");
@@ -505,7 +507,7 @@ MultiSelectBox.showSearch = function(boxid)
 		searchBox.style.position="absolute";
 		searchBox.style.top=(offsety)+"px";
 		searchBox.style.left=(offsetx)+"px";
-		searchBox.style.width=(selRect.width-margin*2-14)+"px";
+		searchBox.style.width=(selRect.width-margin*2-30)+"px";//(selRect.width-margin*2-14)+"px";
 		
 	// 	//finding the search input's offset parent is not so straight forward
 	// 	//	since it is initially hidden.

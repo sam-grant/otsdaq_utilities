@@ -12,7 +12,7 @@ cmake_minimum_required (VERSION 3.19 FATAL_ERROR)
 
 find_package(cetmodules 3.16.00 REQUIRED)
 
-project(otsdaq_utilities VERSION 2.06.08)
+project(otsdaq_utilities VERSION 2.06.10)
 
 include(CetCMakeEnv)
 cet_cmake_env()
@@ -117,12 +117,19 @@ if( $ENV{OTS_DOXY} MATCHES "DOIT" )
 	add_subdirectory(onlineDoc)
 endif()
 
+if( NOT DEBUG_MODE )
+	if(DEFINED $ENV{DEBUG_MODE})
+		set(DEBUG_MODE $ENV{DEBUG_MODE})
+	else()
+		set(DEBUG_MODE 0)
+	endif()
+endif()
+
 # WebGUI
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js.in ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js @ONLY)
 FILE(COPY WebGUI DESTINATION . PATTERN "*.in" EXCLUDE)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js DESTINATION WebGUI/js)
 INSTALL(DIRECTORY WebGUI DESTINATION . FILE_PERMISSIONS USE_SOURCE_PERMISSIONS PATTERN "*.in" EXCLUDE)
-configure_file(${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js ${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js @ONLY)
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js DESTINATION WebGUI/js)
 
 # tools
 FILE(COPY tools DESTINATION .)

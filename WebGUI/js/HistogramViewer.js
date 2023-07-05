@@ -114,7 +114,6 @@ Ext.onReady(function()
        STDLINE("--------------------------------------")  ;
   }
 
-<<<<<<< HEAD
  var currentDirectory_  = ""                                                                        ;
  var currentRootObject_ = ""                                                                        ;
  var currentTree_       = ""                                                                        ;
@@ -137,39 +136,6 @@ Ext.onReady(function()
  var mdi_               = ""                                                                        ;
  var treeDisplayField_  = "fDisplayName"                                                            ;
  var doReset_           = true                                                                      ;
- var _cookieCodeMailbox = self.parent.document.getElementById("DesktopContent-cookieCodeMailbox")   ;
- var _cookieCode        = _cookieCodeMailbox.innerHTML                                              ;
- var _theWindow         = self                                                                      ;
- var _requestURL        = self.parent.window.location.origin                                       +
-                          "/urn:xdaq-application:lid="                                             +
-                          getLocalURN(0,"urn")                                                     +
-                          "/Request?"                                                               ;
- var viewportW          = window.innerWidth                                                         ;
- var viewportH          = window.innerHeight                                                        ;
-=======
- var currentDirectory_  = ""                                                                      ;  
- var currentRootObject_ = ""                                                                      ;  
- var currentTree_       = ""                                                                      ;
- var grid_              = ""                                                                      ;
- var selectedItem_      = "getDirectories";                                                       ;
- var theStore_          = ""                                                                      ;
- var theCanvas_         = ""                                                                      ;
- var fSystemPath_       = ""                                                                      ;
- var fRootPath_         = ""                                                                      ;
- var fFoldersPath_      = ""                                                                      ;
- var fFileName_         = ""                                                                      ;
- var fRFoldersPath_     = ""                                                                      ;
- var fHistName_         = ""                                                                      ;
- var fRFoldersPath      = ""                                                                      ;
- var theSources_        = ""                                                                      ;
- var theControls_       = ""                                                                      ;
- var thetheSourcesCB__  = ""                                                                      ;
- var dataModel_         = ""                                                                      ;
- var displayPlot_       = ""                                                                      ;
- var periodicPlotID_    = ""                                                                      ;
- var mdi_               = ""                                                                      ;
- var treeDisplayField_  = "fDisplayName"                                                          ;
- var doReset_           = true                                                                    ;
  var _cookieCodeMailbox = 0; //RAR must get from desktop messages now to survive cross-origin browser restrictions//self.parent.document.getElementById("DesktopContent-cookieCodeMailbox") ;
  var _cookieCode        = 0; //RAR must get from desktop messages now to survive cross-origin browser restrictions //_cookieCodeMailbox.innerHTML                                            ;
  var _theWindow         = self                                                                    ;
@@ -181,7 +147,6 @@ Ext.onReady(function()
                           "/Request?"                                                             ; 
  var viewportW          = window.innerWidth                                                       ;
  var viewportH          = window.innerHeight                                                      ;
->>>>>>> bf136daa6ae2a3ae66154273cccec225fdf3641a
 
  var topMargin_         = 28
  var bottomMargin_      = 5                                                                         ;
