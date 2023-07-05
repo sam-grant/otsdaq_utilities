@@ -64,14 +64,14 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 
 	init();
 
-	//initFElist for Macro Maker mode
+	// initFElist for Macro Maker mode
 	if(CorePropertySupervisorBase::allSupervisorInfo_.isMacroMakerMode())
 	{
 		// const SupervisorInfoMap& feTypeSupervisors =
 		//     CorePropertySupervisorBase::allSupervisorInfo_.getAllFETypeSupervisorInfo();
 
-		ConfigurationTree appsNode =
-		    theConfigurationManager_->getNode(ConfigurationManager::XDAQ_APPLICATION_TABLE_NAME);
+		ConfigurationTree appsNode = theConfigurationManager_->getNode(
+		    ConfigurationManager::XDAQ_APPLICATION_TABLE_NAME);
 
 		// __SUP_COUT__ << "Number of FE Supervisors found = " << feTypeSupervisors.size()
 		//              << __E__;
@@ -79,29 +79,33 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 		FEPluginTypetoFEsMap_.clear();  // reset
 		FEtoSupervisorMap_.clear();     // reset
 		FEtoPluginTypeMap_.clear();     // reset
-		// for(auto& feApp : feTypeSupervisors)
-		// {
-			__SUP_COUT__ << "FEs for app MacroMakerFESupervisor" << __E__; // << feApp.first << ":" << feApp.second.getName()
-			            //  << __E__;
+		                                // for(auto& feApp : feTypeSupervisors)
+		                                // {
+		__SUP_COUT__ << "FEs for app MacroMakerFESupervisor"
+		             << __E__;  // << feApp.first << ":" << feApp.second.getName()
+		                        //  << __E__;
 
-			auto feChildren = appsNode.getNode("MacroMakerFESupervisor") //feApp.second.getName())
-			                      .getNode("LinkToSupervisorTable")
-			                      .getNode("LinkToFEInterfaceTable")
-			                      .getChildren();
+		auto feChildren =
+		    appsNode
+		        .getNode("MacroMakerFESupervisor")  // feApp.second.getName())
+		        .getNode("LinkToSupervisorTable")
+		        .getNode("LinkToFEInterfaceTable")
+		        .getChildren();
 
-			for(auto& fe : feChildren)
-			{
-				if(!fe.second.status())
-					continue;  // skip disabled FEs
+		for(auto& fe : feChildren)
+		{
+			if(!fe.second.status())
+				continue;  // skip disabled FEs
 
-				__SUP_COUTV__(fe.first);
-				FEtoSupervisorMap_[fe.first] = atoi(__ENV__("FE_SUPERVISOR_ID"));//feApp.first;
+			__SUP_COUTV__(fe.first);
+			FEtoSupervisorMap_[fe.first] =
+			    atoi(__ENV__("FE_SUPERVISOR_ID"));  // feApp.first;
 
-				std::string pluginType =
-				    fe.second.getNode("FEInterfacePluginName").getValue();
-				FEPluginTypetoFEsMap_[pluginType].emplace(fe.first);
-				FEtoPluginTypeMap_[fe.first] = pluginType;
-			}
+			std::string pluginType =
+			    fe.second.getNode("FEInterfacePluginName").getValue();
+			FEPluginTypetoFEsMap_[pluginType].emplace(fe.first);
+			FEtoPluginTypeMap_[fe.first] = pluginType;
+		}
 		// }
 
 		__SUP_COUTV__(StringMacros::mapToString(FEtoSupervisorMap_));
@@ -428,7 +432,7 @@ void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
 	userInfo.usernameWithLock_       = "admin";
 	userInfo.activeUserSessionIndex_ = 0;
 	std::map<std::string /*groupName*/, WebUsers::permissionLevel_t> initPermissions = {
-							    {WebUsers::DEFAULT_USER_GROUP, WebUsers::PERMISSION_LEVEL_ADMIN}};
+	    {WebUsers::DEFAULT_USER_GROUP, WebUsers::PERMISSION_LEVEL_ADMIN}};
 	userInfo.setGroupPermissionLevels(StringMacros::mapToString(initPermissions));
 
 	if(1 || !userInfo.automatedCommand_)
