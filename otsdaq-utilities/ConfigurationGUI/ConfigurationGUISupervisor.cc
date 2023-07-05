@@ -4472,39 +4472,48 @@ try
 		}
 		else if(type == "tree-copy")
 		{
-			// recursively copy to depth 
+			// recursively copy to depth
 			__COUTV__(newValue);
 			std::vector<std::string> paramArray =
-		   	 	StringMacros::getVectorFromString(newValue);
+			    StringMacros::getVectorFromString(newValue);
 			__COUTV__(StringMacros::vectorToString(paramArray));
 
 			if(paramArray.size() != 2)
 			{
-				__SS__ << "Illegal parameters for tree copy request: must be number of copy instances & depth of copy." << __E__;
+				__SS__ << "Illegal parameters for tree copy request: must be number of "
+				          "copy instances & depth of copy."
+				       << __E__;
 				__SS_THROW__;
 			}
 
-			
 			unsigned int row = cfgView->findRow(col, uid);
 			__COUTV__(uid);
 			__COUTV__(row);
 			unsigned int numberOfInstances = atoi(paramArray[0].c_str());
-			unsigned int depth = atoi(paramArray[1].c_str());
+			unsigned int depth             = atoi(paramArray[1].c_str());
 			__COUTV__(depth);
 			__COUTV__(numberOfInstances);
 			if(numberOfInstances > 1000)
-			{				
-				__SS__ << "Illegal parameters - the maximum number of copy instances is 1000. Number of instances provided was " << numberOfInstances << __E__;
+			{
+				__SS__ << "Illegal parameters - the maximum number of copy instances is "
+				          "1000. Number of instances provided was "
+				       << numberOfInstances << __E__;
 				__SS_THROW__;
 			}
 
-			std::map<std::string /*modified table*/, TableVersion /* modified version */> modifiedTablesMap = 
-				cfgMgr->getActiveVersions(); //handling copied from ConfigurationGUISupervisor::handleFillModifiedTablesXML()
-			ConfigurationSupervisorBase::recursiveCopyTreeUIDNode(xmlOut,cfgMgr,
-				modifiedTablesMap,
-				depth,depth,
-				numberOfInstances,
-				cfgView,uid);
+			std::map<std::string /*modified table*/, TableVersion /* modified version */>
+			    modifiedTablesMap =
+			        cfgMgr
+			            ->getActiveVersions();  // handling copied from
+			                                    // ConfigurationGUISupervisor::handleFillModifiedTablesXML()
+			ConfigurationSupervisorBase::recursiveCopyTreeUIDNode(xmlOut,
+			                                                      cfgMgr,
+			                                                      modifiedTablesMap,
+			                                                      depth,
+			                                                      depth,
+			                                                      numberOfInstances,
+			                                                      cfgView,
+			                                                      uid);
 		}
 		else if(type == "uid" || type == "value" || type == "value-groupid" ||
 		        type == "value-bool" || type == "value-bitmap")

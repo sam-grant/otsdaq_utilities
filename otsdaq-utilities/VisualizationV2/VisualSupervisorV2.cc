@@ -1,10 +1,10 @@
 #include "otsdaq-utilities/VisualizationV2/VisualSupervisorV2.h"
 #include "otsdaq/XmlUtilities/XmlDocument.h"
-//#include "otsdaq-utilities/V2/fileSystemToXML.h"
-//#include "otsdaq/RootUtilities/DQMHistos.h"
+// #include "otsdaq-utilities/V2/fileSystemToXML.h"
+// #include "otsdaq/RootUtilities/DQMHistos.h"
 #include "otsdaq/DataManager/DataManagerSingleton.h"
 #include "otsdaq/Macros/BinaryStringMacros.h"
-//#include "otsdaq/otsdaq/Macros/MessageTools.h"
+// #include "otsdaq/otsdaq/Macros/MessageTools.h"
 #include <boost/regex.hpp>
 #include "otsdaq/DataManager/DQMHistosConsumerBase.h"
 #include "otsdaq/Macros/MessageTools.h"
@@ -243,7 +243,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	// 	ss << "Request type: |" << requestType << "|";
 	// 	STDLINE(ss.str(),"") ;
 	if(requestType ==
-	   "getRawData")  //################################################################################################################
+	   "getRawData")  // ################################################################################################################
 	{
 		__SUP_COUT__ << __E__;
 		try
@@ -278,7 +278,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	else if(
 	    requestType == "setUserPreferences" &&
 	    userInfo.username_ !=
-	        "" /*from allow no user*/)  //################################################################################################################
+	        "" /*from allow no user*/)  // ################################################################################################################
 	{
 		__SUP_COUT__ << "userInfo.username_: " << userInfo.username_ << __E__;
 		std::string fullPath =
@@ -350,7 +350,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "getUserPreferences")  //################################################################################################################
+	    "getUserPreferences")  // ################################################################################################################
 	{
 		__SUP_COUT__ << "userInfo.username_: " << userInfo.username_ << __E__;
 		std::string fullPath =
@@ -395,7 +395,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "getDirectoryContents")  //################################################################################################################
+	    "getDirectoryContents")  // ################################################################################################################
 	{
 		// return directory structure for requested path, types are "dir" and "file"
 
@@ -528,7 +528,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "getRoot")  //################################################################################################################
+	    "getRoot")  // ################################################################################################################
 	{
 		// return directory structure for requested ROOT path, types are "dir" and "file"
 
@@ -919,7 +919,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}  // end getRoot handling
 	else if(
 	    requestType ==
-	    "getEvents")  //################################################################################################################
+	    "getEvents")  // ################################################################################################################
 	{
 		if(theDataManager_ == nullptr)
 		{
@@ -984,7 +984,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "getGeometry")  //################################################################################################################
+	    "getGeometry")  // ################################################################################################################
 	{
 		__SUP_COUT__ << "getGeometry" << __E__;
 
@@ -1032,7 +1032,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "getRootConfig")  //################################################################################################################
+	    "getRootConfig")  // ################################################################################################################
 	{
 		std::string path = CgiDataUtilities::postData(cgiIn, "RootConfigPath");
 		__SUP_COUT__ << "path " << path << __E__;
@@ -1058,7 +1058,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "rootAdminControls")  //################################################################################################################
+	    "rootAdminControls")  // ################################################################################################################
 	{
 		//		if(userPermissions < ROOT_VIEWER_PERMISSIONS_THRESHOLD)
 		//		{
@@ -1167,7 +1167,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "getMeDirs")  //################################################################################################################
+	    "getMeDirs")  // ################################################################################################################
 	{
 		xmlOut.setDarioStyle(true);  // workaround for XML formatting....
 		std::string  fSystemPath = std::string(ROOT_BROWSER_PATH) + "/";
@@ -1188,7 +1188,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "getMeRootFile")  //################################################################################################################
+	    "getMeRootFile")  // ################################################################################################################
 	{
 		xmlOut.setDarioStyle(true);  // workaround for XML formatting....
 		std::string  fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
@@ -1214,7 +1214,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "getMeLIVE-DQMFile")  //################################################################################################################
+	    "getMeLIVE-DQMFile")  // ################################################################################################################
 	{
 		xmlOut.setDarioStyle(true);  // workaround for XML formatting....
 		std::string fSystemPath   = std::string(ROOT_BROWSER_PATH) + "/";
@@ -1257,7 +1257,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "saveConfiguration")  //################################################################################################################
+	    "saveConfiguration")  // ################################################################################################################
 	{
 		std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
 		STDLINE("configPayload: ", ACRed);
@@ -1270,7 +1270,7 @@ void VisualSupervisorV2::request(const std::string&               requestType,
 	}
 	else if(
 	    requestType ==
-	    "getConfiguration")  //################################################################################################################
+	    "getConfiguration")  // ################################################################################################################
 	{
 		std::string configPayload = CgiDataUtilities::postData(cgiIn, "configPayload");
 		std::string JSONPayLoad   = "";
