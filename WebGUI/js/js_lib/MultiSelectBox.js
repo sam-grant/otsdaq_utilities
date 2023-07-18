@@ -407,15 +407,15 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
     el.innerHTML = str;    
 	// el.style.position = "relative";
     
-    if(msH > 200)
+	//setup search box
+	var searchBox=el.getElementsByTagName('input')[0];//document.getElementById(name + "search"); //document.createElement(name + "search");
+
+	if(msH > 200)
     {	//provide a minimum width for looks (to avoid long and skinny)
     	var el = document.getElementById(name);
     	if(msW < 200)
     		el.style.width = 200 + "px"; 
     }
-	// //setup search box
-	var searchBox=document.getElementById(name + "search"); //document.createElement(name + "search");
-	//var searchBox=$(name + "search");
 	
 	var onchange='MultiSelectBox.searchSelect("' + name + '",this)';
 	
