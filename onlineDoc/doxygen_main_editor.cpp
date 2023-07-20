@@ -38,8 +38,8 @@
 #define __E__ std::endl
 
 // and use this to suppress
-//#define __PRINTF__ if(0) printf
-//#define __COUT__  if(0) std::cout
+// #define __PRINTF__ if(0) printf
+// #define __COUT__  if(0) std::cout
 
 int main(int argc, char** argv)
 {
