@@ -570,7 +570,7 @@
 					var name = feMacroRunArgNames[i].getAttribute("value");
 					//first decode URI, then convert html entities
 					var value = Debug.errorPopConditionString(decodeURIComponent(
-						feMacroRunArgValues[i].getAttribute("value")));
+						feMacroRunArgValues[i].getAttribute("value")), Debug._ERR_TRUNCATION_LENGTH*5 /* allow bigger strings before truncation */);
 
 					if(name == "Filename" || name == "filename")
 					{
@@ -658,7 +658,7 @@
 						var name = outputArgNames[i].getAttribute("value");
 		    			//first decode URI, then convert html entities
 						var value = Debug.errorPopConditionString(decodeURIComponent(
-								outputArgValues[i].getAttribute("value")));
+								outputArgValues[i].getAttribute("value")), Debug._ERR_TRUNCATION_LENGTH*5 /* allow bigger strings before truncation */);
 
 						if(name == "Filename" || name == "filename")
 							str += name + " = " +
