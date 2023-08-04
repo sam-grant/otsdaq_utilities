@@ -35,10 +35,13 @@
 
 		<script>
 			
-
-			var urnLid    = DesktopContent.getDesktopWindowParameter(0,"urn");//(window.location.search.split("?")[1].split("&")[0].split("=")[1]);
+			//copied from /WebPath/html/Wizard.html
+			var urnLid_  = DesktopContent.getDesktopWindowParameter(0,"urn");
+			var serverOrigin_ = window.location.origin;
 			
-			Debug.log("Application URN-LID #" + urnLid);
+			Debug.log("Application URN-LID #" + urnLid_);
+
+			//=====================================================================================
 
 			function init() {				
 				Desktop.init(window.parent.window.location.search.split("?")[1].split("&")[0].split("=")[1]);
@@ -107,7 +110,7 @@
         <!-- end ots icon handling -->
 	</head>	
 	
-	<body onload='//init() called by DesktopContent.js;'>
+	<body onload='init()'>
 	</body>
 	
 </html>

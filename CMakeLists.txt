@@ -117,19 +117,29 @@ if( $ENV{OTS_DOXY} MATCHES "DOIT" )
 	add_subdirectory(onlineDoc)
 endif()
 
-if( NOT DEBUG_MODE )
-	if(DEFINED $ENV{DEBUG_MODE})
-		set(DEBUG_MODE $ENV{DEBUG_MODE})
+if( NOT OTS_DEBUG_MODE )
+	message("otsdaq_utilities checking WebGUI Debug Mode OTS_DEBUG_MODE=$ENV{OTS_DEBUG_MODE}")
+	if(DEFINED ENV{OTS_DEBUG_MODE})
+		message("otsdaq_utilities found WebGUI Debug Mode = $ENV{OTS_DEBUG_MODE}")
+		set(OTS_DEBUG_MODE $ENV{OTS_DEBUG_MODE})
 	else()
-		set(DEBUG_MODE 0)
+		set(OTS_DEBUG_MODE 0)
 	endif()
 endif()
 
+message("otsdaq_utilities WebGUI Debug Mode = ${OTS_DEBUG_MODE}")
+
 # WebGUI
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js.in ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js @ONLY)
+#FILE(REMOVE [ ${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js ])
+#FILE(REMOVE [ ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js ])
+# configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js.in ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js.in ${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js @ONLY)
 FILE(COPY WebGUI DESTINATION . PATTERN "*.in" EXCLUDE)
 INSTALL(DIRECTORY WebGUI DESTINATION . FILE_PERMISSIONS USE_SOURCE_PERMISSIONS PATTERN "*.in" EXCLUDE)
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js DESTINATION WebGUI/js)
+
+message("otsdaq_utilities WebGUI created Debug.js at ${CMAKE_CURRENT_BINARY_DIR}/WebGUI/js/Debug.js}")
+message("otsdaq_utilities WebGUI created Debug.js at ${CMAKE_CURRENT_SOURCE_DIR}/WebGUI/js/Debug.js}")
 
 # tools
 FILE(COPY tools DESTINATION .)

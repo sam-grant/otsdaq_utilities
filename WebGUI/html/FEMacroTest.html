@@ -465,6 +465,14 @@
 			var macroName = macroModules_[r][c].feMacroNameSelected;
 			
 			var macroObj = macroModules_[r][c].feMacroNameObject[macroName];
+			if(!macroObj)
+			{
+				Debug.log("Invalid Macro Name '" + macroName + "' - please select a valid Macro Name.",
+						Debug.HIGH_PRIORITY);
+				console.log("macroModules_",macroModules_);
+				return;
+			}
+
 			
 			var saveOutputs = document.getElementById("outputMacroToFile-row-" + r + "-col-" + c).checked?1:0;
 			var inputsArr 	= macroObj.inputs;
@@ -562,7 +570,7 @@
 					var name = feMacroRunArgNames[i].getAttribute("value");
 					//first decode URI, then convert html entities
 					var value = Debug.errorPopConditionString(decodeURIComponent(
-						feMacroRunArgValues[i].getAttribute("value")));
+						feMacroRunArgValues[i].getAttribute("value")), Debug._ERR_TRUNCATION_LENGTH*5 /* allow bigger strings before truncation */);
 
 					if(name == "Filename" || name == "filename")
 					{
@@ -650,7 +658,7 @@
 						var name = outputArgNames[i].getAttribute("value");
 		    			//first decode URI, then convert html entities
 						var value = Debug.errorPopConditionString(decodeURIComponent(
-								outputArgValues[i].getAttribute("value")));
+								outputArgValues[i].getAttribute("value")), Debug._ERR_TRUNCATION_LENGTH*5 /* allow bigger strings before truncation */);
 
 						if(name == "Filename" || name == "filename")
 							str += name + " = " +

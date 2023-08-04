@@ -1,19 +1,19 @@
 #include "otsdaq-utilities/Logbook/LogbookSupervisor.h"
-//#include "otsdaq/MessageFacility/MessageFacility.h"
-//#include "otsdaq/Macros/CoutMacros.h"
-//#include "otsdaq/CgiDataUtilities/CgiDataUtilities.h"
-//#include "otsdaq/XmlUtilities/HttpXmlDocument.h"
-//#include "otsdaq/SOAPUtilities/SOAPUtilities.h"
-//#include "otsdaq/SOAPUtilities/SOAPParameters.h"
+// #include "otsdaq/MessageFacility/MessageFacility.h"
+// #include "otsdaq/Macros/CoutMacros.h"
+// #include "otsdaq/CgiDataUtilities/CgiDataUtilities.h"
+// #include "otsdaq/XmlUtilities/HttpXmlDocument.h"
+// #include "otsdaq/SOAPUtilities/SOAPUtilities.h"
+// #include "otsdaq/SOAPUtilities/SOAPParameters.h"
 //
-//#include <xdaq/NamespaceURI.h>
+// #include <xdaq/NamespaceURI.h>
 //
-//#include <iostream>
-//#include <fstream>
-//#include <string>
+// #include <iostream>
+// #include <fstream>
+// #include <string>
 #include <dirent.h>    //for DIR
 #include <sys/stat.h>  //for mkdir
-//#include <thread>       // std::thread
+// #include <thread>       // std::thread
 
 using namespace ots;
 

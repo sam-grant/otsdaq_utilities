@@ -223,6 +223,11 @@ function getAppsArray()
 				var all0 = true;
 				for(var i=1;i<appTime.length;++i)
 				{
+					//if bad time or status == "Not Monitored"
+
+					if(appStatus[i].getAttribute("value") == "Not Monitored")
+						continue;
+
 					//e.g. Wed Oct 14 05:20:48 1970 CDT
 					var appTimeSplit = appTime[i].getAttribute("value").split(' ');
 					if(appTime[i].getAttribute("value") != "0" &&

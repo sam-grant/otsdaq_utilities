@@ -296,6 +296,19 @@
 			cursor: pointer;
 		}
 
+		.treeNode-copyIcon {
+			background-image: url(/WebPath/images/windowContentImages/ConfigurationGUI-copyTree.png);
+			width: 20px;
+			height: 20px;
+			border: 0;
+			margin: -9px 0 -10px 10px;
+		}
+
+		.treeNode-copyIcon:hover {
+			background-image: url(/WebPath/images/windowContentImages/ConfigurationGUI-copyTreeHover.png);
+			cursor: pointer;
+		}
+
 		.preloadImage {
 			width: 24px;
 			height: 20px;
@@ -316,6 +329,13 @@
 			background-image: url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 		}
 
+		#preloadImage-treeEditCopyIcon {
+			background-image: url(/WebPath/images/windowContentImages/ConfigurationGUI-copyTree.png);
+		}
+
+		#preloadImage-treeEditCopyIconHover {
+			background-image: url(/WebPath/images/windowContentImages/ConfigurationGUI-copyTreeHover.png);
+		}
 		.treeNode-Link {
 			float: left;
 			margin: -1px 0 -3px 10px;
@@ -643,7 +663,7 @@
 			//setupGroupCreator(); return
 
 			//setupTableGroupTreeView("test","10"); return; //"46"); return;
-			//setupTableGroupTreeView("defaultConfig","3"); return;
+			// setupTableGroupTreeView("daqRoomContext","11"); return;
 
 			//setupGroupViewMode(); return;
 
@@ -7112,6 +7132,15 @@
 					"},0,\"#efeaea\",0,\"#770000\",0,250);' " + //val, bgColor, textColor, borderColor, getUserInput, dialogWidth)
 					"title='Delete the record associated with this UID node.' " +
 					"></div>";
+				// str += "</td><td>";
+				// str +=
+				// 	"<div class='treeNode-copyIcon' " +
+				// 	"onmouseup='event.stopPropagation();' " +
+				// 	"onclick='event.stopPropagation();" +
+				// 	"treeEditingNodeType_ = \"tree-copy\";" +
+				// 	"editTreeNodeOK();' " + 
+				// 	"title='Copy recursively the tree hierachy with this UID node as the root.' " +
+				// 	"></div>";
 				str += "</td></tr></table>";
 
 				str += _OK_CANCEL_DIALOG_STR;
@@ -10327,6 +10356,7 @@
 					treeEditingNodeType_ == "table-newRow" ||
 					treeEditingNodeType_ == "uid" ||
 					treeEditingNodeType_ == "delete-uid" ||
+					treeEditingNodeType_ == "tree-copy" ||
 					treeEditingNodeType_.indexOf("link-") == 0 || //UID or GroupID
 					treeEditingNodeType_ == "table-newGroupRow" || //spawns from group link edit
 					treeEditingNodeType_ == "table-newUIDRow" || //spawns from uid link edit
@@ -10485,6 +10515,35 @@
 						}
 
 					}
+					else if (treeEditingNodeType_ == "tree-copy")
+					{
+						//make new value the new UID 
+						newValue = prompt("Please enter the number of duplicates you would like to create:",1);
+						newValue = newValue.trim()|0;
+						if (newValue)
+						{
+							var tmpNewValue = prompt(
+								"(Use -1 to include the full hierachy. Use 0 to copy only the selected record. For example, a depth of 1 would only include children, but not grandchilden in the copy.)" + 
+								"\n\nPlease enter the tree depth of the copy:",-1);
+							tmpNewValue = tmpNewValue.trim()|0;
+							if (tmpNewValue)
+							{
+								newValue += "," + tmpNewValue;
+								Debug.logv({newValue});								
+							}
+							else //prompt was cancelled
+							{
+								editCellCancel();
+								return;
+							}
+						}
+						else //prompt was cancelled
+						{
+							editCellCancel();
+							return;
+						}
+
+					}
 					else	//value (normal or multiline data)
 					{
 						var sel;
@@ -10603,7 +10662,7 @@
 									Debug.log(err);
 									return;
 								}
-								Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the page", Debug.HIGH_PRIORITY);
+								Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the Tree-view page.", Debug.HIGH_PRIORITY);
 								Debug.log(err, Debug.HIGH_PRIORITY);
 
 								editCellCancel();
@@ -17591,6 +17650,8 @@
 	<div class='preloadImage' id='preloadImage-treeEditIconHover'></div>
 	<div class='preloadImage' id='preloadImage-treeEditTrashIcon'></div>
 	<div class='preloadImage' id='preloadImage-treeEditTrashIconHover'></div>
+	<div class='preloadImage' id='preloadImage-treeEditCopyIcon'></div>
+	<div class='preloadImage' id='preloadImage-treeEditCopyIconHover'></div>
 
 </body>
 
