@@ -30,8 +30,6 @@
 			//	pvListReqHandler(req)
 			//	setupPvParams(id)
 			//	settingsReqHandler(req, passParams)
-			//	getPvHistory(widget, parameters)
-			//	pvHistoryReqHandler(req, passParams)
 
 			//	drawNewValue(widget, pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			//	setWidgetToolTip(pvName, pvValue, pvTime, pvSettings)
@@ -479,15 +477,8 @@
 			//=====================================================================================
 			function drawGraph(widget, pvName)
 			{
-				//var url = "/WebPath/html/DqmPages/Plot.html?urn=" + DesktopContent._localUrnLid;
-				//url.replace(/"/g, "\\\"");
-				//DesktopContent.openNewWindow("Plot",pvName,url,false,true);
-
-				// var plotPanel = document.getElementById('plotPanel');
-				// plotPanel.hidden = false;
-				// var plotFrame = document.getElementById('plotFrame');
-				// plotFrame.name = pvName;
-				// plotFrame.src = "/WebPath/html/DqmPages/Plot.html";
+				var url = location.origin + "/WebPath/html/DqmPages/Plot.html?urn=" + DesktopContent._localUrnLid + "&pv_name=" + pvName;
+				DesktopContent.openNewWindow("Plot",pvName,url,false);
 			} //end drawGraph()
 
 
@@ -906,14 +897,6 @@
 	<body onload='//init() called by DesktopContent.js'>
 		<div class="mainBlockContainer">
 			<h2 align="center">DAQ room health</h2>
-			<div class="plotContainer" id="plot" hidden="hidden"></div>
-			<div id="plotPanel" class="panel panel-primary resizable draggable" hidden="hidden">
-				<div class="panel-heading draggable-handler">Handler for dragging</div>
-					<div class="panel-body">
-						<iframe id="plotFrame"></iframe>
-					</div>
-				</div>
-			</div>
 			<div class="topBlockContainer">
 				<div class="rack" id="rack7E"><center>7E</center></div>
 				<div class="rack" id="rack6E"><center>6E</center></div>

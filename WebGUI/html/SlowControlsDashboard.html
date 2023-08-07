@@ -1894,11 +1894,17 @@
 					pvList += pv + ",";
 				}
 
+				var actualTime = Math.floor(Date.now())/1000;
+				var startTime = actualTime - 6*3600;
+				var endTime = actualTime;
+
 				var passParams = [id, parameters];
-				DesktopContent.XMLHttpRequest("Request?RequestType=getPVArchiverData",
+				DesktopContent.XMLHttpRequest("Request?RequestType=getPvArchiverData",
 									//post data 
 		    						"pvList=" + pvList + 
-									"&id=" + id,
+									"&id=" + id +
+									"&startTime=" + startTime +
+									"&endTime=" + endTime,
 									pvHistoryReqHandler /*handler*/,
 									 passParams /*parameter*/);
 				console.log("get history for widget! pvList: " + pvList);

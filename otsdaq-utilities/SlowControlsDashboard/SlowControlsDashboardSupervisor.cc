@@ -380,7 +380,7 @@ void SlowControlsDashboardSupervisor::handleRequest(
 		GetChannelSettings(cgiIn, xmlOut);
 		xmlOut.addTextElementToData("id", CgiDataUtilities::getData(cgiIn, "id"));
 	}
-	else if(Command == "getPVArchiverData")
+	else if(Command == "getPvArchiverData")
 	{
 		__SUP_COUT__ << "Archived Channel data requested from server! " << __E__;
 		GetChannelArchiverData(cgiIn, xmlOut);
@@ -566,12 +566,15 @@ void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc&    cg
 	__SUP_COUT__ << "Requesting archived data!" << __E__;
 
 	std::string channelList = CgiDataUtilities::postData(cgiIn, "pvList");
+	int startTime = stoi(CgiDataUtilities::postData(cgiIn, "startTime"));
+	int endTime = stoi(CgiDataUtilities::postData(cgiIn, "endTime"));
 
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
-	             << "Getting History for " << channelList << __E__;
+	             << "Getting History for " << channelList
+				 << " start time: " << startTime << " end time: " << endTime << __E__;
 
 	__SUP_COUT__ << "channelList.size(): " << channelList.size() << __E__;
-	if(channelList.size() > 0)
+	if(channelList.size() > 0 && startTime > 0 && endTime > 0)
 	{
 		std::string channel;
 		size_t      pos = 0;
@@ -580,12 +583,10 @@ void SlowControlsDashboardSupervisor::GetChannelArchiverData(cgicc::Cgicc&    cg
 		{
 			channel = channelList.substr(pos, nextPos - pos);
 
-			__SUP_COUT__ << channel << __E__;
+			__SUP_COUT__ << "Getting History for " << channel << __E__;
 
 			std::vector<std::vector<std::string>> channelInformation =
-			    interface_->getChannelHistory(channel);
-			__SUP_COUT__ << channel << ": " << channelInformation[0][1] << " : "
-			             << channelInformation[0][3] << __E__;
+			    interface_->getChannelHistory(channel, startTime, endTime);
 
 			for(auto channelData : channelInformation)
 			{

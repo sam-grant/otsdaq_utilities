@@ -25,6 +25,8 @@
 			//	init()
 			//	getPvSet()
 			//	makeMainPage()
+			//	drawGraph()
+			//	makeGraph()
 
 			//	getAllPvList()
 			//	pvListReqHandler(req)
@@ -34,6 +36,7 @@
 			//	pvHistoryReqHandler(req, passParams)
 
 			//	drawNewValue(widget, pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			//	drawNewGraphValue(widget, pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			//	setWidgetToolTip(pvName, pvValue, pvTime, pvSettings)
 			//	checkPvTime(widget, pvName, pvTime)
 			//	setWidgetPvInfo(widget, pvName, pvValue, pvTime, pvStatus, pvSeverity, showLabel, foregroundColor, bkgColor, border)
@@ -113,6 +116,7 @@
 			function init() 
 			{
 				Debug.log("init() was called");
+				var parameterPvName = DesktopContent.getParameter(0,"pv_name");				
 
 				page_.createPage();
 
@@ -139,7 +143,7 @@
 
 				window.clearTimeout(timerVariable_);
 
-				makeMainPage();
+				makeMainPage(parameterPvName);
 				generateUID();
 				pollServer();
 			} //end init()
@@ -147,10 +151,8 @@
 
 			//=====================================================================================
 			//Make main page here
-			function makeMainPage()
+			function makeMainPage(pvName)
 			{
-				//var pvName = window.frameElement.parentElement.parentElement.getElementsByClassName('DesktopWindowHeader')[0].innerText.split('- ')[1];
-				var pvName = window.frameElement.name;
 				pvName_ [0] = {[pvName]:0};
 				var plot = document.getElementById('plot');
 				var widgetObject 		= {};
@@ -159,7 +161,10 @@
 				widgetObject.el = plot;
 				page_.widgets[0] = widgetObject;
 				setupPvParams(0);
-				drawGraph(0, pvName)
+
+				var actualTime = Math.floor(Date.now())/1000;
+				var startTime = actualTime - 6*3600;
+				drawGraph(0, startTime, actualTime);
 			} //end makeMainPage()
 
 
@@ -170,7 +175,7 @@
 			var plotPvList_ = {};
 			var plotParameters_ = {class: "", "show_labels": "false", "background_color": "transparent", "trace_type": "scatter", "trace_mode": "lines"};
 			//=====================================================================================
-			function drawGraph(widget, pvName)
+			function drawGraph(widget, startTime, endTime)
 			{
 				var plot = document.getElementById('plot');
 				var i = 0;
@@ -185,7 +190,7 @@
 				}
 
 				makeGraph();
-				getPvHistory(widget, plotParameters_);
+				getPvHistory(widget, plotParameters_, startTime, endTime);
 				actualGraphId_ = widget;
 			} //end drawGraph()
 
@@ -226,10 +231,10 @@
 	    		}, {responsive: true});
 
 	    		Plotly.relayout(plot, {
-								  width: plot.innerWidth
-								, height: plot.innerHeight }
+								  width: window.innerWidth - 50
+								, height: window.innerHeight - 100}
 							   );
-				
+
 				console.log("newGraph() reached");
 			} //end makeGraph()
 
@@ -312,7 +317,7 @@
 
 
 			//=====================================================================================
-			function getPvHistory(widged, parameters)
+			function getPvHistory(widged, parameters, startTime, endTime)
 			{
 				var pvList = "";
 				
@@ -329,10 +334,12 @@
 				}
 
 				var passParams = [widged, parameters];
-				DesktopContent.XMLHttpRequest("Request?RequestType=getPVArchiverData",
+				DesktopContent.XMLHttpRequest("Request?RequestType=getPvArchiverData",
 									//post data 
 		    						"pvList=" + pvList + 
-									"&id=" + widged,
+									"&id=" + widged +
+									"&startTime=" + startTime +
+									"&endTime=" + endTime,
 									pvHistoryReqHandler /*handler*/,
 									 passParams /*parameter*/);
 				console.log("get history for widget! pvList: " + pvList);
@@ -759,12 +766,40 @@
 				return (Object.getOwnPropertyNames(obj).length === 0);
 			} //end isEmpty()rackTable
 
+
+			//=====================================================================================
+			window.onresize = function() {
+				Plotly.relayout(document.getElementById("plot"),
+				{
+					width: (window.innerWidth - 50),
+					height: (window.innerHeight - 100)
+				});
+				//console.log("window.onresize Plotly.relayout");
+			};
+
+
+			//=====================================================================================
+			function showGraphPeriod(period /*days*/)
+			{
+				var actualTime = Math.floor(Date.now())/1000;
+				var startTime = actualTime - period*24*3600;
+				drawGraph(0,startTime, actualTime);
+			} //end isEmpty()rackTable
+
 		</script>
 	</head>
 
 	<body onload='//init() called by DesktopContent.js'>
-		<div class="mainBlockContainer">
-			<div class="plotContainer" id="plot"></div>
+		<div class="mainBlockContainer" id ="mainBlock">
+			<div class="topContainer">
+				Show period
+				<button class='timeButton' onclick='showGraphPeriod(0.5)'>12 h</button>
+				<button class='timeButton' onclick='showGraphPeriod(1)'>1 day</button>
+				<button class='timeButton' onclick='showGraphPeriod(7)'>1 week</button>
+			</div>
+			<div class="bottomContainer">
+				<div class="plotContainer" id="plot"></div>
+			</div>
 		</div> <!-- end main block container -->
 	</body>
 </html>

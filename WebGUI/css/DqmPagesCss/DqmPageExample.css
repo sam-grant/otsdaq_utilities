@@ -11,20 +11,17 @@ body {
 	overflow-y: scroll;
 }
 
-/* Column containers */
+/* Column container */
 .mainBlockContainer {
+	display: -ms-flexbox; /* IE10 */
 	display: flex;
-	flex-direction: column;
-  }
-
-.topBlockContainer {
-	
-  }
-
-.bottomBlockContainer {
 
   }
 
+  .mainBlockContainer span {
+	display: inline-block;
+  }
+  
   /* Create two unequal columns that sits next to each other */
   /* Sidebar/left column */
   .tableContainer {
@@ -33,12 +30,21 @@ body {
 	background-color: white;
 	padding: 0px;
   }
+  
+  /* Main column */
+  .plotContainer {
+	height: 55%;
+	width: 40%;
+	vertical-align: top;
+	background-color: white;
+	margin-left: 30%;
+	position: fixed;
+  }
 
   /* PV button */
   .pvButton {
 	height: 100%;
 	width: 100%;
-	color: white;
 	border: none;
 	background-color: transparent;
 	
@@ -49,44 +55,26 @@ body {
 	transition: 0.7s;
   }
 
-  .rack {
-	background-color: transparent;
-	border: 2px solid;
-	height: 300px;
-	width:	150px;
-	float: left;
-	margin-left: 30px;
-	margin-top: 30px;
-  }
-
-  .led {
-	border-radius: 50%;
-	width: 20px;
-    height: 20px;
-	background-color: gray;
-	margin-left: 2px;
-	float: left;
-  }
-
-  .temper {
-	width: 140px;
-    height: 30px;
-	background-color: gray;
-	margin-top: 30px;
-	margin-left: 2px;
-	float: left;
-  }
-
 /* Responsive layout - when the screen is less than 700px wide, make the two columns stack on top of each other instead of next to each other */
 @media screen and (max-width: 700px) {
-	.topBlockContainer {
+	.mainBlockContainer {
 	  flex-direction: column;
+	}
+
+	.plotContainer {
+		position: inherit;
+		bottom: 0px;
 	}
 }
 
 /* Responsive layout - when the screen is less than 400px wide, make the navigation links stack on top of each other instead of next to each other */
 @media screen and (max-width: 400px) {
-	.topBlockContainer {
+	.mainBlockContainer {
 		flex-direction: column;
 	  }
+
+	  .plotContainer {
+		position: inherit;
+		bottom: 0px;
+	}
 }
