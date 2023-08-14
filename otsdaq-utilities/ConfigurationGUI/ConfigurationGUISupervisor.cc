@@ -5374,7 +5374,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 		__SUP_COUT_INFO__ << "Refreshing all table info." << __E__;
 		userConfigurationManagers_[mapKey]->getAllTableInfo(true);
 	}
-	__SUP_COUT_INFO__ << "Configuration Manager ready. time=" << time(0) << " " << clock() <<
+	__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "Configuration Manager ready. time=" << time(0) << " " << clock() <<
 		" runTimeSeconds=" << userConfigurationManagers_[mapKey]->runTimeSeconds() <<  __E__;
 
 	// load backbone configurations always based on backboneVersion
