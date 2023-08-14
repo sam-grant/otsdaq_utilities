@@ -461,7 +461,13 @@ Debug.errorPopConditionString = function(str, truncLenIn) {
 
 	var truncLen = Debug._ERR_TRUNCATION_LENGTH;
 	if(truncLenIn !== undefined)
-		truncLen = truncLenIn;
+	{
+		if(truncLenIn == -1)
+			truncLen = Number.MAX_VALUE;
+		else
+			truncLen = truncLenIn;
+	}
+	
 	
 	for(var i=0;i<str.length && i<truncLen; ++i)
 		if(str[i] == '\n')
@@ -470,9 +476,9 @@ Debug.errorPopConditionString = function(str, truncLenIn) {
 			rstr += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 		else
 			rstr += str[i];
-	if(str.length > truncLen)
+	if(truncLenIn !== -1 && str.length > truncLen)
 		rstr += "<br>...&lt;&lt;&lt; MESSAGE TRUNCATED &gt;&gt;&gt;";
-	
+		
 	return rstr; 
 } //end errorPopConditionString()
 
