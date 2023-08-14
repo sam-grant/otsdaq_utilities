@@ -46,7 +46,7 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 																	const std::string&      groupName,
 																	TableGroupKey           groupKey,
 																	const std::string&      author);
-	void 					handleSetVersionAliasInBackboneXML		(HttpXmlDocument&       xmldoc,
+	void 					handleSetTableAliasInBackboneXML		(HttpXmlDocument&       xmldoc,
 																	ConfigurationManagerRW* cfgMgr,
 																	const std::string&      versionAlias,
 																	const std::string&      tableName,

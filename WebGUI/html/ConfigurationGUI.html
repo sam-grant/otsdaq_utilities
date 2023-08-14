@@ -121,7 +121,7 @@
 		//createTableGroup(ignoreWarnings)
 		//createTableGroupHandler(req)
 
-		//setVersionAliasInActiveBackbone(versionAlias,tableName,version,newBackboneNameAdd,doneHandler,doReturnParams)			
+		//MOVED TO ConfigurationAPI.js -- setVersionAliasInActiveBackbone(versionAlias,tableName,version,newBackboneNameAdd,doneHandler,doReturnParams)			
 		//wizToLatestTableGroup(groupAlias, ignoreWarnings, groupType)
 		//wizToActiveTableGroup(groupAlias, groupType)
 		//saveGroupAndActivate(groupName,tableMap,doneHandler,doReturnParams) ==> replaced with ConfigurationAPI version
@@ -169,6 +169,7 @@
 		//ConfigurationAPI.getDateString(date)
 		//ConfigurationAPI.setCaretPosition(el,start,stop)
 		//ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
+		//ConfigurationAPI.setTableAliasInActiveBackbone(tableAlias,tableName,version,newBackboneNameAdd,doneHandler,doReturnParams)
 		//ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 		//ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin)
 		//end ConfigurationAPI functions =========
@@ -2185,7 +2186,7 @@
 				"&groupName=" + groupName +
 				"&groupKey=" + groupKey + "\", \"\"," +
 				"ConfigurationAPI.newWizBackboneMemberHandler," +
-				"[\"MemberVersionAliasWizBackbone\",undefined]," +
+				"[ConfigurationAPI._activeGroups.Backbone.groupName, undefined]," + //"[\"MemberVersionAliasWizBackbone\",undefined]," +
 				"0,true" +  //progressHandler, callHandlerOnErr
 				");";
 
@@ -2637,7 +2638,7 @@
 			//add link for wiz to default
 			if (version != -1) {
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str += "<a onclick='setVersionAliasInActiveBackbone(\"Default\",\"" +
+				str += "<a onclick='ConfigurationAPI.setTableAliasInActiveBackbone(\"Default\",\"" +
 					tableName + "\",\"" +
 					version + "\",0,/*done handler*/ function()" +
 					"{setupSpecificTable(\"" +
@@ -3036,38 +3037,6 @@
 			else
 				throw ("Unknown type for launchRecordDeletionWizard: " + launchType);
 		} //end launchRecordDeletionWizard()
-
-		//==============================================================================
-		//setVersionAliasInActiveBackbone ~~
-		//	Used to setup a table-alias.
-		//	It will activate the resuling backbone and call a done handler
-		function setVersionAliasInActiveBackbone(versionAlias, tableName, version,
-			newBackboneNameAdd, doneHandler, doReturnParams) 
-		{
-			Debug.log("setVersionAliasInActiveBackbone versionAlias " + versionAlias);
-			Debug.log("setVersionAliasInActiveBackbone tableName " + tableName);
-			Debug.log("setVersionAliasInActiveBackbone version " + version);
-
-			if (!tableName || tableName == "" || !version || version == "") 
-			{
-				Debug.log("Process interrupted. Invalid group name and key given!", Debug.HIGH_PRIORITY);
-				return;
-			}
-
-			if (!newBackboneNameAdd || newBackboneNameAdd == "")
-				newBackboneNameAdd = "Wiz";
-			newBackboneNameAdd += "Backbone";
-			Debug.log("setVersionAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
-
-			DesktopContent.XMLHttpRequest("Request?RequestType=setVersionAliasInActiveBackbone" +
-				"&versionAlias=" + versionAlias +
-				"&tableName=" + tableName +
-				"&version=" + version, "",
-				ConfigurationAPI.newWizBackboneMemberHandler,
-				[("VersionAlias" + newBackboneNameAdd), doneHandler, doReturnParams],
-				0, true  //progressHandler, callHandlerOnErr
-			);
-		} //end setVersionAliasInActiveBackbone()
 
 		//==============================================================================
 		//isTemporary
@@ -10114,7 +10083,7 @@
 								Debug.log("groupKey = " + groupKey);
 
 								ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias, groupName, groupKey,
-									"TreeEditWiz",
+									0,
 									localNextAliasHandler,
 									true); //request return parameters		
 							}
@@ -13420,7 +13389,7 @@
 				"document.getElementById(\"popUpDialog-alias\").value + \"" +
 				"&groupName=" + groupName +
 				"&groupKey=" + groupKey + "\", \"\"," +
-				"ConfigurationAPI.newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]," +
+				"ConfigurationAPI.newWizBackboneMemberHandler,[ConfigurationAPI._activeGroups.Backbone.groupName,undefined]," +
 				"0,true" +  //progressHandler, callHandlerOnErr
 				");";
 			onmouseupJS += "var el = document.getElementById(" +
@@ -14333,7 +14302,7 @@
 			str += "</div><br><br>";
 
 			var onmouseupJS = "";
-			onmouseupJS += "setVersionAliasInActiveBackbone(" +
+			onmouseupJS += "ConfigurationAPI.setTableAliasInActiveBackbone(" +
 				"document.getElementById(\"popUpDialog-alias\").value" +
 				",\"" +
 				_currentTableName + "\",\"" +
@@ -15432,7 +15401,12 @@
 										}
 										Debug.log(tableMap);
 
-										ConfigurationAPI.saveGroupAndActivate("GroupAliasWizBackbone", tableMap,
+
+										var newBackboneName = ConfigurationAPI._activeGroups.Backbone.groupName;
+										if(ConfigurationAPI._activeGroups.Backbone.groupName == "")
+											newBackboneName = "WizBackbone";
+										
+										ConfigurationAPI.saveGroupAndActivate(newBackboneName, tableMap,
 											function (retParams) 
 											{
 												Debug.log("Save and activate is done.");
@@ -16065,6 +16039,10 @@
 
 								Debug.log("Moving on to Alias creation...");
 
+								var newBackboneName = ConfigurationAPI._activeGroups.Backbone.groupName;
+								if(ConfigurationAPI._activeGroups.Backbone.groupName == "")
+									newBackboneName = "WizBackbone";
+
 								//check each alias checkbox
 								//	for each alias that is checked
 								//		set alias for new group
@@ -16165,8 +16143,9 @@
 												tableVersions[i].getAttribute("value") + ",";
 										}
 										Debug.log(tableMap);
+										
 
-										ConfigurationAPI.saveGroupAndActivate("GroupAliasWizBackbone", tableMap,
+										ConfigurationAPI.saveGroupAndActivate(newBackboneName, tableMap,
 											function (retParams) 
 											{
 												Debug.log("Save and activate is done.");
@@ -16487,7 +16466,7 @@
 					tableMap += ConfigurationAPI._backboneMemberNames[i] + ",-1,";
 					
 				Debug.log("Identified missing backbone, attempting to create it.");
-				ConfigurationAPI.saveGroupAndActivate("GroupAliasWizBackbone",tableMap,
+				ConfigurationAPI.saveGroupAndActivate("WizBackbone",tableMap,
 					function(retParams)
 					{
 						Debug.log("Save and activate is done.");
