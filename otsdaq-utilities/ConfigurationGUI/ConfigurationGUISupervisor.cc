@@ -169,7 +169,7 @@ try
 	//	getColumnTypes
 	//	getGroupAliases
 	//	setGroupAliasInActiveBackbone
-	//	setVersionAliasInActiveBackbone
+	//	setTableAliasInActiveBackbone
 	//	setAliasOfGroupMembers
 	//	getVersionAliases
 	//	getTableGroups
@@ -459,21 +459,21 @@ try
 		                                 TableGroupKey(groupKey),
 		                                 userInfo.username_);
 	}
-	else if(requestType == "setVersionAliasInActiveBackbone")
+	else if(requestType == "setTableAliasInActiveBackbone")
 	{
-		std::string versionAlias =
-		    CgiDataUtilities::getData(cgiIn, "versionAlias");  // from GET
+		std::string tableAlias =
+		    CgiDataUtilities::getData(cgiIn, "tableAlias");  // from GET
 		std::string tableName =
 		    CgiDataUtilities::getData(cgiIn, "tableName");                  // from GET
 		std::string version = CgiDataUtilities::getData(cgiIn, "version");  // from GET
 
-		__SUP_COUT__ << "versionAlias: " << versionAlias << __E__;
+		__SUP_COUT__ << "tableAlias: " << tableAlias << __E__;
 		__SUP_COUT__ << "tableName: " << tableName << __E__;
 		__SUP_COUT__ << "version: " << version << __E__;
 
-		handleSetVersionAliasInBackboneXML(xmlOut,
+		handleSetTableAliasInBackboneXML(xmlOut,
 		                                   cfgMgr,
-		                                   versionAlias,
+		                                   tableAlias,
 		                                   tableName,
 		                                   TableVersion(version),
 		                                   userInfo.username_);
@@ -5351,7 +5351,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	// create new table mgr if not one for active session index
 	if(userConfigurationManagers_.find(mapKey) == userConfigurationManagers_.end())
 	{
-		__SUP_COUT_INFO__ << "Creating new Configuration Manager." << __E__;
+		__SUP_COUT_INFO__ << "Creating new Configuration Manager. time=" << time(0) << __E__;
 		userConfigurationManagers_[mapKey] = new ConfigurationManagerRW(username);
 
 		// update table info for each new configuration manager
@@ -5374,6 +5374,8 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 		__SUP_COUT_INFO__ << "Refreshing all table info." << __E__;
 		userConfigurationManagers_[mapKey]->getAllTableInfo(true);
 	}
+	__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "Configuration Manager ready. time=" << time(0) << " " << clock() <<
+		" runTimeSeconds=" << userConfigurationManagers_[mapKey]->runTimeSeconds() <<  __E__;
 
 	// load backbone configurations always based on backboneVersion
 	// if backboneVersion is -1, then latest
@@ -5983,17 +5985,17 @@ catch(...)
 }
 
 //==============================================================================
-//	handleSetVersionAliasInBackboneXML
+//	handleSetTableAliasInBackboneXML
 //		open current backbone
 //		modify VersionAliases
 //		save as new version of VersionAliases
 //		return new version of VersionAliases
 //
 // Note: very similar to ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML
-void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
+void ConfigurationGUISupervisor::handleSetTableAliasInBackboneXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
-    const std::string&      versionAlias,
+    const std::string&      tableAlias,
     const std::string&      tableName,
     TableVersion            version,
     const std::string&      author)
@@ -6055,7 +6057,7 @@ try
 			do
 			{  // start looking from beyond last find
 				tmpRow = configView->findRow(col3, tableName, tmpRow + 1);
-			} while(configView->getDataView()[tmpRow][col2] != versionAlias);
+			} while(configView->getDataView()[tmpRow][col2] != tableAlias);
 			// at this point the first pair was found! (else exception was thrown)
 			row = tmpRow;
 		}
@@ -6071,15 +6073,15 @@ try
 			col = configView->findCol(TableViewColumnInfo::COL_NAME_COMMENT);
 			configView->setValue(
 			    std::string("Entry was added by server in ") +
-			        "ConfigurationGUISupervisor::setVersionAliasInActiveBackbone().",
+			        "ConfigurationGUISupervisor::setTableAliasInActiveBackbone().",
 			    row,
 			    col);
 
 			col = configView->findCol("VersionAliasUID");
 			configView->setValue(
-			    tableName.substr(0, tableName.rfind("Table")) + versionAlias, row, col);
+			    tableName.substr(0, tableName.rfind("Table")) + tableAlias, row, col);
 
-			configView->setValue(versionAlias, row, col2);
+			configView->setValue(tableAlias, row, col2);
 			configView->setValue(tableName, row, col3);
 		}
 
@@ -6277,7 +6279,7 @@ try
 			col = configView->findCol(TableViewColumnInfo::COL_NAME_COMMENT);
 			configView->setValue(
 			    std::string("Entry was added by server in ") +
-			        "ConfigurationGUISupervisor::setVersionAliasInActiveBackbone().",
+			        "ConfigurationGUISupervisor::setTableAliasInActiveBackbone().",
 			    row,
 			    col);
 

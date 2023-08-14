@@ -115,8 +115,9 @@ ConfigurationAPI._DATATYPE_LINK_DEFAULT			= "NO_LINK";
 //	ConfigurationAPI.handleGroupCommentToggle(groupName,setHideVal)
 //	ConfigurationAPI.handlePopUpHeightToggle(h,gh)
 //	ConfigurationAPI.handlePopUpAliasEditToggle(i)
-//	ConfigurationAPI.activateGroup(groupName, groupKey, ignoreWarnings, doneHandler)
+//	ConfigurationAPI.activateGroup(groupName,groupKey,ignoreWarnings,doneHandler)
 //	ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
+//	ConfigurationAPI.setTableAliasInActiveBackbone(tableAlias,tableName,version,newBackboneNameAdd,doneHandler,doReturnParams)
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 //	ConfigurationAPI.saveGroupAndActivate(groupName,tableMap,doneHandler,doReturnParams)
 //	ConfigurationAPI.getOnePixelPngData(rgba)
@@ -2305,7 +2306,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							Debug.log("groupKey = " + groupKey);
 
 							ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
-									"SaveWiz",
+									0 /*newBackboneName*/,
 									localNextAliasHandler,										
 									true); //request return parameters	
 						}
@@ -2464,7 +2465,7 @@ ConfigurationAPI.activateGroup = function(groupName, groupKey,
 //                 retParams.groupKey    //backbone group key
 //               
 ConfigurationAPI.setGroupAliasInActiveBackbone = function(groupAlias,groupName,groupKey,
-		newBackboneNameAdd,doneHandler,doReturnParams)
+	newBackboneName,doneHandler,doReturnParams)
 {
 	Debug.log("setGroupAliasInActiveBackbone groupAlias=" + groupAlias);
 	Debug.log("setGroupAliasInActiveBackbone groupName=" + groupName);
@@ -2484,20 +2485,22 @@ ConfigurationAPI.setGroupAliasInActiveBackbone = function(groupAlias,groupName,g
 		return;
 	}
 
-	if(!newBackboneNameAdd || newBackboneNameAdd == "")
-		newBackboneNameAdd = "Wiz";
-	newBackboneNameAdd += "Backbone";
-	Debug.log("setGroupAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
+	if(!newBackboneName || newBackboneName == "")
+		newBackboneName = ConfigurationAPI._activeGroups.Backbone.groupName;
+	// newBackboneName += "Backbone";
+	Debug.log("setGroupAliasInActiveBackbone newBackboneName=" + newBackboneName);
 
 	//if no active backbone, create it
 	if(ConfigurationAPI._activeGroups.Backbone.groupName == "")
 	{
+		newBackboneName = "WizBackbone";
+
 		var tableMap = "tableList=";
 		for (var i = 0; i < ConfigurationAPI._backboneMemberNames.length; ++i)				
 			tableMap += ConfigurationAPI._backboneMemberNames[i] + ",-1,";
 			
 		Debug.log("Identified missing backbone, attempting to create it.");
-		ConfigurationAPI.saveGroupAndActivate(("GroupAlias" + newBackboneNameAdd),
+		ConfigurationAPI.saveGroupAndActivate(newBackboneName,
 			tableMap,
 			function(retParams)
 			{
@@ -2508,7 +2511,7 @@ ConfigurationAPI.setGroupAliasInActiveBackbone = function(groupAlias,groupName,g
 					"&groupName=" + groupName +
 					"&groupKey=" + groupKey, "", 
 					ConfigurationAPI.newWizBackboneMemberHandler,
-					[("GroupAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
+					[newBackboneName,doneHandler,doReturnParams],
 					0,true  //progressHandler, callHandlerOnErr
 				);				
 			},	//end of done handler for saveGroupAndActivate
@@ -2522,10 +2525,90 @@ ConfigurationAPI.setGroupAliasInActiveBackbone = function(groupAlias,groupName,g
 			"&groupName=" + groupName +
 			"&groupKey=" + groupKey, "", 
 			ConfigurationAPI.newWizBackboneMemberHandler,
-			[("GroupAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
+			[newBackboneName,doneHandler,doReturnParams],
 			0,true  //progressHandler, callHandlerOnErr		
 		);
 } //end setGroupAliasInActiveBackbone()
+
+
+//=====================================================================================
+//setTableAliasInActiveBackbone ~~
+//	Used to set a group alias.
+//	This function will activate the resulting backbone group and 
+//		call a done handler	
+//
+//      if doReturnParms
+//          then the handler is called with an object 
+//          describing the new backbone group object:
+//                 retParams.newGroupCreated //true if successfully created
+//                 retParams.groupName   //backbone group name 
+//                 retParams.groupKey    //backbone group key
+//               
+ConfigurationAPI.setTableAliasInActiveBackbone = function(tableAlias, tableName, version,
+	newBackboneName, doneHandler, doReturnParams)
+{
+	Debug.log("setTableAliasInActiveBackbone tableAlias " + tableAlias);
+	Debug.log("setTableAliasInActiveBackbone tableName " + tableName);
+	Debug.log("setTableAliasInActiveBackbone version " + version);
+
+	if(!tableAlias || tableAlias.trim() == "")
+	{
+		Debug.log("Process interrupted. Invalid empty alias given!",Debug.HIGH_PRIORITY);
+		if(doneHandler) doneHandler(); //error so call done handler
+		return;
+	}
+
+	if (!tableName || tableName.trim() == "" || !version || version.trim() == "") 
+	{
+		Debug.log("Process interrupted. Invalid table name and version given!", Debug.HIGH_PRIORITY);
+		if(doneHandler) doneHandler(); //error so call done handler
+		return;
+	}
+
+	if(!newBackboneName || newBackboneName == "")
+		newBackboneName = ConfigurationAPI._activeGroups.Backbone.groupName;
+	// newBackboneName += "Backbone";
+	Debug.log("setTableAliasInActiveBackbone newBackboneName=" + newBackboneName);
+
+	//if no active backbone, create it
+	if(ConfigurationAPI._activeGroups.Backbone.groupName == "")
+	{
+		newBackboneName = "WizBackbone";
+
+		var tableMap = "tableList=";
+		for (var i = 0; i < ConfigurationAPI._backboneMemberNames.length; ++i)				
+			tableMap += ConfigurationAPI._backboneMemberNames[i] + ",-1,";
+			
+		Debug.log("Identified missing backbone, attempting to create it.");
+		ConfigurationAPI.saveGroupAndActivate(newBackboneName,
+			tableMap,
+			function(retParams)
+			{
+				Debug.log("Save and activate is done.");
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=setTableAliasInActiveBackbone" +
+					"&tableAlias=" + tableAlias +
+					"&tableName=" + tableName +
+					"&version=" + version, "",
+					ConfigurationAPI.newWizBackboneMemberHandler,
+					[newBackboneName, doneHandler, doReturnParams],
+					0,true  //progressHandler, callHandlerOnErr
+				);				
+			},	//end of done handler for saveGroupAndActivate
+			true, //request return parameters
+			true  //lookForEquivalent
+		); //end saveGroupAndActivate call
+	}
+	else //backbone is already in place	
+		DesktopContent.XMLHttpRequest("Request?RequestType=setTableAliasInActiveBackbone" +
+			"&tableAlias=" + tableAlias +
+			"&tableName=" + tableName +
+			"&version=" + version, "",
+			ConfigurationAPI.newWizBackboneMemberHandler,
+			[newBackboneName, doneHandler, doReturnParams],
+			0, true  //progressHandler, callHandlerOnErr
+);
+} //end setTableAliasInActiveBackbone()
 
 //=====================================================================================
 //newWizBackboneMemberHandler
@@ -2575,8 +2658,11 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 	}
 	
 	console.log("backbone tableMap",tableMap);
-
-	ConfigurationAPI.saveGroupAndActivate(params[0],tableMap,params[1],params[2],
+	
+	var newBackboneName = params[0];
+	if(!params[0] || params[0] == "")
+		newBackboneName = "WizBackbone";
+	ConfigurationAPI.saveGroupAndActivate(newBackboneName,tableMap,params[1],params[2],
 			true /*lookForEquivalent*/);			
 } // end ConfigurationAPI.newWizBackboneMemberHandler()
 
