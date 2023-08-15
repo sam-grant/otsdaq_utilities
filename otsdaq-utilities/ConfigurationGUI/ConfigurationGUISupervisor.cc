@@ -98,8 +98,6 @@ void ConfigurationGUISupervisor::destroy(void)
 	}
 	userConfigurationManagers_.clear();
 
-	// NOTE: Moved to ConfigurationGUISupervisor [FIXME is this correct?? should we use
-	// shared_ptr??]
 	if(ConfigurationInterface::getInstance(true) != 0)
 		delete ConfigurationInterface::getInstance(true);
 }  // end destroy()
@@ -219,8 +217,7 @@ try
 
 	// acquire user's configuration manager based on username&  activeSessionIndex
 	std::string refresh = CgiDataUtilities::getData(cgiIn, "refresh");  // from GET
-	//__SUP_COUT__ << "refresh: " << refresh << __E__;
-
+	
 	// refresh to reload from info files and db (maintains temporary views!)
 	ConfigurationManagerRW* cfgMgr = refreshUserSession(
 	    userInfo.username_, userInfo.activeUserSessionIndex_, (refresh == "1"));
@@ -237,9 +234,6 @@ try
 		    CgiDataUtilities::postData(cgiIn, "tableDescription");  // from POST
 		std::string columnChoicesCSV =
 		    CgiDataUtilities::postData(cgiIn, "columnChoicesCSV");  // from POST
-
-		// columnCSV = StringMacros::decodeURIComponent(columnCSV);
-		// tableDescription = StringMacros::decodeURIComponent(tableDescription);
 
 		__SUP_COUT__ << "tableName: " << tableName << __E__;
 		__SUP_COUT__ << "columnCSV: " << columnCSV << __E__;
@@ -412,8 +406,7 @@ try
 		bool reloadActive =
 		    1 == CgiDataUtilities::getDataAsInt(cgiIn, "reloadActiveGroups");  // from GET
 
-		__SUP_COUT__ << "reloadActive: " << reloadActive << __E__;
-		// bool wasError = false;
+		__SUP_COUT__ << "reloadActive: " << reloadActive << __E__;		
 		if(reloadActive)
 		{
 			try
@@ -427,14 +420,12 @@ try
 				           << __E__;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
 				xmlOut.addTextElementToData("Error", ss.str());
-				// wasError = true;
 			}
 			catch(...)
 			{
 				__SUP_SS__ << ("Error loading active groups!\n\n") << __E__;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
 				xmlOut.addTextElementToData("Error", ss.str());
-				// wasError = true;
 			}
 		}
 
@@ -767,13 +758,13 @@ try
 		int         depth          = CgiDataUtilities::getDataAsInt(cgiIn, "depth");
 		bool hideStatusFalse = CgiDataUtilities::getDataAsInt(cgiIn, "hideStatusFalse");
 
-		//		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
-		//		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
-		//		__SUP_COUT__ << "startPath: " << startPath << __E__;
-		//		__SUP_COUT__ << "depth: " << depth << __E__;
-		//		__SUP_COUT__ << "hideStatusFalse: " << hideStatusFalse << __E__;
-		//		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
-		//		__SUP_COUT__ << "filterList: " << filterList << __E__;
+		__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "tableGroupKey: " << tableGroupKey << __E__;
+		__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "startPath: " << startPath << __E__;
+		__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "depth: " << depth << __E__;
+		__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "hideStatusFalse: " << hideStatusFalse << __E__;
+		__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "modifiedTables: " << modifiedTables << __E__;
+		__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "filterList: " << filterList << __E__;
 
 		handleFillTreeViewXML(xmlOut,
 		                      cfgMgr,
@@ -1205,20 +1196,8 @@ try
 		TableVersion newTemporaryVersion;
 		try
 		{
-			// force emptying of cache for this table
 			newTemporaryVersion =
 			    cfgMgr->copyViewToCurrentColumns(tableName, TableVersion(sourceVersion));
-			//
-			//			getTableByName(tableName)->reset();
-			//
-			//			//make sure source version is loaded
-			//			//need to load with loose column rules!
-			//			table = cfgMgr->getVersionedTableByName(tableName,
-			//					TableVersion(sourceVersion), true);
-			//
-			//			//copy from source version to a new temporary version
-			//			newTemporaryVersion = table->copyView(table->getView(),
-			//							TableVersion(),userName);
 
 			__SUP_COUT__ << "New temporary version = " << newTemporaryVersion << __E__;
 		}
@@ -1346,8 +1325,6 @@ try
 		__SUP_COUT__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
-
-	//__SUP_COUT__ << "Wrapping up..." << __E__;
 
 	// always add active table groups to xml response
 	ConfigurationSupervisorBase::getConfigurationStatusXML(xmlOut, cfgMgr);
@@ -1665,8 +1642,6 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
     std::string*                                              accumulatedErrors)
 try
 {
-	// if(accumulatedErrors)
-	//	*accumulatedErrors = "";
 
 	xmlOut.addTextElementToData("tableGroup", groupName);
 	xmlOut.addTextElementToData("tableGroupKey", groupKey.toString());
@@ -1798,10 +1773,6 @@ try
 			    tableInfoIt->second.tablePtr_->getView().getComment());
 		}
 
-		//__SUP_COUT__ << "Active table = " <<
-		//		activePair.first << "-v" <<
-		//		allTableInfo.at(activePair.first).tablePtr_->getView().getVersion() <<
-		//__E__;
 	}  // end ordered table loop
 }  // end setupActiveTablesXML()
 catch(std::runtime_error& e)
@@ -1879,7 +1850,6 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(
 		{
 			std::istringstream f(recordList);
 			std::string        recordUID;
-			// unsigned int       i;
 
 			while(getline(f, recordUID, ','))  // for each record
 			{
@@ -2460,8 +2430,6 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(
 			{
 				recordUID = StringMacros::decodeURIComponent(recordUID);
 
-				//__SUP_COUT__ << "recordUID " <<	recordUID << __E__;
-
 				/*xercesc::DOMElement* parentEl =*/
 				xmlOut.addTextElementToData("fieldValues", recordUID);
 
@@ -2607,8 +2575,6 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 				fieldPaths.push_back(StringMacros::decodeURIComponent(fieldPath));
 			}
 			__SUP_COUT__ << fieldList << __E__;
-			// for(auto& field : fieldPaths)
-			//	__SUP_COUT__ << "fieldPath " << field << __E__;
 		}
 
 		// extract record list
@@ -3166,7 +3132,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
                                                     xercesc::DOMElement*     parentEl,
                                                     bool hideStatusFalse)
 {
-	//__COUT__ << t.getValueAsString() << __E__;
+	__COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << t.getValueAsString() << __E__;
 
 	if(t.isValueNode())
 	{
@@ -3179,7 +3145,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 		if(t.getValueType() == TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
 		   t.getValueType() == TableViewColumnInfo::TYPE_BITMAP_DATA)
 		{
-			//__COUT__ << t.getValueType() << __E__;
+			__COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << t.getValueType() << __E__;
 
 			std::vector<std::string> choices = t.getFixedChoices();
 			for(const auto& choice : choices)
@@ -3190,7 +3156,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 	{
 		if(t.isLinkNode())
 		{
-			//__COUT__ << t.getValueName() << __E__;
+			__COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << t.getValueName() << __E__;
 
 			// Note: The order of xml fields is required by JavaScript, so do NOT change
 			// order.
@@ -3198,7 +3164,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 
 			if(t.isDisconnected())
 			{
-				__COUT__ << t.getValueName() << __E__;
+				__COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << t.getValueName() << __E__;
 
 				// xmlOut.addTextElementToParent("value", t.getValueAsString(), parentEl);
 				// xmlOut.addTextElementToParent("DisconnectedLink", t.getValueAsString(),
@@ -3251,8 +3217,6 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 				xercesc::DOMElement* choicesParentEl =
 				    xmlOut.addTextElementToParent("fixedChoices", "", parentEl);
 				std::vector<std::string> choices = t.getFixedChoices();
-
-				//__COUT__ << "choices.size() " << choices.size() << __E__;
 
 				for(const auto& choice : choices)
 					xmlOut.addTextElementToParent("fixedChoice", choice, choicesParentEl);
@@ -3946,13 +3910,13 @@ try
 			int                i;
 			while(getline(f, commandSubString, ';'))
 			{
-				//__SUP_COUT__ << "commandSubString " << commandSubString << __E__;
+				__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "commandSubString " << commandSubString << __E__;
 				std::istringstream g(commandSubString);
 
 				i = 0;
 				while(getline(g, paramSubString, ','))
 				{
-					//__SUP_COUT__ << "paramSubString " << paramSubString << __E__;
+					__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "paramSubString " << paramSubString << __E__;
 					if(i == 0)  // type
 					{
 						if(paramSubString != "type")
@@ -3965,14 +3929,14 @@ try
 
 						getline(g, paramValue, ',');
 						++i;
-						//__SUP_COUT__ << "paramValue " << paramValue << __E__;
+						__SUP_COUT_TYPE__(TLVL_DEBUG+13) << __COUT_HDR__ << "paramValue " << paramValue << __E__;
 						commands.back().type_ = paramValue;
 					}
 					else  // params
 					{
 						getline(g, paramValue, ',');
 						++i;
-						//__SUP_COUT__ << "paramValue " << paramValue << __E__;
+						__SUP_COUT_TYPE__(TLVL_DEBUG+13) << __COUT_HDR__ << "paramValue " << paramValue << __E__;
 
 						commands.back().params_.emplace(
 						    std::pair<std::string /*param name*/,
@@ -5006,8 +4970,6 @@ try
 
 	std::string accumulatedErrors = "";
 
-	//__COUTV__(allowIllegalColumns);
-
 	if(allowIllegalColumns)
 		xmlOut.addTextElementToData("allowIllegalColumns", "1");
 
@@ -5018,8 +4980,6 @@ try
 	                            tableName);  // filter errors by tableName
 
 	TableBase* table = cfgMgr->getTableByName(tableName);
-
-	//__COUTV__(allowIllegalColumns);
 
 	if(!getRawData)
 	{
@@ -5102,8 +5062,6 @@ try
 	}
 	else  // use view version
 	{
-		//__COUTV__(allowIllegalColumns);
-		// __COUTV__(getRawData);
 		try
 		{
 			// locally accumulate 'manageable' errors getting the version to avoid
@@ -5190,12 +5148,6 @@ try
 
 	for(int i = 0; i < (int)colInfo.size(); ++i)  // column headers and types
 	{
-		//		__SUP_COUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << "() "
-		//<< 				colInfo[i].getName() << " "
-		//				<< colInfo[i].getStorageName() << " " << colInfo[i].getDataType()
-		//<<
-		//__E__;
-
 		xmlOut.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
 		xmlOut.addTextElementToParent("ColumnType", colInfo[i].getType(), parentEl);
 		xmlOut.addTextElementToParent(
@@ -5242,8 +5194,6 @@ try
 
 	for(int r = 0; r < (int)tableViewPtr->getNumberOfRows(); ++r)
 	{
-		//__SUP_COUT__ << "\t\tRow " << r << ": "  << __E__;
-
 		sprintf(tmpIntStr, "%d", r);
 		xercesc::DOMElement* tmpParentEl =
 		    xmlOut.addTextElementToParent("Row", tmpIntStr, parentEl);
@@ -5278,9 +5228,6 @@ try
 	// don't give author and time.. force default author, let JS fill time
 	for(unsigned int c = 0; c < defaultRowValues.size() - 2; ++c)
 	{
-		//		__SUP_COUT__ << "Default for c" << c << "=" <<
-		//				tableViewPtr->getColumnInfo(c).getName() << " is " <<
-		//				defaultRowValues[c] << __E__;
 		xmlOut.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
 	}
 
@@ -5327,14 +5274,9 @@ catch(...)
 //
 //		Returns a configurationMangager instance dedictated to the user.
 //		This configurationManager will have at least empty instances of all base
-// configurations (no null pointers) 		and will load the backbone configurations to
-// specified backboneVersion
-//
-//		If backboneVersion is -1, then latest, and backboneVersion passed by reference
-// will  be updated
+// configurations (no null pointers) 
 ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
     std::string username, uint64_t activeSessionIndex, bool refresh)
-//, TableVersion& backboneVersion)
 {
 	activeSessionIndex =
 	    0;  // make session by username for now! (may never want to change back)
@@ -5342,9 +5284,9 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
-	//	__SUP_COUT__ << "Using Config Session " << mapKey
-	//	             << " ... Total Session Count: " << userConfigurationManagers_.size()
-	//	             << __E__;
+	__SUP_COUT_TYPE__(TLVL_DEBUG+15) << __COUT_HDR__ << "Using Config Session " << mapKey
+					<< " ... Total Session Count: " << userConfigurationManagers_.size()
+					<< __E__;
 
 	time_t now = time(0);
 
@@ -5376,11 +5318,6 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	}
 	__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "Configuration Manager ready. time=" << time(0) << " " << clock() <<
 		" runTimeSeconds=" << userConfigurationManagers_[mapKey]->runTimeSeconds() <<  __E__;
-
-	// load backbone configurations always based on backboneVersion
-	// if backboneVersion is -1, then latest
-	// backboneVersion = 0;//
-	// userConfigurationManagers_[mapKey]->loadConfigurationBackbone(backboneVersion);
 
 	// update active sessionIndex last use time
 	userLastUseTime_[mapKey] = now;
@@ -5506,9 +5443,6 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 	// each column is represented by 4 fields or 6
 	//	- type, name, dataType, defaultValue, minValue, maxValue
 
-	// int i = 0;                  // use to parse data std::string
-	// int j = data.find(',', i);  // find next field delimiter
-	// int k = data.find(';', i);  // find next col delimiter
 
 	std::istringstream       columnChoicesISS(columnChoicesCSV);
 	std::string              columnChoicesString;
@@ -5562,7 +5496,6 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 			outss << columnParameters[3];
 		}
 		getline(columnChoicesISS, columnChoicesString, ';');
-		//__SUP_COUT__ << "columnChoicesString = " << columnChoicesString << __E__;
 		outss << "\" \t	DataChoices=\"";
 		outss << columnChoicesString;
 
@@ -5617,109 +5550,6 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 		}
 		outss << "\"/>\n";
 	}
-
-	// gets number of parameters and its values, outss is the xml on the output that
-	// should be modified.
-
-	// while(k != (int)(std::string::npos))
-	// {
-	// 	// type
-	// 	columnType = data.substr(i, j - i);
-	// 	outss << "\t\t\t\t<COLUMN Type=\"";
-	// 	outss << columnType;
-
-	// 	i = j + 1;
-	// 	j = data.find(',', i);  // find next field delimiter
-
-	// 	// name and storage name
-	// 	outss << "\" \t Name=\"";
-	// 	capsName = data.substr(i, j - i);  // not caps yet
-	// 	outss << capsName;
-	// 	outss << "\" \t StorageName=\"";
-
-	// 	try
-	// 	{
-	// 		outss << TableBase::convertToCaps(capsName);  // now caps
-	// 	}
-	// 	catch(std::runtime_error& e)
-	// 	{  // error! non-alpha
-	// 		xmlOut.addTextElementToData("Error",
-	// 		                            std::string("For column name '") +
-	// 		                                data.substr(i, j - i) + "' - " + e.what());
-	// 		return;
-	// 	}
-
-	// 	i = j + 1;
-	// 	j = data.find(',', i);  // find next field delimiter
-	// 	columnDataType = data.substr(i, j - i);
-
-	// 	// data type
-	// 	outss << "\" \t	DataType=\"";
-	// 	outss << columnDataType;
-
-	// 	i = j + 1;
-	// 	j = data.find(',', i);  // find next field delimiter
-	// 	columnDefaultValue = data.substr(i, k - i);
-
-	// 	// default value (Note: check by decoding URI because..
-	// 	//	which characters are encoded is not exact match to browser)
-	// 	if(StringMacros::decodeURIComponent(columnDefaultValue) !=
-	// 			TableViewColumnInfo::getDefaultDefaultValue(columnType,columnDataType))
-	// 	{
-	// 		__SUP_COUT__ << "FOUND user spec'd default value = " << columnDefaultValue <<
-	// __E__; 		outss << "\" \t	DefaultValue=\""; 		outss << columnDefaultValue;
-	// 	}
-
-	// 	// fixed data choices for TableViewColumnInfo::TYPE_FIXED_CHOICE_DATA
-	// 	getline(columnChoicesISS, columnChoicesString, ';');
-	// 	//__SUP_COUT__ << "columnChoicesString = " << columnChoicesString << __E__;
-	// 	outss << "\" \t	DataChoices=\"";
-	// 	outss << columnChoicesString;
-
-	// 	//including min and max here if they are available, max is taken from the end of
-	// the column delimiter minus the last position before the field delimiter
-
-	// 	//It only works with both min and max, if none are given then they should be set
-	// otherwise the program crashes.
-	// 	__COUT__ << "\t value of k " << k  << "value of j " << j << __E__;
-	// 	// if (k != j)
-	// 	// {
-
-	// 	// 	i = j + 1;
-	// 	// 	j = data.find(',', i);  // find next field delimiter
-	// 	// 	columnMinValue = data.substr(i, j - i);
-
-	// 	// 	if(StringMacros::decodeURIComponent(columnMinValue) !=
-	// 	// 		TableViewColumnInfo::getMinValue(columnDataType))
-	// 	// 	{
-	// 	// 		__SUP_COUT__ << "FOUND user spec'd min value = " << columnMinValue <<
-	// __E__;
-	// 	// 		outss << "\" \t	MinValue=\"";
-	// 	// 		outss << columnMinValue;
-	// 	// 	}
-
-	// 	// 	i = j + 1;
-	// 	// 	j = data.find(',', i);
-	// 	// 	columnMaxValue = data.substr(i, k - i);
-	// 	// 	if(StringMacros::decodeURIComponent(columnMaxValue) !=
-	// 	// 		TableViewColumnInfo::getMinValue(columnDataType))
-	// 	// 	{
-	// 	// 		__SUP_COUT__ << "FOUND user spec'd max value = " << columnMaxValue <<
-	// __E__;
-	// 	// 		outss << "\" \t	MaxValue=\"";
-	// 	// 		outss << columnMaxValue;
-	// 	// 	}
-
-	// 	// }
-
-	// 	// end column info
-	// 	outss << "\"/>\n";
-
-	// 	i = k + 1;
-	// 	j = data.find(',', i);  // find next field delimiter
-	// 	k = data.find(';', i);  // find new col delimiter
-
-	// }
 
 	outss << "\t\t\t</VIEW>\n";
 	outss << "\t\t</TABLE>\n";
@@ -5788,8 +5618,7 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 	// return the new table info
 	handleGetTableXML(xmlOut, cfgMgr, tableName, TableVersion());
 
-	// debug all table column info
-	// FIXME -- possibly remove this debug feature in future
+	// After save, debug all table column info
 	const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo();
 
 	// give a print out of currently illegal table column info
@@ -5940,11 +5769,7 @@ try
 		__SUP_COUT__ << "\t\t**************************** Save as new table version"
 		             << __E__;
 
-		// newAssignedVersion =
-		//		cfgMgr->saveNewTable(groupAliasesTableName,temporaryVersion);
-
 		// save or find equivalent
-
 		newAssignedVersion = ConfigurationSupervisorBase::saveModifiedVersionXML(
 		    xmlOut,
 		    cfgMgr,
@@ -6121,9 +5946,6 @@ try
 		__SUP_COUT__ << "\t\t**************************** Save as new table version"
 		             << __E__;
 
-		// newAssignedVersion  =
-		//		cfgMgr->saveNewTable(versionAliasesTableName,temporaryVersion);
-
 		newAssignedVersion = ConfigurationSupervisorBase::saveModifiedVersionXML(
 		    xmlOut,
 		    cfgMgr,
@@ -6261,8 +6083,6 @@ try
 			do
 			{  // start looking from beyond last find
 				tmpRow = configView->findRow(col3, memberPair.first, tmpRow + 1);
-
-				//__SUP_COUT__ << configView->getDataView()[tmpRow][col2] << __E__;
 			} while(configView->getDataView()[tmpRow][col2] != versionAlias);
 			// at this point the first pair was found! (else exception was thrown)
 			row = tmpRow;
@@ -6294,12 +6114,8 @@ try
 			configView->setValue(memberPair.first, row, col3);
 		}
 
-		//__SUP_COUT__ << "\t\t row: " << row << __E__;
-
 		col = configView->findCol("Version");
-		//__SUP_COUT__ << "\t\t col: " << col << __E__;
-		//__SUP_COUT__ << "\t\t version: " << memberPair.second << " vs "
-		//             << configView->getDataView()[row][col] << __E__;
+
 		if(memberPair.second.toString() != configView->getDataView()[row][col])
 		{
 			configView->setValue(memberPair.second.toString(), row, col);
@@ -6581,24 +6397,6 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 
 	const std::map<std::string, GroupInfo>& allGroupInfo = cfgMgr->getAllGroupInfo();
 
-	//	ConfigurationInterface* theInterface = cfgMgr->getConfigurationInterface();
-	//	std::set<std::string /*name*/>  tableGroups =
-	// theInterface->getAllTableGroupNames();
-	//	__SUP_COUT__ << "Number of Table groups: " << tableGroups.size() << __E__;
-	//
-	//	TableGroupKey groupKey;
-	//	std::string groupName;
-	//
-	//	std::map<std::string /*groupName*/,std::set<TableGroupKey> > allGroupsWithKeys;
-	//	for(auto& groupString:tableGroups)
-	//	{
-	//		TableGroupKey::getGroupNameAndKey(groupString,groupName,groupKey);
-	//		allGroupsWithKeys[groupName].emplace(groupKey);
-	//
-	//		//__SUP_COUT__ << "Table group " << groupString << " := " << groupName <<
-	//		//"(" << groupKey << ")" << __E__;
-	//	}
-
 	TableGroupKey groupKey;
 	std::string   groupName;
 	std::string   groupString, groupTypeString, groupComment, groupCreationTime,
@@ -6630,59 +6428,10 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 
 		if(returnMembers)
 		{
-			// groupTypeString = "Invalid";
-			// groupComment = ""; //clear just in case failure
-
-			// groupString = TableGroupKey::getFullGroupString(groupName,groupKey);
-
-			//__SUP_COUT__ << "Latest Table group " << groupString << " := " << groupName
-			//<<
-			//		"(" << groupKey << ")" << __E__;
-
 			parentEl = xmlOut.addTextElementToData("TableGroupMembers", "");
-			//
-			//			std::map<std::string /*name*/, TableVersion /*version*/>
-			// memberMap;
-			//			//try to determine type, dont report errors, just mark "Invalid"
-			//			try
-			//			{
-			//				//determine the type of the table group
-			//				memberMap = cfgMgr->loadTableGroup(groupName,groupKey,
-			//						0,0,0,&groupComment,0,0, //mostly defaults
-			//						true /*doNotLoadMembers*/,&groupTypeString);
-			//				//groupTypeString = cfgMgr->getTypeNameOfGroup(memberMap);
-			//				xmlOut.addTextElementToData("TableGroupType",
-			// groupTypeString);
-			//				xmlOut.addTextElementToData("TableGroupComment",
-			// groupComment);
-			//			}
-			//			catch(std::runtime_error& e)
-			//			{
-			//				__SUP_SS__ << "Table group \"" + groupString +
-			//						"\" has invalid type! " + e.what() << __E__;
-			//				__SUP_COUT__ << "\n" << ss.str();
-			//				groupTypeString = "Invalid";
-			//				xmlOut.addTextElementToData("TableGroupType",
-			// groupTypeString);
-			//				xmlOut.addTextElementToData("TableGroupComment",
-			// groupComment); 				continue;
-			//			}
-			//			catch(...)
-			//			{
-			//				__SUP_SS__ << "Table group \"" + groupString +
-			//						"\" has invalid type! " << __E__;
-			//				__SUP_COUT__ << "\n" << ss.str();
-			//				groupTypeString = "Invalid";
-			//				xmlOut.addTextElementToData("TableGroupType",
-			// groupTypeString);
-			//				xmlOut.addTextElementToData("TableGroupComment",
-			// groupComment); 				continue;
-			//			}
-
+			
 			for(auto& memberPair : groupInfo.second.latestKeyMemberMap_)
 			{
-				//__SUP_COUT__ << "\tMember table " << memberPair.first << ":" <<
-				// memberPair.second << __E__;
 				xmlOut.addTextElementToParent("MemberName", memberPair.first, parentEl);
 				xmlOut.addTextElementToParent(
 				    "MemberVersion", memberPair.second.toString(), parentEl);
@@ -6803,9 +6552,6 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 
 		// for each table name
 		// get existing version keys
-
-		//__SUP_COUT__ << "Name: " << it->first << " - #ofVersions: " <<
-		// it->second.versions_.size() << __E__;
 
 		// add system table name
 		xmlOut.addTextElementToData("TableName", it->first);
