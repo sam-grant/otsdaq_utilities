@@ -567,6 +567,7 @@ catch(...)
 }  // end request() error handling
 
 //==============================================================================
+
 void MacroMakerSupervisor::handleRequest(const std::string                Command,
                                          HttpXmlDocument&                 xmldoc,
                                          cgicc::Cgicc&                    cgi,
@@ -600,6 +601,12 @@ void MacroMakerSupervisor::handleRequest(const std::string                Comman
 	else if(Command == "runFEMacro")  // called by FE Macro Test returns FE Macros and
 	                                  // Macro Maker Macros
 		runFEMacro(xmldoc, cgi, userInfo);
+	else if(Command == "loadFEHistory")  // called by FE Macro Test and returns FE Macros
+	                                      // and Macro Maker Macros
+		loadFEHistory(xmldoc, userInfo.username_);
+	else if(Command == "clearFEHistory")  // called by FE Macro Test returns FE Macros and
+	                                  		// Macro Maker Macros
+		clearFEHistory(userInfo.username_);
 	else
 		xmldoc.addTextElementToData("Error", "Unrecognized command '" + Command + "'");
 }  // end handleRequest()
@@ -1398,7 +1405,40 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string        Command,
 	else
 		__SUP_COUT__ << "Unable to open history.hist" << __E__;
 }
+//==============================================================================
+void MacroMakerSupervisor::appendCommandToHistory(std::string feClass,
+												  std::string feUID,
+												  std::string macroType,
+												  std::string macroName,
+												  std::string inputArgs,
+												  std::string outputArgs,
+												  bool saveOutputs,
+												  const std::string& username)
+{
+	std::string fileName = "FEhistory.hist";
+	std::string fullPath = (std::string)MACROS_HIST_PATH + username + "/" + fileName;
+	__SUP_COUT__ << fullPath << __E__;
+	std::ofstream histfile (fullPath.c_str(), std::ios::app);
+	if (histfile.is_open())
+	{
+		histfile << "{\n";
+		histfile << "\"feClass\":\"" << feClass << "\",\n";
+		histfile << "\"feUID\":\"" << feUID << "\",\n";
+		histfile << "\"macroType\":\"" << macroType << "\",\n";
+		histfile << "\"macroName\":\"" << macroName << "\",\n";
+		histfile << "\"inputArgs\":\"" << inputArgs << "\",\n";
+		histfile << "\"outputArgs\":\"" << outputArgs << "\",\n";
+		if (saveOutputs)
+			histfile << "\"saveOutputs\":\"" << 1 << "\"\n";
+		else
+			histfile << "\"saveOutputs\":\"" << 0 << "\"\n";
+		histfile << "}#" << __E__;
+		histfile.close();
+	}
+	else
+		__SUP_COUT__ << "Unable to open FEhistory.hist" << __E__;
 
+}
 //==============================================================================
 void MacroMakerSupervisor::loadHistory(HttpXmlDocument&   xmldoc,
                                        const std::string& username)
@@ -1463,6 +1503,73 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument&   xmldoc,
 	else
 
 		__SUP_COUT__ << "Unable to open history.hist" << __E__;
+}
+//==============================================================================
+void MacroMakerSupervisor::loadFEHistory(HttpXmlDocument&   xmldoc,
+                                       const std::string& username)
+{
+	std::string fileName = MACROS_HIST_PATH + username + "/" + "FEhistory.hist";
+
+	std::ifstream read(fileName.c_str());
+	__SUP_COUT__ << fileName << __E__;
+
+	if (read.is_open())
+	{
+		std::string line;
+		char* returnStr;
+		unsigned long long fileSize;
+		unsigned long long i = 0;
+		unsigned long long MAX_HISTORY_SIZE = 100000;
+		
+		// get the length of the file
+		read.seekg(0, std::ios::end);
+		fileSize = read.tellg();
+		returnStr = new char[fileSize + 1];
+		returnStr[fileSize] = '\0';
+		read.seekg(0, std::ios::beg);
+
+		// read data as block
+		read.read(returnStr, fileSize);
+		read.close();
+
+		// find i such that new string size is less than
+		if (fileSize > MAX_HISTORY_SIZE)
+		{
+			i = fileSize - MAX_HISTORY_SIZE;
+			for (; i < fileSize; ++i)
+			{
+				if (returnStr[i] == '#')	// skip the new line char
+				{
+					i += 2;
+					break;
+				}
+			}
+			if (i > fileSize)
+				i = fileSize;
+
+			// write back to file truncated history
+			FILE* fp = fopen(fileName.c_str(), "w");
+			if (!fp)
+			{
+				__SS__ << "Big problem with FE history file: " << fileName
+				       << __E__;
+				__SS_THROW__;
+			}
+			fwrite(&returnStr[i], fileSize - i, 1, fp);
+			fclose(fp);
+		}
+
+		__SUP_COUT__ << "Loading user history! " << __E__;
+
+		if(fileSize > 1)
+			returnStr[fileSize - 2] = '\0';  // remove final newline and last #
+
+		xmldoc.addTextElementToData("returnHistStr", &returnStr[i]);
+
+		delete[] returnStr;
+	}
+	else
+		__SUP_COUT__ << "Unable to open FE history.hist" << __E__;
 }
 
 //==============================================================================
@@ -1553,6 +1660,16 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument&   xmldoc,
 void MacroMakerSupervisor::clearHistory(const std::string& username)
 {
 	std::string fileName = "history.hist";
+	std::string fullPath = (std::string)MACROS_HIST_PATH + username + "/" + fileName;
+
+	std::remove(fullPath.c_str());
+	__SUP_COUT__ << "Successfully deleted " << fullPath;
+}
+
+//==============================================================================
+void MacroMakerSupervisor::clearFEHistory(const std::string& username)
+{
+	std::string fileName = "FEhistory.hist";
 	std::string fullPath = (std::string)MACROS_HIST_PATH + username + "/" + fileName;
 
 	std::remove(fullPath.c_str());
@@ -2258,6 +2375,15 @@ try
 	__SUP_COUTV__(inputArgs);
 	__SUP_COUTV__(outputArgs);
 	__SUP_COUTV__(saveOutputs);
+
+	appendCommandToHistory(feClassSelected, 
+						   feUIDSelected,
+						   macroType,
+						   macroName,
+						   inputArgs,
+						   outputArgs,
+						   saveOutputs,
+						   userInfo.username_);
 
 	std::set<std::string /*feUID*/> feUIDs;
 
