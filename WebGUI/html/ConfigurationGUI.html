@@ -3262,8 +3262,8 @@
 				// TODO: add the search bar
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				treeViewHandlerStr_ += "<input id='tree-view-searchbar'" +
-										"placeholder='Search...' " +
-										"onkeyup='applySearchNode(); return false;'></input>";
+										"placeholder='Search...' " + 
+										"onkeydown='applySearchNode(event)'></input>";
 
 
 				//				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
@@ -4651,9 +4651,8 @@
 		//==============================================================================
 		//TODO: search bar
 		//applySearchNode ~
-		function applySearchNode()
+		function applySearchNode(event)
 		{
-			console.log("call")
 			var fields = document.getElementsByClassName("treeNode-Value");
 			var text = document.getElementById("tree-view-searchbar").value;
 
@@ -4661,15 +4660,14 @@
 			{
 				if (text !== "" && fields[i].innerText.toLowerCase().includes(text))
 				{
-					// nodes[i].style.display = "block";
 					fields[i].style.color = "green";
 				}
 				else
 				{
 					fields[i].style.color = "inherit";
-					// nodes[i].style.display = "none";
 				}
 			}
+			event.stopPropagation();
 		}
 
 		//==============================================================================
@@ -8904,7 +8902,7 @@
 					{
 						//handle expand
 						Debug.log("treeView bodyKey expand " + e.key);
-						// expandTreeChildrenDepth();
+						expandTreeChildrenDepth();
 						break;
 					}
 
@@ -8913,7 +8911,7 @@
 					{
 						//handle hide
 						Debug.log("treeView bodyKey hide " + e.key);
-						// hideTreeChildrenDepth();
+						hideTreeChildrenDepth();
 						break;
 					}
 			}
