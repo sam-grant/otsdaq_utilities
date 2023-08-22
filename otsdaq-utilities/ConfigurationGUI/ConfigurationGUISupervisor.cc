@@ -7006,6 +7006,25 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	{
 		__SUP_COUT__ << "Attempting test activation of the context group." << __E__;
 		ConfigurationManager cfgMgr;  // create instance to activate saved groups
+
+		// test the ConfigurationTree getNodes()
+		std::map<std::string, ConfigurationTree> map1 = cfgMgr.getNode("/XDAQContextTable").getNodes("ContextCFO0");
+		std::map<std::string, ConfigurationTree> map2 = cfgMgr.getNodes("/XDAQContextTable/ContextCFO0");
+		__SUP_COUT__ << "map1 length = " << map1.size() << " map2 length = " << map2.size() << __E__;
+		if (map1.size() == map2.size())
+		{
+			__SUP_COUT__ << "Children of map1:" << __E__;
+			for (auto& pair : map1)
+			{
+				__SUP_COUT__ << pair.first << __E__;
+			}
+
+			__SUP_COUT__ << "Children of map2:" << __E__;
+			for (auto& pair : map2)
+			{
+				__SUP_COUT__ << pair.first << __E__;
+			}
+		}
 	}
 	catch(const std::runtime_error& e)
 	{
