@@ -444,6 +444,34 @@
 			-ms-user-select: 		none;
 			user-select: 			none;
 		}
+
+		#searchbar {
+			float: right;
+			width: 200px;
+			display: flex;
+			text-align: center;
+			border-radius: 3px;
+			background-color: white;
+			padding: 4px
+		}
+
+		#searchbar input:focus {
+			outline: 0;
+		}
+
+		#searchbar input {
+			border: 0;
+		}
+
+		#searchbar span {
+			display: inline-block;
+			width: 24px;
+			height: 24px;
+			background-image: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-magnifyingGlass.png);
+			background-size: 24px 24px;
+			margin-right: 2px;
+		}
+
 	</style>
 
 
@@ -3259,6 +3287,14 @@
 					"\nNote: hot keys will target the highlighted node.'" +
 					">- All Children</a>";
 
+				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				treeViewHandlerStr_ += "<div id='searchbar'>" + 
+											"<span></span>" + 
+											"<input id='tree-view-searchbar'" +
+											"placeholder='Search...' " + 
+											"onkeydown='applySearchNode(event)'></input>" + 
+										"</div>";
+
 
 				//				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				//				treeViewHandlerStr_ += "<a href='#' onclick='" +
@@ -4643,6 +4679,34 @@
 		} //end handleTreeNodeClick()
 
 		//==============================================================================
+		//applySearchNode ~
+		function applySearchNode(event)
+		{
+			var fields = document.getElementsByClassName("treeNode-Value");
+			var text = document.getElementById("tree-view-searchbar").value; 
+
+			// problem with keydown
+			if (event.keyCode >= 48 && event.keyCode <= 90)
+				text = text + event.key;
+
+			if (event.keyCode === 8)
+				text = text.slice(0, -1);
+
+			for (var i = 0; i < fields.length; i++)
+			{
+				if (text !== "" && fields[i].innerText.toLowerCase().includes(text.toLowerCase()))
+				{
+					fields[i].style.color = "green";
+				}
+				else
+				{
+					fields[i].style.color = "inherit";
+				}
+			}
+			event.stopPropagation();
+		}
+
+		//==============================================================================
 		//applyTreeFilter ~
 		function applyTreeFilter(filter, reapplyFilter, infoWasToggled) 
 		{
@@ -4676,11 +4740,13 @@
 				lastTreeFilter_ = treeFilter_;
 			}
 
+			// refresh the filter
 			if (reapplyFilter)
 				filter = treeFilter_;
 			else
 				treeFilter_ = filter;
 
+			// case no filter
 			if (!filter || filter == "" || filter == "*") return;
 
 			//apply new filter
