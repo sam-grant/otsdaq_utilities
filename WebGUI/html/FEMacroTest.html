@@ -1817,7 +1817,7 @@
 						"class": className,
 						"onClick": "onClickHistoryRecord(" + record + ")"
 					},
-					command["macroName"] + ": " + (recordName === "" ? "No arguments": recordName),
+					"(" + command["feUID"] + ") " + command["macroName"] + ": " + (recordName === "" ? "No arguments": recordName),
 					true);
 		}
 
