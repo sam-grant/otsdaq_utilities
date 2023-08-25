@@ -1653,7 +1653,8 @@ try
 	{
 		__SUP_COUT__ << "Refreshing all table info, ignoring warnings..." << __E__;
 		std::string accumulatedWarnings = "";
-		cfgMgr->getAllTableInfo(true, &accumulatedWarnings);  // do refresh
+		cfgMgr->getAllTableInfo(true, &accumulatedWarnings, 
+			"" /* errorFilterName */, false /* getGroupInfo */);  // do refresh
 	}
 
 	const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo(false);
@@ -3741,7 +3742,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
     const std::string&      commandString)
 try
 {
-	__MOUT__ << "handleSavePlanCommandSequenceXML" << __E__;
+	__COUT__ << "handleSavePlanCommandSequenceXML " << planName << __E__;
 
 	//	setup active tables based on input group and modified tables
 	setupActiveTablesXML(xmlOut,
@@ -3759,12 +3760,16 @@ try
 	TableEditStruct targetTable(IterateTable::TARGET_TABLE,
 	                            cfgMgr);  // Table ready for editing!
 
-	// create table-edit struct for each iterate command type
-	std::map<std::string, TableEditStruct> commandTypeToCommandTableMap;
+	// create table-edit struct for each table that an iterate command type can use
+	//if two command types have same table, TableEditStruct returns the same temporary version of the table, but then modified_ 
+	//	will be maintained separately and saving the table becomes a mess.	
+	std::map<std::string /* table name */, TableEditStruct> commandTableToEditMap;
 	for(const auto& commandPair : IterateTable::commandToTableMap_)
 		if(commandPair.second != "")  // skip tables with no parameters
-			commandTypeToCommandTableMap.emplace(std::pair<std::string, TableEditStruct>(
-			    commandPair.first, TableEditStruct(commandPair.second, cfgMgr)));
+			commandTableToEditMap.emplace(std::pair<std::string, TableEditStruct>(
+			    commandPair.second, TableEditStruct(commandPair.second, cfgMgr)));
+	 
+	
 
 	// try to catch any errors while editing..
 	//	if errors delete temporary plan view (if created here)
@@ -3830,14 +3835,15 @@ try
 					// delete linked command
 					//	find linked UID in table (mapped by type)
 					cmdType = planTable.tableView_->getDataView()[row][cmdTypeCol];
-					if(commandTypeToCommandTableMap.find(cmdType) !=
-					   commandTypeToCommandTableMap
-					       .end())  // skip if invalid command type
+					auto cmdTypeTableIt = IterateTable::commandToTableMap_.find(cmdType);
+					if(cmdTypeTableIt !=
+					   IterateTable::commandToTableMap_
+					       .end() && cmdTypeTableIt->second != "")  // skip if invalid command type or if no command parameter table
 					{
+						TableEditStruct& cmdTypeTableEdit = commandTableToEditMap.at(cmdTypeTableIt->second);
 						cmdRow =
-						    commandTypeToCommandTableMap[cmdType].tableView_->findRow(
-						        commandTypeToCommandTableMap[cmdType]
-						            .tableView_->getColUID(),
+						    cmdTypeTableEdit.tableView_->findRow(
+						        cmdTypeTableEdit.tableView_->getColUID(),
 						        planTable.tableView_
 						            ->getDataView()[row][commandUidLink.second]);
 
@@ -3846,11 +3852,9 @@ try
 						//	remove all targets in group
 						try
 						{
-							cmdCol =
-							    commandTypeToCommandTableMap[cmdType].tableView_->findCol(
+							cmdCol = cmdTypeTableEdit.tableView_->findCol(
 							        IterateTable::commandTargetCols_.TargetsLinkGroupID_);
-							targetGroupName =
-							    commandTypeToCommandTableMap[cmdType]
+							targetGroupName = cmdTypeTableEdit
 							        .tableView_->getDataView()[cmdRow][cmdCol];
 
 							for(unsigned int trow = 0;
@@ -3859,8 +3863,7 @@ try
 							{
 								// remove command from target group..
 								if(targetTable.tableView_->isEntryInGroup(
-								       trow,
-								       commandTypeToCommandTableMap[cmdType]
+								       trow, cmdTypeTableEdit
 								           .tableView_->getColumnInfo(cmdCol)
 								           .getChildLinkIndex(),
 								       targetGroupName))
@@ -3883,10 +3886,10 @@ try
 
 						// now no more targets, delete row
 
-						commandTypeToCommandTableMap[cmdType].tableView_->deleteRow(
+						cmdTypeTableEdit.tableView_->deleteRow(
 						    cmdRow);
 
-						commandTypeToCommandTableMap[cmdType].modified_ = true;
+						cmdTypeTableEdit.modified_ = true;
 					}
 
 					// remove command entry in plan table
@@ -3981,18 +3984,20 @@ try
 			    "1", row, planTable.tableView_->getColStatus());
 
 			// create command specifics
-			if(commandTypeToCommandTableMap.find(command.type_) !=
-			   commandTypeToCommandTableMap.end())  // if table exists in map! (some
-			                                        // commands may have no parameters)
+			auto cmdTypeTableIt = IterateTable::commandToTableMap_.find(command.type_);
+					if(cmdTypeTableIt !=
+					   IterateTable::commandToTableMap_
+					       .end() && cmdTypeTableIt->second != "")  // skip if invalid command type or if no command parameter table
 			{
+				TableEditStruct& cmdTypeTableEdit = commandTableToEditMap.at(cmdTypeTableIt->second);
 				__SUP_COUT__ << "table "
-				             << commandTypeToCommandTableMap[command.type_].tableName_
+				             << cmdTypeTableEdit.tableName_
 				             << __E__;
 
 				// at this point have table, tempVersion, and createdFlag
 
 				// create command parameter entry at command level
-				cmdRow = commandTypeToCommandTableMap[command.type_].tableView_->addRow(
+				cmdRow = cmdTypeTableEdit.tableView_->addRow(
 				    author, true /*incrementUniqueData*/, command.type_ + "_COMMAND_");
 
 				// parameters are linked
@@ -4053,20 +4058,16 @@ try
 						continue;
 					}
 
-					cmdCol =
-					    commandTypeToCommandTableMap[command.type_].tableView_->findCol(
+					cmdCol = cmdTypeTableEdit.tableView_->findCol(
 					        param.first);
 
 					__SUP_COUT__ << "param col " << cmdCol << __E__;
 
-					commandTypeToCommandTableMap[command.type_]
-					    .tableView_->setURIEncodedValue(param.second, cmdRow, cmdCol);
+					cmdTypeTableEdit.tableView_->setURIEncodedValue(param.second, cmdRow, cmdCol);
 				}  // end parameter loop
 
-				cmdUID =
-				    commandTypeToCommandTableMap[command.type_].tableView_->getDataView()
-				        [cmdRow][commandTypeToCommandTableMap[command.type_]
-				                     .tableView_->getColUID()];
+				cmdUID = cmdTypeTableEdit.tableView_->getDataView()
+				        [cmdRow][cmdTypeTableEdit.tableView_->getColUID()];
 
 				if(command.targets_.size())
 				{
@@ -4075,18 +4076,14 @@ try
 					__SUP_COUT__ << "targets found for command UID=" << cmdUID << __E__;
 
 					// create link from command table to target
-					cmdCol =
-					    commandTypeToCommandTableMap[command.type_].tableView_->findCol(
+					cmdCol = cmdTypeTableEdit.tableView_->findCol(
 					        IterateTable::commandTargetCols_.TargetsLink_);
-					commandTypeToCommandTableMap[command.type_]
-					    .tableView_->setValueAsString(
+					cmdTypeTableEdit.tableView_->setValueAsString(
 					        IterateTable::TARGET_TABLE, cmdRow, cmdCol);
 
-					cmdCol =
-					    commandTypeToCommandTableMap[command.type_].tableView_->findCol(
+					cmdCol = cmdTypeTableEdit.tableView_->findCol(
 					        IterateTable::commandTargetCols_.TargetsLinkGroupID_);
-					commandTypeToCommandTableMap[command.type_]
-					    .tableView_->setValueAsString(
+					cmdTypeTableEdit.tableView_->setValueAsString(
 					        cmdUID + "_Targets", cmdRow, cmdCol);
 
 					// create row(s) for each target in target table with correct groupID
@@ -4112,8 +4109,7 @@ try
 				}  // end target handling
 
 				// add link at plan level to created UID
-				planTable.tableView_->setValueAsString(
-				    commandTypeToCommandTableMap[command.type_].tableName_,
+				planTable.tableView_->setValueAsString(cmdTypeTableEdit.tableName_,
 				    row,
 				    commandUidLink.first);
 				planTable.tableView_->setValueAsString(
@@ -4121,7 +4117,7 @@ try
 
 				__SUP_COUT__ << "linked to uid = " << cmdUID << __E__;
 
-				commandTypeToCommandTableMap[command.type_].modified_ = true;
+				cmdTypeTableEdit.modified_ = true;
 			}  // done with command specifics
 
 		}  // end command loop
@@ -4129,13 +4125,15 @@ try
 		// commands are created in the temporary tables
 		//	validate with init
 
+
 		planTable.tableView_->print();
 		planTable.tableView_->init();  // verify new table (throws runtime_errors)
 
 		__SUP_COUT__ << "requestType tables:" << __E__;
 
-		for(auto& modifiedConfig : commandTypeToCommandTableMap)
+		for(auto& modifiedConfig : commandTableToEditMap)
 		{
+			__SUP_COUTV__(modifiedConfig.second.modified_);
 			modifiedConfig.second.tableView_->print();
 			modifiedConfig.second.tableView_->init();
 		}
@@ -4170,7 +4168,7 @@ try
 			                              targetTable.temporaryVersion_);
 		}
 
-		for(auto& modifiedConfig : commandTypeToCommandTableMap)
+		for(auto& modifiedConfig : commandTableToEditMap)
 		{
 			if(modifiedConfig.second
 			       .createdTemporaryVersion_)  // if temporary version created here
@@ -4217,7 +4215,7 @@ try
 	__SUP_COUT__ << "Final target version is " << targetTable.tableName_ << "-v"
 	             << finalVersion << __E__;
 
-	for(auto& modifiedConfig : commandTypeToCommandTableMap)
+	for(auto& modifiedConfig : commandTableToEditMap)
 	{
 		if(!modifiedConfig.second.modified_)
 		{

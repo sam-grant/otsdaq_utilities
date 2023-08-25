@@ -227,8 +227,9 @@
 		
 		#topPane-status {
 			float: 				left;
-			margin: 			12px 0 -6px 26px;			  
+			margin: 			3px 0 -6px 26px;			  
 			text-align:			center;
+			width:				160px;
 		}
 		#topPane-status-fieldName {
 			text-decoration:	underline;
@@ -689,6 +690,7 @@
 		//global vars for iteration plan records
 		var _planUIDs; //array of UIDs in the currently active Iterate group
 		var _targetPlan = "";
+		var _setActiveIterationPlan = "";
 				
 		//global vars for saving tables
 		var _modifiedTables;
@@ -705,6 +707,8 @@
 		_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP 	= "CONFIGURE_ACTIVE_GROUP";
 		_COMMAND_TYPES.CONFIGURE_ALIAS 			= "CONFIGURE_ALIAS";
 		_COMMAND_TYPES.CONFIGURE_GROUP 			= "CONFIGURE_GROUP";
+		_COMMAND_TYPES.ACTIVATE_ALIAS 			= "ACTIVATE_ALIAS";
+		_COMMAND_TYPES.ACTIVATE_GROUP 			= "ACTIVATE_GROUP";
 		_COMMAND_TYPES.EXECUTE_FE_MACRO 		= "EXECUTE_FE_MACRO";
 		_COMMAND_TYPES.EXECUTE_MACRO 			= "EXECUTE_MACRO";
 		_COMMAND_TYPES.MODIFY_ACTIVE_GROUP 		= "MODIFY_ACTIVE_GROUP";
@@ -734,6 +738,8 @@
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP] 	= [];
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_ALIAS] 		= [_COMMAND_PARAM_FIELDS.SystemAlias];
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_GROUP] 		= ["GroupName","GroupKey"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.ACTIVATE_ALIAS] 			= [_COMMAND_PARAM_FIELDS.SystemAlias];
+		_COMMAND_PARAMS[_COMMAND_TYPES.ACTIVATE_GROUP] 			= ["GroupName","GroupKey"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_FE_MACRO] 		= [_COMMAND_PARAM_FIELDS.Targets,"MacroName",_COMMAND_PARAM_FIELDS.LinkToMacroDimensions,"LinkToMacroDimensionalLoopGroupID","EnableSavingOutputsToFile","OutputFilePath","OutputFileRadix"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_MACRO] 			= [_COMMAND_PARAM_FIELDS.Targets,"MacroName",_COMMAND_PARAM_FIELDS.LinkToMacroDimensions,"LinkToMacroDimensionalLoopGroupID","EnableSavingOutputsToFile","OutputFilePath","OutputFileRadix"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= [_COMMAND_PARAM_FIELDS.Targets,_COMMAND_PARAM_FIELDS.DoTrackGroupChanges,_COMMAND_PARAM_FIELDS.RelativePathToField,"FieldStartValue","FieldIterationStepSize"];
@@ -799,7 +805,7 @@
 				"</INDENT>"	;						
 			Debug.log("Iterate init ");
 			DesktopContent.tooltip("Iterate Introduction",
-			windowTooltip);
+				windowTooltip);
 			DesktopContent.setWindowTooltip(windowTooltip);
 			
 			//extract get parameters
@@ -934,10 +940,8 @@
 			//if no target plan and plans exist, load the first one
 			if(_targetPlan == "")
 			{
-				if(_planUIDs.length)
-					drawIterationPlan(_planUIDs[0]);
-				else
-					drawIterationPlan();					
+				//first time through, updateIterateStatus() should set target plan (before paint() is called)
+				//drawIterationPlan();					
 			}
 			else
 			{
@@ -1982,14 +1986,14 @@
 			function localCompleteInit()
 			{
 				Debug.log("localCompleteInit -- Wrapping up init.");
-				paint();
+				
 				if(!_eventListenersCreated)
 				{
 					window.addEventListener("resize",paint);
 					_eventListenersCreated = true; //prevent multiple event creation
 				}	
 				
-				updateIterateStatus();
+				updateIterateStatus(); // calls paint() when _targetPlan is defined
 			} //end localCompleteInit()
 
 						
@@ -2412,6 +2416,8 @@
 							addCommand(_COMMAND_TYPES.REPEAT_LABEL,
 									["Main",
 									 0]); //"NumberOfRepetitions"
+							addCommand(_COMMAND_TYPES.HALT,
+									[]); 
 						}		
 						
 						//FOR DEBUGGING
@@ -2833,15 +2839,20 @@
 											"onchange":"popUpParamSystemAliasOnChange(this.value); _popUpParamsModified = true;",
 
 									});
-
+							var selectedAliasIndex = 0;
 							for(var j=0;j<_tableGroupAliases.length;++j)
+							{
+								if(_tableGroupAliases[j].alias == initValue)
+									selectedAliasIndex = j;
+							
 								str += DesktopContent.htmlOpen("option" +
 										(_tableGroupAliases[j].alias == initValue? //select the init value if match
 												" selected":""),
-												{
-														"value":_tableGroupAliases[j].alias
-												},
-												_tableGroupAliases[j].alias/*innerHTML*/, true /*closeTag*/);
+										{
+												"value":_tableGroupAliases[j].alias
+										},
+										_tableGroupAliases[j].alias/*innerHTML*/, true /*closeTag*/);
+							}
 
 							str += "</select>";	
 
@@ -2851,7 +2862,7 @@
 									});
 							if(_tableGroupAliases.length)
 								str += popUpParamSystemAliasOnChange(
-										_tableGroupAliases[0].alias);
+										_tableGroupAliases[selectedAliasIndex].alias);
 							str += "</div>";
 							hDelta += 90;						
 						}
@@ -3902,7 +3913,7 @@
 				return str;
 			else
 				el.innerHTML = str;
-			return "";
+			return str;
 		} //end popUpParamSystemAliasOnChange()
 		
 		//=====================================================================================
@@ -4139,8 +4150,9 @@
 
 			Debug.log("Selected plan: " + sel.value + " " + _planUIDs[sel.value|0]);
 			
-			drawIterationPlan(_planUIDs[sel.value|0]);
-			
+			_setActiveIterationPlan = _planUIDs[sel.value|0]; //to request setting as active plan at server
+
+			drawIterationPlan(_planUIDs[sel.value|0]);			
 		}	//end handlePlanSelect()
 		
 		
@@ -4274,7 +4286,9 @@
 			//Debug.log("updateIterateStatus");
 
 			DesktopContent.XMLHttpRequest("Request?" + 
-					"RequestType=getIterationPlanStatus", //end get data 
+					"RequestType=getIterationPlanStatus" +
+					(_setActiveIterationPlan?
+						("&activeIterationPlan=" + _setActiveIterationPlan):""), //end get data 
 					"", //end post data
 					function(req,ignoreParam,errStr) //start handler
 					{
@@ -4283,7 +4297,7 @@
 				{
 					Debug.log("getIterationPlanStatus ERROR handler ");
 					var str = "";
-					str += "Disconnected. Click <a onclick='initIterateData()'>Refresh</a> to attempt to reconnect.";
+					str += "<label style='font-size:14px'>Disconnected. <a onclick='initIterateData()'>Refresh</a> to reconnect.</label>";
 					document.getElementById('topPane-status-field').innerHTML = str;
 					return;
 				} //end error case handler
@@ -4306,22 +4320,37 @@
 				var last_started_plan	= DesktopContent.getXMLValue(req,"last_started_plan");
 				var last_finished_plan	= DesktopContent.getXMLValue(req,"last_finished_plan");
 				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+
+				//first time through, paint target plan
+				if(_targetPlan == "")
+				{ 
+					if(active_plan != "")
+						_targetPlan = active_plan;
+					else if(last_started_plan != "")
+						_targetPlan = last_started_plan;
+					else if(_planUIDs.length)
+						_targetPlan = _planUIDs[0];
+
+					Debug.logv({_targetPlan});
+
+					paint();
+				}
 				
-				if(_need_plan_complete && 
+				if(_need_plan_complete && _old_active_plan_status != "" && //require twice to avoid race conditions with startup
 						active_plan_status == "Inactive")
 				{
 					Debug.log("Iteration plan was completed.",
 							Debug.INFO_PRIORITY);
 					_need_plan_complete = false;
 				}
-				else if(_need_plan_halted && 
+				else if(_need_plan_halted && _old_active_plan_status != "" && //require twice to avoid race conditions with startup
 						active_plan_status == "Inactive")
 				{
 					Debug.log("Iteration plan was halted.",
 							Debug.INFO_PRIORITY);
 					_need_plan_halted = false;
 				}
-				else if(_need_plan_paused && 
+				else if(_need_plan_paused && _old_active_plan_status != "" && //require twice to avoid race conditions with startup
 						active_plan_status == "Paused")
 				{
 					Debug.log("Iteration plan was paused.",
@@ -4496,6 +4525,8 @@
 					0, //handler param
 					0,true,true, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
+
+			_setActiveIterationPlan = ""; //clear, so the request only happens once from GUI manipulations
 		} //end updateIterateStatus()
 		
 		
