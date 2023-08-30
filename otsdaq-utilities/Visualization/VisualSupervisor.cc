@@ -128,21 +128,14 @@ try
 			__SUP_COUT__ << "Configuration table group name: " << theGroup.first
 			             << " key: " << theGroup.second << __E__;
 
-			theConfigurationManager_->loadTableGroup(
-			    theGroup.first, theGroup.second, true /*doActivate*/);
+			//disable version tracking to accept untracked versions to be selected by the FSM transition source
+			theConfigurationManager_->loadTableGroup(theGroup.first, theGroup.second, true /*doActivate*/,
+				0,0,0,0,0,0,false,0,0,ConfigurationManager::LoadGroupType::ALL_TYPES,
+				true /*ignoreVersionTracking*/);
 		}
 	}  // end start like CoreSupervisorBase::transitionConfiguring
 
-	__COUTV__(theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName());
-	__COUTV__(theConfigurationManager_
-	              ->getNode(theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
-	                            ->getTableName())
-	              .getValueAsString());
-
-	__COUTV__("/" +
-	          theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName() +
-	          CorePropertySupervisorBase::getSupervisorConfigurationPath());
-
+	
 	try
 	{
 		ConfigurationTree testAppLink = theConfigurationManager_->getNode(

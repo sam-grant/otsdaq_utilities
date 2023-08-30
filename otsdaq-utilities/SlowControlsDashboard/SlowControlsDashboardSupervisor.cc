@@ -198,7 +198,9 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 		}
 
 		sleep(alarmNotifyRefreshRate_);
-		__COUT__ << "checkSlowControlsAlarms() n. "
+
+		if(cs->interface_->checkAlarmNotifications().size())
+			__COUT__ << "checkSlowControlsAlarms() found count = "
 		         << cs->interface_->checkAlarmNotifications().size() << __E__;
 	}
 }  // end checkSlowControlsAlarms()
