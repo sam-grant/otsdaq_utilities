@@ -121,6 +121,14 @@
 		.dark {
 			background-color: lightsteelblue;
 		}
+
+		.macroInfo {
+			background-image: url(/WebPath/images/windowContentImages/macromaker-information.png);
+			position: absolute;
+			background-size: cover;
+			height: 24px;
+			width: 24px;
+		}
 		
 	</style>
 	
@@ -1040,7 +1048,6 @@
 					el.innerHTML = str;
 
 					handleSelectedFEClass(r,c);
-					// fill the history
 			
 				} //end macro module loop
 			
@@ -1581,7 +1588,6 @@
 			var macroName = feMacroNameSelected;
 			
 			var macroObj = macroNameObject[macroName];
-			
 			var requiredPermissions = macroObj.requiredPermissions;			
 			var inputsArr 	= macroObj.inputs;
 			var outputsArr 	= macroObj.outputs;
@@ -1597,12 +1603,17 @@
 
 			//====================== create Inputs
 			str += "<br>"
-			str += "<b>&quot;" + macroName + "()&quot;</b> RequiredPermissions=" + 
-					requiredPermissions + "<br>" +
-					"&nbsp;&nbsp;&nbsp; <b>Inputs (count=" + 
-					inputsArr.length + "):</b>" +
-					"<div style='margin-left:60px;'>";
-
+			str += "<b>&quot;" + macroName + "()&quot;</b> RequiredPermissions=" + requiredPermissions;
+			if (tooltip != "")
+			{
+				str += "<span class='macroInfo' title='" + tooltip + "'></span>";
+			}
+					
+			str += "<br>" +
+				   "&nbsp;&nbsp;&nbsp; <b>Inputs (count=" + 
+				   inputsArr.length + "):</b>" +
+				   "<div style='margin-left:60px;'>";
+			
 			//create input text boxes
 			if(inputsArr.length)
 			{							
