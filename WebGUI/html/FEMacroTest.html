@@ -472,8 +472,12 @@
 		//=====================================================================================
 		//runMacro ~~
 		var verticalOutputDivSize_ = [600,1000];
+		var row, col;
 		function runMacro(r, c)
 		{
+			console.warn("test", r, c);
+			row = r;
+			col = c;
 			//get any user resize of output element
 			var el = document.getElementById("verticalLayoutOutputDiv");
 			if(el)
@@ -606,7 +610,7 @@
 			if(verticalOrientation_)
 				el = document.getElementById("macroModule-output");			
 			else
-				el = document.getElementById("macroResults-row-" + r + "-col-" + c);
+				el = document.getElementById("macroResults-row-" + row + "-col-" + col);	// r is not defined
 
 			var str = "";
 			
@@ -1695,8 +1699,7 @@
 					"id": "runMacroButton-row-" + r + "-col-" + c,
 					"class":"runMacroButton",
 					"type":"button",					
-					"onclick": "runMacro(" +					
-						r + "," + c + ");",
+					"onclick": "runMacro(" + r + "," + c + ");",
 					"value": "Run",
 					"title": "Run the " + 
 						Object.keys(MACRO_TYPES_)[MAP_FROM_LAYOUT_TO_MACRO_TYPES_[feMacroTypeSelected]] + 
@@ -1821,6 +1824,18 @@
 					recordName += decodeURIComponent(tuple[0]) + "=" + decodeURIComponent(tuple[1]) + "; ";
 			}
 
+			// build the record text
+			var recordText = ""
+			if (command["feUID"] === "*" && command["feClass"] !== "*")
+			{
+				recordText = "(all " + command["feClass"] + ") ";
+			}
+			else
+			{
+				recordText = "(" + command["feUID"] + ") ";
+			}
+			recordText += command["macroName"] + ": ";
+
 			historyContent.innerHTML += DesktopContent.htmlOpen(
 					"div",
 					{
@@ -1828,7 +1843,7 @@
 						"class": className,
 						"onClick": "onClickHistoryRecord(" + record + ")"
 					},
-					"(" + command["feUID"] + ") " + command["macroName"] + ": " + (recordName === "" ? "No arguments": recordName),
+					"<span>" + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
 					true);
 		}
 
