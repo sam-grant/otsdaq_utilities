@@ -475,7 +475,6 @@
 		var row, col;
 		function runMacro(r, c)
 		{
-			console.warn("test", r, c);
 			row = r;
 			col = c;
 			//get any user resize of output element
@@ -598,7 +597,6 @@
 				"outputArgs": outputData,
 				"saveOutputs": saveOutputs,
 			}
-			console.warn("sent", command)
 			if (verticalOrientation_)
 				appendHistoryRecord(JSON.stringify(command));
 		} //end runMacro()
@@ -1850,7 +1848,6 @@
 		// call the function when we click on the history
 		function onClickHistoryRecord(recordObj) {
 			var postData = "inputArgs=" + recordObj["inputArgs"] + "&outputArgs=" + recordObj["outputArgs"];
-			console.warn("history", recordObj, postData)
 			DesktopContent.XMLHttpRequest("Request?RequestType=runFEMacro" +					
 					//"&feSupervisorID=" + feSupervisorID +
 					"&feClassSelected=" + recordObj["feClass"] +
