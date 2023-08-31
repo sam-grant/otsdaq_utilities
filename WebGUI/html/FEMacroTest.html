@@ -121,6 +121,14 @@
 		.dark {
 			background-color: lightsteelblue;
 		}
+
+		.macroInfo {
+			background-image: url(/WebPath/images/windowContentImages/macromaker-information.png);
+			position: absolute;
+			background-size: cover;
+			height: 24px;
+			width: 24px;
+		}
 		
 	</style>
 	
@@ -464,8 +472,11 @@
 		//=====================================================================================
 		//runMacro ~~
 		var verticalOutputDivSize_ = [600,1000];
+		var row, col;
 		function runMacro(r, c)
 		{
+			row = r;
+			col = c;
 			//get any user resize of output element
 			var el = document.getElementById("verticalLayoutOutputDiv");
 			if(el)
@@ -586,7 +597,6 @@
 				"outputArgs": outputData,
 				"saveOutputs": saveOutputs,
 			}
-			console.warn("sent", command)
 			if (verticalOrientation_)
 				appendHistoryRecord(JSON.stringify(command));
 		} //end runMacro()
@@ -598,7 +608,7 @@
 			if(verticalOrientation_)
 				el = document.getElementById("macroModule-output");			
 			else
-				el = document.getElementById("macroResults-row-" + r + "-col-" + c);
+				el = document.getElementById("macroResults-row-" + row + "-col-" + col);	// r is not defined
 
 			var str = "";
 			
@@ -1040,7 +1050,6 @@
 					el.innerHTML = str;
 
 					handleSelectedFEClass(r,c);
-					// fill the history
 			
 				} //end macro module loop
 			
@@ -1581,7 +1590,6 @@
 			var macroName = feMacroNameSelected;
 			
 			var macroObj = macroNameObject[macroName];
-			
 			var requiredPermissions = macroObj.requiredPermissions;			
 			var inputsArr 	= macroObj.inputs;
 			var outputsArr 	= macroObj.outputs;
@@ -1597,12 +1605,17 @@
 
 			//====================== create Inputs
 			str += "<br>"
-			str += "<b>&quot;" + macroName + "()&quot;</b> RequiredPermissions=" + 
-					requiredPermissions + "<br>" +
-					"&nbsp;&nbsp;&nbsp; <b>Inputs (count=" + 
-					inputsArr.length + "):</b>" +
-					"<div style='margin-left:60px;'>";
-
+			str += "<b>&quot;" + macroName + "()&quot;</b> RequiredPermissions=" + requiredPermissions;
+			if (tooltip != "")
+			{
+				str += "<span class='macroInfo' title='" + tooltip + "'></span>";
+			}
+					
+			str += "<br>" +
+				   "&nbsp;&nbsp;&nbsp; <b>Inputs (count=" + 
+				   inputsArr.length + "):</b>" +
+				   "<div style='margin-left:60px;'>";
+			
 			//create input text boxes
 			if(inputsArr.length)
 			{							
@@ -1684,8 +1697,7 @@
 					"id": "runMacroButton-row-" + r + "-col-" + c,
 					"class":"runMacroButton",
 					"type":"button",					
-					"onclick": "runMacro(" +					
-						r + "," + c + ");",
+					"onclick": "runMacro(" + r + "," + c + ");",
 					"value": "Run",
 					"title": "Run the " + 
 						Object.keys(MACRO_TYPES_)[MAP_FROM_LAYOUT_TO_MACRO_TYPES_[feMacroTypeSelected]] + 
@@ -1810,6 +1822,18 @@
 					recordName += decodeURIComponent(tuple[0]) + "=" + decodeURIComponent(tuple[1]) + "; ";
 			}
 
+			// build the record text
+			var recordText = ""
+			if (command["feUID"] === "*" && command["feClass"] !== "*")
+			{
+				recordText = "(all " + command["feClass"] + ") ";
+			}
+			else
+			{
+				recordText = "(" + command["feUID"] + ") ";
+			}
+			recordText += command["macroName"] + ": ";
+
 			historyContent.innerHTML += DesktopContent.htmlOpen(
 					"div",
 					{
@@ -1817,14 +1841,13 @@
 						"class": className,
 						"onClick": "onClickHistoryRecord(" + record + ")"
 					},
-					"(" + command["feUID"] + ") " + command["macroName"] + ": " + (recordName === "" ? "No arguments": recordName),
+					"<span>" + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
 					true);
 		}
 
 		// call the function when we click on the history
 		function onClickHistoryRecord(recordObj) {
 			var postData = "inputArgs=" + recordObj["inputArgs"] + "&outputArgs=" + recordObj["outputArgs"];
-			console.warn("history", recordObj, postData)
 			DesktopContent.XMLHttpRequest("Request?RequestType=runFEMacro" +					
 					//"&feSupervisorID=" + feSupervisorID +
 					"&feClassSelected=" + recordObj["feClass"] +
