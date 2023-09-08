@@ -1834,7 +1834,8 @@
 			}
 			recordText += command["macroName"] + ": ";
 
-			historyContent.innerHTML += DesktopContent.htmlOpen(
+			// put the new history in head
+			historyContent.innerHTML = DesktopContent.htmlOpen(
 					"div",
 					{
 						"id": "historyRecord" + numRecords,
@@ -1842,7 +1843,7 @@
 						"onClick": "onClickHistoryRecord(" + record + ")"
 					},
 					"<span>" + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
-					true);
+					true) + historyContent.innerHTML;
 		}
 
 		// call the function when we click on the history
