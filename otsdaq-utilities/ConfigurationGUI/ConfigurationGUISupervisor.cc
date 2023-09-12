@@ -1100,7 +1100,7 @@ try
 		std::string groupKey  = CgiDataUtilities::getData(cgiIn, "groupKey");
 		bool ignoreWarnings   = CgiDataUtilities::getDataAsInt(cgiIn, "ignoreWarnings");
 
-		__SUP_COUT__ << "Activating table: " << groupName << "(" << groupKey << ")"
+		__SUP_COUT__ << "Activating group: " << groupName << "(" << groupKey << ")"
 		             << __E__;
 		__SUP_COUTV__(ignoreWarnings);
 
@@ -1176,7 +1176,15 @@ try
 		}
 		catch(...)
 		{
-			__SUP_COUT__ << "Unknown error detected!" << __E__;
+			__SUP_COUT__ << "Unknown error detected!" << __E__;			
+			try  // just in case any lingering pieces, lets deactivate
+			{
+				cfgMgr->destroyTableGroup(groupName, true);
+			}
+			catch(...)
+			{
+			}
+
 			throw;  // unexpected exception!
 		}
 	}
@@ -1326,8 +1334,10 @@ try
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
 
+	__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "cfgMgr runtime=" << cfgMgr->runTimeSeconds() << __E__;
 	// always add active table groups to xml response
 	ConfigurationSupervisorBase::getConfigurationStatusXML(xmlOut, cfgMgr);
+	__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "cfgMgr runtime=" << cfgMgr->runTimeSeconds() << __E__;
 
 }  // end ::request()
 catch(const std::runtime_error& e)
@@ -1653,11 +1663,16 @@ try
 	{
 		__SUP_COUT__ << "Refreshing all table info, ignoring warnings..." << __E__;
 		std::string accumulatedWarnings = "";
-		cfgMgr->getAllTableInfo(true, &accumulatedWarnings, 
-			"" /* errorFilterName */, false /* getGroupInfo */);  // do refresh
+		cfgMgr->getAllTableInfo(true /* refresh */,
+			&accumulatedWarnings,
+			"" /* errorFilterName */,
+			false /* getGroupKeys */,
+			false /* getGroupInfo */,
+			true /* initializeActiveGroups */);
+		
 	}
 
-	const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo(false);
+	const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo();
 
 	std::map<std::string /*name*/, TableVersion /*version*/> modifiedTablesMap;
 	std::map<std::string /*name*/, TableVersion /*version*/>::iterator
@@ -3054,7 +3069,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 		             << StringMacros::mapToString(cfgMgr->getActiveVersions()) << __E__;
 	}
 	else
-		__SUP_COUT__ << "Active tables are setup. No issues found." << __E__;
+		__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "Active tables are setup. No issues found." << __E__;
 
 	try
 	{
@@ -4972,8 +4987,8 @@ try
 		xmlOut.addTextElementToData("allowIllegalColumns", "1");
 
 	const std::map<std::string, TableInfo>&
-	    allTableInfo =  // if allowIllegalColumns, then also refresh
-	    cfgMgr->getAllTableInfo(allowIllegalColumns,
+	    allTableInfo = 
+	    	cfgMgr->getAllTableInfo(allowIllegalColumns /* if allowIllegalColumns, then also refresh */,
 	                            allowIllegalColumns ? &accumulatedErrors : 0,
 	                            tableName);  // filter errors by tableName
 
@@ -5298,7 +5313,12 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 		//	IMPORTANTLY this also fills all configuration manager pointers with instances,
 		//	so we are not dealing with changing pointers later on
 		userConfigurationManagers_[mapKey]->getAllTableInfo(
-		    true);  // load empty instance of everything important
+		    true /* refresh */, // load empty instance of everything important
+			0 /* accumulatedWarnings */,
+			"" /* errorFilterName */,
+			false /* getGroupKeys */,
+			false /* getGroupInfo */,
+			true /* initializeActiveGroups */);  
 	}
 	else if(userLastUseTime_.find(mapKey) == userLastUseTime_.end())
 	{
@@ -5312,7 +5332,13 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	                                                                 // info
 	{
 		__SUP_COUT_INFO__ << "Refreshing all table info." << __E__;
-		userConfigurationManagers_[mapKey]->getAllTableInfo(true);
+		userConfigurationManagers_[mapKey]->getAllTableInfo(
+			true /* refresh */,
+			0 /* accumulatedWarnings */,
+			"" /* errorFilterName */,
+			false /* getGroupKeys */,
+			false /* getGroupInfo */,
+			true /* initializeActiveGroups */);
 	}
 	__SUP_COUT_TYPE__(TLVL_DEBUG+11) << __COUT_HDR__ << "Configuration Manager ready. time=" << time(0) << " " << clock() <<
 		" runTimeSeconds=" << userConfigurationManagers_[mapKey]->runTimeSeconds() <<  __E__;
@@ -5344,7 +5370,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 		}
 
 	return userConfigurationManagers_[mapKey];
-}
+} //end refreshUserSession()
 
 //==============================================================================
 //	handleDeleteTableInfoXML
@@ -5374,7 +5400,7 @@ void ConfigurationGUISupervisor::handleDeleteTableInfoXML(HttpXmlDocument&      
 	}
 
 	// reload all with refresh to remove new table
-	cfgMgr->getAllTableInfo(true);
+	cfgMgr->getAllTableInfo(true /* refresh */);
 }  // end handleDeleteTableInfoXML()
 
 //==============================================================================
@@ -5570,7 +5596,7 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 	// reload all table info with refresh AND reset to pick up possibly new table
 	// check for errors related to this tableName
 	std::string accumulatedErrors = "";
-	cfgMgr->getAllTableInfo(true, &accumulatedErrors, tableName);
+	cfgMgr->getAllTableInfo(true /* refresh */, &accumulatedErrors, tableName);
 
 	// if errors associated with this table name stop and report
 	if(accumulatedErrors != "")
@@ -5583,33 +5609,7 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 
 		__SUP_COUT_ERR__ << ss.str() << __E__;
 		xmlOut.addTextElementToData("Error", ss.str());
-
-		// if error detected reading back then move the saved table info to
-		// .unused
-		// // This was disabled by RAR on 11/4/2016.. (just keep broken info files)
-		// // ... especially since now there is a Delete button
-		if(0)
-		{
-			// table info is illegal so report error, and disable file
-
-			// if error detected //move file to ".unused"
-			if(0 ==
-			   rename((TABLE_INFO_PATH + tableName + TABLE_INFO_EXT).c_str(),
-			          (TABLE_INFO_PATH + tableName + TABLE_INFO_EXT + ".unused").c_str()))
-				__SUP_COUT_INFO__
-				    << ("File successfully renamed: " +
-				        (TABLE_INFO_PATH + tableName + TABLE_INFO_EXT + ".unused"))
-				    << __E__;
-			else
-
-				__SUP_COUT_ERR__
-				    << ("Error renaming file to " +
-				        (TABLE_INFO_PATH + tableName + TABLE_INFO_EXT + ".unused"))
-				    << __E__;
-
-			// reload all with refresh to remove new table
-			cfgMgr->getAllTableInfo(true);
-		}
+		
 		return;
 	}
 
@@ -6382,18 +6382,27 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
                                                       ConfigurationManagerRW* cfgMgr,
                                                       bool returnMembers)
 {
-	xercesc::DOMElement* parentEl;
+	// use xmlOut.dataSs_ since there is no need for escape the string and it can be a huge data block to escape and recursively print
+	// xercesc::DOMElement* parentEl;
 
 	// get all group info from cache (if no cache, get from interface)
 
 	if(!cfgMgr->getAllGroupInfo()
-	        .size())  // empty cache is strange, attempt to get from interface
+	        .size() || 
+		cfgMgr->getAllGroupInfo().begin()->second.latestKeyGroupTypeString_ == "")  
 	{
 		__SUP_COUT__ << "Cache is empty? Attempting to regenerate." << __E__;
-		cfgMgr->getAllTableInfo(true /*refresh*/);
+		cfgMgr->getAllTableInfo(true /*refresh*/,
+			0 /* accumulatedWarnings */,
+			"" /* errorFilterName */,
+			true /* getGroupKeys */,
+			true /* getGroupInfo */);
 	}
 
 	const std::map<std::string, GroupInfo>& allGroupInfo = cfgMgr->getAllGroupInfo();
+
+
+	__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "cfgMgr runtime=" << cfgMgr->runTimeSeconds() << __E__;
 
 	TableGroupKey groupKey;
 	std::string   groupName;
@@ -6411,29 +6420,45 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 
 		groupKey = *(groupInfo.second.keys_.rbegin());
 
-		xmlOut.addTextElementToData("TableGroupName", groupName);
-		xmlOut.addTextElementToData("TableGroupKey", groupKey.toString());
+		xmlOut.dataSs_ << "<TableGroupName value='" << groupName << "'/>" << __E__;
+		xmlOut.dataSs_ << "<TableGroupKey value='" << groupKey << "'/>" << __E__;
+	
 
 		// trusting the cache!
-		xmlOut.addTextElementToData("TableGroupType",
-		                            groupInfo.second.latestKeyGroupTypeString_);
-		xmlOut.addTextElementToData("TableGroupComment",
-		                            groupInfo.second.latestKeyGroupComment_);
-		xmlOut.addTextElementToData("TableGroupAuthor",
-		                            groupInfo.second.latestKeyGroupAuthor_);
-		xmlOut.addTextElementToData("TableGroupCreationTime",
-		                            groupInfo.second.latestKeyGroupCreationTime_);
+		xmlOut.dataSs_ << "<TableGroupType value='" << groupInfo.second.latestKeyGroupTypeString_ << "'/>" << __E__;
+		xmlOut.dataSs_ << "<TableGroupComment value='" << groupInfo.second.latestKeyGroupComment_ << "'/>" << __E__;
+		xmlOut.dataSs_ << "<TableGroupAuthor value='" << groupInfo.second.latestKeyGroupAuthor_ << "'/>" << __E__;
+		xmlOut.dataSs_ << "<TableGroupCreationTime value='" << groupInfo.second.latestKeyGroupCreationTime_ << "'/>" << __E__;
+
+
+		// xmlOut.addTextElementToData("TableGroupName", groupName);
+		// xmlOut.addTextElementToData("TableGroupKey", groupKey.toString());
+
+		// // trusting the cache!
+		// xmlOut.addTextElementToData("TableGroupType",
+		//                             groupInfo.second.latestKeyGroupTypeString_);
+		// xmlOut.addTextElementToData("TableGroupComment",
+		//                             groupInfo.second.latestKeyGroupComment_);
+		// xmlOut.addTextElementToData("TableGroupAuthor",
+		//                             groupInfo.second.latestKeyGroupAuthor_);
+		// xmlOut.addTextElementToData("TableGroupCreationTime",
+		//                             groupInfo.second.latestKeyGroupCreationTime_);
 
 		if(returnMembers)
 		{
-			parentEl = xmlOut.addTextElementToData("TableGroupMembers", "");
+			// parentEl = xmlOut.addTextElementToData("TableGroupMembers", "");
+			xmlOut.dataSs_ << "<TableGroupMembers value=''>" << __E__;
 			
 			for(auto& memberPair : groupInfo.second.latestKeyMemberMap_)
 			{
-				xmlOut.addTextElementToParent("MemberName", memberPair.first, parentEl);
-				xmlOut.addTextElementToParent(
-				    "MemberVersion", memberPair.second.toString(), parentEl);
+				xmlOut.dataSs_ << "\t<MemberName value='" << memberPair.first << "'/>" << __E__;
+				xmlOut.dataSs_ << "\t<MemberVersion value='" << memberPair.second << "'/>" << __E__;
+		
+				// xmlOut.addTextElementToParent("MemberName", memberPair.first, parentEl);
+				// xmlOut.addTextElementToParent(
+				//     "MemberVersion", memberPair.second.toString(), parentEl);
 			}
+			xmlOut.dataSs_ << "</TableGroupMembers>" << __E__;
 		}  // end if returnMembers
 
 		// add other group keys to xml for this group name
@@ -6442,22 +6467,36 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 		{
 			if(keyInSet == groupKey)
 				continue;  // skip the lastest
-			xmlOut.addTextElementToData("TableGroupName", groupName);
-			xmlOut.addTextElementToData("TableGroupKey", keyInSet.toString());
 
-			// assume latest in cache reflects others (for speed)
-			xmlOut.addTextElementToData("TableGroupType",
-			                            groupInfo.second.latestKeyGroupTypeString_);
-			xmlOut.addTextElementToData("TableGroupComment",
-			                            groupInfo.second.latestKeyGroupComment_);
-			xmlOut.addTextElementToData("TableGroupAuthor",
-			                            groupInfo.second.latestKeyGroupAuthor_);
-			xmlOut.addTextElementToData("TableGroupCreationTime",
-			                            groupInfo.second.latestKeyGroupCreationTime_);
+			xmlOut.dataSs_ << "<TableGroupName value='" << groupName << "'/>" << __E__;
+			xmlOut.dataSs_ << "<TableGroupKey value='" << keyInSet << "'/>" << __E__;
+		
+
+			// trusting the cache!
+			xmlOut.dataSs_ << "<TableGroupType value='" << groupInfo.second.latestKeyGroupTypeString_ << "'/>" << __E__;
+			xmlOut.dataSs_ << "<TableGroupComment value='" << "" << "'/>" << __E__;
+			xmlOut.dataSs_ << "<TableGroupAuthor value='" << "" << "'/>" << __E__;
+			xmlOut.dataSs_ << "<TableGroupCreationTime value='" << "" << "'/>" << __E__;
+
+
+			// xmlOut.addTextElementToData("TableGroupName", groupName);
+			// xmlOut.addTextElementToData("TableGroupKey", keyInSet.toString());
+
+			// // assume latest in cache reflects others (for speed)
+			// xmlOut.addTextElementToData("TableGroupType",
+			//                             groupInfo.second.latestKeyGroupTypeString_);
+			// xmlOut.addTextElementToData("TableGroupComment",
+			//                             groupInfo.second.latestKeyGroupComment_);
+			// xmlOut.addTextElementToData("TableGroupAuthor",
+			//                             groupInfo.second.latestKeyGroupAuthor_);
+			// xmlOut.addTextElementToData("TableGroupCreationTime",
+			//                             groupInfo.second.latestKeyGroupCreationTime_);
 
 			if(returnMembers)
 			{
-				xmlOut.addTextElementToData("TableGroupMembers", "");
+				//need to add empty group members, event for historical groups, for easier Javascript extraction
+				xmlOut.dataSs_ << "<TableGroupMembers/>" << __E__; 
+				// xmlOut.addTextElementToData("TableGroupMembers", "");
 
 				// TODO -- make loadingHistoricalInfo an input parameter
 				bool loadingHistoricalInfo = false;
@@ -6495,7 +6534,9 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 			}
 
 		}  // end other key loop
+		__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << groupName << " runtime=" << cfgMgr->runTimeSeconds() << __E__;
 	}      // end primary group loop
+	__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "cfgMgr runtime=" << cfgMgr->runTimeSeconds() << __E__;
 }  // end handleTableGroupsXML()
 
 //==============================================================================
@@ -6519,7 +6560,7 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 	__COUTV__(allowIllegalColumns);
 	std::string                             accumulatedErrors = "";
 	const std::map<std::string, TableInfo>& allTableInfo      = cfgMgr->getAllTableInfo(
-        true,                 // always refresh!!  allowIllegalColumns /*refresh*/,
+        true /*refresh*/,
         &accumulatedErrors);  // if allowIllegalColumns, then also refresh
 
 	// construct specially ordered table name set
@@ -7031,32 +7072,32 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	// behave like a new user
 	//
 	// ConfigurationManagerRW cfgMgrInst("ExampleUser");
-	//
+	
 	// ConfigurationManagerRW* cfgMgr =& cfgMgrInst;
 
-	// std::map<std::string, TableVersion> groupMembers;
-	// groupMembers["DesktopIcon"] = TableVersion(2);
-	//	cfgMgr->saveNewTableGroup("test",
-	//			groupMembers, "test comment");
+	// // std::map<std::string, TableVersion> groupMembers;
+	// // groupMembers["DesktopIcon"] = TableVersion(2);
+	// // 	cfgMgr->saveNewTableGroup("test",
+	// // 			groupMembers, "test comment");
 
-	//	//
-	//	const std::map<std::string, TableInfo>& allTableInfo =
-	// cfgMgr->getAllTableInfo(true);
-	//	__SUP_COUT__ << "allTableInfo.size() = " << allTableInfo.size() << __E__;
-	//	for(auto& mapIt : allTableInfo)
-	//	{
-	//		__SUP_COUT__ << "Table Name: " << mapIt.first << __E__;
-	//		__SUP_COUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size()
-	//<<
-	//__E__;
-	//
-	//		//get version key for the current system table key
-	//		for (auto& v:mapIt.second.versions_)
-	//		{
-	//			__SUP_COUT__ << "\t\t" << v << __E__;
-	//		}
-	//	}
-
+	// 	//
+	// 	const std::map<std::string, TableInfo>& allTableInfo =
+	// 		cfgMgr->getAllTableInfo(true /* refresh*/);
+	// 	__SUP_COUT__ << "allTableInfo.size() = " << allTableInfo.size() << __E__;
+	// 	for(auto& mapIt : allTableInfo)
+	// 	{
+	// 		__SUP_COUT__ << "Table Name: " << mapIt.first << __E__;
+	// 		__SUP_COUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size()
+	// <<
+	// __E__;
+	
+	// 		//get version key for the current system table key
+	// 		for (auto& v:mapIt.second.versions_)
+	// 		{
+	// 			__SUP_COUT__ << "\t\t" << v << __E__;
+	// 		}
+	// 	}
+	// __SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "Group Info end runtime=" << cfgMgr->runTimeSeconds() << __E__;
 	// testXDAQContext just a test bed for navigating the new config tree
 	// cfgMgr->testXDAQContext();
 
