@@ -621,7 +621,7 @@ displayVersionsAndQualifiers
 
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 echo -e "UpdateOTS.sh [${LINENO}]  \t ots update script done"
-echo -e "UpdateOTS.sh [${LINENO}]  \t Note: if you have issues with this script, logging into redmine may fix access issues, otherwise please notify us by opening a ticket."
+echo -e "UpdateOTS.sh [${LINENO}]  \t Note: if you have issues with this script, please notify us by opening a ticket here:\n\t\t https://github.com/art-daq/otsdaq_utilities/issues/new/choose"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
 
