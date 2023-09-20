@@ -6426,7 +6426,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 
 		// trusting the cache!
 		xmlOut.dataSs_ << "<TableGroupType value='" << groupInfo.second.latestKeyGroupTypeString_ << "'/>" << __E__;
-		xmlOut.dataSs_ << "<TableGroupComment value='" << groupInfo.second.latestKeyGroupComment_ << "'/>" << __E__;
+		xmlOut.dataSs_ << "<TableGroupComment value='" << StringMacros::escapeString(groupInfo.second.latestKeyGroupComment_, true /* allowWhiteSpace */) << "'/>" << __E__;
 		xmlOut.dataSs_ << "<TableGroupAuthor value='" << groupInfo.second.latestKeyGroupAuthor_ << "'/>" << __E__;
 		xmlOut.dataSs_ << "<TableGroupCreationTime value='" << groupInfo.second.latestKeyGroupCreationTime_ << "'/>" << __E__;
 
@@ -6470,27 +6470,64 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 
 			xmlOut.dataSs_ << "<TableGroupName value='" << groupName << "'/>" << __E__;
 			xmlOut.dataSs_ << "<TableGroupKey value='" << keyInSet << "'/>" << __E__;
-		
-
-			// trusting the cache!
-			xmlOut.dataSs_ << "<TableGroupType value='" << groupInfo.second.latestKeyGroupTypeString_ << "'/>" << __E__;
-			xmlOut.dataSs_ << "<TableGroupComment value='" << "" << "'/>" << __E__;
-			xmlOut.dataSs_ << "<TableGroupAuthor value='" << "" << "'/>" << __E__;
-			xmlOut.dataSs_ << "<TableGroupCreationTime value='" << "" << "'/>" << __E__;
-
-
 			// xmlOut.addTextElementToData("TableGroupName", groupName);
 			// xmlOut.addTextElementToData("TableGroupKey", keyInSet.toString());
+		
 
-			// // assume latest in cache reflects others (for speed)
-			// xmlOut.addTextElementToData("TableGroupType",
-			//                             groupInfo.second.latestKeyGroupTypeString_);
-			// xmlOut.addTextElementToData("TableGroupComment",
-			//                             groupInfo.second.latestKeyGroupComment_);
-			// xmlOut.addTextElementToData("TableGroupAuthor",
-			//                             groupInfo.second.latestKeyGroupAuthor_);
-			// xmlOut.addTextElementToData("TableGroupCreationTime",
-			//                             groupInfo.second.latestKeyGroupCreationTime_);
+			// TODO -- make loadingHistoricalInfo an input parameter
+			bool loadingHistoricalInfo = false;
+			if(loadingHistoricalInfo)
+			{
+				groupComment = "";  // clear just in case failure
+				try
+				{
+					cfgMgr->loadTableGroup(groupName,
+											keyInSet,
+											0,
+											0,
+											0,
+											0,
+											&groupComment,
+											0,
+											0,  // mostly defaults
+											true /*doNotLoadMembers*/,
+											&groupTypeString);
+				}
+				catch(...)
+				{
+					groupTypeString = "Invalid";
+					__SUP_COUT_WARN__
+						<< "Failed to load group '" << groupName << "(" << keyInSet
+						<< ")' to extract group comment and type." << __E__;
+				}
+
+				xmlOut.dataSs_ << "<TableGroupType value='" << groupTypeString << "'/>" << __E__;
+				xmlOut.dataSs_ << "<TableGroupComment value='" << StringMacros::escapeString(groupComment, true /* allowWhiteSpace */)  << "'/>" << __E__;
+				xmlOut.dataSs_ << "<TableGroupAuthor value='" << groupAuthor << "'/>" << __E__;
+				xmlOut.dataSs_ << "<TableGroupCreationTime value='" << groupCreationTime << "'/>" << __E__;
+				// xmlOut.addTextElementToData("TableGroupType", groupTypeString);
+				// xmlOut.addTextElementToData("TableGroupComment", groupComment);
+				// xmlOut.addTextElementToData("TableGroupAuthor", groupAuthor);
+				// xmlOut.addTextElementToData("TableGroupCreationTime", groupCreationTime);
+			}
+			else
+			{
+				// just use guess that historical groups are of same type
+				xmlOut.dataSs_ << "<TableGroupType value='" << groupInfo.second.latestKeyGroupTypeString_ << "'/>" << __E__;
+				xmlOut.dataSs_ << "<TableGroupComment value='" << "" << "'/>" << __E__;
+				xmlOut.dataSs_ << "<TableGroupAuthor value='" << "" << "'/>" << __E__;
+				xmlOut.dataSs_ << "<TableGroupCreationTime value='" << "" << "'/>" << __E__;
+				// // assume latest in cache reflects others (for speed)
+				// xmlOut.addTextElementToData("TableGroupType",
+				//                             groupInfo.second.latestKeyGroupTypeString_);
+				// xmlOut.addTextElementToData("TableGroupComment",
+				//                             groupInfo.second.latestKeyGroupComment_);
+				// xmlOut.addTextElementToData("TableGroupAuthor",
+				//                             groupInfo.second.latestKeyGroupAuthor_);
+				// xmlOut.addTextElementToData("TableGroupCreationTime",
+				//                             groupInfo.second.latestKeyGroupCreationTime_);
+			}
+
 
 			if(returnMembers)
 			{
@@ -6498,39 +6535,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 				xmlOut.dataSs_ << "<TableGroupMembers/>" << __E__; 
 				// xmlOut.addTextElementToData("TableGroupMembers", "");
 
-				// TODO -- make loadingHistoricalInfo an input parameter
-				bool loadingHistoricalInfo = false;
-				if(loadingHistoricalInfo)
-				{
-					groupComment = "";  // clear just in case failure
-					try
-					{
-						cfgMgr->loadTableGroup(groupName,
-						                       keyInSet,
-						                       0,
-						                       0,
-						                       0,
-						                       0,
-						                       &groupComment,
-						                       0,
-						                       0,  // mostly defaults
-						                       true /*doNotLoadMembers*/,
-						                       &groupTypeString);
-					}
-					catch(...)
-					{
-						groupTypeString = "Invalid";
-						__SUP_COUT_WARN__
-						    << "Failed to load group '" << groupName << "(" << keyInSet
-						    << ")' to extract group comment and type." << __E__;
-					}
-
-					xmlOut.addTextElementToData("TableGroupType", groupTypeString);
-					xmlOut.addTextElementToData("TableGroupComment", groupComment);
-					xmlOut.addTextElementToData("TableGroupAuthor", groupAuthor);
-					xmlOut.addTextElementToData("TableGroupCreationTime",
-					                            groupCreationTime);
-				}
+				
 			}
 
 		}  // end other key loop
