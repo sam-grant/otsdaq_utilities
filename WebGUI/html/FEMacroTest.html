@@ -1749,6 +1749,7 @@
 		//=====================================================================================				
 		//loadHistory ~~
 		var numRecords = 0;
+		var lastMacro = "";
 
 		function loadHistory()
 		{
@@ -1808,15 +1809,14 @@
 		{
 			var historyContent = document.getElementById("historyContent");
 			var command = JSON.parse(record);
-			var recordID = command["macroName"] + command["inputArgs"] + command["feUID"] + command["feClass"];
-			var targetRecord = document.getElementById(recordID);
-			if (targetRecord)
+			var counter = document.getElementById(numRecords + "-counter");
+			if (counter && lastMacro === record)
 			{
 				// increment the number
-				var counter = document.getElementById(recordID + "-counter");
 				counter.innerText = String(parseInt(counter.innerText) + 1);
 				return;
 			}
+			lastMacro = record;
 			// check the i to alternate the colors
 			var className = "record ";
 			if (numRecords % 2 == 0)
@@ -1854,11 +1854,11 @@
 			historyContent.innerHTML = DesktopContent.htmlOpen(
 					"div",
 					{
-						"id": recordID,
+						"id": "historyRecord" + numRecords,
 						"class": className,
 						"onClick": "onClickHistoryRecord(" + record + ")"
 					},
-					"<span>#<i id='" + recordID + "-counter'>1</i> " + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
+					"<span><i id='" + numRecords + "-counter'>1</i>x " + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
 					true) + historyContent.innerHTML;
 		}
 
