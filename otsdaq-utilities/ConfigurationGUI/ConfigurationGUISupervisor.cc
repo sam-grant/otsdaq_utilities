@@ -3706,7 +3706,7 @@ try
 		// make merge report directories in case they don't exist
 		mkdir((mergeReportBasePath + mergeReportPath).c_str(), 0755);
 
-		mergeReportPath += "merge_" + std::to_string(clock()) + ".txt";
+		mergeReportPath += "merge_" + std::to_string(time(0)) + "_" + std::to_string(clock()) + ".txt";
 		__SUP_COUTV__(mergeReportPath);
 
 		FILE* fp = fopen((mergeReportBasePath + mergeReportPath).c_str(), "w");
