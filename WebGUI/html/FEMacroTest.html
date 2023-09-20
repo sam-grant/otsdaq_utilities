@@ -112,7 +112,8 @@
 			padding: 2px;
 			font-weight: bold;
 			cursor: pointer;
-			white-space: initial;
+			/* white-space: initial; */
+			text-overflow: clip;
 
 		}
 
@@ -1748,6 +1749,7 @@
 		//=====================================================================================				
 		//loadHistory ~~
 		var numRecords = 0;
+
 		function loadHistory()
 		{
 			var historyModule = document.getElementById("macroModule-history");
@@ -1806,6 +1808,15 @@
 		{
 			var historyContent = document.getElementById("historyContent");
 			var command = JSON.parse(record);
+			var recordID = command["macroName"] + command["inputArgs"] + command["feUID"] + command["feClass"];
+			var targetRecord = document.getElementById(recordID);
+			if (targetRecord)
+			{
+				// increment the number
+				var counter = document.getElementById(recordID + "-counter");
+				counter.innerText = String(parseInt(counter.innerText) + 1);
+				return;
+			}
 			// check the i to alternate the colors
 			var className = "record ";
 			if (numRecords % 2 == 0)
@@ -1820,8 +1831,11 @@
 			for (var j = 0; j < inputArgs.length; j++)
 			{
 				var tuple = inputArgs[j].split(",");
+				if (j)
+					recordName += "<br>&nbsp;&nbsp;&nbsp;&nbsp;"
 				if (tuple[0] !== "")
-					recordName += decodeURIComponent(tuple[0]) + "=" + decodeURIComponent(tuple[1]) + "; ";
+					recordName += decodeURIComponent(tuple[0]) + "=" + decodeURIComponent(tuple[1]) + ";";
+				
 			}
 
 			// build the record text
@@ -1840,11 +1854,11 @@
 			historyContent.innerHTML = DesktopContent.htmlOpen(
 					"div",
 					{
-						"id": "historyRecord" + numRecords,
+						"id": recordID,
 						"class": className,
 						"onClick": "onClickHistoryRecord(" + record + ")"
 					},
-					"<span>" + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
+					"<span>#<i id='" + recordID + "-counter'>1</i> " + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
 					true) + historyContent.innerHTML;
 		}
 
