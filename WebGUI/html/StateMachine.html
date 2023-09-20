@@ -536,8 +536,14 @@
 					else //default to js default
 						toggleViewMode(_altStateDrawingMode);
 					
-					initTransitionParameters();
+					//delay get system aliases because it makes the GUI load experience more responsive to users
+					window.setTimeout(
+						function()
+						{
+							initTransitionParameters();
+						},1000); 	
 				});
+					
 			} //end init()
 
 			//=====================================================================================
@@ -914,9 +920,9 @@
 					_altPlacedStates[s] = [r,c];
                 	
                 	Debug.log("placed " + r + "," + c);
-                	console.log(_altPlacedStates);                	
+                	Debug.log(_altPlacedStates);                	
                 	for(var i=0;i<_altStateGrid.length;++i)
-                		console.log("grid",_altStateGrid[i]);
+						Debug.log("grid",_altStateGrid[i]);
 
                 	//place all transition states adjacent to this
                 	for(var i=0;i<_transitions.length;++i)
@@ -2760,7 +2766,7 @@
 	<a href='Javascript:showAlarmSetup(1);' title='Setup the Alarm'>Setup Alarm</a>		
 		
 	&nbsp;&nbsp;&nbsp;&nbsp;
-	<a id='view-mode-select' href='Javascript:toggleViewMode();' title='Toggle State Machine View Mode'>View Full State Machine</a>
+	<a id='view-mode-select' href='Javascript:toggleViewMode();' title='Toggle State Machine View Mode'>Toggle View</a>
 </div>
 		
 <div id='alarm-setup-box'>
