@@ -112,7 +112,8 @@
 			padding: 2px;
 			font-weight: bold;
 			cursor: pointer;
-			white-space: initial;
+			/* white-space: initial; */
+			text-overflow: clip;
 
 		}
 
@@ -1748,6 +1749,8 @@
 		//=====================================================================================				
 		//loadHistory ~~
 		var numRecords = 0;
+		var lastMacro = "";
+
 		function loadHistory()
 		{
 			var historyModule = document.getElementById("macroModule-history");
@@ -1806,6 +1809,16 @@
 		{
 			var historyContent = document.getElementById("historyContent");
 			var command = JSON.parse(record);
+			var counter = document.getElementById(numRecords + "-counter");
+			if (counter && lastMacro === record)
+			{
+				// increment the number
+				if (counter.innerText === "") counter.innerText = 1;
+				counter.innerText = String(parseInt(counter.innerText) + 1);
+				counter.innerText += "x";
+				return;
+			}
+			lastMacro = record;
 			// check the i to alternate the colors
 			var className = "record ";
 			if (numRecords % 2 == 0)
@@ -1820,8 +1833,11 @@
 			for (var j = 0; j < inputArgs.length; j++)
 			{
 				var tuple = inputArgs[j].split(",");
+				if (j)
+					recordName += "<br>&nbsp;&nbsp;&nbsp;&nbsp;"
 				if (tuple[0] !== "")
-					recordName += decodeURIComponent(tuple[0]) + "=" + decodeURIComponent(tuple[1]) + "; ";
+					recordName += decodeURIComponent(tuple[0]) + "=" + decodeURIComponent(tuple[1]) + ";";
+				
 			}
 
 			// build the record text
@@ -1844,7 +1860,7 @@
 						"class": className,
 						"onClick": "onClickHistoryRecord(" + record + ")"
 					},
-					"<span>" + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
+					"<span><i id='" + numRecords + "-counter'></i> " + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
 					true) + historyContent.innerHTML;
 		}
 

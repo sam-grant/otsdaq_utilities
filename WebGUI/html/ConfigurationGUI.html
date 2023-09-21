@@ -4665,6 +4665,7 @@
 			{
 				if (type == "table" || type == "uid" || type == "link") {
 					toggleTreeChildren(depth, uid);
+					applySearchNode()
 				}
 				else if (type == "value") {
 					//N/A
@@ -4680,18 +4681,22 @@
 
 		//==============================================================================
 		//applySearchNode ~
-		function applySearchNode(event)
+		function applySearchNode(event = null)
 		{
 			var fields = document.getElementsByClassName("treeNode-Value");
 			var text = document.getElementById("tree-view-searchbar").value; 
 
-			// problem with keydown
-			if (event.keyCode >= 48 && event.keyCode <= 90)
+			if (event)
+			{
+				// problem with keydown
+				if (event.keyCode >= 48 && event.keyCode <= 90)
 				text = text + event.key;
 
-			if (event.keyCode === 8)
-				text = text.slice(0, -1);
+				if (event.keyCode === 8)
+					text = text.slice(0, -1);
+			}
 
+			// color the proper target
 			for (var i = 0; i < fields.length; i++)
 			{
 				if (text !== "" && fields[i].innerText.toLowerCase().includes(text.toLowerCase()))
@@ -4703,7 +4708,8 @@
 					fields[i].style.color = "inherit";
 				}
 			}
-			event.stopPropagation();
+			if (event)
+				event.stopPropagation();
 		}
 
 		//==============================================================================
