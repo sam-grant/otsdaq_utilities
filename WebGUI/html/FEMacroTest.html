@@ -1813,7 +1813,9 @@
 			if (counter && lastMacro === record)
 			{
 				// increment the number
+				if (counter.innerText === "") counter.innerText = 1;
 				counter.innerText = String(parseInt(counter.innerText) + 1);
+				counter.innerText += "x";
 				return;
 			}
 			lastMacro = record;
@@ -1858,7 +1860,7 @@
 						"class": className,
 						"onClick": "onClickHistoryRecord(" + record + ")"
 					},
-					"<span><i id='" + numRecords + "-counter'>1</i>x " + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
+					"<span><i id='" + numRecords + "-counter'></i> " + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
 					true) + historyContent.innerHTML;
 		}
 
