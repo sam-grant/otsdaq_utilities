@@ -625,6 +625,8 @@ void MacroMakerSupervisor::handleRequest(const std::string                Comman
 		loadMacroSequences(xmldoc, userInfo.username_);
 	else if (Command == "saveSequence")
 		saveMacroSequence(cgi, userInfo.username_);
+	else if (Command == "getSequence")
+		getMacroSequence(xmldoc, cgi, userInfo.username_);
 	else
 		xmldoc.addTextElementToData("Error", "Unrecognized command '" + Command + "'");
 }  // end handleRequest()
@@ -1517,6 +1519,47 @@ void MacroMakerSupervisor::saveMacroSequence(cgicc::Cgicc& cgi,
 	else
 		__SUP_COUT__ << "Unable to open " << name << ".dat" << __E__;
 }
+
+//==============================================================================
+void MacroMakerSupervisor::getMacroSequence(HttpXmlDocument& xmldoc,
+										   cgicc::Cgicc& cgi, 
+										   const std::string& username)
+{
+	std::string sequenceName = CgiDataUtilities::getData(cgi, "name");
+
+	__SUP_COUTV__(sequenceName);
+
+	// access to the file
+	std::string fullPath = (std::string)MACROS_SEQUENCE_PATH + username + "/" + sequenceName + ".dat";
+	__SUP_COUT__ << fullPath << __E__;
+
+	std::ifstream read(fullPath.c_str());	// reading the file
+	char* response;
+	unsigned long long fileSize;
+
+	if (read.is_open())
+	{
+		read.seekg(0, std::ios::end);
+		fileSize = read.tellg();
+		response = new char[fileSize + 1];
+		response[fileSize] = '\0';
+		read.seekg(0, std::ios::beg);
+
+		// read data as a block:
+		read.read(response, fileSize);
+		read.close();
+
+		xmldoc.addTextElementToData("sequence", &response[0]);
+
+		delete[] response;
+	}
+	else
+	{
+		__SUP_COUT__ << "Unable to open " << fullPath << "!" << __E__;
+		xmldoc.addTextElementToData("error", "ERROR");
+	}
+}
+
 //==============================================================================
 void MacroMakerSupervisor::loadHistory(HttpXmlDocument&   xmldoc,
                                        const std::string& username)

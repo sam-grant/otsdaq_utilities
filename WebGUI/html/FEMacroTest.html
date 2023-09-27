@@ -156,8 +156,7 @@
 			display: none;
 		}
 
-		#sequence-builder
-		{
+		#sequence-builder, #show-sequence {
 			max-height: 500px;
 			overflow-y: auto;
 			resize: horizontal;
@@ -1980,8 +1979,123 @@
 		//loadSequence
 
 		var sequenceBuilding_ = false;
-		var selectedSequence_ = [];
+		var selectedSequence_ = {};
 		var tempSequence_ = {}
+
+		// UTILS
+
+		function statusActionButtons(status)
+		{
+			var runBtn = document.getElementById("runSequenceBtn");
+			var editBtn = document.getElementById("editSequenceBtn");
+			var deleteBtn = document.getElementById("deleteSequenceBtn");
+			var newBtn = document.getElementById("newSequenceBtn");
+			runBtn = status;
+			editBtn = status;
+			deleteBtn = status;
+			newBtn = !status;
+		}
+
+		function statusEditButtons(status)
+		{
+			var testBtn = document.getElementById("testSequenceBtn");
+			var saveBtn = document.getElementById("saveSequenceBtn");
+			var resetBtn = document.getElementById("resetSequenceBtn");
+			resetBtn.disabled = status;
+			testBtn.disabled = status;
+			saveBtn.disabled = status;
+		}
+
+		function showSequence(target, seq)
+		{
+			console.log(target, seq);
+			var container = document.getElementById(target);
+			container.innerHTML = "";
+			var GUIIndex = 0;
+			for (const entry of Object.entries(seq))
+			{
+				var index = entry[0];
+				var command = JSON.parse(entry[1]);
+				// alternate the color
+				var className = "component ";
+				if (GUIIndex % 2 == 0)
+					className += "light";
+				else 
+					className += "dark";
+
+				// create the record name
+				var recordName = "";
+				var inputArgs = command["inputArgs"].split(";");
+				for (var j = 0; j < inputArgs.length; j++)
+				{
+					var tuple = inputArgs[j].split(",");
+					if (j)
+						recordName += "<br>&nbsp;&nbsp;&nbsp;&nbsp;"
+					if (tuple[0] !== "")
+						recordName += decodeURIComponent(tuple[0]) + "=" + decodeURIComponent(tuple[1]) + ";";
+				}
+
+				// build the record text
+				var recordText = ""
+				if (command["feUID"] === "*" && command["feClass"] !== "*")
+					recordText = "(all " + command["feClass"] + ") ";
+				else
+					recordText = "(" + command["feUID"] + ") ";
+
+				recordText += command["macroName"] + ": ";
+
+				container.innerHTML += DesktopContent.htmlOpen(
+					"div",
+					{
+						"id": "sequenceComponent-" + index,
+						"class": className,
+					},
+					"<span><i>#" + (GUIIndex + 1) + "</i> " + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
+					true);
+
+				GUIIndex++;
+				if (target === "sequence-builder") 
+				{
+					// append control sequence buttons
+					var sequence = document.getElementById("sequenceComponent-" + index);
+					var sequenceAction = document.createElement("div");
+					sequenceAction.setAttribute("class", "vbox");
+					// up button
+					var upBtn = document.createElement("button");
+					upBtn.innerText = "Up";
+					upBtn.setAttribute("onClick", "moveUpSequence(" + index + ")");
+					// down button
+					var downBtn = document.createElement("button");
+					downBtn.innerText = "Down";
+					downBtn.setAttribute("onClick", "moveDownSequence(" + index + ")");
+					// up button
+					const removeBtn = document.createElement("button");
+					removeBtn.innerText = "X";
+					removeBtn.setAttribute("onClick", "removeFromSequence(" + index + ")");
+
+					sequenceAction.appendChild(upBtn);
+					sequenceAction.appendChild(downBtn);
+					sequenceAction.appendChild(removeBtn);
+					sequence.appendChild(sequenceAction);
+				}
+			}
+		}
+
+		function showPopupSaveSequence()
+		{
+			var popup = document.getElementById("popupSaveSequence");
+			var sequenceName = document.getElementById("sequenceName").value;
+			sequenceName = "";
+			popup.style.display = "block";
+		}
+
+		function hidePopupSaveSequence()
+		{
+			var popup = document.getElementById("popupSaveSequence");
+			popup.style.display = "none";
+		}
+
+		// END UTILS
 
 		function toggleSequenceMode()
 		{
@@ -2005,8 +2119,8 @@
 				"select",
 				{
 					"id": "select-sequence",
-					"style": "width: 200px;"
-
+					"style": "width: 200px;",
+					"onChange": "selectSequence(this.value)"
 				},
 				"<option value='undefined'>None</option>",
 				true,
@@ -2024,11 +2138,10 @@
 				"div",
 				{
 					"id": "show-sequence",
-					"style": "display: none;"
 				},
-				"<p>Sequence composition: </p>",
+				"",
 				true);
-			// action buttons (7)
+			// action buttons (8)
 			var runButton = DesktopContent.htmlOpen(
 				"button",
 				{
@@ -2093,6 +2206,15 @@
 				},
 				"Reset",
 				true);
+			var closeButton = DesktopContent.htmlOpen(
+				"button",
+				{
+					"id": "closeSequenceBtn",
+					"onClick": "closeSequence()",
+				},
+				"Close",
+				true);
+			
 			str += DesktopContent.htmlOpen(
 				"div",
 				{
@@ -2107,9 +2229,9 @@
 				"div",
 				{
 					"id": "sequence-builder",
-					"style": "margin-top:10px; display: none"
+					"style": "margin-top:10px;"
 				},
-				"<h3>Build the sequence:</h3>",
+				"",
 				true);
 			str += DesktopContent.htmlOpen(
 				"div",
@@ -2117,9 +2239,10 @@
 					"id": "sequence-builder-buttons",
 					"style": "margin-top:10px; display: none; gap: 20px"
 				},
-				testButton + saveButton + resetButton,
+				testButton + saveButton + resetButton + closeButton,
 				true);
-
+			
+			
 			sequenceModule.innerHTML += str;
 			// load saved sequences
 			DesktopContent.XMLHttpRequest("Request?RequestType=loadMacroSequences",
@@ -2151,111 +2274,195 @@
 			);
 		}
 
+		// ACTIONS
+
+		// TODO
+		function runSequence()
+		{
+			console.log("run", selectedSequence_);
+		}
+
 		function newSequence() 
 		{
+			// disable action buttons
+			statusActionButtons(false);
+			// clean selected sequence
+			selectSequence();
+			// allow editing
 			sequenceBuilding_ = true;
-			var builder = document.getElementById("sequence-builder");
-			var builderActions = document.getElementById("sequence-builder-buttons");
+			// empty builder
 			tempSequence_ = {};
-			builder.style.display = "block";
+			showSequence("sequence-builder", tempSequence_);
+			// show edit buttons
+			var builderActions = document.getElementById("sequence-builder-buttons");			
 			builderActions.style.display = "flex";
 		}
 
-		function showSequence(target, seq)
+		// TODO
+		function deleteSequence()
 		{
-			var container = document.getElementById(target);
-			container.innerHTML = "";
-			var GUIIndex = 0;
-			for (const entry of Object.entries(seq))
-			{
-				var index = entry[0];
-				var command = JSON.parse(entry[1]);
-				// alternate the color
-				var className = "component ";
-				if (GUIIndex % 2 == 0)
-					className += "light";
-				else 
-					className += "dark";
-
-				// create the record name
-				var recordName = "";
-				var inputArgs = command["inputArgs"].split(";");
-				for (var j = 0; j < inputArgs.length; j++)
-				{
-					var tuple = inputArgs[j].split(",");
-					if (j)
-						recordName += "<br>&nbsp;&nbsp;&nbsp;&nbsp;"
-					if (tuple[0] !== "")
-						recordName += decodeURIComponent(tuple[0]) + "=" + decodeURIComponent(tuple[1]) + ";";
-				}
-
-				// build the record text
-				var recordText = ""
-				if (command["feUID"] === "*" && command["feClass"] !== "*")
-					recordText = "(all " + command["feClass"] + ") ";
-				else
-					recordText = "(" + command["feUID"] + ") ";
-
-				recordText += command["macroName"] + ": ";
-
-				container.innerHTML += DesktopContent.htmlOpen(
-					"div",
-					{
-						"id": "sequenceComponent-" + index,
-						"class": className,
-					},
-					"<span><i>#" + (GUIIndex + 1) + "</i> " + recordText + "<br>&nbsp;&nbsp;&nbsp;&nbsp;" + (recordName === "" ? "No arguments": recordName) + "</span>",
-					true);
-
-				GUIIndex++;
-				if (target === "sequence-builder") 
-				{
-					// append control sequence buttons
-					var sequence = document.getElementById("sequenceComponent-" + index);
-					var sequenceAction = document.createElement("div");
-					sequenceAction.setAttribute("class", "vbox");
-					// up button
-					var upBtn = document.createElement("button");
-					upBtn.innerText = "Up";
-					//upBtn.onClick = function() {moveUpSequence(sequence)};
-					// down button
-					var downBtn = document.createElement("button");
-					downBtn.innerText = "Down";
-					//downBtn.onClick = function() {moveDownSequence(sequence)};
-					// up button
-					const removeBtn = document.createElement("button");
-					removeBtn.innerText = "X";
-					removeBtn.setAttribute("onClick", "removeFromSequence(" + index + ")");
-
-					sequenceAction.appendChild(upBtn);
-					sequenceAction.appendChild(downBtn);
-					sequenceAction.appendChild(removeBtn);
-					sequence.appendChild(sequenceAction);
-				}
-			}
+			console.log("delete", selectSequence);
 		}
 
+		// TODO
+		function editSequence()
+		{
+			// close active view
+			statusActionButtons(false);
+
+			// open the builder
+
+			// suggest old name
+
+			// API call
+
+		}
+
+		function selectSequence(elem = "undefined")
+		{
+			var container = document.getElementById("show-sequence");
+			
+			// no sequence selected
+			if (elem === "undefined")
+			{
+				// reset the list
+				selectedSequence_ = {};
+				showSequence("show-sequence", selectedSequence_)
+				statusActionButtons(false);
+				return;
+			}
+
+			// call the API
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSequence" +
+				"&name=" + elem,
+				"",
+				function(req) {
+					// request hendler
+					Debug.log("loadMacroSequences() was called.");
+					var sequenceString = DesktopContent.getXMLValue(req, "sequence");
+					if (!sequenceString) 
+					{
+						Debug.log("Sequence is empty!");
+						return;
+					}
+					selectedSequence_ = JSON.parse(decodeURI(sequenceString));
+
+					// close the building if it is open
+					closeSequence();
+					// fill the list
+					showSequence("show-sequence", selectedSequence_);
+					// active buttons
+					statusActionButtons(true);
+				}
+			);
+		}
+			
+		function saveSequence()
+		{
+			var sequenceSelector = document.getElementById("select-sequence");
+			var sequenceName = document.getElementById("sequenceName");
+			var errorMessage = document.getElementById("sequenceName-error");	// TODO:make it red
+
+			// check if name is empty
+			if (sequenceName.value === "")
+			{
+				errorMessage.innerText = "Sequence name cannot be empty!";
+				return;
+			}
+
+			// TODO: check if the name can be used for a file
+
+			// check if the name is unique 
+			for (var i = 0; i < sequenceSelector.options.length; i++)
+			{
+				if (sequenceSelector.options[i].value === sequenceName.value)
+				{
+					errorMessage.innerText = "Name already in use!";
+					return;
+				}
+			}
+
+			// prepare the payload of the API call
+			var postData = "sequence=" + encodeURI(JSON.stringify(tempSequence_)) + 
+						   "&sequenceName=" + sequenceName.value;
+
+			// API call
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveSequence",				
+				postData, 
+				function () {
+					// update the select
+					var option = document.createElement("option");
+					option.text = sequenceName.value;
+					option.value = sequenceName.value;
+					sequenceSelector.add(option);
+					selectSequence(sequenceName.value);
+				},
+				0 /*reqParam*/, 
+				0 /*progressHandler*/, 
+				true /*callHandlerOnErr*/
+			);
+			
+			closeSequence();
+		}
+
+		function resetSequence()
+		{
+			// reset the container
+			tempSequence_ = {};
+			showSequence("sequence-builder", tempSequence_);
+			
+			// disable edit buttons
+			statusEditButtons(false);
+			
+			console.log("reset", tempSequence_);
+		}
+
+		function closeSequence()
+		{
+			// reset the container
+			tempSequence_ = {};
+			showSequence("sequence-builder", tempSequence_);
+			statusActionButtons(false);
+			statusEditButtons(false);
+			// hide the edit buttons
+			var builderActions = document.getElementById("sequence-builder-buttons");			
+			builderActions.style.display = "none";
+			// stop building 
+			sequenceBuilding_ = false;
+			console.log("close", tempSequence_);
+		}
+		
+		// TODO
+		function testSequence()
+		{
+			console.log("test", tempSequence_);
+		}
+		
+		// END ACTIONS
+
+		// SEQUENCE CONTROL
 		function appendMacroToSequence(macro)
 		{			
 			var index = Object.keys(tempSequence_).length;
 			// activate buttons
-			var testBtn = document.getElementById("testSequenceBtn");
-			testBtn.disabled = false;
-			var saveBtn = document.getElementById("saveSequenceBtn");
-			saveBtn.disabled = false;
-			var resetBtn = document.getElementById("resetSequenceBtn");
-			resetBtn.disabled = false;
+			statusEditButtons(true);
 			tempSequence_[index] = macro;
 			showSequence("sequence-builder", tempSequence_);
 			console.log("add", tempSequence_);
 		}
 
-		// TODO: control the sequence
-		function moveUpSequence(elem)
+		function moveUpSequence(index)
 		{
+			if (index === 0)
+				return;
+			var tempValue = tempSequence_[index];
+			tempSequence_[index] = tempSequence_[index-1];
+			tempSequence_[index-1] = tempValue;
+			showSequence("sequence-builder", tempSequence_);
 			console.log("up", tempSequence_);
 			return;
 		}
+		
 		function removeFromSequence(index)
 		{
 			delete tempSequence_[index]
@@ -2274,69 +2481,20 @@
 			console.log("remove", tempSequence_);
 			return
 		}
-		function moveDownSequence(elem)
+
+		function moveDownSequence(index)
 		{
+			if (index === (Object.keys(tempSequence_).length-1))
+				return;
+			var tempValue = tempSequence_[index];
+			tempSequence_[index] = tempSequence_[index+1];
+			tempSequence_[index+1] = tempValue;
+			showSequence("sequence-builder", tempSequence_);
 			console.log("down", tempSequence_);
 			return
 		}
-
-		function showPopupSaveSequence()
-		{
-			var popup = document.getElementById("popupSaveSequence");
-			var sequenceName = document.getElementById("sequenceName").value;
-			sequenceName = "";
-			popup.style.display = "block";
-		}
-
-		function hidePopupSaveSequence()
-		{
-			var popup = document.getElementById("popupSaveSequence");
-			popup.style.display = "none";
-		}
-
-		function saveSequence(value)
-		{
-			
-			var sequenceName = document.getElementById("sequenceName");
-			var errorMessage = document.getElementById("sequenceName-error");
-			if (sequenceName.value === "")
-			{
-				errorMessage.innerText = "Sequence name cannot be empty!";
-				return;
-			}
-
-			// TODO: check if the name is unique and can be used as file
-
-			// save the data
-			var postData = "sequence=" + encodeURI(JSON.stringify(tempSequence_)) + 
-						   "&sequenceName=" + sequenceName.value;
-
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveSequence",				
-				postData, 
-				function () {
-					// TODO: update the select
-					return;
-				},
-				0 /*reqParam*/, 0 /*progressHandler*/, 
-				true /*callHandlerOnErr*/
-			);
-
-			hidePopupSaveSequence();
-		}
-
-		function resetSequence()
-		{
-			tempSequence_ = {};
-			var testBtn = document.getElementById("testSequenceBtn");
-			testBtn.disabled = true;
-			var saveBtn = document.getElementById("saveSequenceBtn");
-			saveBtn.disabled = true;
-			var resetBtn = document.getElementById("resetSequenceBtn");
-			resetBtn.disabled = true;
-			showSequence("sequence-builder", tempSequence_);
-			console.log("reset", tempSequence_);
-
-		}
+		
+		// END SEQUENCE CONTROL
 		//=====================================================================================		
 	</script>
 		
