@@ -1990,10 +1990,10 @@
 			var editBtn = document.getElementById("editSequenceBtn");
 			var deleteBtn = document.getElementById("deleteSequenceBtn");
 			var newBtn = document.getElementById("newSequenceBtn");
-			runBtn = status;
-			editBtn = status;
-			deleteBtn = status;
-			newBtn = !status;
+			runBtn.disabled = status;
+			editBtn.disabled = status;
+			deleteBtn.disabled = status;
+			newBtn.disabled = !status;
 		}
 
 		function statusEditButtons(status)
@@ -2301,7 +2301,34 @@
 		// TODO
 		function deleteSequence()
 		{
-			console.log("delete", selectSequence);
+			// call the API
+			var selector = document.getElementById("select-sequence");
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=deleteSequence" +
+				"&name=" + selector.value,
+				"",
+				function() {
+					// request hendler
+					Debug.log("deleteSequences() was called.");
+					
+					// remove the option
+					for (var index = 0; selector.options.length; index++)
+					{
+						if (selector.options[index].value === selector.value)
+						{
+							selector.remove(index);
+							break;
+						}
+					}
+
+					// clean the list
+					selectedSequence_ = {};
+					showSequence("show-sequence", selectedSequence_);
+					// deactive buttons
+					statusActionButtons(true);
+				}
+			);
+			console.log("delete", selectedSequence_);
 		}
 
 		// TODO
@@ -2328,7 +2355,7 @@
 				// reset the list
 				selectedSequence_ = {};
 				showSequence("show-sequence", selectedSequence_)
-				statusActionButtons(false);
+				statusActionButtons(true);
 				return;
 			}
 
@@ -2352,7 +2379,7 @@
 					// fill the list
 					showSequence("show-sequence", selectedSequence_);
 					// active buttons
-					statusActionButtons(true);
+					statusActionButtons(false);
 				}
 			);
 		}

@@ -627,6 +627,8 @@ void MacroMakerSupervisor::handleRequest(const std::string                Comman
 		saveMacroSequence(cgi, userInfo.username_);
 	else if (Command == "getSequence")
 		getMacroSequence(xmldoc, cgi, userInfo.username_);
+	else if (Command == "deleteSequence")
+		deleteMacroSequence(cgi, userInfo.username_);
 	else
 		xmldoc.addTextElementToData("Error", "Unrecognized command '" + Command + "'");
 }  // end handleRequest()
@@ -1560,6 +1562,22 @@ void MacroMakerSupervisor::getMacroSequence(HttpXmlDocument& xmldoc,
 	}
 }
 
+//==============================================================================
+void MacroMakerSupervisor::deleteMacroSequence(cgicc::Cgicc& cgi, 
+										       const std::string& username)
+{
+	std::string sequenceName = CgiDataUtilities::getData(cgi, "name");
+
+	__SUP_COUTV__(sequenceName);
+
+	// access to the file
+	std::string fullPath = (std::string)MACROS_SEQUENCE_PATH + username + "/" + sequenceName + ".dat";
+	__SUP_COUT__ << fullPath << __E__;
+
+	std::remove(fullPath.c_str());
+	__SUP_COUT__ << "Successfully deleted " << fullPath;
+
+}
 //==============================================================================
 void MacroMakerSupervisor::loadHistory(HttpXmlDocument&   xmldoc,
                                        const std::string& username)
