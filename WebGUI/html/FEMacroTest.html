@@ -83,8 +83,8 @@
 		}
 
 		.smallPopup {
-			width:					225px;
-			height:					112px;
+			width:					300px;
+			height:					120px;
 			background-color: 		#002540;
 			z-index:				9;
 			position: 				fixed;
@@ -2086,7 +2086,8 @@
 			var popup = document.getElementById("popupSaveSequence");
 			var sequenceName = document.getElementById("sequenceName").value;
 			sequenceName = "";
-			popup.style.display = "block";
+			popup.style.display = "grid";
+			popup.style.gridTemplateColumns = "1fr";
 		}
 
 		function hidePopupSaveSequence()
@@ -2279,6 +2280,18 @@
 		// TODO
 		function runSequence()
 		{
+			// call the API
+			var selector = document.getElementById("select-sequence");
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=runSequence" +
+				"&name=" + selector.value,
+				"",
+				function() {
+					// request hendler
+					Debug.log("runFEMacroSequence() was called.");
+					// TODO: show the results
+				}
+			);
 			console.log("run", selectedSequence_);
 		}
 
@@ -2298,7 +2311,7 @@
 			builderActions.style.display = "flex";
 		}
 
-		// TODO
+		
 		function deleteSequence()
 		{
 			// call the API
@@ -2331,18 +2344,19 @@
 			console.log("delete", selectedSequence_);
 		}
 
-		// TODO
+		
 		function editSequence()
 		{
-			// close active view
+			// disable action buttons
 			statusActionButtons(false);
-
-			// open the builder
-
-			// suggest old name
-
-			// API call
-
+			sequenceBuilding_ = true;
+			// close active view
+			tempSequence_ = selectedSequence_;
+			selectSequence();
+			showSequence("sequence-builder", tempSequence_);
+			var builderActions = document.getElementById("sequence-builder-buttons");			
+			builderActions.style.display = "flex";
+			document.getElementById("sequenceName").value = document.getElementById("select-sequence").value;
 		}
 
 		function selectSequence(elem = "undefined")
@@ -2388,7 +2402,7 @@
 		{
 			var sequenceSelector = document.getElementById("select-sequence");
 			var sequenceName = document.getElementById("sequenceName");
-			var errorMessage = document.getElementById("sequenceName-error");	// TODO:make it red
+			var errorMessage = document.getElementById("sequenceName-error");
 
 			// check if name is empty
 			if (sequenceName.value === "")
@@ -2472,7 +2486,7 @@
 		{			
 			var index = Object.keys(tempSequence_).length;
 			// activate buttons
-			statusEditButtons(true);
+			statusEditButtons(false);
 			tempSequence_[index] = macro;
 			showSequence("sequence-builder", tempSequence_);
 			console.log("add", tempSequence_);
@@ -2552,7 +2566,7 @@
 	<div id="popupSaveSequence" class="smallPopup">
 	    <h4>Type a name for the sequence"</h4>
 		<input type="text" id="sequenceName" maxlength="30"></input>
-		<span id="sequenceName-error"></span>
+		<span id="sequenceName-error" style="color: red;"></span>
 	    <div class="buttongroup">
 		  <center>
 			<button onclick="saveSequence()">Confirm</button>

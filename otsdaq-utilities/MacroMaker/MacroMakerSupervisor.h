@@ -84,6 +84,9 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	void getMacroSequence(HttpXmlDocument& xmldoc,
 						  cgicc::Cgicc& cgi, 
 						  const std::string& username);
+	void runFEMacroSequence(HttpXmlDocument& xmldoc,
+							cgicc::Cgicc& cgi,
+							const std::string& username);
 	void deleteMacroSequence(cgicc::Cgicc& cgi, const std::string& username);
 	void loadHistory(HttpXmlDocument& xmldoc, const std::string& username);
 	void loadFEHistory(HttpXmlDocument& xmldoc, const std::string& username);
