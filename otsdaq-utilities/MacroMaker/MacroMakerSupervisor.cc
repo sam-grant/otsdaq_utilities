@@ -2528,6 +2528,14 @@ void MacroMakerSupervisor::runFEMacroSequence(HttpXmlDocument& xmldoc,
 	}
 
 	// TODO: decode list
+	std::map<std::string, std::string> sequenceMap;
+	StringMacros::getMapFromString(
+	    sequence,
+	    sequenceMap,
+	    std::set<char>({','}) /*pair delimiters*/,
+	    std::set<char>({':'}) /*name/value delimiters*/);
+
+	__SUP_COUTV__(sequenceName);
 
 	//TODO: iterate over the list and exe macros
 
