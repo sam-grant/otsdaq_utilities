@@ -42,6 +42,7 @@
 		//uploadTableFromCSV()
 		//launchRecordCreationWizard(typeOfLaunch)
 		//launchRecordDeletionWizard(typeOfLaunch)
+		//toggleTreeDiffMode(setVal)
 
 		//tree-view focused =========
 		//setupTableGroupTreeView(tableGroupName,tableGroupKey,backLinkStr)
@@ -160,6 +161,7 @@
 		//mergeGroupsDialog()
 		//popUpGroupUploadDownloadUpdateForm(groupName,groupKey,isUpload)
 		//diffWithActiveGroup(groupName, groupKey)
+		//popUpDiffWithAnotherKey(groupName, groupKey)
 
 		//tableLinkTooltip(prependString)
 
@@ -603,10 +605,11 @@
 		var treeMemberNames_, treeMemberVersions_, treeMemberComments_;
 		var treeViewBackLinkStr_;
 		var treeViewExpandedCapture_; //object to capture and load from on refresh
-		var treeGroupName_, treeGroupKey_;
+		var treeGroupName_, treeGroupKey_, treeGroupType_;
 		var treeViewHideStatus_ = false;
 		var treeFilterApplied_ = false;
 		var treeViewHideInfo_ = true;
+		var treeDiffModeApplied_ = false; var treeDiffModeGroupName_, treeDiffModeGroupKey_;
 		var treeFilter_ = "";
 		var lastTreeFilter_ = "";
 		var lastTreeWarnStr_ = "";
@@ -690,7 +693,8 @@
 			//setupSpecificTable("XDAQContextTable","2","setupTableViewMode('anchorTag-XDAQContextTable');"); return;
 
 			//setupSpecificTableGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerTable"); return;			
-			//setupSpecificTableGroup("GroupAliasWizBackbone","0"); 
+			// setupSpecificTableGroup("CalVstSidetV2Config","15"); return;
+			setupTableGroupTreeView("CalVstSidetV2Config","15"); return;
 
 			//mergeGroups("GroupAliasWizBackbone","0","GroupAliasWizBackbone","3","rename");
 			//mergeGroups("  ","2","testContext","3","defaultConfig","1","defaultConfig","4","Rename");
@@ -1272,7 +1276,7 @@
 				Debug.log("CfgGUI subsystemNames subsystemNames.length " + _subsystemNames.length);
 
 				str += "<br><br><br>";
-				str += "<h3 style='margin-top:-10px'><u>Subsystems:</u></h3>";
+				str += "<h3 style='margin: -10px 0 4px 16px;'><u>Subsystems</u></h3>";
 				str += DesktopContent.htmlOpen("div",
 					{
 						"id": "subsystemTable",	
@@ -2440,7 +2444,7 @@
 			}
 
 			if (historicalKeys.length) {
-				str += "Existing &quot;" + groupName + "&quot; group keys: ";
+				str += "Existing &quot;" + groupName + "&quot; group keys: <label id='existingGroupKeys'>";
 				//str += " " + groupKey;
 
 				for (var i = 0; i < historicalKeys.length; ++i) {
@@ -2452,6 +2456,7 @@
 					str += key;
 					str += "</a>";
 				}
+				str += "</label>";
 			}
 			else
 				str += "No Historical keys exist for " + groupName + ".<br>";
@@ -2530,6 +2535,16 @@
 				},
 				"Diff with the Active table group" /*innerHTML*/,
 				true /*doCloseTag*/);
+			//add another-key-diff link
+			str += "<br>";
+			str += DesktopContent.htmlOpen("a",
+				{
+					"onclick": "popUpDiffWithAnotherKey(\"" + groupName +
+						"\",\"" + groupKey + "\");",
+					"title": "Get a difference report between the this group &apos;" + groupName + "(" + groupKey + ").&apos; and another key of this group.",
+				},
+				"Diff with another Key of this group" /*innerHTML*/,
+				true /*doCloseTag*/);
 
 			str += "<br><br>";
 
@@ -2571,8 +2586,8 @@
 
 				str += "</td><td style='background-color: rgb(218, 194, 194); width:10px;'>"; //open "curren version" link
 
-				str += "<div id='" + tableName + "-currentVersionLink' class='currentMemberVersionLink' " + 
-					"style='float:left;white-space:nowrap;'>";	//open name div
+				str += "<center><div id='" + tableName + "-currentVersionLink' class='currentMemberVersionLink' " + 
+					"style='float:left;white-space:nowrap; width:100%;'>";	//open name div
 				str += "<a  " +
 					// "href='javascript:" + replaceScreenJS + "'>"; //FIXME .. back to onclick, but L12808  changeMemberVersionForTableGroup()!!
 					"onclick='" + replaceScreenJS + "'>";
@@ -2584,7 +2599,7 @@
 
 				str += ")";
 				str += "</a>";
-				str += "</div>"; //close member current version link
+				str += "</div></center>"; //close member current version link
 
 				str += "</td><td style='width:20px;'>"; //open table nav link
 
@@ -3331,6 +3346,192 @@
 		} //end launchRecordDeletionWizard()
 
 		//==============================================================================
+		//toggleTreeDiffMode ~~
+		function toggleTreeDiffMode(setVal) 
+		{
+			if (setVal !== undefined)
+				treeDiffModeApplied_ = setVal;
+			else
+				treeDiffModeApplied_ = !treeDiffModeApplied_; //invert
+
+			Debug.log("toggleTreeDiffMode " + treeDiffModeApplied_);
+
+			if(treeDiffModeApplied_)
+			{
+				//pop up diff group selection
+				Debug.log("toggleTreeDiffModeDialog");
+
+				var el = document.getElementById("popUpDialog");
+				if (!el) 
+				{
+					el = document.createElement("div");
+					el.setAttribute("id", "popUpDialog");
+				}
+				el.style.display = "none";
+
+				//set position and size
+				var w = 500;
+				var h = 225;
+				ConfigurationAPI.setPopUpPosition(el, w /*w*/, h /*h*/);
+
+				//show choices for context and config groups
+
+				var str = "<a id='" +
+					"popUpDialog" +
+					"-header' onclick='var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+				//get existing groups to merge	
+				///////////////////////////////////////////////////////////
+				DesktopContent.XMLHttpRequest("Request?RequestType=getTableGroups" +
+					"",
+					"",
+					function (req) 
+					{
+						var err = DesktopContent.getXMLValue(req, "Error");
+						if (err) 
+						{
+							Debug.log(err, Debug.HIGH_PRIORITY);
+							el.innerHTML = str;
+							return;
+						}
+
+						var groupNames = req.responseXML.getElementsByTagName("TableGroupName");
+						var keys = req.responseXML.getElementsByTagName("TableGroupKey");
+						var types = req.responseXML.getElementsByTagName("TableGroupType");
+
+						var groupName, lastGroupName;
+
+						//Two group types here:	"Context" "Configuration"
+
+						str += "<div id='popUpDialog-div'>";
+						str += "Please select a " + treeGroupType_ + " group with which to compare to &apos;" + treeGroupName_ + 
+							"(" + treeGroupKey_ + ").&apos; <br>(Differences will appear in <b><label style='color:red'>red</label></b> in the Tree View.)" +
+							"<br><br>";
+						str += "<center>";
+
+						str += "Group Name to compare: " + DesktopContent.htmlOpen("select",
+							{
+								"id": "diffGroupName",
+								"title": "Select the group name to compare to &apos;" + 
+									treeGroupName_ + "(" + treeGroupKey_ + ").&apos;",						
+							},
+							"" /*innerHTML*/,
+							false /*doCloseTag*/);
+						for (var j = 0; j < groupNames.length; ++j) 
+						{
+							if (types[j].getAttribute("value") == treeGroupType_) 
+							{
+								groupName = groupNames[j].getAttribute("value");
+								str += "<option value='" + groupName + "' " + 
+									(groupName == treeGroupName_?"selected":"") + 
+									">";
+								str += groupName;	//can display however
+								str += "</option>";
+								lastGroupName = groupName;
+							}
+						}
+						str += "</select><br><br>";
+
+						str += "Group Key to compare: " + DesktopContent.htmlOpen("select",
+							{
+								"id": "diffGroupKey",
+								"title": "Select the group key to compare to &apos;" + 
+									treeGroupName_ + "(" + treeGroupKey_ + ").&apos;",						
+							},
+							"" /*innerHTML*/,
+							true /*doCloseTag*/);		
+						str += "<br><br>";
+						
+
+						str += DesktopContent.htmlOpen("input",
+							{
+								"type": "button",
+								"id": "diffButton",
+								"value": "Diff Group Keys",
+								"title": "Generation different report for the two selected &apos;" + 
+									groupName + "&apos; group keys.",						
+							},
+							"" /*innerHTML*/,
+							true /*doCloseTag*/);
+				
+						str += "</div><br><br>";
+
+						el.innerHTML = str;
+
+						document.getElementById("display").appendChild(el); //add element to display div
+						el.style.display = "block";									
+
+						function localHandleDiffGroupNameChange(event)
+						{
+							var groupName;
+							if(event)
+								groupName = this.value;
+							else
+								groupName = treeGroupName_;
+							
+
+							Debug.log("localHandleDiffGroupNameChange",groupName);
+
+							var el = document.getElementById("diffGroupKey");
+							var str = "";
+							var groupKey;
+							var groupKeyCount = 0;
+
+							for (var j = 0; j < groupNames.length; ++j) 
+							{
+								if (groupNames[j].getAttribute("value") == groupName) 
+								{
+									groupKey = keys[j].getAttribute("value");
+									str += "<option value='" + groupKey + "' " + 
+										(((!event && ((groupKey+1)|0)) == (treeGroupKey_|0))?"selected":"") + 
+										">";
+									str += groupKey;	//can display however
+									str += "</option>";
+									++groupKeyCount;
+									lastGroupName = groupName;
+								}
+							}
+							el.innerHTML = str;
+							if(event)
+								el.selectedIndex = groupKeyCount-1;
+
+						} //end localHandleDiffGroupNameChange()
+
+						document.getElementById("diffGroupName").onchange = localHandleDiffGroupNameChange;
+						localHandleDiffGroupNameChange(); //initialize diff key select
+
+						document.getElementById("diffButton").onmouseup = 
+							function () 
+							{
+								var selectedKey = document.getElementById("diffSelect").value;
+								Debug.log("treeDiffButton onmouseup", selectedKey);
+
+								DesktopContent.XMLHttpRequest("Request?RequestType=diffWithGroupKey&groupName=" + groupName +
+									"&groupKey=" + groupKey + 
+									"&diffKey=" + selectedKey,
+									"",
+									function (req) {
+										var noDifference = DesktopContent.getXMLValue(req, "NoDifference") == "1";
+										var diffReport = DesktopContent.getXMLValue(req, "DiffReport");
+										if(noDifference)
+											Debug.info(DesktopContent.tooltipConditionString(diffReport));
+										else
+											Debug.warn(DesktopContent.tooltipConditionString(diffReport));
+									}); //end diffWithActiveGroup
+							}; // end diffButton onmouseup
+
+					}, 0, 0, true //reqParam, progressHandler, callHandlerOnErr
+				); //end of getTableGroups handler
+
+
+				document.getElementById("display").appendChild(el); //add element to display div
+				el.style.display = "block";
+			}
+
+		} //end toggleTreeDiffMode()
+
+		//==============================================================================
 		//isTemporary
 		function isTemporary(version) { return version < -1;} 
 
@@ -3376,6 +3577,7 @@
 
 			var tableGroupName = DesktopContent.getXMLValue(req, "tableGroup");
 			var tableGroupKey = DesktopContent.getXMLValue(req, "tableGroupKey");
+			var tableGroupType = DesktopContent.getXMLValue(req, "tableGroupType");
 
 
 			//always update tree names
@@ -3467,6 +3669,7 @@
 
 			treeGroupName_ = tableGroupName;
 			treeGroupKey_ = tableGroupKey;
+			treeGroupType_ = tableGroupType;
 
 
 			Debug.log("treeEditingNodeParentIdString_ " + treeEditingNodeParentIdString_);
@@ -3649,7 +3852,7 @@
 
 			//add tree
 			var tree = DesktopContent.getXMLNode(req, "tree");
-			var childrenLength = tree.children.length;
+			var childrenLength = (tree && tree.children)?tree.children.length:0;
 
 			if (childrenLength)
 				recursiveDrawTree(tree, depth, tree.getAttribute("value"), parentId);
@@ -5366,6 +5569,12 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" +
 					"&tableGroup=" + tableGroupEls[0].innerHTML +
 					"&tableGroupKey=" + tableGroupEls[1].innerHTML +
+					(treeDiffModeApplied_?
+						(
+						"&diffGroup=" + treeDiffModeGroupName_+
+						"&diffGroupKey=" + treeDiffModeGroupKey_
+						):""
+					) +
 					"&hideStatusFalse=" + (treeViewHideStatus_ ? 1 : 0) +
 					"&depth=1",
 					"startPath=" + path + nodeName + "/" +
@@ -5389,6 +5598,12 @@
 			DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" +
 				"&tableGroup=" + tableGroupName +
 				"&tableGroupKey=" + tableGroupKey +
+				(treeDiffModeApplied_?
+					(
+					"&diffGroup=" + treeDiffModeGroupName_+
+					"&diffGroupKey=" + treeDiffModeGroupKey_
+					):""
+				) +
 				"&hideStatusFalse=" + (treeViewHideStatus_ ? 1 : 0) +
 				"&depth=1",
 				"startPath=/", treeViewHandler,
@@ -7320,6 +7535,12 @@
 			DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" +
 				"&tableGroup=" + treeGroupName_ +
 				"&tableGroupKey=" + treeGroupKey_ +
+				(treeDiffModeApplied_?
+					(
+					"&diffGroup=" + treeDiffModeGroupName_+
+					"&diffGroupKey=" + treeDiffModeGroupKey_
+					):""
+				) +
 				"&hideStatusFalse=" + 1 +
 				"&depth=1",
 				"startPath=" + "/" +
@@ -8126,6 +8347,12 @@
 							DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" +
 								"&tableGroup=" + treeGroupName_ +
 								"&tableGroupKey=" + treeGroupKey_ +
+								(treeDiffModeApplied_?
+									(
+									"&diffGroup=" + treeDiffModeGroupName_+
+									"&diffGroupKey=" + treeDiffModeGroupKey_
+									):""
+								) +
 								"&hideStatusFalse=" + 1 +
 								"&depth=1",
 								"startPath=" + "/" +
@@ -13692,7 +13919,7 @@
 		} //end popUpGroupUploadDownloadUpdateForm()
 
 		//==============================================================================
-		//popUpVersionAliasSpecificGroupForm
+		//diffWithActiveGroup
 		function diffWithActiveGroup(groupName, groupKey) 
 		{
 			Debug.log("CfgGUI diffWithActiveGroup",groupName,groupKey);
@@ -13708,7 +13935,107 @@
 					else
 						Debug.warn(DesktopContent.tooltipConditionString(diffReport));
 				}); //end diffWithActiveGroup
-		} //end popUpGroupUploadDownloadUpdateForm()
+		} //end diffWithActiveGroup()
+
+		//==============================================================================
+		//popUpDiffWithAnotherKey
+		function popUpDiffWithAnotherKey(groupName, groupKey) 
+		{
+			Debug.log("CfgGUI popUpDiffWithAnotherKey ",groupName,groupKey);
+			var el = document.getElementById("existingGroupKeys");
+			if(!el)
+			{
+				Debug.err("No historical group keys to select!");
+				return;
+			}
+			var keys = el.innerText.split(' ');
+			if(!keys.length)
+			{
+				Debug.err("No historical group keys to select!");
+				return;
+			}
+
+			Debug.logv({keys});
+			
+			var el = document.getElementById("popUpDialog");
+			if (!el) 
+			{
+				el = document.createElement("div");
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 460;
+			var h = 192;
+			ConfigurationAPI.setPopUpPosition(el, w /*w*/, h /*h*/);
+
+			var str = "<a id='" +
+				"popUpDialog" +
+				"-header' onclick='var el = document.getElementById(" +
+				"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Please select the group key of &apos;" + groupName + 
+				"&apos; for which you would like to compare to key (" + groupKey + ") and generate a difference report"
+				+ ":<br><br>";
+
+			str += "Group Key to compare: " + DesktopContent.htmlOpen("select",
+				{
+					"id": "diffSelect",
+					"title": "Select the group key to compare to &apos;" + 
+						groupName + "(" + groupKey + ").&apos;",						
+				},
+				"" /*innerHTML*/,
+				false /*doCloseTag*/);
+			for(var i=0;i<keys.length;++i)
+				str += "<option value='" + keys[i] + "' " +
+					//default to previous key
+					(((groupKey|0)-1) == (keys[i]|0)?"selected":"") + ">" + 
+					keys[i] + //can display however
+					"</option>";
+			str += "</select><br><br>";
+
+			str += DesktopContent.htmlOpen("input",
+					{
+						"type": "button",
+						"id": "diffButton",
+						"value": "Diff Group Keys",
+						"title": "Generation different report for the two selected &apos;" + 
+							groupName + "&apos; group keys.",						
+					},
+					"" /*innerHTML*/,
+					true /*doCloseTag*/);
+		
+			str += "</div><br><br>";
+
+			el.innerHTML = str;
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+						
+			document.getElementById("diffButton").onmouseup = 
+				function () 
+				{
+					var selectedKey = document.getElementById("diffSelect").value;
+					Debug.log("diffButton onmouseup", selectedKey);
+
+					DesktopContent.XMLHttpRequest("Request?RequestType=diffWithGroupKey&groupName=" + groupName +
+						"&groupKey=" + groupKey + 
+						"&diffKey=" + selectedKey,
+						"",
+						function (req) {
+							var noDifference = DesktopContent.getXMLValue(req, "NoDifference") == "1";
+							var diffReport = DesktopContent.getXMLValue(req, "DiffReport");
+							if(noDifference)
+								Debug.info(DesktopContent.tooltipConditionString(diffReport));
+							else
+								Debug.warn(DesktopContent.tooltipConditionString(diffReport));
+						}); //end diffWithActiveGroup
+				};
+
+
+		} //end popUpDiffWithAnotherKey()
 
 		//==============================================================================
 		//popUpVersionAliasSpecificGroupForm
@@ -16891,7 +17218,7 @@
 				"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 
-			//get existing group aliases	
+			//get existing groups to merge	
 			///////////////////////////////////////////////////////////
 			DesktopContent.XMLHttpRequest("Request?RequestType=getTableGroups" +
 				"",
@@ -17334,7 +17661,10 @@
 					"Show Info Fields" :
 					"Hide Info Fields",
 				"Record Creation Wizard",
-				"Record Deletion Wizard"
+				"Record Deletion Wizard",
+				treeDiffModeApplied_ ? 
+					"Disable Diff Mode" :
+					"Enable Diff Mode"
 			];
 
 			var refreshLinkStr = "refreshTreeView();";
@@ -17353,12 +17683,13 @@
 				refreshWrapper,
 				"toggleGroupDetails()",
 				"treeViewHideStatus_ = !treeViewHideStatus_;" +
-				refreshLinkStr,
+					refreshLinkStr,
 				"treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()",
 				"treeViewHideInfo_ = !treeViewHideInfo_; " +
-				"applyTreeFilter('',0,1)",
+					"applyTreeFilter('',0,1)",
 				"launchRecordCreationWizard(\"tree\")",
-				"launchRecordDeletionWizard(\"tree\")"
+				"launchRecordDeletionWizard(\"tree\")",
+				"toggleTreeDiffMode()"
 			];
 			Debug.log("createEditTableMenu()");
 			SimpleContextMenu.createMenu(

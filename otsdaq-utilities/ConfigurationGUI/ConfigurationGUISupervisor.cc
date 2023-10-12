@@ -209,6 +209,9 @@ try
 	//	getAffectedActiveGroups
 	// 	getLinkToChoices
 	//	getLastTableGroups
+	//	getSubsytemTableGroups
+	//	diffWithActiveGroup
+	//	diffWithGroupKey
 	//	mergeGroups
 	//
 	//		---- associated with JavaScript Iterate App
@@ -1273,7 +1276,18 @@ try
 		__SUP_COUTV__(groupName);
 		__SUP_COUTV__(groupKey);
 
-		handleDiffWithActiveGroup(xmlOut, cfgMgr, groupName, TableGroupKey(groupKey));
+		handleGroupDiff(xmlOut, cfgMgr, groupName, TableGroupKey(groupKey)); //diff with active group
+	}
+	else if(requestType == "diffWithGroupKey")
+	{
+		std::string groupName = CgiDataUtilities::getData(cgiIn, "groupName");  // from GET
+		std::string groupKey = CgiDataUtilities::getData(cgiIn, "groupKey");  // from GET
+		std::string diffKey = CgiDataUtilities::getData(cgiIn, "diffKey");  // from GET
+		__SUP_COUTV__(groupName);
+		__SUP_COUTV__(groupKey);
+		__SUP_COUTV__(diffKey);
+
+		handleGroupDiff(xmlOut, cfgMgr, groupName, TableGroupKey(groupKey), TableGroupKey(diffKey));
 	}
 	else if(requestType == "savePlanCommandSequence")
 	{
@@ -1701,7 +1715,7 @@ try
 		__SUP_COUT__ << "Loading group '" << groupName << "(" << groupKey << ")'"
 		             << __E__;
 
-		std::string groupComment, groupAuthor, tableGroupCreationTime;
+		std::string groupComment, groupAuthor, tableGroupCreationTime, groupType;
 
 		// only same member map if object pointer was passed
 		cfgMgr->loadTableGroup(groupName,
@@ -1712,13 +1726,16 @@ try
 		                       accumulatedErrors,
 		                       doGetGroupInfo ? &groupComment : 0,
 		                       doGetGroupInfo ? &groupAuthor : 0,
-		                       doGetGroupInfo ? &tableGroupCreationTime : 0);
+		                       doGetGroupInfo ? &tableGroupCreationTime : 0,
+							   false     /*doNotLoadMembers*/,
+		                       doGetGroupInfo ? &groupType : 0);
 
 		if(doGetGroupInfo)
 		{
 			xmlOut.addTextElementToData("tableGroupComment", groupComment);
 			xmlOut.addTextElementToData("tableGroupAuthor", groupAuthor);
 			xmlOut.addTextElementToData("tableGroupCreationTime", tableGroupCreationTime);
+			xmlOut.addTextElementToData("tableGroupType", groupType);
 		}
 
 		if(accumulatedErrors && *accumulatedErrors != "")
@@ -1810,6 +1827,7 @@ catch(std::runtime_error& e)
 	           << __E__;
 	__SUP_COUT_ERR__ << "\n" << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
+	throw;  // throw to get info from special errors at a parent level
 }
 catch(...)
 {
@@ -3044,32 +3062,20 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 	std::map<std::string /*name*/, TableVersion /*version*/> memberMap;
 
 	std::string accumulatedErrors = "";
-	try
-	{
-		setupActiveTablesXML(xmlOut,
-		                     cfgMgr,
-		                     groupName,
-		                     groupKey,
-		                     modifiedTables,
-		                     (startPath == "/"),  // refreshAll, if at root node, reload
-		                                          // all tables so that partially loaded
-		                                          // tables are not allowed
-		                     (startPath == "/"),  // get group info
-		                     &memberMap,          // get group member map
-		                     true,                // output active tables (default)
-		                     &accumulatedErrors   // accumulate errors
-		);
-	}
-	catch(const std::runtime_error& e)
-	{
-		__SS__ << "Error occured setting up active tables: " << e.what() << __E__;
-		accumulatedErrors += ss.str();
-	}
-	catch(...)
-	{
-		__SS__ << "Unknown error occured setting up active tables." << __E__;
-		accumulatedErrors += ss.str();
-	}
+	setupActiveTablesXML(xmlOut,
+						cfgMgr,
+						groupName,
+						groupKey,
+						modifiedTables,
+						(startPath == "/"),  // refreshAll, if at root node, reload
+											// all tables so that partially loaded
+											// tables are not allowed
+						(startPath == "/"),  // get group info
+						&memberMap,          // get group member map
+						true,                // output active tables (default)
+						&accumulatedErrors   // accumulate errors
+	);
+	
 
 	if(accumulatedErrors != "")
 	{
@@ -7324,22 +7330,27 @@ catch(const std::runtime_error& e)
 } // end getSubsytemTableGroups()
 
 //==============================================================================
-// handleDiffWithActiveGroup
-void ConfigurationGUISupervisor::handleDiffWithActiveGroup(
+// handleGroupDiff
+void ConfigurationGUISupervisor::handleGroupDiff(
     HttpXmlDocument& xmlOut,
     ConfigurationManagerRW* cfgMgr,
 	const std::string&      groupName,
-	const TableGroupKey&    groupKey)
+	const TableGroupKey&    groupKey,
+	const TableGroupKey&    diffKey /* = TableGroupKey() */)
 {
 	//Steps:
 	//	- Get group type and load table map
 	//	- Get match type active group table map
 	//	- For each table, compare
 
-	__SUP_COUT__ << "Differencing group " << groupName << "(" << groupKey << ") with the active group." << __E__;
+	if(diffKey.isInvalid())
+		__SUP_COUT__ << "Differencing group " << groupName << "(" << groupKey << ") with the active group." << __E__;
+	else
+		__SUP_COUT__ << "Differencing group " << groupName << "(" << groupKey << ") with group " <<
+			groupName << "(" << diffKey << ")" << __E__;
 
 
-	std::map<std::string /*name*/, TableVersion /*version*/> memberMap, activeMemberMap;
+	std::map<std::string /*name*/, TableVersion /*version*/> memberMap, diffMemberMap;
 	std::string groupType, accumulateErrors;
 	std::stringstream diffReport;
 	bool noDifference = true;
@@ -7355,42 +7366,68 @@ void ConfigurationGUISupervisor::handleDiffWithActiveGroup(
 		0 /*groupAuthor*/, 
 		0 /*groupCreationTime*/, 
 		false /*doNotLoadMember*/,
-		&groupType);
-
-	std::map<std::string /* groupType */, std::pair<std::string, TableGroupKey>> activeGroups = cfgMgr->getActiveTableGroups();
-
-	__SUP_COUT__ << "active " << groupType << " group is " << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")" << __E__;
-
-	diffReport << "This difference report is between " << groupType << " group <b>'" << groupName << "(" << groupKey << ")'</b>" <<
-		" and active group <b>'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")'</b>." << __E__;
+		(diffKey.isInvalid()?0:&groupType));
 
 	__SUP_COUTV__(StringMacros::mapToString(memberMap));
 
-	
-	cfgMgr->loadTableGroup(
-		activeGroups.at(groupType).first,
-		activeGroups.at(groupType).second,
-		false /*doActivate*/,
-		&activeMemberMap /*groupMembers*/,
-		0 /*progressBar*/,
-		&accumulateErrors /*accumulateErrors*/,
-		0 /*groupComment*/,
-		0 /*groupAuthor*/, 
-		0 /*groupCreationTime*/, 
-		false /*doNotLoadMember*/);
+	std::map<std::string /* groupType */, std::pair<std::string, TableGroupKey>> activeGroups;
+	if(diffKey.isInvalid())
+	{
+		activeGroups = cfgMgr->getActiveTableGroups();
 
-	
-	diffReport << "\n\n" <<
+		__SUP_COUT__ << "active " << groupType << " group is " << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")" << __E__;
+
+		diffReport << "This difference report is between " << groupType << " group <b>'" << groupName << "(" << groupKey << ")'</b>" <<
+			" and active group <b>'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")'</b>." << __E__;
+		
+		cfgMgr->loadTableGroup(
+			activeGroups.at(groupType).first,
+			activeGroups.at(groupType).second,
+			false /*doActivate*/,
+			&diffMemberMap /*groupMembers*/,
+			0 /*progressBar*/,
+			&accumulateErrors /*accumulateErrors*/,
+			0 /*groupComment*/,
+			0 /*groupAuthor*/, 
+			0 /*groupCreationTime*/, 
+			false /*doNotLoadMember*/);
+
+		diffReport << "\n\n" <<
+				"'" << groupName << "(" << groupKey << ")' has <b>" << memberMap.size() << " member tables</b>, and " << 
+				"'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")' has <b>" << diffMemberMap.size() << " member tables</b>." << __E__;
+
+	}
+	else
+	{
+		diffReport << "This difference report is between " << groupType << " group <b>'" << groupName << "(" << groupKey << ")'</b>" <<
+			" and group <b>'" << groupName << "(" << diffKey << ")'</b>." << __E__;
+		
+		cfgMgr->loadTableGroup(
+			groupName,
+			diffKey,
+			false /*doActivate*/,
+			&diffMemberMap /*groupMembers*/,
+			0 /*progressBar*/,
+			&accumulateErrors /*accumulateErrors*/,
+			0 /*groupComment*/,
+			0 /*groupAuthor*/, 
+			0 /*groupCreationTime*/, 
+			false /*doNotLoadMember*/);
+
+		diffReport << "\n\n" <<
 			"'" << groupName << "(" << groupKey << ")' has <b>" << memberMap.size() << " member tables</b>, and " << 
-			"'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ") has <b>" << activeMemberMap.size() << " member tables</b>." << __E__;
+			"'" << groupName << "(" << diffKey << ")' has <b>" << diffMemberMap.size() << " member tables</b>." << __E__;
 
+	}
+
+	
 	diffReport << "<INDENT>";
 
 	unsigned int tableDifferences = 0;
 
 	for(auto& member : memberMap)
 	{
-		if(activeMemberMap.find(member.first) == activeMemberMap.end())
+		if(diffMemberMap.find(member.first) == diffMemberMap.end())
 		{
 			diffReport << "\n\n" <<
 				"Table <b>" << member.first << "-v" << member.second << "</b> not found in active group." << __E__;
@@ -7401,15 +7438,15 @@ void ConfigurationGUISupervisor::handleDiffWithActiveGroup(
 
 		__SUP_COUT__ <<  "Comparing " << 
 			member.first << "-v" << member.second << " ... " << 
-			member.first << "-v" << activeMemberMap.at(member.first) << __E__;
+			member.first << "-v" << diffMemberMap.at(member.first) << __E__;
 		
-		if(member.second == activeMemberMap.at(member.first)) continue;
+		if(member.second == diffMemberMap.at(member.first)) continue;
 
 		diffReport << "\n\n" <<
-			"Table <b>" << member.first << " v" << member.second << "</b> ...vs... " << " active version <b>v" << activeMemberMap.at(member.first) << "</b>:" << __E__;
+			"Table <b>" << member.first << " v" << member.second << "</b> ...vs... " << " active version <b>v" << diffMemberMap.at(member.first) << "</b>:" << __E__;
 		 
 		TableBase* table = cfgMgr->getTableByName(member.first);
-		if(!table->diffTwoVersions(member.second,activeMemberMap.at(member.first),&diffReport))
+		if(!table->diffTwoVersions(member.second,diffMemberMap.at(member.first),&diffReport))
 		{
 			//difference found!
 			noDifference = false;
@@ -7418,12 +7455,19 @@ void ConfigurationGUISupervisor::handleDiffWithActiveGroup(
 
 	} //end member table comparison loop
 
-	for(auto& activeMember : activeMemberMap)
+	for(auto& activeMember : diffMemberMap)
 	{
 		if(memberMap.find(activeMember.first) == memberMap.end())
 		{
-			diffReport << "\n\n" <<
-				"Active Group Table <b>" << activeMember.first << "-v" << activeMember.second << "</b> not found in '" << groupName << "(" << groupKey << ")'." << __E__;
+
+			if(diffKey.isInvalid())
+				diffReport << "\n\n" <<
+					"Active Group Table <b>" << activeMember.first << "-v" << activeMember.second << "</b> not found in '" << groupName << "(" << groupKey << ")'." << __E__;
+			else
+				diffReport << "\n\n" <<
+					"Group key (" << diffKey << ") Table <b>" << activeMember.first << "-v" << activeMember.second << "</b> not found in '" << groupName << "(" << groupKey << ")'." << __E__;
+			
+
 			noDifference = false;
 			++tableDifferences;
 			continue;
@@ -7431,19 +7475,35 @@ void ConfigurationGUISupervisor::handleDiffWithActiveGroup(
 	}
 	diffReport << "\n</INDENT>";
 
-	if(noDifference)
-		diffReport << "\n\nNo difference found between " <<
-			"<b>'" << groupName << "(" << groupKey << ")'</b> and active group " << 
-			"<b>'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")'</b>." << __E__;
+
+	if(diffKey.isInvalid())
+	{
+		if(noDifference)
+			diffReport << "\n\nNo difference found between " <<
+				"<b>'" << groupName << "(" << groupKey << ")'</b> and active group " << 
+				"<b>'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")'</b>." << __E__;
+		else
+			diffReport << "\n\n<b>" << tableDifferences << "</b> member table differences identified between " <<
+				"<b>'" << groupName << "(" << groupKey << ")'</b> and active group " << 
+				"<b>'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")'</b>." << __E__;
+	}
 	else
-		diffReport << "\n\n<b>" << tableDifferences << "</b> member table differences identified between " <<
-			"<b>'" << groupName << "(" << groupKey << ")'</b> and active group " << 
-			"<b>'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")'</b>." << __E__;
+	{
+		if(noDifference)
+			diffReport << "\n\nNo difference found between " <<
+				"<b>'" << groupName << "(" << groupKey << ")'</b> and group " << 
+				"<b>'" << groupName << "(" << diffKey << ")'</b>." << __E__;
+		else
+			diffReport << "\n\n<b>" << tableDifferences << "</b> member table differences identified between " <<
+				"<b>'" << groupName << "(" << groupKey << ")'</b> and group " << 
+				"<b>'" << groupName << "(" << diffKey << ")'</b>." << __E__;
+	}
+
 
 
 	xmlOut.addTextElementToData("NoDifference", noDifference?"1":"0");
 	xmlOut.addTextElementToData("DiffReport", diffReport.str());
-} // end handleDiffWithActiveGroup()
+} // end handleGroupDiff()
 
 //==============================================================================
 //	testXDAQContext

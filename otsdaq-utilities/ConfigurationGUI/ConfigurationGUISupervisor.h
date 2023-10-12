@@ -234,10 +234,11 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 																	ConfigurationManagerRW* cfgMgr,
 																	bool					getFullList,
 																	std::string				targetSubsystem = "");
-	void  					handleDiffWithActiveGroup				(HttpXmlDocument&       xmlOut,
+	void  					handleGroupDiff							(HttpXmlDocument&       xmlOut,
 																	ConfigurationManagerRW* cfgMgr,
 																	const std::string&      groupName,
-																	const TableGroupKey&    groupKey);
+																	const TableGroupKey&    groupKey,
+																	const TableGroupKey&    diffKey = TableGroupKey());
 
 
 
