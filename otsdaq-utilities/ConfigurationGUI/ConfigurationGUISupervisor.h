@@ -67,8 +67,7 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 																	const std::string&      configList);
 
 	void 					handleTablesXML							(HttpXmlDocument&       xmldoc,
-																	ConfigurationManagerRW* cfgMgr,
-																	bool                    allowIllegalColumns);
+																	ConfigurationManagerRW* cfgMgr);
 	void 					handleGetTableXML						(HttpXmlDocument&       xmldoc,
 																	ConfigurationManagerRW* cfgMgr,
 																	const std::string&      tableName,
@@ -231,6 +230,16 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 																	const std::string&      layoutString,
 																	const std::string&      contextGroupName = "",
 																	const TableGroupKey&    contextGroupKey  = TableGroupKey());
+	void  					handleOtherSubsystemActiveGroups		(HttpXmlDocument&       xmlOut,
+																	ConfigurationManagerRW* cfgMgr,
+																	bool					getFullList,
+																	std::string				targetSubsystem = "");
+	void  					handleDiffWithActiveGroup				(HttpXmlDocument&       xmlOut,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      groupName,
+																	const TableGroupKey&    groupKey);
+
+
 
 	void  					testXDAQContext							(void);
 

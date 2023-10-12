@@ -159,6 +159,7 @@
 		//mergeGroups(groupANameContext, groupAKeyContext, groupBNameContext, groupBKeyContext,groupANameConfig, groupAKeyConfig, groupBNameConfig, groupBKeyConfig, mergeApproach)
 		//mergeGroupsDialog()
 		//popUpGroupUploadDownloadUpdateForm(groupName,groupKey,isUpload)
+		//diffWithActiveGroup(groupName, groupKey)
 
 		//tableLinkTooltip(prependString)
 
@@ -413,17 +414,24 @@
 		#groupAddRemoveTable {
 			margin-bottom: 		10px;
 		}
+		#subsystemViewActiveTable {
+			background-color: 	rgb(226, 216, 216);
+			padding: 			10px;
+		}
 		#groupAddRemoveTable tr:nth-child(even),
 		#systemViewActiveTable tr:nth-child(even),
+		#subsystemViewActiveTable tr:nth-child(even),
 		#systemAliasTable tr:nth-child(even),
 		#tableViewTable tr:nth-child(even) {
 			background-color: 	rgb(218, 194, 194);
 		}
 		#systemViewActiveTable tr,
+		#subsystemViewActiveTable tr,
 		#systemAliasTable tr {
 			height: 			18px;
 		}
 		#systemViewActiveTable td,
+		#subsystemViewActiveTable td,
  	 	#tableViewTable td {
 			padding: 			0 5px 0 5px;
 		}
@@ -561,6 +569,7 @@
 
 		var _activeTableGroups = []; //sz 8 (each 2) := holds the group name,key for currently active (could be none on failure) Context, Backbone, Iterator, Config
 		var _lastTableGroups = []; //sz 18 (each 3):= holds the group name,key,TIME for last successfully Configured, Started, activated-Config, activated-Context, activated-Backbone, activated-Iterator 
+		var _subsystemNames = []; //for multi subsystem systems, to explore and diff configurations among subsystems
 
 		var _versionTrackingIsOn = true;
 		var _firstTimeSilentActive = true;
@@ -825,6 +834,11 @@
 						
 					];
 					//console.log(_lastTableGroups);
+
+					_subsystemNames = [];
+					var subsystemNames = req.responseXML.getElementsByTagName("SubsystemName");					
+					for(var i=0;i<subsystemNames.length;++i)
+						_subsystemNames.push(subsystemNames[i].getAttribute("value"));
 
 					systemViewPreventInfiniteLoop_ = true;
 					DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases&" +
@@ -1253,34 +1267,49 @@
 			} localShowActiveBackboneAndConfig();
 
 
-			//			str += "<a href='#' onclick='setupSpecificTable(\"" + 
-			//					groupAliasesName + "\",\"" +
-			//					groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
-			//			str += "Edit System Aliases</a>";
-			//
-			//			str += "<br>";
-			//			
-			//			str += "<a onclick='popUpGroupAliasForm(1); return false;' " +
-			//					"title='Automatically assign a new System Alias to a Group comprised of the latest table versions.'" +
-			//					">";
-			//			str += "Wiz-New System Alias-to-Latest</a>";
-			//
-			//			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
-			//			str += "<br>";
-			//
-			//			str += "<a onclick='popUpGroupAliasForm(0); return false;'  " +
-			//						"title='Automatically assign a new System Alias to an Active Group.'" +
-			//						">";
-			//			str += "Wiz-New System Alias-to-Active</a>";
+			if(_subsystemNames.length)
+			{			
+				Debug.log("CfgGUI subsystemNames subsystemNames.length " + _subsystemNames.length);
+
+				str += "<br><br><br>";
+				str += "<h3 style='margin-top:-10px'><u>Subsystems:</u></h3>";
+				str += DesktopContent.htmlOpen("div",
+					{
+						"id": "subsystemTable",	
+						"style" : "background-color: 	rgb(218, 194, 194)",
+					},
+					"" /*innerHTML*/,
+					false /*doCloseTag*/);
+				str += "</br>";
+				for(var i=0;i<_subsystemNames.length;++i)
+				{
+					str +=  "&nbsp;&nbsp; ";
+					str += DesktopContent.htmlOpen("a",
+						{
+							"onclick": "loadSubsystemFocus(\"" + _subsystemNames[i] + "\");",
+							"title": "Access the active, aliased, and recent table groups of the subsystem &apos;" + _subsystemNames[i] + ").&apos;",
+						},
+						_subsystemNames[i] /*innerHTML*/,
+						true /*doCloseTag*/);
+				}
+				str += "</br>";
+				str += "</br>";
+				str += DesktopContent.htmlOpen("div",
+					{
+						"id": "subsystemTableFocus",
+					},
+					"" /*innerHTML*/,
+					true /*doCloseTag*/);
+				str += "</div>"; //close subsystemTable tag
+			} //end subsystem handling
+
+			
 
 			str += "<br><br><br>";
 
 			Debug.log("CfgGUI groupAliasesRequestHandler groupAliases.length " + groupAliases.length);
 
-
-
 			str += "<table id='systemAliasTable' style='white-space:nowrap' cellpadding='0' cellspacing='0' border='0' >"; //open system aliases table
-
 			str += "<tr>";
 			str += "<th style='border-left: 0'>";
 			str += "<u>System Alias</u>";
@@ -1414,6 +1443,231 @@
 			var el = document.getElementById("display");
 			el.innerHTML = str;
 		} //end groupAliasesRequestHandler()
+
+		//==============================================================================
+		//loadSubsystemFocus ~
+		function loadSubsystemFocus(subsystemName) 
+		{
+			Debug.log("loadSubsystemFocus",subsystemName);
+
+			var el = document.getElementById("subsystemTableFocus");
+			el.innerHTML = DesktopContent.htmlOpen("div",
+							{
+								"id": "subsystemTableFocusDiv",
+								"style": "padding: 0 30px 30px 30px",
+							},
+							"Loading..." /*innerHTML*/,
+							true /*doCloseTag*/);
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSubsytemTableGroups&subsystem=" + subsystemName,
+				"",
+				function (req) {
+
+					//extract subsystem table groups
+
+					var subsystemActiveTableGroups = [
+						DesktopContent.getXMLValue(req, "CurrentlyActiveContextGroupName"),
+						DesktopContent.getXMLValue(req, "CurrentlyActiveContextGroupKey"),
+						DesktopContent.getXMLValue(req, "CurrentlyActiveBackboneGroupName"),
+						DesktopContent.getXMLValue(req, "CurrentlyActiveBackboneGroupKey"),
+						DesktopContent.getXMLValue(req, "CurrentlyActiveIterateGroupName"),
+						DesktopContent.getXMLValue(req, "CurrentlyActiveIterateGroupKey"),
+						DesktopContent.getXMLValue(req, "CurrentlyActiveConfigurationGroupName"),
+						DesktopContent.getXMLValue(req, "CurrentlyActiveConfigurationGroupKey")
+					];
+
+					var subsystemLastTableGroups = [
+						DesktopContent.getXMLValue(req, "LastConfiguredGroupName"),
+						DesktopContent.getXMLValue(req, "LastConfiguredGroupKey"),
+						DesktopContent.getXMLValue(req, "LastConfiguredGroupTime"),
+						DesktopContent.getXMLValue(req, "LastStartedGroupName"),
+						DesktopContent.getXMLValue(req, "LastStartedGroupKey"),
+						DesktopContent.getXMLValue(req, "LastStartedGroupTime"),
+						
+						DesktopContent.getXMLValue(req, "LastActivatedConfigGroupName"),
+						DesktopContent.getXMLValue(req, "LastActivatedConfigGroupKey"),
+						DesktopContent.getXMLValue(req, "LastActivatedConfigGroupTime"),
+						DesktopContent.getXMLValue(req, "LastActivatedIteratorGroupName"),
+						DesktopContent.getXMLValue(req, "LastActivatedIteratorGroupKey"),
+						DesktopContent.getXMLValue(req, "LastActivatedIteratorGroupTime"),
+						DesktopContent.getXMLValue(req, "LastActivatedBackboneGroupName"),
+						DesktopContent.getXMLValue(req, "LastActivatedBackboneGroupKey"),
+						DesktopContent.getXMLValue(req, "LastActivatedBackboneGroupTime"),
+						DesktopContent.getXMLValue(req, "LastActivatedContextGroupName"),
+						DesktopContent.getXMLValue(req, "LastActivatedContextGroupKey"),
+						DesktopContent.getXMLValue(req, "LastActivatedContextGroupTime")
+					];
+					Debug.log(subsystemActiveTableGroups);
+					Debug.log(subsystemLastTableGroups);
+
+					var el = document.getElementById("subsystemTableFocusDiv");
+
+					var activeConfigHeaders = ["Context", "Backbone", "Iterate Group", "Configuration"];
+
+					var str = "";
+					str += "<table id='subsystemViewActiveTable' cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
+
+					insertLocalLastConfigGroups();
+					
+					for (var i = activeConfigHeaders.length-1; i >= 0 && i < activeConfigHeaders.length; --i) 
+					{
+						str += "<tr><td style='text-align:left; white-space:nowrap;'>";
+
+						//if (i == activeConfigHeaders.length - 1) //for last configured 
+						//	str += "Last Activated " + activeConfigHeaders[i] + ": ";
+						//else	//for backbone, iterate
+						if(i != 3)
+							str += "Currently Active " + activeConfigHeaders[i] + ": ";
+						else
+							str += "Current Editor " + activeConfigHeaders[i] + ": ";
+
+						str += "</td><td style='text-align:left; padding-left:20px;'>";
+
+						if (!subsystemActiveTableGroups[i * 2] || subsystemActiveTableGroups[i * 2] == "")
+						{
+							str += "None";
+						}
+						else 
+						{
+							str += "<a href='#' onclick='setupSpecificTableGroup(\"" + subsystemActiveTableGroups[i * 2] +
+								"\",\"" + subsystemActiveTableGroups[i * 2 + 1] + "\"); return false;'>";
+							str += subsystemActiveTableGroups[i * 2] + "</a>(" + subsystemActiveTableGroups[i * 2 + 1] + ")";
+						}
+
+						str += "</td><td style='text-align:left; padding-left:20px;'>";
+						
+						if (!(!subsystemActiveTableGroups[i * 2] || subsystemActiveTableGroups[i * 2] == ""))
+							str += "<a href='#' onclick='setupTableGroupTreeView(\"" +
+								subsystemActiveTableGroups[i * 2] +
+								"\",\"" +
+								subsystemActiveTableGroups[i * 2 + 1] + "\"); return false;' " +
+								"title='Open the tree-view for " + subsystemActiveTableGroups[i * 2] + 
+								"(" + subsystemActiveTableGroups[i * 2 + 1] + ")'" +
+								">Tree-view</a>";
+
+						str += "</td></tr>";
+
+						//if (i == activeConfigHeaders.length - 1) //for last configured 
+							//insertLocalLastConfigGroups();
+					}
+
+					/////////////////////
+					function insertLocalLastConfigGroups()
+					{
+						//last config groups for "Configured" and "Started:
+						var extraPadding = "";
+						for (var i = 0; i < subsystemLastTableGroups.length; i += 3) 
+						{
+								
+	//						if(((i/3)|0) == 5) //add padding to last
+	//							extraPadding = "padding-bottom:10px;";
+	//						else
+	//							extraPadding = "";
+							
+							str += "<tr><td style='text-align:left;white-space:nowrap;" +
+									extraPadding + "'>";
+
+
+							if (!subsystemLastTableGroups[i] || subsystemLastTableGroups[i] == "") 
+							{
+								//no last group
+
+								switch((i/3)|0)
+								{
+								case 0:
+									str += "Last Configured by FSM: "; 
+									break;
+								case 1:
+									str += "Last Run Started by FSM: ";
+									break;
+								case 2:
+									str += "Last Editor Config: ";
+									break;
+								case 3:
+									str += "Last Activated Iterate Group: ";
+									break;
+								case 4:
+									str += "Last Activated Backbone: ";
+									break;
+								case 5:
+									str += "Last Activated Context: ";
+								default:; //impossible
+								}
+							}
+							else 
+							{
+								//there is a last group, so show time
+
+								switch((i/3)|0)
+								{
+								case 0:
+									str += "Last Configured by FSM ";
+									break;
+								case 1:
+									str += "Last Run Started by FSM ";
+									break;
+								case 2:
+									str += "Last Activated Config ";
+									break;
+								case 3:
+									str += "Last Activated Iterate ";
+									break;
+								case 4:
+									str += "Last Activated Backbone ";
+									break;
+								case 5:
+									str += "Last Activated Context ";
+								default:; //impossible
+								}
+
+								str += "<label style='font-size:10px;white-space:nowrap;'>[" +
+									subsystemLastTableGroups[i + 2] + "]</label>: ";
+							}
+
+							str += "</td><td style='text-align:left; padding-left:20px;" + extraPadding + "'>";
+
+							if (!subsystemLastTableGroups[i] || subsystemLastTableGroups[i] == "") 
+							{
+								str += "None";
+							}
+							else 
+							{
+								str += "<a href='#' onclick='setupSpecificTableGroup(\"" +
+								subsystemLastTableGroups[i] +
+										"\",\"" + subsystemLastTableGroups[i + 1] + "\"); return false;'>";
+								str += subsystemLastTableGroups[i] + "</a>(" + subsystemLastTableGroups[i + 1] + ")";
+							}
+
+							str += "</td><td style='text-align:left; padding-left:20px;" + extraPadding + "'>";
+						
+							if(!(!subsystemLastTableGroups[i] || subsystemLastTableGroups[i] == ""))
+								str += "<a href='#' onclick='setupTableGroupTreeView(\"" +
+									subsystemLastTableGroups[i] +
+									"\",\"" +
+									subsystemLastTableGroups[i + 1] + "\"); return false;' " +
+									"title='Open the tree-view for " + subsystemLastTableGroups[i] + 
+									"(" + subsystemLastTableGroups[i + 1] + ")'" +
+									">Tree-view</a>";
+
+							str += "</td></tr>";
+							
+							if(((i/3)|0) == 5 ||
+									((i/3)|0) == 1) //add extra rows for spacing
+								str += "<tr style='background-color: rgb(140, 86, 86);height:2px;'>" +
+									"<td colspan=3></td></tr>";
+							if(((i/3)|0) == 5 ||
+									((i/3)|0) == 1) //swap odd even coloring
+								str += "<tr style='background-color: rgb(140, 86, 86);height:0px;'>" +
+								"<td colspan=3></td></tr>";
+						}
+					}  //end insertLocalLastConfigGroups()
+
+
+					str += "</table>"; //close active groups table
+					el.innerHTML = str;
+
+				}); //end getSubsytemTableGroups
+		} //end loadSubsystemFocus()
 
 		//==============================================================================
 		//tableGroupsRequestHandler ~
@@ -2266,6 +2520,16 @@
 				},
 				"Update a selection of member tables" /*innerHTML*/,
 				true /*doCloseTag*/);
+			//add Active-diff link
+			str += "<br>";
+			str += DesktopContent.htmlOpen("a",
+				{
+					"onclick": "diffWithActiveGroup(\"" + groupName +
+						"\",\"" + groupKey + "\");",
+					"title": "Get a difference report between the active group and this group &apos;" + groupName + "(" + groupKey + ").&apos;",
+				},
+				"Diff with the Active table group" /*innerHTML*/,
+				true /*doCloseTag*/);
 
 			str += "<br><br>";
 
@@ -2390,7 +2654,7 @@
 
 				str += "<div style='white-space:nowrap'>";
 				str += "Existing versions: ";
-				str += "<label id='" + tableName + "-existingVersions'>";
+				str += "<label id='" + tableName + "-existingVersions' style='white-space: normal;'>";
 				cfgVersionStr = ""; //keep CSV list of versions for use by changeMemberVersionForTableGroup
 
 				tableExistingVersions = tableVersions[i].getElementsByTagName("TableExistingVersion");
@@ -5363,7 +5627,10 @@
 				//if flag from server that an activation was attempted..)
 				if (DesktopContent.getXMLValue(req, "AttemptedGroupActivation") == "1")
 				{
-					Debug.log("Note: There was a successful activation of the group '" +
+					var type = DesktopContent.getXMLValue(req, "AttemptedGroupActivationType");
+					
+					Debug.log("Note: There was a successful activation of the " + 
+						((type && type != "")?(type + " "):"") + "group '" +
 						DesktopContent.getXMLValue(req, "AttemptedGroupActivationName") +
 						" (" +
 						DesktopContent.getXMLValue(req, "AttemptedGroupActivationKey") +
@@ -5371,9 +5638,12 @@
 						Debug.INFO_PRIORITY);
 				}
 				else if (!_firstTimeSilentActive && //only popup after the first time
-					str != oldStr)  //if change							  
+					// str != oldStr)  //if change		
+					_activeTableGroups.length >= 8 && 					  
+					(oldStr.indexOf(_activeTableGroups[0]+"</a>("+_activeTableGroups[1] + ")") < 0 || //active context group
+					 oldStr.indexOf(_activeTableGroups[6]+"</a>("+_activeTableGroups[7] + ")") < 0))  //active config group
 				{
-					if (thereIsAnEmpty) //may have been a deactivationg (due to error?)
+					if (thereIsAnEmpty) //may have been a deactivating (due to error?)
 						Debug.log("Note: There was a change to the active Context group (check the top of the page)!",
 							Debug.INFO_PRIORITY);
 					else //must have been an activation
@@ -13423,6 +13693,25 @@
 
 		//==============================================================================
 		//popUpVersionAliasSpecificGroupForm
+		function diffWithActiveGroup(groupName, groupKey) 
+		{
+			Debug.log("CfgGUI diffWithActiveGroup",groupName,groupKey);
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=diffWithActiveGroup&groupName=" + groupName +
+				"&groupKey=" + groupKey,
+				"",
+				function (req) {
+					var noDifference = DesktopContent.getXMLValue(req, "NoDifference") == "1";
+					var diffReport = DesktopContent.getXMLValue(req, "DiffReport");
+					if(noDifference)
+						Debug.info(DesktopContent.tooltipConditionString(diffReport));
+					else
+						Debug.warn(DesktopContent.tooltipConditionString(diffReport));
+				}); //end diffWithActiveGroup
+		} //end popUpGroupUploadDownloadUpdateForm()
+
+		//==============================================================================
+		//popUpVersionAliasSpecificGroupForm
 		function popUpVersionAliasSpecificGroupForm(groupName, groupKey) 
 		{
 			Debug.log("CfgGUI popUpVersionAliasSpecificGroupForm");
@@ -15347,15 +15636,16 @@
 							++numberOfReturns;
 
 							var newGroupKey = DesktopContent.getXMLValue(req, "TableGroupKey");
+							var newGroupType = DesktopContent.getXMLValue(req, "TableGroupType");
 							affectedGroupKeys.push(newGroupKey); //can only be index 0, since affectedArr[0] was used for request
 
 							var foundEquivalentKey = DesktopContent.getXMLValue(req, "foundEquivalentKey") | 0; //as int
 
 							if (foundEquivalentKey)
-								Debug.log("Found equivalent group '" + attemptedNewGroupName +
+								Debug.log("Found equivalent " + (newGroupType?(newGroupType + " "):"") + "group '" + attemptedNewGroupName +
 									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
 							else
-								Debug.log("Successfully created new group '" + attemptedNewGroupName +
+								Debug.log("Successfully created new " + (newGroupType?(newGroupType + " "):"") + "group '" + attemptedNewGroupName +
 									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
 
 							//need to modify root group name if changed
