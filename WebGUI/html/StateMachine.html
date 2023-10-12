@@ -990,11 +990,13 @@
 							_timeUpdateTimeout = window.setInterval(updateTimeInState,1000);
 	        			    updateTimeInState(DesktopContent.getXMLValue(req,"time_in_state"));
                 		}
-        			    
-                		
+        			                    		
         			    //draw current state if changed
 						if(i != _currState)
-						{								
+						{	
+							//in case there is an error, grab it						
+			    			var current_error = DesktopContent.getXMLValue(req,"current_error");	
+
 							//notify if state was changed unexpectedly
 							if(_currState != -1 && _transitionResultingState != i)
 							{
@@ -1030,16 +1032,22 @@
 								_suppressReloginPopups = false;
 
 							    
-							    if(_states[i] == "F") //Failed state occured, so get error message
+							    if(current_error) //Failed error message received (note: could occur in non-"Failed" states if state machine mechanics fail)
 							    {
-							    	DesktopContent.XMLHttpRequest(
+									Debug.err("State Machine Error:\n\n" + current_error);							    	
+							    }
+								else if(_stateNames[i] == "Failed") //If race condition on error message, try to retrieve it
+								{
+									DesktopContent.XMLHttpRequest(
 							    			"Request?RequestType=getErrorInStateMatchine", "",
 											function(req) {
 							    		var err = DesktopContent.getXMLValue(req,"FSM_Error");
 					            		Debug.err("State Machine Error:\n\n" + err);
 							    	});
-							    }
+								}
 							}
+							if(_currState == -1 && current_error)
+								Debug.err("State Machine Error:\n\n" + current_error);
 								
 							_currState = i;
 							redrawPhysics();

@@ -511,6 +511,10 @@ void MacroMakerSupervisor::request(const std::string&               requestType,
                                    const WebUsers::RequestUserInfo& userInfo)
 try
 {
+
+	std::chrono::steady_clock::time_point requestStart = std::chrono::steady_clock::now();
+	time_t requestStartTime = time(0);
+
 	// sanitize username
 	std::string username = "";
 	for(unsigned int i = 0; i < userInfo.username_.size(); ++i)
@@ -551,6 +555,10 @@ try
 	}
 	else
 		handleRequest(requestType, xmlOut, cgiIn, userInfo);
+
+	
+	__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "Total MacroMaker request time: " << artdaq::TimeUtils::GetElapsedTime(requestStart) << 
+		" = " <<  time(0) - requestStartTime << __E__;
 }  // end request()
 catch(const std::runtime_error& e)
 {
