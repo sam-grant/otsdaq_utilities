@@ -512,12 +512,7 @@ try
 	}
 	else if(requestType == "getTables")
 	{
-		std::string allowIllegalColumns =
-		    CgiDataUtilities::getData(cgiIn, "allowIllegalColumns");  // from GET
-
-		__SUP_COUT__ << "allowIllegalColumns: " << allowIllegalColumns << __E__;
-
-		handleTablesXML(xmlOut, cfgMgr, allowIllegalColumns == "1");
+		handleTablesXML(xmlOut, cfgMgr);
 	}
 	else if(requestType == "getContextMemberNames")
 	{
@@ -1111,13 +1106,13 @@ try
 
 		try
 		{
-			std::string accumulatedErrors;
+			std::string accumulatedErrors, groupTypeString;
 
 			// if ignore warnings,
 			//	then only print errors, do not add to xml
 
 			cfgMgr->activateTableGroup(
-			    groupName, TableGroupKey(groupKey), &accumulatedErrors);
+			    groupName, TableGroupKey(groupKey), &accumulatedErrors, &groupTypeString);
 
 			if(accumulatedErrors != "")
 			{
@@ -1132,6 +1127,7 @@ try
 				              << accumulatedErrors << __E__;
 				__COUT_WARN__ << "Done ignoring the above error(s)." << __E__;
 			}
+			xmlOut.addTextElementToData("AttemptedGroupActivationType", groupTypeString);
 		}
 		catch(std::runtime_error& e)
 		{
@@ -1260,21 +1256,38 @@ try
 		xmlOut.addTextElementToData("LastActivatedIteratorGroupKey",
 		                            theGroup.second.toString());
 		xmlOut.addTextElementToData("LastActivatedIteratorGroupTime", timeString);
+
+		//check other subsystems active groups
+		handleOtherSubsystemActiveGroups(xmlOut, cfgMgr, false /* getFullList */);
+	}
+	else if(requestType == "getSubsytemTableGroups")
+	{
+		std::string subsystem = CgiDataUtilities::getData(cgiIn, "subsystem");  // from GET
+		__SUP_COUTV__(subsystem);
+		handleOtherSubsystemActiveGroups(xmlOut, cfgMgr, true /* getFullList */, subsystem);
+	}
+	else if(requestType == "diffWithActiveGroup")
+	{
+		std::string groupName = CgiDataUtilities::getData(cgiIn, "groupName");  // from GET
+		std::string groupKey = CgiDataUtilities::getData(cgiIn, "groupKey");  // from GET
+		__SUP_COUTV__(groupName);
+		__SUP_COUTV__(groupKey);
+
+		handleDiffWithActiveGroup(xmlOut, cfgMgr, groupName, TableGroupKey(groupKey));
 	}
 	else if(requestType == "savePlanCommandSequence")
 	{
 		std::string planName = CgiDataUtilities::getData(cgiIn, "planName");   // from GET
-		std::string commands = CgiDataUtilities::postData(cgiIn, "commands");  // from
-		                                                                       // POST
+		std::string commands = CgiDataUtilities::postData(cgiIn, "commands");  // from POST
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string groupName      = CgiDataUtilities::getData(cgiIn, "groupName");
 		std::string groupKey       = CgiDataUtilities::getData(cgiIn, "groupKey");
 
-		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
-		__SUP_COUT__ << "planName: " << planName << __E__;
-		__SUP_COUT__ << "commands: " << commands << __E__;
-		__SUP_COUT__ << "groupName: " << groupName << __E__;
-		__SUP_COUT__ << "groupKey: " << groupKey << __E__;
+		__SUP_COUTV__(modifiedTables);
+		__SUP_COUTV__(planName);
+		__SUP_COUTV__(commands);
+		__SUP_COUTV__(groupName);
+		__SUP_COUTV__(groupKey);		
 
 		handleSavePlanCommandSequenceXML(xmlOut,
 		                                 cfgMgr,
@@ -6382,6 +6395,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
                                                       ConfigurationManagerRW* cfgMgr,
                                                       bool returnMembers)
 {
+	__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "cfgMgr runtime=" << cfgMgr->runTimeSeconds() << __E__;
 	// use xmlOut.dataSs_ since there is no need for escape the string and it can be a huge data block to escape and recursively print
 	// xercesc::DOMElement* parentEl;
 
@@ -6391,12 +6405,13 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 	        .size() || 
 		cfgMgr->getAllGroupInfo().begin()->second.latestKeyGroupTypeString_ == "")  
 	{
-		__SUP_COUT__ << "Cache is empty? Attempting to regenerate." << __E__;
+		__SUP_COUT__ << "Group Info cache appears empty. Attempting to regenerate." << __E__;
 		cfgMgr->getAllTableInfo(true /*refresh*/,
 			0 /* accumulatedWarnings */,
 			"" /* errorFilterName */,
 			true /* getGroupKeys */,
-			true /* getGroupInfo */);
+			true /* getGroupInfo */,
+			true /* initializeActiveGroups */);
 	}
 
 	const std::map<std::string, GroupInfo>& allGroupInfo = cfgMgr->getAllGroupInfo();
@@ -6557,16 +6572,22 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 //		...
 //
 void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
-                                                 ConfigurationManagerRW* cfgMgr,
-                                                 bool allowIllegalColumns)
+                                                 ConfigurationManagerRW* cfgMgr)
 {
-	xercesc::DOMElement* parentEl;
+	if(cfgMgr->getAllGroupInfo().size() == 0 || 
+		cfgMgr->getActiveVersions().size() == 0)  
+	{
+		__SUP_COUT__ << "Table Info cache appears empty. Attempting to regenerate." << __E__;
+		cfgMgr->getAllTableInfo(true /*refresh*/,
+			0 /* accumulatedWarnings */,
+			"" /* errorFilterName */,
+			false /* getGroupKeys */,
+			false /* getGroupInfo */,
+			true /* initializeActiveGroups */);
+	}
 
-	__COUTV__(allowIllegalColumns);
-	std::string                             accumulatedErrors = "";
-	const std::map<std::string, TableInfo>& allTableInfo      = cfgMgr->getAllTableInfo(
-        true /*refresh*/,
-        &accumulatedErrors);  // if allowIllegalColumns, then also refresh
+	xercesc::DOMElement* parentEl;
+	const std::map<std::string, TableInfo>& allTableInfo      = cfgMgr->getAllTableInfo();
 
 	// construct specially ordered table name set
 	std::set<std::string, StringMacros::IgnoreCaseCompareStruct> orderedTableSet;
@@ -6636,11 +6657,6 @@ void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
 		//++it;
 	}  // end table loop
 
-	if(accumulatedErrors != "")
-		xmlOut.addTextElementToData(
-		    "Warning",
-		    std::string("Column errors were allowed for this request, ") +
-		        "but please note the following errors:\n" + accumulatedErrors);
 }  // end handleTablesXML()
 
 //==============================================================================
@@ -7040,6 +7056,394 @@ void ConfigurationGUISupervisor::handleSaveArtdaqNodeLayoutXML(
 	fclose(fp);
 
 }  // end handleSaveArtdaqNodeLayoutXML()
+
+//==============================================================================
+// handleOtherSubsystemActiveGroups
+void ConfigurationGUISupervisor::handleOtherSubsystemActiveGroups(
+    HttpXmlDocument& xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+	bool getFullList,
+	std::string targetSubsystem /* = "" */)
+try
+{
+
+	try
+	{
+		ConfigurationTree node = cfgMgr->getNode(ConfigurationManager::CONTEXT_SUBSYSTEM_OPTIONAL_TABLE);
+		auto children = node.getChildren();
+
+		for(auto subsystem : children)
+		{
+			__SUP_COUTV__(subsystem.first);
+			__SUP_COUTV__(StringMacros::vectorToString(subsystem.second.getChildrenNames()));
+
+			std::string userPath = subsystem.second.getNode("SubsystemUserDataPath").getValue();
+			__SUP_COUTV__(userPath);
+		}
+	}
+	catch(const std::runtime_error& e)
+	{
+		__SUP_COUT__ << "Ignoring errors in handling other subsystem active groups (assuming the subsystem information map is not setup in " <<
+			ConfigurationManager::CONTEXT_SUBSYSTEM_OPTIONAL_TABLE << ") -- here is the error: \n" << e.what() << __E__;
+		return; //ignore errors if subsystems not defined
+	}
+
+	//else subsystems are defined, so do not ignore errors!
+
+	ConfigurationTree node = cfgMgr->getNode(ConfigurationManager::CONTEXT_SUBSYSTEM_OPTIONAL_TABLE);
+	auto children = node.getChildren();
+	for(auto subsystem : children)
+	{		
+		if(targetSubsystem != "" && targetSubsystem != subsystem.first) continue; //skip non-target subsystem
+
+		std::string userPath = subsystem.second.getNode("SubsystemUserDataPath").getValue();
+		auto splitPath = StringMacros::getVectorFromString(userPath,{':'});
+		__SUP_COUTV__(StringMacros::vectorToString(splitPath));
+
+		if(!splitPath.size() || splitPath.size() > 2) 
+		{					
+			__SUP_SS__ << "Illegal user data path specified for subsystem '" <<  subsystem.first
+				<< "': " << userPath << __E__;
+			__SS_ONLY_THROW__;				
+		}		
+		std::string userDataPath = splitPath[splitPath.size()-1];
+
+		//since we are running exec, cleanse the filename path for alphanumeric,_,-,/ only
+		for(unsigned int i=0; i < userDataPath.length(); ++i)
+			if(!((userDataPath[i] >= 'a' && userDataPath[i] <= 'z') ||
+				(userDataPath[i] >= 'A' && userDataPath[i] <= 'Z') ||
+				(userDataPath[i] >= '0' && userDataPath[i] <= '9') ||
+				userDataPath[i] == '-' ||
+				userDataPath[i] == '_' ||
+				userDataPath[i] == '/'))
+			{				
+				__SUP_SS__ << "Illegal user data path specified (no special characters allowed) for subsystem '" <<  subsystem.first
+						<< "': " << userPath << __E__;
+				__SS_ONLY_THROW__;									
+			} // end filename cleanse	
+		
+
+		xercesc::DOMElement* parent = xmlOut.addTextElementToData("SubsystemName", subsystem.first);
+
+		if(!getFullList)
+			continue;
+
+		//enforce filename ends correctly
+		std::string filename = userDataPath + "/ServiceData/ActiveTableGroups.cfg";		
+
+		std::string cmdResult;
+		std::string username, hostname;
+		bool scpWithUsername = false;
+		if(splitPath.size() == 2) //then need to scp the file
+		{
+			//since we are running exec, cleanse the username@host path for alphanumeric,_,-,/ only
+			std::vector<std::string> userHostSplit = StringMacros::getVectorFromString(splitPath[0],{'@'});
+			__SUP_COUTV__(userHostSplit.size());			
+			if(userHostSplit.size() == 1)
+				hostname = userHostSplit[0];
+			else if(userHostSplit.size() == 2)
+			{
+				username = userHostSplit[0];
+				hostname = userHostSplit[1];
+			}
+			else
+			{					
+				__SUP_SS__ << "Illegal remote username/host specified for subsystem '" <<  subsystem.first
+					<< "': " << userPath << __E__;
+				__SS_ONLY_THROW__;					
+			}		
+
+			for(unsigned int i=0;userHostSplit.size() == 2 && i<username.length(); ++i)
+				if(!((username[i] >= 'a' && username[i] <= 'z') ||
+					(username[i] >= 'A' && username[i] <= 'Z') ||
+					(username[i] >= '0' && username[i] <= '9') ||
+					username[i] == '-' ||
+					username[i] == '_'))
+				{					
+					__SUP_SS__ << "Illegal remote username specified for subsystem '" <<  subsystem.first
+						<< "': " << userPath << __E__;
+					__SS_ONLY_THROW__;					
+				}		
+			unsigned int ii = 0; //track last . to prevent weird . usage
+			for(unsigned int i=0;i<hostname.length(); ++i)
+				if(!((hostname[i] >= 'a' && hostname[i] <= 'z') ||
+					(hostname[i] >= 'A' && hostname[i] <= 'Z') ||
+					(hostname[i] >= '0' && hostname[i] <= '9') ||
+					hostname[i] == '-' ||
+					hostname[i] == '_'))
+				{					
+					if(hostname[i] == '.' && i > ii + 1)
+					{
+						//its ok to have this . so track position
+						ii = i;
+					}
+					else //else not ok to have .. or other characters
+					{
+						__SUP_SS__ << "Illegal remote hostname '" << hostname << "' specified for subsystem '" <<  subsystem.first
+							<< "': " << userPath << __E__;
+						__SS_ONLY_THROW__;					
+					}
+				}		
+
+			std::string tmpSubsystemFilename = ConfigurationManager::ACTIVE_GROUPS_FILENAME + "." + subsystem.first;
+			__SUP_COUTV__(tmpSubsystemFilename);
+			if(userHostSplit.size() == 2) //has username
+			{
+				scpWithUsername = true;
+				cmdResult = StringMacros::exec(("rm "  + tmpSubsystemFilename + " 2>/dev/null; scp " + username + "@" + hostname + 
+					":" + filename + 
+					" " + tmpSubsystemFilename + " 2>&1; cat " + tmpSubsystemFilename + " 2>&1").c_str());
+			}
+			else
+				cmdResult = StringMacros::exec(("rm "  + tmpSubsystemFilename + " 2>/dev/null; scp " + hostname + ":" + filename + 
+					" " + tmpSubsystemFilename + " 2>&1; cat " + tmpSubsystemFilename + " 2>&1").c_str());
+		}
+		else if(splitPath.size() == 1) //then can just directly access the file
+		{
+			cmdResult = StringMacros::exec(("cat " + filename + " 2>&1").c_str());
+		}
+		else
+		{
+			__SUP_SS__ << "Illegal user data path specified for subsystem '" << subsystem.first
+				<< "': " << userPath << __E__;
+			__SS_ONLY_THROW__;
+		}
+
+		__SUP_COUTV__(cmdResult);
+		if(cmdResult.find("Permission denied") != std::string::npos)
+		{
+			__SUP_SS__ << "Permission denied accessing user data path specified for subsystem '" << subsystem.first
+				<< "': " << userPath << __E__;
+			__SS_ONLY_THROW__;
+		}
+
+		auto subsystemActiveGroupMap = StringMacros::getVectorFromString(cmdResult,{'\n'} /* delimieter*/, {' ','\t'} /* whitespace*/);
+		__SUP_COUTV__(StringMacros::vectorToString(subsystemActiveGroupMap));
+		__SUP_COUTV__(subsystemActiveGroupMap.size());
+
+		std::string //groupComment, groupAuthor, groupCreationTime, 
+			groupType;
+		for(unsigned int i = 0; i + 1 < subsystemActiveGroupMap.size(); i += 2)
+		{
+			if(subsystemActiveGroupMap[i] == "" || subsystemActiveGroupMap[i+1] == "-1") continue;
+
+			__SUP_COUT__ << "Loading type of subsystem '" << subsystem.first
+				<< "' group " << subsystemActiveGroupMap[i] << "(" << subsystemActiveGroupMap[i+1] << ")" << __E__;
+
+			try
+			{
+				cfgMgr->loadTableGroup(
+					subsystemActiveGroupMap[i]/*groupName*/,
+					TableGroupKey(subsystemActiveGroupMap[i+1]),
+					false /*doActivate*/,
+					0 /*groupMembers*/,
+					0 /*progressBar*/,
+					0 /*accumulateErrors*/,
+					0, // &groupComment,
+					0, //&groupAuthor,
+					0, //&groupCreationTime,
+					true /*doNotLoadMember*/,
+					&groupType);
+			}
+			catch(const std::runtime_error& e)
+			{
+				__SUP_COUT__ <<  "Ignoring error loading subsystem '" << subsystem.first
+				<< "' group " << subsystemActiveGroupMap[i] << "(" << subsystemActiveGroupMap[i+1] << "): " << __E__ << e.what() << __E__;
+				groupType = "Unknown";
+			}			
+			
+			xmlOut.addTextElementToParent("CurrentlyActive" + groupType + "GroupName", subsystemActiveGroupMap[i], parent);
+			xmlOut.addTextElementToParent("CurrentlyActive" + groupType + "GroupKey", subsystemActiveGroupMap[i+1], parent);
+			// xmlOut.addTextElementToParent("CurrentlyActive" + groupType + "GroupComment", groupComment, parent);
+			// xmlOut.addTextElementToParent("CurrentlyActive" + groupType + "GroupAuthor", groupAuthor, parent);
+			// xmlOut.addTextElementToParent("CurrentlyActive" + groupType + "GroupCreationTime", groupCreationTime, parent);
+		}
+
+
+		std::vector<std::string> filenameTypes = {
+			"Configured",
+			"Started",
+			"ActivatedConfig",
+			"ActivatedContext",
+			"ActivatedBackbone",
+			"ActivatedIterator"	
+		};
+
+		std::vector<std::string> filenames = {
+			FSM_LAST_CONFIGURED_GROUP_ALIAS_FILE,
+			FSM_LAST_STARTED_GROUP_ALIAS_FILE,
+			ConfigurationManager::LAST_ACTIVATED_CONFIG_GROUP_FILE,
+			ConfigurationManager::LAST_ACTIVATED_CONTEXT_GROUP_FILE,
+			ConfigurationManager::LAST_ACTIVATED_BACKBONE_GROUP_FILE,
+			ConfigurationManager::LAST_ACTIVATED_ITERATOR_GROUP_FILE
+		};
+
+		for(unsigned int i = 0; i < filenames.size(); ++i)
+		{
+			filename = userDataPath + "/ServiceData/RunControlData/" + filenames[i];	
+			__SUP_COUTV__(filename);
+
+			std::string tmpSubsystemFilename = ConfigurationManager::LAST_TABLE_GROUP_SAVE_PATH + "/" + filenames[i] + "." + subsystem.first;
+			__SUP_COUTV__(tmpSubsystemFilename);
+			
+			if(splitPath.size() == 2) //must scp
+			{
+				if(scpWithUsername) //has username
+					cmdResult = StringMacros::exec(("rm "  + tmpSubsystemFilename + " 2>/dev/null; scp " + username + "@" + hostname + 
+						":" + filename + 
+						" " + tmpSubsystemFilename + " 2>&1; cat " + tmpSubsystemFilename + " 2>&1").c_str());
+				else
+					cmdResult = StringMacros::exec(("rm "  + tmpSubsystemFilename + " 2>/dev/null; scp " + hostname + ":" + filename + 
+						" " + tmpSubsystemFilename + " 2>&1; cat " + tmpSubsystemFilename + " 2>&1").c_str());
+			}
+			else if(splitPath.size() == 1) //then can just directly access the file
+			{
+				cmdResult = StringMacros::exec(("rm "  + tmpSubsystemFilename + " 2>/dev/null; cp " + filename + 
+						" " + tmpSubsystemFilename + " 2>&1; cat " + tmpSubsystemFilename + " 2>&1").c_str());
+			}
+
+			__SUP_COUTV__(cmdResult);
+			std::string                                          timeString;
+			std::pair<std::string /*group name*/, TableGroupKey> theGroup = ConfigurationManager::loadGroupNameAndKey(filenames[i] + "." + subsystem.first, timeString);
+
+			// fill return parameters
+			xmlOut.addTextElementToParent("Last" + filenameTypes[i] + "GroupName", theGroup.first, parent);
+			xmlOut.addTextElementToParent("Last" + filenameTypes[i] + "GroupKey", theGroup.second.toString(), parent);
+			xmlOut.addTextElementToParent("Last" + filenameTypes[i] + "GroupTime", timeString, parent);
+		} // end active/recent filename handling
+		
+
+	} //end subsystem loop
+
+} 
+catch(const std::runtime_error& e)
+{
+	__SUP_SS__ << "An error occurred handling subsystem active groups (Please check the subsystem user data path information map setup in the Context group table " <<
+		ConfigurationManager::CONTEXT_SUBSYSTEM_OPTIONAL_TABLE << ") -- here is the error: \n" << e.what() << __E__;
+	__SUP_SS_THROW__;
+} // end getSubsytemTableGroups()
+
+//==============================================================================
+// handleDiffWithActiveGroup
+void ConfigurationGUISupervisor::handleDiffWithActiveGroup(
+    HttpXmlDocument& xmlOut,
+    ConfigurationManagerRW* cfgMgr,
+	const std::string&      groupName,
+	const TableGroupKey&    groupKey)
+{
+	//Steps:
+	//	- Get group type and load table map
+	//	- Get match type active group table map
+	//	- For each table, compare
+
+	__SUP_COUT__ << "Differencing group " << groupName << "(" << groupKey << ") with the active group." << __E__;
+
+
+	std::map<std::string /*name*/, TableVersion /*version*/> memberMap, activeMemberMap;
+	std::string groupType, accumulateErrors;
+	std::stringstream diffReport;
+	bool noDifference = true;
+
+	cfgMgr->loadTableGroup(
+		groupName,
+		groupKey,
+		false /*doActivate*/,
+		&memberMap /*groupMembers*/,
+		0 /*progressBar*/,
+		&accumulateErrors /*accumulateErrors*/,
+		0 /*groupComment*/,
+		0 /*groupAuthor*/, 
+		0 /*groupCreationTime*/, 
+		false /*doNotLoadMember*/,
+		&groupType);
+
+	std::map<std::string /* groupType */, std::pair<std::string, TableGroupKey>> activeGroups = cfgMgr->getActiveTableGroups();
+
+	__SUP_COUT__ << "active " << groupType << " group is " << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")" << __E__;
+
+	diffReport << "This difference report is between " << groupType << " group <b>'" << groupName << "(" << groupKey << ")'</b>" <<
+		" and active group <b>'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")'</b>." << __E__;
+
+	__SUP_COUTV__(StringMacros::mapToString(memberMap));
+
+	
+	cfgMgr->loadTableGroup(
+		activeGroups.at(groupType).first,
+		activeGroups.at(groupType).second,
+		false /*doActivate*/,
+		&activeMemberMap /*groupMembers*/,
+		0 /*progressBar*/,
+		&accumulateErrors /*accumulateErrors*/,
+		0 /*groupComment*/,
+		0 /*groupAuthor*/, 
+		0 /*groupCreationTime*/, 
+		false /*doNotLoadMember*/);
+
+	
+	diffReport << "\n\n" <<
+			"'" << groupName << "(" << groupKey << ")' has <b>" << memberMap.size() << " member tables</b>, and " << 
+			"'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ") has <b>" << activeMemberMap.size() << " member tables</b>." << __E__;
+
+	diffReport << "<INDENT>";
+
+	unsigned int tableDifferences = 0;
+
+	for(auto& member : memberMap)
+	{
+		if(activeMemberMap.find(member.first) == activeMemberMap.end())
+		{
+			diffReport << "\n\n" <<
+				"Table <b>" << member.first << "-v" << member.second << "</b> not found in active group." << __E__;
+			noDifference = false;
+			++tableDifferences;
+			continue;
+		}
+
+		__SUP_COUT__ <<  "Comparing " << 
+			member.first << "-v" << member.second << " ... " << 
+			member.first << "-v" << activeMemberMap.at(member.first) << __E__;
+		
+		if(member.second == activeMemberMap.at(member.first)) continue;
+
+		diffReport << "\n\n" <<
+			"Table <b>" << member.first << " v" << member.second << "</b> ...vs... " << " active version <b>v" << activeMemberMap.at(member.first) << "</b>:" << __E__;
+		 
+		TableBase* table = cfgMgr->getTableByName(member.first);
+		if(!table->diffTwoVersions(member.second,activeMemberMap.at(member.first),&diffReport))
+		{
+			//difference found!
+			noDifference = false;
+			++tableDifferences;
+		}		
+
+	} //end member table comparison loop
+
+	for(auto& activeMember : activeMemberMap)
+	{
+		if(memberMap.find(activeMember.first) == memberMap.end())
+		{
+			diffReport << "\n\n" <<
+				"Active Group Table <b>" << activeMember.first << "-v" << activeMember.second << "</b> not found in '" << groupName << "(" << groupKey << ")'." << __E__;
+			noDifference = false;
+			++tableDifferences;
+			continue;
+		}
+	}
+	diffReport << "\n</INDENT>";
+
+	if(noDifference)
+		diffReport << "\n\nNo difference found between " <<
+			"<b>'" << groupName << "(" << groupKey << ")'</b> and active group " << 
+			"<b>'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")'</b>." << __E__;
+	else
+		diffReport << "\n\n<b>" << tableDifferences << "</b> member table differences identified between " <<
+			"<b>'" << groupName << "(" << groupKey << ")'</b> and active group " << 
+			"<b>'" << activeGroups.at(groupType).first << "(" << activeGroups.at(groupType).second << ")'</b>." << __E__;
+
+
+	xmlOut.addTextElementToData("NoDifference", noDifference?"1":"0");
+	xmlOut.addTextElementToData("DiffReport", diffReport.str());
+} // end handleDiffWithActiveGroup()
 
 //==============================================================================
 //	testXDAQContext
