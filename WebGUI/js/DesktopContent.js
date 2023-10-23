@@ -1137,13 +1137,13 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	var timeoutTimer;	
 	var timeoutFunction = function() 
 					{
-						Debug.log("It has been 60 seconds.. still waiting for a response. " +
+						Debug.log("It has been 90 seconds.. still waiting for a response. " +
 							"Is there an infinite loop occuring at the server? " +
 							"Or is this just a really long request..",
 							Debug.HIGH_PRIORITY);
 						timeoutTimer = window.setTimeout(timeoutFunction, 60000); 
 					}
-	timeoutTimer = window.setTimeout(timeoutFunction, 60000);
+	timeoutTimer = window.setTimeout(timeoutFunction, 90000);
 	
 	//setup response handler
 	req.onreadystatechange = function() {
