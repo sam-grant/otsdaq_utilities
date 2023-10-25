@@ -16024,7 +16024,7 @@
 				var i = memberTableVersion.indexOf(needle);
 				var j = memberTableVersion.indexOf("&quot;,&quot;",i + needle.length);
 				memberTableVersion = memberTableVersion.substr(i + needle.length,j - i - needle.length);				
-				memberTableVersion |= 0;
+				//memberTableVersion |= 0;
 				// Debug.logv({memberTableVersion});
 
 				var backLinkStr = "setupSpecificTableGroup(\\\"" + groupName + "\\\",\\\"" +
@@ -16038,7 +16038,7 @@
 					"onclick='" + replaceScreenJS + "'>";
 				str += "(Member version: ";
 				str += "<label id='" + memberTableName + "-currentVersion'>";
-				str += ((memberTableVersion | 0) == ConfigurationAPI._SCRATCH_VERSION ?
+				str += ((memberTableVersion) == ConfigurationAPI._SCRATCH_VERSION ?
 					_SCRATCH_VIEW_NAME : memberTableVersion);
 				str += "</label>";
 
