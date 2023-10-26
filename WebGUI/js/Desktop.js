@@ -2474,6 +2474,27 @@ Desktop.handleWindowHelp = function (mouseEvent)
 } //end handleWindowHelp()
 
 //==============================================================================
+Desktop.handleDashboardHelp = function (mouseEvent) 
+{
+	// Check if window exists 
+	if(Desktop.desktop.getForeWindow() == 0)
+	{
+		window.open("https://github.com/Mu2e/otsdaq_mu2e", "_blank")
+	}
+
+	if(Desktop.desktop.getForeWindow().isMaximized())
+	{
+		Debug.log("Help " + Desktop.desktop.getForeWindow());
+		Desktop.desktop.windowHelpById(Desktop.desktop.getForeWindow().getWindowId());
+	}
+	else 
+	{
+		window.open("https://github.com/Mu2e/otsdaq_mu2e", "_blank")
+	}
+	return false;
+} //end handleWindowHelp()
+
+//==============================================================================
 Desktop.handleFullScreenWindowRefresh = function(mouseEvent)
 {
         Debug.log("Refresh Full Screen Window");

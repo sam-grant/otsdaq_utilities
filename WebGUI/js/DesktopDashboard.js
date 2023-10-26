@@ -831,9 +831,11 @@ else
                 
         tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
-        tmpBtn.innerHTML = "<a target='_blank' href='" + 
-        	"https://cdcvs.fnal.gov/redmine/projects/otsdaq/wiki/Otsdaq_User_Manual" +
-        	" 'title='Click to open ots documentation in a new tab' ><img src='/WebPath/images/dashboardImages/icon-Help.png'></a>";
+        tmpBtn.innerHTML = "<a  href='" + 
+        	"#'" +
+        	" 'title='Click to open NEW ots documentation in a new tab' ><img src='/WebPath/images/dashboardImages/icon-Help.png'></a>";
+		tmpBtn.onmouseup = Desktop.handleDashboardHelp;
+		tmpBtn.onmousedown = Desktop.handleDashboardHelp;
         _topBar.appendChild(tmpBtn);
                
         if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS || 
