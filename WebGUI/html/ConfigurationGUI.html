@@ -16024,7 +16024,7 @@
 				var i = memberTableVersion.indexOf(needle);
 				var j = memberTableVersion.indexOf("&quot;,&quot;",i + needle.length);
 				memberTableVersion = memberTableVersion.substr(i + needle.length,j - i - needle.length);				
-				memberTableVersion |= 0;
+				//memberTableVersion |= 0; // do not convert to int, because aliases are represented as strings!
 				// Debug.logv({memberTableVersion});
 
 				var backLinkStr = "setupSpecificTableGroup(\\\"" + groupName + "\\\",\\\"" +
