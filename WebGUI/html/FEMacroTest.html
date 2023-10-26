@@ -638,12 +638,14 @@
 					);
 			}
 
-			if (currentLiveViewTimeout !== null) {
+			if (currentLiveViewTimeout !== null)
+			{
         		clearTimeout(currentLiveViewTimeout);
        		 	currentLiveViewTimeout = null;
    			}
 
-			if (liveViewActive) {
+			if (liveViewActive)
+			{
         		currentLiveViewTimeout = setTimeout(function() { runMacro(r, c); }, intervalTime); 
     		}
 			
@@ -1940,7 +1942,8 @@
 		}
 
 		// call the function when we click on the history
-		function onClickHistoryRecord(recordObj) {
+		function onClickHistoryRecord(recordObj)
+		{
 
 			// in bulding sequence mode add the macro to the sequence
 			if (sequenceBuilding_)
@@ -1963,7 +1966,8 @@
 					true /*callHandlerOnErr*/
 					);
 			
-			if (currentLiveViewTimeout !== null) {
+			if (currentLiveViewTimeout !== null) 
+			{
         		clearTimeout(currentLiveViewTimeout);
        		 	currentLiveViewTimeout = null;
    			}
@@ -2022,16 +2026,19 @@
 
 			liveViewActive = !liveViewActive;
 
-			if (liveViewActive) {
-
+			if (liveViewActive) 
+			{
 				document.getElementById('popupSetInterval').style.display = 'block';
 				var inputField = document.getElementById("intervalTime");
 				inputField.focus();
 				inputField.select();
 
-			} else{
+			}
+			else
+			{
 
-				if (currentLiveViewTimeout !== null) {
+				if (currentLiveViewTimeout !== null)
+				{
             		clearTimeout(currentLiveViewTimeout);
             		currentLiveViewTimeout = null;
        			}
@@ -2052,7 +2059,8 @@
 			var intervalTimeInput = document.getElementById('intervalTime').value*1000;
 			intervalTime = parseInt(intervalTimeInput);
 
-			if (isNaN(intervalTime) || intervalTime <= 0) {
+			if (isNaN(intervalTime) || intervalTime <= 0)
+			{
 				alert("Please enter a valid number greater than 0");
 				return;
 			}
@@ -2065,20 +2073,22 @@
 			liveViewBtn.style.color = 'white';
 			
 
-			if (!liveViewActive) {
+			if (!liveViewActive)
+			{
 				liveViewActive = true;
 			}
 		}
 
 		function handleEnterPress(event) 
 		{
-        if (event.key === "Enter" || event.keyCode === 13) {
-            event.preventDefault();
+        	if (event.key === "Enter" || event.keyCode === 13)
+			{
+            	event.preventDefault();
             
-            setIntervalAndStart();
+            	setIntervalAndStart();
 
-            return false;
-        }
+           		return false;
+        	}
         return true;
     	}    
 
@@ -2419,7 +2429,6 @@
 			builderActions.style.display = "flex";
 		}
 
-		
 		function deleteSequence()
 		{
 			// call the API
