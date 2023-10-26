@@ -70,7 +70,7 @@
 		h1{
 			font-size: 			40px;
 		}
-		
+
 		.goodValue {
 			color:				darkgreen; 
 			font-size:			inherit;
@@ -137,11 +137,11 @@
 		}
 
 		.component.light {
-			background-color: lightcoral;
+			background-color: lavender;
 		}
 
 		.component.dark {
-			background-color: coral;
+			background-color: lightgrey;
 		}
 
 		.macroInfo {
@@ -251,6 +251,12 @@
 		var focusedMacroCell = [-1,-1]; //when enter is pressed which macro to run
 
 		var firstTime = true;
+
+		var liveViewActive = false;
+
+		var intervalTime;
+
+		var currentLiveViewTimeout = null;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -631,6 +637,15 @@
 					true /*callHandlerOnErr*/
 					);
 			}
+
+			if (currentLiveViewTimeout !== null) {
+        		clearTimeout(currentLiveViewTimeout);
+       		 	currentLiveViewTimeout = null;
+   			}
+
+			if (liveViewActive) {
+        		currentLiveViewTimeout = setTimeout(function() { runMacro(r, c); }, intervalTime); 
+    		}
 			
 			var command = {
 				"feClass": feClassSelected,
@@ -651,7 +666,7 @@
 			if (verticalOrientation_)
 				appendHistoryRecord(JSON.stringify(command));
 		} //end runMacro()
-
+		
 		function handleMacroResponse(req, reqParam, errStr) 
 		{
 			var el;
@@ -920,9 +935,11 @@
 							"rowspan": maxRow,
 							"width":"400px",
 						},
-						"<h3>Command history</h3>",
+						"<div style='display: flex; justify-content: space-between; align-items: center; width: 100%;'>" +
+							"<h3>Command history</h3>" +
+							"<button id='liveViewBtn' onClick='toggleLiveView()'>Live View</button>",
 						true);
-
+					
 					// add sequence builder
 					str += DesktopContent.htmlOpen(
 						"td",
@@ -1806,7 +1823,6 @@
 				runMacro(focusedMacroCell[0],focusedMacroCell[1]);
 			}
 		} //end handleKeyInput()
-		
 		//=====================================================================================				
 		//loadHistory ~~
 		var numRecords = 0;
@@ -1830,6 +1846,15 @@
 				},
 				"",
 				true);
+
+			//str += DesktopContent.htmlOpen(
+			//	"button",
+			//	{
+			//		"id": "liveViewBtn",
+			//		"onClick": "toggleLiveView()",
+			//	},
+			//	"Live View",
+			//	true);
 			
 			// add the clear history button
 			str += DesktopContent.htmlOpen(
@@ -1947,9 +1972,18 @@
 					0 /*reqParam*/, 0 /*progressHandler*/, 
 					true /*callHandlerOnErr*/
 					);
+			
+			if (currentLiveViewTimeout !== null) {
+        		clearTimeout(currentLiveViewTimeout);
+       		 	currentLiveViewTimeout = null;
+   			}
 
 			// show the command in the interface
 			appendHistoryRecord(JSON.stringify(recordObj));
+
+			if (liveViewActive) {
+				currentLiveViewTimeout = setTimeout(function() { onClickHistoryRecord(recordObj); }, intervalTime); 
+    		}
 		}
 
 		// ask confirm before clearing the history
@@ -1962,8 +1996,25 @@
 		// hide the popup
 		function hideSmallPopup(el)
 		{
+			var sequenceNameInput = document.getElementById("sequenceName");
+			sequenceNameInput.value = "";
+
+			var errorMessage = document.getElementById("sequenceName-error");
+			errorMessage.innerText = "";
+
 			var wholeDiv = el.parentNode.parentNode.parentNode;
 			wholeDiv.style.display = "none";
+
+		}
+
+		// hide the popup for live view
+		function hideSmallPopupLiveView(el)
+		{
+			var wholeDiv = el.parentNode.parentNode.parentNode;
+			wholeDiv.style.display = "none";
+			liveViewActive = false;
+			document.getElementById('intervalTime').value = '2';
+
 		}
 
 		// clear the history
@@ -1974,6 +2025,72 @@
 			contentEl.innerHTML = "";
 			hideSmallPopup(el);
 		}
+		//=====================================================================================				
+		// live view
+		function toggleLiveView()
+		{
+
+			liveViewActive = !liveViewActive;
+
+			if (liveViewActive) {
+
+				document.getElementById('popupSetInterval').style.display = 'block';
+				var inputField = document.getElementById("intervalTime");
+				inputField.focus();
+				inputField.select();
+
+			} else{
+
+				if (currentLiveViewTimeout !== null) {
+            		clearTimeout(currentLiveViewTimeout);
+            		currentLiveViewTimeout = null;
+       			}
+
+				liveViewActive = false;
+				document.getElementById('intervalTime').value = '2';
+			
+				var liveViewBtn = document.getElementById('liveViewBtn');
+				liveViewBtn.textContent = 'Live View';
+				liveViewBtn.style.backgroundColor = '';
+				liveViewBtn.style.color = '';			
+			}
+
+		}
+	
+		function setIntervalAndStart() 
+		{
+			var intervalTimeInput = document.getElementById('intervalTime').value*1000;
+			intervalTime = parseInt(intervalTimeInput);
+
+			if (isNaN(intervalTime) || intervalTime <= 0) {
+				alert("Please enter a valid number greater than 0");
+				return;
+			}
+
+			document.getElementById('popupSetInterval').style.display = 'none';
+
+			var liveViewBtn = document.getElementById('liveViewBtn');
+			liveViewBtn.textContent = 'Stop Live View';
+			liveViewBtn.style.backgroundColor = 'red';
+			liveViewBtn.style.color = 'white';
+			
+
+			if (!liveViewActive) {
+				liveViewActive = true;
+			}
+		}
+
+		function handleEnterPress(event) 
+		{
+        if (event.key === "Enter" || event.keyCode === 13) {
+            event.preventDefault();
+            
+            setIntervalAndStart();
+
+            return false;
+        }
+        return true;
+    	}    
 
 		//=====================================================================================	
 		//loadSequence
@@ -2084,10 +2201,11 @@
 		function showPopupSaveSequence()
 		{
 			var popup = document.getElementById("popupSaveSequence");
-			var sequenceName = document.getElementById("sequenceName").value;
-			sequenceName = "";
+			var sequenceNameInput = document.getElementById("sequenceName");
 			popup.style.display = "grid";
 			popup.style.gridTemplateColumns = "1fr";
+			sequenceNameInput.value = "";
+			sequenceNameInput.focus();
 		}
 
 		function hidePopupSaveSequence()
@@ -2120,7 +2238,7 @@
 				"select",
 				{
 					"id": "select-sequence",
-					"style": "width: 200px;",
+					"style": "width: 150px;",
 					"onChange": "selectSequence(this.value)"
 				},
 				"<option value='undefined'>None</option>",
@@ -2132,7 +2250,7 @@
 					"id": "sequnce-selector",
 					"style": "margin:10px; display: inline-flex; gap: 15px;"
 				},
-				"<p>Select sequence: </p>" + select,
+				"<p><strong>Select sequence: </strong></p>" + select,
 				true);
 			// space used to show the steps of each sequence
 			str += DesktopContent.htmlOpen(
@@ -2165,7 +2283,7 @@
 				"button",
 				{
 					"id": "deleteSequenceBtn",
-					"style": "background-color: #ff0000",
+					"style": "background-color: Red; color: white;",
 					"onClick": "deleteSequence()",
 					"disabled": "true",
 				},
@@ -2175,7 +2293,7 @@
 				"button",
 				{
 					"id": "newSequenceBtn",
-					"style": "background-color: #66ff66",
+					"style": "background-color: green; color: white;",
 					"onClick": "newSequence()",
 				},
 				"New",
@@ -2411,7 +2529,12 @@
 				return;
 			}
 
-			// TODO: check if the name can be used for a file
+			var invalidCharacters = /[<>:"/\\|?*]/;
+			if (invalidCharacters.test(sequenceName.value))
+			{
+				errorMessage.innerText = "Sequence name contains invalid characters!";
+				return;
+			}
 
 			// check if the name is unique 
 			for (var i = 0; i < sequenceSelector.options.length; i++)
@@ -2441,8 +2564,14 @@
 				0 /*reqParam*/, 
 				0 /*progressHandler*/, 
 				true /*callHandlerOnErr*/
+				
 			);
-			
+			var sequenceNameInput = document.getElementById("sequenceName");
+			sequenceNameInput.value = "";
+
+			var errorMessage = document.getElementById("sequenceName-error");
+			errorMessage.innerText = "";
+			hidePopupSaveSequence()
 			closeSequence();
 		}
 
@@ -2535,6 +2664,18 @@
 			return
 		}
 		
+		function handleEnterPressSequence(event) 
+		{
+        if (event.key === "Enter" || event.keyCode === 13) {
+            event.preventDefault();
+            
+            saveSequence();
+
+            return false;
+        }
+        return true;
+    	}    
+
 		// END SEQUENCE CONTROL
 		//=====================================================================================		
 	</script>
@@ -2563,15 +2704,26 @@
 		</div>
 	</div>
 
+	<div id="popupSetInterval" class="smallPopup">
+			<center>
+		<h4>Please enter the interval time (sec):</h4>
+		<input type="number" id="intervalTime" value="2" onkeypress="return handleEnterPress(event)">
+		<div class="buttongroup" style="margin-top: 20px;">
+				<button onclick="setIntervalAndStart()">Set Interval</button>
+				<button onclick="hideSmallPopupLiveView(this)">Cancel</button>
+		</div>
+	</center>
+	</div>
+
 	<div id="popupSaveSequence" class="smallPopup">
-	    <h4>Type a name for the sequence"</h4>
-		<input type="text" id="sequenceName" maxlength="30"></input>
-		<span id="sequenceName-error" style="color: red;"></span>
-	    <div class="buttongroup">
-		  <center>
+		<center>
+	    <h4>Type a name for the sequence</h4>
+		<input type="text" id="sequenceName" maxlength="30" onkeypress="return handleEnterPressSequence(event)"></input>
+		<span id="sequenceName-error" style="color: red; display: block;"></span>
+	    <div class="buttongroup" style="margin-top: 20px;">
 			<button onclick="saveSequence()">Confirm</button>
 			<button onclick="hideSmallPopup(this)">Cancel</button>
-		  </center>
+		</center>
 		</div>
 	</div>
 
@@ -2580,3 +2732,4 @@
 </body>
 	
 </html>
+
