@@ -14,6 +14,7 @@
 
 #define MACROS_DB_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroData/"
 #define MACROS_HIST_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroHistory/"
+#define MACROS_SEQUENCE_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroSequence/"
 #define MACROS_EXPORT_PATH std::string("/MacroExport/")
 
 #define SEQUENCE_FILE_NAME \
@@ -39,6 +40,7 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 	// make macro directories in case they don't exist
 	mkdir(((std::string)MACROS_DB_PATH).c_str(), 0755);
 	mkdir(((std::string)MACROS_HIST_PATH).c_str(), 0755);
+	mkdir(((std::string)MACROS_SEQUENCE_PATH).c_str(), 0755);
 	mkdir((__ENV__("SERVICE_DATA_PATH") + MACROS_EXPORT_PATH).c_str(), 0755);
 
 	xoap::bind(this,
@@ -536,11 +538,23 @@ try
 	             << unsigned(userInfo.permissionLevel_) << "." << __E__;
 
 	// handle request per requestType
+
+	if (requestType == "loadFEHistory")
+	{
+		std::string histPath = (std::string)MACROS_HIST_PATH + userInfo.username_ + "/";
+		mkdir(histPath.c_str(), 0755);
+	}
+
+	if (requestType == "loadMacroSequences")
+	{
+		std::string seqPath = (std::string)MACROS_SEQUENCE_PATH + userInfo.username_ + "/";
+		mkdir(seqPath.c_str(), 0755);
+	}
+
 	if(requestType == "getPermission")
 	{
 		xmlOut.addTextElementToData("Permission",
 		                            std::to_string(unsigned(userInfo.permissionLevel_)));
-
 		// create macro maker folders for the user (the first time a user authenticates
 		// with macro maker)
 		std::string macroPath = (std::string)MACROS_DB_PATH + userInfo.username_ + "/";
@@ -615,6 +629,16 @@ void MacroMakerSupervisor::handleRequest(const std::string                Comman
 	else if(Command == "clearFEHistory")  // called by FE Macro Test returns FE Macros and
 	                                  		// Macro Maker Macros
 		clearFEHistory(userInfo.username_);
+	else if (Command == "loadMacroSequences")
+		loadMacroSequences(xmldoc, userInfo.username_);
+	else if (Command == "saveSequence")
+		saveMacroSequence(cgi, userInfo.username_);
+	else if (Command == "getSequence")
+		getMacroSequence(xmldoc, cgi, userInfo.username_);
+	else if (Command == "deleteSequence")
+		deleteMacroSequence(cgi, userInfo.username_);
+	else if (Command == "runSequence")
+		runFEMacroSequence(xmldoc, cgi, userInfo.username_);
 	else
 		xmldoc.addTextElementToData("Error", "Unrecognized command '" + Command + "'");
 }  // end handleRequest()
@@ -1445,6 +1469,123 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string feClass,
 	}
 	else
 		__SUP_COUT__ << "Unable to open FEhistory.hist" << __E__;
+
+}
+//==============================================================================
+void MacroMakerSupervisor::loadMacroSequences(HttpXmlDocument& xmldoc,
+                                       		  const std::string& username) 
+{
+	DIR* dir;
+	struct dirent* ent;
+	std::string fullPath = (std::string)MACROS_SEQUENCE_PATH + username + "/";
+	std::string sequences = "";
+	if ((dir = opendir(fullPath.c_str())) != NULL)
+	{
+		/* print all the files and directories within directory */
+		while((ent = readdir(dir)) != NULL)
+		{
+			std::string line;
+			std::ifstream read(((fullPath + (std::string)ent->d_name)).c_str());  // reading a file
+			if(read.is_open())
+			{
+				read.close();
+				sequences = sequences + ent->d_name + ";";
+			}
+			else
+				__SUP_COUT__ << "Unable to open file" << __E__;
+		}
+		closedir(dir);
+	}
+	else
+	{
+		__SUP_COUT__ << "Looping through MacroSequence/" + username + 
+						" folder failed! Wrong directory" << __E__;
+	}
+
+	// return the list of sequences
+	xmldoc.addTextElementToData("sequences", sequences);
+	return;
+}
+
+//==============================================================================
+void MacroMakerSupervisor::saveMacroSequence(cgicc::Cgicc& cgi,
+											 const std::string& username) 
+{
+	// get data from the http request
+	std::string name = CgiDataUtilities::postData(cgi, "sequenceName");
+	std::string sequence = StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "sequence"));
+
+	__SUP_COUTV__(name);
+	__SUP_COUTV__(sequence);
+
+	// append to the file
+	std::string fullPath = (std::string)MACROS_SEQUENCE_PATH + username + "/" + name + ".dat";
+	__SUP_COUT__ << fullPath << __E__;
+	std::ofstream seqfile (fullPath.c_str(), std::ios::app);
+	if (seqfile.is_open())
+	{
+		// seqfile << "#" << name << __E__;
+		seqfile << sequence << __E__;
+		seqfile.close();
+	}
+	else
+		__SUP_COUT__ << "Unable to open " << name << ".dat" << __E__;
+}
+
+//==============================================================================
+void MacroMakerSupervisor::getMacroSequence(HttpXmlDocument& xmldoc,
+										   cgicc::Cgicc& cgi, 
+										   const std::string& username)
+{
+	std::string sequenceName = CgiDataUtilities::getData(cgi, "name");
+
+	__SUP_COUTV__(sequenceName);
+
+	// access to the file
+	std::string fullPath = (std::string)MACROS_SEQUENCE_PATH + username + "/" + sequenceName + ".dat";
+	__SUP_COUT__ << fullPath << __E__;
+
+	std::ifstream read(fullPath.c_str());	// reading the file
+	char* response;
+	unsigned long long fileSize;
+
+	if (read.is_open())
+	{
+		read.seekg(0, std::ios::end);
+		fileSize = read.tellg();
+		response = new char[fileSize + 1];
+		response[fileSize] = '\0';
+		read.seekg(0, std::ios::beg);
+
+		// read data as a block:
+		read.read(response, fileSize);
+		read.close();
+
+		xmldoc.addTextElementToData("sequence", &response[0]);
+
+		delete[] response;
+	}
+	else
+	{
+		__SUP_COUT__ << "Unable to open " << fullPath << "!" << __E__;
+		xmldoc.addTextElementToData("error", "ERROR");
+	}
+}
+
+//==============================================================================
+void MacroMakerSupervisor::deleteMacroSequence(cgicc::Cgicc& cgi, 
+										       const std::string& username)
+{
+	std::string sequenceName = CgiDataUtilities::getData(cgi, "name");
+
+	__SUP_COUTV__(sequenceName);
+
+	// access to the file
+	std::string fullPath = (std::string)MACROS_SEQUENCE_PATH + username + "/" + sequenceName + ".dat";
+	__SUP_COUT__ << fullPath << __E__;
+
+	std::remove(fullPath.c_str());
+	__SUP_COUT__ << "Successfully deleted " << fullPath;
 
 }
 //==============================================================================
@@ -2354,7 +2495,61 @@ std::string MacroMakerSupervisor::generateHexArray(const std::string& sourceHexS
 
 	return retSs.str();
 }
+//==============================================================================
+void MacroMakerSupervisor::runFEMacroSequence(HttpXmlDocument& xmldoc,
+											  cgicc::Cgicc& cgi,
+											  const std::string& username)
+{
+	std::string sequenceName = CgiDataUtilities::getData(cgi, "name");
 
+	__SUP_COUTV__(sequenceName);
+
+	// access to the file
+	std::string fullPath = (std::string)MACROS_SEQUENCE_PATH + username + "/" + sequenceName + ".dat";
+	__SUP_COUT__ << fullPath << __E__;
+
+	// read from the file
+	std::ifstream read(fullPath.c_str());	// reading the file
+	std::string sequence;
+
+	if (read.is_open())
+	{
+		char* seqFile;
+		unsigned long long fileSize;
+		read.seekg(0, std::ios::end);
+		fileSize = read.tellg();
+		seqFile = new char[fileSize + 1];
+		seqFile[fileSize] = '\0';
+		read.seekg(0, std::ios::beg);
+
+		// read data as a block:
+		read.read(seqFile, fileSize);
+		read.close();
+
+		sequence = StringMacros::decodeURIComponent(seqFile);
+		delete[] seqFile;
+	}
+	else
+	{
+		__SUP_SS__ << "Unable to read the file " << sequenceName << "!" << __E__;
+		__SUP_SS_THROW__;
+	}
+
+	// TODO: decode list
+	std::map<std::string, std::string> sequenceMap;
+	StringMacros::getMapFromString(
+	    sequence,
+	    sequenceMap,
+	    std::set<char>({','}) /*pair delimiters*/,
+	    std::set<char>({':'}) /*name/value delimiters*/);
+
+	__SUP_COUTV__(sequenceName);
+
+	//TODO: iterate over the list and exe macros
+
+	// TODO: send backe the results
+	xmldoc.addTextElementToData("result", "OK");
+}
 //==============================================================================
 void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&                 xmldoc,
                                       cgicc::Cgicc&                    cgi,
