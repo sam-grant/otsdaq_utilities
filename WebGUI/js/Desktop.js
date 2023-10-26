@@ -2479,7 +2479,7 @@ Desktop.handleDashboardHelp = function (mouseEvent)
 	// Check if window exists 
 	if(Desktop.desktop.getForeWindow() == 0)
 	{
-		window.open("https://github.com/art-daq", "_blank")
+		window.open("https://github.com/art-daq/otsdaq#readme", "_blank")
 	}
 
 	if(Desktop.desktop.getForeWindow().isMaximized())
@@ -2489,7 +2489,7 @@ Desktop.handleDashboardHelp = function (mouseEvent)
 	}
 	else 
 	{
-		window.open("https://github.com/art-daq", "_blank")
+		window.open("https://github.com/art-daq/otsdaq#readme", "_blank")
 	}
 	return false;
 } //end handleWindowHelp()
