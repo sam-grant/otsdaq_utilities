@@ -2481,8 +2481,7 @@ Desktop.handleDashboardHelp = function (mouseEvent)
 	{
 		window.open("https://github.com/art-daq/otsdaq#readme", "_blank")
 	}
-
-	if(Desktop.desktop.getForeWindow().isMaximized())
+	else if(Desktop.desktop.getForeWindow().isMaximized())
 	{
 		Debug.log("Help " + Desktop.desktop.getForeWindow());
 		Desktop.desktop.windowHelpById(Desktop.desktop.getForeWindow().getWindowId());
