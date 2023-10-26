@@ -2662,7 +2662,12 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex)
 				//check if failed due to cookieCode and go to login prompt
 				if(req.responseText == Globals.REQ_NO_PERMISSION_RESPONSE)
 				{
-					errStr = "Request failed do to insufficient account permissions.";
+					var requestType = requestURL.indexOf("RequestType=");
+					if(requestType > 0)
+						requestType = " '" + requestURL.substr(requestType + ("RequestType=").length) + "'";
+					else
+						requestType = "";
+					errStr = "Request " + requestType + " failed due to insufficient account permissions."; 
 					//return;
 				}
 				else if(req.responseText == Globals.REQ_NO_LOGIN_RESPONSE) 
