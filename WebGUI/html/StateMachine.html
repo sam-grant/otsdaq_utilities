@@ -641,19 +641,22 @@
             			var lastIndex = -1;
             			var alias;
                         for(var i=0;i<aliasArr.length;++i) 
-                        {
-                            
+                        {                            
+							//require meta information for a 'good' alias
+							if(!aliasCommentArr[i] || !aliasCreateTimeArr[i]) continue;
+
                         	//this skips all except for Physics.. don't want this anymore
                         	//if(aliasArr[i].getAttribute('value').indexOf("Physics") == -1) continue;
                         	alias = aliasArr[i].getAttribute('value');
                         	_aliasTranslationMap[alias] = aliasGroupArr[i].getAttribute('value');
-                        	if(aliasCommentArr[i])
-                        	_aliasTranslationMetaDataMap[alias] = [
-																   aliasCommentArr[i].getAttribute('value'),
-																   aliasAuthorArr[i].getAttribute('value'),
-																   aliasCreateTimeArr[i].getAttribute('value'),
-																   aliasGroupCommentArr[i].getAttribute('value')
-																   ];
+                        	
+							if(aliasCommentArr[i])
+                        		_aliasTranslationMetaDataMap[alias] = [
+									aliasCommentArr[i].getAttribute('value'),
+									aliasAuthorArr[i].getAttribute('value'),
+									aliasCreateTimeArr[i].getAttribute('value'),
+									aliasGroupCommentArr[i].getAttribute('value')
+									];
 														 
                             //choose the first system alias by default (the first init)
                             if(!i) _transitionParameterValues[_parameterInitCount] = alias;
