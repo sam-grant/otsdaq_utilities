@@ -642,12 +642,19 @@
             			var alias;
                         for(var i=0;i<aliasArr.length;++i) 
                         {                            
-							//require meta information for a 'good' alias
-							if(!aliasCommentArr[i] || !aliasCreateTimeArr[i]) continue;
+							
 
                         	//this skips all except for Physics.. don't want this anymore
                         	//if(aliasArr[i].getAttribute('value').indexOf("Physics") == -1) continue;
                         	alias = aliasArr[i].getAttribute('value');
+
+							//require meta information for a 'good' alias
+							if(!aliasCommentArr[i] || !aliasCreateTimeArr[i]) 
+							{
+								Debug.err("Configuration alias '" + alias + "' has an illegal group translation or is missing meta data information. Please delete the alias or fix the translation in your active Backbone group.");
+								continue;
+							}
+
                         	_aliasTranslationMap[alias] = aliasGroupArr[i].getAttribute('value');
                         	
 							if(aliasCommentArr[i])
