@@ -239,7 +239,7 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 																	const std::string&      groupName,
 																	const TableGroupKey&    groupKey);
 
-
+	
 
 	void  					testXDAQContext							(void);
 
