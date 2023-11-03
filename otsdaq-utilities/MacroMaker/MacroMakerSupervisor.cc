@@ -557,10 +557,6 @@ try
 		                            std::to_string(unsigned(userInfo.permissionLevel_)));
 		// create macro maker folders for the user (the first time a user authenticates
 		// with macro maker)
-		std::string macroPath = (std::string)MACROS_DB_PATH + userInfo.username_ + "/";
-		mkdir(macroPath.c_str(), 0755);
-		std::string histPath = (std::string)MACROS_HIST_PATH + userInfo.username_ + "/";
-		mkdir(histPath.c_str(), 0755);
 		std::string publicPath = (std::string)MACROS_DB_PATH + "publicMacros/";
 		mkdir(publicPath.c_str(), 0755);
 		std::string exportPath =
@@ -619,7 +615,15 @@ void MacroMakerSupervisor::handleRequest(const std::string                Comman
 		exportFEMacro(xmldoc, cgi, userInfo.username_);
 	else if(Command == "getFEMacroList")  // called by FE Macro Test and returns FE Macros
 	                                      // and Macro Maker Macros
+	{
+
+		std::string macroPath = (std::string)MACROS_DB_PATH + userInfo.username_ + "/";
+		mkdir(macroPath.c_str(), 0755);
+		std::string histPath = (std::string)MACROS_HIST_PATH + userInfo.username_ + "/";
+		mkdir(histPath.c_str(), 0755);
+	
 		getFEMacroList(xmldoc, userInfo.username_);
+	}
 	else if(Command == "runFEMacro")  // called by FE Macro Test returns FE Macros and
 	                                  // Macro Maker Macros
 		runFEMacro(xmldoc, cgi, userInfo);
