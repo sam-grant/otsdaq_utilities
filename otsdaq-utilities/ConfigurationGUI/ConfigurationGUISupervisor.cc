@@ -6283,7 +6283,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 		for(auto& aliasNodePair : aliasNodePairs)
 		{
 			std::string groupName, groupKey;
-			ots::GroupInfo groupInfo;
+			std::shared_ptr<ots::GroupInfo> groupInfo = std::make_shared<ots::GroupInfo>();
 
 			groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
 			groupKey  = aliasNodePair.second.getNode("GroupKey").getValueAsString();
@@ -6323,23 +6323,23 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 				ConfigurationManagerRW* 				theCfgMgr, 
 				std::string 							theGroupName, 
 				ots::TableGroupKey						theGroupKey,
-				ots::GroupInfo*                       	theGroupInfo,
+				std::shared_ptr<ots::GroupInfo>        	theGroupInfo,
 				std::shared_ptr<std::atomic<bool>> 		theThreadDone) { 
 			ConfigurationManagerRW::loadTableGroupThread(theCfgMgr, theGroupName, theGroupKey, theGroupInfo, theThreadDone); },
 				cfgMgr,
 				groupName,
 				TableGroupKey(groupKey),
-				&groupInfo,
+				groupInfo,
 				threadDone[foundThreadIndex])
 			.detach();
 						
 			++threadsLaunched;
 			++foundThreadIndex;					
 			
-			xmlOut.addTextElementToData("GroupComment", 		groupInfo.latestKeyGroupComment_);
-			xmlOut.addTextElementToData("GroupAuthor", 			groupInfo.latestKeyGroupAuthor_);
-			xmlOut.addTextElementToData("GroupCreationTime", 	groupInfo.latestKeyGroupCreationTime_);
-			xmlOut.addTextElementToData("GroupType", 			groupInfo.latestKeyGroupTypeString_);
+			xmlOut.addTextElementToData("GroupComment", 		groupInfo->latestKeyGroupComment_);
+			xmlOut.addTextElementToData("GroupAuthor", 			groupInfo->latestKeyGroupAuthor_);
+			xmlOut.addTextElementToData("GroupCreationTime", 	groupInfo->latestKeyGroupCreationTime_);
+			xmlOut.addTextElementToData("GroupType", 			groupInfo->latestKeyGroupTypeString_);
 			
 		} //end alias group thread loop
 
