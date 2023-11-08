@@ -636,7 +636,7 @@ void MacroMakerSupervisor::handleRequest(const std::string                Comman
 		mkdir(macroPath.c_str(), 0755);
 		std::string histPath = (std::string)MACROS_HIST_PATH + userInfo.username_ + "/";
 		mkdir(histPath.c_str(), 0755);
-		
+	
 		getFEMacroList(xmldoc, userInfo.username_);
 	}
 	else if(Command == "runFEMacro")  // called by FE Macro Test returns FE Macros and

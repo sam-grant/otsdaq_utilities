@@ -452,7 +452,7 @@ function displayTable(appsArray)
             	}
             	catch(e)
             	{
-            		str = "Unknown";
+            		str = "UNKNOWN";
             		Debug.log("What happened? " + e);
             	}
             	

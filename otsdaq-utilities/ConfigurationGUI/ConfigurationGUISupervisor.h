@@ -249,7 +249,7 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 																	const TableVersion&     vA,
 																	const TableVersion&     vB);
 
-
+	
 
 	void  					testXDAQContext							(void);
 

@@ -23,6 +23,7 @@ using namespace ots;
 #undef __MF_SUBJECT__
 #define __MF_SUBJECT__ "CfgGUI"
 
+
 #define TABLE_INFO_PATH std::string(__ENV__("TABLE_INFO_PATH")) + "/"
 #define TABLE_INFO_EXT std::string("Info.xml")
 
@@ -5877,7 +5878,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 	}
 	else if(userLastUseTime_.find(mapKey) == userLastUseTime_.end())
 	{
-		__SUP_SS__ << "Fatal error managing userLastUseTime_!" << __E__;
+		__SUP_SS__ << "Fatal error managing userLastUseTime_! Check the logs for Configuration Interface failure." << __E__;
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		__SS_THROW__;
 	}
@@ -6786,45 +6787,143 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 	std::vector<std::pair<std::string, ConfigurationTree>> aliasNodePairs =
 	    cfgMgr->getNode(groupAliasesTableName).getChildren();
 
-	std::string groupName, groupKey, groupComment, groupType;
-	for(auto& aliasNodePair : aliasNodePairs)
+
+	const int numOfThreads = ConfigurationManager::PROCESSOR_COUNT/2;
+	__SUP_COUT__ << " PROCESSOR_COUNT " << ConfigurationManager::PROCESSOR_COUNT << " ==> " << numOfThreads << " threads for alias group loads." << __E__;
+
+	if(numOfThreads < 2) // no multi-threading			
 	{
-		groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
-		groupKey  = aliasNodePair.second.getNode("GroupKey").getValueAsString();
-
-		xmlOut.addTextElementToData("GroupAlias", aliasNodePair.first);
-		xmlOut.addTextElementToData("GroupName", groupName);
-		xmlOut.addTextElementToData("GroupKey", groupKey);
-		xmlOut.addTextElementToData(
-		    "AliasComment",
-		    aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT)
-		        .getValueAsString());
-
-		// get group comment
-		groupComment = "";  // clear just in case failure
-		groupType    = "Invalid";
-		try
+		std::string groupName, groupKey, groupComment, groupAuthor, groupCreateTime, groupType;
+		for(auto& aliasNodePair : aliasNodePairs)
 		{
-			cfgMgr->loadTableGroup(groupName,
-			                       TableGroupKey(groupKey),
-			                       0,
-			                       0,
-			                       0,
-			                       0,
-			                       &groupComment,
-			                       0,
-			                       0,  // mostly defaults
-			                       true /*doNotLoadMembers*/,
-			                       &groupType);
-		}
-		catch(...)
-		{
-			__SUP_COUT_WARN__ << "Failed to load group '" << groupName << "(" << groupKey
-			                  << ")' to extract group comment and type." << __E__;
-		}
-		xmlOut.addTextElementToData("GroupComment", groupComment);
-		xmlOut.addTextElementToData("GroupType", groupType);
+			groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
+			groupKey  = aliasNodePair.second.getNode("GroupKey").getValueAsString();
+
+			xmlOut.addTextElementToData("GroupAlias", aliasNodePair.first);
+			xmlOut.addTextElementToData("GroupName", groupName);
+			xmlOut.addTextElementToData("GroupKey", groupKey);
+			xmlOut.addTextElementToData(
+				"AliasComment",
+				aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT)
+					.getValueAsString());
+
+			// get group comment
+			groupComment = ConfigurationManager::UNKNOWN_INFO;  // clear just in case failure
+			groupType    = ConfigurationManager::GROUP_TYPE_NAME_UNKNOWN;
+			try
+			{
+				cfgMgr->loadTableGroup(groupName,
+									TableGroupKey(groupKey),
+									false /* doActivate */,
+									0 /* groupMembers */,
+									0 /* progressBar */,
+									0 /* accumulatedWarnings */,
+									&groupComment,
+									&groupAuthor,
+									&groupCreateTime, 
+									true /*doNotLoadMembers*/,
+									&groupType);
+			}
+			catch(...)
+			{
+				__SUP_COUT_WARN__ << "Failed to load group '" << groupName << "(" << groupKey
+								<< ")' to extract group comment and type." << __E__;
+			}
+			xmlOut.addTextElementToData("GroupComment", groupComment);
+			xmlOut.addTextElementToData("GroupType", groupType);
+		} // end alias pair loop
 	}
+	else //multi-threading
+	{
+		int threadsLaunched = 0;
+		int foundThreadIndex = 0;
+		std::mutex threadMutex; // to protect accumulatedWarnings
+		std::vector<std::shared_ptr<std::atomic<bool>>> threadDone;
+		for(int i=0;i<numOfThreads;++i)
+			threadDone.push_back(std::make_shared<std::atomic<bool>>(true));
+	
+
+		for(auto& aliasNodePair : aliasNodePairs)
+		{
+			std::string groupName, groupKey;
+			std::shared_ptr<ots::GroupInfo> groupInfo = std::make_shared<ots::GroupInfo>();
+
+			groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
+			groupKey  = aliasNodePair.second.getNode("GroupKey").getValueAsString();
+			xmlOut.addTextElementToData("GroupAlias", aliasNodePair.first);
+			xmlOut.addTextElementToData("GroupName", groupName);
+			xmlOut.addTextElementToData("GroupKey", groupKey);
+			xmlOut.addTextElementToData("AliasComment",
+				aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT)
+					.getValueAsString());
+
+
+			if(threadsLaunched >= numOfThreads)
+			{
+				//find availableThreadIndex
+				foundThreadIndex = -1;
+				while(foundThreadIndex == -1)
+				{
+					for(int i=0;i<numOfThreads;++i)
+						if(*(threadDone[i]))
+						{
+							foundThreadIndex = i;
+							break;
+						}
+					if(foundThreadIndex == -1)
+					{
+						__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "Waiting for available thread..." << __E__;
+						usleep(10000);
+					}
+				} //end thread search loop
+				threadsLaunched = numOfThreads - 1;
+			}					
+			__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "Starting load group thread... " << groupName << "(" << groupKey << ")" << __E__;
+			*(threadDone[foundThreadIndex]) = false;
+
+
+			std::thread([](
+				ConfigurationManagerRW* 				theCfgMgr, 
+				std::string 							theGroupName, 
+				ots::TableGroupKey						theGroupKey,
+				std::shared_ptr<ots::GroupInfo>        	theGroupInfo,
+				std::shared_ptr<std::atomic<bool>> 		theThreadDone) { 
+			ConfigurationManagerRW::loadTableGroupThread(theCfgMgr, theGroupName, theGroupKey, theGroupInfo, theThreadDone); },
+				cfgMgr,
+				groupName,
+				TableGroupKey(groupKey),
+				groupInfo,
+				threadDone[foundThreadIndex])
+			.detach();
+						
+			++threadsLaunched;
+			++foundThreadIndex;					
+			
+			xmlOut.addTextElementToData("GroupComment", 		groupInfo->latestKeyGroupComment_);
+			xmlOut.addTextElementToData("GroupAuthor", 			groupInfo->latestKeyGroupAuthor_);
+			xmlOut.addTextElementToData("GroupCreationTime", 	groupInfo->latestKeyGroupCreationTime_);
+			xmlOut.addTextElementToData("GroupType", 			groupInfo->latestKeyGroupTypeString_);
+			
+		} //end alias group thread loop
+
+		//check for all threads done					
+		do
+		{
+			foundThreadIndex = -1;
+			for(int i=0;i<numOfThreads;++i)
+				if(!*(threadDone[i]))
+				{
+					foundThreadIndex = i;
+					break;
+				}
+			if(foundThreadIndex != -1)
+			{
+				__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "Waiting for thread to finish... " << foundThreadIndex << __E__;
+				usleep(10000);
+			}
+		} while(foundThreadIndex != -1); //end thread done search loop
+
+	} //end multi-thread handling
 }  // end handleGroupAliasesXML
 
 //==============================================================================
@@ -6915,7 +7014,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupTypeXML(
 	}
 
 	std::string groupTypeString = "";
-	// try to determine type, dont report errors, just mark "Invalid"
+	// try to determine type, dont report errors, just mark ots::GroupType::UNKNOWN_TYPE
 	try
 	{
 		// determine the type of the table group
@@ -6926,7 +7025,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupTypeXML(
 	{
 		__SUP_SS__ << "Table group has invalid type! " << e.what() << __E__;
 		__SUP_COUT__ << "\n" << ss.str();
-		groupTypeString = "Invalid";
+		groupTypeString = ConfigurationManager::GROUP_TYPE_NAME_UNKNOWN;
 		xmlOut.addTextElementToData("TableGroupType", groupTypeString);
 	}
 	catch(...)
@@ -6939,10 +7038,10 @@ void ConfigurationGUISupervisor::handleGetTableGroupTypeXML(
 		}
 		catch(...){}
 		__SUP_COUT__ << "\n" << ss.str();
-		groupTypeString = "Invalid";
+		groupTypeString = ConfigurationManager::GROUP_TYPE_NAME_UNKNOWN;
 		xmlOut.addTextElementToData("TableGroupType", groupTypeString);
 	}
-}
+} //end handleGetTableGroupTypeXML()
 
 //==============================================================================
 //	handleTableGroupsXML
@@ -7079,7 +7178,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 				}
 				catch(...)
 				{
-					groupTypeString = "Invalid";
+					groupTypeString = ConfigurationManager::GROUP_TYPE_NAME_UNKNOWN;
 					__SUP_COUT_WARN__
 						<< "Failed to load group '" << groupName << "(" << keyInSet
 						<< ")' to extract group comment and type." << __E__;
@@ -7818,7 +7917,7 @@ try
 			{
 				__SUP_COUT__ <<  "Ignoring error loading subsystem '" << subsystem.first
 				<< "' group " << subsystemActiveGroupMap[i] << "(" << subsystemActiveGroupMap[i+1] << "): " << __E__ << e.what() << __E__;
-				groupType = "Unknown";
+				groupType = ConfigurationManager::GROUP_TYPE_NAME_UNKNOWN;
 			}			
 			
 			xmlOut.addTextElementToParent("CurrentlyActive" + groupType + "GroupName", subsystemActiveGroupMap[i], parent);
@@ -8201,6 +8300,11 @@ void ConfigurationGUISupervisor::handleTableDiff(
 //		test activation of context group
 void ConfigurationGUISupervisor::testXDAQContext()
 {
+	// ConfigurationManagerRW cfgMgrInst("ExampleUser");
+	// ConfigurationManagerRW* cfgMgr =& cfgMgrInst;
+	// cfgMgr->testXDAQContext();
+	// return;
+
 	try
 	{
 		__SUP_COUT__ << "Attempting test activation of the context group." << __E__;
@@ -8217,6 +8321,13 @@ void ConfigurationGUISupervisor::testXDAQContext()
 		__SUP_COUT_WARN__ << "The test activation of the context group failed. Ignoring."
 		                  << __E__;
 	}
+
+
+
+
+
+
+
 	return;
 
 	/////////////////////////////////

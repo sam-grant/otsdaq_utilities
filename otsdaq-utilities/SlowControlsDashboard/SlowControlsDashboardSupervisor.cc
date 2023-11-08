@@ -312,10 +312,8 @@ void SlowControlsDashboardSupervisor::forceSupervisorPropertyValues()
 	{
         CorePropertySupervisorBase::setSupervisorProperty(
             CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.UserPermissionsThreshold,
-            "*=0 | getPages=1 | getList=1 | "
-            "isUserAdmin=1");  // block users from writing if no write access
-		__COUT__ << "readOnly true in setSupervisorProperty" << __E__;
-
+            "*=0 | getPages=1 | loadPhoebusPage=1 | getList=1 | getPVSettings=1 | getPvArchiverData=1 | generateUID=1 | getUserPermissions=1 |\
+			 userActivityHeartbeat=1 | poll=1 | uid=1 | isUserAdmin=1");  // block users from writing if no write access
 	}
 } //end forceSupervisorPropertyValues()
 
