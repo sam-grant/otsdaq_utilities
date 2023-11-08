@@ -199,6 +199,12 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 		{
 			__SS__ << "checkSlowControlsAlarms() ERROR While sendin alarm messages"
 			       << __E__;
+			try	{ throw; } //one more try to printout extra info
+			catch(const std::exception &e)
+			{
+				ss << "Exception message: " << e.what();
+			}
+			catch(...){}
 			std::lock_guard<std::mutex> lock(cs->alarmCheckThreadErrorMutex_);
 			cs->alarmCheckThreadError_ = ss.str();
 			__COUT_ERR__ << ss.str();
@@ -349,6 +355,12 @@ void SlowControlsDashboardSupervisor::request(const std::string& requestType,
 	{
 		__SS__ << "Unknown error occurred handling request '" << requestType << "!'"
 		       << __E__;
+		try	{ throw; } //one more try to printout extra info
+		catch(const std::exception &e)
+		{
+			ss << "Exception message: " << e.what();
+		}
+		catch(...){}
 		__SUP_COUT__ << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
