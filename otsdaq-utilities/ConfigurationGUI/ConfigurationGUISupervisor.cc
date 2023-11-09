@@ -454,9 +454,9 @@ try
 		std::string groupNameCSV  	= CgiDataUtilities::getData(cgiIn, "groupName");  	// from GET
 		std::string groupKeyCSV  	= CgiDataUtilities::getData(cgiIn, "groupKey");  	// from GET
 
-		__SUP_COUT__ << "groupAliasCSV : " << groupAliasCSV  << __E__;
-		__SUP_COUT__ << "groupNameCSV : " << groupNameCSV  << __E__;
-		__SUP_COUT__ << "groupKeyCSV : " << groupKeyCSV  << __E__;
+		__SUP_COUTV__(groupAliasCSV); 
+		__SUP_COUTV__(groupNameCSV); 
+		__SUP_COUTV__(groupKeyCSV);
 
 		handleSetGroupAliasInBackboneXML(xmlOut,
 		                                 cfgMgr,
@@ -6265,6 +6265,15 @@ try
 		size_t i = 0;
 		for(const auto& groupAlias : groupAliases)
 		{
+			if(groupAlias == "" || groupNames[i] == "" || groupKeys[i] == "") 
+			{
+				//skip empty aliases
+				__SUP_COUT_WARN__ << "Empty alias parameter found [" << i << "] = {" << 
+					groupAlias << ", " << groupNames[i] << "(" << groupKeys[i] << ")}" << __E__; 
+				++i; 
+				continue;
+			} 
+
 			bool localIsDifferent = false;
 			const std::string& groupName = groupNames[i];
 			const TableGroupKey groupKey(groupKeys[i]);
@@ -7098,7 +7107,8 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 
 	if(!cfgMgr->getAllGroupInfo()
 	        .size() || 
-		cfgMgr->getAllGroupInfo().begin()->second.latestKeyGroupTypeString_ == "")  
+		cfgMgr->getAllGroupInfo().begin()->second.latestKeyGroupTypeString_ == "" ||
+		cfgMgr->getAllGroupInfo().begin()->second.latestKeyGroupTypeString_ == ConfigurationManager::GROUP_TYPE_NAME_UNKNOWN)  
 	{
 		__SUP_COUT__ << "Group Info cache appears empty. Attempting to regenerate." << __E__;
 		cfgMgr->getAllTableInfo(true /*refresh*/,

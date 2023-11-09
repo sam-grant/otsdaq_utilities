@@ -103,7 +103,7 @@
 		//popUpGroupViewAliasFormSubmit(groupName,groupKey)
 		//popUpSaveTreeForm()
 
-		//handlePopUpSetGroupAlias()
+		//handlePopUpSetGroupAlias(affectedGroupNames,affectedGroupKeys)
 
 		//handleGroupCommentToggle(groupName,setHideVal)
 		//handlePopUpHeightToggle(h,gh)
@@ -10358,9 +10358,9 @@
 
 		//==============================================================================
 		//handlePopUpSetGroupAlias ~~
-		function handlePopUpSetGroupAlias() 
+		function handlePopUpSetGroupAlias(affectedGroupNames,affectedGroupKeys) 
 		{
-			Debug.log("CfgGUI handlePopUpSetGroupAlias");
+			Debug.log("CfgGUI handlePopUpSetGroupAlias",affectedGroupNames,affectedGroupKeys);
 
 			//check each alias checkbox
 			//	for each alias that is checked
@@ -10372,7 +10372,7 @@
 				document.getElementsByClassName("popUpDialog-setGroupAlias");
 
 			var groupAlias = "", groupName = "", groupKey = "";
-			var setAliasCheckboxIndex = 0; //-1;
+			var setAliasCheckboxIndex = 0;
 
 			//in order to set alias, we need:
 			//	groupAlias
@@ -10411,17 +10411,18 @@
 						if (el) el.parentNode.removeChild(el);
 						return;
 					}
-					groupAlias += (groupAlias.length?",":"") + localVal;
+					groupAlias += (groupAlias.length?",":"") + el.value;
 					hasAnAliasChange = true;
 				} //end get next alias
 
-				groupName = (groupName.length?",":"") + affectedGroupNames[setAliasCheckboxIndex];
-				groupKey = (groupKey.length?",":"") + affectedGroupKeys[setAliasCheckboxIndex];
+				groupName += (groupName.length?",":"") + affectedGroupNames[setAliasCheckboxIndex];
+				groupKey += (groupKey.length?",":"") + affectedGroupKeys[setAliasCheckboxIndex];
 
 				Debug.log("groupAlias = " + groupAlias);
 				Debug.log("groupName = " + groupName);
 				Debug.log("groupKey = " + groupKey);
 
+				++setAliasCheckboxIndex;
 			} //end alias CSV retrieval loop
 
 			if(groupAlias.length)
@@ -10829,7 +10830,7 @@
 							}
 
 							Debug.log("Moving on to Alias creation...");
-							handlePopUpSetGroupAlias();			
+							handlePopUpSetGroupAlias(affectedGroupNames,affectedGroupKeys);			
 
 							// localNextAliasHandler(); //set in motion
 
@@ -16287,7 +16288,7 @@
 								Debug.log("Done with group saving.");
 
 								Debug.log("Moving on to Alias creation...");
-								handlePopUpSetGroupAlias();
+								handlePopUpSetGroupAlias(affectedGroupNames,affectedGroupKeys);
 
 								// var groupAlias, groupName, groupKey;
 								// var setAliasCheckboxIndex = 0;
@@ -17018,7 +17019,7 @@
 								Debug.log("Done with group saving.");
 
 								Debug.log("Moving on to Alias creation...");
-								handlePopUpSetGroupAlias();
+								handlePopUpSetGroupAlias(affectedGroupNames,affectedGroupKeys);
 								
 								// var newBackboneName = ConfigurationAPI._activeGroups.Backbone.groupName;
 								// if(ConfigurationAPI._activeGroups.Backbone.groupName == "")
