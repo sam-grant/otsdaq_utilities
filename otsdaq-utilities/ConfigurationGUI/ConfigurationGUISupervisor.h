@@ -42,9 +42,9 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	void 					handleGroupAliasesXML					(HttpXmlDocument& 		xmldoc, ConfigurationManagerRW* cfgMgr);
 	void 					handleSetGroupAliasInBackboneXML		(HttpXmlDocument&       xmldoc,
 																	ConfigurationManagerRW* cfgMgr,
-																	const std::string&      groupAlias,
-																	const std::string&      groupName,
-																	TableGroupKey           groupKey,
+																	const std::string&      groupAliasCSV,
+																	const std::string&      groupNameCSV,
+																	const std::string&      groupKeyCSV,
 																	const std::string&      author);
 	void 					handleSetTableAliasInBackboneXML		(HttpXmlDocument&       xmldoc,
 																	ConfigurationManagerRW* cfgMgr,

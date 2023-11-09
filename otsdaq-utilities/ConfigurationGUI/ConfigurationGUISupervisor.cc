@@ -450,21 +450,19 @@ try
 	}
 	else if(requestType == "setGroupAliasInActiveBackbone")
 	{
-		std::string groupAlias =
-		    CgiDataUtilities::getData(cgiIn, "groupAlias");  // from GET
-		std::string groupName = CgiDataUtilities::getData(cgiIn, "groupName");  // from
-		                                                                        // GET
-		std::string groupKey = CgiDataUtilities::getData(cgiIn, "groupKey");  // from GET
+		std::string groupAliasCSV 	= CgiDataUtilities::getData(cgiIn, "groupAlias"); 	// from GET
+		std::string groupNameCSV  	= CgiDataUtilities::getData(cgiIn, "groupName");  	// from GET
+		std::string groupKeyCSV  	= CgiDataUtilities::getData(cgiIn, "groupKey");  	// from GET
 
-		__SUP_COUT__ << "groupAlias: " << groupAlias << __E__;
-		__SUP_COUT__ << "groupName: " << groupName << __E__;
-		__SUP_COUT__ << "groupKey: " << groupKey << __E__;
+		__SUP_COUTV__(groupAliasCSV); 
+		__SUP_COUTV__(groupNameCSV); 
+		__SUP_COUTV__(groupKeyCSV);
 
 		handleSetGroupAliasInBackboneXML(xmlOut,
 		                                 cfgMgr,
-		                                 groupAlias,
-		                                 groupName,
-		                                 TableGroupKey(groupKey),
+		                                 groupAliasCSV,
+		                                 groupNameCSV,
+		                                 groupKeyCSV,
 		                                 userInfo.username_);
 	}
 	else if(requestType == "setTableAliasInActiveBackbone")
@@ -6205,9 +6203,9 @@ void ConfigurationGUISupervisor::handleSaveTableInfoXML(
 void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
-    const std::string&      groupAlias,
-    const std::string&      groupName,
-    TableGroupKey           groupKey,
+    const std::string&      groupAliasCSV,
+    const std::string&      groupNameCSV,
+    const std::string&      groupKeyCSV, 
     const std::string&      author)
 try
 {
@@ -6252,61 +6250,85 @@ try
 		TableView* configView = table->getTemporaryView(temporaryVersion);
 
 		unsigned int col = configView->findCol("GroupKeyAlias");
+		unsigned int ccol = configView->findCol(TableViewColumnInfo::COL_NAME_COMMENT);
+		unsigned int ncol = configView->findCol("GroupName");
+		unsigned int kcol = configView->findCol("GroupKey");
 
 		// only make a new version if we are changing compared to active backbone
+		std::vector<std::string> groupAliases = StringMacros::getVectorFromString(groupAliasCSV);
+		std::vector<std::string> groupNames = StringMacros::getVectorFromString(groupNameCSV);
+		std::vector<std::string> groupKeys = StringMacros::getVectorFromString(groupKeyCSV);
+		__SUP_COUTV__(StringMacros::vectorToString(groupAliases));
+		__SUP_COUTV__(StringMacros::vectorToString(groupNames));
+		__SUP_COUTV__(StringMacros::vectorToString(groupKeys));
 
-		unsigned int row = -1;
-		// find groupAlias row
-		try
+		size_t i = 0;
+		for(const auto& groupAlias : groupAliases)
 		{
-			row = configView->findRow(col, groupAlias);
-		}
-		catch(...)  // ignore not found error
-		{
-		}
-		if(row == (unsigned int)-1)  // if row not found then add a row
-		{
-			isDifferent = true;
-			row         = configView->addRow();
+			if(groupAlias == "" || groupNames[i] == "" || groupKeys[i] == "") 
+			{
+				//skip empty aliases
+				__SUP_COUT_WARN__ << "Empty alias parameter found [" << i << "] = {" << 
+					groupAlias << ", " << groupNames[i] << "(" << groupKeys[i] << ")}" << __E__; 
+				++i; 
+				continue;
+			} 
 
-			// set all columns in new row
-			col = configView->findCol(TableViewColumnInfo::COL_NAME_COMMENT);
-			configView->setValue(
-			    "This Group Alias was automatically setup by the server.", row, col);
-			col = configView->findCol("GroupKeyAlias");
-			configView->setValue(groupAlias, row, col);
-		}
+			bool localIsDifferent = false;
+			const std::string& groupName = groupNames[i];
+			const TableGroupKey groupKey(groupKeys[i]);
+			++i;
 
-		__SUP_COUT__ << "\t\t row: " << row << __E__;
+			unsigned int row = -1;
+			// find groupAlias row
+			try
+			{
+				row = configView->findRow(col, groupAlias);
+			}
+			catch(...)  // ignore not found error
+			{
+			}
+			
+			if(row == (unsigned int)-1)  // if row not found then add a row
+			{
+				localIsDifferent = true;
+				row         = configView->addRow();
 
-		col = configView->findCol("GroupName");
+				// set all columns in new row
+				configView->setValue(
+					"This Group Alias was automatically setup by the server.", row, ccol);
+				configView->setValue(groupAlias, row, col);
+			}
 
-		__SUP_COUT__ << "\t\t groupName: " << groupName << " vs "
-		             << configView->getDataView()[row][col] << __E__;
-		if(groupName != configView->getDataView()[row][col])
-		{
-			configView->setValue(groupName, row, col);
-			isDifferent = true;
-		}
+			__SUP_COUT__ << "\t\t row: " << row << __E__;
 
-		col = configView->findCol("GroupKey");
-		__SUP_COUT__ << "\t\t groupKey: " << groupKey << " vs "
-		             << configView->getDataView()[row][col] << __E__;
-		if(groupKey.toString() != configView->getDataView()[row][col])
-		{
-			configView->setValue(groupKey.toString(), row, col);
-			isDifferent = true;
-		}
+			__SUP_COUT__ << "\t\t groupName: " << groupName << " vs "
+						<< configView->getDataView()[row][ncol] << __E__;
+			if(groupName != configView->getDataView()[row][ncol])
+			{
+				configView->setValue(groupName, row, ncol);
+				localIsDifferent = true;
+			}
 
-		if(isDifferent)  // set author/time of new version if different
-		{
-			configView->setValue(
-			    author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
-			configView->setValue(
-			    time(0),
-			    row,
-			    configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
-		}
+			__SUP_COUT__ << "\t\t groupKey: " << groupKey << " vs "
+						<< configView->getDataView()[row][kcol] << __E__;
+			if(groupKey.toString() != configView->getDataView()[row][kcol])
+			{
+				configView->setValue(groupKey.toString(), row, kcol);
+				localIsDifferent = true;
+			}
+
+			if(localIsDifferent)  // set author/time of new record if different
+			{
+				configView->setValue(
+					author, row, configView->findCol(TableViewColumnInfo::COL_NAME_AUTHOR));
+				configView->setValue(
+					time(0),
+					row,
+					configView->findCol(TableViewColumnInfo::COL_NAME_CREATION));
+				isDifferent = true;
+			}
+		} //end group alias modify loop
 	}
 	catch(...)
 	{
@@ -6368,7 +6390,7 @@ catch(...)
 	catch(...){}
 	__SUP_COUT_ERR__ << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
-}
+} //end handleSetGroupAliasInBackboneXML() catch
 
 //==============================================================================
 //	handleSetTableAliasInBackboneXML
@@ -6842,22 +6864,17 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 		for(int i=0;i<numOfThreads;++i)
 			threadDone.push_back(std::make_shared<std::atomic<bool>>(true));
 	
+		std::vector<std::shared_ptr<ots::GroupInfo>> sharedGroupInfoPtrs;
+		std::string groupName, groupKey;
 
 		for(auto& aliasNodePair : aliasNodePairs)
 		{
-			std::string groupName, groupKey;
-			std::shared_ptr<ots::GroupInfo> groupInfo = std::make_shared<ots::GroupInfo>();
+			//make temporary group info for thread
+			sharedGroupInfoPtrs.push_back(std::make_shared<ots::GroupInfo>());
 
 			groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
 			groupKey  = aliasNodePair.second.getNode("GroupKey").getValueAsString();
-			xmlOut.addTextElementToData("GroupAlias", aliasNodePair.first);
-			xmlOut.addTextElementToData("GroupName", groupName);
-			xmlOut.addTextElementToData("GroupKey", groupKey);
-			xmlOut.addTextElementToData("AliasComment",
-				aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT)
-					.getValueAsString());
-
-
+		
 			if(threadsLaunched >= numOfThreads)
 			{
 				//find availableThreadIndex
@@ -6892,17 +6909,13 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 				cfgMgr,
 				groupName,
 				TableGroupKey(groupKey),
-				groupInfo,
+				sharedGroupInfoPtrs.back(),
 				threadDone[foundThreadIndex])
 			.detach();
 						
 			++threadsLaunched;
 			++foundThreadIndex;					
 			
-			xmlOut.addTextElementToData("GroupComment", 		groupInfo->latestKeyGroupComment_);
-			xmlOut.addTextElementToData("GroupAuthor", 			groupInfo->latestKeyGroupAuthor_);
-			xmlOut.addTextElementToData("GroupCreationTime", 	groupInfo->latestKeyGroupCreationTime_);
-			xmlOut.addTextElementToData("GroupType", 			groupInfo->latestKeyGroupTypeString_);
 			
 		} //end alias group thread loop
 
@@ -6922,6 +6935,29 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 				usleep(10000);
 			}
 		} while(foundThreadIndex != -1); //end thread done search loop
+
+
+		//threads done now, so copy group info
+		size_t i = 0;
+		for(auto& aliasNodePair : aliasNodePairs)
+		{
+
+			groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
+			groupKey  = aliasNodePair.second.getNode("GroupKey").getValueAsString();
+			xmlOut.addTextElementToData("GroupAlias", aliasNodePair.first);
+			xmlOut.addTextElementToData("GroupName", groupName);
+			xmlOut.addTextElementToData("GroupKey", groupKey);
+			xmlOut.addTextElementToData("AliasComment",
+				aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT)
+					.getValueAsString());
+
+			xmlOut.addTextElementToData("GroupComment", 		sharedGroupInfoPtrs[i]->latestKeyGroupComment_);
+			xmlOut.addTextElementToData("GroupAuthor", 			sharedGroupInfoPtrs[i]->latestKeyGroupAuthor_);
+			xmlOut.addTextElementToData("GroupCreationTime", 	sharedGroupInfoPtrs[i]->latestKeyGroupCreationTime_);
+			xmlOut.addTextElementToData("GroupType", 			sharedGroupInfoPtrs[i]->latestKeyGroupTypeString_);
+			// xmlOut.addTextElementToData("GroupType", 			sharedGroupInfoPtrs[i]->latestKeyMemberMap_);
+			++i;
+		} //end copy group info loop
 
 	} //end multi-thread handling
 }  // end handleGroupAliasesXML
@@ -7071,7 +7107,8 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 
 	if(!cfgMgr->getAllGroupInfo()
 	        .size() || 
-		cfgMgr->getAllGroupInfo().begin()->second.latestKeyGroupTypeString_ == "")  
+		cfgMgr->getAllGroupInfo().begin()->second.latestKeyGroupTypeString_ == "" ||
+		cfgMgr->getAllGroupInfo().begin()->second.latestKeyGroupTypeString_ == ConfigurationManager::GROUP_TYPE_NAME_UNKNOWN)  
 	{
 		__SUP_COUT__ << "Group Info cache appears empty. Attempting to regenerate." << __E__;
 		cfgMgr->getAllTableInfo(true /*refresh*/,
@@ -7104,8 +7141,7 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(HttpXmlDocument&        xm
 		groupKey = *(groupInfo.second.keys_.rbegin());
 
 		xmlOut.dataSs_ << "<TableGroupName value='" << groupName << "'/>" << __E__;
-		xmlOut.dataSs_ << "<TableGroupKey value='" << groupKey << "'/>" << __E__;
-	
+		xmlOut.dataSs_ << "<TableGroupKey value='" << groupKey << "'/>" << __E__;	
 
 		// trusting the cache!
 		xmlOut.dataSs_ << "<TableGroupType value='" << groupInfo.second.latestKeyGroupTypeString_ << "'/>" << __E__;

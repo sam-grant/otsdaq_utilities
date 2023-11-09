@@ -103,6 +103,8 @@
 		//popUpGroupViewAliasFormSubmit(groupName,groupKey)
 		//popUpSaveTreeForm()
 
+		//handlePopUpSetGroupAlias(affectedGroupNames,affectedGroupKeys)
+
 		//handleGroupCommentToggle(groupName,setHideVal)
 		//handlePopUpHeightToggle(h,gh)
 
@@ -10352,6 +10354,143 @@
 			el.style.display = "block";
 		} //end popUpSaveTreeForm()
 
+
+
+		//==============================================================================
+		//handlePopUpSetGroupAlias ~~
+		function handlePopUpSetGroupAlias(affectedGroupNames,affectedGroupKeys) 
+		{
+			Debug.log("CfgGUI handlePopUpSetGroupAlias",affectedGroupNames,affectedGroupKeys);
+
+			//check each alias checkbox
+			//	for each alias that is checked
+			//		set alias for new group
+			//if any aliases modified, save and activate backbone
+
+			//get checkboxes
+			var setAliasCheckboxes =
+				document.getElementsByClassName("popUpDialog-setGroupAlias");
+
+			var groupAlias = "", groupName = "", groupKey = "";
+			var setAliasCheckboxIndex = 0;
+
+			//in order to set alias, we need:
+			//	groupAlias
+			//	groupName
+			//	groupKey				
+
+			//for each set alias checkbox that is checked
+			//	modify the active group alias table one after the other
+
+			//get next affected group index			
+			while (setAliasCheckboxIndex < setAliasCheckboxes.length)
+			{
+				if(!setAliasCheckboxes[setAliasCheckboxIndex].checked)
+				{
+					Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
+					continue;
+				}
+
+				//get next alias
+				{
+					var el = document.getElementById("popUpDialog-editAliasSelect-" +
+						setAliasCheckboxIndex);
+					if (el.style.display == "none")
+					{
+						//get value from text box
+						el = document.getElementById("popUpDialog-editAliasTextBox-" +
+							setAliasCheckboxIndex);
+					}
+
+					if (!el.value || el.value.trim() == "")
+					{
+						Debug.log("Process interrupted. Invalid empty alias given!", Debug.HIGH_PRIORITY);
+
+						//kill popup dialog
+						var el = document.getElementById("popUpDialog");
+						if (el) el.parentNode.removeChild(el);
+						return;
+					}
+					groupAlias += (groupAlias.length?",":"") + el.value;
+					hasAnAliasChange = true;
+				} //end get next alias
+
+				groupName += (groupName.length?",":"") + affectedGroupNames[setAliasCheckboxIndex];
+				groupKey += (groupKey.length?",":"") + affectedGroupKeys[setAliasCheckboxIndex];
+
+				Debug.log("groupAlias = " + groupAlias);
+				Debug.log("groupName = " + groupName);
+				Debug.log("groupKey = " + groupKey);
+
+				++setAliasCheckboxIndex;
+			} //end alias CSV retrieval loop
+
+			if(groupAlias.length)
+			{
+				ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias, groupName, groupKey,
+					0,
+					function(retParams)
+					{										
+						if (retParams) 
+						{
+							if (retParams.newGroupCreated)
+								Debug.log("Successfully modified the active Backbone group " +
+									" to set the System Alias '" + groupAlias + "' to " +
+									" refer to the current group '" + groupName +
+									" (" + groupKey + ").'" +
+									"\n\n" +
+									"Backbone group '" + retParams.groupName + " (" +
+									retParams.groupKey + ")' was created and activated.",
+									Debug.INFO_PRIORITY);
+							else
+								Debug.log("Success, but no need to create a new Backbone group. " +
+									"An existing Backbone group " +
+									" already has the System Alias '" + groupAlias + "' " +
+									" referring to the current group '" + groupName +
+									" (" + groupKey + ").'" +
+									"\n\n" +
+									"Backbone group '" + retParams.groupName + " (" +
+									retParams.groupKey + ")' was activated.",
+									Debug.INFO_PRIORITY);
+						}
+						else 
+						{
+							Debug.log("Process interrupted. Failed to modify the currently active Backbone!", Debug.HIGH_PRIORITY);
+
+							//kill popup dialog
+							var el = document.getElementById("popUpDialog");
+							if (el) el.parentNode.removeChild(el);
+							return;
+						}
+
+						Debug.log("Saving and activating Backbone done.");
+
+						//kill popup dialog
+						var el = document.getElementById("popUpDialog");
+						if (el) el.parentNode.removeChild(el);
+
+						Debug.log("Saving operations complete.", Debug.INFO_PRIORITY);
+						treeHasChanged(true); // reset
+						return;
+
+					}, //end setGroupAliasInActiveBackbone return handler
+					true); //request return parameters	
+				Debug.log("Aliases set in motion"); //so done with this thread	
+			}
+			else
+			{
+				Debug.log("No System Aliases were changed, so Backbone was not modified. Done.");
+
+				//kill popup dialog
+				var el = document.getElementById("popUpDialog");
+				if (el) el.parentNode.removeChild(el);
+
+				Debug.log("Saving operations complete.", Debug.INFO_PRIORITY);
+				treeHasChanged(true); // reset
+				return;
+			}
+		} //end handlePopUpSetGroupAlias()
+
 		//==============================================================================
 		//saveModifiedTree ~~
 		//	ignoreWarnings = true will ignore warnings when saving groups
@@ -10691,136 +10830,7 @@
 							}
 
 							Debug.log("Moving on to Alias creation...");
-
-							//check each alias checkbox
-							//	for each alias that is checked
-							//		set alias for new group
-							//if any aliases modified, save and activate backbone
-
-							//get checkboxes
-							var setAliasCheckboxes =
-								document.getElementsByClassName("popUpDialog-setGroupAlias");
-
-							var groupAlias, groupName, groupKey;
-							var setAliasCheckboxIndex = -1;
-							var groupAliasName, groupAliasVersion;
-
-							//in order to set alias, we need:
-							//	groupAlias
-							//	groupName
-							//	groupKey				
-
-							//for each set alias checkbox that is checked
-							//	modify the active group alias table one after the other
-
-
-							localNextAliasHandler(); //set in motion
-
-							//=============================
-							//localNextAliasHandler ~ //////////////////////////////////
-							//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
-							//	and send the next request to modify the activegroupAlias table
-							//	sequentially
-							function localNextAliasHandler(retParams)
-							{
-								//first time there is no setAliasCheckboxIndex, it is -1
-								if (setAliasCheckboxIndex >= 0) 
-								{
-									if (retParams) 
-									{
-										if (retParams.newGroupCreated)
-											Debug.log("Successfully modified the active Backbone group " +
-												" to set the System Alias '" + groupAlias + "' to " +
-												" refer to the current group '" + groupName +
-												" (" + groupKey + ").'" +
-												"\n\n" +
-												"Backbone group '" + retParams.groupName + " (" +
-												retParams.groupKey + ")' was created and activated.",
-												Debug.INFO_PRIORITY);
-										else
-											Debug.log("Success, but no need to create a new Backbone group. " +
-												"An existing Backbone group " +
-												" already has the System Alias '" + groupAlias + "' " +
-												" referring to the current group '" + groupName +
-												" (" + groupKey + ").'" +
-												"\n\n" +
-												"Backbone group '" + retParams.groupName + " (" +
-												retParams.groupKey + ")' was activated.",
-												Debug.INFO_PRIORITY);
-									}
-									else 
-									{
-										Debug.log("Process interrupted. Failed to modify the currently active Backbone!", Debug.HIGH_PRIORITY);
-
-										//kill popup dialog
-										var el = document.getElementById("popUpDialog");
-										if (el) el.parentNode.removeChild(el);
-										return;
-									}
-
-									++setAliasCheckboxIndex; //req back, so ready for next index
-								}
-								else
-									setAliasCheckboxIndex = 0; //ready for first checkbox
-
-								//get next affected group index			
-								while (setAliasCheckboxIndex < setAliasCheckboxes.length &&
-									!setAliasCheckboxes[setAliasCheckboxIndex].checked)
-									Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
-
-								if (setAliasCheckboxIndex >= setAliasCheckboxes.length)
-								{
-									Debug.log("Done with alias checkboxes ");
-
-									if (!retParams)//req) 
-									{
-										Debug.log("No System Aliases were changed, so Backbone was not modified. Done.");
-
-										//kill popup dialog
-										var el = document.getElementById("popUpDialog");
-										if (el) el.parentNode.removeChild(el);
-
-										Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
-										treeHasChanged(true); // reset
-										return;
-									}
-
-									Debug.log("Saving and activating Backbone done.");
-
-									//kill popup dialog
-									var el = document.getElementById("popUpDialog");
-									if (el) el.parentNode.removeChild(el);
-
-									Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
-									treeHasChanged(true); // reset
-									return;
-								}
-
-								//get next alias
-								{
-									var el = document.getElementById("popUpDialog-editAliasSelect-" +
-										setAliasCheckboxIndex);
-									if (el.style.display == "none")
-									{
-										//get value from text box
-										el = document.getElementById("popUpDialog-editAliasTextBox-" +
-											setAliasCheckboxIndex);
-									}
-									groupAlias = el.value;
-								}
-
-								groupName = affectedGroupNames[setAliasCheckboxIndex];
-								groupKey = affectedGroupKeys[setAliasCheckboxIndex];
-
-								Debug.log("groupAlias = " + groupAlias);
-								Debug.log("groupName = " + groupName);
-								Debug.log("groupKey = " + groupKey);
-
-								ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias, groupName, groupKey,
-									0,
-									localNextAliasHandler,
-									true); //request return parameters		
-							}
+							handlePopUpSetGroupAlias(affectedGroupNames,affectedGroupKeys);			
 
 							Debug.log("Aliases set in motion"); //so done with this thread						
 							return;
@@ -16170,183 +16180,7 @@
 								Debug.log("Done with group saving.");
 
 								Debug.log("Moving on to Alias creation...");
-
-								//check each alias checkbox
-								//	for each alias that is checked
-								//		set alias for new group
-								//if any aliases modified, save and activate backbone
-
-								//get checkboxes
-								var setAliasCheckboxes =
-									document.getElementsByClassName("popUpDialog-setGroupAlias");
-
-								var groupAlias, groupName, groupKey;
-								var setAliasCheckboxIndex = 0;
-								var groupAliasName, groupAliasVersion;
-
-								//in order to set alias, we need:
-								//	groupAlias
-								//	groupName
-								//	groupKey				
-
-								//for each set alias checkbox that is checked
-								//	modify the active group alias table one after the other
-
-								//localNextAliasHandler
-								//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
-								//	and send the next request to modify the activegroupAlias table
-								//	sequentially
-								function localNextAliasHandler(req) 
-								{
-									//first time there is no req
-									if (req)
-									{
-										var err = DesktopContent.getXMLValue(req, "Error");
-										if (err) 
-										{
-											Debug.log(err, Debug.HIGH_PRIORITY);
-											Debug.log("Process interrupted. Failed to modify the currently active Backbone!", Debug.HIGH_PRIORITY);
-
-											//kill popup dialog
-											var el = document.getElementById("popUpDialog");
-											if (el) el.parentNode.removeChild(el);
-											return;
-										}
-
-										groupAliasName = DesktopContent.getXMLValue(req, "savedName");
-										groupAliasVersion = DesktopContent.getXMLValue(req, "savedVersion");
-
-										Debug.log("Successfully added the system alias '" + groupAlias +
-											"' reference to group '" + groupName + " (" + groupKey + ")' " +
-											" in table '" + groupAliasName + "-v" + groupAliasVersion +
-											"'.",
-											Debug.INFO_PRIORITY);
-										++setAliasCheckboxIndex; //req back, so ready for next index
-									}
-
-									//get next affected group index			
-									while (setAliasCheckboxIndex < setAliasCheckboxes.length &&
-										!setAliasCheckboxes[setAliasCheckboxIndex].checked)
-										Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
-
-									if (setAliasCheckboxIndex >= setAliasCheckboxes.length) 
-									{
-										Debug.log("Done with alias checkboxes ");
-
-										if (!req) 
-										{
-											Debug.log("Backbone was not modified, so no need to save.");
-
-											//kill popup dialog
-											var el = document.getElementById("popUpDialog");
-											if (el) el.parentNode.removeChild(el);
-
-											Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
-											treeHasChanged(true); // reset
-											return;
-										}
-										Debug.log("Saving and activating modified Backbone");
-
-
-										Debug.log("groupAliasName=" + groupAliasName);
-										Debug.log("groupAliasVersion=" + groupAliasVersion);
-										var tableNames = req.responseXML.getElementsByTagName("oldBackboneName");
-										var tableVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
-
-										//make a new backbone with old versions of everything except Group Alias 
-										var tableMap = "tableList=";
-										var name;
-										for (var i = 0; i < tableNames.length; ++i)
-										{
-											name = tableNames[i].getAttribute("value");
-
-											if (name == groupAliasName)
-											{
-												tableMap += name + "," +
-													groupAliasVersion + ",";
-												continue;
-											}
-											//else use old member
-											tableMap += name + "," +
-												tableVersions[i].getAttribute("value") + ",";
-										}
-										Debug.log(tableMap);
-
-
-										var newBackboneName = ConfigurationAPI._activeGroups.Backbone.groupName;
-										if(ConfigurationAPI._activeGroups.Backbone.groupName == "")
-											newBackboneName = "WizBackbone";
-										
-										ConfigurationAPI.saveGroupAndActivate(newBackboneName, tableMap,
-											function (retParams) 
-											{
-												Debug.log("Save and activate is done.");
-
-												if (retParams) 
-												{
-													Debug.log("Successfully modified the active Backbone group.\n" +
-														"Backbone group '" + retParams.groupName + " (" +
-														retParams.groupKey + ")' was activated.",
-														Debug.INFO_PRIORITY);
-												}
-
-												//kill popup dialog
-												var el = document.getElementById("popUpDialog");
-												if (el) el.parentNode.removeChild(el);
-
-												Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
-												treeHasChanged(true); // reset
-												return;
-											},	//end of done handler for saveGroupAndActivate
-											true, //request return parameters
-											true  //lookForEquivalent
-										);
-										return;
-									}
-
-									//get next alias
-									{
-										var el = document.getElementById("popUpDialog-editAliasSelect-" +
-											setAliasCheckboxIndex);
-										if (el.style.display == "none")
-										{
-											//get value from text box
-											el = document.getElementById("popUpDialog-editAliasTextBox-" +
-												setAliasCheckboxIndex);
-										}
-										groupAlias = el.value;
-									}
-
-									groupName = affectedGroupNames[setAliasCheckboxIndex];
-									groupKey = affectedGroupKeys[setAliasCheckboxIndex];
-
-									Debug.log("groupAlias = " + groupAlias);
-									Debug.log("groupName = " + groupName);
-									Debug.log("groupKey = " + groupKey);
-
-									if (!groupAlias || groupAlias.trim() == "")
-									{
-										Debug.log("Process interrupted. Invalid empty alias given!", Debug.HIGH_PRIORITY);
-
-										//kill popup dialog
-										var el = document.getElementById("popUpDialog");
-										if (el) el.parentNode.removeChild(el);
-
-										return;
-									}
-
-									DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
-										"&groupAlias=" + groupAlias +
-										"&groupName=" + groupName +
-										"&groupKey=" + groupKey, "",
-										localNextAliasHandler,
-										0, 0, true  //reqParam, progressHandler, callHandlerOnErr
-									);
-								} //end localNextAliasHandler()
-
-								localNextAliasHandler();
-
-								Debug.log("Aliases set in motion");
+								handlePopUpSetGroupAlias(affectedGroupNames,affectedGroupKeys);
 
 								return;
 							}
@@ -16909,183 +16743,8 @@
 								Debug.log("Done with group saving.");
 
 								Debug.log("Moving on to Alias creation...");
-
-								var newBackboneName = ConfigurationAPI._activeGroups.Backbone.groupName;
-								if(ConfigurationAPI._activeGroups.Backbone.groupName == "")
-									newBackboneName = "WizBackbone";
-
-								//check each alias checkbox
-								//	for each alias that is checked
-								//		set alias for new group
-								//if any aliases modified, save and activate backbone
-
-								//get checkboxes
-								var setAliasCheckboxes =
-									document.getElementsByClassName("popUpDialog-setGroupAlias");
-
-								var groupAlias, groupName, groupKey;
-								var setAliasCheckboxIndex = 0;
-								var groupAliasName, groupAliasVersion;
-
-								//in order to set alias, we need:
-								//	groupAlias
-								//	groupName
-								//	groupKey				
-
-								//for each set alias checkbox that is checked
-								//	modify the active group alias table one after the other
-
-								//localNextAliasHandler
-								//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
-								//	and send the next request to modify the activegroupAlias table
-								//	sequentially
-								function localNextAliasHandler(req)
-								{
-									//first time there is no req
-									if (req) 
-									{
-										var err = DesktopContent.getXMLValue(req, "Error");
-										if (err) 
-										{
-											Debug.log(err, Debug.HIGH_PRIORITY);
-											Debug.log("Process interrupted. Failed to modify the currently active Backbone!", Debug.HIGH_PRIORITY);
-
-											//kill popup dialog
-											var el = document.getElementById("popUpDialog");
-											if (el) el.parentNode.removeChild(el);
-											return;
-										}
-
-										groupAliasName = DesktopContent.getXMLValue(req, "savedName");
-										groupAliasVersion = DesktopContent.getXMLValue(req, "savedVersion");
-
-										Debug.log("Successfully added the system alias '" + groupAlias +
-											"' reference to group '" + groupName + " (" + groupKey + ")' " +
-											" in table '" + groupAliasName + "-v" + groupAliasVersion +
-											"'.",
-											Debug.INFO_PRIORITY);
-										++setAliasCheckboxIndex; //req back, so ready for next index
-									}
-
-									//get next affected group index			
-									while (setAliasCheckboxIndex < setAliasCheckboxes.length &&
-										!setAliasCheckboxes[setAliasCheckboxIndex].checked)
-										Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
-
-									if (setAliasCheckboxIndex >= setAliasCheckboxes.length) 
-									{
-										Debug.log("Done with alias checkboxes ");
-
-										if (!req) 
-										{
-											Debug.log("Backbone was not modified, so no need to save.");
-
-											//kill popup dialog
-											var el = document.getElementById("popUpDialog");
-											if (el) el.parentNode.removeChild(el);
-
-											Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
-											treeHasChanged(true); // reset
-											return;
-										}
-										Debug.log("Saving and activating modified Backbone");
-
-
-										Debug.log("groupAliasName=" + groupAliasName);
-										Debug.log("groupAliasVersion=" + groupAliasVersion);
-										var tableNames = req.responseXML.getElementsByTagName("oldBackboneName");
-										var tableVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
-
-										//make a new backbone with old versions of everything except Group Alias 
-										var tableMap = "tableList=";
-										var name;
-										for (var i = 0; i < tableNames.length; ++i) 
-										{
-											name = tableNames[i].getAttribute("value");
-
-											if (name == groupAliasName)
-											{
-												tableMap += name + "," +
-													groupAliasVersion + ",";
-												continue;
-											}
-											//else use old member
-											tableMap += name + "," +
-												tableVersions[i].getAttribute("value") + ",";
-										}
-										Debug.log(tableMap);
-										
-
-										ConfigurationAPI.saveGroupAndActivate(newBackboneName, tableMap,
-											function (retParams) 
-											{
-												Debug.log("Save and activate is done.");
-
-												if (retParams)
-												{
-													Debug.log("Successfully modified the active Backbone group.\n" +
-														"Backbone group '" + retParams.groupName + " (" +
-														retParams.groupKey + ")' was activated.",
-														Debug.INFO_PRIORITY);
-												}
-
-												//kill popup dialog
-												var el = document.getElementById("popUpDialog");
-												if (el) el.parentNode.removeChild(el);
-
-												Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
-												treeHasChanged(true); // reset
-												return;
-											},	//end of done handler for saveGroupAndActivate
-											true, //request return parameters
-											true /*lookForEquivalent*/);
-										return;
-									}
-
-									//get next alias
-									{
-										var el = document.getElementById("popUpDialog-editAliasSelect-" +
-											setAliasCheckboxIndex);
-										if (el.style.display == "none") 
-										{
-											//get value from text box
-											el = document.getElementById("popUpDialog-editAliasTextBox-" +
-												setAliasCheckboxIndex);
-										}
-										groupAlias = el.value;
-									}
-
-									groupName = affectedGroupNames[setAliasCheckboxIndex];
-									groupKey = affectedGroupKeys[setAliasCheckboxIndex];
-
-									Debug.log("groupAlias = " + groupAlias);
-									Debug.log("groupName = " + groupName);
-									Debug.log("groupKey = " + groupKey);
-
-									if (!groupAlias || groupAlias.trim() == "") 
-									{
-										Debug.log("Process interrupted. Invalid empty alias given!", Debug.HIGH_PRIORITY);
-
-										//kill popup dialog
-										var el = document.getElementById("popUpDialog");
-										if (el) el.parentNode.removeChild(el);
-
-										return;
-									}
-
-									DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
-										"&groupAlias=" + groupAlias +
-										"&groupName=" + groupName +
-										"&groupKey=" + groupKey, "",
-										localNextAliasHandler,
-										0, 0, true  //reqParam, progressHandler, callHandlerOnErr
-									);
-								} //end localNextAliasHandler()
-
-								localNextAliasHandler();
-
-								Debug.log("Aliases set in motion");
-
+								handlePopUpSetGroupAlias(affectedGroupNames,affectedGroupKeys);
+								
 								return;
 							}
 
