@@ -14,7 +14,7 @@ var SlowControlsAPI = SlowControlsAPI || {}; //define SlowControlsAPI namespace
 
 /////////////////////////////////////////////////////////////////////////
 //global variables
-var datalist_;
+SlowControlsAPI._datalist;
 
 /////////////////////////////////////////////////////////////////////////
 //function definitions
@@ -47,10 +47,10 @@ SlowControlsAPI.setWidgetToolTip = function (pvName, pvValue, pvTime, pvStatus, 
 } //end setWidgetToolTip()
 
 //=====================================================================================
-function checkPvTime(widget, pvName, pvTime)
+SlowControlsAPI.checkPvTime = function (widget, pvName, pvTime)
 {
     var actualTime = Math.floor(Date.now())/1000;
-    var time2compare = pvTime*1. + 6400;//10.*page_.widgets[widget].pvList[pvName]/1000;
+    var time2compare = pvTime*1. + 86400;//24 hours more;
     console.log(
                     "Date now: "
                 + actualTime
@@ -82,7 +82,7 @@ SlowControlsAPI.setWidgetPvInfo = function (widget, pvName, pvValue, pvTime, pvS
                 widgetNameElement.innerHTML = "<center style = 'color: red'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
             else if(pvSeverity == "MINOR")
                 widgetNameElement.innerHTML = "<center style = 'color: orange'>" + pvName + "<br>Status: " + pvStatus + "<br>Severity: " + pvSeverity + "</center>";
-            else if (!checkPvTime(widget, pvName, pvTime))
+            else if (!SlowControlsAPI.checkPvTime(widget, pvName, pvTime))
                 widgetNameElement.innerHTML = "<center style = 'color:" + foregroundColor + "'>"
                                             + pvName
                                             + "<br><i>(Not updated for more than " + parseInt((actualTime - pvTime*1.)/60) + " minutes)</i></center>";
@@ -93,36 +93,33 @@ SlowControlsAPI.setWidgetPvInfo = function (widget, pvName, pvValue, pvTime, pvS
 
     if (widgetValueElement !== null && widgetValueElement !== undefined)
     {
-        if (timeCheck && checkPvTime(widget, pvName, pvTime))
-        {
-            widgetValueElement.style.backgroundColor = 'green';
-            widgetValueElement.style.border = border;
-        }
+        if (timeCheck && SlowControlsAPI.checkPvTime(widget, pvName, pvTime))
+        { 
+            if(pvSeverity == "NO_ALARM" )
+            {
+                    widgetValueElement.style.border = "4px solid green";
+                    widgetValueElement.style.backgroundColor = 'green';
+            }
+            else if(pvSeverity == "MINOR" )
+            {
+                widgetValueElement.style.border = "4px solid orange";
+                widgetValueElement.style.backgroundColor = 'orange';
+            }
+            else if(pvSeverity == "MAJOR" )
+            {
+                widgetValueElement.style.border = "4px solid red";
+                widgetValueElement.style.backgroundColor = 'red';
+            }
+            else
+            {
+                widgetValueElement.style.border = "1px solid darkslategray";
+                widgetValueElement.style.backgroundColor = 'darkslategray';
+            }
+       }
         else
         {
             widgetValueElement.style.backgroundColor = bkgColor;
             widgetValueElement.style.border = bkgColor;
-        }
-
-        if(pvSeverity == "NO_ALARM" )
-        {
-                widgetValueElement.style.border = "4px solid green";
-                widgetValueElement.style.backgroundColor = 'green';
-        }
-        else if(pvSeverity == "MINOR" )
-        {
-            widgetValueElement.style.border = "4px solid orange";
-            widgetValueElement.style.backgroundColor = 'orange';
-        }
-        else if(pvSeverity == "MAJOR" )
-        {
-            widgetValueElement.style.border = "4px solid red";
-            widgetValueElement.style.backgroundColor = 'red';
-        }
-        else
-        {
-            widgetValueElement.style.border = "1px solid " + bkgColor;
-            widgetValueElement.style.backgroundColor = bkgColor;
         }
     }
     else
@@ -150,9 +147,9 @@ SlowControlsAPI.pvListReqHandler = function (req)
 {
     console.log("pvListReqHandler: response received!");	
     console.log(req.responseText);
-    datalist_ = document.createElement('datalist');
-    datalist_.id = "pvDatalist";
-    datalist_.innerHTML = "";
+    SlowControlsAPI._datalist = document.createElement('datalist');
+    SlowControlsAPI._datalist.id = "pvDatalist";
+    SlowControlsAPI._datalist.innerHTML = "";
 
     var jsonStr = DesktopContent.getXMLValue(req, "JSON");
     if(!jsonStr || jsonStr == "") return;				
@@ -166,6 +163,6 @@ SlowControlsAPI.pvListReqHandler = function (req)
     {
         var option = document.createElement("option");
         option.value = pvListJSON[x];
-        datalist_.appendChild(option);
+        SlowControlsAPI._datalist.appendChild(option);
     }
 } //end pvListReqHandler()
