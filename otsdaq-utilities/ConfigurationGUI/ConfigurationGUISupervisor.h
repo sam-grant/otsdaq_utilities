@@ -94,12 +94,15 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 																	unsigned int            depth,
 																	bool                    hideStatusFalse,
 																	const std::string&      modifiedTables,
-																	const std::string&      filterList);
+																	const std::string&      filterList,
+																	const std::string&      diffGroupName = "",
+																	const TableGroupKey&    diffGroupKey = TableGroupKey());
 	static void 			recursiveTreeToXML						(const ConfigurationTree& t,
 																	unsigned int            depth,
 																	HttpXmlDocument&        xmldoc,
 																	DOMElement*             parentEl,
-																	bool                    hideStatusFalse);
+																	bool                    hideStatusFalse,
+																	std::optional<std::reference_wrapper<const ConfigurationTree>> diffTree = std::nullopt);
 	void        			handleFillTreeNodeCommonFieldsXML		(HttpXmlDocument&       xmldoc,
 																	ConfigurationManagerRW* cfgMgr,
 																	const std::string&      groupName,
@@ -234,10 +237,17 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 																	ConfigurationManagerRW* cfgMgr,
 																	bool					getFullList,
 																	std::string				targetSubsystem = "");
-	void  					handleDiffWithActiveGroup				(HttpXmlDocument&       xmlOut,
+	void  					handleGroupDiff							(HttpXmlDocument&       xmlOut,
 																	ConfigurationManagerRW* cfgMgr,
 																	const std::string&      groupName,
-																	const TableGroupKey&    groupKey);
+																	const TableGroupKey&    groupKey,
+																	const TableGroupKey&    diffKey = TableGroupKey(),
+																	const std::string&      diffGroupName = "");
+	void  					handleTableDiff							(HttpXmlDocument&       xmlOut,
+																	ConfigurationManagerRW* cfgMgr,
+																	const std::string&      tableName,
+																	const TableVersion&     vA,
+																	const TableVersion&     vB);
 
 	
 
