@@ -335,6 +335,7 @@
 						for(var i=0;i<feMacros.length;++i)
 						{
 							macroVar = feMacros[i].getAttribute("value");
+							Debug.log("Help [macroVar]", feMacros[i].getAttribute("value"));
 							Debug.log(macroVar);
 							macroVar = macroVar.split(";");
 
@@ -365,6 +366,7 @@
 									Debug.log("Need to create FE to FE Macro map entry.");							
 									feToMacrosMap_[feUID] = {};
 								}
+								Debug.log("Help [macroVar[c+2]", macroVar[c+2]);
 								feToMacrosMap_[feUID][macroName] = 
 								{
 										"requiredPermissions": 	macroVar[c+1],
@@ -514,7 +516,7 @@
 				
 					}); //end getFEMacroList handler
 		} //end init()
-	
+
 		//=====================================================================================
 		//runMacro ~~
 		var verticalOutputDivSize_ = [600,1000];
@@ -1652,6 +1654,8 @@
 			console.log("feMacroNameSelected",feMacroNameSelected);
 
 			var macroNameObject = macroModules_[r][c].feMacroNameObject;
+
+			Debug.log("Help [macroNameObject]", macroNameObject);
 			
 			if(!feMacroNameSelected || feMacroNameSelected == "")
 			{
@@ -1677,8 +1681,6 @@
 			var inputsArr 	= macroObj.inputs;
 			var outputsArr 	= macroObj.outputs;
 			var tooltip 	= macroObj.tooltip;
-			if(tooltip != "")
-				DesktopContent.tooltip(macroName,tooltip);
 
 			//var supervisor 	= macroObj.supervisor;
 			//var lid 		= macroObj.lid;
@@ -1691,7 +1693,15 @@
 			str += "<b>&quot;" + macroName + "()&quot;</b> RequiredPermissions=" + requiredPermissions;
 			if (tooltip != "")
 			{
-				str += "<span class='macroInfo' title='" + tooltip + "'></span>";
+				Debug.log("Help [macro tooltip]", tooltip)
+				str += DesktopContent.htmlOpen("span",{
+						"class" : "macroInfo",
+						"style" : "cursor:pointer",
+						"onclick" : ("DesktopContent.tooltip(\"" + 
+							macroName + "\", \"" + 
+							DesktopContent.tooltipConditionString(tooltip) + "\");"),
+						"title" : "Click to open the tooltip for FE Macro &apos;" + macroName + "&apos;"
+					},"" /*innerHTML*/,true /*doCloseTag*/);					
 			}
 					
 			str += "<br>" +
