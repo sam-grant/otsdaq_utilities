@@ -6859,7 +6859,6 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 	{
 		int threadsLaunched = 0;
 		int foundThreadIndex = 0;
-		std::mutex threadMutex; // to protect accumulatedWarnings
 		std::vector<std::shared_ptr<std::atomic<bool>>> threadDone;
 		for(int i=0;i<numOfThreads;++i)
 			threadDone.push_back(std::make_shared<std::atomic<bool>>(true));
