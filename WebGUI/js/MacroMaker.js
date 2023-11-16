@@ -680,7 +680,7 @@
     {
     	 var fecListEl = document.getElementById("fecList");
     	 var macroLibEl = document.getElementById("macroLib");
-    	 var sequenceEl = document.getElementById("sequence");
+    	 var sequenceEl = document.getElementById("FEsequence");
     	 var progressBarOuterEl = document.getElementById("progressBarOuter");
     	 var mainEl = document.getElementById("main");
     	 var makerEl = document.getElementById("maker");

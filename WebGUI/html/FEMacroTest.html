@@ -84,7 +84,7 @@
 
 		.smallPopup {
 			width:					300px;
-			height:					120px;
+			min-height: 			120px; 
 			background-color: 		#002540;
 			z-index:				9;
 			position: 				fixed;
@@ -137,11 +137,25 @@
 		}
 
 		.component.light {
-			background-color: lavender;
+			background-color: rgb(199, 209, 245);
 		}
 
 		.component.dark {
 			background-color: lightgrey;
+		}
+
+		.sequence-btn, .sequence-btn span {
+			width: 15x;   
+			height: 15px; 
+			padding: 0px;
+			margin-bottom: 30px;
+			margin-top: 10px;
+			margin-right:8px;
+			font-size: 25px;
+			color: rgb(55, 55, 55);
+			border: 0px;
+			background-color: #f9f9f900;
+			cursor: pointer;
 		}
 
 		.macroInfo {
@@ -257,6 +271,10 @@
 		var intervalTime;
 
 		var currentLiveViewTimeout = null;
+
+		var sequenceDelayInput;
+
+		var delayBetweenMacros = 0;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -951,7 +969,15 @@
 							"rowspan": maxRow,
 							"width":"500px",
 						},
-						"<h3>Sequence Mode</h3>",
+						"<div style='display: flex; flex-direction: column; align-items: flex-start; width: 100%;'>" +
+						"<div style='display: flex; justify-content: space-between; align-items: center; width: 100%;'>" +
+							"<h3>Sequence Mode</h3>" +
+							"<span id='currentMacroDisplay'>No Macro Running</span>" +
+						"</div>" +
+						"<div style='display: flex; justify-content: flex-end; width: 100%;'>" +
+							"<span id='currentDelayDisplay'>Delay: 0s</span>" +
+						"</div>" +
+					"</div>",
 						true);
 				}
 
@@ -2110,16 +2136,16 @@
 			runBtn.disabled = status;
 			editBtn.disabled = status;
 			deleteBtn.disabled = status;
-			newBtn.disabled = !status;
+			// newBtn.disabled = !status; // leave new button always enabled
 		}
 
 		function statusEditButtons(status)
 		{
-			var testBtn = document.getElementById("testSequenceBtn");
+			//var testBtn = document.getElementById("testSequenceBtn");
 			var saveBtn = document.getElementById("saveSequenceBtn");
 			var resetBtn = document.getElementById("resetSequenceBtn");
 			resetBtn.disabled = status;
-			testBtn.disabled = status;
+			//testBtn.disabled = status;
 			saveBtn.disabled = status;
 		}
 
@@ -2174,26 +2200,31 @@
 				if (target === "sequence-builder") 
 				{
 					// append control sequence buttons
-					var sequence = document.getElementById("sequenceComponent-" + index);
+					var FEsequence = document.getElementById("sequenceComponent-" + index);
 					var sequenceAction = document.createElement("div");
+					sequenceAction.style.display = "inline-block"
 					sequenceAction.setAttribute("class", "vbox");
+					
 					// up button
 					var upBtn = document.createElement("button");
-					upBtn.innerText = "Up";
+					upBtn.className = "sequence-btn";
+					upBtn.innerHTML = "<span>▲</span>";  
 					upBtn.setAttribute("onClick", "moveUpSequence(" + index + ")");
+					// remove button
+					const removeBtn = document.createElement("button");
+					removeBtn.className = "sequence-btn";
+					removeBtn.innerHTML = "<span>✖</span>";
+					removeBtn.setAttribute("onClick", "removeFromSequence(" + index + ")");
 					// down button
 					var downBtn = document.createElement("button");
-					downBtn.innerText = "Down";
+					downBtn.className = "sequence-btn";
+					downBtn.innerHTML = "<span>▼</v>";  
 					downBtn.setAttribute("onClick", "moveDownSequence(" + index + ")");
-					// up button
-					const removeBtn = document.createElement("button");
-					removeBtn.innerText = "X";
-					removeBtn.setAttribute("onClick", "removeFromSequence(" + index + ")");
 
-					sequenceAction.appendChild(upBtn);
 					sequenceAction.appendChild(downBtn);
 					sequenceAction.appendChild(removeBtn);
-					sequence.appendChild(sequenceAction);
+					sequenceAction.appendChild(upBtn);
+					FEsequence.appendChild(sequenceAction);
 				}
 			}
 		}
@@ -2212,6 +2243,20 @@
 		{
 			var popup = document.getElementById("popupSaveSequence");
 			popup.style.display = "none";
+		}
+
+		function popupSetSequenceDelay()
+		{
+			var popup = document.getElementById("popupSetSequenceDelay");
+			var delayInput = document.getElementById("sequenceDelayInput");
+
+			if (popup) {
+				popup.style.display = "grid";
+				popup.style.gridTemplateColumns = "1fr";
+				delayInput.value = delayBetweenMacros / 1000;
+				delayInput.focus();
+				delayInput.select();
+			}
 		}
 
 		// END UTILS
@@ -2265,11 +2310,20 @@
 				"button",
 				{
 					"id": "runSequenceBtn",
-					"onClick": "runSequence()",
+					"onClick": "onClickRunSequence()",
 					"disabled": "true",
 				},
 				"Run",
 				true);
+			var delayButton = DesktopContent.htmlOpen(
+				"button",
+				{
+					"id": "delaySequenceBtn",
+					"onClick": "popupSetSequenceDelay()",
+				},
+				"Delay",
+				true
+			);
 			var editButton = DesktopContent.htmlOpen(
 				"button",
 				{
@@ -2307,15 +2361,15 @@
 				},
 				"Save",
 				true);
-			var testButton = DesktopContent.htmlOpen(
-				"button",
-				{
-					"id": "testSequenceBtn",
-					"disabled": true,
-					"onClick": "testSequence()",
-				},
-				"Test",
-				true);
+			// var testButton = DesktopContent.htmlOpen(
+			// 	"button",
+			// 	{
+			// 		"id": "testSequenceBtn",
+			// 		"disabled": true,
+			// 		"onClick": "testSequence()",
+			// 	},
+			// 	"Test",
+			// 	true);
 			var resetButton = DesktopContent.htmlOpen(
 				"button",
 				{
@@ -2340,7 +2394,7 @@
 					"id": "sequence-buttons",
 					"style": "margin-top:10px; display: flex; gap: 20px"
 				},
-				runButton + editButton + deleteButton + newButton,
+				runButton + delayButton + editButton + deleteButton + newButton,
 				true);
 
 			// area to build the sequence
@@ -2358,19 +2412,19 @@
 					"id": "sequence-builder-buttons",
 					"style": "margin-top:10px; display: none; gap: 20px"
 				},
-				testButton + saveButton + resetButton + closeButton,
+				saveButton + resetButton + closeButton,
 				true);
 			
 			
 			sequenceModule.innerHTML += str;
 			// load saved sequences
-			DesktopContent.XMLHttpRequest("Request?RequestType=loadMacroSequences",
+			DesktopContent.XMLHttpRequest("Request?RequestType=loadFEMacroSequences",
 				"",
 				function(req) {
 					// request hendler
-					Debug.log("loadMacroSequences() was called.");
+					Debug.log("loadFEMacroSequences() was called.");
 
-					var sequenceString = DesktopContent.getXMLValue(req, "sequences");
+					var sequenceString = DesktopContent.getXMLValue(req, "FEsequences");
 					if (!sequenceString) 
 					{
 						Debug.log("Sequence is empty!");
@@ -2396,29 +2450,42 @@
 		// ACTIONS
 
 		// TODO
-		function runSequence()
-		{
+		//function runSequence()
+	//	{
 			// call the API
-			var selector = document.getElementById("select-sequence");
+			//var selector = document.getElementById("select-sequence");
 
-			DesktopContent.XMLHttpRequest("Request?RequestType=runSequence" +
-				"&name=" + selector.value,
-				"",
-				function() {
+			//DesktopContent.XMLHttpRequest("Request?RequestType=runFEMacroSequence" +
+			//	"&name=" + selector.value,
+			//	"",
+			//	function() {
 					// request hendler
-					Debug.log("runFEMacroSequence() was called.");
+			//		Debug.log("runFEMacroSequence() was called.");
 					// TODO: show the results
-				}
-			);
-			console.log("run", selectedSequence_);
-		}
+
+			//	}
+			//);
+		//	console.log("run", selectedSequence_);
+	//	}
+
+		// call the function when we click on the history
 
 		function newSequence() 
 		{
+			console.log("newSequence called");
 			// disable action buttons
 			statusActionButtons(false);
 			// clean selected sequence
 			selectSequence();
+			
+			// change selection to new unnamed sequence
+			var sequenceSelector = document.getElementById("select-sequence");
+			var unnamedOption = document.createElement("option");
+			unnamedOption.text = "Unnamed";
+			unnamedOption.value = "Unnamed";
+			sequenceSelector.add(unnamedOption);
+			sequenceSelector.value = "Unnamed";
+
 			// allow editing
 			sequenceBuilding_ = true;
 			// empty builder
@@ -2429,39 +2496,50 @@
 			builderActions.style.display = "flex";
 		}
 
-		function deleteSequence()
-		{
-			// call the API
+		function deleteSequence() {
 			var selector = document.getElementById("select-sequence");
 
-			DesktopContent.XMLHttpRequest("Request?RequestType=deleteSequence" +
+			DesktopContent.XMLHttpRequest("Request?RequestType=deleteFEMacroSequence" +
 				"&name=" + selector.value,
 				"",
 				function() {
-					// request hendler
-					Debug.log("deleteSequences() was called.");
+					Debug.log("deleteFEMacroSequence() was called.");
 					
-					// remove the option
-					for (var index = 0; selector.options.length; index++)
+					// Find and remove the selected option
+					for (var index = 0; index < selector.options.length; index++)
 					{
 						if (selector.options[index].value === selector.value)
 						{
 							selector.remove(index);
+
+							// Select and load the next sequence if available
+							if (selector.options.length > 0)
+							{
+								// Adjust index if it's now out of bounds
+								if (index === selector.options.length) 
+								{
+									index--;
+								}
+								selector.selectedIndex = index;
+
+								// Load the newly selected sequence
+								selectSequence(selector.options[selector.selectedIndex].value);
+							} 
+							else 
+							{
+								// No more sequences, reset the UI
+								selectedSequence_ = {};
+								showSequence("show-sequence", selectedSequence_);
+								statusActionButtons(true);
+							}
+
 							break;
 						}
 					}
-
-					// clean the list
-					selectedSequence_ = {};
-					showSequence("show-sequence", selectedSequence_);
-					// deactive buttons
-					statusActionButtons(true);
 				}
 			);
-			console.log("delete", selectedSequence_);
 		}
 
-		
 		function editSequence()
 		{
 			// disable action buttons
@@ -2474,6 +2552,26 @@
 			var builderActions = document.getElementById("sequence-builder-buttons");			
 			builderActions.style.display = "flex";
 			document.getElementById("sequenceName").value = document.getElementById("select-sequence").value;
+		}
+
+		function delaySequence()
+		{
+   			var delayInput = document.getElementById('sequenceDelayInput').value * 1000; 
+    		delayBetweenMacros = parseInt(delayInput);
+
+			if (isNaN(delayBetweenMacros) || delayBetweenMacros < 0)
+			{
+				alert("Please enter a valid number greater than 0");
+				return;
+			}
+
+			var delayDisplay = document.getElementById('currentDelayDisplay');
+			if (delayDisplay)
+			{
+				delayDisplay.textContent = "Delay: " + (delayBetweenMacros / 1000) + "s";  // Convert milliseconds to seconds
+			}
+
+    	document.getElementById('popupSetSequenceDelay').style.display = 'none';
 		}
 
 		function selectSequence(elem = "undefined")
@@ -2491,18 +2589,19 @@
 			}
 
 			// call the API
-			DesktopContent.XMLHttpRequest("Request?RequestType=getSequence" +
+			DesktopContent.XMLHttpRequest("Request?RequestType=getFEMacroSequence" +
 				"&name=" + elem,
 				"",
 				function(req) {
 					// request hendler
-					Debug.log("loadMacroSequences() was called.");
-					var sequenceString = DesktopContent.getXMLValue(req, "sequence");
+					Debug.log("loadFEMacroSequences() was called.");
+					var sequenceString = DesktopContent.getXMLValue(req, "FEsequence");
 					if (!sequenceString) 
 					{
 						Debug.log("Sequence is empty!");
 						return;
 					}
+					console.log(sequenceString);
 					selectedSequence_ = JSON.parse(decodeURI(sequenceString));
 
 					// close the building if it is open
@@ -2520,6 +2619,7 @@
 			var sequenceSelector = document.getElementById("select-sequence");
 			var sequenceName = document.getElementById("sequenceName");
 			var errorMessage = document.getElementById("sequenceName-error");
+			var isNewSequence = sequenceSelector.value === "Unnamed";
 
 			// check if name is empty
 			if (sequenceName.value === "")
@@ -2528,6 +2628,7 @@
 				return;
 			}
 
+    		// Check for invalid characters
 			var invalidCharacters = /[<>:"/\\|?*]/;
 			if (invalidCharacters.test(sequenceName.value))
 			{
@@ -2544,35 +2645,139 @@
 					return;
 				}
 			}
-
+			
 			// prepare the payload of the API call
-			var postData = "sequence=" + encodeURI(JSON.stringify(tempSequence_)) + 
+			var postData = "FEsequence=" + encodeURI(JSON.stringify(tempSequence_)) + 
 						   "&sequenceName=" + sequenceName.value;
+			
+
+			console.log(JSON.stringify(tempSequence_));
+			console.log("Sequence Name:", sequenceName.value);
 
 			// API call
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveSequence",				
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveFEMacroSequence",
 				postData, 
-				function () {
-					// update the select
-					var option = document.createElement("option");
-					option.text = sequenceName.value;
-					option.value = sequenceName.value;
-					sequenceSelector.add(option);
+				function () 
+				{
+					// Update the dropdown based on whether it's a new sequence or not
+					if (isNewSequence)
+					{
+						// Check if the "Unnamed" option exists and update it
+						var unnamedOption = sequenceSelector.querySelector("option[value='Unnamed']");
+						if (unnamedOption)
+						{
+							unnamedOption.text = sequenceName.value;
+							unnamedOption.value = sequenceName.value;
+						}
+					}
+					else
+					{
+						// Check if an option with this name already exists
+						var existingOption = Array.from(sequenceSelector.options).find(option => option.value === sequenceName.value);
+						if (!existingOption)
+						{
+							// Add a new option for the saved sequence
+							var option = document.createElement("option");
+							option.text = sequenceName.value;
+							option.value = sequenceName.value;
+							sequenceSelector.add(option);
+						}
+					}
+
+					sequenceSelector.value = sequenceName.value;
 					selectSequence(sequenceName.value);
+
 				},
 				0 /*reqParam*/, 
 				0 /*progressHandler*/, 
 				true /*callHandlerOnErr*/
-				
-			);
-			var sequenceNameInput = document.getElementById("sequenceName");
-			sequenceNameInput.value = "";
+   			);
 
 			var errorMessage = document.getElementById("sequenceName-error");
 			errorMessage.innerText = "";
 			hidePopupSaveSequence()
 			closeSequence();
 		}
+
+		function onClickRunSequence() 
+		{
+			if (!selectedSequence_ || Object.keys(selectedSequence_).length === 0)
+			{
+				console.log("No sequence selected");
+				updateCurrentMacroDisplay("");
+				return;
+			}
+
+			var keys = Object.keys(selectedSequence_);
+    		var currentIndex = 0;
+			var totalMacros = keys.length; 
+
+			function executeMacro() {
+				if (currentIndex >= keys.length)
+				{
+					updateCurrentMacroDisplay("Done", currentIndex, totalMacros);
+					return; // Stop when all macros are executed
+				}
+
+				var commandString = selectedSequence_[keys[currentIndex]];
+				var command = JSON.parse(commandString);
+
+				updateCurrentMacroDisplay(command["macroName"], currentIndex + 1, totalMacros);
+
+				var postData = "inputArgs=" + command["inputArgs"] + "&outputArgs=" + command["outputArgs"];
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=runFEMacro" +
+					"&feClassSelected=" + command["feClass"] +
+					"&feUIDSelected=" + command["feUID"] +
+					"&macroType=" + command["macroType"] +
+					"&macroName=" + command["macroName"] + 
+					"&saveOutputs=" + parseInt(command["saveOutputs"]),
+					postData, 
+					handleMacroResponse,
+					0 /*reqParam*/, 0 /*progressHandler*/, 
+					true /*callHandlerOnErr*/
+				);
+
+				appendHistoryRecord(JSON.stringify(command));
+
+				currentIndex++;
+				setTimeout(executeMacro, delayBetweenMacros); // Delay before executing next macro
+			}
+
+    		executeMacro(); // Start executing macros with delay
+
+			// if (currentLiveViewTimeout !== null) 
+			// {
+			// 	clearTimeout(currentLiveViewTimeout);
+			// 	currentLiveViewTimeout = null;
+			// }
+
+			// if (liveViewActive) 
+			// {
+			// 	currentLiveViewTimeout = setTimeout(function() { onClickRunSequence(); }, intervalTime); 
+			// }
+			
+		}
+
+		function updateCurrentMacroDisplay(macroName, currentIndex, totalMacros) 
+		{
+			var displayElement = document.getElementById("currentMacroDisplay");
+
+			if (displayElement) 
+			{
+				var displayText;
+				if (macroName === "Done") 
+				{
+					displayText = "Done";
+				} 
+				else 
+				{
+					displayText = currentIndex + "/" + totalMacros + " " + macroName;
+				}
+				displayElement.textContent = "Currently executing: " + displayText;
+			}
+		}
+
 
 		function resetSequence()
 		{
@@ -2602,10 +2807,10 @@
 		}
 		
 		// TODO
-		function testSequence()
-		{
-			console.log("test", tempSequence_);
-		}
+		//function testSequence()
+		//{
+			//console.log("test", tempSequence_);
+		//}
 		
 		// END ACTIONS
 
@@ -2663,17 +2868,41 @@
 			return
 		}
 		
-		function handleEnterPressSequence(event) 
+		function handleEnterPressDelaySequence(event)
 		{
-        if (event.key === "Enter" || event.keyCode === 13) {
-            event.preventDefault();
-            
-            saveSequence();
+			if (event.key === "Enter" || event.keyCode === 13)
+			{
+				event.preventDefault();
 
-            return false;
-        }
-        return true;
-    	}    
+				var activeElement = document.activeElement;
+
+				if (activeElement && activeElement.id === "sequenceDelayInput")
+				{
+					delaySequence();
+					return false; 
+				}
+				return false;
+			}
+			return true;
+		}
+
+	function handleEnterPressSaveSequence(event) {
+		if (event.key === "Enter" || event.keyCode === 13) 
+		{
+			event.preventDefault();
+
+			var activeElement = document.activeElement;
+
+			if (activeElement && activeElement.id === "sequenceName")
+			{
+				saveSequence();
+				return false; 
+			}
+			return false; 
+		}
+		return true;
+	}
+
 
 		// END SEQUENCE CONTROL
 		//=====================================================================================		
@@ -2703,6 +2932,17 @@
 		</div>
 	</div>
 
+	<div id="popupSetSequenceDelay" class="smallPopup">
+		<center>
+		<h4>Set Delay Between Macros (sec):</h4>
+		<input type="number" id="sequenceDelayInput" min="0" maxlength="30" onkeypress="return handleEnterPressDelaySequence(event)"></input>
+		<div class="buttongroup" style="margin-top: 20px;">
+				<button onclick="delaySequence()">Confirm</button>
+				<button onclick="hideSmallPopup(this)">Cancel</button>
+			</center>
+		</div>
+	</div>
+	
 	<div id="popupSetInterval" class="smallPopup">
 			<center>
 		<h4>Please enter the interval time (sec):</h4>
@@ -2717,9 +2957,9 @@
 	<div id="popupSaveSequence" class="smallPopup">
 		<center>
 	    <h4>Type a name for the sequence</h4>
-		<input type="text" id="sequenceName" maxlength="30" onkeypress="return handleEnterPressSequence(event)"></input>
-		<span id="sequenceName-error" style="color: red; display: block;"></span>
-	    <div class="buttongroup" style="margin-top: 20px;">
+		<input type="text" id="sequenceName" maxlength="30" onkeypress="return handleEnterPressSaveSequence(event)"></input>
+		<span id="sequenceName-error" style="color: red; display: block; margin-top: 10px;"></span>
+	    <div class="buttongroup" style="margin-top: 10px;">
 			<button onclick="saveSequence()">Confirm</button>
 			<button onclick="hideSmallPopup(this)">Cancel</button>
 		</center>
