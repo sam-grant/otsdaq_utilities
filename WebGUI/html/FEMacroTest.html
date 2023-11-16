@@ -2001,7 +2001,8 @@
 			// show the command in the interface
 			appendHistoryRecord(JSON.stringify(recordObj));
 
-			if (liveViewActive) {
+			if (liveViewActive) 
+			{
 				currentLiveViewTimeout = setTimeout(function() { onClickHistoryRecord(recordObj); }, intervalTime); 
     		}
 		}
@@ -2250,7 +2251,8 @@
 			var popup = document.getElementById("popupSetSequenceDelay");
 			var delayInput = document.getElementById("sequenceDelayInput");
 
-			if (popup) {
+			if (popup)
+			{
 				popup.style.display = "grid";
 				popup.style.gridTemplateColumns = "1fr";
 				delayInput.value = delayBetweenMacros / 1000;
@@ -2420,7 +2422,8 @@
 			// load saved sequences
 			DesktopContent.XMLHttpRequest("Request?RequestType=loadFEMacroSequences",
 				"",
-				function(req) {
+				function(req)
+				{
 					// request hendler
 					Debug.log("loadFEMacroSequences() was called.");
 
@@ -2496,7 +2499,8 @@
 			builderActions.style.display = "flex";
 		}
 
-		function deleteSequence() {
+		function deleteSequence()
+		{
 			var selector = document.getElementById("select-sequence");
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=deleteFEMacroSequence" +
@@ -2645,7 +2649,7 @@
 					return;
 				}
 			}
-			
+
 			// prepare the payload of the API call
 			var postData = "FEsequence=" + encodeURI(JSON.stringify(tempSequence_)) + 
 						   "&sequenceName=" + sequenceName.value;
@@ -2712,7 +2716,8 @@
     		var currentIndex = 0;
 			var totalMacros = keys.length; 
 
-			function executeMacro() {
+			function executeMacro()
+			{
 				if (currentIndex >= keys.length)
 				{
 					updateCurrentMacroDisplay("Done", currentIndex, totalMacros);
@@ -2778,7 +2783,6 @@
 			}
 		}
 
-
 		function resetSequence()
 		{
 			// reset the container
@@ -2805,12 +2809,6 @@
 			sequenceBuilding_ = false;
 			console.log("close", tempSequence_);
 		}
-		
-		// TODO
-		//function testSequence()
-		//{
-			//console.log("test", tempSequence_);
-		//}
 		
 		// END ACTIONS
 
@@ -2886,7 +2884,8 @@
 			return true;
 		}
 
-	function handleEnterPressSaveSequence(event) {
+	function handleEnterPressSaveSequence(event)
+	{
 		if (event.key === "Enter" || event.keyCode === 13) 
 		{
 			event.preventDefault();
@@ -2971,4 +2970,3 @@
 </body>
 	
 </html>
-
