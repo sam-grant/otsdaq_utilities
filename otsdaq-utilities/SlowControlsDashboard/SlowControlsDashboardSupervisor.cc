@@ -199,6 +199,12 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 		{
 			__SS__ << "checkSlowControlsAlarms() ERROR While sendin alarm messages"
 			       << __E__;
+			try	{ throw; } //one more try to printout extra info
+			catch(const std::exception &e)
+			{
+				ss << "Exception message: " << e.what();
+			}
+			catch(...){}
 			std::lock_guard<std::mutex> lock(cs->alarmCheckThreadErrorMutex_);
 			cs->alarmCheckThreadError_ = ss.str();
 			__COUT_ERR__ << ss.str();
@@ -306,10 +312,8 @@ void SlowControlsDashboardSupervisor::forceSupervisorPropertyValues()
 	{
         CorePropertySupervisorBase::setSupervisorProperty(
             CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.UserPermissionsThreshold,
-            "*=0 | getPages=1 | getList=1 | "
-            "isUserAdmin=1");  // block users from writing if no write access
-		__COUT__ << "readOnly true in setSupervisorProperty" << __E__;
-
+            "*=0 | getPages=1 | loadPhoebusPage=1 | getList=1 | getPVSettings=1 | getPvArchiverData=1 | generateUID=1 | getUserPermissions=1 |\
+			 userActivityHeartbeat=1 | poll=1 | uid=1 | isUserAdmin=1");  // block users from writing if no write access
 	}
 } //end forceSupervisorPropertyValues()
 
@@ -349,6 +353,12 @@ void SlowControlsDashboardSupervisor::request(const std::string& requestType,
 	{
 		__SS__ << "Unknown error occurred handling request '" << requestType << "!'"
 		       << __E__;
+		try	{ throw; } //one more try to printout extra info
+		catch(const std::exception &e)
+		{
+			ss << "Exception message: " << e.what();
+		}
+		catch(...){}
 		__SUP_COUT__ << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}

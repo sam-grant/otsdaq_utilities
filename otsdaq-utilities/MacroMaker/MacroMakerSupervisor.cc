@@ -451,15 +451,19 @@ void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
 			__SUP_SS__ << "An error was encountered handling requestType '" << requestType
 			           << "':" << e.what() << __E__;
 			__SUP_COUT_ERR__ << "\n" << ss.str();
-			__SUP_MOUT_ERR__ << "\n" << ss.str();
 		}
 		catch(...)
 		{
 			__SUP_SS__ << "An unknown error was encountered handling requestType '"
 			           << requestType << ".' "
 			           << "Please check the printouts to debug." << __E__;
+			try	{ throw; } //one more try to printout extra info
+			catch(const std::exception &e)
+			{
+				ss << "Exception message: " << e.what();
+			}
+			catch(...){}
 			__SUP_COUT_ERR__ << "\n" << ss.str();
-			__SUP_MOUT_ERR__ << "\n" << ss.str();
 		}
 		return;
 	}
@@ -482,6 +486,12 @@ void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
 		__SUP_SS__ << "An unknown error was encountered handling requestType '"
 		           << requestType << ".' "
 		           << "Please check the printouts to debug." << __E__;
+		try	{ throw; } //one more try to printout extra info
+		catch(const std::exception &e)
+		{
+			ss << "Exception message: " << e.what();
+		}
+		catch(...){}
 		__SUP_COUT_ERR__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 	}
@@ -557,10 +567,6 @@ try
 		                            std::to_string(unsigned(userInfo.permissionLevel_)));
 		// create macro maker folders for the user (the first time a user authenticates
 		// with macro maker)
-		std::string macroPath = (std::string)MACROS_DB_PATH + userInfo.username_ + "/";
-		mkdir(macroPath.c_str(), 0755);
-		std::string histPath = (std::string)MACROS_HIST_PATH + userInfo.username_ + "/";
-		mkdir(histPath.c_str(), 0755);
 		std::string publicPath = (std::string)MACROS_DB_PATH + "publicMacros/";
 		mkdir(publicPath.c_str(), 0755);
 		std::string exportPath =
@@ -584,6 +590,12 @@ catch(const std::runtime_error& e)
 catch(...)
 {
 	__SS__ << "Unknown error occurred handling request '" << requestType << "!'" << __E__;
+	try	{ throw; } //one more try to printout extra info
+	catch(const std::exception &e)
+	{
+		ss << "Exception message: " << e.what();
+	}
+	catch(...){}
 	__SUP_COUT__ << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
 }  // end request() error handling
@@ -619,7 +631,14 @@ void MacroMakerSupervisor::handleRequest(const std::string                Comman
 		exportFEMacro(xmldoc, cgi, userInfo.username_);
 	else if(Command == "getFEMacroList")  // called by FE Macro Test and returns FE Macros
 	                                      // and Macro Maker Macros
+	{
+		std::string macroPath = (std::string)MACROS_DB_PATH + userInfo.username_ + "/";
+		mkdir(macroPath.c_str(), 0755);
+		std::string histPath = (std::string)MACROS_HIST_PATH + userInfo.username_ + "/";
+		mkdir(histPath.c_str(), 0755);
+	
 		getFEMacroList(xmldoc, userInfo.username_);
+	}
 	else if(Command == "runFEMacro")  // called by FE Macro Test returns FE Macros and
 	                                  // Macro Maker Macros
 		runFEMacro(xmldoc, cgi, userInfo);
@@ -827,6 +846,12 @@ catch(...)
 	    SOAPUtilities::makeSOAPMessageReference("Error");
 
 	__SUP_SS__ << "Unknown error processing FE communication request." << __E__;
+	try	{ throw; } //one more try to printout extra info
+	catch(const std::exception &e)
+	{
+		ss << "Exception message: " << e.what();
+	}
+	catch(...){}
 	__SUP_COUT_ERR__ << ss.str();
 
 	SOAPParameters parameters;
@@ -2841,6 +2866,12 @@ catch(const std::runtime_error& e)
 catch(...)
 {
 	__SUP_SS__ << "Unknown error processing FE communication request." << __E__;
+	try	{ throw; } //one more try to printout extra info
+	catch(const std::exception &e)
+	{
+		ss << "Exception message: " << e.what();
+	}
+	catch(...){}
 	__SUP_COUT_ERR__ << ss.str();
 
 	xmldoc.addTextElementToData("Error", ss.str());
