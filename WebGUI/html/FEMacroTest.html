@@ -2738,7 +2738,20 @@
 					updateCurrentMacroDisplay("Done", currentIndex, totalMacros);
 					isSequenceRunning = false;
             		updateRunButtonState();
-					return; // Stop when all macros are executed
+				
+					if (liveViewActive) 
+					{
+						if (currentLiveViewTimeout !== null) 
+						{
+							clearTimeout(currentLiveViewTimeout);
+						}
+						// Set up the sequence to restart after the live view interval
+						currentLiveViewTimeout = setTimeout(function() {
+							onClickRunSequence();
+						}, intervalTime);
+					}
+
+					return;
 				}
 
 				var commandString = selectedSequence_[keys[currentIndex]];
@@ -2767,17 +2780,6 @@
 			}
 
     		executeMacro(); // Start executing macros with delay
-
-			// if (currentLiveViewTimeout !== null) 
-			// {
-			// 	clearTimeout(currentLiveViewTimeout);
-			// 	currentLiveViewTimeout = null;
-			// }
-
-			// if (liveViewActive) 
-			// {
-			// 	currentLiveViewTimeout = setTimeout(function() { onClickRunSequence(); }, intervalTime); 
-			// }
 			
 		}
 
