@@ -2520,65 +2520,7 @@ std::string MacroMakerSupervisor::generateHexArray(const std::string& sourceHexS
 
 	return retSs.str();
 }
-//==============================================================================
-//void MacroMakerSupervisor::runFEMacroSequence(HttpXmlDocument& xmldoc,
-						//					  cgicc::Cgicc& cgi,
-						//					  const std::string& username)
-//{
-	//std::string sequenceName = CgiDataUtilities::getData(cgi, "name");
 
-	//__SUP_COUTV__(sequenceName);
-
-	// access to the file
-//	std::string fullPath = (std::string)MACROS_SEQUENCE_PATH + username + "/" + sequenceName + ".dat";
-//	__SUP_COUT__ << fullPath << __E__;
-
-	// read from the file
-//	std::ifstream read(fullPath.c_str());	// reading the file
-//	std::string FEsequence;
-
-//	if (read.is_open())
-//	{
-	//	char* seqFile;
-	//	unsigned long long fileSize;
-	//	read.seekg(0, std::ios::end);
-	//	fileSize = read.tellg();
-	//	seqFile = new char[fileSize + 1];
-	//	seqFile[fileSize] = '\0';
-	//	read.seekg(0, std::ios::beg);
-
-		// read data as a block:
-		//read.read(seqFile, fileSize);
-		//read.close();
-		
-		//__SUP_SS__ <<  "file has been read" << __E__;
-
-		//FEsequence = StringMacros::decodeURIComponent(seqFile);
-		//delete[] seqFile;
-	//}
-	//else
-	//{
-		//__SUP_SS__ << "Unable to read the file " << sequenceName << "!" << __E__;
-		//__SUP_SS_THROW__;
-	//}
-
-	// TODO: decode list
-	//std::map<std::string, std::string> sequenceMap;
-//	StringMacros::getMapFromString(
-	  //  FEsequence,
-	  //  sequenceMap,
-	  //  std::set<char>({','}) /*pair delimiters*/,
-	  //  std::set<char>({':'}) /*name/value delimiters*/);
-
-	//__SUP_COUTV__(sequenceName);
-
-	//TODO: iterate over the list and exe macros
-
-
-	// TODO: send back the results
-	//xmldoc.addTextElementToData("result", "OK");
-
-//}
 //==============================================================================
 void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&                 xmldoc,
                                       cgicc::Cgicc&                    cgi,
