@@ -275,6 +275,8 @@
 		var sequenceDelayInput;
 
 		var delayBetweenMacros = 0;
+
+		var isSequenceRunning = false;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -2712,6 +2714,9 @@
 				return;
 			}
 
+			isSequenceRunning = true;
+			updateRunButtonState();
+
 			var keys = Object.keys(selectedSequence_);
     		var currentIndex = 0;
 			var totalMacros = keys.length; 
@@ -2721,6 +2726,8 @@
 				if (currentIndex >= keys.length)
 				{
 					updateCurrentMacroDisplay("Done", currentIndex, totalMacros);
+					isSequenceRunning = false;
+            		updateRunButtonState();
 					return; // Stop when all macros are executed
 				}
 
@@ -2762,6 +2769,15 @@
 			// 	currentLiveViewTimeout = setTimeout(function() { onClickRunSequence(); }, intervalTime); 
 			// }
 			
+		}
+
+		function updateRunButtonState() 
+		{
+			var runButton = document.getElementById("runSequenceBtn");
+			if (runButton) 
+			{
+				runButton.disabled = isSequenceRunning;
+			}
 		}
 
 		function updateCurrentMacroDisplay(macroName, currentIndex, totalMacros) 
