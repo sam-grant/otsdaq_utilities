@@ -1175,7 +1175,7 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& /*xmldoc*/,
 {
 	__SUP_COUT__ << "MacroMaker wants to create a macro!!!!!!!!!" << __E__;
 	std::string Name     = CgiDataUtilities::postData(cgi, "Name");
-	std::string FESequence = CgiDataUtilities::postData(cgi, "FEsequence");
+	std::string Sequence = CgiDataUtilities::postData(cgi, "Sequence");
 	std::string Time     = CgiDataUtilities::postData(cgi, "Time");
 	std::string Notes =
 	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "Notes"));
@@ -1183,7 +1183,7 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& /*xmldoc*/,
 	std::string isMacroLSBF   = CgiDataUtilities::getData(cgi, "isLSBF");
 
 	__SUP_COUTV__(Name);
-	__SUP_COUTV__(FESequence);
+	__SUP_COUTV__(Sequence);
 	__SUP_COUTV__(Notes);
 	__SUP_COUTV__(Time);
 	__SUP_COUTV__(isMacroPublic);
@@ -1205,7 +1205,7 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& /*xmldoc*/,
 	{
 		macrofile << "{\n";
 		macrofile << "\"name\":\"" << Name << "\",\n";
-		macrofile << "\"FEsequence\":\"" << FESequence << "\",\n";
+		macrofile << "\"sequence\":\"" << Sequence << "\",\n";
 		macrofile << "\"time\":\"" << Time << "\",\n";
 		macrofile << "\"notes\":\"" << Notes << "\",\n";
 		macrofile << "\"LSBF\":\"" << isMacroLSBF << "\"\n";
