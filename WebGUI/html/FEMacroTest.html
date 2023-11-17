@@ -280,6 +280,25 @@
 			{
 				firstTime = false;
 			}
+			var windowTooltip = "Welcome to the FE Macros web app!\n\n" + 
+				"This app provides an interface for devices configured in the context. " +
+				"It allows for common functions such as resets and reading and writing to memory. " +
+				"\n\n" +
+				"Choose a Front-End (FE) type (i.e. this should match your FE plugin class name) to access functionalities. " +
+				"Alternatively, you can handpick a subset of devices for more granular control by selecting <b>FE Target UID</b> or <b>toggle Multi-select</b>. " +
+				"Once you've chosen your FE type and target(s), select the FE Macro name, and hit <b>Run</b> to execute. " +
+				"The FE Macro will only run one time and on the devices specified. " + 
+				"For more information about a FE Macro click on the tooltip icon below the FE Macro name. " + 
+				"\n\n" +
+				"The output is displayed in the middle panel. " +
+				"\n\n" +
+				"The panel on the right tracks your history. You can run previous FE Macros by clicking on them. " +
+				"Optionally, the <b>Live View</b> button can repeatedly run the last FE Macro for a given amount of time. " + 
+				"\n\n" +
+				"Clicking on <b>Sequence Mode</b> on the top left corner will open a fourth panel. Here, users can create an alias for a sequence of previously ran FE Macros. " 
+
+			DesktopContent.tooltip("FE Macros Introduction", windowTooltip);
+			DesktopContent.setWindowTooltip(windowTooltip);
 			
 			Debug.closeErrorPop(); //close any debug pop-ups to start a blank slate 
 			Debug.log("feMacroTest init ");
@@ -1699,7 +1718,7 @@
 						"style" : "cursor:pointer",
 						"onclick" : ("DesktopContent.tooltip(\"" + 
 							macroName + "\", \"" + 
-							DesktopContent.tooltipConditionString(tooltip) + "\");"),
+							DesktopContent.tooltipConditionString(tooltip) + "\", \"always\");"),
 						"title" : "Click to open the tooltip for FE Macro &apos;" + macroName + "&apos;"
 					},"" /*innerHTML*/,true /*doCloseTag*/);					
 			}

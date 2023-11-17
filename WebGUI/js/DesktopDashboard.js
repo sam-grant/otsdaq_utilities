@@ -831,7 +831,7 @@ else
                 
         tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
-    tmpBtn.innerHTML = "<a  href='" + 
+    	tmpBtn.innerHTML = "<a  href='" + 
         	"#'" +
         	" 'title='Click to open ots documentation in a new tab' ><img src='/WebPath/images/dashboardImages/icon-Help.png'></a>";
 		tmpBtn.onmouseup = Desktop.handleDashboardHelp;
