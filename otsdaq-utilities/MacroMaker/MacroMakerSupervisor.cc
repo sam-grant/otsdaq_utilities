@@ -555,7 +555,7 @@ try
 		mkdir(histPath.c_str(), 0755);
 	}
 
-	if (requestType == "loadMacroSequences")
+	if (requestType == "loadFEMacroSequences")
 	{
 		std::string seqPath = (std::string)MACROS_SEQUENCE_PATH + userInfo.username_ + "/";
 		mkdir(seqPath.c_str(), 0755);
@@ -648,16 +648,16 @@ void MacroMakerSupervisor::handleRequest(const std::string                Comman
 	else if(Command == "clearFEHistory")  // called by FE Macro Test returns FE Macros and
 	                                  		// Macro Maker Macros
 		clearFEHistory(userInfo.username_);
-	else if (Command == "loadMacroSequences")
-		loadMacroSequences(xmldoc, userInfo.username_);
-	else if (Command == "saveSequence")
-		saveMacroSequence(cgi, userInfo.username_);
-	else if (Command == "getSequence")
-		getMacroSequence(xmldoc, cgi, userInfo.username_);
-	else if (Command == "deleteSequence")
-		deleteMacroSequence(cgi, userInfo.username_);
-	else if (Command == "runSequence")
-		runFEMacroSequence(xmldoc, cgi, userInfo.username_);
+	else if (Command == "loadFEMacroSequences")
+		loadFEMacroSequences(xmldoc, userInfo.username_);
+	else if (Command == "saveFEMacroSequence")
+		saveFEMacroSequence(cgi, userInfo.username_);
+	else if (Command == "getFEMacroSequence")
+		getFEMacroSequence(xmldoc, cgi, userInfo.username_);
+	else if (Command == "deleteFEMacroSequence")
+		deleteFEMacroSequence(cgi, userInfo.username_);
+	//else if (Command == "runFEMacroSequence")
+	//	runFEMacroSequence(xmldoc, cgi, userInfo.username_);
 	else
 		xmldoc.addTextElementToData("Error", "Unrecognized command '" + Command + "'");
 }  // end handleRequest()
@@ -1497,7 +1497,7 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string feClass,
 
 }
 //==============================================================================
-void MacroMakerSupervisor::loadMacroSequences(HttpXmlDocument& xmldoc,
+void MacroMakerSupervisor::loadFEMacroSequences(HttpXmlDocument& xmldoc,
                                        		  const std::string& username) 
 {
 	DIR* dir;
@@ -1528,20 +1528,20 @@ void MacroMakerSupervisor::loadMacroSequences(HttpXmlDocument& xmldoc,
 	}
 
 	// return the list of sequences
-	xmldoc.addTextElementToData("sequences", sequences);
+	xmldoc.addTextElementToData("FEsequences", sequences);
 	return;
 }
 
 //==============================================================================
-void MacroMakerSupervisor::saveMacroSequence(cgicc::Cgicc& cgi,
+void MacroMakerSupervisor::saveFEMacroSequence(cgicc::Cgicc& cgi,
 											 const std::string& username) 
 {
 	// get data from the http request
 	std::string name = CgiDataUtilities::postData(cgi, "sequenceName");
-	std::string sequence = StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "sequence"));
+	std::string FEsequence = StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "FEsequence"));
 
 	__SUP_COUTV__(name);
-	__SUP_COUTV__(sequence);
+	__SUP_COUTV__(FEsequence);
 
 	// append to the file
 	std::string fullPath = (std::string)MACROS_SEQUENCE_PATH + username + "/" + name + ".dat";
@@ -1550,7 +1550,7 @@ void MacroMakerSupervisor::saveMacroSequence(cgicc::Cgicc& cgi,
 	if (seqfile.is_open())
 	{
 		// seqfile << "#" << name << __E__;
-		seqfile << sequence << __E__;
+		seqfile << FEsequence << __E__;
 		seqfile.close();
 	}
 	else
@@ -1558,7 +1558,7 @@ void MacroMakerSupervisor::saveMacroSequence(cgicc::Cgicc& cgi,
 }
 
 //==============================================================================
-void MacroMakerSupervisor::getMacroSequence(HttpXmlDocument& xmldoc,
+void MacroMakerSupervisor::getFEMacroSequence(HttpXmlDocument& xmldoc,
 										   cgicc::Cgicc& cgi, 
 										   const std::string& username)
 {
@@ -1586,7 +1586,7 @@ void MacroMakerSupervisor::getMacroSequence(HttpXmlDocument& xmldoc,
 		read.read(response, fileSize);
 		read.close();
 
-		xmldoc.addTextElementToData("sequence", &response[0]);
+		xmldoc.addTextElementToData("FEsequence", &response[0]);
 
 		delete[] response;
 	}
@@ -1598,7 +1598,7 @@ void MacroMakerSupervisor::getMacroSequence(HttpXmlDocument& xmldoc,
 }
 
 //==============================================================================
-void MacroMakerSupervisor::deleteMacroSequence(cgicc::Cgicc& cgi, 
+void MacroMakerSupervisor::deleteFEMacroSequence(cgicc::Cgicc& cgi, 
 										       const std::string& username)
 {
 	std::string sequenceName = CgiDataUtilities::getData(cgi, "name");
@@ -1775,7 +1775,7 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument&   xmldoc,
 {
 	std::string oldMacroName = CgiDataUtilities::postData(cgi, "oldMacroName");
 	std::string newMacroName = CgiDataUtilities::postData(cgi, "newMacroName");
-	std::string Sequence     = CgiDataUtilities::postData(cgi, "Sequence");
+	std::string FESequence     = CgiDataUtilities::postData(cgi, "FEsequence");
 	std::string Time         = CgiDataUtilities::postData(cgi, "Time");
 	std::string Notes =
 	    StringMacros::decodeURIComponent(CgiDataUtilities::postData(cgi, "Notes"));
@@ -1785,7 +1785,7 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument&   xmldoc,
 
 	__SUP_COUTV__(oldMacroName);
 	__SUP_COUTV__(newMacroName);
-	__SUP_COUTV__(Sequence);
+	__SUP_COUTV__(FESequence);
 	__SUP_COUTV__(Notes);
 	__SUP_COUTV__(Time);
 	__SUP_COUTV__(isMacroPublic);
@@ -1807,7 +1807,7 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument&   xmldoc,
 	{
 		macrofile << "{\n";
 		macrofile << "\"name\":\"" << newMacroName << "\",\n";
-		macrofile << "\"sequence\":\"" << Sequence << "\",\n";
+		macrofile << "\"FEsequence\":\"" << FESequence << "\",\n";
 		macrofile << "\"time\":\"" << Time << "\",\n";
 		macrofile << "\"notes\":\"" << Notes << "\",\n";
 		macrofile << "\"LSBF\":\"" << isMacroLSBF << "\"\n";
@@ -2520,61 +2520,7 @@ std::string MacroMakerSupervisor::generateHexArray(const std::string& sourceHexS
 
 	return retSs.str();
 }
-//==============================================================================
-void MacroMakerSupervisor::runFEMacroSequence(HttpXmlDocument& xmldoc,
-											  cgicc::Cgicc& cgi,
-											  const std::string& username)
-{
-	std::string sequenceName = CgiDataUtilities::getData(cgi, "name");
 
-	__SUP_COUTV__(sequenceName);
-
-	// access to the file
-	std::string fullPath = (std::string)MACROS_SEQUENCE_PATH + username + "/" + sequenceName + ".dat";
-	__SUP_COUT__ << fullPath << __E__;
-
-	// read from the file
-	std::ifstream read(fullPath.c_str());	// reading the file
-	std::string sequence;
-
-	if (read.is_open())
-	{
-		char* seqFile;
-		unsigned long long fileSize;
-		read.seekg(0, std::ios::end);
-		fileSize = read.tellg();
-		seqFile = new char[fileSize + 1];
-		seqFile[fileSize] = '\0';
-		read.seekg(0, std::ios::beg);
-
-		// read data as a block:
-		read.read(seqFile, fileSize);
-		read.close();
-
-		sequence = StringMacros::decodeURIComponent(seqFile);
-		delete[] seqFile;
-	}
-	else
-	{
-		__SUP_SS__ << "Unable to read the file " << sequenceName << "!" << __E__;
-		__SUP_SS_THROW__;
-	}
-
-	// TODO: decode list
-	std::map<std::string, std::string> sequenceMap;
-	StringMacros::getMapFromString(
-	    sequence,
-	    sequenceMap,
-	    std::set<char>({','}) /*pair delimiters*/,
-	    std::set<char>({':'}) /*name/value delimiters*/);
-
-	__SUP_COUTV__(sequenceName);
-
-	//TODO: iterate over the list and exe macros
-
-	// TODO: send backe the results
-	xmldoc.addTextElementToData("result", "OK");
-}
 //==============================================================================
 void MacroMakerSupervisor::runFEMacro(HttpXmlDocument&                 xmldoc,
                                       cgicc::Cgicc&                    cgi,

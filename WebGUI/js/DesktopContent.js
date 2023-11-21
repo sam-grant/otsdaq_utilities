@@ -1535,7 +1535,8 @@ DesktopContent.tooltipConditionString = function(str) {
 			"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
 					"</div>").replace(/<TAB>/g,
 							"<div style='margin-left:60px;'>").replace(/<\/TAB>/g,
-									"</div>");
+									"</div>").replace(/\n/g,
+										"<br>");
 } //end tooltipConditionString()
 
 //=====================================================================================
@@ -2733,6 +2734,16 @@ DesktopContent.getExceptionLineNumber = function(e)
 
 //=====================================================================================
 //	provide html tag name and attribute/value map object
+//		To escape quotes in usage, use \" for example and use encodeURIComponent(str) to avoid special characters:
+//
+// 		str += DesktopContent.htmlOpen("span",{
+// 			"class" : "macroInfo",
+// 			"style" : "cursor:pointer",
+// 			"onclick" : ("DesktopContent.tooltip(\"" + 
+// 				encodeURIComponent(macroName) + "\", \"" + 
+// 				encodeURIComponent(tooltip) + "\");"),
+// 			"title" : "Click to open the tooltip for FE Macro &apos;" + encodeURIComponent(macroName) + "&apos;"
+// 		},"" /*innerHTML*/,true /*doCloseTag*/);					
 DesktopContent.htmlOpen = function(tag, attObj, innerHTML, doCloseTag)
 {
 	var str = "";
@@ -2748,8 +2759,13 @@ DesktopContent.htmlOpen = function(tag, attObj, innerHTML, doCloseTag)
 		else if(attKeys[i] == "checked") str += (attObj[attKeys[i]]|0)?" checked ":""; //no value
 		else if(attKeys[i] == "") continue; //skip empty key
 		else
+		{
+			var tmpStr = attObj[attKeys[i]];
+			if(typeof(tmpStr) == "string")
+				tmpStr = tmpStr.replaceAll("'","\\'");
 			str += " " + attKeys[i] + "='" +
-			attObj[attKeys[i]] + "' ";
+				tmpStr + "' ";
+		}
 	}
 	str += ">";
 	if(innerHTML) 
