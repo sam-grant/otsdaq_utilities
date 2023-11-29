@@ -1276,7 +1276,6 @@ Desktop.createDesktop = function(security) {
 				if(pathUniquePair ===
 						undefined)
 				{
-
 					if(_firstCheckOfMailboxes)
 					{
 						Debug.log("Perhaps icons have not been setup yet, try again at mailbox check.");
@@ -1284,7 +1283,7 @@ Desktop.createDesktop = function(security) {
 					}
 					
 					Debug.log("An error occurred opening the window named '" + 
-							windowName + "' - it was not found in the Desktop icons. " +
+							windowName + "' - it was not found in the Desktop icons. Does it exist? " +
 							"Do you have permissions to access this window? Notify admins if the problem persists.",
 							Debug.HIGH_PRIORITY);
 
