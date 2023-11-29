@@ -44,7 +44,8 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	                   cgicc::Cgicc&                    cgi,
 	                   const WebUsers::RequestUserInfo& userInfo);
 
-	xoap::MessageReference frontEndCommunicationRequest(xoap::MessageReference message);
+	xoap::MessageReference 		frontEndCommunicationRequest	(xoap::MessageReference message);
+	xoap::MessageReference 		supervisorSequenceCheck			(xoap::MessageReference message);
 
 	void getFElist(HttpXmlDocument& xmldoc);
 	void getFEMacroList(HttpXmlDocument& xmldoc, const std::string& username);

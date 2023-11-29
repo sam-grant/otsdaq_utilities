@@ -107,15 +107,18 @@
 			resize: horizontal;
 		}
 
-		.record .component {
+		.record, .component {
 			text-align: left;
 			padding: 2px;
-			font-weight: bold;
-			cursor: pointer;
+			/* font-weight: bold; */
 			/* white-space: initial; */
 			text-overflow: clip;
 		}
 
+		.record {
+			cursor: pointer;
+		}
+		
 		.component {
 			height: fit-content;
 			display: grid;
@@ -879,6 +882,8 @@
 							.replace(/ERROR/g,"<label class='badValue'>ERROR</label>")									
 							.replace(/MISSING/g,"<label class='badValue'>MISSING</label>")
 							.replace(/BAD/g,"<label class='badValue'>BAD</label>")
+							.replace(/  /g,"&nbsp;&nbsp;")
+							.replace(/&nbsp; /g,"&nbsp;&nbsp;")
 							;
 						
 						str += name + " = " + 

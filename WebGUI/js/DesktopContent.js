@@ -639,7 +639,6 @@ DesktopContent.init = function(onloadFunction)
 //	Note: in normal mode the first two params are only separated by = (no &'s) for historical reasons
 DesktopContent.getParameter = function(index,name) 
 {	
-	// Debug.log(window.location)
 	var params = (window.location.search.substr(1)).split('&');
 	var spliti, vs;
 	//if name given, make it the priority
@@ -653,6 +652,8 @@ DesktopContent.getParameter = function(index,name)
 			if(decodeURIComponent(vs[0]) == name)
 				return decodeURIComponent(vs[1]);
 		}
+
+		Debug.log("name",name," not found in window.location.search:",window.location.search);
 		return; //return undefined .. name not found
 	}
 
@@ -719,7 +720,7 @@ DesktopContent.getDesktopWindowParameter = function(index, name)
 	var win = DesktopContent._theWindow;
 	if(!win)	//for parameter directly from desktop code
 		win = window;
-	else 
+	else if(!win.location || !win.location.search)
 		win = win.parent.window;
 									 
 	//fix/standardize search string
@@ -2420,20 +2421,24 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique)
 		// check from = that there is nothing but numbers	
 		try
 		{
-			var i = windowPath.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
-			var isAllNumbers = true;
-			for(i;i<windowPath.length;++i)
+			var i = windowPath.indexOf("urn:xdaq-application:lid=");
+			if(i >= 0)
 			{
-				//Debug.log(windowPath[i]);
-	
-				if(windowPath[i] < "0" || windowPath[i] > "9")
+				i += ("urn:xdaq-application:lid=").length;
+				var isAllNumbers = true;
+				for(i;i<windowPath.length;++i)
 				{
-					isAllNumbers = false;
-					break;
-				}				
+					//Debug.log(windowPath[i]);
+		
+					if(windowPath[i] < "0" || windowPath[i] > "9")
+					{
+						isAllNumbers = false;
+						break;
+					}				
+				}
+				if(isAllNumbers)
+					windowPath += "/";		
 			}
-			if(isAllNumbers)
-				windowPath += "/";		
 		}
 		catch(e)
 		{
