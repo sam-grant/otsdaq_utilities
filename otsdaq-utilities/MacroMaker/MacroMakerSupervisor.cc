@@ -57,6 +57,7 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 		xgi::bind(this, &MacroMakerSupervisor::verification, "Verify");
 		xgi::bind(this, &MacroMakerSupervisor::tooltipRequest, "TooltipRequest");
 		xgi::bind(this, &MacroMakerSupervisor::requestWrapper, "Request");
+		xoap::bind(this, &MacroMakerSupervisor::supervisorSequenceCheck, "SupervisorSequenceCheck", XDAQ_NS_URI);
 		generateURL();
 		__SUP_COUT__ << "Completed constructor for Macro Maker mode." << __E__;
 	}
@@ -319,6 +320,7 @@ void MacroMakerSupervisor::generateURL()
 
 	return;
 }  // end generateURL()
+
 //==============================================================================
 void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 {
@@ -354,6 +356,8 @@ void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 	        ",FE Macros"
 	        ",CFG,0,1,icon-Configure.png,/WebPath/html/"
 	        "FEMacroTest.html?urn=290,/"
+	    //  << ",Console,C,1,1,icon-Console.png,/urn:xdaq-application:lid=260/,/"
+	     << ",Code Editor,CODE,0,1,icon-CodeEditor.png,/urn:xdaq-application:lid=240/,/" 
 	     << "";
 
 	// if there is a file of more icons, add to end of output
@@ -381,6 +385,40 @@ void MacroMakerSupervisor::requestIcons(xgi::Input* in, xgi::Output* out)
 		__COUT__ << "Macro Maker mode user icons file not found: " << iconFile << __E__;
 	return;
 }  // end requestIcons()
+
+//==============================================================================
+// xoap::supervisorSequenceCheck
+//	verify cookie
+xoap::MessageReference MacroMakerSupervisor::supervisorSequenceCheck(xoap::MessageReference message)
+{
+	// SOAPUtilities::receive request parameters
+	SOAPParameters parameters;
+	parameters.addParameter("sequence");
+	SOAPUtilities::receive(message, parameters);
+
+	std::string submittedSequence = parameters.getValue("sequence");
+
+	// If submittedSequence matches securityCode_ then return full permissions (255)
+	//	else, return permissions 0
+	std::map<std::string /*groupName*/, WebUsers::permissionLevel_t> permissionMap;
+
+	if(securityCode_ == submittedSequence)
+		permissionMap.emplace(
+		    std::pair<std::string /*groupName*/, WebUsers::permissionLevel_t>(WebUsers::DEFAULT_USER_GROUP, WebUsers::PERMISSION_LEVEL_ADMIN));
+	else
+	{
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+
+		permissionMap.emplace(
+		    std::pair<std::string /*groupName*/, WebUsers::permissionLevel_t>(WebUsers::DEFAULT_USER_GROUP, WebUsers::PERMISSION_LEVEL_INACTIVE));
+	}
+
+	// fill return parameters
+	SOAPParameters retParameters;
+	retParameters.addParameter("Permissions", StringMacros::mapToString(permissionMap));
+
+	return SOAPUtilities::makeSOAPMessageReference("SequenceResponse", retParameters);
+} //end supervisorSequenceCheck()
 
 //==============================================================================
 // requestWrapper ~

@@ -348,6 +348,23 @@ CodeEditor.create = function(standAlone) {
 			DesktopContent.getParameter(0,"openDirectoryPrimary"),
 			DesktopContent.getParameter(0,"openDirectorySecondary")
 			];
+
+		if(parameterStartFile[0] === undefined && parameterOpenDirectory[0] === undefined) //attempt to get Desktop Window Parameter
+		{
+			parameterStartFile = [
+				DesktopContent.getDesktopWindowParameter(0,"startFilePrimary"),
+				DesktopContent.getDesktopWindowParameter(0,"startFileSecondary")
+				];
+			parameterGotoLine = [
+				DesktopContent.getDesktopWindowParameter(0,"gotoLinePrimary"),
+				DesktopContent.getDesktopWindowParameter(0,"gotoLineSecondary")
+				];
+			parameterOpenDirectory = [
+				DesktopContent.getDesktopWindowParameter(0,"openDirectoryPrimary"),
+				DesktopContent.getDesktopWindowParameter(0,"openDirectorySecondary")
+				];	
+		}
+
 		if(parameterOpenDirectory[0] === undefined)
 			parameterOpenDirectory[0] = "/";
 		if(parameterOpenDirectory[1] === undefined)
