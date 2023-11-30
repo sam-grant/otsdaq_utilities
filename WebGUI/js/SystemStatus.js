@@ -121,7 +121,7 @@ function paint()
 	Debug.log("Resize filters " + _filtersDivElement.scrollWidth);
 	
 	var filterEls = document.getElementsByClassName("filterList");
-	var filterBtns = document.getElementsByClassName("collapsible");
+    var filterBtns = document.getElementsByClassName("filterHeader");
 	for(var i=0;i<filterEls.length;++i)
 	{
 		filterEls[i].style.width = (w-30) + "px";
@@ -202,7 +202,7 @@ function getAppsArray()
 				return;
 			}
 			var appNames, appUrls, appIds, appStatus, appTime, 
-				appStale, appClasses, appProgress, appDetail, appContexts;
+				appStale, appClasses, appProgress, appDetail, appContexts, appSubapps;
 
 			appNames = req.responseXML.getElementsByTagName("name");
 			appIds = req.responseXML.getElementsByTagName("id");
@@ -213,7 +213,8 @@ function getAppsArray()
 			appDetail = req.responseXML.getElementsByTagName("detail");
 			appClasses = req.responseXML.getElementsByTagName("class");
 			appUrls = req.responseXML.getElementsByTagName("url");
-			appContexts = req.responseXML.getElementsByTagName("context");
+                    appContexts = req.responseXML.getElementsByTagName("context");
+                    appSubapps = req.responseXML.getElementsByTagName("subapps");
 
 			if(_allAppsArray === undefined && appTime.length > 1)
 			{
@@ -269,7 +270,28 @@ function getAppsArray()
 					"class"     :   appClasses[i].getAttribute("value"),
 					"url"       :   appUrls[i].getAttribute("value"),
 					"context"   :   appContexts[i].getAttribute("value")
-				});
+                });
+
+                if (appSubapps != undefined && appSubapps[i] != undefined) {
+                    var subappNames = appSubapps[i].getElementsByTagName("subapp_name");
+                    var subappStatus = appSubapps[i].getElementsByTagName("subapp_status");
+                    var subappTime = appSubapps[i].getElementsByTagName("subapp_time");
+                    var subappStale = appSubapps[i].getElementsByTagName("subapp_stale");
+                    var subappProgress = appSubapps[i].getElementsByTagName("subapp_progress");
+                    var subappDetail = appSubapps[i].getElementsByTagName("subapp_detail");
+
+                    _allAppsArray[_allAppsArray.length - 1].subappStatus = new Array();
+                    for (var j = 0; j < subappNames.length; j++) {
+                        _allAppsArray[_allAppsArray.length - 1].subappStatus.push({
+                            "name": subappNames[j].getAttribute("value"),
+                            "status": subappStatus[j].getAttribute("value"),
+                            "time": subappTime[j].getAttribute("value"),
+                            "stale": subappStale[j].getAttribute("value"),
+                            "progress": subappProgress[j].getAttribute("value"),
+                            "detail": subappDetail[j].getAttribute("value")
+                        });
+                    }
+                }
 				
 				var appTimeSplit = _allAppsArray[_allAppsArray.length-1].time.split(' ');
 				if(!(appTimeSplit.length > 2 && 
@@ -367,11 +389,11 @@ function displayTable(appsArray)
     table.border = "0";
 
     //Get the count of columns.
-    var columnNames = ["App Name", "Status", "Progress", "Detail",
+    var columnNames = ["Context Name", "App Name", "Status", "Progress", "Detail",
 					   //add white space so changing ping has less update effect
 					   "&nbsp;&nbsp;Last Update&nbsp;&nbsp;", 
-					   "App Type", "App URL", "App ID", "Parent Context Name"];
-    var columnKeys = ["name", "status", "progress", "detail", "stale", "class", "url", "id", "context" ];
+					   "App Type", "App URL", "App ID" ];
+    var columnKeys = ["context", "name", "status", "progress", "detail", "stale", "class", "url", "id" ];
     var columnCount = columnNames.length;
 
     //Add the header row.
@@ -384,137 +406,266 @@ function displayTable(appsArray)
     }
 
     //Add the data rows.
-    for (var i = 0; i < appsArray.length; i++) 
-    {
+    for (var contextName in _allContextNames) {
+
         row = table.insertRow(-1);
-        for (var j = 0; j < columnKeys.length; ++j) 
-        {
-            var cell = row.insertCell(-1);
-            
-            //add mouseover tooltip
-            cell.title =  appsArray[i].name + "'s " +
-            		columnNames[j];
-            
-            if(columnKeys[j] == "stale")
-            {
-            	cell.style.fontSize = "12px";
-            	            	
-            	var staleString = "";
-            	var staleSeconds = appsArray[i][columnKeys[j]] | 0;
-            	if(appsArray[i].time == "0")
-            		staleString = "No status";
-            	else if(staleSeconds < 1)
-            		staleString = "0." + ping_ + " seconds ago";
-            	else if(staleSeconds < 2)
-            		staleString = "1." + ping_ + " seconds ago";            		
-            	else if(staleSeconds < 46)
-            		staleString = staleSeconds + " seconds ago";
-            	else if(staleSeconds < 90)
-            		staleString = "One minute ago";
-            	else if(staleSeconds < 40*60)
-            		staleString = (((staleSeconds/60)|0)+1) + " minutes ago";
-            	else if(staleSeconds < 75*60)
-            		staleString = "One hour ago";
-            	else if (staleSeconds < 60*60*2)
-            		staleString = (((staleSeconds/60/60)|0)+1) + " hours ago";
-            	else if (staleSeconds < 60*60*48)
-            		staleString = (((staleSeconds/60/60/24)|0)+1) + " days ago";
-            		
-            	cell.innerHTML = staleString;
-            }
-            else if(columnKeys[j] == "progress")
-            {
-            	var progressNum = appsArray[i][columnKeys[j]] | 0;
-            	if(progressNum > 100)
-            		progressNum = 99; //attempting to figure out max (or variable steps)
-            		
-            	if(progressNum == 100)
-                	cell.innerHTML = "Done";
-            	else
-            	{
-            		//scale progress bar to width of cell (66px)
+        row.setAttribute("class", "collapsible");
+        var cell = row.insertCell(-1);
+        cell.title = contextName + "'s apps";
+        cell.innerHTML = contextName;
 
-                	var progressPX = ((66*progressNum/100)|0);
-                	if(progressPX > 0 && progressPX < 3) progressPX = 3; //show something non-zero
-                	
-                	cell.innerHTML = "&nbsp;" + progressNum + " %<div class='progressBar' style='width:" +
-                			progressPX + "px;'></div>";
-                	
-            	}
-            }
-            else if (columnKeys[j] == "status")
-            {
-            	var statusString = appsArray[i][columnKeys[j]];
-            	
-            	try
-            	{
-            		statusString = statusString.split(":::")[0];
-            	}
-            	catch(e)
-            	{
-            		str = "UNKNOWN";
-            		Debug.log("What happened? " + e);
-            	}
-            	
+        for (var i = 0; i < appsArray.length; i++) {
+            if (appsArray[i].context == contextName) {
+                row = table.insertRow(-1);
+                for (var j = 0; j < columnKeys.length; ++j) {
+                    cell = row.insertCell(-1);
 
-                switch(statusString) 
-                {
-                    case "Initial":
-                    	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(119, 208, 255), rgb(119, 208, 255) 10%, rgb(7, 105, 191) 80%, rgb(6, 39, 69) 100%)";
-                        break;
-                    case "Halted":
-                    	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(255, 207, 105), rgb(245, 218, 179) 10%, rgb(234, 131, 3) 80%, rgb(121, 68, 0) 100%)";
-                        break;
-                    case "Configured":
-                    case "Paused":
-                    	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(80, 236, 199), rgb(179, 204, 197) 10%, rgb(5, 148, 122) 80%, rgb(6, 39, 69) 100%)";
-                        break;
-                    case "Running":
-                    	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(0, 255, 67), rgb(142, 255, 172) 10%, rgb(5, 148, 42) 80%, rgb(6, 39, 69) 100%)";
-                        break;                    	
-                    case "Failed":
-                    case "Error":
-                    case "Soft-Error":
-                    	cell.style.background = "radial-gradient(circle at 50% 120%, rgb(255, 124, 124), rgb(255, 159, 159) 10%, rgb(218, 0, 0) 80%, rgb(144, 1, 1) 100%)";
-                    	                    	
-                    	cell.style.cursor = "pointer";
-                    	cell.id = "cell-" + i + "-" + j;
-                    	cell.onclick = 
-                    			function()
-						{
-							Debug.log("Cell " + this.id);	
-							
-							var i = this.id.split('-');
-							var j = i[2]|0;
-							var i = i[1]|0;
-							Debug.log(
-									appsArray[i][columnKeys[j]],
-									Debug.HIGH_PRIORITY);
-						};
-                        break;
-                    default:
-                  } // end of switch
-                
-                cell.innerHTML = statusString;
+                    //add mouseover tooltip
+                    cell.title = appsArray[i].name + "'s " +
+                        columnNames[j];
+
+                    if (columnKeys[j] == "stale") {
+                        cell.style.fontSize = "12px";
+
+                        var staleString = "";
+                        var staleSeconds = appsArray[i][columnKeys[j]] | 0;
+                        if (appsArray[i].time == "0")
+                            staleString = "No status";
+                        else if (staleSeconds < 1)
+                            staleString = "0." + ping_ + " seconds ago";
+                        else if (staleSeconds < 2)
+                            staleString = "1." + ping_ + " seconds ago";
+                        else if (staleSeconds < 46)
+                            staleString = staleSeconds + " seconds ago";
+                        else if (staleSeconds < 90)
+                            staleString = "One minute ago";
+                        else if (staleSeconds < 40 * 60)
+                            staleString = (((staleSeconds / 60) | 0) + 1) + " minutes ago";
+                        else if (staleSeconds < 75 * 60)
+                            staleString = "One hour ago";
+                        else if (staleSeconds < 60 * 60 * 2)
+                            staleString = (((staleSeconds / 60 / 60) | 0) + 1) + " hours ago";
+                        else if (staleSeconds < 60 * 60 * 48)
+                            staleString = (((staleSeconds / 60 / 60 / 24) | 0) + 1) + " days ago";
+
+                        cell.innerHTML = staleString;
+                    }
+                    else if (columnKeys[j] == "progress") {
+                        var progressNum = appsArray[i][columnKeys[j]] | 0;
+                        if (progressNum > 100)
+                            progressNum = 99; //attempting to figure out max (or variable steps)
+
+                        if (progressNum == 100)
+                            cell.innerHTML = "Done";
+                        else {
+                            //scale progress bar to width of cell (66px)
+
+                            var progressPX = ((66 * progressNum / 100) | 0);
+                            if (progressPX > 0 && progressPX < 3) progressPX = 3; //show something non-zero
+
+                            cell.innerHTML = "&nbsp;" + progressNum + " %<div class='progressBar' style='width:" +
+                                progressPX + "px;'></div>";
+
+                        }
+                    }
+                    else if (columnKeys[j] == "status") {
+                        var statusString = appsArray[i][columnKeys[j]];
+
+                        try {
+                            statusString = statusString.split(":::")[0];
+                        }
+                        catch (e) {
+                            str = "UNKNOWN";
+                            Debug.log("What happened? " + e);
+                        }
+
+
+                        switch (statusString) {
+                            case "Initial":
+                                cell.style.background = "radial-gradient(circle at 50% 120%, rgb(119, 208, 255), rgb(119, 208, 255) 10%, rgb(7, 105, 191) 80%, rgb(6, 39, 69) 100%)";
+                                break;
+                            case "Halted":
+                                cell.style.background = "radial-gradient(circle at 50% 120%, rgb(255, 207, 105), rgb(245, 218, 179) 10%, rgb(234, 131, 3) 80%, rgb(121, 68, 0) 100%)";
+                                break;
+                            case "Configured":
+                            case "Paused":
+                                cell.style.background = "radial-gradient(circle at 50% 120%, rgb(80, 236, 199), rgb(179, 204, 197) 10%, rgb(5, 148, 122) 80%, rgb(6, 39, 69) 100%)";
+                                break;
+                            case "Running":
+                                cell.style.background = "radial-gradient(circle at 50% 120%, rgb(0, 255, 67), rgb(142, 255, 172) 10%, rgb(5, 148, 42) 80%, rgb(6, 39, 69) 100%)";
+                                break;
+                            case "Failed":
+                            case "Error":
+                            case "Soft-Error":
+                                cell.style.background = "radial-gradient(circle at 50% 120%, rgb(255, 124, 124), rgb(255, 159, 159) 10%, rgb(218, 0, 0) 80%, rgb(144, 1, 1) 100%)";
+
+                                cell.style.cursor = "pointer";
+                                cell.id = "cell-" + i + "-" + j;
+                                cell.onclick =
+                                    function () {
+                                        Debug.log("Cell " + this.id);
+
+                                        var i = this.id.split('-');
+                                        var j = i[2] | 0;
+                                        var i = i[1] | 0;
+                                        Debug.log(
+                                            appsArray[i][columnKeys[j]],
+                                            Debug.HIGH_PRIORITY);
+                                    };
+                                break;
+                            default:
+                        } // end of switch
+
+                        cell.innerHTML = statusString;
+                    }
+                    else if (columnKeys[j] == "detail") {
+                        cell.innerHTML = decodeURIComponent(appsArray[i][columnKeys[j]]);
+                    } else if (columnKeys[j] == "context") {
+                        // Skip to make things look better
+                    }
+                    else
+                        cell.innerHTML = appsArray[i][columnKeys[j]];
+
+                    if (columnKeys[j] == "status") {
+                        cell.style.textAlign = "center";
+                        cell.className = "statusCell";
+
+                    }// end of status style handling
+                    else if (columnKeys[j] == "progress" || columnKeys[j] == "id")
+                        cell.style.textAlign = "center";
+                }
+
+                for (var subapp in appsArray[i].subappStatus) {
+                    var subappInfo = appsArray[i].subappStatus[subapp];
+                    row = table.insertRow(-1);
+                    for (var j = 0; j < columnKeys.length; ++j) {
+                        cell = row.insertCell(-1);
+
+                        //add mouseover tooltip
+                        cell.title = subappInfo.name + "'s " +
+                            columnNames[j];
+
+                        if (columnKeys[j] == "name") {
+                            cell.innerHTML = "---> " + subappInfo.name;
+                        }
+                        else if (columnKeys[j] == "stale") {
+                            cell.style.fontSize = "12px";
+
+                            var staleString = "";
+                            var staleSeconds = subappInfo[columnKeys[j]] | 0;
+                            if (subappInfo.time == "0")
+                                staleString = "No status";
+                            else if (staleSeconds < 1)
+                                staleString = "0." + ping_ + " seconds ago";
+                            else if (staleSeconds < 2)
+                                staleString = "1." + ping_ + " seconds ago";
+                            else if (staleSeconds < 46)
+                                staleString = staleSeconds + " seconds ago";
+                            else if (staleSeconds < 90)
+                                staleString = "One minute ago";
+                            else if (staleSeconds < 40 * 60)
+                                staleString = (((staleSeconds / 60) | 0) + 1) + " minutes ago";
+                            else if (staleSeconds < 75 * 60)
+                                staleString = "One hour ago";
+                            else if (staleSeconds < 60 * 60 * 2)
+                                staleString = (((staleSeconds / 60 / 60) | 0) + 1) + " hours ago";
+                            else if (staleSeconds < 60 * 60 * 48)
+                                staleString = (((staleSeconds / 60 / 60 / 24) | 0) + 1) + " days ago";
+
+                            cell.innerHTML = staleString;
+                        }
+                        else if (columnKeys[j] == "progress") {
+                            var progressNum = subappInfo[columnKeys[j]] | 0;
+                            if (progressNum > 100)
+                                progressNum = 99; //attempting to figure out max (or variable steps)
+
+                            if (progressNum == 100)
+                                cell.innerHTML = "Done";
+                            else {
+                                //scale progress bar to width of cell (66px)
+
+                                var progressPX = ((66 * progressNum / 100) | 0);
+                                if (progressPX > 0 && progressPX < 3) progressPX = 3; //show something non-zero
+
+                                cell.innerHTML = "&nbsp;" + progressNum + " %<div class='progressBar' style='width:" +
+                                    progressPX + "px;'></div>";
+
+                            }
+                        }
+                        else if (columnKeys[j] == "status") {
+                            var statusString = subappInfo[columnKeys[j]];
+
+                            try {
+                                statusString = statusString.split(":::")[0];
+                            }
+                            catch (e) {
+                                str = "UNKNOWN";
+                                Debug.log("What happened? " + e);
+                            }
+
+
+                            switch (statusString) {
+                                case "Initial":
+                                    cell.style.background = "radial-gradient(circle at 50% 120%, rgb(119, 208, 255), rgb(119, 208, 255) 10%, rgb(7, 105, 191) 80%, rgb(6, 39, 69) 100%)";
+                                    break;
+                                case "Halted":
+                                    cell.style.background = "radial-gradient(circle at 50% 120%, rgb(255, 207, 105), rgb(245, 218, 179) 10%, rgb(234, 131, 3) 80%, rgb(121, 68, 0) 100%)";
+                                    break;
+                                case "Configured":
+                                case "Paused":
+                                    cell.style.background = "radial-gradient(circle at 50% 120%, rgb(80, 236, 199), rgb(179, 204, 197) 10%, rgb(5, 148, 122) 80%, rgb(6, 39, 69) 100%)";
+                                    break;
+                                case "Running":
+                                    cell.style.background = "radial-gradient(circle at 50% 120%, rgb(0, 255, 67), rgb(142, 255, 172) 10%, rgb(5, 148, 42) 80%, rgb(6, 39, 69) 100%)";
+                                    break;
+                                case "Failed":
+                                case "Error":
+                                case "Soft-Error":
+                                    cell.style.background = "radial-gradient(circle at 50% 120%, rgb(255, 124, 124), rgb(255, 159, 159) 10%, rgb(218, 0, 0) 80%, rgb(144, 1, 1) 100%)";
+
+                                    cell.style.cursor = "pointer";
+                                    cell.id = "cell-" + i + "-" + j;
+                                    cell.onclick =
+                                        function () {
+                                            Debug.log("Cell " + this.id);
+
+                                            var i = this.id.split('-');
+                                            var j = i[2] | 0;
+                                            var i = i[1] | 0;
+                                            Debug.log(
+                                                subappInfo[columnKeys[j]],
+                                                Debug.HIGH_PRIORITY);
+                                        };
+                                    break;
+                                default:
+                            } // end of switch
+
+                            cell.innerHTML = statusString;
+                        }
+                        else if (columnKeys[j] == "detail") {
+                            cell.innerHTML = decodeURIComponent(subappInfo[columnKeys[j]]);
+                        }
+                        else if (columnKeys[j] == "context" || columnKeys[j] == "class" || columnKeys[j] == "url" || columnKeys[j] == "id") {
+                            // Subapps don't have these
+                        }
+                        else
+                            cell.innerHTML = subappInfo[columnKeys[j]];
+
+                        if (columnKeys[j] == "status") {
+                            cell.style.textAlign = "center";
+                            cell.className = "statusCell";
+
+                        }// end of status style handling
+                        else if (columnKeys[j] == "progress" || columnKeys[j] == "id")
+                            cell.style.textAlign = "center";
+                    }
+
+                }
             }
-            else if (columnKeys[j] == "detail")
-            {
-            	cell.innerHTML = decodeURIComponent(appsArray[i][columnKeys[j]]);
-        	}
-        	else
-            	cell.innerHTML = appsArray[i][columnKeys[j]];
-            
-            if (columnKeys[j] == "status")
-            {
-            	cell.style.textAlign = "center";
-            	cell.className = "statusCell";
-            	
-            }// end of status style handling
-            else if(columnKeys[j] == "progress" || columnKeys[j] == "id")
-            	cell.style.textAlign = "center";
         }
-    }// done with adding data rows
+    } // done with adding data rows
 
+    collapsibleList()
    
     // add table to appStatusDiv	
     statusDivElement.appendChild(table);
