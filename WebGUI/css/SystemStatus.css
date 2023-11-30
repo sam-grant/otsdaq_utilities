@@ -61,9 +61,12 @@ h1, h2, h3 {
 }
 
 .collapsible {
+    cursor: pointer;
+}
+
+.filterHeader {
     background-color: 		#777;
     color: 					white;
-    cursor: 				pointer;
     padding: 				18px;
     width: 					100%;
     border: 				none;
