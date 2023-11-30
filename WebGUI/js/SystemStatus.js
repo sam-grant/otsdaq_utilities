@@ -279,6 +279,8 @@ function getAppsArray()
                     var subappStale = appSubapps[i].getElementsByTagName("subapp_stale");
                     var subappProgress = appSubapps[i].getElementsByTagName("subapp_progress");
                     var subappDetail = appSubapps[i].getElementsByTagName("subapp_detail");
+                    var subappUrl = appSubapps[i].getElementsByTagName("subapp_url");
+                    var subappClass = appSubapps[i].getElementsByTagName("subapp_class");
 
                     _allAppsArray[_allAppsArray.length - 1].subappStatus = new Array();
                     for (var j = 0; j < subappNames.length; j++) {
@@ -288,7 +290,9 @@ function getAppsArray()
                             "time": subappTime[j].getAttribute("value"),
                             "stale": subappStale[j].getAttribute("value"),
                             "progress": subappProgress[j].getAttribute("value"),
-                            "detail": subappDetail[j].getAttribute("value")
+                            "detail": subappDetail[j].getAttribute("value"),
+                            "class": subappClass[j].getAttribute("value"),
+                            "url": subappUrl[j].getAttribute("value")
                         });
                     }
                 }
@@ -645,7 +649,7 @@ function displayTable(appsArray)
                         else if (columnKeys[j] == "detail") {
                             cell.innerHTML = decodeURIComponent(subappInfo[columnKeys[j]]);
                         }
-                        else if (columnKeys[j] == "context" || columnKeys[j] == "class" || columnKeys[j] == "url" || columnKeys[j] == "id") {
+                        else if (columnKeys[j] == "context" || columnKeys[j] == "id") {
                             // Subapps don't have these
                         }
                         else
