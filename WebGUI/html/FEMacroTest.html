@@ -561,7 +561,7 @@
 
 		//=====================================================================================
 		//runMacro ~~
-		var verticalOutputDivSize_ = [400,1000];
+		var verticalOutputDivSize_ = [600,1000];
 		var row, col;
 		function runMacro(r, c)
 		{
@@ -2028,7 +2028,29 @@
 					0 /*reqParam*/, 0 /*progressHandler*/, 
 					true /*callHandlerOnErr*/
 					);
-			
+					var el = document.getElementById("verticalLayoutOutputDiv");
+
+					var el = document.getElementById("verticalLayoutOutputDiv");
+					var el = document.getElementById("verticalLayoutOutputDiv");
+
+			if (el)
+			 {
+				var currentWidth = el.offsetWidth;
+				var currentHeight = el.offsetHeight;
+
+				if (verticalOutputDivSize_[0] !== currentWidth || verticalOutputDivSize_[1] !== currentHeight) 
+				{
+					verticalOutputDivSize_ = [currentWidth, currentHeight];
+				}
+
+				var macroOutputEl = document.getElementById("macroModule-output");
+
+				if (macroOutputEl) 
+				{
+					macroOutputEl.style.width = verticalOutputDivSize_[0] + "px";
+				}
+			}
+
 			if (currentLiveViewTimeout !== null) 
 			{
         		clearTimeout(currentLiveViewTimeout);
@@ -2742,6 +2764,25 @@
 
 		function onClickRunSequence() 
 		{
+			var el = document.getElementById("verticalLayoutOutputDiv");
+			if (el) 
+			{
+				var currentWidth = el.offsetWidth;
+				var currentHeight = el.offsetHeight;
+
+				if (verticalOutputDivSize_[0] !== currentWidth || verticalOutputDivSize_[1] !== currentHeight) 
+				{
+					verticalOutputDivSize_ = [currentWidth, currentHeight];
+				}
+
+				var macroOutputEl = document.getElementById("macroModule-output");
+
+				if (macroOutputEl) 
+				{
+					macroOutputEl.style.width = verticalOutputDivSize_[0] + "px";
+				}
+			}
+
 			if (!selectedSequence_ || Object.keys(selectedSequence_).length === 0)
 			{
 				console.log("No sequence selected");
