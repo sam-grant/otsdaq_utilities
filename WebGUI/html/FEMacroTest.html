@@ -23,6 +23,49 @@
 			cursor: 			pointer;
 		}
 	
+		#topPane-controls-playButton {
+			width:				0; 
+			height: 			0; 
+			border-top: 		15px solid transparent;
+			border-bottom: 		15px solid transparent;			  
+			border-left: 		25px solid green;			  
+		}
+		#topPane-controls-playButton:hover {	
+		    border-top: 		20px solid transparent;
+		    border-bottom: 		20px solid transparent;
+		    border-left: 		32px solid rgb(83, 191, 83);
+		    margin: 			-5px -5px 0 15px;
+		}
+
+		#topPane-controls-pauseButton {
+			  width: 			6px; 
+			  height: 			24px;		
+			  margin-top: 		3px;
+			  border-right: 	9px solid rgb(13, 13, 148);			  
+			  border-left: 		9px solid rgb(13, 13, 148);			  
+		}
+
+		#topPane-controls-pauseButton:hover {	
+			height: 			32px;
+			width: 				6px;
+			border-right: 		11px solid rgb(79, 166, 255);			  
+			border-left: 		11px solid rgb(79, 166, 255);
+			margin: 			-1px -2px 0 15px;
+		}
+		
+		#topPane-controls-stopButton {
+			width: 				24px; 
+			height: 			24px;	
+			margin-top: 		3px;			  
+			background-color: 	rgb(218, 5, 5);
+		}
+		#topPane-controls-stopButton:hover {	
+			width: 				32px;
+			height: 			32px;
+		  	background-color: 	rgb(255, 59, 0);	
+			margin: 			-1px -4px 0 13px;	
+		}
+
 		#popUpDialog {
 			position: 			absolute;
 			z-index: 			1000;    
@@ -31,7 +74,6 @@
 		    text-align: 		center;
 		    padding: 			10px;
 		}
-		
 
 		#clearDiv {
 			clear: 				both;
@@ -280,6 +322,12 @@
 		var delayBetweenMacros = 0;
 
 		var isSequenceRunning = false;
+
+		var pauseSequenceFlag = false;
+
+		var stopSequenceFlag = false;
+
+		var currentIndex = 0;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -2188,6 +2236,8 @@
 		function statusActionButtons(status)
 		{
 			var runBtn = document.getElementById("runSequenceBtn");
+			var pauseBtn = document.getElementById("pauseSequenceBtn");
+			var stopBtn = document.getElementById("stopSequenceBtn");
 			var editBtn = document.getElementById("editSequenceBtn");
 			var deleteBtn = document.getElementById("deleteSequenceBtn");
 			var newBtn = document.getElementById("newSequenceBtn");
@@ -2370,9 +2420,28 @@
 				{
 					"id": "runSequenceBtn",
 					"onClick": "onClickRunSequence()",
+					"style": "border: none; background: none; width: 0; height: 0; border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-left: 25px solid green; cursor: pointer;",
 					"disabled": "true",
 				},
-				"Run",
+				"", 
+				true);
+			var pauseButton = DesktopContent.htmlOpen(
+				"button",
+				{
+					"id": "pauseSequenceBtn",
+					"onClick": "onClickPauseSequence()",
+					"style": "border: none; background: none; cursor: pointer; width: 6px; height: 24px; margin-top: 3px; border-right: 9px solid rgb(13, 13, 148); border-left: 9px solid rgb(13, 13, 148);",
+				},
+				"", 
+				true);
+				var stopButton = DesktopContent.htmlOpen(
+				"button",
+				{
+					"id": "stopSequenceBtn",
+					"onClick": "onClickStopSequence()",
+					"style": "width: 24px; height: 24px; margin-top: 3px; background-color: rgb(218, 5, 5); border: none; cursor: pointer;",
+				},
+				"", 
 				true);
 			var delayButton = DesktopContent.htmlOpen(
 				"button",
@@ -2381,8 +2450,7 @@
 					"onClick": "popupSetSequenceDelay()",
 				},
 				"Delay",
-				true
-			);
+				true);
 			var editButton = DesktopContent.htmlOpen(
 				"button",
 				{
@@ -2453,7 +2521,7 @@
 					"id": "sequence-buttons",
 					"style": "margin-top:10px; display: flex; gap: 20px"
 				},
-				runButton + delayButton + editButton + deleteButton + newButton,
+				runButton + pauseButton + stopButton + delayButton + editButton + deleteButton + newButton,
 				true);
 
 			// area to build the sequence
@@ -2646,6 +2714,8 @@
 				selectedSequence_ = {};
 				showSequence("show-sequence", selectedSequence_)
 				statusActionButtons(true);
+				currentIndex = 0;
+				updateCurrentMacroDisplay("No Macro Running", 0, 0);
 				return;
 			}
 
@@ -2653,7 +2723,8 @@
 			DesktopContent.XMLHttpRequest("Request?RequestType=getFEMacroSequence" +
 				"&name=" + elem,
 				"",
-				function(req) {
+				function(req) 
+				{
 					// request hendler
 					Debug.log("loadFEMacroSequences() was called.");
 					var sequenceString = DesktopContent.getXMLValue(req, "FEsequence");
@@ -2665,6 +2736,8 @@
 					console.log(sequenceString);
 					selectedSequence_ = JSON.parse(decodeURI(sequenceString));
 
+					updateCurrentMacroDisplay("No Macro Running", 0, 0);
+					currentIndex = 0;
 					// close the building if it is open
 					closeSequence();
 					// fill the list
@@ -2760,12 +2833,12 @@
 			closeSequence();
 		}
 
-		function onClickRunSequence() 
+		function onClickRunSequence()
 		{
+			var toggleButton = document.getElementById("runSequenceBtn");
 			var el = document.getElementById("verticalLayoutOutputDiv");
 			
-			if (el) 
-			{
+			if (el) {
 				var currentWidth = el.offsetWidth;
 				var currentHeight = el.offsetHeight;
 
@@ -2776,7 +2849,7 @@
 
 				var macroOutputEl = document.getElementById("macroModule-output");
 
-				if (macroOutputEl) 
+				if (macroOutputEl)
 				{
 					macroOutputEl.style.width = verticalOutputDivSize_[0] + "px";
 				}
@@ -2789,36 +2862,71 @@
 				return;
 			}
 
+			if (stopSequenceFlag)
+			{
+				currentIndex = 0; // Start from the beginning if stopped
+				stopSequenceFlag = false; // Reset the stop flag
+				pauseSequenceFlag = false; 
+			}
+
+			else if (!isSequenceRunning && pauseSequenceFlag)
+			{
+				// Logic for resuming from a paused state
+				pauseSequenceFlag = false;
+			}
+			
+			else if (!isSequenceRunning)
+			{
+				// Starting a new sequence
+				currentIndex = 0;
+			}
+
 			isSequenceRunning = true;
 			updateRunButtonState();
 
 			var keys = Object.keys(selectedSequence_);
-    		var currentIndex = 0;
 			var totalMacros = keys.length; 
 
 			function executeMacro()
 			{
+				if (stopSequenceFlag)
+				{
+					console.log("Sequence has been stopped.");
+					updateCurrentMacroDisplay("Stopped", currentIndex, totalMacros);
+					return;
+				}
+
+				if (pauseSequenceFlag)
+				{
+					console.log("Sequence stopped by user.");
+					updateCurrentMacroDisplay("Halted", currentIndex, totalMacros);
+					isSequenceRunning = false; 
+					return;
+				}
+
 				if (currentIndex >= keys.length)
 				{
+					currentIndex = 0; 
 					updateCurrentMacroDisplay("Done", currentIndex, totalMacros);
 					isSequenceRunning = false;
-            		updateRunButtonState();
-				
-					if (liveViewActive) 
+					updateRunButtonState();
+					
+					if (liveViewActive)
 					{
-						if (currentLiveViewTimeout !== null) 
+						if (currentLiveViewTimeout !== null)
 						{
 							clearTimeout(currentLiveViewTimeout);
 						}
 						// Set up the sequence to restart after the live view interval
-						currentLiveViewTimeout = setTimeout(function() {
+						currentLiveViewTimeout = setTimeout(function()
+						{
 							onClickRunSequence();
 						}, intervalTime);
 					}
 
 					return;
 				}
-
+				
 				var commandString = selectedSequence_[keys[currentIndex]];
 				var command = JSON.parse(commandString);
 
@@ -2840,12 +2948,30 @@
 
 				appendHistoryRecord(JSON.stringify(command));
 
-				currentIndex++;
+				if (!pauseSequenceFlag)
+				{
+					currentIndex++;
+				}       
 				setTimeout(executeMacro, delayBetweenMacros); // Delay before executing next macro
 			}
 
-    		executeMacro(); // Start executing macros with delay
-			
+			executeMacro(); // Start executing macros with delay
+		}
+
+		function onClickPauseSequence() 
+		{
+			pauseSequenceFlag = true; 
+			isSequenceRunning = false;
+   			statusActionButtons(false); 
+		}
+
+		function onClickStopSequence()
+		{
+			stopSequenceFlag = true;
+			pauseSequenceFlag = false;
+			isSequenceRunning = false;
+			currentIndex = 0; // Reset the currentIndex to start from the beginning
+			statusActionButtons(false); // Update UI elements accordingly
 		}
 
 		function updateRunButtonState() 
@@ -2857,22 +2983,41 @@
 			}
 		}
 
-		function updateCurrentMacroDisplay(macroName, currentIndex, totalMacros) 
+		function updateCurrentMacroDisplay(macroName, currentIndex, totalMacros)
 		{
 			var displayElement = document.getElementById("currentMacroDisplay");
 
 			if (displayElement) 
 			{
 				var displayText;
-				if (macroName === "Done") 
+
+				if (macroName === "Done")
 				{
 					displayText = "Done";
 				} 
-				else 
+				else if (macroName === "No Macro Running")
+				{
+            		displayText = "No Macro Running";
+				}
+				else if (stopSequenceFlag)
+				{
+					displayText = "Halted";
+				} 
+				else if (macroName === "Halted")
+				{
+					var haltedMacroIndex = Math.max(0, currentIndex - 1);
+					var haltedMacroString = selectedSequence_[haltedMacroIndex];
+					var haltedMacro = haltedMacroString ? JSON.parse(haltedMacroString) : null;
+					var haltedMacroName = haltedMacro ? haltedMacro.macroName : "Unknown";
+
+					displayText = "Paused: " + (haltedMacroIndex + 1) + "/" + totalMacros + " " + haltedMacroName;
+				}
+				else
 				{
 					displayText = currentIndex + "/" + totalMacros + " " + macroName;
 				}
-				displayElement.textContent = "Currently executing: " + displayText;
+
+				displayElement.textContent = displayText;
 			}
 		}
 
