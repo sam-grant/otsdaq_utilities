@@ -905,24 +905,29 @@
 			DesktopContent.getWindowScrollTop(),"to",scrollTop);
 			DesktopContent.setWindowScrollTop(scrollTop);	
 
-			if (isFlagActive) {
+			if (isFlagActive)
+			{
 				var comparisonOperator = document.getElementById('comparisonOperator').value;
 				var triggeredNumber = null;
 
-				if (comparisonOperator === 'none') {
+				if (comparisonOperator === 'none')
+				{
 					var outputContainsKeyword = el.innerHTML.includes(flagKeyword);
 					var shouldFlag = (flagIfPresent && outputContainsKeyword) || (!flagIfPresent && !outputContainsKeyword);
 
-					if (shouldFlag) {
+					if (shouldFlag)
+					{
 						var message = flagIfPresent ?
 							"ALERT: String '" + flagKeyword + "' found!\n\nThe macro has been halted." :
 							"ALERT: String '" + flagKeyword + "' not found!\n\nThe macro has been halted.";
 						document.getElementById('matchMessage').innerText = message;
 						document.getElementById('popupKeywordMatch').style.display = 'block';
 
-						if (liveViewActive) {
+						if (liveViewActive)
+						{
 							liveViewActive = false;
-							if (currentLiveViewTimeout) {
+							if (currentLiveViewTimeout)
+							{
 								clearTimeout(currentLiveViewTimeout);
 								currentLiveViewTimeout = null;
 							}
@@ -932,45 +937,56 @@
 							liveViewBtn.style.color = '';
 						}
 						var flagTriggerButton = document.getElementById('flagTriggerButton');
-						if (flagTriggerButton) {
+						if (flagTriggerButton)
+						{
 							flagTriggerButton.style.border = "1px solid black";
 						}
 						isFlagActive = false;
 					}
-				} else {
+				} 
+				else 
+				{
 					// Numerical comparison logic for other operators
 					var keywordParts = flagKeyword.match(/(.*?)\s*<([\d.]+)>/);
-					if (keywordParts && keywordParts.length === 3) {
+					if (keywordParts && keywordParts.length === 3) 
+					{
 						var searchText = keywordParts[1].trim();
 						var numberToCompare = parseFloat(keywordParts[2]);
 						var regex = new RegExp(searchText + '\\s*\\|\\s*\\d+(\\.\\d+)?\\b', 'g');
 						var conditionMet = false;
 
 						var match;
-						while ((match = regex.exec(el.innerHTML)) !== null) {
+						while ((match = regex.exec(el.innerHTML)) !== null) 
+						{
 							var foundNumber = parseFloat(match[0].match(/\d+(\.\d+)?/)[0]);
-							if (!conditionMet) {
-								switch (comparisonOperator) {
+							if (!conditionMet) 
+							{
+								switch (comparisonOperator) 
+								{
 									case "gt":
-										if (foundNumber > numberToCompare) {
+										if (foundNumber > numberToCompare) 
+										{
 											conditionMet = true;
 											triggeredNumber = foundNumber;
 										}
 										break;
 									case "gte":
-										if (foundNumber >= numberToCompare) {
+										if (foundNumber >= numberToCompare) 
+										{
 											conditionMet = true;
 											triggeredNumber = foundNumber;
 										}
 										break;
 									case "lt":
-										if (foundNumber < numberToCompare) {
+										if (foundNumber < numberToCompare)
+										{
 											conditionMet = true;
 											triggeredNumber = foundNumber;
 										}
 										break;
 									case "lte":
-										if (foundNumber <= numberToCompare) {
+										if (foundNumber <= numberToCompare)
+										{
 											conditionMet = true;
 											triggeredNumber = foundNumber;
 										}
@@ -979,25 +995,32 @@
 							}
 						}
 
-						if (conditionMet) {
+						if (conditionMet)
+						{
 							var message;
 							var operatorSymbol = getOperatorSymbol(comparisonOperator);
-							if (flagIfPresent) {
+							if (flagIfPresent) 
+							{
 								var message = "ALERT: Condition met for: " + operatorSymbol + " " + numberToCompare + ".\n\nTarget was stopped at " + triggeredNumber + "\n\nThe macro has been halted.";
-							} else {
+							}
+							else 
+							{
 								var message = "ALERT: Condition not met for '" + operatorSymbol + " " + numberToCompare + "'.\n\nTarget was stopped at " + triggeredNumber + "\n\nThe macro has been halted.";
 							}
 							document.getElementById('matchMessage').innerText = message;
 							document.getElementById('popupKeywordMatch').style.display = 'block';
 
-							if (isSequenceRunning) {
+							if (isSequenceRunning)
+							{
 								onClickStopSequence();
 							}
 
 							// Repeating the logic for stopping the live view and updating UI elements
-							if (liveViewActive) {
+							if (liveViewActive) 
+							{
 								liveViewActive = false;
-								if (currentLiveViewTimeout) {
+								if (currentLiveViewTimeout) 
+								{
 									clearTimeout(currentLiveViewTimeout);
 									currentLiveViewTimeout = null;
 								}
@@ -1007,7 +1030,8 @@
 								liveViewBtn.style.color = '';
 							}
 							var flagTriggerButton = document.getElementById('flagTriggerButton');
-							if (flagTriggerButton) {
+							if (flagTriggerButton) 
+							{
 								flagTriggerButton.style.border = "1px solid black";
 							}
 							isFlagActive = false;
