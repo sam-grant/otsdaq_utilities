@@ -902,50 +902,117 @@
 			el.innerHTML = str;
 
 			Debug.log("Returning scroll position", 
-				DesktopContent.getWindowScrollTop(),"to",scrollTop);
+			DesktopContent.getWindowScrollTop(),"to",scrollTop);
 			DesktopContent.setWindowScrollTop(scrollTop);	
 
-			if (isFlagActive) 
-			{
-				var outputContainsKeyword = el.innerHTML.includes(flagKeyword);
-				var shouldFlag = (flagIfPresent && outputContainsKeyword) || (!flagIfPresent && !outputContainsKeyword);
+			if (isFlagActive) {
+				var comparisonOperator = document.getElementById('comparisonOperator').value;
+				var triggeredNumber = null;
 
-				if (flagKeyword && shouldFlag)
-				{
-					var message;
-					if (flagIfPresent)
-					{
-						message = "ALERT: String '" + flagKeyword + "' found!\n\nThe macro has been halted.";
-					}
-					else
-					{
-						message = "ALERT: String '" + flagKeyword + "' not found!\n\nThe macro has been halted.";
-					}
-					document.getElementById('matchMessage').innerText = message;
+				if (comparisonOperator === 'none') {
+					var outputContainsKeyword = el.innerHTML.includes(flagKeyword);
+					var shouldFlag = (flagIfPresent && outputContainsKeyword) || (!flagIfPresent && !outputContainsKeyword);
 
-					// Show the keyword match popup
-					document.getElementById('popupKeywordMatch').style.display = 'block';
+					if (shouldFlag) {
+						var message = flagIfPresent ?
+							"ALERT: String '" + flagKeyword + "' found!\n\nThe macro has been halted." :
+							"ALERT: String '" + flagKeyword + "' not found!\n\nThe macro has been halted.";
+						document.getElementById('matchMessage').innerText = message;
+						document.getElementById('popupKeywordMatch').style.display = 'block';
 
-					if (liveViewActive)
-					{
-						liveViewActive = false;
-						if (currentLiveViewTimeout)
-						{
-							clearTimeout(currentLiveViewTimeout);
-							currentLiveViewTimeout = null;
+						if (liveViewActive) {
+							liveViewActive = false;
+							if (currentLiveViewTimeout) {
+								clearTimeout(currentLiveViewTimeout);
+								currentLiveViewTimeout = null;
+							}
+							var liveViewBtn = document.getElementById('liveViewBtn');
+							liveViewBtn.textContent = 'Live View';
+							liveViewBtn.style.backgroundColor = '';
+							liveViewBtn.style.color = '';
 						}
-						var liveViewBtn = document.getElementById('liveViewBtn');
-						liveViewBtn.textContent = 'Live View';
-						liveViewBtn.style.backgroundColor = '';
-						liveViewBtn.style.color = '';
+						var flagTriggerButton = document.getElementById('flagTriggerButton');
+						if (flagTriggerButton) {
+							flagTriggerButton.style.border = "1px solid black";
+						}
+						isFlagActive = false;
 					}
-					var flagTriggerButton = document.getElementById('flagTriggerButton');
-					if (flagTriggerButton)
-					{
-						flagTriggerButton.style.border = "1px solid black";
+				} else {
+					// Numerical comparison logic for other operators
+					var keywordParts = flagKeyword.match(/(.*?)\s*<([\d.]+)>/);
+					if (keywordParts && keywordParts.length === 3) {
+						var searchText = keywordParts[1].trim();
+						var numberToCompare = parseFloat(keywordParts[2]);
+						var regex = new RegExp(searchText + '\\s*\\|\\s*\\d+(\\.\\d+)?\\b', 'g');
+						var conditionMet = false;
+
+						var match;
+						while ((match = regex.exec(el.innerHTML)) !== null) {
+							var foundNumber = parseFloat(match[0].match(/\d+(\.\d+)?/)[0]);
+							if (!conditionMet) {
+								switch (comparisonOperator) {
+									case "gt":
+										if (foundNumber > numberToCompare) {
+											conditionMet = true;
+											triggeredNumber = foundNumber;
+										}
+										break;
+									case "gte":
+										if (foundNumber >= numberToCompare) {
+											conditionMet = true;
+											triggeredNumber = foundNumber;
+										}
+										break;
+									case "lt":
+										if (foundNumber < numberToCompare) {
+											conditionMet = true;
+											triggeredNumber = foundNumber;
+										}
+										break;
+									case "lte":
+										if (foundNumber <= numberToCompare) {
+											conditionMet = true;
+											triggeredNumber = foundNumber;
+										}
+										break;
+								}
+							}
+						}
+
+						if (conditionMet) {
+							var message;
+							var operatorSymbol = getOperatorSymbol(comparisonOperator);
+							if (flagIfPresent) {
+								var message = "ALERT: Condition met for: " + operatorSymbol + " " + numberToCompare + ".\n\nTarget was stopped at " + triggeredNumber + "\n\nThe macro has been halted.";
+							} else {
+								var message = "ALERT: Condition not met for '" + operatorSymbol + " " + numberToCompare + "'.\n\nTarget was stopped at " + triggeredNumber + "\n\nThe macro has been halted.";
+							}
+							document.getElementById('matchMessage').innerText = message;
+							document.getElementById('popupKeywordMatch').style.display = 'block';
+
+							if (isSequenceRunning) {
+								onClickStopSequence();
+							}
+
+							// Repeating the logic for stopping the live view and updating UI elements
+							if (liveViewActive) {
+								liveViewActive = false;
+								if (currentLiveViewTimeout) {
+									clearTimeout(currentLiveViewTimeout);
+									currentLiveViewTimeout = null;
+								}
+								var liveViewBtn = document.getElementById('liveViewBtn');
+								liveViewBtn.textContent = 'Live View';
+								liveViewBtn.style.backgroundColor = '';
+								liveViewBtn.style.color = '';
+							}
+							var flagTriggerButton = document.getElementById('flagTriggerButton');
+							if (flagTriggerButton) {
+								flagTriggerButton.style.border = "1px solid black";
+							}
+							isFlagActive = false;
+						}
 					}
-					isFlagActive = false;
-					return;
 				}
 			}
 			
@@ -3231,6 +3298,16 @@
 		return true;
 	}
 
+	function getOperatorSymbol(operator) {
+		switch (operator) {
+			case "gt": return ">";
+			case "gte": return ">=";
+			case "lt": return "<";
+			case "lte": return "<=";
+			default: return "";
+		}
+	}
+
 
 		// END SEQUENCE CONTROL
 		//=====================================================================================		
@@ -3289,7 +3366,16 @@
 	<div id="popupFlagAlert" class="smallPopup" style="display: none;">
 		<center>
 			<h4>Please enter a keyword to flag:</h4>
-			<input type="text" id="flagKeyword" value="" style="margin-top: 5px;"/>
+			<div style="display: flex; align-items: center; justify-content: center;">
+				<select id="comparisonOperator" style="margin-top: 5px; height: 30px; margin-right: 10px;">
+					<option value="none">None</option>
+					<option value="gt">&gt;</option>
+					<option value="gte">&gt;=</option>
+					<option value="lt">&lt;</option>
+					<option value="lte">&lt;=</option>
+				</select>
+				<input type="text" id="flagKeyword" value="" style="margin-top: 5px;"/>
+			</div>
 			<div class="buttongroup" style="margin-top: 20px;">
 				<button onclick="setFlagKeyword(true)">Flag if Present</button>
 				<button onclick="setFlagKeyword(false)" style="margin-left: 10px;">Flag if Absent</button>
@@ -3298,7 +3384,7 @@
 				</div>
 			</div>
 		</center>
-	</div>
+	</div>	
 
 	<div id="popupKeywordMatch" class="smallPopup" style="display: none;">
 		<center>
