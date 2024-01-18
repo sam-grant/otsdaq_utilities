@@ -907,7 +907,9 @@
 
 			if (isFlagActive)
 			{
+				console.log("Entering flagging section, isFlagActive:", isFlagActive);  // Log #1
 				var comparisonOperator = document.getElementById('comparisonOperator').value;
+				console.log("Comparison Operator:", comparisonOperator);  // Log #2
 				var triggeredNumber = null;
 
 				if (comparisonOperator === 'none')
@@ -946,32 +948,44 @@
 				} 
 				else 
 				{
-					// Numerical comparison logic for other operators
-					var keywordParts = flagKeyword.match(/(.*?)\s*<([\d.]+)>/);
-					if (keywordParts && keywordParts.length === 3) 
+					console.log("HTML Content:", el.innerHTML);
+					// Extract label and comparison value from flagKeyword
+					var keywordParts = flagKeyword.split('<');
+					console.log("Flag Keyword:", flagKeyword);  // Log #2
+					if (keywordParts.length === 2)
 					{
-						var searchText = keywordParts[1].trim();
-						var numberToCompare = parseFloat(keywordParts[2]);
-						var regex = new RegExp(searchText + '\\s*\\|\\s*\\d+(\\.\\d+)?\\b', 'g');
+						var searchText = keywordParts[0].trim().replace(/\|$/, '');
+						var numberToCompare = parseFloat(keywordParts[1].replace('>', '').trim());
+
+						// Update regex pattern to match full label text
+						var regexPattern = '([^|]+)\\s*\\|\\s*(\\d+(\\.\\d+)?)\\s*[VC]';
+						console.log("Running regex, pattern:", regexPattern);  // Log #3
+						var regex = new RegExp(regexPattern, 'g');
 						var conditionMet = false;
 
 						var match;
-						while ((match = regex.exec(el.innerHTML)) !== null) 
+						while ((match = regex.exec(el.innerHTML)) !== null)
 						{
-							var foundNumber = parseFloat(match[0].match(/\d+(\.\d+)?/)[0]);
-							if (!conditionMet) 
+							console.log("Match found:", match);  // Log #3
+							console.log("Matched String:", match[0]);
+							var labelFound = match[1].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().replace(/\s+/g, ' ');
+							var foundNumber = parseFloat(match[2]); // match[2] is the captured group (numeric value)
+							console.log("Label Found:", labelFound, "Search Text:", searchText, "Found Number:", foundNumber, "Number To Compare:", numberToCompare);
+
+							if (labelFound === searchText)
 							{
-								switch (comparisonOperator) 
+								switch (comparisonOperator)
 								{
 									case "gt":
-										if (foundNumber > numberToCompare) 
+										console.log("Checking condition for operator gt");
+										if (foundNumber > numberToCompare)
 										{
 											conditionMet = true;
 											triggeredNumber = foundNumber;
 										}
 										break;
 									case "gte":
-										if (foundNumber >= numberToCompare) 
+										if (foundNumber >= numberToCompare)
 										{
 											conditionMet = true;
 											triggeredNumber = foundNumber;
@@ -993,19 +1007,26 @@
 										break;
 								}
 							}
+
+							if (conditionMet)
+							{
+								break;
+								console.log("Condition met, triggering flag");
+							}
 						}
 
 						if (conditionMet)
 						{
 							var message;
 							var operatorSymbol = getOperatorSymbol(comparisonOperator);
-							if (flagIfPresent) 
+							console.log("Operator Symbol for", comparisonOperator, ":", operatorSymbol);  // Log #10
+							if (flagIfPresent)
 							{
-								var message = "ALERT: Condition met for: " + operatorSymbol + " " + numberToCompare + ".\n\nTarget was stopped at " + triggeredNumber + "\n\nThe macro has been halted.";
+								message = "ALERT: Condition met for: " + searchText + " " + operatorSymbol + " " + numberToCompare + ".\n\nTarget was stopped at " + triggeredNumber + "\n\nThe macro has been halted.";
 							}
-							else 
+							else
 							{
-								var message = "ALERT: Condition not met for '" + operatorSymbol + " " + numberToCompare + "'.\n\nTarget was stopped at " + triggeredNumber + "\n\nThe macro has been halted.";
+								message = "ALERT: Condition not met for: " + searchText + " " + operatorSymbol + " " + numberToCompare + ".\n\nTarget was stopped at " + triggeredNumber + "\n\nThe macro has been halted.";
 							}
 							document.getElementById('matchMessage').innerText = message;
 							document.getElementById('popupKeywordMatch').style.display = 'block';
@@ -1016,10 +1037,10 @@
 							}
 
 							// Repeating the logic for stopping the live view and updating UI elements
-							if (liveViewActive) 
+							if (liveViewActive)
 							{
 								liveViewActive = false;
-								if (currentLiveViewTimeout) 
+								if (currentLiveViewTimeout)
 								{
 									clearTimeout(currentLiveViewTimeout);
 									currentLiveViewTimeout = null;
@@ -1030,7 +1051,7 @@
 								liveViewBtn.style.color = '';
 							}
 							var flagTriggerButton = document.getElementById('flagTriggerButton');
-							if (flagTriggerButton) 
+							if (flagTriggerButton)
 							{
 								flagTriggerButton.style.border = "1px solid black";
 							}
@@ -1059,7 +1080,6 @@
 					}
 				}, intervalTime);
 			}
-		
 		}
 
 		//=====================================================================================
