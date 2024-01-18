@@ -285,6 +285,16 @@
 		var stopSequenceFlag = false;
 
 		var currentIndex = 0;
+
+		var currentHistoryRecord = null;
+
+		var lastRunMacro = { row: null, col: null };
+
+		var flagKeyword = "";
+
+		var flagIfPresent = true; 
+
+		var isFlagActive = false;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -582,6 +592,7 @@
 				el.style.width = (verticalOutputDivSize_[0] + 30) + "px";
 			}
 
+			lastRunMacro = { row: r, col: c };
 
 			Debug.log("runMacro(" + r + "," + c + ")");
 			
@@ -686,17 +697,6 @@
 					true /*callHandlerOnErr*/
 					);
 			}
-
-			if (currentLiveViewTimeout !== null)
-			{
-        		clearTimeout(currentLiveViewTimeout);
-       			currentLiveViewTimeout = null;
-   			}
-
-			if (liveViewActive)
-			{
-        		currentLiveViewTimeout = setTimeout(function() { runMacro(r, c); }, intervalTime); 
-    		}
 			
 			var command = {
 				"feClass": feClassSelected,
@@ -903,8 +903,164 @@
 			el.innerHTML = str;
 
 			Debug.log("Returning scroll position", 
-				DesktopContent.getWindowScrollTop(),"to",scrollTop);
-			DesktopContent.setWindowScrollTop(scrollTop);				
+			DesktopContent.getWindowScrollTop(),"to",scrollTop);
+			DesktopContent.setWindowScrollTop(scrollTop);	
+
+			if (isFlagActive)
+			{
+				var comparisonOperator = document.getElementById('comparisonOperator').value;
+				var triggeredNumber = null;
+
+				if (comparisonOperator === 'none')
+				{
+					var outputContainsKeyword = el.innerHTML.includes(flagKeyword);
+					var shouldFlag = (flagIfPresent && outputContainsKeyword) || (!flagIfPresent && !outputContainsKeyword);
+
+					if (shouldFlag)
+					{
+						var message = flagIfPresent ?
+							"ALERT: String '" + flagKeyword + "' found!\n\nThe macro has been halted." :
+							"ALERT: String '" + flagKeyword + "' not found!\n\nThe macro has been halted.";
+						document.getElementById('matchMessage').innerText = message;
+						document.getElementById('popupKeywordMatch').style.display = 'block';
+
+						if (liveViewActive)
+						{
+							liveViewActive = false;
+							if (currentLiveViewTimeout)
+							{
+								clearTimeout(currentLiveViewTimeout);
+								currentLiveViewTimeout = null;
+							}
+							var liveViewBtn = document.getElementById('liveViewBtn');
+							liveViewBtn.textContent = 'Live View';
+							liveViewBtn.style.backgroundColor = '';
+							liveViewBtn.style.color = '';
+						}
+						var flagTriggerButton = document.getElementById('flagTriggerButton');
+						if (flagTriggerButton)
+						{
+							flagTriggerButton.style.border = "1px solid black";
+						}
+						isFlagActive = false;
+					}
+				} 
+				else 
+				{
+					// Numerical comparison logic for other operators
+					var keywordParts = flagKeyword.match(/(.*?)\s*<([\d.]+)>/);
+					if (keywordParts && keywordParts.length === 3) 
+					{
+						var searchText = keywordParts[1].trim();
+						var numberToCompare = parseFloat(keywordParts[2]);
+						var regex = new RegExp(searchText + '\\s*\\|\\s*\\d+(\\.\\d+)?\\b', 'g');
+						var conditionMet = false;
+
+						var match;
+						while ((match = regex.exec(el.innerHTML)) !== null) 
+						{
+							var foundNumber = parseFloat(match[0].match(/\d+(\.\d+)?/)[0]);
+							if (!conditionMet) 
+							{
+								switch (comparisonOperator) 
+								{
+									case "gt":
+										if (foundNumber > numberToCompare) 
+										{
+											conditionMet = true;
+											triggeredNumber = foundNumber;
+										}
+										break;
+									case "gte":
+										if (foundNumber >= numberToCompare) 
+										{
+											conditionMet = true;
+											triggeredNumber = foundNumber;
+										}
+										break;
+									case "lt":
+										if (foundNumber < numberToCompare)
+										{
+											conditionMet = true;
+											triggeredNumber = foundNumber;
+										}
+										break;
+									case "lte":
+										if (foundNumber <= numberToCompare)
+										{
+											conditionMet = true;
+											triggeredNumber = foundNumber;
+										}
+										break;
+								}
+							}
+						}
+
+						if (conditionMet)
+						{
+							var message;
+							var operatorSymbol = getOperatorSymbol(comparisonOperator);
+							if (flagIfPresent) 
+							{
+								var message = "ALERT: Condition met for: " + operatorSymbol + " " + numberToCompare + ".\n\nTarget was stopped at " + triggeredNumber + "\n\nThe macro has been halted.";
+							}
+							else 
+							{
+								var message = "ALERT: Condition not met for '" + operatorSymbol + " " + numberToCompare + "'.\n\nTarget was stopped at " + triggeredNumber + "\n\nThe macro has been halted.";
+							}
+							document.getElementById('matchMessage').innerText = message;
+							document.getElementById('popupKeywordMatch').style.display = 'block';
+
+							if (isSequenceRunning)
+							{
+								onClickStopSequence();
+							}
+
+							// Repeating the logic for stopping the live view and updating UI elements
+							if (liveViewActive) 
+							{
+								liveViewActive = false;
+								if (currentLiveViewTimeout) 
+								{
+									clearTimeout(currentLiveViewTimeout);
+									currentLiveViewTimeout = null;
+								}
+								var liveViewBtn = document.getElementById('liveViewBtn');
+								liveViewBtn.textContent = 'Live View';
+								liveViewBtn.style.backgroundColor = '';
+								liveViewBtn.style.color = '';
+							}
+							var flagTriggerButton = document.getElementById('flagTriggerButton');
+							if (flagTriggerButton) 
+							{
+								flagTriggerButton.style.border = "1px solid black";
+							}
+							isFlagActive = false;
+						}
+					}
+				}
+			}
+			
+			if (liveViewActive)
+			{
+				if (currentLiveViewTimeout !== null)
+				{
+					clearTimeout(currentLiveViewTimeout);
+				}
+
+				currentLiveViewTimeout = setTimeout(function() 
+				{
+					if (currentHistoryRecord !== null) 
+					{
+						onClickHistoryRecord(currentHistoryRecord);
+					} 
+					else if (lastRunMacroDetails.row !== null && lastRunMacroDetails.col !== null) 
+					{
+						runMacro(lastRunMacroDetails.row, lastRunMacroDetails.col);
+					}
+				}, intervalTime);
+			}
+		
 		}
 
 		//=====================================================================================
@@ -985,15 +1141,26 @@
 						"td",
 						{
 							"id": "macroModule-history",
-							"class":"macroModule",
+							"class": "macroModule",
 							"rowspan": maxRow,
-							"width":"400px",
+							"width": "400px",
 						},
-						"<div style='display: flex; justify-content: space-between; align-items: center; width: 100%;'>" +
+						"<div style='display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 5px;'>" + 
 							"<h3>Command history</h3>" +
-							"<button id='liveViewBtn' onClick='toggleLiveView()'>Live View</button>",
-						true);
-					
+							"<div>" +
+								"<button id='liveViewBtn' onClick='toggleLiveView()' style='margin-right: 5px;'>Live View</button>" + 
+								"<button id='flagTriggerButton' onClick='PopupMacroFlagAlert()' style='background-color: light gray; border: 1px solid gray; cursor: pointer; font-size: 15px; padding: 3px 10px; border-radius: 5px;'>🚩</button>" +
+							"</div>" +
+						"</div>" + 
+						"<div style='display: flex; justify-content: flex-end; align-items: center;'>" +
+							"<div style='display: flex; flex-direction: column; align-items: flex-end;'>" +
+								"<div style='margin-bottom: 5px;'>Delay: <span id='delayValue'>2 seconds</span></div>" +
+								"<div>Alert For: <span id='keywordValue'>[None]</span></div>" +
+							"</div>" +
+						"</div>",
+						true
+					);
+
 					// add sequence builder
 					str += DesktopContent.htmlOpen(
 						"td",
@@ -2014,6 +2181,8 @@
 		function onClickHistoryRecord(recordObj)
 		{
 
+			currentHistoryRecord = recordObj;
+
 			// in bulding sequence mode add the macro to the sequence
 			if (sequenceBuilding_)
 			{
@@ -2055,19 +2224,8 @@
 				}
 			}
 
-			if (currentLiveViewTimeout !== null) 
-			{
-        		clearTimeout(currentLiveViewTimeout);
-       		 	currentLiveViewTimeout = null;
-   			}
-
 			// show the command in the interface
 			appendHistoryRecord(JSON.stringify(recordObj));
-
-			if (liveViewActive) 
-			{
-				currentLiveViewTimeout = setTimeout(function() { onClickHistoryRecord(recordObj); }, intervalTime); 
-    		}
 		}
 
 		// ask confirm before clearing the history
@@ -2098,7 +2256,19 @@
 			wholeDiv.style.display = "none";
 			liveViewActive = false;
 			document.getElementById('intervalTime').value = '2';
+			document.getElementById('noDelayCheckbox').checked = false;
+		}
 
+		// hide the popup for keyword flag
+		function hideSmallPopupFlag()
+		{
+			var flagKeywordInput = document.getElementById("flagKeyword");
+   			flagKeywordInput.value = "";
+			var popupFlagAlert = document.getElementById('popupFlagAlert');
+			if (popupFlagAlert)
+			{
+				popupFlagAlert.style.display = 'none';
+			}
 		}
 
 		// clear the history
@@ -2113,7 +2283,7 @@
 		// live view
 		function toggleLiveView()
 		{
-
+			document.getElementById('delayValue').textContent = '2 seconds';
 			liveViewActive = !liveViewActive;
 
 			if (liveViewActive) 
@@ -2144,15 +2314,28 @@
 
 		}
 	
-		function setIntervalAndStart() 
+		function setIntervalAndStart()
 		{
-			var intervalTimeInput = document.getElementById('intervalTime').value*1000;
-			intervalTime = parseInt(intervalTimeInput);
+			var intervalTimeInput = document.getElementById('intervalTime').value;
+			var noDelayCheckbox = document.getElementById('noDelayCheckbox');
 
-			if (isNaN(intervalTime) || intervalTime <= 0)
+			if (noDelayCheckbox.checked)
 			{
-				alert("Please enter a valid number greater than 0");
-				return;
+				intervalTime = 0;
+				document.getElementById('delayValue').textContent = 'None';
+			}
+			else
+			{
+				intervalTime = parseInt(intervalTimeInput, 10) * 1000;
+				if (isNaN(intervalTime) || intervalTime < 0)
+				{
+					alert("Please enter a valid number greater than or equal to 0");
+					return;
+				}
+				else
+				{
+					document.getElementById('delayValue').textContent = (intervalTime / 1000) + ' seconds'; 
+				}
 			}
 
 			document.getElementById('popupSetInterval').style.display = 'none';
@@ -2161,8 +2344,9 @@
 			liveViewBtn.textContent = 'Stop Live View';
 			liveViewBtn.style.backgroundColor = 'red';
 			liveViewBtn.style.color = 'white';
-			
+			document.getElementById('noDelayCheckbox').checked = false;
 
+			// Enable live view only if it's not already active
 			if (!liveViewActive)
 			{
 				liveViewActive = true;
@@ -2181,6 +2365,45 @@
         	}
         return true;
     	}    
+
+		function PopupMacroFlagAlert()
+		{
+			var flagTriggerButton = document.getElementById('flagTriggerButton');
+
+			if (isFlagActive)
+			{
+				flagKeyword = "";
+				flagIfPresent = true;
+				flagTriggerButton.style.border = "1px solid black";
+				isFlagActive = false; 
+				document.getElementById('keywordValue').textContent = '[None]'; 
+			}
+			else
+			{
+				document.getElementById('popupFlagAlert').style.display = 'block';
+			}
+		}
+
+		function setFlagKeyword(isPresent)
+		{
+			flagKeyword = document.getElementById('flagKeyword').value;
+			flagIfPresent = isPresent;
+			document.getElementById('keywordValue').textContent = flagKeyword || '[None]';
+
+			var flagTriggerButton = document.getElementById('flagTriggerButton');
+			if (flagKeyword)
+			{
+				flagTriggerButton.style.border = "3px solid green"; 
+				isFlagActive = true;
+			}
+			else
+			{
+				flagTriggerButton.style.border = "1px solid black"; 
+				isFlagActive = false;
+			}
+
+			document.getElementById('popupFlagAlert').style.display = 'none';
+		}
 
 		//=====================================================================================	
 		//loadSequence
@@ -3100,6 +3323,16 @@
 		return true;
 	}
 
+	function getOperatorSymbol(operator) {
+		switch (operator) {
+			case "gt": return ">";
+			case "gte": return ">=";
+			case "lt": return "<";
+			case "lte": return "<=";
+			default: return "";
+		}
+	}
+
 
 		// END SEQUENCE CONTROL
 		//=====================================================================================		
@@ -3141,15 +3374,51 @@
 	</div>
 	
 	<div id="popupSetInterval" class="smallPopup">
-			<center>
-		<h4>Please enter the interval time (sec):</h4>
-		<input type="number" id="intervalTime" value="2" onkeypress="return handleEnterPress(event)">
-		<div class="buttongroup" style="margin-top: 20px;">
+		<center>
+			<h4>Please enter the interval time (sec):</h4>
+			<input type="number" id="intervalTime" value="2" onkeypress="return handleEnterPress(event)">
+			<div>
+				<input type="checkbox" id="noDelayCheckbox" style="margin-top: 20px;">
+				<label for="noDelayCheckbox">No Delay</label>
+			</div>
+			<div class="buttongroup" style="margin-top: 20px;">
 				<button onclick="setIntervalAndStart()">Set Interval</button>
 				<button onclick="hideSmallPopupLiveView(this)">Cancel</button>
-		</div>
-	</center>
+			</div>
+		</center>
 	</div>
+	
+	<div id="popupFlagAlert" class="smallPopup" style="display: none;">
+		<center>
+			<h4>Please enter a keyword to flag:</h4>
+			<div style="display: flex; align-items: center; justify-content: center;">
+				<select id="comparisonOperator" style="margin-top: 5px; height: 30px; margin-right: 10px;">
+					<option value="none">None</option>
+					<option value="gt">&gt;</option>
+					<option value="gte">&gt;=</option>
+					<option value="lt">&lt;</option>
+					<option value="lte">&lt;=</option>
+				</select>
+				<input type="text" id="flagKeyword" value="" style="margin-top: 5px;"/>
+			</div>
+			<div class="buttongroup" style="margin-top: 20px;">
+				<button onclick="setFlagKeyword(true)">Flag if Present</button>
+				<button onclick="setFlagKeyword(false)" style="margin-left: 10px;">Flag if Absent</button>
+				<div style="margin-top: 10px;">
+					<button onclick="hideSmallPopupFlag(this)">Cancel</button>
+				</div>
+			</div>
+		</center>
+	</div>	
+
+	<div id="popupKeywordMatch" class="smallPopup" style="display: none;">
+		<center>
+			<h4 id="matchMessage">Keyword matched!</h4>
+			<div class="buttongroup" style="margin-top: 20px;">
+				<button onclick="hideSmallPopup(this)">Close</button>
+			</div>
+		</center>
+	</div>	
 
 	<div id="popupSaveSequence" class="smallPopup">
 		<center>
