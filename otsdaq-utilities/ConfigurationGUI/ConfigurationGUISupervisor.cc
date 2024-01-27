@@ -2787,7 +2787,8 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 				// for each field, get value
 				for(const auto& fieldPath : fieldPaths)
 				{
-					__SUP_COUT__ << "fieldPath " << fieldPath << __E__;
+					// __SUP_COUT__ << "fieldPath " << fieldPath << __E__;
+					// __SUP_COUT__ << "fullPath " << (startPath + "/" + recordUID + "/" + fieldPath) << __E__;
 
 					ConfigurationTree node =
 					    cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPath);
@@ -2796,8 +2797,7 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 
 					xmlOut.addTextElementToParent(
 					    "FieldValue",
-					    cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPath)
-					        .getValueAsString(true /*returnLinkTableValue*/),
+						node.getValueAsString(true /*returnLinkTableValue*/),
 					    parentEl);
 				}
 			}
