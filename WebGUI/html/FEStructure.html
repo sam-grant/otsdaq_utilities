@@ -1,0 +1,372 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<title>MU2E FRONT END STRUCTURE</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/FEStructure.css">
+
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopContent.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+
+	<script>		
+
+		//	Description of Configuration-Subset Functionality/Behavior:
+		//	
+		//	GET parameters:
+		//		<subsetBasePath> = Records at this path are the target of this GUI, e.g. “FEInterfaceConfiguration”
+		//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. “LinkToFETypeConfiguration,FEInterfacePluginName”
+		//									- these are the fields that can be used to filter UID records by (and these will cause grouping in square-view)	
+		//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
+		//		<recordPreFilterList> = CSV list (of forced filter) of tree paths relative to <baseTable> and = value, e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
+		//									- this is like a pre-filter (filter on records UID that user can not control)
+		//		<recordsAlias> = Records display name, e.g. "Front-ends"
+
+
+		//global vars for GET params
+		var _subsetBasePath;
+		var _groupingFieldList;
+		var _editableFieldList;
+		var _recordPreFilterList;
+		var _recordsAlias;
+
+		var _selectedGroupFieldValues;
+		var _selectedGroupIDs;
+		var _selectedRecords;
+
+		var _subsetUIDs; //array of UIDs defined by the subset selected filterVals in multiselects (based on _subsetBasePath and _recordPreFilterList)
+
+		//global vars for saving tables
+		var _modifiedTables;
+
+		///////////////////////////////////////////////////////////////////////////////////////
+		///////////////////////////////////////////////////////////////////////////////////////
+
+		//functions:			
+			//init()
+			//paintDtc() 
+			//paintRoc() 
+			//extractGETParameters()
+			//initSubsetGlobalData()
+
+
+
+		///////////////////////////////////////////////////////////////////////////////////////
+		///////////////////////////////////////////////////////////////////////////////////////
+
+
+		//=====================================================================================
+		//init ~~
+		//	init called once body has loaded
+		function init()
+		{
+			Debug.log("FEStructure init ");
+
+			//extract get parameters
+			if(!extractGETParameters())
+			{
+				Debug.log("Illegal GET parameters. Aborting.",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+			var windowTooltip = "Welcome to the FE Structure viewer. " + 
+				". Here you can view the FE objects and their status.";
+			DesktopContent.tooltip("FE Structure GUI Introduction",
+			windowTooltip);
+			DesktopContent.setWindowTooltip(windowTooltip);
+
+			//get subset record uids and 
+			//	filter values for all possible grouping fields
+			initSubsetGlobalData();
+
+		} //end init()
+
+
+		//=====================================================================================
+		//paintDtc ~~
+		function paintDtc (dtci)
+		{
+			var el = document.getElementById("mainDiv");
+			var dtcDiv = document.createElement('div');
+			dtcDiv.classList.add("dtcBlockContainer");
+			dtcDiv.id = dtci;
+
+			var dtcBox = document.createElement('button');
+			dtcBox.classList.add("dtcBox");
+			dtcBox.id = dtci + '-box';
+			dtcBox.innerText = dtci;
+
+			dtcDiv.appendChild(dtcBox);
+			el.appendChild(dtcDiv);
+		}	//end paintDtc()
+
+
+		//=====================================================================================
+		//paintRoc ~~
+		function paintRoc (dtci, roci)
+		{
+			var dtcDiv = document.getElementById(dtci);
+			var rocBox = document.createElement('button');
+			rocBox.classList.add("rocBox");
+			rocBox.id = roci + '-' + dtci + '-box';
+			rocBox.innerText = roci;
+			dtcDiv.appendChild(rocBox);
+		}	//end paintRoc()
+
+
+		//=====================================================================================
+		//extractGETParameters ~~
+		//	return false, if illegal params
+		function extractGETParameters()
+		{
+			//extract get parameters (most optional)
+			//		<subsetBasePath> 		= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
+			//		<groupingFieldList> 	= CSV list of tree paths relative to <baseTable>, e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
+			//		<selectedGroupFieldValues>	= Pre-chosen selections for grouping field filters
+			//		<editableFieldList> 	= empty string or "DEFAULT" for all, or CSV list of fields to show for editing
+			//		<recordPreFilterList> 	= semicolon-separated list (of forced filter) of tree paths relative to <baseTable> and = value (CSV for multiple values), e.g. "LinkToFETypeConfiguration=NIMPlus;FEInterfacePluginName=NIMPlusPlugin,FEOtsUDPTemplateInterface"
+			//		<selectedRecords> 		= CSV list of pre-chosen record UID selections (this will override default behavior of selecting the first record,.. if only one record is chosen, that record will be loaded) 
+			//		<recordsAlias> 			= PLURAL Records display name, e.g. "Front-ends"
+			
+			_subsetBasePath		= DesktopContent.getParameter(0,"subsetBasePath");//"FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");	
+			_groupingFieldList 	= DesktopContent.getParameter(0,"groupingFieldList"); //"LinkToFETypeConfiguration,FEInterfacePluginName"; //DesktopContent.getParameter(0,"groupingFieldList");			
+			_editableFieldList	= DesktopContent.getParameter(0,"editableFieldList");//"";//DesktopContent.getParameter(0,"editableFieldList");
+			_recordPreFilterList= DesktopContent.getParameter(0,"recordPreFilterList"); //"";//FEInterfacePluginName=myNewInterface";//DesktopContent.getParameter(0,"recordPreFilterList");
+			_recordsAlias		= DesktopContent.getParameter(0,"recordAlias"); //"Front-ends"; //default to records
+			
+			_selectedGroupFieldValues = DesktopContent.getParameter(0,"selectedGroupFieldValues"); //"ParameterGroupID=myNewInterfaceParameters,myNewInterfaceParameters;FEInterfacePluginName=myNewInterface""; 
+			_selectedGroupIDs 	= DesktopContent.getParameter(0,"selectedGroupIDs"); //"ParameterGroupID=myNewInterfaceParameters,myNewInterfaceParameters;FEInterfacePluginName=myNewInterface""; 
+			_selectedRecords	= DesktopContent.getParameter(0,"selectedRecords"); //"myNewInterface,myNewInterface2";
+									
+			
+			if(!_subsetBasePath)
+			{
+				Debug.log("Missing required GET parameter 'subsetBasePath.'",
+						Debug.HIGH_PRIORITY);
+				return false;
+			}
+			if(!_groupingFieldList) _groupingFieldList = "";
+			if(!_editableFieldList) _editableFieldList = "";
+			if(!_recordPreFilterList) _recordPreFilterList = "";
+			if(!_recordsAlias) _recordsAlias = "Records";
+			
+			if(!_selectedGroupFieldValues) _selectedGroupFieldValues = "";
+			if(!_selectedGroupIDs) _selectedGroupIDs = "";
+			if(!_selectedRecords) _selectedRecords = "";
+
+			Debug.logv({_subsetBasePath});
+			Debug.logv({_groupingFieldList});
+			Debug.logv({_editableFieldList});
+			Debug.logv({_recordPreFilterList});
+			Debug.logv({_recordsAlias});
+
+			Debug.logv({_selectedGroupFieldValues});
+			Debug.logv({_selectedGroupIDs});
+			Debug.logv({_selectedRecords});
+			
+			return true;
+		}	//end extractGETParameters()
+
+
+		var FEstruct = {};
+		//=====================================================================================
+		//initSubsetGlobalData ~~
+		//	fills _subsetUIDs
+		//		array of UIDs defined by the subset (based on _subsetBasePath and _recordPreFilterList)
+
+		function initSubsetGlobalData()
+		{
+			//get list of records that match <subsetBasePath> AND <recordPreFilterList>
+			_subsetUIDs = []; //reset
+			_modifiedTables = undefined; //reset
+
+			localGetDTCs();
+			localGetCFOs();
+
+			var ROCs_done = 0;
+
+
+			//====================
+			function localGetDTCs()
+			{
+				Debug.log("localGetDTCs");
+
+				_subsetBasePath = "/FEInterfaceTable";
+				_recordPreFilterList = "FEInterfacePluginName=DTCFrontEndInterface"; //"Status,FEInterfacePluginName";
+	
+				ConfigurationAPI.getSubsetRecords(
+					_subsetBasePath,
+					_recordPreFilterList,
+					function(records)
+					{
+						_subsetUIDs = records;
+						Debug.log("DTC records found = " + records.length);
+						console.log(records);
+						FEstruct.dtcs = [];
+						for(var i=0; i<records.length; ++i)
+						{
+							var record = records[i];
+							Debug.log("DTC:",record, " status:", status);
+							FEstruct.dtcs.push({"name": record, "rocs": []});
+
+							paintDtc(record);
+							console.log("FEstruct.dtcs",FEstruct.dtcs);
+							localGetROCs(i);
+						} //end DTC loop
+					}, //end DTC getSubsetRecords() handler
+					_modifiedTables);
+
+				console.log("FEstruct.dtcs",FEstruct.dtcs);
+			} //end localGetDTCs()
+
+
+			//====================
+			function localGetROCs(dtci)
+			{
+				Debug.log("localGetROCs",dtci);
+				var dtcName = FEstruct.dtcs[dtci].name;
+
+				_subsetBasePath = "/FEInterfaceTable/" + dtcName +
+								"/LinkToFETypeTable/LinkToROCGroupTable/";
+							_recordPreFilterList = "";
+
+				ConfigurationAPI.getSubsetRecords(
+					_subsetBasePath,
+					_recordPreFilterList,
+					function(ROCrecords)
+					{
+						Debug.log("DTC",dtcName,
+							" ROC records found = " + ROCrecords.length);
+						console.log(ROCrecords);
+						FEstruct.dtcs[dtci].rocs = [];
+						for(var j=0; j<ROCrecords.length; ++j)
+						{
+							FEstruct.dtcs[dtci].rocs.push({"rocName": ROCrecords[j]});
+							paintRoc(dtcName, ROCrecords[j]);
+						}
+
+						++ROCs_done;
+						if(ROCs_done == FEstruct.dtcs.length)
+						{
+							Debug.log("Done with DTC record fetch");
+							console.log("FEstruct.dtcs",FEstruct.dtcs);
+							setDtcsColorStatus();
+						}
+					}, //end ROC getSubsetRecords() handler
+					_modifiedTables);
+			} //end localGetROCs()
+
+
+			//====================
+			function localGetCFOs()
+			{
+				Debug.log("localGetCFOs");
+
+				_subsetBasePath = "/FEInterfaceTable";
+				_recordPreFilterList = "FEInterfacePluginName=CFOFrontEndInterface"; //"Status,FEInterfacePluginName";
+
+				ConfigurationAPI.getSubsetRecords(
+					_subsetBasePath,
+					_recordPreFilterList,
+					function(records)
+					{
+						_subsetUIDs = records;
+						Debug.log("CFO records found = " + records.length);
+						console.log(records);
+					}, //end getSubsetRecords() handler
+					_modifiedTables);
+			} //end localGetCFOs()
+		}	//end initSubsetGlobalData()
+
+
+		//=====================================================================================
+		function setDtcsColorStatus()
+		{
+			Debug.log("setDtcsColorStatus()");
+			_subsetBasePath = "/FEInterfaceTable/";
+
+			var recordArr = [];
+			var fieldArr = ["Status"]; //just one field (get for all records)
+
+			for(var i=0;i<FEstruct.dtcs.length;++i)
+				recordArr.push(FEstruct.dtcs[i].name);
+			console.log("recordArr",recordArr);
+			console.log("fieldArr",fieldArr);
+
+			ConfigurationAPI.getFieldValuesForRecords(
+					_subsetBasePath,
+					recordArr, 
+					fieldArr,
+					function(recFieldValues)
+					{
+						console.log("recFieldValues", recFieldValues);
+						for (i = 0; i < recFieldValues.length; ++i)
+						{
+							var dtcUID = recFieldValues[i].fieldUID;
+							var	dtcStatus = recFieldValues[i].fieldValue;
+							var dtcBox = document.getElementById(dtcUID + '-box');
+							if (dtcStatus == 'On')
+								dtcBox.style.backgroundColor = 'green';
+							else
+								dtcBox.style.backgroundColor = 'red';
+
+								setRocsColorStatus(dtcUID);
+						}
+					}, //end getFieldValuesForRecord handler
+					 _modifiedTables);
+		}	//end setDtcsColorStatus()
+
+
+		//=====================================================================================
+		function setRocsColorStatus(dtcName)
+		{
+			Debug.log("setRocsColorStatus()",dtcName);
+			_subsetBasePath = "/FEInterfaceTable/" + dtcName +
+								"/LinkToFETypeTable/LinkToROCGroupTable/";
+
+			var recordArr = [];
+			var fieldArr = ["Status"]; //just one field (get for all records)
+
+			for(var i=0; i<FEstruct.dtcs.length; ++i)
+				for(var j=0; j<FEstruct.dtcs[i].rocs.length; ++j)
+					if (FEstruct.dtcs[i].name == dtcName)
+						recordArr.push(FEstruct.dtcs[i].rocs[j].rocName);
+			console.log("recordArr",recordArr);
+			console.log("fieldArr",fieldArr);
+
+			ConfigurationAPI.getFieldValuesForRecords(
+					_subsetBasePath,
+					recordArr, 
+					fieldArr,
+					function(recFieldValues)
+					{
+						console.log("recFieldValues", recFieldValues);
+						for (i = 0; i < recFieldValues.length; i++)
+						{
+							var rocUID = recFieldValues[i].fieldUID;
+							var	rocStatus = recFieldValues[i].fieldValue;
+							var rocBox = document.getElementById(rocUID + '-' + dtcName + '-box');
+							if (rocStatus == 'On')
+								rocBox.style.backgroundColor = 'green';
+							else
+								rocBox.style.backgroundColor = 'red';
+						}
+					}, //end getFieldValuesForRecord handler
+					 _modifiedTables);
+		}	//end setRocsColorStatus()
+
+		</script>
+</head>
+
+<body onload='//init() called by DesktopContent.js'>	
+
+	<!-- body content populated by javascript paint(), etc. -->
+
+	<div class='mainBlockContainer' id='mainDiv'></div>
+</body>
+
+</html>

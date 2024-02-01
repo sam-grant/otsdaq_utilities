@@ -1,0 +1,36 @@
+body {
+	background-color: 		white; 
+	overflow: 				hidden;	
+}
+
+b, h3, h1 { /* overwrite ConfigurationGUI.css:41 */
+	color:					rgb(12, 10, 113);
+}
+
+.mainBlockContainer {
+	display: flex;
+	flex-direction: column;
+}
+
+.dtcBlockContainer {
+	display: flex;
+	flex-direction: row;
+}
+
+.dtcBox {
+	border-radius: 20%;
+	width: 100px;
+    height: 40px;
+	background-color: gray;
+	margin: 4px;
+	float: left;
+	border: 2px solid black;
+}
+
+.rocBox {
+	width: 90px;
+    height: 40px;
+	background-color: gray;
+	margin: 4px;
+	float: right;
+}
