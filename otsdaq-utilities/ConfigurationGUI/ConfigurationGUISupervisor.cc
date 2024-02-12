@@ -194,6 +194,7 @@ try
 	//	deleteTreeNodeRecords
 	//	renameTreeNodeRecords
 	//	copyTreeNodeRecords
+	//	getTableStructureStatusAsJSON
 	//		---- end associated with JavaScript Table API
 	//
 	//		---- associated with JavaScript artdaq API
@@ -995,6 +996,29 @@ try
 		                                 modifiedTables,
 		                                 recordList,
 		                                 numberOfCopies);
+	}
+	else if(requestType == "getTableStructureStatusAsJSON")
+	{
+		std::string  tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string  tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string  tableName      = CgiDataUtilities::getData(cgiIn, "tableName");
+		std::string  modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
+
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
+		__SUP_COUT__ << "tableName: " << tableName << __E__;
+		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
+
+		//	setup active tables based on active groups and modified tables
+		setupActiveTablesXML(
+			xmlOut, 
+			cfgMgr, 
+			tableGroup,
+			TableGroupKey(tableGroupKey),
+			modifiedTables);
+
+		xmlOut.addTextElementToData("StructureStatusAsJSON", 
+			cfgMgr->getTableByName(tableName)->getStructureStatusAsJSON(cfgMgr));
 	}
 	else if(requestType == "getArtdaqNodes")
 	{

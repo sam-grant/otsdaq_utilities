@@ -68,6 +68,7 @@ if (typeof DesktopContent == 'undefined' &&
 // 	ConfigurationAPI.renameSubsetRecords(subsetBasePath,recordArr,newRecordArr,responseHandler,modifiedTablesIn,silenceErrors)	
 // 	ConfigurationAPI.copySubsetRecords(subsetBasePath,recordArr,numberOfCopies,responseHandler,modifiedTablesIn,silenceErrors)	
 //	ConfigurationAPI.addTableToConfigurationGroup(tableName)
+// 	ConfigurationAPI.getStructureStatus(rootTableOfStructure,responseHandler,modifiedTables)
 
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
@@ -419,6 +420,45 @@ ConfigurationAPI.getAliasesAndGroups = function(responseHandler,optionForNoAlias
 
 
 //=====================================================================================
+//getStructureStatus ~~
+ConfigurationAPI.getStructureStatus = function(rootTableOfStructure,responseHandler,modifiedTables)
+{
+	Debug.log("ConfigurationAPI.getStructureStatus()", rootTableOfStructure);
+
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+
+	DesktopContent.XMLHttpRequest("Request?RequestType=getTableStructureStatusAsJSON" + 
+			"&tableGroup=" +
+			"&tableGroupKey=-1" +
+			"&tableName=" + rootTableOfStructure, //end get data 
+			"modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+				ConfigurationAPI.extractActiveGroups(req);
+				
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					if(responseHandler) responseHandler();
+					return;
+				}
+				var json = DesktopContent.getXMLValue(req,"StructureStatusAsJSON");
+				if(responseHandler) responseHandler(json);
+
+			}, //handler
+			0, //handler param
+			0,true); //progressHandler, callHandlerOnErr
+
+} // end getStructureStatus
+
+//=====================================================================================
 //getSubsetRecords ~~
 //	takes as input a base path where the desired records are, 
 //	  and a filter list.
@@ -484,7 +524,7 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 			}, //handler
 			0, //handler param
 			0,true); //progressHandler, callHandlerOnErr
-}
+} //end getSubsetRecords()
 
 //=====================================================================================
 //getTree ~~
