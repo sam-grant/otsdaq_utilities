@@ -12,9 +12,53 @@ b, h3, h1 { /* overwrite ConfigurationGUI.css:41 */
 	flex-direction: column;
 }
 
+/* Containers content */
+.legend {
+	display: flex;
+	flex-direction: row;
+	width:	100%;
+}
+
+.legend > div {
+	margin: 5px;
+	height: 80%;
+	padding: 2px;
+	border-radius: 4px;
+}
+
+.title {
+	display: flex;
+	flex-direction: row;
+	margin-left: 250px;
+	width:	100%;
+}
+
+.setStatus { /* write status button */
+	margin: 2px;
+}
+
+.appBlockContainer {
+	display: flex;
+	flex-direction: column;
+	border: 2px solid black;
+	font-size: 10px;
+	vertical-align: text-top;
+}
+
 .dtcBlockContainer {
 	display: flex;
 	flex-direction: row;
+}
+
+.appBox {
+	border-radius: 20%;
+	width: 80px;
+    height: 20px;
+	background-color: gray;
+	margin: 4px;
+	float: left;
+	border: 2px solid black;
+	font-size: 10px;
 }
 
 .dtcBox {
@@ -24,7 +68,6 @@ b, h3, h1 { /* overwrite ConfigurationGUI.css:41 */
 	background-color: gray;
 	margin: 4px;
 	float: left;
-	border: 2px solid black;
 	font-size: 10px;
 }
 
