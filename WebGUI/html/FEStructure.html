@@ -38,21 +38,18 @@
 		var _selectedGroupIDs;
 		var _selectedRecords;
 
-		var _subsetUIDs; //array of UIDs defined by the subset selected filterVals in multiselects (based on _subsetBasePath and _recordPreFilterList)
-
 		//global vars for saving tables
 		var _modifiedTables;
 
 		///////////////////////////////////////////////////////////////////////////////////////
 		///////////////////////////////////////////////////////////////////////////////////////
 
-		//functions:			
+		//functions:
 			//init()
-			//paintDtc() 
-			//paintRoc() 
 			//extractGETParameters()
 			//initSubsetGlobalData()
-
+			//paintDtc()
+			//paintRoc()
 
 
 		///////////////////////////////////////////////////////////////////////////////////////
@@ -84,38 +81,6 @@
 			initSubsetGlobalData();
 
 		} //end init()
-
-
-		//=====================================================================================
-		//paintDtc ~~
-		function paintDtc (dtci)
-		{
-			var el = document.getElementById("mainDiv");
-			var dtcDiv = document.createElement('div');
-			dtcDiv.classList.add("dtcBlockContainer");
-			dtcDiv.id = dtci;
-
-			var dtcBox = document.createElement('button');
-			dtcBox.classList.add("dtcBox");
-			dtcBox.id = dtci + '-box';
-			dtcBox.innerText = dtci;
-
-			dtcDiv.appendChild(dtcBox);
-			el.appendChild(dtcDiv);
-		}	//end paintDtc()
-
-
-		//=====================================================================================
-		//paintRoc ~~
-		function paintRoc (dtci, roci)
-		{
-			var dtcDiv = document.getElementById(dtci);
-			var rocBox = document.createElement('button');
-			rocBox.classList.add("rocBox");
-			rocBox.id = roci + '-' + dtci + '-box';
-			rocBox.innerText = roci;
-			dtcDiv.appendChild(rocBox);
-		}	//end paintRoc()
 
 
 		//=====================================================================================
@@ -171,193 +136,328 @@
 			return true;
 		}	//end extractGETParameters()
 
+		function saveAllStatusChanges()
+		{
+			//proceed to save (quietly) tables, groups, aliases
+			ConfigurationAPI.saveModifiedTables(_modifiedTables,
+					function(savedTables, savedGroups, savedAliases)
+					{
+				if(!savedTables.length)
+				{
+					Debug.log("There was an error while saving the values.",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+				
+				Debug.log("The values for each field were successfully written to the targeted " +
+						recordsAlias + " (target count = " + recordArr.length + ")!",
+						Debug.INFO_PRIORITY);
+				
+				_modifiedTables = undefined; //clear after save
+				
+					}); //end saveModifiedTables handler
+			
+		} //end saveAllStatusChanges
 
-		var FEstruct = {};
+		function setDTCStatus(dtcName, status)
+		{
+			Debug.log("setDTCStatus()", dtcName, status);
+
+			var fields = ["Status"];
+			var valueArr = [status]; 
+			var recordArr = [dtcName];
+
+			Debug.logv({recordArr});
+			Debug.logv({valueArr});
+			Debug.logv({fields});
+
+			var subsetBasePath = "/DTCInterfaceTable";
+			var recordsAlias = "DTC";
+						
+			ConfigurationAPI.setFieldValuesForRecords(
+					subsetBasePath,
+					recordArr, 	//recordArr
+					fields, 	//fieldArr
+					valueArr, 	//valueArr
+					function(modifiedTables)
+					{
+				Debug.log("modifiedTables length " + modifiedTables.length);
+								
+				if(!modifiedTables.length)
+				{
+					Debug.log("There was an error while writing the values.",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+									
+				_modifiedTables = modifiedTables;
+				
+				// //proceed to save (quietly) tables, groups, aliases
+				// ConfigurationAPI.saveModifiedTables(_modifiedTables,
+				// 		function(savedTables, savedGroups, savedAliases)
+				// 		{
+				// 	if(!savedTables.length)
+				// 	{
+				// 		Debug.log("There was an error while saving the values.",
+				// 				Debug.HIGH_PRIORITY);
+				// 		return;					
+				// 	}
+					
+				// 	Debug.log("The values for each field were successfully written to the targeted " +
+				// 			recordsAlias + " (target count = " + recordArr.length + ")!",
+				// 			Debug.INFO_PRIORITY);
+					
+				// 	_modifiedTables = undefined; //clear after save
+					
+				// 		}); //end saveModifiedTables handler
+				
+					}, //end setFieldValuesForRecords handler
+					 _modifiedTables);	
+
+
+		} //end setDTCStatus()
+
+		function setROCStatus(rocName, status)
+		{
+			Debug.log("setROCStatus()", rocName, status);
+
+			var fields = ["Status"];
+			var valueArr = [status]; 
+			var recordArr = [rocName];
+
+			Debug.logv({recordArr});
+			Debug.logv({valueArr});
+			Debug.logv({fields});
+
+			var subsetBasePath = "/ROCInterfaceTable";
+			var recordsAlias = "ROC";
+						
+			ConfigurationAPI.setFieldValuesForRecords(
+					subsetBasePath,
+					recordArr, 	//recordArr
+					fields, 	//fieldArr
+					valueArr, 	//valueArr
+					function(modifiedTables)
+					{
+				Debug.log("modifiedTables length " + modifiedTables.length);
+								
+				if(!modifiedTables.length)
+				{
+					Debug.log("There was an error while writing the values.",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+									
+				_modifiedTables = modifiedTables;
+				
+				// //proceed to save (quietly) tables, groups, aliases
+				// ConfigurationAPI.saveModifiedTables(_modifiedTables,
+				// 		function(savedTables, savedGroups, savedAliases)
+				// 		{
+				// 	if(!savedTables.length)
+				// 	{
+				// 		Debug.log("There was an error while saving the values.",
+				// 				Debug.HIGH_PRIORITY);
+				// 		return;					
+				// 	}
+					
+				// 	Debug.log("The values for each field were successfully written to the targeted " +
+				// 			recordsAlias + " (target count = " + recordArr.length + ")!",
+				// 			Debug.INFO_PRIORITY);
+					
+				// 	_modifiedTables = undefined; //clear after save
+					
+				// 		}); //end saveModifiedTables handler
+				
+					}, //end setFieldValuesForRecords handler
+					 _modifiedTables);	
+
+
+		} //end setROCStatus()
+
+		//=====================================================================================
+		//checkForActiveGroupChange ~~
+		function checkForActiveGroupChange(doInit)
+		{
+			//Debug.log("checkForActiveGroupChange() " + doInit);
+
+			if(_checkActiveGroupsTimer)
+			{
+				window.clearTimeout(_checkActiveGroupsTimer);
+				_checkActiveGroupsTimer = 0;
+			}
+
+			//get active table groups
+			DesktopContent.XMLHttpRequest(
+					"Request?RequestType=getActiveTableGroups",
+					"", function (req) {
+
+				if(_checkActiveGroupsTimer)
+					window.clearTimeout(_checkActiveGroupsTimer);
+				_checkActiveGroupsTimer = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+
+				if(!req) return; //ignore disconnected requests
+
+				var activeConfigGroups = [
+					DesktopContent.getXMLValue(req, "Context-ActiveGroupName"),
+					DesktopContent.getXMLValue(req, "Context-ActiveGroupKey"),
+					DesktopContent.getXMLValue(req, "Configuration-ActiveGroupName"),
+					DesktopContent.getXMLValue(req, "Configuration-ActiveGroupKey")];
+
+				//console.log("activeConfigGroups",activeConfigGroups);
+
+				//check for changes
+				if(doInit || _lastActiveGroups.length != activeConfigGroups.length)
+				{
+					if(!doInit && _lastActiveGroups.length) //treat as change
+					{
+						localHandleChange(activeConfigGroups);
+						return;
+					}
+					else //treat as initializing active groups
+						_lastActiveGroups = activeConfigGroups;					
+				}
+
+				for(var i=0;i<_lastActiveGroups.length && activeConfigGroups.length;++i)
+				{
+					if(_lastActiveGroups[i] != activeConfigGroups[i])
+					{
+						localHandleChange(activeConfigGroups);
+						return;
+					}
+				}
+
+			},
+			0, 0, true,  //reqParam, progressHandler, callHandlerOnErr
+			true /*doNotShowLoadingOverlay*/
+			); //end of getActiveTableGroups handler
+
+			return;
+
+			//===========
+			function localHandleChange(activeConfigGroups)
+			{
+				if(_checkActiveGroupsTimer)
+				{
+					window.clearTimeout(_checkActiveGroupsTimer);
+					_checkActiveGroupsTimer = 0;
+				}
+
+				console.log("Change detected!... activeConfigGroups",activeConfigGroups,
+						"_lastActiveGroups",_lastActiveGroups);
+
+				DesktopContent.popUpVerification(
+						"A configuration change was detected! " +
+						"Do you want to <b>reload</b> the FE Structure Configuration GUI (any modifications in this window will be lost!)?",
+						initSubsetGlobalData /*yes-to-reload handler*/
+						,
+						0,0,// val [optional], bgColor [optional], 
+						0,0,0, //			textColor [optional], borderColor [optional], getUserInput [optional], 
+						0, //			dialogWidth [optional], 
+						function() /*cancelFunc [optional]*/
+						{
+							Debug.log("Canceled...");
+
+							if(_checkActiveGroupsTimer)
+								window.clearTimeout(_checkActiveGroupsTimer);
+							_checkActiveGroupsTimer = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+
+						} //end cancelFunc handler
+				);
+
+				//save for next time
+				_lastActiveGroups = activeConfigGroups;
+
+			} //end localHandleChange()
+
+		} //end checkForActiveGroupChange()
+
+
+		//=====================================================================================
+		//paintDtc ~~
+		function paintDtc (dtci, dtciStatus)
+		{
+			var el = document.getElementById("mainDiv");
+			var dtcDiv = document.createElement('div');
+			dtcDiv.classList.add("dtcBlockContainer");
+			dtcDiv.id = dtci;
+
+			var dtcBox = document.createElement('button');
+			dtcBox.classList.add("dtcBox");
+			dtcBox.id = dtci + '-box';
+			dtcBox.innerText = dtci;
+
+			if (dtciStatus == '1')
+				dtcBox.style.backgroundColor = 'green';
+			else
+				dtcBox.style.backgroundColor = 'red';
+
+			dtcDiv.appendChild(dtcBox);
+			el.appendChild(dtcDiv);
+		}	//end paintDtc()
+
+
+		//=====================================================================================
+		//paintRoc ~~
+		function paintRoc (dtci, roci, rociStatus)
+		{
+			var dtcDiv = document.getElementById(dtci);
+			var rocBox = document.createElement('button');
+			rocBox.classList.add("rocBox");
+			rocBox.id = roci + '-' + dtci + '-box';
+			rocBox.innerText = roci;
+
+			if (rociStatus == '1')
+				rocBox.style.backgroundColor = 'green';
+			else
+				rocBox.style.backgroundColor = 'red';
+
+			dtcDiv.appendChild(rocBox);
+		}	//end paintRoc()
+
+
+		var FEstructure_;
+		var _checkActiveGroupsTimer = 0;
+		var _CHECK_ACTIVE_GROUPS_PERIOD = 5000; //ms
+		var _lastActiveGroups = [];
 		//=====================================================================================
 		//initSubsetGlobalData ~~
-		//	fills _subsetUIDs
-		//		array of UIDs defined by the subset (based on _subsetBasePath and _recordPreFilterList)
-
 		function initSubsetGlobalData()
 		{
-			//get list of records that match <subsetBasePath> AND <recordPreFilterList>
-			_subsetUIDs = []; //reset
-			_modifiedTables = undefined; //reset
-
-			localGetDTCs();
-			localGetCFOs();
-
-			var ROCs_done = 0;
-
-
-			//====================
-			function localGetDTCs()
+			if(_checkActiveGroupsTimer)
 			{
-				Debug.log("localGetDTCs");
+				window.clearTimeout(_checkActiveGroupsTimer);
+				_checkActiveGroupsTimer = 0;
+			}
 
-				_subsetBasePath = "/FEInterfaceTable";
-				_recordPreFilterList = "FEInterfacePluginName=DTCFrontEndInterface"; //"Status,FEInterfacePluginName";
-	
-				ConfigurationAPI.getSubsetRecords(
-					_subsetBasePath,
-					_recordPreFilterList,
-					function(records)
+			ConfigurationAPI.getStructureStatus("DTCInterfaceTable",
+				function(json)
+				{
+					Debug.logv({json});
+					FEstructure_ = JSON.parse(json);
+					Debug.logv({FEstructure_});
+					for(var i=0; i<FEstructure_.dtcs.length; ++i)
 					{
-						_subsetUIDs = records;
-						Debug.log("DTC records found = " + records.length);
-						console.log(records);
-						FEstruct.dtcs = [];
-						for(var i=0; i<records.length; ++i)
+						var dtcName = FEstructure_.dtcs[i].name;
+						var dtcStatus = FEstructure_.dtcs[i].enabled;
+						paintDtc(dtcName, dtcStatus);
+
+						for(var j=0; j<FEstructure_.dtcs[i].rocs.length; ++j)
 						{
-							var record = records[i];
-							Debug.log("DTC:",record, " status:", status);
-							FEstruct.dtcs.push({"name": record, "rocs": []});
-
-							paintDtc(record);
-							console.log("FEstruct.dtcs",FEstruct.dtcs);
-							localGetROCs(i);
-						} //end DTC loop
-					}, //end DTC getSubsetRecords() handler
-					_modifiedTables);
-
-				console.log("FEstruct.dtcs",FEstruct.dtcs);
-			} //end localGetDTCs()
-
-
-			//====================
-			function localGetROCs(dtci)
-			{
-				Debug.log("localGetROCs",dtci);
-				var dtcName = FEstruct.dtcs[dtci].name;
-
-				_subsetBasePath = "/FEInterfaceTable/" + dtcName +
-								"/LinkToFETypeTable/LinkToROCGroupTable/";
-							_recordPreFilterList = "";
-
-				ConfigurationAPI.getSubsetRecords(
-					_subsetBasePath,
-					_recordPreFilterList,
-					function(ROCrecords)
-					{
-						Debug.log("DTC",dtcName,
-							" ROC records found = " + ROCrecords.length);
-						console.log(ROCrecords);
-						FEstruct.dtcs[dtci].rocs = [];
-						for(var j=0; j<ROCrecords.length; ++j)
-						{
-							FEstruct.dtcs[dtci].rocs.push({"rocName": ROCrecords[j]});
-							paintRoc(dtcName, ROCrecords[j]);
+							paintRoc(dtcName, FEstructure_.dtcs[i].rocs[j].name, FEstructure_.dtcs[i].rocs[j].enabled);	
 						}
+					}
 
-						++ROCs_done;
-						if(ROCs_done == FEstruct.dtcs.length)
-						{
-							Debug.log("Done with DTC record fetch");
-							console.log("FEstruct.dtcs",FEstruct.dtcs);
-							setDtcsColorStatus();
-						}
-					}, //end ROC getSubsetRecords() handler
-					_modifiedTables);
-			} //end localGetROCs()
+					checkForActiveGroupChange(true /*init*/); //force group update
 
-
-			//====================
-			function localGetCFOs()
-			{
-				Debug.log("localGetCFOs");
-
-				_subsetBasePath = "/FEInterfaceTable";
-				_recordPreFilterList = "FEInterfacePluginName=CFOFrontEndInterface"; //"Status,FEInterfacePluginName";
-
-				ConfigurationAPI.getSubsetRecords(
-					_subsetBasePath,
-					_recordPreFilterList,
-					function(records)
-					{
-						_subsetUIDs = records;
-						Debug.log("CFO records found = " + records.length);
-						console.log(records);
-					}, //end getSubsetRecords() handler
-					_modifiedTables);
-			} //end localGetCFOs()
-		}	//end initSubsetGlobalData()
-
-
-		//=====================================================================================
-		function setDtcsColorStatus()
-		{
-			Debug.log("setDtcsColorStatus()");
-			_subsetBasePath = "/FEInterfaceTable/";
-
-			var recordArr = [];
-			var fieldArr = ["Status"]; //just one field (get for all records)
-
-			for(var i=0;i<FEstruct.dtcs.length;++i)
-				recordArr.push(FEstruct.dtcs[i].name);
-			console.log("recordArr",recordArr);
-			console.log("fieldArr",fieldArr);
-
-			ConfigurationAPI.getFieldValuesForRecords(
-					_subsetBasePath,
-					recordArr, 
-					fieldArr,
-					function(recFieldValues)
-					{
-						console.log("recFieldValues", recFieldValues);
-						for (i = 0; i < recFieldValues.length; ++i)
-						{
-							var dtcUID = recFieldValues[i].fieldUID;
-							var	dtcStatus = recFieldValues[i].fieldValue;
-							var dtcBox = document.getElementById(dtcUID + '-box');
-							if (dtcStatus == 'On')
-								dtcBox.style.backgroundColor = 'green';
-							else
-								dtcBox.style.backgroundColor = 'red';
-
-								setRocsColorStatus(dtcUID);
-						}
-					}, //end getFieldValuesForRecord handler
-					 _modifiedTables);
-		}	//end setDtcsColorStatus()
-
-
-		//=====================================================================================
-		function setRocsColorStatus(dtcName)
-		{
-			Debug.log("setRocsColorStatus()",dtcName);
-			_subsetBasePath = "/FEInterfaceTable/" + dtcName +
-								"/LinkToFETypeTable/LinkToROCGroupTable/";
-
-			var recordArr = [];
-			var fieldArr = ["Status"]; //just one field (get for all records)
-
-			for(var i=0; i<FEstruct.dtcs.length; ++i)
-				for(var j=0; j<FEstruct.dtcs[i].rocs.length; ++j)
-					if (FEstruct.dtcs[i].name == dtcName)
-						recordArr.push(FEstruct.dtcs[i].rocs[j].rocName);
-			console.log("recordArr",recordArr);
-			console.log("fieldArr",fieldArr);
-
-			ConfigurationAPI.getFieldValuesForRecords(
-					_subsetBasePath,
-					recordArr, 
-					fieldArr,
-					function(recFieldValues)
-					{
-						console.log("recFieldValues", recFieldValues);
-						for (i = 0; i < recFieldValues.length; i++)
-						{
-							var rocUID = recFieldValues[i].fieldUID;
-							var	rocStatus = recFieldValues[i].fieldValue;
-							var rocBox = document.getElementById(rocUID + '-' + dtcName + '-box');
-							if (rocStatus == 'On')
-								rocBox.style.backgroundColor = 'green';
-							else
-								rocBox.style.backgroundColor = 'red';
-						}
-					}, //end getFieldValuesForRecord handler
-					 _modifiedTables);
-		}	//end setRocsColorStatus()
+					//return configuration change check
+					if(_checkActiveGroupsTimer)
+						window.clearTimeout(_checkActiveGroupsTimer);
+					_checkActiveGroupsTimer = window.setTimeout(checkForActiveGroupChange,_CHECK_ACTIVE_GROUPS_PERIOD);
+					
+				}, //end DTC getSubsetRecords() handler
+				_modifiedTables);
+		}
 
 		</script>
 </head>
@@ -366,6 +466,7 @@
 
 	<!-- body content populated by javascript paint(), etc. -->
 
+	<button onclick="setROCStatus('trackerROC3',0)">Write Status For Selected</button>
 	<div class='mainBlockContainer' id='mainDiv'></div>
 </body>
 

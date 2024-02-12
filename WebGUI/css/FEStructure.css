@@ -19,18 +19,20 @@ b, h3, h1 { /* overwrite ConfigurationGUI.css:41 */
 
 .dtcBox {
 	border-radius: 20%;
-	width: 100px;
-    height: 40px;
+	width: 80px;
+    height: 20px;
 	background-color: gray;
 	margin: 4px;
 	float: left;
 	border: 2px solid black;
+	font-size: 10px;
 }
 
 .rocBox {
-	width: 90px;
-    height: 40px;
+	width: 70px;
+    height: 20px;
 	background-color: gray;
 	margin: 4px;
 	float: right;
+	font-size: 10px;
 }
