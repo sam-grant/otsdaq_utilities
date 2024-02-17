@@ -460,10 +460,10 @@
 
 		//=====================================================================================
 		//paintApp ~~
-		function paintApp (appName, appStatus)
+		function paintApp (appLength, appName, appStatus)
 		{
 			var el = document.getElementById("mainDiv");
-			if (el.childNodes.length) el.innerHTML = "";
+			if (el.childNodes.length == appLength) el.innerHTML = "";
 			var appDiv =  document.createElement('div');
 			appDiv.classList.add("appBlockContainer");
 			appDiv.id = appName;
@@ -558,7 +558,7 @@
 						var app = FEstructure_.apps[i];
 						var appName = app.name;
 						var appStatus = app.enabled;
-						paintApp(appName, appStatus);
+						paintApp(FEstructure_.apps.length, appName, appStatus);
 
 						for(var j=0; j<app.dtcs.length; ++j)
 						{
