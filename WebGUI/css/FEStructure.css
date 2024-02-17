@@ -42,7 +42,9 @@ b, h3, h1 { /* overwrite ConfigurationGUI.css:41 */
 	flex-direction: column;
 	border: 2px solid black;
 	font-size: 10px;
+	font-weight: bold;
 	vertical-align: text-top;
+	margin-top: 4px;
 }
 
 .dtcBlockContainer {
