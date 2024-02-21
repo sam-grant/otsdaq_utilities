@@ -213,8 +213,8 @@ function getAppsArray()
 			appDetail = req.responseXML.getElementsByTagName("detail");
 			appClasses = req.responseXML.getElementsByTagName("class");
 			appUrls = req.responseXML.getElementsByTagName("url");
-                    appContexts = req.responseXML.getElementsByTagName("context");
-                    appSubapps = req.responseXML.getElementsByTagName("subapps");
+            appContexts = req.responseXML.getElementsByTagName("context");
+            appSubapps = req.responseXML.getElementsByTagName("subapps");
 
 			if(_allAppsArray === undefined && appTime.length > 1)
 			{
@@ -306,7 +306,6 @@ function getAppsArray()
 					_allAppsArray[_allAppsArray.length-1].progress = 0;
 
 				// populate the array of classes
-
 				if(_allClassNames[appClasses[i].getAttribute("value")])
 					++_allClassNames[appClasses[i].getAttribute("value")];
 				else
@@ -354,7 +353,7 @@ function getAppsArray()
             if(_updateAppsTimeout) window.clearTimeout(_updateAppsTimeout);
             _updateAppsTimeout = window.setTimeout(updateAppsArray, 1000 /*ms*/);
 
-				},				 
+				},
 				0,0, //reqParam, progressHandler
 				true /*callHandlerOnErr*/,
 				true /*doNotShowLoadingOverlay*/);// end of request handler
@@ -371,6 +370,37 @@ function updateAppsArray()
 {    
 	getAppsArray();
 }; // end of updateAppsArray()
+
+
+//=====================================================================================
+// this function start stop Apps on a server
+function restartApps(contextName, serverName)
+{
+    console.log("Restart " + contextName + "s'Apps");
+    DesktopContent.popUpVerification(
+        "Restarting server " + serverName + " for 'no gateway apps'. Are you sure?",
+        function () /*yes-to-restart servers*/
+        {
+            DesktopContent.XMLHttpRequest(
+                "Request?RequestType=restartApps&contextName=" + contextName,
+                "", 
+                function(req)
+                {
+                    var status = DesktopContent.getXMLValue(req,"status");
+                    console.log("Response", status);
+                } /*returnStatus*/, 
+                0 /*reqParam*/, 
+                0 /*progressStatus*/, 
+                true /*callStatusHandlerOnErr*/, 
+                true /*doNoShowLoadingOverlay*/);
+        }        ,
+        0,0,// val [optional], bgColor [optional], 
+        0,0,0, //			textColor [optional], borderColor [optional], getUserInput [optional], 
+        0, //			dialogWidth [optional], 
+        function (){}
+    );
+} // end of restartApps()
+
 
 //=====================================================================================
 // this function displays a table with the app array passed into it
@@ -396,13 +426,13 @@ function displayTable(appsArray)
     var columnNames = ["Context Name", "App Name", "Status", "Progress", "Detail",
 					   //add white space so changing ping has less update effect
 					   "&nbsp;&nbsp;Last Update&nbsp;&nbsp;", 
-					   "App Type", "App URL", "App ID" ];
-    var columnKeys = ["context", "name", "status", "progress", "detail", "stale", "class", "url", "id" ];
+					   "App Type", "App URL", "App ID", "Action" ];
+    var columnKeys = ["context", "name", "status", "progress", "detail", "stale", "class", "url", "id", "action" ];
     var columnCount = columnNames.length;
 
     //Add the header row.
     var row = table.insertRow(-1);
-    for (var i = 0; i < columnCount; i++) 
+    for (var i = 0; i < columnCount; i++)
     {
         var headerCell = document.createElement("TH");
         headerCell.innerHTML = columnNames[i];
@@ -414,13 +444,20 @@ function displayTable(appsArray)
 
         row = table.insertRow(-1);
         row.setAttribute("class", "collapsible");
+        row.id = contextName;
         var cell = row.insertCell(-1);
         cell.title = contextName + "'s apps";
         cell.innerHTML = contextName;
 
+        var appRowId = 0; //using this id to make a subRow id for apps in each context
         for (var i = 0; i < appsArray.length; i++) {
             if (appsArray[i].context == contextName) {
                 row = table.insertRow(-1);
+                row.setAttribute("class", "subRow");
+                row.id = contextName + "-" + appRowId;
+
+                appRowId++;
+
                 for (var j = 0; j < columnKeys.length; ++j) {
                     cell = row.insertCell(-1);
 
@@ -428,7 +465,16 @@ function displayTable(appsArray)
                     cell.title = appsArray[i].name + "'s " +
                         columnNames[j];
 
-                    if (columnKeys[j] == "stale") {
+                    if(columnKeys[j] == "action") {
+                        var url = appsArray[i].url;
+                        url = url.substring(url.indexOf("://")+3,url.lastIndexOf(":"));
+                        if(!appsArray[i].class.includes("Gateway"))
+                            cell.innerHTML = "<button onclick = 'restartApps(\"" +
+                                            contextName + "\", \"" + url + "\")' title = 'Restart " +
+                                            " no gateway apps on " + url + "' class = 'contextButton'>" +
+                                            "Restart server</button>";
+                    }
+                    else if (columnKeys[j] == "stale") {
                         cell.style.fontSize = "12px";
 
                         var staleString = "";
@@ -663,7 +709,6 @@ function displayTable(appsArray)
                         else if (columnKeys[j] == "progress" || columnKeys[j] == "id")
                             cell.style.textAlign = "center";
                     }
-
                 }
             }
         }
