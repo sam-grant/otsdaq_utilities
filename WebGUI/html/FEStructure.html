@@ -506,6 +506,14 @@
 				dtcBox.style.backgroundColor = 'red';
 
 			dtcDiv.appendChild(dtcBox);
+
+			var fiber = document.createElement('img');
+			fiber.classList.add("fiber");
+			fiber.src = "/WebPath/images/fiber.png";
+			fiber.alt = "fibers";
+			fiber.title = "fibers";
+			dtcDiv.appendChild(fiber);
+
 			app.appendChild(dtcDiv);
 
 			return dtcDiv.id;

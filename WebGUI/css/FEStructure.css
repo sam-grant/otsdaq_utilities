@@ -24,6 +24,7 @@ b, h3, h1 { /* overwrite ConfigurationGUI.css:41 */
 	height: 80%;
 	padding: 2px;
 	border-radius: 4px;
+	color: white;
 }
 
 .title {
@@ -71,13 +72,21 @@ b, h3, h1 { /* overwrite ConfigurationGUI.css:41 */
 	margin: 4px;
 	float: left;
 	font-size: 10px;
+	color: white;
 }
 
 .rocBox {
-	width: 70px;
+	width: 75px;
     height: 20px;
 	background-color: gray;
 	margin: 4px;
 	float: right;
 	font-size: 10px;
+	color: white;
+}
+
+.fiber {
+	width: 30px;
+    /*height: 10px;*/
+	margin: 4px;
 }

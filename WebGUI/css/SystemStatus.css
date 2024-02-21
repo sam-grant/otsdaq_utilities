@@ -64,6 +64,11 @@ h1, h2, h3 {
     cursor: pointer;
 }
 
+.contextButton {
+    cursor: pointer;
+    width: 100%;
+}
+
 .filterHeader {
     background-color: 		#777;
     color: 					white;
@@ -76,7 +81,7 @@ h1, h2, h3 {
     font-size: 				18px;
     font-family: 			'Inconsolata', monospace;
     font-weight:			bold;
- }
+}
 
 .collapsible:hover {
     background-color: 		#555;
@@ -179,14 +184,3 @@ h1, h2, h3 {
 	text-shadow: 			0px 1px 0px rgba(255,255,255,.3), 
 							0px -1px 0px rgba(0,0,0,.7);
 }
-
-
-
-
-
-
-
-
-
-
-
