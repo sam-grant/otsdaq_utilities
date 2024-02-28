@@ -249,26 +249,35 @@
 		//saveAllDtcsStatusChanges ~~
 		function saveAllDtcsStatusChanges()
 		{
-			//proceed to save (quietly) tables, groups, aliases fot dtcs
-			if (_dtcModifiedTables != undefined)
-			ConfigurationAPI.saveModifiedTables(_dtcModifiedTables,
-				function(savedTables, savedGroups, savedAliases)
-				{
-					if(!savedTables.length)
+			DesktopContent.popUpVerification(
+	        "Saving  DTCs configuration'. Are you sure?",
+			function () /*yes-to-save rocs tables*/
+			{
+				//proceed to save (quietly) tables, groups, aliases fot dtcs
+				if (_dtcModifiedTables != undefined)
+					ConfigurationAPI.saveModifiedTables(_dtcModifiedTables,
+					function(savedTables, savedGroups, savedAliases)
 					{
-						Debug.log("There was an error while saving the values.",
-								Debug.HIGH_PRIORITY);
-						return;
-					}
+						if(!savedTables.length)
+						{
+							Debug.log("There was an error while saving the values.",
+									Debug.HIGH_PRIORITY);
+							return;
+						}
 
-					Debug.log("The values for each field were successfully written to the targeted " +
-							_dtcRecordsAlias + " (target count = " + _dtcRecordsAlias.length + ")!",
-							Debug.INFO_PRIORITY);
+						Debug.log("The values for each field were successfully written to the targeted " +
+								_dtcRecordsAlias + " (target count = " + _dtcRecordsAlias.length + ")!",
+								Debug.INFO_PRIORITY);
 
-					_dtcModifiedTables = undefined; //clear after save
+						_dtcModifiedTables = undefined; //clear after save
 
-				}); //end saveModifiedTables handler
-
+					}); //end saveModifiedTables handler
+				}	,
+				0,0,// val [optional], bgColor [optional], 
+				0,0,0, //			textColor [optional], borderColor [optional], getUserInput [optional], 
+				0, //			dialogWidth [optional], 
+				function (){}
+			);
 		} //end saveAllDtcsStatusChanges
 
 
@@ -276,26 +285,35 @@
 		//saveAllRocsStatusChanges ~~
 		function saveAllRocsStatusChanges()
 		{
-			//proceed to save (quietly) tables, groups, aliases for rocs
-			if (_rocModifiedTables != undefined)
-			ConfigurationAPI.saveModifiedTables(_rocModifiedTables,
-				function(savedTables, savedGroups, savedAliases)
-				{
-					if(!savedTables.length)
+			DesktopContent.popUpVerification(
+	        "Saving  ROCs configuration'. Are you sure?",
+			function () /*yes-to-save rocs tables*/
+			{
+				//proceed to save (quietly) tables, groups, aliases for rocs
+				if (_rocModifiedTables != undefined)
+					ConfigurationAPI.saveModifiedTables(_rocModifiedTables,
+					function(savedTables, savedGroups, savedAliases)
 					{
-						Debug.log("There was an error while saving the values.",
-								Debug.HIGH_PRIORITY);
-						return;
-					}
+						if(!savedTables.length)
+						{
+							Debug.log("There was an error while saving the values.",
+									Debug.HIGH_PRIORITY);
+							return;
+						}
 
-					Debug.log("The values for each field were successfully written to the targeted " +
-							_rocRecordsAlias + " (target count = " + _rocRecordsAlias.length + ")!",
-							Debug.INFO_PRIORITY);
+						Debug.log("The values for each field were successfully written to the targeted " +
+								_rocRecordsAlias + " (target count = " + _rocRecordsAlias.length + ")!",
+								Debug.INFO_PRIORITY);
 
-					_rocModifiedTables = undefined; //clear after save
+						_rocModifiedTables = undefined; //clear after save
 
-				}); //end saveModifiedTables handler
-
+					}); //end saveModifiedTables handler
+				}	,
+				0,0,// val [optional], bgColor [optional], 
+				0,0,0, //			textColor [optional], borderColor [optional], getUserInput [optional], 
+				0, //			dialogWidth [optional], 
+				function (){}
+			);
 		} //end saveAllRocsStatusChanges
 
 
@@ -603,7 +621,7 @@
 	<!-- body content populated by javascript paint(), etc. -->
 
 	<div class="legend">
-		<div>Status color legend:</div>
+		<div style="color: black;">Status color legend:</div>
 		<div style="background-color: green">ON</div>
 		<div style="background-color: red">OFF</div>
 		<div style="background-color: gray">PARENT APP OFF</div>

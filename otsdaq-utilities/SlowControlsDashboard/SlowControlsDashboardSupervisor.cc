@@ -897,7 +897,7 @@ void SlowControlsDashboardSupervisor::loadPage(
 		__SUP_COUT__ << page << __E__;
 	}
 
-	std::string file = CONTROLS_SUPERVISOR_DATA_PATH;
+	std::string file = PAGES_DIRECTORY;
 	file += page;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 	             << "Trying to load page: " << page << __E__;
@@ -949,6 +949,7 @@ void SlowControlsDashboardSupervisor::loadPage(
 	xmlOut.addTextElementToData("Page", controlsPage);  // add to response
 }  // end loadPage()
 
+//==============================================================================
 void SlowControlsDashboardSupervisor::loadPhoebusPage(
     cgicc::Cgicc& /*cgiIn*/,
     HttpXmlDocument& xmlOut,
@@ -985,7 +986,7 @@ void SlowControlsDashboardSupervisor::loadPhoebusPage(
 		__SUP_COUT__ << page << __E__;
 	}
 
-	std::string file = CONTROLS_SUPERVISOR_DATA_PATH;
+	std::string file = PAGES_DIRECTORY;
 	file += page;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 	             << "Trying to load page: " << page << __E__;
@@ -1036,8 +1037,6 @@ void SlowControlsDashboardSupervisor::SaveControlsPage(
 
 	if(controlsPageName == "")
 		return;
-
-	__SUP_COUTV__(CONTROLS_SUPERVISOR_DATA_PATH);
 
 	std::string fullPath;
 	if(isControlsPagePublic == "true")
@@ -1100,8 +1099,6 @@ void SlowControlsDashboardSupervisor::SavePhoebusControlsPage(
 	if(controlsPageName == "")
 		return;
 
-	__SUP_COUTV__(CONTROLS_SUPERVISOR_DATA_PATH);
-
 	std::string fullPath;
 	if(isControlsPagePublic == "true")
 		fullPath = (std::string)PAGES_PUBLIC_DIRECTORY;
@@ -1160,9 +1157,9 @@ void SlowControlsDashboardSupervisor::saveImageFile(
 	__SUP_COUTV__(isImagePublic);
 
 	if(isImagePublic == "true")
-		fullPath = (std::string)CONTROLS_SUPERVISOR_DATA_PATH + "public/";
+		fullPath = (std::string)PAGES_PUBLIC_DIRECTORY;
 	else
-		fullPath = (std::string)CONTROLS_SUPERVISOR_DATA_PATH + "private/";
+		fullPath = (std::string)PAGES_PRIVATE_DIRECTORY;
 
 	for(unsigned int i = 0; i < files.size(); ++i)
 	{
@@ -1214,18 +1211,17 @@ bool SlowControlsDashboardSupervisor::isDir(std::string dir)
 }
 
 //==============================================================================
-void SlowControlsDashboardSupervisor::listFiles(std::string               baseDir,
+void SlowControlsDashboardSupervisor::listFiles(std::string               innerDir,
                                                 bool                      recursive,
                                                 std::vector<std::string>* pages)
 {
-	std::string base = CONTROLS_SUPERVISOR_DATA_PATH;
-	base += baseDir;
-
+	std::string baseDir = PAGES_DIRECTORY;
+	baseDir += innerDir;
 	DIR*           dp;
 	struct dirent* dirp;
-	if((dp = opendir(base.c_str())) == NULL)
+	if((dp = opendir(baseDir.c_str())) == NULL)
 	{
-		__SUP_COUT__ << "[ERROR: " << errno << " ] Couldn't open " << base << "."
+		__SUP_COUT__ << "[ERROR: " << errno << " ] Couldn't open " << baseDir << "."
 		             << __E__;
 		return;
 	}
@@ -1235,16 +1231,16 @@ void SlowControlsDashboardSupervisor::listFiles(std::string               baseDi
 		{
 			if(dirp->d_name != std::string(".") && dirp->d_name != std::string(".."))
 			{
-				if(isDir(base + dirp->d_name) == true && recursive == true)
+				if(isDir(baseDir + dirp->d_name) == true && recursive == true)
 				{
 					// pages->push_back(baseDir + dirp->d_name);
 					__SUP_COUT__ << "[DIR]\t" << baseDir << dirp->d_name << "/" << __E__;
-					listFiles(baseDir + dirp->d_name + "/", true, pages);
+					listFiles(std::string("") + dirp->d_name + "/", true, pages);
 				}
 				else
 				{
-					pages->push_back(baseDir + dirp->d_name);
-					__SUP_COUT__ << "[FILE]\t" << baseDir << dirp->d_name << __E__;
+					pages->push_back(innerDir + dirp->d_name);
+					__SUP_COUT__ << "[FILE]\t" << baseDir << innerDir << dirp->d_name << __E__;
 				}
 			}
 		}

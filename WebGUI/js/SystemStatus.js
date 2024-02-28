@@ -443,7 +443,7 @@ function displayTable(appsArray)
     for (var contextName in _allContextNames) {
 
         row = table.insertRow(-1);
-        row.setAttribute("class", "collapsible");
+        row.setAttribute("class", "collapsibleRow");
         row.id = contextName;
         var cell = row.insertCell(-1);
         cell.title = contextName + "'s apps";
@@ -858,28 +858,29 @@ function applyFilterItemListeners()
 			var val = this.firstElementChild.value;
 			var type = this.firstElementChild.className;
 			
-			
 			Debug.log("Clicked list item " + val + " type" + type);
 			
 			//toggle checkbox
 			this.firstElementChild.checked = !this.firstElementChild.checked;
-						
+            saveCheckedUserPreferences(this.firstElementChild.className, this.firstElementChild.value, this.firstElementChild.checked);			
+
 			// tick the checkbox and call filter function
 			var listChildren = document.getElementsByClassName(type);
 			console.log("listChildren",listChildren);
 			
 			if(val == "selectAll")
 			{
-				for(var j = 0; j < listChildren.length; j++) 
+				for(var j = 0; j < listChildren.length; j++)
+                {
 					listChildren[j].checked = this.firstElementChild.checked;
+                }
 			}
-			
+
 			filter();
-			
 				}; //end list item click handler
 
 	} //end list item loop
-	
+
 }// end of applyFilterItemListeners()
 
 //=====================================================================================
@@ -942,7 +943,6 @@ function filter()
     
     // display the table
     displayTable(result);
-    
 } // end of filter()
 
 //=====================================================================================
@@ -1008,22 +1008,14 @@ function setIntersection(list1, list2)
     return result;
 } // end of setIntersection()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//=====================================================================================
+//saveCheckedUserPreferences ~
+//	save one check user preference to server
+function saveCheckedUserPreferences(className, elementName, checked)
+{
+    DesktopContent.XMLHttpRequest("Request?RequestType=SaveAppsStatusUserPreferences", 
+    "className=" + className +
+    "&elementName=" + elementName +
+    "&checked=" + (checked?1:0));
+    console.log(className, elementName, checked);
+} // end of saveCheckedUserPreferences()
