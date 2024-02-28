@@ -93,6 +93,11 @@ h1, h2, h3 {
     font-size: 				14px;
 }
 
+.collapsibleRow {
+    color: rgb(6, 6, 235);
+    font-weight: bold;
+}
+
 /* Tooltip text */
 .helptext {
     visibility: 			hidden;
@@ -134,7 +139,6 @@ h1, h2, h3 {
     background-color: 		yellow;
     cursor: 				pointer;
 }
-
 
 /*================ APP STATUS ===============*/
 #appStatusDiv {
