@@ -2280,7 +2280,7 @@ DesktopContent.getUsername = function() {
 			console.log(req);
 		
 		});
-	var dispName = ""; //DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
+	var dispName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
 	return dispName.substr(dispName.indexOf(",")+2);	
 } //end getUsername()
 
