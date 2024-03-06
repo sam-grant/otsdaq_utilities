@@ -1832,7 +1832,7 @@
 
 					if (filterOutGroup) 
 					{
-						Debug.log("Filtering out " + groupName + "_v" + key);
+						// Debug.log("Filtering out " + groupName + "_v" + key);
 						continue;
 					}
 
@@ -1896,7 +1896,7 @@
 						"Search and Select a Group:",
 						msValues, msAllKeys, msTypes, groupSearchSelectionHandler, noMultiSelect);
 	
-					MultiSelectBox.initMySelectBoxes();
+					MultiSelectBox.initMySelectBoxes(true); //init to clear
 	
 					//if anything is selected from before.. handle as selected
 					var selArr = MultiSelectBox.getSelectionArray(el);
@@ -1927,7 +1927,8 @@
 		{
 			var i = MultiSelectBox.getSelectedIndex(el);
 			var selArr = MultiSelectBox.getSelectionArray(el);
-			if (selArr[i]) {
+			if (selArr[i]) 
+			{
 				Debug.log("Chosen element index:" + i +
 					" value:" + el.innerHTML +
 					" key:" + el.getAttribute("key-value") +
@@ -1951,7 +1952,8 @@
 				el = document.getElementById('msSelectedGroupDiv');
 				el.innerHTML = str;
 			}
-			else {
+			else 
+			{
 				_msChosenGroupName = "";
 				_msChosenGroupKey = "";
 				el = document.getElementById('msSelectedGroupDiv');

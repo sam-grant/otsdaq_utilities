@@ -134,8 +134,10 @@ else
         // w undefined will leave width unchanged
         var _setDashboardWidth = function(w) 
         { 
-        	console.log("_setDashboardWidth",w);       
-        	console.log("_setDashboardWidth _windowDashboardWidth",_windowDashboardWidth);  	
+			Debug.logv({w});
+			Debug.logv({_windowDashboardWidth});
+        	// console.log("_setDashboardWidth",w);       
+        	// console.log("_setDashboardWidth _windowDashboardWidth",_windowDashboardWidth);  	
         	if(w !== undefined)
         	{
         		_windowDashboardWidth = w|0;         	

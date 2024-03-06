@@ -295,7 +295,7 @@ else {
 				
 				//push new icon object
 				folderPtr[1].push([subtext, altText, linkurl, uniqueWin, picfn]); 
-				console.log(folders);
+				// console.log(folders);
 
 				//check if this is first icon encountered in this root folder
 				//	if so, need to display on desktop
@@ -577,7 +577,7 @@ else {
       		}
       		
       		Debug.log("_openFolderPath = " + _openFolderPath);
-      		console.log(_openFolderPtr);
+      		// console.log(_openFolderPtr);
       	
       		if(!_openFolderPtr) {Debug.log("Should never happen??!"); return;}//throw("What");
       		//if(!_openFolderPtr) this.resetWithPermissions = function(_permissions);

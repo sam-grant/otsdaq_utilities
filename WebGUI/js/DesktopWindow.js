@@ -327,7 +327,7 @@ else {
 			this.windiv.style.display = "inline"; //make sure is visible
 			this.setWindowSizeAndPosition(_x+10,_y,_w,_h);
 			window.parent.document.title= _name;
-			console.log(document.title, _name, "Maximize()");
+			// console.log(document.title, _name, "Maximize()");
 			
 		} //end maximize()
 

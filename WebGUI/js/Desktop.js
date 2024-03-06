@@ -285,16 +285,16 @@ Desktop.createDesktop = function(security) {
 		
 		if(_firstCheckOfMailboxes)
 		{
-			console.log("First check of mailboxes!");
+			Debug.log("First check of mailboxes!");
 			if(Desktop.desktop.icons.iconNameToPathMap === undefined)
 			{
-				console.log("Icons have not been setup yet... need to try again!");
+				Debug.log("Icons have not been setup yet... need to try again!");
 				window.clearTimeout(Desktop.desktop.checkMailboxTimer);
 				Desktop.desktop.checkMailboxTimer = window.setTimeout(_checkMailboxes,
 								100);
 				return;
 			}
-			console.log("Checking for any shortcut work from get parameters...");
+			Debug.log("Checking for any shortcut work from get parameters...");
 			_firstCheckOfMailboxes = false;
 			Desktop.desktop.actOnParameterAction();    //this should be the second running and will always work (first time is at end of Desktop instance creation.. and may fail for opening icon by name)
 						
@@ -857,7 +857,7 @@ Desktop.createDesktop = function(security) {
 
 	    this.setForeWindow(win);
 	    this.refreshWindow();
-            console.log("Finished refreshWindow() " + id);
+		Debug.log("Finished refreshWindow() " + id);
 	} //end refreshWindowById()
 
 	//==============================================================================
@@ -869,8 +869,8 @@ Desktop.createDesktop = function(security) {
 		this.setForeWindow(win);
 		var tempwin = Desktop.desktop.getForeWindow();
 
-		console.log(tempwin);
-		console.log(tempwin.windiv);	    
+		Debug.log(tempwin);
+		Debug.log(tempwin.windiv);	    
 
 		var tooltipEl;
 		
@@ -929,7 +929,7 @@ Desktop.createDesktop = function(security) {
         var isMin = window.isMinimized();
         
 	    _closeWindow(window);
-	    console.log(window, id, z, name, width, height);
+	    // console.log(window, id, z, name, width, height);
 	    
 	    var newWindow = this.addWindow(name,subname,url);
 	    newWindow.setWindowSizeAndPosition(x,y,width,height);
@@ -1471,7 +1471,7 @@ Desktop.createDesktop = function(security) {
 			Desktop.desktop.setForeWindow(this.getWindowById(event.data.windowId|0));			
 			break;
 		case "openNewWindow":
-			console.log("openNewWindow");
+			Debug.log("openNewWindow");
 
 	    	var requestingWindowId = 	event.data.windowId|0;
 	    	var windowPath = 			event.data.windowPath;
@@ -1483,13 +1483,13 @@ Desktop.createDesktop = function(security) {
 	    	{
 	    		//have work to do!
 	    		// Note: similar to L1000 in actOnParameterAction() 
-	    		console.log("requestingWindowId=" + requestingWindowId);
-	    		console.log("windowPath=" + windowPath);
+	    		Debug.log("requestingWindowId=" + requestingWindowId);
+	    		Debug.log("windowPath=" + windowPath);
 		    	while(windowPath.length && windowPath[0] == '?') windowPath = windowPath.substr(1); //remove leading ?'s
-		    	console.log("modified windowPath=" + windowPath);
-		    	console.log("windowName=" + windowName);
-		    	console.log("windowSubname=" + windowSubname);
-		    	console.log("windowUnique=" + windowUnique);
+		    	Debug.log("modified windowPath=" + windowPath);
+		    	Debug.log("windowName=" + windowName);
+		    	Debug.log("windowSubname=" + windowSubname);
+		    	Debug.log("windowUnique=" + windowUnique);
 
 		    	var newWin;
 		    	
@@ -1498,11 +1498,11 @@ Desktop.createDesktop = function(security) {
 		    	if((windowSubname === undefined || windowSubname == "undefined") &&
 		    			(windowUnique === undefined || windowUnique == "undefined")) //the string undefined is what comes through
 		    	{
-		    		console.log("Opening desktop window... " + windowName);
+		    		Debug.log("Opening desktop window... " + windowName);
 
 		    		var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
-		    		console.log("Desktop.desktop.icons.iconNameToPathMap",
-		    				Desktop.desktop.icons.iconNameToPathMap);
+		    		// console.log("Desktop.desktop.icons.iconNameToPathMap",
+		    		// 		Desktop.desktop.icons.iconNameToPathMap);
 
 		    		if(pathUniquePair ===
 		    				undefined)
@@ -1559,7 +1559,7 @@ Desktop.createDesktop = function(security) {
 	    
 			break;
 		case "refreshIcons":
-			console.log("refreshIcons");
+			Debug.log("refreshIcons");
 			
 			//reset icons, if permissions undefined, keep permissions from before
 			Desktop.desktop.icons.resetWithPermissions(
@@ -1567,25 +1567,25 @@ Desktop.createDesktop = function(security) {
 			
 			break;
 		case "startSystemBlackout":
-			console.log("startSystemBlackout");
+			Debug.log("startSystemBlackout");
 			//windows can request a blackout, to avoid logging out (attempt to stop all other tabs by using browser cookie)
 			Desktop.desktop.login.blackout(true); 
 			break;
 		case "stopSystemBlackout":
-			console.log("stopSystemBlackout");
+			Debug.log("stopSystemBlackout");
 			Desktop.desktop.login.blackout(false);
 			break;
 		case "getCookieCode":
 			responseObject = {
 				"cookieCode":	Desktop.desktop.login.getCookieCode()
 			};
-			//console.log("getCookieCode");
+			//Debug.log("getCookieCode");
 			break;
 		case "updateCookieCode":			
 			//do ms compare to decide if desktop cookie code should be updated with some throttling
 			var delta = parseInt(event.data.cookieCodeTime) - parseInt(Desktop.desktop.login.getCookieTime());
 
-			// console.log("updateCookieCode",delta);
+			// Debug.log("updateCookieCode",delta);
 			if(delta > 5*1000 /*ms*/) //update based on content value
 			{
 				// Debug.log("Updating desktop cookie code from content window");
@@ -1595,7 +1595,7 @@ Desktop.createDesktop = function(security) {
 			}	     
 			break;
 		case "needToLogin":
-			console.log("needToLogin");
+			Debug.log("needToLogin");
 			
 			if(!document.getElementById("Desktop-loginDiv") &&
 					!Desktop.desktop.login.isBlackout())

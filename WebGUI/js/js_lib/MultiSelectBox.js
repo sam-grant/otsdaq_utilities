@@ -67,8 +67,11 @@
 var selected = [];
 var MultiSelectBox = MultiSelectBox || {}; //define MultiSelectBox namespace
 
-if(window.console && console && console.log)
+if(0 && window.console && console && console.log)
 	MultiSelectBox.dbg = console.log.bind(window.console);
+else
+	MultiSelectBox.dbg = function(){;} //do nothing
+
 //var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
 function $(id) {return document.getElementById(id);}
