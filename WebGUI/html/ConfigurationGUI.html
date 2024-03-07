@@ -6136,10 +6136,7 @@
 						Debug.INFO_PRIORITY);
 				}
 				else if (!_firstTimeSilentActive && //only popup after the first time
-					thereIsAChange)// str != oldStr)  //if change		
-					// _activeTableGroups.length >= 8 && 					  
-					// (oldStr.indexOf(_activeTableGroups[0]+"</a>("+_activeTableGroups[1] + ")") < 0 || //active context group
-					//  oldStr.indexOf(_activeTableGroups[6]+"</a>("+_activeTableGroups[7] + ")") < 0))  //active config group
+					thereIsAChange)					//and if change		
 				{
 					if (thereIsAnEmpty) //may have been a deactivating (due to error?)
 						Debug.log("Note: There was a change to the active Context group (check the top of the page)!",
