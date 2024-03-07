@@ -588,6 +588,7 @@
 		var _cachedTableComment, _cachedGroupComment;
 
 		var _activeTableGroups = []; //sz 8 (each 2) := holds the group name,key for currently active (could be none on failure) Context, Backbone, Iterator, Config
+		var _lastActiveTableGroups = []; //sz 8 (each 2) := holds the group name,key for last checked active (could be none on failure) Context, Backbone, Iterator, Config
 		var _lastTableGroups = []; //sz 18 (each 3):= holds the group name,key,TIME for last successfully Configured, Started, activated-Config, activated-Context, activated-Backbone, activated-Iterator 
 		var _subsystemNames = []; //for multi subsystem systems, to explore and diff configurations among subsystems
 
@@ -796,7 +797,7 @@
 					}, //end handler
 					0, 0, true,//reqParam, progressHandler, callHandlerOnErr, 
 					false,//doNotShowLoadingOverlay,
-					true //targetSupervisor
+					true //targetGatewaySupervisor
 			); //end getAppId request
 
 		} //end init()
@@ -864,6 +865,7 @@
 					var subsystemNames = req.responseXML.getElementsByTagName("SubsystemName");					
 					for(var i=0;i<subsystemNames.length;++i)
 						_subsystemNames.push(subsystemNames[i].getAttribute("value"));
+					Debug.logv({_subsystemNames});
 
 					systemViewPreventInfiniteLoop_ = true;
 					DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases&" +
@@ -1301,7 +1303,7 @@
 				str += DesktopContent.htmlOpen("div",
 					{
 						"id": "subsystemTable",	
-						"style" : "background-color: 	rgb(218, 194, 194)",
+						"style" : "background-color: 	rgb(218, 194, 194);",
 					},
 					"" /*innerHTML*/,
 					false /*doCloseTag*/);
@@ -6028,6 +6030,7 @@
 			var oldStr = document.getElementById("activeConfig").innerHTML;
 			var str = "";
 			var thereIsAnEmpty = false;
+			var thereIsAChange = false;
 
 			str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
 
@@ -6079,6 +6082,17 @@
 			}
 			str += "</table>"; //close active groups table
 
+			//check if there is a change
+			if(_lastActiveTableGroups.length != _activeTableGroups.length)
+				thereIsAChange = true;
+			else
+				for(var i=0;i<_activeTableGroups.length;++i) 
+					if(_lastActiveTableGroups[i] != _activeTableGroups[i])
+					{
+						thereIsAChange = true;
+						break;
+					}
+			Debug.logv({thereIsAChange});
 
 			if (withWarningsStr != "") 
 			{
@@ -6122,10 +6136,10 @@
 						Debug.INFO_PRIORITY);
 				}
 				else if (!_firstTimeSilentActive && //only popup after the first time
-					// str != oldStr)  //if change		
-					_activeTableGroups.length >= 8 && 					  
-					(oldStr.indexOf(_activeTableGroups[0]+"</a>("+_activeTableGroups[1] + ")") < 0 || //active context group
-					 oldStr.indexOf(_activeTableGroups[6]+"</a>("+_activeTableGroups[7] + ")") < 0))  //active config group
+					thereIsAChange)// str != oldStr)  //if change		
+					// _activeTableGroups.length >= 8 && 					  
+					// (oldStr.indexOf(_activeTableGroups[0]+"</a>("+_activeTableGroups[1] + ")") < 0 || //active context group
+					//  oldStr.indexOf(_activeTableGroups[6]+"</a>("+_activeTableGroups[7] + ")") < 0))  //active config group
 				{
 					if (thereIsAnEmpty) //may have been a deactivating (due to error?)
 						Debug.log("Note: There was a change to the active Context group (check the top of the page)!",
@@ -6136,6 +6150,10 @@
 
 					//Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
 				}
+				//save last active table groups
+				_lastActiveTableGroups = []; //clear
+				for(var i=0;i<_activeTableGroups.length;++i) 
+					_lastActiveTableGroups.push(_activeTableGroups[i]);
 
 				_firstTimeSilentActive = false;
 			}
@@ -17444,7 +17462,7 @@
 							0 /*progressHandler*/,
 							true /*callHandlerOnErr*/,
 							false /*doNotShowLoadingOverlay*/,
-							true /*targetSupervisor*/,
+							true /*targetGatewaySupervisor*/,
 							true /*ignoreSystemBlock*/);
 					} //end localDelayedLaunch		
 
@@ -17478,7 +17496,7 @@
 							0 /*progressHandler*/,
 							true /*callHandlerOnErr*/,
 							false /*doNotShowLoadingOverlay*/,
-							true /*targetSupervisor*/,
+							true /*targetGatewaySupervisor*/,
 							true /*ignoreSystemBlock*/);
 					} //end localDelayedLaunch		
 

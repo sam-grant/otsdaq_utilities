@@ -2089,7 +2089,7 @@
 						}, //handler
 						0, //handler param
 						0,false,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
-						true /*targetSupervisor*/);
+						true /*targetGatewaySupervisor*/);
 			} //end localGetNamesOfFSMs()
 			localGetNamesOfFSMs(); 
 			
@@ -4196,7 +4196,7 @@
 					}, //end handler
 					0, //handler param
 					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
-					true /*targetSupervisor*/);
+					true /*targetGatewaySupervisor*/);
 		} //end startTargetIterationPlan
 		
 		//=====================================================================================
@@ -4241,7 +4241,7 @@
 					}, //end handler
 					0, //handler param
 					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
-					true /*targetSupervisor*/);
+					true /*targetGatewaySupervisor*/);
 		} //end pauseTargetIterationPlan
 		
 		//=====================================================================================
@@ -4276,7 +4276,7 @@
 					}, //end handler
 					0, //handler param
 					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
-					true /*targetSupervisor*/);
+					true /*targetGatewaySupervisor*/);
 		} //end haltTargetIterationPlan
 
 		//=====================================================================================
@@ -4524,7 +4524,7 @@
 					}, //end handler
 					0, //handler param
 					0,true,true, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
-					true /*targetSupervisor*/);
+					true /*targetGatewaySupervisor*/);
 
 			_setActiveIterationPlan = ""; //clear, so the request only happens once from GUI manipulations
 		} //end updateIterateStatus()
