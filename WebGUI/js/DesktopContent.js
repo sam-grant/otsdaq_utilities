@@ -33,7 +33,7 @@
 //	This code also handles server requests and response handlers for the content code:
 //		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, 
 //			reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, 
-//			doNotShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>,
+//			doNotShowLoadingOverlay <optional>, targetGatewaySupervisor <optional>, ignoreSystemBlock <optional>,
 //			doNotOfferSequenceChange <optional>)
 //
 //			... here is an example request:
@@ -128,7 +128,7 @@ if (typeof Globals == 'undefined')
 
 
 //"public" function list: 
-//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay, targetSupervisor, ignoreSystemBlock)
+//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay, targetGatewaySupervisor, ignoreSystemBlock)
 //	DesktopContent.getXMLValue(req, name)
 //	DesktopContent.getXMLNode(req, name)
 //	DesktopContent.getXMLDataNode(req)
@@ -1068,7 +1068,7 @@ DesktopContent.hideLoading = function()
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
 		reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
-		targetSupervisor, ignoreSystemBlock, doNotOfferSequenceChange) 
+		targetGatewaySupervisor, ignoreSystemBlock, doNotOfferSequenceChange) 
 {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
@@ -1189,7 +1189,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 									Debug.log("Retrying request with new access code...");
 									DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, 
 										reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
-										targetSupervisor, ignoreSystemBlock);
+										targetGatewaySupervisor, ignoreSystemBlock);
 									return;
 								}
 								
@@ -1403,7 +1403,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	var urn = DesktopContent._localUrnLid;
 	var origin = DesktopContent._localOrigin;
 	
-	if(!urn || targetSupervisor) //desktop supervisor, instead of local application
+	if(!urn || targetGatewaySupervisor) //desktop supervisor, instead of local application
 	{
 		urn = DesktopContent._serverUrnLid;
 		origin = DesktopContent._serverOrigin;
@@ -2702,7 +2702,7 @@ DesktopContent.addDesktopIcon = function(caption, altText,
 			}, //end request handler
 			0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
 			false /*doNotShowLoadingOverlay*/,
-			true /*targetSupervisor*/);  //end XMLHttpRequest() call
+			true /*targetGatewaySupervisor*/);  //end XMLHttpRequest() call
 
 } //end addDesktopIcon()
 
