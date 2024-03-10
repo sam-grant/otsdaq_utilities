@@ -258,6 +258,7 @@
 		.treeNode-Value {
 			margin-left: 38px;
 			float: left;
+			width: max-content; /* force to one line for any div content display */
 		}
 
 		.treeNode-Value-nodeEditType-link {
@@ -4526,15 +4527,17 @@
 
 
 					treeViewHandlerStr_ +=
-						"</div>" + //end treeNode Value value side div
+						"</div>";// + //end treeNode Value value side div
 
-						"</div>" + //end treeNode Value div		
-						"</div>"; //end treeNode div		
-						
 					//add diff value div if difference
 					if(diffValueStr != "")
 						treeViewHandlerStr_ += "<div style='float:left; margin-left:20px;'>" +
 					 		diffValueStr + "</div>";
+
+					treeViewHandlerStr_ +=
+						"</div>" + //end treeNode Value div		
+						"</div>"; //end treeNode div		
+						
 								
 					treeViewHandlerStr_ +=			
 						"<div id='clearDiv'></div>";
