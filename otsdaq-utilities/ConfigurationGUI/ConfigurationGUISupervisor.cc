@@ -3764,12 +3764,12 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 					xmlOut.addTextElementToParent("fixedChoice", choice, choicesParentEl);
 			}
 		}
-		else  // uid node
+		else  // uid node (or root node)
 		{
 			__COUT_TYPE__(TLVL_DEBUG+20) << __COUT_HDR__ << "\t\t" << t.getValueAsString() << __E__;
 			bool returnNode = true;  // default to shown
 
-			if(hideStatusFalse)  // only show if status evaluates to true
+			if(t.isUIDNode() && hideStatusFalse)  // only show if status evaluates to true
 				returnNode = t.isEnabled();
 
 			if(returnNode)
