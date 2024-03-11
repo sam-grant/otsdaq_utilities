@@ -94,8 +94,8 @@ h1, h2, h3 {
 }
 
 .collapsibleRow {
-    color: rgb(6, 6, 235);
-    font-weight: bold;
+    /* Use Filters to collapse instead of a link -- color: rgb(6, 6, 235); */
+    /* font-weight: bold; */
 }
 
 /* Tooltip text */
