@@ -4366,7 +4366,7 @@
 				//handle value nodes
 				if (isDiffNode || (childrenLength &&
 					(value = nodes[i].children[offset]).nodeName == "value"
-				)) //&& (valueType = nodes[i].children[1]).nodeName != "Disconnected")
+				)) //&& (valueType = nodes[i].children[offset+1]).nodeName != "Disconnected")
 				{
 					if(isDiffNode)
 					{
@@ -4376,7 +4376,7 @@
 					else
 					{
 						value = value.getAttribute("value");
-						valueType = nodes[i].children[1].getAttribute("value"); //dataType
+						valueType = nodes[i].children[offset+1].getAttribute("value"); //dataType
 					}
 
 					//make value html safe
@@ -4407,7 +4407,7 @@
 							"id='treeNode-FixedChoice-CSV-" +
 							(depth + "-" + uid) + "'>";
 
-						choices = nodes[i].children[1].children; //xml elements
+						choices = nodes[i].children[offset+1].children; //xml elements
 						for (var j = 0; j < choices.length; ++j) 
 						{
 							if (j) treeViewHandlerStr_ += ",";
@@ -4423,7 +4423,7 @@
 							"id='treeNode-BitMap-Params-" +
 							(depth + "-" + uid) + "'>";
 
-						var choices = nodes[i].children[1].children; //xml elements
+						var choices = nodes[i].children[offset+1].children; //xml elements
 						for (var j = 1; j < choices.length; ++j) //skip the first DEFAULT param
 						{
 							if (j - 1) treeViewHandlerStr_ += ";"; //assume no ';' in fields, so likely no issue to replace ; with ,
@@ -4572,7 +4572,7 @@
 
 					}
 					else //define check if group link
-						isGroupLink = nodes[i].children[0].nodeName == "GroupID";
+						isGroupLink = nodes[i].children[offset-1].nodeName == "GroupID";
 
 					value =
 						"<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
