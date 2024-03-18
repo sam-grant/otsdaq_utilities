@@ -1815,7 +1815,8 @@ try
 	bool usingActiveGroups = (groupName == "" || groupKey.isInvalid());
 
 	// reload all tables so that partially loaded tables are not allowed
-	if(usingActiveGroups || refreshAll)
+	if(//usingActiveGroups || 
+		refreshAll)
 	{
 		__SUP_COUT__ << "Refreshing all table info, ignoring warnings..." << __E__;
 		std::string accumulatedWarnings = "";
