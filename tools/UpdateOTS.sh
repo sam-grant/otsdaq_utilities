@@ -268,7 +268,15 @@ SCRIPT_DIR="$(
 echo -e "UpdateOTS.sh:${LINENO}  \t Script directory found as: $SCRIPT_DIR"
 echo -e "UpdateOTS.sh:${LINENO}  \t Finding target repositories..."
  
-#REPO_DIR="$(find $SCRIPT_DIR/../../../srcs -maxdepth 1 -iname 'otsdaq*')" #old way before using MRB path
+#if not done with compile setup, then OTS_SOURCE may not be defined
+if [ "x$OTS_SOURCE" == "x" ]; then
+	OTS_SOURCE="$SCRIPT_DIR/../../../srcs"
+fi
+
+echo -e "UpdateOTS.sh:${LINENO}  \t Source directory found as OTS_SOURCE = ${OTS_SOURCE}"
+echo
+echo
+
 if [ $ALL_REPOS = 1 ]; then
 	REPO_DIR="$(find -L $OTS_SOURCE -maxdepth 1 -iname '*')"
 else
@@ -370,12 +378,12 @@ if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 	chmod 755 $OTS_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #make sure permissions allow deleting
 	chmod 755 $OTS_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #make sure permissions allow deleting
 	chmod 755 $OTS_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #make sure permissions allow deleting
-	rm $OTS_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #hide output
-	rm $OTS_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #hide output
-	rm $OTS_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output
-	#echo -e "UpdateOTS.sh:${LINENO}  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
+	timeout 1 rm $OTS_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #hide output (could hang if weird permission, so use timeout)
+	timeout 1 rm $OTS_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #hide output (could hang if weird permission, so use timeout)
+	timeout 1 rm $OTS_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output (could hang if weird permission, so use timeout)
+	# echo -e "UpdateOTS.sh:${LINENO}  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
-	wget https://github.com/art-daq/otsdaq_demo/raw/develop/tools/reset_ots_tutorial.sh -P $OTS_SOURCE/../ --no-check-certificate	 &>/dev/null 2>&1
+	wget -T 5 https://github.com/art-daq/otsdaq_demo/raw/develop/tools/reset_ots_tutorial.sh -P $OTS_SOURCE/../ --no-check-certificate	 &>/dev/null 2>&1
 	chmod 644 $OTS_SOURCE/../reset_ots_tutorial.sh 
 	
 	rm $OTS_SOURCE/../reset_ots_artdaq_tutorial.sh &>/dev/null 2>&1 #hide output
