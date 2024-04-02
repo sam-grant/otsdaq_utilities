@@ -4366,7 +4366,7 @@
 				//handle value nodes
 				if (isDiffNode || (childrenLength &&
 					(value = nodes[i].children[offset]).nodeName == "value"
-				)) //&& (valueType = nodes[i].children[1]).nodeName != "Disconnected")
+				)) //&& (valueType = nodes[i].children[offset+1]).nodeName != "Disconnected")
 				{
 					if(isDiffNode)
 					{
@@ -4376,7 +4376,7 @@
 					else
 					{
 						value = value.getAttribute("value");
-						valueType = nodes[i].children[1].getAttribute("value"); //dataType
+						valueType = nodes[i].children[offset+1].getAttribute("value"); //dataType
 					}
 
 					//make value html safe
@@ -4407,7 +4407,7 @@
 							"id='treeNode-FixedChoice-CSV-" +
 							(depth + "-" + uid) + "'>";
 
-						choices = nodes[i].children[1].children; //xml elements
+						choices = nodes[i].children[offset+1].children; //xml elements
 						for (var j = 0; j < choices.length; ++j) 
 						{
 							if (j) treeViewHandlerStr_ += ",";
@@ -4423,7 +4423,7 @@
 							"id='treeNode-BitMap-Params-" +
 							(depth + "-" + uid) + "'>";
 
-						var choices = nodes[i].children[1].children; //xml elements
+						var choices = nodes[i].children[offset+1].children; //xml elements
 						for (var j = 1; j < choices.length; ++j) //skip the first DEFAULT param
 						{
 							if (j - 1) treeViewHandlerStr_ += ";"; //assume no ';' in fields, so likely no issue to replace ; with ,
@@ -4572,7 +4572,7 @@
 
 					}
 					else //define check if group link
-						isGroupLink = nodes[i].children[0].nodeName == "GroupID";
+						isGroupLink = nodes[i].children[offset-1].nodeName == "GroupID";
 
 					value =
 						"<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
@@ -5223,6 +5223,8 @@
 				if (_editingCellEl == el) //if same cell do nothing
 					return true;
 				editTreeNodeOK(); //if new cell, click ok on old cell before continuing
+				if(_handlingTreeNodeOK) //if still handling OK, just ignore this click and force another click after OK complete
+					return true;
 			}
 
 			var path = document.getElementById("treeNode-path-" + idString).textContent;
@@ -5857,6 +5859,8 @@
 		//setupTableGroupTreeView ~
 		function setupTableGroupTreeView(tableGroupName, tableGroupKey, backLinkStr) 
 		{
+			editCellCancel();
+
 			if (backLinkStr && backLinkStr != "")
 				treeViewBackLinkStr_ = backLinkStr;
 			else
@@ -11073,11 +11077,18 @@
 
 		//==============================================================================
 		//editTreeNodeOK
+		var _handlingTreeNodeOK = false;
 		function editTreeNodeOK() 
 		{
-			try 
+			if(_handlingTreeNodeOK)  //already handling, dont double handle because of HTTP Request
 			{
+				Debug.log("ALREADY handling editTreeNodeOK type " + treeEditingNodeType_);
+				return; 
+			}
+			try 
+			{				
 				if (!_editingCellEl) return;
+				_handlingTreeNodeOK = true;
 				Debug.log("editTreeNodeOK type " + treeEditingNodeType_);
 
 				//local initial variables can be used by continuation edit types 
@@ -11393,6 +11404,7 @@
 								if (err.indexOf("is the same as the current value. No need to save node.") > 0) 
 								{
 									Debug.log(err);
+									editCellCancel();
 									return;
 								}
 								Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the Tree-view page.", Debug.HIGH_PRIORITY);
@@ -11427,6 +11439,7 @@
 									Debug.log("Invalid tree member '" + resultingTableName +
 										"' was changed! Should be impossible. If repeatable, alert admins.",
 										Debug.HIGH_PRIORITY);
+									editCellCancel();
 									return;
 								}
 								Debug.log("New table version for " + resultingTableName + " = " +
@@ -11488,7 +11501,7 @@
 
 							//recover (possibly) modified target table
 							treeEditingTargetTable_ = initTargetTable;
-
+							editCellCancel();
 						}, 0, 0, true //reqParam, progressHandler, callHandlerOnErr
 					); //end of saveTreeNodeEdit call
 				}
@@ -11500,7 +11513,7 @@
 				}
 
 
-				//withhold ending edit until after request completes
+				//withhold ending edit until after request completes (and editCellCancel() is called)
 				//			_editingCell = false;
 				//			_editingCellEl = 0;	
 
@@ -12807,7 +12820,7 @@
 								els[i].innerHTML = str;
 							}
 							else
-								els[i].appendChild(document.createTextNode(newValue));
+								els[i].appendChild(document.createTextNode(decodeURIComponent(newValue)));
 
 						}
 					}
@@ -13349,7 +13362,8 @@
 
 			_editingCell = false;
 			_editingCellEl = 0;
-		}
+			_handlingTreeNodeOK = false;
+		} //end editCellCancel()
 
 		//addRow ~~
 		// adds row to position r (relative to view on page)

@@ -1815,7 +1815,8 @@ try
 	bool usingActiveGroups = (groupName == "" || groupKey.isInvalid());
 
 	// reload all tables so that partially loaded tables are not allowed
-	if(usingActiveGroups || refreshAll)
+	if(//usingActiveGroups || 
+		refreshAll)
 	{
 		__SUP_COUT__ << "Refreshing all table info, ignoring warnings..." << __E__;
 		std::string accumulatedWarnings = "";
@@ -3336,9 +3337,9 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 		
 
 		for(auto& activeTable : cfgMgr->getActiveVersions())	
-			__SUP_COUT__ << "cfgMgr " << activeTable.first << "-v" << activeTable.second << __E__;
+			__SUP_COUT_TYPE__(TLVL_DEBUG+1) << "cfgMgr " << activeTable.first << "-v" << activeTable.second << __E__;
 		for(auto& activeTable : diffCfgMgr->getActiveVersions())	
-			__SUP_COUT__ << "diffCfgMgr " << activeTable.first << "-v" << activeTable.second << __E__;
+			__SUP_COUT_TYPE__(TLVL_DEBUG+1) << "diffCfgMgr " << activeTable.first << "-v" << activeTable.second << __E__;
 
 		__SUP_COUT_TYPE__(TLVL_DEBUG+12) << __COUT_HDR__ << "Diff Group tables are setup: " << diffAccumulateErrors << __E__;
 	} // end do diff load
@@ -4978,7 +4979,8 @@ try
 
 			// add row
 			unsigned int row = cfgView->addRow(
-			    author, true /*incrementUniqueData*/, newRowUID /*baseNameAutoID*/);
+			    author, true /*incrementUniqueData*/, newRowUID /*baseNameAutoID*/,
+				-1 /* rowToAdd */, linkIndex, groupId);
 
 			// set UID value
 			cfgView->setURIEncodedValue(newRowUID, row, cfgView->getColUID());

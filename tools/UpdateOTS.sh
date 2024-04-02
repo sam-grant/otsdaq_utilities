@@ -268,11 +268,19 @@ SCRIPT_DIR="$(
 echo -e "UpdateOTS.sh:${LINENO}  \t Script directory found as: $SCRIPT_DIR"
 echo -e "UpdateOTS.sh:${LINENO}  \t Finding target repositories..."
  
-#REPO_DIR="$(find $SCRIPT_DIR/../../../srcs -maxdepth 1 -iname 'otsdaq*')" #old way before using MRB path
+#if not done with compile setup, then OTS_SOURCE may not be defined
+if [ "x$OTS_SOURCE" == "x" ]; then
+	OTS_SOURCE="$SCRIPT_DIR/../../../srcs"
+fi
+
+echo -e "UpdateOTS.sh:${LINENO}  \t Source directory found as OTS_SOURCE = ${OTS_SOURCE}"
+echo
+echo
+
 if [ $ALL_REPOS = 1 ]; then
-	REPO_DIR="$(find -L $MRB_SOURCE -maxdepth 1 -iname '*')"
+	REPO_DIR="$(find -L $OTS_SOURCE -maxdepth 1 -iname '*')"
 else
-	REPO_DIR="$(find -L $MRB_SOURCE -maxdepth 1 -iname 'otsdaq*')"
+	REPO_DIR="$(find -L $OTS_SOURCE -maxdepth 1 -iname 'otsdaq*')"
 fi
 					
 for p in ${REPO_DIR[@]}; do
@@ -367,18 +375,18 @@ if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 	#copy tutorial launching scripts
 	echo
 	echo -e "UpdateOTS.sh:${LINENO}  \t updating tutorial launch scripts..."
-	chmod 755 $MRB_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #make sure permissions allow deleting
-	chmod 755 $MRB_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #make sure permissions allow deleting
-	chmod 755 $MRB_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #make sure permissions allow deleting
-	rm $MRB_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #hide output
-	rm $MRB_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #hide output
-	rm $MRB_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output
-	#echo -e "UpdateOTS.sh:${LINENO}  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
+	chmod 755 $OTS_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #make sure permissions allow deleting
+	chmod 755 $OTS_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #make sure permissions allow deleting
+	chmod 755 $OTS_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #make sure permissions allow deleting
+	timeout 1 rm $OTS_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #hide output (could hang if weird permission, so use timeout)
+	timeout 1 rm $OTS_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #hide output (could hang if weird permission, so use timeout)
+	timeout 1 rm $OTS_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output (could hang if weird permission, so use timeout)
+	# echo -e "UpdateOTS.sh:${LINENO}  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
-	wget https://github.com/art-daq/otsdaq_demo/raw/develop/tools/reset_ots_tutorial.sh -P $MRB_SOURCE/../ --no-check-certificate	 &>/dev/null 2>&1
-	chmod 644 $MRB_SOURCE/../reset_ots_tutorial.sh 
+	wget -T 5 https://github.com/art-daq/otsdaq_demo/raw/develop/tools/reset_ots_tutorial.sh -P $OTS_SOURCE/../ --no-check-certificate	 &>/dev/null 2>&1
+	chmod 644 $OTS_SOURCE/../reset_ots_tutorial.sh 
 	
-	rm $MRB_SOURCE/../reset_ots_artdaq_tutorial.sh &>/dev/null 2>&1 #hide output
+	rm $OTS_SOURCE/../reset_ots_artdaq_tutorial.sh &>/dev/null 2>&1 #hide output
 	#now there is only one reset_tutorial script (that includes the artdaq tutorial), so cleanup old systems and do not download script
 	
 	
@@ -404,15 +412,15 @@ if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 		while read line; do
 			echo
 			echo -e "UpdateOTS.sh:${LINENO}  \t updating ${line} repository...."
-			echo -e "UpdateOTS.sh:${LINENO}  \t running script $MRB_SOURCE/${line}/tools/update_ots_repo.sh"	
-			$MRB_SOURCE/${line}/tools/update_ots_repo.sh			
+			echo -e "UpdateOTS.sh:${LINENO}  \t running script $OTS_SOURCE/${line}/tools/update_ots_repo.sh"	
+			$OTS_SOURCE/${line}/tools/update_ots_repo.sh			
 		done < $USER_DATA/ServiceData/InstalledRepoNames.dat
 	
 		#do one more time after loop to make sure last line is read (even if user did not put new line)
 		echo
 		echo -e "UpdateOTS.sh:${LINENO}  \t updating ${line} repository...."		
-		echo -e "UpdateOTS.sh:${LINENO}  \t running script $MRB_SOURCE/${line}/tools/update_ots_repo.sh"	
-		$MRB_SOURCE/${line}/tools/update_ots_repo.sh			
+		echo -e "UpdateOTS.sh:${LINENO}  \t running script $OTS_SOURCE/${line}/tools/update_ots_repo.sh"	
+		$OTS_SOURCE/${line}/tools/update_ots_repo.sh			
 			
 	fi
 	
@@ -446,14 +454,14 @@ if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 	
 	
 	echo
-	echo -e "UpdateOTS.sh:${LINENO}  \t Updating ups products based on .bz2 files in $MRB_SOURCE/otsdaq/tarballs/"
+	echo -e "UpdateOTS.sh:${LINENO}  \t Updating ups products based on .bz2 files in $OTS_SOURCE/otsdaq/tarballs/"
 	echo -e "UpdateOTS.sh:${LINENO}  \t PRODUCTS path found as: $PRODUCTS"
 	IFS=':' read -r -a array <<< "$PRODUCTS"
 	UPS_DIR=${array[@]: -1:1}
 	echo -e "UpdateOTS.sh:${LINENO}  \t Unzipping any extra products from otsdaq to: $UPS_DIR"	
 	
 	cd $UPS_DIR
-	for file in $MRB_SOURCE/otsdaq/tarballs/*.bz2 	# undo c++ style comment for Eclipse viewing*/
+	for file in $OTS_SOURCE/otsdaq/tarballs/*.bz2 	# undo c++ style comment for Eclipse viewing*/
 	do 
 		IFS='/' read -r -a array <<< "$file"
 		UPS_FILE_NAME=${array[@]: -1:1}
