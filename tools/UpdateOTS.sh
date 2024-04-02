@@ -336,6 +336,7 @@ for p in ${REPO_DIR[@]}; do
 	else
 		echo -e "UpdateOTS.sh:${LINENO}  \t Pulling updates from $p"
 		git pull
+		git submodule update --init
 	fi
 	
 	echo -e "UpdateOTS.sh:${LINENO}  \t ==================" >> $CHECKIN_LOG_PATH
