@@ -7023,7 +7023,9 @@
 					else
 						Debug.warn(DesktopContent.tooltipConditionString(diffReport));
 					Debug._errTruncLen = undefined;
-				}); //end diffWithActiveGroup
+				}, //end req handler
+				0, 0, true  //reqParam, progressHandler, callHandlerOnErr
+			); //end diffWithActiveGroup
 
 		} //end tableVersionDiff()
 
