@@ -178,6 +178,23 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 					//    "*" /*toList*/, "Subject", "Message", false /*doEmail*/);
 					theRemoteWebUsers_.sendSystemMessage(
 					    alarm[6], subject, message, alarm[7] == "Yes" ? true : false);
+
+                                        // Send slack message 
+                                        bool sendSlackMessage = alarm[8] == "Yes" ? true : false;
+                                        if(sendSlackMessage) 
+                                        { 
+                                                std::string webhookURL = alarm[9]; 
+                                                std::string curlCommand = "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"" + message + "\"}' " + webhookURL;
+                                                int result = system(curlCommand.c_str()); 
+                                                if (result != 0) 
+                                                {
+                                                        __SS__ << "ERROR: Slack alarm message failed!" << __E__;
+                                                } else 
+                                                {
+                                                        __SS__ << "Slack alarm message sent!\n" << __E__;
+                                                }
+                                        }
+
 				}
 			}
 		}
