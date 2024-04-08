@@ -10,3 +10,4 @@ WebGUI/*Path
 *.tmp
 WebGUI/js/Debug.js
 *.code-workspace
+spack-build-*
