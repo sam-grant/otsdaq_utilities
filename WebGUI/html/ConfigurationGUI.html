@@ -7023,7 +7023,9 @@
 					else
 						Debug.warn(DesktopContent.tooltipConditionString(diffReport));
 					Debug._errTruncLen = undefined;
-				}); //end diffWithActiveGroup
+				}, //end req handler
+				0, 0, true  //reqParam, progressHandler, callHandlerOnErr
+			); //end diffWithActiveGroup
 
 		} //end tableVersionDiff()
 
@@ -7762,7 +7764,7 @@
 
 					el.innerHTML = str;
 				},
-				0, 0, true); //reqParam, progressHandler, callHandlerOnErr
+				0, 0, true, true); //reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 		} //end treeViewGroupMemberEditMultiSelectHandler()
 
 		//==============================================================================
@@ -11501,7 +11503,10 @@
 
 							//recover (possibly) modified target table
 							treeEditingTargetTable_ = initTargetTable;
-							editCellCancel();
+							
+							//do not cancel at this point, because still editing cell for multi-step link/record editing, but indicate request is done
+							// editCellCancel();
+							_handlingTreeNodeOK = false;
 						}, 0, 0, true //reqParam, progressHandler, callHandlerOnErr
 					); //end of saveTreeNodeEdit call
 				}

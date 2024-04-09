@@ -407,7 +407,7 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 						//look for icc, .cc, .cpp, .hh, and .h 
 						if((str[j-2] == '.' && str[j-1] == 'h') || 
 							(str[j-3] == '.' && (str[j-2] == 'h' || str[j-2] == 'c')) || 							
-							(str[j-4] == '.' && (str[j-3] == 'c' || str[j-2] == 'i') && (str[j-2] == 'p' || str[j-2] == 'c')))
+							(str[j-4] == '.' && (str[j-3] == 'c' || str[j-3] == 'i') && (str[j-2] == 'p' || str[j-2] == 'c')))
 						{
 							//find beginning of blob (first non-file/c++ character)
 							for(l = j-3; l >= i; --l)
