@@ -265,6 +265,44 @@ ConfigurationAPI.extractActiveGroups = function(req)
 	return retObj;
 } // end extractActiveGroups()
 
+//=====================================================================================
+//getVersionAliases 
+// 
+// when complete, the responseHandler is called with an object parameter.
+//  of the form req.TABLENAME = []
+//  with a lit of {version: VERSION, alias: ALIAS} objects
+//  so an example would be:
+//  { DataBufferTable : [ {version : '1' alias : 'Default'} ]}
+//
+ConfigurationAPI.getVersionAliases = function(responseHandler)
+{
+        //get aliases
+        DesktopContent.XMLHttpRequest("Request?RequestType=getVersionAliases" +
+                        "", //end get data 
+                        "", //end post data
+                        function(req)
+                        {
+                                let tableNames = req.responseXML.getElementsByTagName("TableName");
+                                let tableVersions = req.responseXML.getElementsByTagName("Version");
+                                let versionAlias = req.responseXML.getElementsByTagName("VersionAlias");
+
+                                var retObj = {};
+                                console.log(req.responseXML             )
+                                console.log(tableNames)
+                                for(var i=0;i<tableNames.length;++i) {
+                                        let name = tableNames[i].getAttribute('value');
+                                        if(!retObj[name]) {
+                                                retObj[name] = []
+                                        }
+                                        retObj[name].push({version:tableVersions[i].getAttribute('value'),
+                                                                          alais:versionAlias[i].getAttribute('value')
+                                        })
+                                }
+                                responseHandler(retObj)
+                                console.log(retObj)
+                        });
+}
+
 
 //=====================================================================================
 //getAliasesAndGroups ~~

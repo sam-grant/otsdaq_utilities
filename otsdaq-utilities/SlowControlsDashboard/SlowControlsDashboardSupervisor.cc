@@ -2,11 +2,13 @@
 #include <dirent.h>    //for DIR
 #include <sys/stat.h>  //for stat() quickly checking if file exists
 #include <thread>      //for std::thread
+#include <format>      //for std::format
 
 #include "otsdaq/SlowControlsCore/MakeSlowControls.h"
 #include "otsdaq/SlowControlsCore/SlowControlsVInterface.h"
 
 #include <boost/regex.hpp>
+
 
 using namespace ots;
 
@@ -22,6 +24,8 @@ XDAQ_INSTANTIATOR_IMPL(SlowControlsDashboardSupervisor)
 SlowControlsDashboardSupervisor::SlowControlsDashboardSupervisor(
     xdaq::ApplicationStub* stub)
     : CoreSupervisorBase(stub)
+	, alarms_()
+	, alarms_timestamp_()
 {
 	__SUP_COUT__ << "Constructor." << __E__;
 
@@ -34,7 +38,7 @@ SlowControlsDashboardSupervisor::SlowControlsDashboardSupervisor(
 	mkdir(((std::string)(PAGES_PRIVATE_DIRECTORY)).c_str(), 0755);
 
 	interface_              = NULL;
-	alarmNotifyRefreshRate_ = 60;  // seconds
+    alarmNotifyRefreshRate_ = 60;  // seconds
 
 	readOnly_        		= getSupervisorProperty("ReadOnly","1") == "1"?true:false;
     __SUP_COUTV__(readOnly_);
@@ -83,6 +87,10 @@ void SlowControlsDashboardSupervisor::init(void)
 		pluginType = CorePropertySupervisorBase::getSupervisorProperty(
 		    "ControlsInterfacePluginType");
 	}
+	try { alarmNotifyRefreshRate_ = node.getNode("AlarmCheckRefreshPeriod").getValue<int>(); }
+	catch(...) {
+		__COUT_WARN__ << "Couldn't find `AlarmCheckRefreshPeriod`. Default alarmNotifyRefreshRate = " << alarmNotifyRefreshRate_ << " seconds." << __E__;
+	}
 
 	__COUTV__(pluginType);
 
@@ -93,6 +101,8 @@ void SlowControlsDashboardSupervisor::init(void)
 		    CorePropertySupervisorBase::getSupervisorUID(),
 		    CorePropertySupervisorBase::getContextTreeNode(),
 		    CorePropertySupervisorBase::getSupervisorConfigurationPath());
+
+			interface_->setNewAlarmCallback(std::bind(&SlowControlsDashboardSupervisor::handleNewAlarms, this)); 
 	}
 	catch(...)
 	{
@@ -138,6 +148,11 @@ void SlowControlsDashboardSupervisor::init(void)
 	CoreSupervisorBase::theStateMachineImplementation_.push_back(interface_);
 }  // end init()
 
+void SlowControlsDashboardSupervisor::handleNewAlarms() {
+	__COUT__ << "DEBUG handleNewAlarms" << __E__; 
+	
+}
+
 //==============================================================================
 // Manage channel subscriptions to Interface
 void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
@@ -150,11 +165,18 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 
 	while(true)
 	{
+		alarms_ = cs->interface_->checkAlarmNotifications();
+		alarms_timestamp_ = std::chrono::system_clock::now(); ;
+		if(alarms_.size()) {
+			__COUT__ << "checkSlowControlsAlarms() found count = "
+		         << alarms_.size() << __E__;
+		}
+
 		try
 		{
-			for(const auto& alarm : cs->interface_->checkAlarmNotifications())
+			for(const auto& alarm : alarms_)
 			{
-				if(alarm.size() > 8)
+				if(alarm.size() > 9) // this works for the epics interface, what about others?
 				{
 					time_t      rawtime = static_cast<time_t>(std::stoi(alarm[1]));
 					char*       dt      = ctime(&rawtime);
@@ -248,9 +270,11 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 
 		sleep(alarmNotifyRefreshRate_);
 
-		if(cs->interface_->checkAlarmNotifications().size())
-			__COUT__ << "checkSlowControlsAlarms() found count = "
-		         << cs->interface_->checkAlarmNotifications().size() << __E__;
+        // moved this on top of the loop, this implementation runs checkAlarmNotifications 3 times,
+		// these calls are potential expensive since they probe the interface every time
+		//if(cs->interface_->checkAlarmNotifications().size())
+		//	__COUT__ << "checkSlowControlsAlarms() found count = "
+		//         << cs->interface_->checkAlarmNotifications().size() << __E__;
 	}
 }  // end checkSlowControlsAlarms()
 
@@ -349,7 +373,7 @@ void SlowControlsDashboardSupervisor::forceSupervisorPropertyValues()
         CorePropertySupervisorBase::setSupervisorProperty(
             CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.UserPermissionsThreshold,
             "*=0 | getPages=1 | loadPhoebusPage=1 | getList=1 | getPVSettings=1 | getPvArchiverData=1 | generateUID=1 | getUserPermissions=1 |\
-			 userActivityHeartbeat=1 | poll=1 | uid=1 | isUserAdmin=1");  // block users from writing if no write access
+			 userActivityHeartbeat=1 | poll=1 | uid=1 | isUserAdmin=1 | getLastAlarmsData=1 | getAlarmsLogData=1 | getAlarmsCheck=1 | getPvData=1 ");  // block users from writing if no write access
 	}
 } //end forceSupervisorPropertyValues()
 
@@ -417,6 +441,10 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	{
 		std::string uid = CgiDataUtilities::getOrPostData(cgiIn, "uid");
 		Poll(cgiIn, xmlOut, uid);
+	}
+	else if(Command == "getPvData")
+	{
+		Poll(cgiIn, xmlOut);
 	}
 	else if(Command == "userActivityHeartbeat")
 	{
@@ -498,6 +526,12 @@ void SlowControlsDashboardSupervisor::handleRequest(
 		GetAlarmsLogData(cgiIn, xmlOut);
 		xmlOut.addTextElementToData("id", CgiDataUtilities::getData(cgiIn, "id"));
 	}
+	else if(Command == "getAlarmsCheck")
+	{
+		__SUP_COUT__ << "Alams Data requested from server! " << __E__;
+		GetAlarmsCheck(xmlOut);
+		//xmlOut.addTextElementToData("id", "test");
+	}
 	else if(Command == "saveImageFile")
 	{
 		saveImageFile(cgiIn, xmlOut, userInfo);
@@ -505,6 +539,16 @@ void SlowControlsDashboardSupervisor::handleRequest(
 
 	__SUP_COUT__ << "" << __E__;
 }  // end handleRequest()
+
+void SlowControlsDashboardSupervisor::Poll(cgicc::Cgicc& cgiIn,
+                                           HttpXmlDocument& xmlOut) {
+
+	std::string channelList = CgiDataUtilities::postData(cgiIn, "pvList");
+	std::set<std::string> channels;
+	StringMacros::getSetFromString(channelList, channels);
+
+    xmlOut.addTextElementToData("JSON", PollChannels_(channels));
+	}
 
 //==============================================================================
 void SlowControlsDashboardSupervisor::Poll(cgicc::Cgicc& /*cgiIn*/,
@@ -521,53 +565,57 @@ void SlowControlsDashboardSupervisor::Poll(cgicc::Cgicc& /*cgiIn*/,
 	                        .end())  // We have their current list of Channel Dependencies
 	{
 		uidPollTimeMap_.at(std::stoi(UID)) = std::time(NULL);
-		std::string JSONMessage            = "{ ";
-
-		for(auto channel : mapReference->second)
-		{
-			// channel = channel.substr(0, channel.find(":"));
-
-			__SUP_COUT__ << channel << __E__;
-
-			std::array<std::string, 4> channelInformation =
-			    interface_->getCurrentValue(channel);
-
-			__SUP_COUT__ << channel << ": " << channelInformation[1] << " : "
-			             << channelInformation[3] << __E__;
-
-			if(channelInformation[0] != "NO_CHANGE")
-			{
-				//__SUP_COUT__ << "Reached" <<  __E__;
-				JSONMessage += "\"" + channel + "\": {";
-				JSONMessage += "\"Timestamp\":\"" + channelInformation[0] + "\",";
-				JSONMessage += "\"Value\":\"" + channelInformation[1] + "\",";
-				JSONMessage += "\"Status\":\"" + channelInformation[2] + "\",";
-				JSONMessage += "\"Severity\":\"" + channelInformation[3] + "\"},";
-			}
-			else
-			{
-				__SUP_COUT__ << "No change in value since last poll: " << channel
-				             << __E__;
-			}
-
-			// Handle Channels that disconnect, etc
-			if(channelInformation[3] == "INVALID")
-			{
-				interface_->unsubscribe(channel);
-				interface_->subscribe(channel);
-			}
-		}
-
-		JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
-		JSONMessage += "}";
-		__SUP_COUT__ << JSONMessage << __E__;
-		xmlOut.addTextElementToData("JSON", JSONMessage);  // add to response
+		
+		xmlOut.addTextElementToData("JSON", PollChannels_(mapReference->second));  // add to response
 	}
 	else  // UID is not in our map so force them to generate a new one
 	{
 		xmlOut.addTextElementToData("JSON",
 		                            "{ \"message\": \"NOT_FOUND\"}");  // add to response
 	}
+}
+
+std::string  SlowControlsDashboardSupervisor::PollChannels_(std::set<std::string>& channels, bool resubscibe/*=true*/) {
+    std::string JSONMessage            = "{ ";
+
+	for(auto channel : channels) {
+		// channel = channel.substr(0, channel.find(":"));
+
+		__SUP_COUT__ << channel << __E__;
+
+		std::array<std::string, 4> channelInformation =
+		    interface_->getCurrentValue(channel);
+
+		__SUP_COUT__ << channel << ": " << channelInformation[1] << " : "
+		             << channelInformation[3] << __E__;
+
+		if(channelInformation[0] != "NO_CHANGE")
+		{
+			//__SUP_COUT__ << "Reached" <<  __E__;
+			JSONMessage += "\"" + channel + "\": {";
+			JSONMessage += "\"Timestamp\":\"" + channelInformation[0] + "\",";
+			JSONMessage += "\"Value\":\"" + channelInformation[1] + "\",";
+			JSONMessage += "\"Status\":\"" + channelInformation[2] + "\",";
+			JSONMessage += "\"Severity\":\"" + channelInformation[3] + "\"},";
+		}
+		else
+		{
+			__SUP_COUT__ << "No change in value since last poll: " << channel
+			             << __E__;
+		}
+
+		// Handle Channels that disconnect, etc
+		if(channelInformation[3] == "INVALID" && resubscibe)
+		{
+			interface_->unsubscribe(channel);
+			interface_->subscribe(channel);
+		}
+	}
+
+	JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
+	JSONMessage += "}";
+	__SUP_COUT__ << JSONMessage << __E__;
+	return JSONMessage;
 }
 
 //==============================================================================
@@ -742,8 +790,39 @@ void SlowControlsDashboardSupervisor::GetLastAlarmsData(cgicc::Cgicc&    cgiIn,
 }  // end GetLastAlarmsData()
 
 //==============================================================================
+void SlowControlsDashboardSupervisor::GetAlarmsCheck(HttpXmlDocument& xmlOut)
+{
+	__SUP_COUT__ << "Requesting alarms check cache data!" << __E__;
+
+	std::string JSONMessage = "{ ";
+	JSONMessage += "\"last_check\":" + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(alarms_timestamp_.time_since_epoch()).count()) + ",";
+	JSONMessage += "\"total\":" +std::to_string(alarms_.size()) + ",";
+	JSONMessage += "\"alarms\": [";
+    unsigned int nactive = 0;
+	if(alarms_.size()) {
+		for(auto& alarmRow : alarms_) {
+			JSONMessage +=  "{ ";
+			JSONMessage += "\"name\":\"" + alarmRow[0] + "\",";
+			if(alarmRow.size() > 9 ) { // alarm present
+				++nactive;
+				JSONMessage += "\"time\":\"" + alarmRow[1] + "\",";
+				JSONMessage += "\"value\":\"" + alarmRow[2] + "\",";
+				JSONMessage += "\"status\":\"" + alarmRow[3] + "\",";
+				JSONMessage += "\"severity\":\"" + alarmRow[4] + "\",";
+			}
+			JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1); // get rid of last ,
+			JSONMessage += "},";
+		}
+		JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1); // get rid of last ,
+	}
+	JSONMessage += "], \"nactive\": " +std::to_string(nactive);
+	JSONMessage += "}";
+	xmlOut.addTextElementToData("JSON", JSONMessage);  // add to response
+}  // end GetAlarmsCheck()
+
+//==============================================================================
 void SlowControlsDashboardSupervisor::GetAlarmsLogData(cgicc::Cgicc&    cgiIn,
-                                                       HttpXmlDocument& xmlOut)
+                                             HttpXmlDocument& xmlOut)
 {
 	__SUP_COUT__ << "Requesting alarms log data!" << __E__;
 
