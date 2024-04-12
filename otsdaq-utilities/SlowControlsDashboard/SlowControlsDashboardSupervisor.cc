@@ -178,43 +178,43 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 					//    "*" /*toList*/, "Subject", "Message", false /*doEmail*/);
 					theRemoteWebUsers_.sendSystemMessage(alarm[6], subject, message, alarm[7] == "Yes" ? true : false);
 
-                    // Option 1: send slack message directly
-					__COUT__ << "Send Slack message directly? " << alarm[8] << __E__;
-                    bool sendSlackMessage = alarm[8] == "Yes" ? true : false;
-                    if(sendSlackMessage) 
-                    { 
-                        std::string slackURL = alarm[9]; 
-                        std::string curlCommand = "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"" + message + "\"}' " + slackURL;
-                        int result = system(curlCommand.c_str()); 
-                        if (result != 0) 
-                        {
-                            __COUT_ERR__ << "ERROR: Slack alarm message failed!" << __E__;
-                        } else 
-                        {
-                            __COUT__ << "Slack alarm message sent!\n" << __E__;
-                        }
-                    }
+                                        // Option 1: send slack message directly
+                                        __COUT__ << "Send Slack message directly? " << alarm[8] << __E__;
+                                        bool sendSlackMessage = alarm[8] == "Yes" ? true : false;
+                                        if(sendSlackMessage) 
+                                        { 
+                                                std::string slackURL = alarm[9]; 
+                                                std::string curlCommand = "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"" + message + "\"}' " + slackURL;
+                                                int result = system(curlCommand.c_str()); 
+                                        if (result != 0) 
+                                        {
+                                                __COUT_ERR__ << "ERROR: Slack alarm message failed!" << __E__;
+                                        } else 
+                                        {
+                                        __COUT__ << "Slack alarm message sent!\n" << __E__;
+                                        }
+                                        }
 
-					// Option 2: send alarm status to script 
-					__COUT__ << "Send alarm status to script? " << alarm[10] << __E__;
-					bool sendToScript = alarm[10] == "Yes" ? true : false;
-					if(sendToScript)
-					{
-						std::string pathToScript = alarm[11];
-						std::string scriptCommand =  "python " + pathToScript + " --message '" + message + "'"; 
-						__COUT__ << "scriptCommand: " << scriptCommand << __E__;
-						int result = system(scriptCommand.c_str());
-						if (result != 0) 
-                        {
-                            __COUT_ERR__ << "ERROR: Alarm message to script " << pathToScript << " failed!" << __E__;
-                        } else 
-                        {
-                            __COUT__ << "Alarm message sent to script " << pathToScript << __E__;
-                        }
-					}
+                                        // Option 2: send alarm status to script 
+                                        __COUT__ << "Send alarm status to script? " << alarm[10] << __E__;
+                                        bool sendToScript = alarm[10] == "Yes" ? true : false;
+                                        if(sendToScript)
+                                        {
+                                                std::string pathToScript = alarm[11];
+                                                std::string scriptCommand =  "python " + pathToScript + " --message '" + message + "'"; 
+                                                __COUT__ << "scriptCommand: " << scriptCommand << __E__;
+                                                int result = system(scriptCommand.c_str());
+                                                if (result != 0) 
+                                                {
+                                                        __COUT_ERR__ << "ERROR: Alarm message to script " << pathToScript << " failed!" << __E__;
+                                                } else 
+                                                {
+                                                        __COUT__ << "Alarm message sent to script " << pathToScript << __E__;
+                                                }
+                                        }
 
-				}
-			}
+                                }
+                        }
 		}
 		catch(const std::runtime_error& e)
 		{
