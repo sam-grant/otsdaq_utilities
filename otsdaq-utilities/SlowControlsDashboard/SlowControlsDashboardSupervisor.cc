@@ -176,27 +176,26 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 					// toList can be "*", or "Tracker:10", "Ryan, Antonio"
 					// theRemoteWebUsers_.sendSystemMessage(
 					//    "*" /*toList*/, "Subject", "Message", false /*doEmail*/);
-					theRemoteWebUsers_.sendSystemMessage(
-					    alarm[6], subject, message, alarm[7] == "Yes" ? true : false);
+					theRemoteWebUsers_.sendSystemMessage(alarm[6], subject, message, alarm[7] == "Yes" ? true : false);
 
-                                        // Send slack message directly
+                    // Option 1: send slack message directly
 					__COUT__ << "Send Slack message directly? " << alarm[8] << __E__;
-                                        bool sendSlackMessage = alarm[8] == "Yes" ? true : false;
-                                        if(sendSlackMessage) 
-                                        { 
-                                                std::string slackURL = alarm[9]; 
-                                                std::string curlCommand = "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"" + message + "\"}' " + slackURL;
-                                                int result = system(curlCommand.c_str()); 
-                                                if (result != 0) 
-                                                {
-                                                        __COUT__ << "ERROR: Slack alarm message failed!" << __E__;
-                                                } else 
-                                                {
-                                                        __COUT__ << "Slack alarm message sent!\n" << __E__;
-                                                }
-                                        }
+                    bool sendSlackMessage = alarm[8] == "Yes" ? true : false;
+                    if(sendSlackMessage) 
+                    { 
+                        std::string slackURL = alarm[9]; 
+                        std::string curlCommand = "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"" + message + "\"}' " + slackURL;
+                        int result = system(curlCommand.c_str()); 
+                        if (result != 0) 
+                        {
+                            __COUT_ERR__ << "ERROR: Slack alarm message failed!" << __E__;
+                        } else 
+                        {
+                            __COUT__ << "Slack alarm message sent!\n" << __E__;
+                        }
+                    }
 
-					// Send alarm status to script 
+					// Option 2: send alarm status to script 
 					__COUT__ << "Send alarm status to script? " << alarm[10] << __E__;
 					bool sendToScript = alarm[10] == "Yes" ? true : false;
 					if(sendToScript)
@@ -206,12 +205,12 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 						__COUT__ << "scriptCommand: " << scriptCommand << __E__;
 						int result = system(scriptCommand.c_str());
 						if (result != 0) 
-                                                {
-                                                        __COUT__ << "ERROR: Alarm message to script " << pathToScript << " failed!" << __E__;
-                                                } else 
-                                                {
-                                                        __COUT__ << "Alarm message sent to script " << pathToScript << __E__;
-                                                }
+                        {
+                            __COUT_ERR__ << "ERROR: Alarm message to script " << pathToScript << " failed!" << __E__;
+                        } else 
+                        {
+                            __COUT__ << "Alarm message sent to script " << pathToScript << __E__;
+                        }
 					}
 
 				}
