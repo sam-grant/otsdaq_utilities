@@ -176,7 +176,7 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 		{
 			for(const auto& alarm : alarms_)
 			{
-				if(alarm.size() > 9) // this works for the epics interface, what about others?
+				if(alarm.size() > 8)
 				{
 					time_t      rawtime = static_cast<time_t>(std::stoi(alarm[1]));
 					char*       dt      = ctime(&rawtime);
@@ -200,42 +200,6 @@ void SlowControlsDashboardSupervisor::checkSlowControlsAlarms(
 					//    "*" /*toList*/, "Subject", "Message", false /*doEmail*/);
 					theRemoteWebUsers_.sendSystemMessage(
 					    alarm[6], subject, message, alarm[7] == "Yes" ? true : false);
-
-                                        // Send slack message directly
-					__COUT__ << "Send Slack message directly? " << alarm[8] << __E__;
-                                        bool sendSlackMessage = alarm[8] == "Yes" ? true : false;
-                                        if(sendSlackMessage) 
-                                        { 
-                                                std::string slackURL = alarm[9]; 
-                                                std::string curlCommand = "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"" + message + "\"}' " + slackURL;
-                                                int result = system(curlCommand.c_str()); 
-                                                if (result != 0) 
-                                                {
-                                                        __COUT__ << "ERROR: Slack alarm message failed!" << __E__;
-                                                } else 
-                                                {
-                                                        __COUT__ << "Slack alarm message sent!\n" << __E__;
-                                                }
-                                        }
-
-					// Send alarm status to script 
-					__COUT__ << "Send alarm status to script? " << alarm[10] << __E__;
-					bool sendToScript = alarm[10] == "Yes" ? true : false;
-					if(sendToScript)
-					{
-						std::string pathToScript = alarm[11];
-						std::string scriptCommand =  "python " + pathToScript + " --message '" + message + "'"; 
-						__COUT__ << "scriptCommand: " << scriptCommand << __E__;
-						int result = system(scriptCommand.c_str());
-						if (result != 0) 
-                                                {
-                                                        __COUT__ << "ERROR: Alarm message to script " << pathToScript << " failed!" << __E__;
-                                                } else 
-                                                {
-                                                        __COUT__ << "Alarm message sent to script " << pathToScript << __E__;
-                                                }
-					}
-
 				}
 			}
 		}
@@ -530,7 +494,6 @@ void SlowControlsDashboardSupervisor::handleRequest(
 	{
 		__SUP_COUT__ << "Alams Data requested from server! " << __E__;
 		GetAlarmsCheck(xmlOut);
-		//xmlOut.addTextElementToData("id", "test");
 	}
 	else if(Command == "saveImageFile")
 	{
@@ -822,7 +785,7 @@ void SlowControlsDashboardSupervisor::GetAlarmsCheck(HttpXmlDocument& xmlOut)
 
 //==============================================================================
 void SlowControlsDashboardSupervisor::GetAlarmsLogData(cgicc::Cgicc&    cgiIn,
-                                             HttpXmlDocument& xmlOut)
+                                                       HttpXmlDocument& xmlOut)
 {
 	__SUP_COUT__ << "Requesting alarms log data!" << __E__;
 
