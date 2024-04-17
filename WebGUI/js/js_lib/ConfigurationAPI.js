@@ -276,33 +276,34 @@ ConfigurationAPI.extractActiveGroups = function(req)
 //
 ConfigurationAPI.getVersionAliases = function(responseHandler)
 {
-        //get aliases
-        DesktopContent.XMLHttpRequest("Request?RequestType=getVersionAliases" +
-                        "", //end get data 
-                        "", //end post data
-                        function(req)
-                        {
-                                let tableNames = req.responseXML.getElementsByTagName("TableName");
-                                let tableVersions = req.responseXML.getElementsByTagName("Version");
-                                let versionAlias = req.responseXML.getElementsByTagName("VersionAlias");
+	//get aliases
+	DesktopContent.XMLHttpRequest("Request?RequestType=getVersionAliases" +
+		"", //end get data 
+		"", //end post data
+		function(req)
+		{
+			let tableNames = req.responseXML.getElementsByTagName("TableName");
+			let tableVersions = req.responseXML.getElementsByTagName("Version");
+			let versionAlias = req.responseXML.getElementsByTagName("VersionAlias");
 
-                                var retObj = {};
-                                console.log(req.responseXML             )
-                                console.log(tableNames)
-                                for(var i=0;i<tableNames.length;++i) {
-                                        let name = tableNames[i].getAttribute('value');
-                                        if(!retObj[name]) {
-                                                retObj[name] = []
-                                        }
-                                        retObj[name].push({version:tableVersions[i].getAttribute('value'),
-                                                                          alais:versionAlias[i].getAttribute('value')
-                                        })
-                                }
-                                responseHandler(retObj)
-                                console.log(retObj)
-                        });
-}
+			var retObj = {};
+			console.log(req.responseXML);
+			console.log(tableNames);
+			for(var i=0;i<tableNames.length;++i) 
+			{
+				let name = tableNames[i].getAttribute('value');
+				if(!retObj[name])
+					retObj[name] = [];
 
+				retObj[name].push({
+					version:tableVersions[i].getAttribute('value'),
+					alais:versionAlias[i].getAttribute('value')
+				});
+			}
+			responseHandler(retObj);
+			console.log(retObj);
+		});
+} //end getVersionAliases()
 
 //=====================================================================================
 //getAliasesAndGroups ~~
