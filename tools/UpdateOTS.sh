@@ -24,12 +24,13 @@ echo -e "UpdateOTS.sh:${LINENO}  "
 echo -e "UpdateOTS.sh:${LINENO}  "
 
 
-if [ "x$1" == "x" ] || [[ "$1" != "--fetch" && "$1" != "--fetchcore" && "$1" != "--fetchall" && "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullcore" && "$1" != "--pushcore" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
+if [ "x$1" == "x" ] || [[ "$1" != "--share" && "$1" != "--fetch" && "$1" != "--fetchcore" && "$1" != "--fetchall" && "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullcore" && "$1" != "--pushcore" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
     echo -e "UpdateOTS.sh:${LINENO}  \t Usage: Parameter 1 is the operation and, for pushes, Parameter 2 is the comment for git commit"
 	echo -e "UpdateOTS.sh:${LINENO}  "
     echo -e "UpdateOTS.sh:${LINENO}  \t Note: git status will be logged here: $CHECKIN_LOG_PATH"
 	echo -e "UpdateOTS.sh:${LINENO}  "
 	echo -e "UpdateOTS.sh:${LINENO}  \t Parameter 1 operations:"
+	echo -e "UpdateOTS.sh:${LINENO}  \t\t --share               \t #will mark as shared (multi-owner) all repositories in srcs/"	
 	echo -e "UpdateOTS.sh:${LINENO}  \t\t --fetch               \t #will fetch otsdaq repositories in srcs/"	
 	echo -e "UpdateOTS.sh:${LINENO}  \t\t --pull                \t #will pull  otsdaq user repositories in srcs/"
 	echo -e "UpdateOTS.sh:${LINENO}  \t\t --push \"comment\"    \t #will push  otsdaq user repositories in srcs/"
@@ -189,6 +190,7 @@ SKIP_CORE=0
 ONLY_CORE=0
 
 FETCH_ONLY=0
+SHARE_ONLY=0
 
 if [ "$1"  == "--tables" ]; then
 	TABLES_ONLY=1
@@ -239,6 +241,11 @@ if [ "$1"  == "--pullcore" ]; then
 	echo -e "UpdateOTS.sh:${LINENO}  \t Pulling otsdaq core repositories!"
 fi
 
+if [ "$1"  == "--share" ]; then
+	ALL_REPOS=1
+	SHARE_ONLY=1
+	echo -e "UpdateOTS.sh:${LINENO}  \t Sharing (marking as multi-user) all repositories (i.e. not only otsdaq)!"
+fi
 if [ "$1"  == "--fetchall" ]; then
 	ALL_REPOS=1
 	FETCH_ONLY=1
@@ -269,8 +276,12 @@ echo -e "UpdateOTS.sh:${LINENO}  \t Script directory found as: $SCRIPT_DIR"
 echo -e "UpdateOTS.sh:${LINENO}  \t Finding target repositories..."
  
 #if not done with compile setup, then OTS_SOURCE may not be defined
+DEREFENCED_OTS_SOURCE="$SCRIPT_DIR/../../../srcs"
 if [ "x$OTS_SOURCE" == "x" ]; then
 	OTS_SOURCE="$SCRIPT_DIR/../../../srcs"
+fi
+if [ $SHARE_ONLY = 1 ]; then
+	OTS_SOURCE="${DEREFENCED_OTS_SOURCE%%/otsdaq_utilities/tools*}"  #strip path back to /srcs without ../.. in path
 fi
 
 echo -e "UpdateOTS.sh:${LINENO}  \t Source directory found as OTS_SOURCE = ${OTS_SOURCE}"
@@ -330,7 +341,10 @@ for p in ${REPO_DIR[@]}; do
 	
 	cd $p
 	
-	if [ $FETCH_ONLY = 1 ]; then
+	if [ $SHARE_ONLY = 1 ]; then
+		echo -e "UpdateOTS.sh:${LINENO}  \t Sharing (marking as multi-user) $p"
+		git config --global --add safe.directory $p
+	elif [ $FETCH_ONLY = 1 ]; then
 		echo -e "UpdateOTS.sh:${LINENO}  \t Fetching updates from $p"
 		git fetch
 	else
