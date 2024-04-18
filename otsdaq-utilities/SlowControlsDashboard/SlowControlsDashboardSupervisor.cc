@@ -2,7 +2,6 @@
 #include <dirent.h>    //for DIR
 #include <sys/stat.h>  //for stat() quickly checking if file exists
 #include <thread>      //for std::thread
-#include <format>      //for std::format
 
 #include "otsdaq/SlowControlsCore/MakeSlowControls.h"
 #include "otsdaq/SlowControlsCore/SlowControlsVInterface.h"
